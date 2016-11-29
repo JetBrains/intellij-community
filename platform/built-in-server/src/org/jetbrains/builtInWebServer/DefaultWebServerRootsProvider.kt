@@ -65,14 +65,21 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           continue
         }
 
-        val roots = rootProvider.getRoots(module.rootManager)
-        findByRelativePath(path, roots, resolver, null)?.let {
+        findByRelativePath(path, rootProvider.getRoots(module.rootManager), resolver, null)?.let {
           it.moduleName = getModuleNameQualifier(project, module)
           return it
         }
+      }
+    }
 
-        // https://youtrack.jetbrains.com/issue/WEB-24283
-        for (root in roots) {
+    // https://youtrack.jetbrains.com/issue/WEB-24283
+    for (rootProvider in RootProvider.values()) {
+      for (module in modules) {
+        if (module.isDisposed) {
+          continue
+        }
+
+        for (root in rootProvider.getRoots(module.rootManager)) {
           if (resolver.resolve("/config.json", root) != null) {
             resolver.resolve("/index.html", root)?.let {
               it.moduleName = getModuleNameQualifier(project, module)
