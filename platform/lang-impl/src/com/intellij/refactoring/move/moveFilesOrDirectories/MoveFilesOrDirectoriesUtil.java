@@ -73,17 +73,19 @@ public class MoveFilesOrDirectoriesUtil {
    * @param newDirectory the directory to move the file into.
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
-  public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException {
-    PsiManager manager = file.getManager();
+  public static void doMoveFile(@NotNull PsiFile file, @NotNull PsiDirectory newDirectory) throws IncorrectOperationException {
     // the class is already there, this is true when multiple classes are defined in the same file
     if (!newDirectory.equals(file.getContainingDirectory())) {
       // do actual move
       checkMove(file, newDirectory);
 
+      VirtualFile vFile = file.getVirtualFile();
+      if (vFile == null) {
+        throw new IncorrectOperationException("Non-physical file: " + file + " (" + file.getClass() + ")");
+      }
+
       try {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        LOG.assertTrue(virtualFile != null, file);
-        virtualFile.move(manager, newDirectory.getVirtualFile());
+        vFile.move(file.getManager(), newDirectory.getVirtualFile());
       }
       catch (IOException e) {
         throw new IncorrectOperationException(e);
