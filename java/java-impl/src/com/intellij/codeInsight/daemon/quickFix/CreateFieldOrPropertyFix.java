@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
   private void generateMembers(final Project project, final Editor editor, final PsiFile file) {
     try {
       List<? extends GenerationInfo> prototypes = new GenerateFieldOrPropertyHandler(myName, myType, myMemberType, myAnnotations).generateMemberPrototypes(myClass, ClassMember.EMPTY_ARRAY);
-      prototypes = GenerateMembersUtil.insertMembersAtOffset(myClass.getContainingFile(), editor.getCaretModel().getOffset(), prototypes);
+      prototypes = GenerateMembersUtil.insertMembersAtOffset(myClass, editor.getCaretModel().getOffset(), prototypes);
       if (prototypes.isEmpty()) return;
       final PsiElement scope = prototypes.get(0).getPsiMember().getContext();
       assert scope != null;

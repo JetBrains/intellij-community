@@ -133,7 +133,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     List<? extends GenerationInfo> newMembers;
     try{
       List<? extends GenerationInfo> prototypes = generateMemberPrototypes(aClass, members);
-      newMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
+      newMembers = GenerateMembersUtil.insertMembersAtOffset(aClass, offset, prototypes);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
