@@ -66,6 +66,11 @@ public class MockCreateParameterInfoContext implements CreateParameterInfoContex
   }
 
   @Override
+  public void setRequestFocus(boolean focus) {
+
+  }
+
+  @Override
   public Project getProject() {
     return myFile.getProject();
   }

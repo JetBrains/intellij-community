@@ -34,7 +34,6 @@ import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -532,7 +531,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  public static class MyList extends JBListWithHintProvider implements DataProvider {
+  public class MyList extends JBListWithHintProvider implements DataProvider {
     public MyList(ListPopupModel listModel) {
       super(listModel);
     }

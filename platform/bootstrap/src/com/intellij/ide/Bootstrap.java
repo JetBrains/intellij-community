@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.idea.Main;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ public class Bootstrap {
   private Bootstrap() { }
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {
-    main(args, mainClass, methodName, null, null);
+    main(args, mainClass, methodName, Collections.<String>emptyList(), null);
   }
 
   public static void main(String[] args, String mainClass, String methodName, List<String> classpath, ClassLoader parent) throws Exception {

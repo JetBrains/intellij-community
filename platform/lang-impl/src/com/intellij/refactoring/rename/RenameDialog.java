@@ -356,6 +356,6 @@ public class RenameDialog extends RefactoringDialog implements RenameDialogViewM
   }
 
   public JCheckBox getCbSearchTextOccurences() {
-    return myCbSearchTextOccurences;
+    return myCbSearchTextOccurrences;
   }
 }

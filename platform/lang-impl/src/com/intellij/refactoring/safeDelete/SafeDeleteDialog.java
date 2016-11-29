@@ -17,6 +17,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;

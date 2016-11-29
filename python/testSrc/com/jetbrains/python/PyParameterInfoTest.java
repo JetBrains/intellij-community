@@ -559,6 +559,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public void setRequestFocus(boolean focus) {
+
+    }
+
+    @Override
     public Project getProject() {
       return myProject;
     }

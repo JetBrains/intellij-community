@@ -74,14 +74,14 @@ public class IdeaApplication {
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
-    boolean isServer = System.getProperty(ExtensionPoints.APPLICATION_STARTER).equals("onair");
+    boolean isOnAir = "onair".equals(System.getProperty(ExtensionPoints.APPLICATION_STARTER));
 
     boolean headless = Main.isHeadless();
     patchSystem(headless);
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
-        new CommandLineApplication(isInternal, isUnitTest, headless, isServer);
+        new CommandLineApplication(isInternal, isUnitTest, headless, isOnAir);
       }
       if (isUnitTest) {
         myLoaded = true;
@@ -93,7 +93,7 @@ public class IdeaApplication {
       if (myStarter instanceof IdeStarter) {
         splash = ((IdeStarter)myStarter).showSplash(myArgs);
       }
-      ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash, isServer);
+      ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash, isOnAir);
     }
 
     if (myStarter == null) {

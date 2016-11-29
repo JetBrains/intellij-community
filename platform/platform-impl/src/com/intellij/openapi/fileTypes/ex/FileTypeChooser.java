@@ -96,9 +96,4 @@ public class FileTypeChooser {
 
     return patterns;
   }
-
-  @Override
-  protected String getHelpId() {
-    return "reference.dialogs.register.association";
-  }
 }
