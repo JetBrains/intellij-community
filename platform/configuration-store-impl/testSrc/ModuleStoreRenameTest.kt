@@ -6,12 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleAdapter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.project.modifyModules
 import com.intellij.testFramework.*
 import com.intellij.util.Function
 import com.intellij.util.SmartList
@@ -73,16 +72,6 @@ internal class ModuleStoreRenameTest {
 
   @Rule fun getChain() = ruleChain
 
-  fun changeModule(task: ModifiableModuleModel.() -> Unit) {
-    runInEdtAndWait {
-      val model = ModuleManager.getInstance(projectRule.project).modifiableModel
-      runWriteAction {
-        model.task()
-        model.commit()
-      }
-    }
-  }
-
   // project structure
   @Test fun `rename module using model`() {
     runInEdtAndWait { module.saveStore() }
@@ -92,7 +81,7 @@ internal class ModuleStoreRenameTest {
 
     val oldName = module.name
     val newName = "foo"
-    changeModule { renameModule(module, newName) }
+    runInEdtAndWait { projectRule.project.modifyModules { renameModule(module, newName) } }
     assertRename(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }

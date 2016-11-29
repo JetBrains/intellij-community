@@ -149,32 +149,34 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   public void loadState(Element state) {
     List<ModulePath> prevPaths = myModulePaths;
     readExternal(state);
-    if (prevPaths != null) {
-      final ModifiableModuleModel model = getModifiableModel();
+    if (prevPaths == null) {
+      return;
+    }
 
-      Module[] existingModules = model.getModules();
+    final ModifiableModuleModel model = getModifiableModel();
 
-      ModuleGroupInterner groupInterner = new ModuleGroupInterner();
-      for (Module existingModule : existingModules) {
-        ModulePath correspondingPath = findCorrespondingPath(existingModule);
-        if (correspondingPath == null) {
-          model.disposeModule(existingModule);
-        }
-        else {
-          myModulePaths.remove(correspondingPath);
+    Module[] existingModules = model.getModules();
 
-          String groupStr = correspondingPath.getModuleGroup();
-          String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
-          if (!Arrays.equals(group, model.getModuleGroupPath(existingModule))) {
-            groupInterner.setModuleGroupPath(model, existingModule, group);
-          }
+    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
+    for (Module existingModule : existingModules) {
+      ModulePath correspondingPath = findCorrespondingPath(existingModule);
+      if (correspondingPath == null) {
+        model.disposeModule(existingModule);
+      }
+      else {
+        myModulePaths.remove(correspondingPath);
+
+        String groupStr = correspondingPath.getModuleGroup();
+        String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
+        if (!Arrays.equals(group, model.getModuleGroupPath(existingModule))) {
+          groupInterner.setModuleGroupPath(model, existingModule, group);
         }
       }
-
-      loadModules((ModuleModelImpl)model);
-
-      ApplicationManager.getApplication().runWriteAction(() -> model.commit());
     }
+
+    loadModules((ModuleModelImpl)model);
+
+    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
   }
 
   private ModulePath findCorrespondingPath(@NotNull Module existingModule) {
@@ -342,7 +344,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return new ModuleModelImpl(myModuleModel);
   }
-
 
   private abstract static class SaveItem {
     @NotNull
