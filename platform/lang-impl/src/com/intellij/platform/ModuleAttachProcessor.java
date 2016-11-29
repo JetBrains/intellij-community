@@ -13,221 +13,193 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.platform;
+package com.intellij.platform
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.projectImport.ProjectOpenedCallback;
-import com.intellij.util.io.PathKt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleManagerImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
+import com.intellij.project.modifyModules
+import com.intellij.project.rootManager
+import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.projectImport.ProjectOpenedCallback
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.exists
+import com.intellij.util.io.systemIndependentPath
+import java.io.File
+import java.nio.file.Path
+import java.util.*
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+private val LOG = Logger.getInstance(ModuleAttachProcessor::class.java)
 
-/**
- * @author yole
- */
-public class ModuleAttachProcessor extends ProjectAttachProcessor {
-  private static final Logger LOG = Logger.getInstance(ModuleAttachProcessor.class);
+class ModuleAttachProcessor : ProjectAttachProcessor() {
+  companion object {
+    @JvmStatic
+    fun getPrimaryModule(project: Project) = if (ProjectAttachProcessor.canAttachToProject()) findModuleInBaseDir(project) else null
 
-  @Override
-  public boolean attachToProject(@NotNull Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
-    if (!Files.exists(projectDir)) {
-      Path projectDirParent = projectDir.getParent();
-      assert projectDirParent != null;
-      String filePath = projectDirParent.toString();
-      Project newProject = ((ProjectManagerEx)ProjectManager.getInstance()).newProject(projectDirParent.getFileName().toString(),
-                                                                                       filePath, true, false);
-      if (newProject == null) {
-        return false;
-      }
-
-      VirtualFile baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath));
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject);
-      newProject.save();
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject));
-    }
-
-    Boolean isAttached = findMainModule(project, projectDir, callback);
-    if (Boolean.FALSE.equals(isAttached)) {
-      isAttached = findMainModule(project, projectDir.resolve(Project.DIRECTORY_STORE_FOLDER), callback);
-    }
-    if (Boolean.TRUE.equals(isAttached)) {
-      return true;
-    }
-
-    return Messages.showYesNoDialog(project, "The project at " +
-                                             projectDir +
-                                             " uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
-                                    "Open Project", Messages.getQuestionIcon()) != Messages.YES;
-  }
-
-  private static Boolean findMainModule(@NotNull Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
-    return PathKt.directoryStreamIfExists(projectDir, path -> path.getFileName().toString().endsWith(ModuleManagerImpl.IML_EXTENSION), files -> {
-      for (Path file : files) {
-        VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathKt.getSystemIndependentPath(file));
-        if (imlFile != null) {
-          attachModule(project, imlFile, callback);
-          return true;
+    @JvmStatic
+    fun findModuleInBaseDir(project: Project): Module? {
+      for (module in ModuleManager.getInstance(project).modules) {
+        for (root in module.rootManager.contentRoots) {
+          if (root == project.baseDir) {
+            return module
+          }
         }
       }
-      return false;
-    });
-  }
+      return null
+    }
 
-  private static void attachModule(Project project, VirtualFile imlFile, @Nullable ProjectOpenedCallback callback) {
-    try {
-      final ModifiableModuleModel model = ModuleManager.getInstance(project).getModifiableModel();
-      final Module module = model.loadModule(imlFile.getPath());
-
-      WriteAction.run(() -> model.commit());
-      final Module newModule = ModuleManager.getInstance(project).findModuleByName(module.getName());
-      assert newModule != null;
-      final Module primaryModule = addPrimaryModuleDependency(project, newModule);
-      if (primaryModule != null) {
-        VirtualFile dotIdeaDir = imlFile.getParent();
-        if (dotIdeaDir != null) {
-          updateVcsMapping(primaryModule, dotIdeaDir.getParent());
+    @JvmStatic
+    fun getSortedModules(project: Project): List<Module> {
+      val result = ArrayList<Module>()
+      val primaryModule = getPrimaryModule(project)
+      val modules = ModuleManager.getInstance(project).modules
+      for (module in modules) {
+        if (module !== primaryModule) {
+          result.add(module)
         }
       }
-
-      if (callback != null) {
-        callback.projectOpened(project, newModule);
+      result.sortBy(Module::getName)
+      primaryModule?.let {
+        result.add(0, it)
       }
+      return result
     }
-    catch (Exception ex) {
-      LOG.info(ex);
-      Messages.showErrorDialog(project, "Cannot attach project: " + ex.getMessage(), CommonBundle.getErrorTitle());
-    }
-  }
 
-  private static void updateVcsMapping(Module primaryModule, VirtualFile addedModuleContentRoot) {
-    final Project project = primaryModule.getProject();
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    final List<VcsDirectoryMapping> mappings = vcsManager.getDirectoryMappings();
-    if (mappings.size() == 1) {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(primaryModule).getContentRoots();
-      // if we had one mapping for the root of the primary module and the added module uses the same VCS, change mapping to <Project Root>
-      if (contentRoots.length == 1 && FileUtil.filesEqual(new File(contentRoots[0].getPath()), new File(mappings.get(0).getDirectory()))) {
-        final AbstractVcs vcs = vcsManager.findVersioningVcs(addedModuleContentRoot);
-        if (vcs != null && vcs.getName().equals(mappings.get(0).getVcs())) {
-          vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", vcs.getName())));
-          return;
+    /**
+     * @param project the project
+     * *
+     * @return null if either multi-projects are not enabled or the project has only one module
+     */
+    @JvmStatic
+    fun getMultiProjectDisplayName(project: Project): String? {
+      if (!ProjectAttachProcessor.canAttachToProject()) {
+        return null
+      }
+
+      val modules = ModuleManager.getInstance(project).modules
+      if (modules.size <= 1) {
+        return null
+      }
+
+      val primaryModule = getPrimaryModule(project) ?: modules[0]
+      val result = StringBuilder(primaryModule!!.name)
+      result.append(", ")
+      for (module in modules) {
+        if (module === primaryModule) {
+          continue
         }
+        result.append(module.name)
+        break
+      }
+      if (modules.size > 2) {
+        result.append("...")
+      }
+      return result.toString()
+    }
+  }
+
+  override fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
+    if (!projectDir.exists()) {
+      val projectDirParent = projectDir.parent!!
+      val newProject = ProjectManagerEx.getInstanceEx().newProject(projectDirParent.fileName.toString(), projectDirParent.toString(), true, false) ?: return false
+
+      val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirParent.systemIndependentPath)
+      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject)
+      newProject.save()
+      runWriteAction { Disposer.dispose(newProject) }
+    }
+
+    var isAttached = findMainModule(project, projectDir, callback)
+    if (!isAttached) {
+      isAttached = findMainModule(project, projectDir.resolve(Project.DIRECTORY_STORE_FOLDER), callback)
+    }
+    if (isAttached) {
+      return true
+    }
+
+    return Messages.showYesNoDialog(project,
+      "The project at $projectDir uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
+      "Open Project", Messages.getQuestionIcon()) != Messages.YES
+  }
+}
+
+private fun findMainModule(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
+  projectDir.directoryStreamIfExists({ path -> path.fileName.toString().endsWith(ModuleManagerImpl.IML_EXTENSION) }) {
+    for (file in it) {
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)?.let {
+        attachModule(project, it, callback)
+        return true
       }
     }
-    final AbstractVcs vcs = vcsManager.findVersioningVcs(addedModuleContentRoot);
-    if (vcs != null) {
-      ArrayList<VcsDirectoryMapping> newMappings = new ArrayList<>(mappings);
-      newMappings.add(new VcsDirectoryMapping(addedModuleContentRoot.getPath(), vcs.getName()));
-      vcsManager.setDirectoryMappings(newMappings);
-    }
   }
+  return false
+}
 
-  @Nullable
-  private static Module addPrimaryModuleDependency(Project project, @NotNull Module newModule) {
-    final Module module = getPrimaryModule(project);
-    if (module != null && module != newModule) {
-      ModuleRootModificationUtil.addDependency(module, newModule);
-      return module;
+private fun attachModule(project: Project, imlFile: VirtualFile, callback: ProjectOpenedCallback?) {
+  try {
+    val module = project.modifyModules {
+      loadModule(imlFile.path)
     }
-    return null;
-  }
-
-  @Nullable
-  public static Module getPrimaryModule(Project project) {
-    if (!canAttachToProject()) {
-      return null;
-    }
-    return findModuleInBaseDir(project);
-  }
-
-  @Nullable
-  public static Module findModuleInBaseDir(Project project) {
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-      for (VirtualFile root : roots) {
-        if (Comparing.equal(root, project.getBaseDir())) {
-          return module;
-        }
-      }
-    }
-    return null;
-  }
-
-  public static List<Module> getSortedModules(Project project) {
-    List<Module> result = new ArrayList<>();
-    final Module primaryModule = getPrimaryModule(project);
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      if (module != primaryModule) {
-        result.add(module);
-      }
-    }
-    Collections.sort(result, Comparator.comparing(Module::getName));
+    val newModule = ModuleManager.getInstance(project).findModuleByName(module.name)!!
+    val primaryModule = addPrimaryModuleDependency(project, newModule)
     if (primaryModule != null) {
-      result.add(0, primaryModule);
+      val dotIdeaDir = imlFile.parent
+      if (dotIdeaDir != null) {
+        updateVcsMapping(primaryModule, dotIdeaDir.parent)
+      }
     }
-    return result;
+
+    callback?.projectOpened(project, newModule)
   }
-
-  /**
-   * @param project the project
-   * @return null if either multi-projects are not enabled or the project has only one module
-   */
-  @Nullable
-  public static String getMultiProjectDisplayName(@NotNull Project project) {
-    if (!ProjectAttachProcessor.canAttachToProject()) {
-      return null;
-    }
-
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    if (modules.length <= 1) {
-      return null;
-    }
-
-    Module primaryModule = getPrimaryModule(project);
-    if (primaryModule == null) {
-      primaryModule = modules [0];
-    }
-    final StringBuilder result = new StringBuilder(primaryModule.getName());
-    result.append(", ");
-    for (Module module : modules) {
-      if (module == primaryModule) continue;
-      result.append(module.getName());
-      break;
-    }
-    if (modules.length > 2) {
-      result.append("...");
-    }
-    return result.toString();
+  catch (e: Exception) {
+    LOG.info(e)
+    Messages.showErrorDialog(project, "Cannot attach project: ${e.message}", CommonBundle.getErrorTitle())
   }
+}
 
+private fun updateVcsMapping(primaryModule: Module, addedModuleContentRoot: VirtualFile) {
+  val project = primaryModule.project
+  val vcsManager = ProjectLevelVcsManager.getInstance(project)
+  val mappings = vcsManager.directoryMappings
+  if (mappings.size == 1) {
+    val contentRoots = ModuleRootManager.getInstance(primaryModule).contentRoots
+    // if we had one mapping for the root of the primary module and the added module uses the same VCS, change mapping to <Project Root>
+    if (contentRoots.size == 1 && FileUtil.filesEqual(File(contentRoots[0].path), File(mappings[0].directory))) {
+      val vcs = vcsManager.findVersioningVcs(addedModuleContentRoot)
+      if (vcs != null && vcs.name == mappings[0].vcs) {
+        vcsManager.directoryMappings = listOf(VcsDirectoryMapping("", vcs.name))
+        return
+      }
+    }
+  }
+  val vcs = vcsManager.findVersioningVcs(addedModuleContentRoot)
+  if (vcs != null) {
+    val newMappings = ArrayList(mappings)
+    newMappings.add(VcsDirectoryMapping(addedModuleContentRoot.path, vcs.name))
+    vcsManager.directoryMappings = newMappings
+  }
+}
+
+private fun addPrimaryModuleDependency(project: Project, newModule: Module): Module? {
+  val module = getPrimaryModule(project)
+  if (module != null && module !== newModule) {
+    ModuleRootModificationUtil.addDependency(module, newModule)
+    return module
+  }
+  return null
 }
