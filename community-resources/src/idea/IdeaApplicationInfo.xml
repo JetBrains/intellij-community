@@ -1,4 +1,6 @@
-<component>
+<component xmlns="http://jetbrains.org/intellij/schema/application-info"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
   <version codename="Community Edition" major="2017" minor="1" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
@@ -9,6 +11,8 @@
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
+  <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>
+
   <editor background-url="/idea_logo_welcome.png"/>
 
   <plugins url="http://plugins.jetbrains.com/"/>
@@ -26,7 +30,6 @@
   <third-party url="http://www.jetbrains.org/"/>
   <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
-  <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>
 
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml" service="https://www.jetbrains.com/idea/statistics/index.jsp"/>
 </component>

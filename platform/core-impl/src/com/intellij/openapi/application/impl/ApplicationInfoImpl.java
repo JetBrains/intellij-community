@@ -629,7 +629,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private void loadState(Element parentNode) {
-    Element versionElement = parentNode.getChild(ELEMENT_VERSION);
+    Element versionElement = getChild(parentNode, ELEMENT_VERSION);
     if (versionElement != null) {
       myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
@@ -640,14 +640,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }
 
-    Element companyElement = parentNode.getChild(ELEMENT_COMPANY);
+    Element companyElement = getChild(parentNode, ELEMENT_COMPANY);
     if (companyElement != null) {
       myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
       myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
       myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
     }
 
-    Element buildElement = parentNode.getChild(ELEMENT_BUILD);
+    Element buildElement = getChild(parentNode, ELEMENT_BUILD);
     if (buildElement != null) {
       myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
       myApiVersion = buildElement.getAttributeValue(ATTRIBUTE_API_VERSION);
@@ -685,7 +685,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       ", eap:" + myEAP + ", os:" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
       ", java-version:" + SystemProperties.getJavaVendor() + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
-    Element logoElement = parentNode.getChild(ELEMENT_LOGO);
+    Element logoElement = getChild(parentNode, ELEMENT_LOGO);
     if (logoElement != null) {
       mySplashImageUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
       mySplashTextColor = parseColor(logoElement.getAttributeValue(ATTRIBUTE_TEXT_COLOR));
@@ -720,7 +720,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
+    Element aboutLogoElement = getChild(parentNode, ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
 
@@ -753,7 +753,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element iconElement = parentNode.getChild(ELEMENT_ICON);
+    Element iconElement = getChild(parentNode, ELEMENT_ICON);
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
@@ -764,32 +764,32 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element packageElement = parentNode.getChild(ELEMENT_PACKAGE);
+    Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
     if (packageElement != null) {
       myPackageCode = packageElement.getAttributeValue(ATTRIBUTE_CODE);
     }
 
-    Element showLicensee = parentNode.getChild(ELEMENT_LICENSEE);
+    Element showLicensee = getChild(parentNode, ELEMENT_LICENSEE);
     if (showLicensee != null) {
       myShowLicensee = Boolean.valueOf(showLicensee.getAttributeValue(ATTRIBUTE_SHOW)).booleanValue();
     }
 
-    Element welcomeScreen = parentNode.getChild(WELCOME_SCREEN_ELEMENT_NAME);
+    Element welcomeScreen = getChild(parentNode, WELCOME_SCREEN_ELEMENT_NAME);
     if (welcomeScreen != null) {
       myWelcomeScreenLogoUrl = welcomeScreen.getAttributeValue(LOGO_URL_ATTR);
     }
 
-    Element wizardSteps = parentNode.getChild(CUSTOMIZE_IDE_WIZARD_STEPS);
+    Element wizardSteps = getChild(parentNode, CUSTOMIZE_IDE_WIZARD_STEPS);
     if (wizardSteps != null) {
       myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
     }
 
-    Element editor = parentNode.getChild(ELEMENT_EDITOR);
+    Element editor = getChild(parentNode, ELEMENT_EDITOR);
     if (editor != null) {
       myEditorBackgroundImageUrl = editor.getAttributeValue(BACKGROUND_URL_ATTR);
     }
 
-    Element helpElement = parentNode.getChild(HELP_ELEMENT_NAME);
+    Element helpElement = getChild(parentNode, HELP_ELEMENT_NAME);
     if (helpElement != null) {
       myHelpFileName = helpElement.getAttributeValue(ATTRIBUTE_HELP_FILE);
       myHelpRootName = helpElement.getAttributeValue(ATTRIBUTE_HELP_ROOT);
@@ -805,31 +805,31 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myHasContextHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
     }
 
-    Element updateUrls = parentNode.getChild(UPDATE_URLS_ELEMENT_NAME);
+    Element updateUrls = getChild(parentNode, UPDATE_URLS_ELEMENT_NAME);
     myUpdateUrls = new UpdateUrlsImpl(updateUrls);
 
-    Element documentationElement = parentNode.getChild(ELEMENT_DOCUMENTATION);
+    Element documentationElement = getChild(parentNode, ELEMENT_DOCUMENTATION);
     if (documentationElement != null) {
       myDocumentationUrl = documentationElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element supportElement = parentNode.getChild(ELEMENT_SUPPORT);
+    Element supportElement = getChild(parentNode, ELEMENT_SUPPORT);
     if (supportElement != null) {
       mySupportUrl = supportElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element feedbackElement = parentNode.getChild(ELEMENT_FEEDBACK);
+    Element feedbackElement = getChild(parentNode, ELEMENT_FEEDBACK);
     if (feedbackElement != null) {
       myEAPFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_EAP_URL);
       myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
     }
 
-    Element whatsnewElement = parentNode.getChild(ELEMENT_WHATSNEW);
+    Element whatsnewElement = getChild(parentNode, ELEMENT_WHATSNEW);
     if (whatsnewElement != null) {
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
+    Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
       myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
@@ -862,18 +862,18 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
     }
 
-    Element keymapElement = parentNode.getChild(ELEMENT_KEYMAP);
+    Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
       myWinKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_WINDOWS_URL);
       myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
     }
 
     myPluginChooserPages = new ArrayList<PluginChooserPage>();
-    for (Element child : parentNode.getChildren(PLUGINS_PAGE_ELEMENT_NAME)) {
+    for (Element child : getChildren(parentNode, PLUGINS_PAGE_ELEMENT_NAME)) {
       myPluginChooserPages.add(new PluginChooserPageImpl(child));
     }
 
-    List<Element> essentialPluginsElements = parentNode.getChildren(ESSENTIAL_PLUGIN);
+    List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
     Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
       @Override
       public String fun(Element element) {
@@ -883,7 +883,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     });
     myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
 
-    Element statisticsElement = parentNode.getChild(ELEMENT_STATISTICS);
+    Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
       myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
       myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
@@ -895,17 +895,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myStatisticsServiceKey  = null;
     }
 
-    Element thirdPartyElement = parentNode.getChild(ELEMENT_THIRD_PARTY);
+    Element thirdPartyElement = getChild(parentNode, ELEMENT_THIRD_PARTY);
     if (thirdPartyElement != null) {
       myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element tvElement = parentNode.getChild(ELEMENT_JB_TV);
+    Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
     if (tvElement != null) {
       myJetbrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element evaluationElement = parentNode.getChild(ELEMENT_EVALUATION);
+    Element evaluationElement = getChild(parentNode, ELEMENT_EVALUATION);
     if (evaluationElement != null) {
       final String url = evaluationElement.getAttributeValue(ATTRIBUTE_EVAL_LICENSE_URL);
       if (url != null && !url.isEmpty()) {
@@ -913,7 +913,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
  
-    Element licensingElement = parentNode.getChild(ELEMENT_LICENSING);
+    Element licensingElement = getChild(parentNode, ELEMENT_LICENSING);
     if (licensingElement != null) {
       final String url = licensingElement.getAttributeValue(ATTRIBUTE_KEY_CONVERSION_URL);
       if (url != null && !url.isEmpty()) {
@@ -921,7 +921,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element subscriptionsElement = parentNode.getChild(ELEMENT_SUBSCRIPTIONS);
+    Element subscriptionsElement = getChild(parentNode, ELEMENT_SUBSCRIPTIONS);
     if (subscriptionsElement != null) {
       mySubscriptionFormId = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_FORM_ID);
       mySubscriptionNewsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY);
@@ -930,6 +930,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
     }
+  }
+
+  @NotNull
+  private static List<Element> getChildren(Element parentNode, String name) {
+    return parentNode.getChildren(name, parentNode.getNamespace());
+  }
+
+  private static Element getChild(Element parentNode, String version) {
+    return parentNode.getChild(version, parentNode.getNamespace());
   }
 
   //copy of ApplicationInfoProperties.shortenCompanyName
