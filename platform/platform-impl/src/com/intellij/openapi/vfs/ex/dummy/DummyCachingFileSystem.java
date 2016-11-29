@@ -30,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -49,11 +48,6 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   private final FactoryMap<String, T> myCachedFiles = new ConcurrentFactoryMap<String, T>() {
     @Override
     protected T create(String key) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        //noinspection TestOnlyProblems
-        cleanup();
-        initProjectMap();
-      }
       return findFileByPathInner(key);
     }
 
@@ -135,35 +129,38 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     return myCachedFiles.notNullValues();
   }
 
-  @TestOnly
   public void onProjectClosed(@NotNull Project project) {
-    onProjectClosedInner(project);
-  }
-
-  protected void onProjectClosedInner(@NotNull Project project) {
     String projectId = project.getLocationHash();
     Project mapped = myProjectMap.remove(projectId);
+    clearCache();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      cleanup();
+    }
     if (mapped == null) {
       LOG.warn(String.format("'%s' project not mapped", projectId));
     }
-    clearCache();
   }
 
   public void onProjectOpened(final Project project) {
-    // use Disposer instead of ProjectManagerListener#projectClosed() because Disposer.dispose(project)
-    // is called later and some cached files should stay valid till the last moment
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        onProjectClosedInner(project);
-      }
-    });
-
     clearCache();
     String projectId = project.getLocationHash();
     Project mapped = myProjectMap.put(projectId, project);
 
-    if (mapped != null) {
+    if (mapped != project) {
+      // use Disposer instead of ProjectManagerListener#projectClosed() because Disposer.dispose(project)
+      // is called later and some cached files should stay valid till the last moment
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          onProjectClosed(project);
+        }
+      });
+    }
+
+    if (mapped == project) {
+      LOG.warn(String.format("'%s' project already bound", projectId));
+    }
+    else if (mapped != null) {
       LOG.error(String.format("'%s' project rebound, was %s", projectId, mapped));
     }
   }
@@ -186,8 +183,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     while (myCachedFiles.removeValue(null)) ;
   }
 
-  @TestOnly
-  public void cleanup() {
+  private void cleanup() {
     myCachedFiles.clear();
     myProjectMap.clear();
   }
