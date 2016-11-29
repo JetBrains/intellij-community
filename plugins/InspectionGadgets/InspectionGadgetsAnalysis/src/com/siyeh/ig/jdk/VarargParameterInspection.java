@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +32,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class VarargParameterInspection extends BaseInspection {
 
@@ -62,6 +65,11 @@ public class VarargParameterInspection extends BaseInspection {
   private static class VarargParameterFix extends InspectionGadgetsFix {
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     @NotNull
     public String getFamilyName() {
       return InspectionGadgetsBundle.message("variable.argument.method.quickfix");
@@ -73,40 +81,51 @@ public class VarargParameterInspection extends BaseInspection {
       final PsiMethod method = (PsiMethod)element.getParent();
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
+      if (parameters.length == 0) {
+        return;
+      }
       final PsiParameter lastParameter = parameters[parameters.length - 1];
       if (!lastParameter.isVarArgs()) {
         return;
       }
-      final PsiEllipsisType type = (PsiEllipsisType)lastParameter.getType();
-      final Query<PsiReference> query = ReferencesSearch.search(method);
-      final PsiType componentType = type.getComponentType();
-      final String typeText;
-      if (componentType instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)componentType;
-        typeText = classType.rawType().getCanonicalText();
-      } else {
-        typeText = componentType.getCanonicalText();
-      }
-      final Collection<PsiReference> references = query.findAll();
-      for (PsiReference reference : references) {
-        modifyCalls(reference, typeText, parameters.length - 1);
-      }
-      final PsiType arrayType = type.toArrayType();
-      final PsiManager psiManager = lastParameter.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-      final PsiTypeElement newTypeElement = factory.createTypeElement(arrayType);
       final PsiTypeElement typeElement = lastParameter.getTypeElement();
       if (typeElement == null) {
         return;
       }
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "java.lang.SafeVarargs");
-      if (annotation != null) {
-        annotation.delete();
+      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
+      final List<PsiElement> prepare = new ArrayList<>();
+      prepare.add(parameterList);
+      for (PsiReference reference : references) {
+        prepare.add(reference.getElement());
       }
-      typeElement.replace(newTypeElement);
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(prepare)) {
+        return;
+      }
+      WriteAction.run(() -> {
+        final PsiEllipsisType type = (PsiEllipsisType)lastParameter.getType();
+        final PsiType componentType = type.getComponentType();
+        final String typeText;
+        if (componentType instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)componentType;
+          typeText = classType.rawType().getCanonicalText();
+        } else {
+          typeText = componentType.getCanonicalText();
+        }
+        for (PsiReference reference : references) {
+          modifyCall(reference, typeText, parameters.length - 1);
+        }
+        final PsiType arrayType = type.toArrayType();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(lastParameter.getProject());
+        final PsiTypeElement newTypeElement = factory.createTypeElement(arrayType);
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "java.lang.SafeVarargs");
+        if (annotation != null) {
+          annotation.delete();
+        }
+        typeElement.replace(newTypeElement);
+      });
     }
 
-    public static void modifyCalls(PsiReference reference, String arrayTypeText, int indexOfFirstVarargArgument) {
+    public static void modifyCall(PsiReference reference, String arrayTypeText, int indexOfFirstVarargArgument) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference.getElement();
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)referenceExpression.getParent();
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -134,10 +153,8 @@ public class VarargParameterInspection extends BaseInspection {
       else {
         argumentList.add(arrayExpression);
       }
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-      final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
-      javaCodeStyleManager.shortenClassReferences(argumentList);
-      codeStyleManager.reformat(argumentList);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(argumentList);
+      CodeStyleManager.getInstance(project).reformat(argumentList);
     }
   }
 
