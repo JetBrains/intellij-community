@@ -58,7 +58,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().file("A.class").file("a.txt"));
 
     rebuild();
-    assertOutput(a, fs().file("A.class"));
+    assertOutput(a, fs().file("A.class").file("a.txt"));
   }
 
   public void testDoNotRebuildIncludedModulesOnRebuildingArtifact() throws IOException {
