@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.*;
@@ -473,7 +474,10 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     boolean hasVariable() {
-      return myValueReference != null;
+      if(myValueReference == null) return false;
+      PsiVariable var = PsiTreeUtil.getParentOfType(myKeyExpression, PsiVariable.class, true, PsiStatement.class);
+      // has variable, but it used only in condition
+      return var == null || ReferencesSearch.search(var).findAll().size() != 1;
     }
 
     PsiMethodCallExpression getCheckCall() {
