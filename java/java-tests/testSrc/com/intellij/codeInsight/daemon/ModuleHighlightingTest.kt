@@ -73,6 +73,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires <error descr="Cyclic dependence: M1, M2">M2</error>;
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
+          requires lib.multi.release;
         }""".trimIndent())
   }
 
