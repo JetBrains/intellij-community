@@ -142,7 +142,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     outputPanel.setBackground(IpnbEditorUtil.getBackground());
 
     for (IpnbOutputCell outputCell : myCell.getCellOutputs()) {
-      addOutputPanel(outputPanel, outputCell, true);
+      addOutputPanel(outputPanel, outputCell, outputCell instanceof IpnbOutOutputCell);
     }
 
     return outputPanel;
