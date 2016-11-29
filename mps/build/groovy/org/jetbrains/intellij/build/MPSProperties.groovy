@@ -43,7 +43,7 @@ class MPSProperties extends ProductProperties {
                  "external-system-impl"]
 
         productLayout.bundledPluginModules = [
-                "git4idea", "svn4idea", "cvs-plugin",
+                "git4idea", "remote-servers-git", "remote-servers-git-java", "svn4idea", "cvs-plugin",
                 "terminal"
                 /*, "properties", "ant"*/
         ]

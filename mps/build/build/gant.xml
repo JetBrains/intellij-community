@@ -31,7 +31,7 @@
 
     <target name="check.commit">
         <condition property="idea.commit.is.set">
-            <isset property="idea.commit"/>
+            <isset property="${idea.commit}"/>
         </condition>
         <echo message="Commit/branch/tag value: ${idea.commit}"/>
     </target>
