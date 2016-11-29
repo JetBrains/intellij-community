@@ -1519,6 +1519,11 @@ public class PyTypeTest extends PyTestCase {
            "expr = min(1, 2, 3)");
   }
 
+  public void testMaxResult() {
+    doTest("int",
+           "expr = max(1, 2, 3)");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

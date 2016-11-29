@@ -470,6 +470,11 @@ public class Py3TypeTest extends PyTestCase {
            "expr = min(1, 2, 3)");
   }
 
+  public void testMaxResult() {
+    doTest("int",
+           "expr = max(1, 2, 3)");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

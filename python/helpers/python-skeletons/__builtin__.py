@@ -219,6 +219,16 @@ def min(*args, key=None, default=None):
     pass
 
 
+def max(*args, key=None, default=None):
+    """Return the largest item in an iterable or the largest of two or more
+    arguments.
+
+    :type args: T
+    :rtype: T
+    """
+    pass
+
+
 def next(iterator, default=None):
     """Return the next item from the iterator.
 
