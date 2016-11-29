@@ -194,12 +194,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.varargs.ConvertVarargParameterToArrayIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.varargs.WrapVarargArgumentsWithExplicitArrayIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>

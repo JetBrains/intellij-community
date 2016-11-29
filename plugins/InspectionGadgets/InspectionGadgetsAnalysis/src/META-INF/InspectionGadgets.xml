@@ -1378,7 +1378,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.ForeachStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="VariableArgumentMethod" shortName="VarargParameter" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="variable.argument.method.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.java.language.level.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.java.language.level.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.jdk.VarargParameterInspection"/>
 
     <!--group.names.junit.issues-->
