@@ -50,7 +50,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
 
   protected synchronized void schedule(@NotNull RemoteTask task,
                                        @NotNull Argument argument,
-                                       RemoteTask.ResultProcessor<Result> resultProcessor,
+                                       MavenRemoteTask.ResultProcessor<Result> resultProcessor,
                                        boolean force) {
     DequeItem<Result, Argument, RemoteTask> dequeItem = new DequeItem<>(task, argument, resultProcessor);
     if (!busy) {
@@ -144,7 +144,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
   private static class DequeItem<Result, Argument, Task extends MavenRemoteTask<Result, Argument>> {
     @NotNull private final Task task;
     @NotNull private final Argument argument;
-    @Nullable private final Task.ResultProcessor<Result> resultProcessor;
+    @Nullable private final MavenRemoteTask.ResultProcessor<Result> resultProcessor;
 
 
     private DequeItem(@NotNull Task task, @NotNull Argument argument, @Nullable MavenRemoteTask.ResultProcessor<Result> processor) {
@@ -164,7 +164,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
     }
 
     @Nullable
-    public Task.ResultProcessor<Result> getResultProcessor() {
+    public MavenRemoteTask.ResultProcessor<Result> getResultProcessor() {
       return resultProcessor;
     }
   }
