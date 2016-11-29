@@ -288,11 +288,11 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
       final Document document = FileDocumentManager.getInstance().getDocument(myFile);
       if (document == null) return;
 
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
 
       String date = null;
-      boolean canRestoreElement = !DumbService.getInstance(myProject).isDumb() || FoldingUpdate.supportsDumbModeFolding(psiFile);
+      boolean canRestoreElement = psiFile != null &&
+                                  (!DumbService.getInstance(myProject).isDumb() || FoldingUpdate.supportsDumbModeFolding(psiFile));
       for (final Object o : element.getChildren()) {
         Element e = (Element)o;
         Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
