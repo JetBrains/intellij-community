@@ -397,7 +397,7 @@ public class FindDialog extends DialogWrapper {
       new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          if (!isResultsPreviewTabActive()) doOKAction();
+          if (!isResultsPreviewTabActive() || myResultsPreviewTable.getSelectedRowCount() == 0) doOKAction();
           else action.actionPerformed(e);
         }
       }.registerCustomShortcutSet(CommonShortcuts.ENTER, comboBox, myDisposable);
@@ -534,9 +534,6 @@ public class FindDialog extends DialogWrapper {
 
             ApplicationManager.getApplication().invokeLater(() -> {
               model.addRow(new Object[]{usage});
-              if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model && isResultsPreviewTabActive()) {
-                myResultsPreviewTable.setRowSelectionInterval(0, 0);
-              }
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
           }, processPresentation, filesToScanInitially);
