@@ -20,7 +20,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -180,8 +179,6 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   public static void invoke(PsiFile file, final PsiElement element) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final String referenceName = refExpr.getReferenceName();
     final JavaResolveResult[] targets = refExpr.multiResolve(false);

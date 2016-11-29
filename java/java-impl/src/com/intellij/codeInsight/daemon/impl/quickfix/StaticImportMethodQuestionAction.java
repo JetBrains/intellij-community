@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -35,8 +34,6 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,16 +91,8 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     final Project project = toImport.getProject();
     final PsiElement element = myRef.getElement();
     if (element == null) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(element.getContainingFile())) return;
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () -> {
-      try {
-        AddSingleMemberStaticImportAction
-          .bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.import"), null, () ->
+      AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass()));
   }
 
   private void chooseAndImport(final Editor editor, final Project project) {

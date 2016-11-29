@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -113,8 +111,6 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   }
 
   public static void invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {

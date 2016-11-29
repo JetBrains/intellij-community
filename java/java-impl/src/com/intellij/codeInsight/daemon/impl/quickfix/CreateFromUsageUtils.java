@@ -30,6 +30,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -300,13 +301,9 @@ public class CreateFromUsageUtils {
       qualifierName = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();
       qualifierElement = ((PsiJavaCodeReferenceElement)qualifier).resolve();
       if (qualifierElement instanceof PsiClass) {
-        return ApplicationManager.getApplication().runWriteAction(
-          new Computable<PsiClass>() {
-            @Override
-            public PsiClass compute() {
-              return createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement);
-            }
-          });
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(qualifierElement)) return null;
+
+        return WriteAction.compute(() -> createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement));
       }
     }
     else {
@@ -369,23 +366,15 @@ public class CreateFromUsageUtils {
                                                  CreateClassKind classKind,
                                                  String name,
                                                  PsiJavaCodeReferenceElement referenceElement) {
-    try {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiClass)) return null;
-
-      PsiManager manager = psiClass.getManager();
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
-                        classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
-                        classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
-                        elementFactory.createEnum(name);
-      CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
-      result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
-      return (PsiClass) psiClass.add(result);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
+    PsiManager manager = psiClass.getManager();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
+                      classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
+                      classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
+                      elementFactory.createEnum(name);
+    CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
+    result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
+    return (PsiClass) psiClass.add(result);
   }
 
   public static PsiClass createClass(final CreateClassKind classKind,

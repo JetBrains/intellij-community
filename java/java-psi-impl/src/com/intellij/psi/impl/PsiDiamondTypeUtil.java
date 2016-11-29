@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -94,7 +93,6 @@ public class PsiDiamondTypeUtil {
 
   public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
     if (psiElement instanceof PsiReferenceParameterList) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(psiElement.getContainingFile())) return psiElement;
       final PsiNewExpression expression =
         (PsiNewExpression)JavaPsiFacade.getElementFactory(psiElement.getProject()).createExpressionFromText("new a<>()", psiElement);
       final PsiJavaCodeReferenceElement classReference = expression.getClassReference();

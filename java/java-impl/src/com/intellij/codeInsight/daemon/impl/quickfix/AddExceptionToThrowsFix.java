@@ -20,6 +20,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -93,29 +94,21 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
       processSuperMethods = false;
     }
 
-    ApplicationManager.getApplication().runWriteAction(
-      () -> {
-        if (!FileModificationService.getInstance().prepareFileForWrite(targetMethod.getContainingFile())) return;
-        if (processSuperMethods) {
-          for (PsiMethod superMethod : superMethods) {
-            if (!FileModificationService.getInstance().prepareFileForWrite(superMethod.getContainingFile())) return;
-          }
-        }
+    if (!FileModificationService.getInstance().prepareFileForWrite(targetMethod.getContainingFile())) return;
+    if (processSuperMethods) {
+      for (PsiMethod superMethod : superMethods) {
+        if (!FileModificationService.getInstance().prepareFileForWrite(superMethod.getContainingFile())) return;
+      }
+    }
+    WriteAction.run(() -> {
+      processMethod(project, targetMethod, unhandledExceptions);
 
-        try {
-          processMethod(project, targetMethod, unhandledExceptions);
-
-          if (processSuperMethods) {
-            for (PsiMethod superMethod : superMethods) {
-              processMethod(project, superMethod, unhandledExceptions);
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+      if (processSuperMethods) {
+        for (PsiMethod superMethod : superMethods) {
+          processMethod(project, superMethod, unhandledExceptions);
         }
       }
-    );
+    });
   }
 
   private static PsiMethod[] getSuperMethods(@NotNull PsiMethod targetMethod) {

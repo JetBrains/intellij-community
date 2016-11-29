@@ -209,11 +209,6 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void addImport(final PsiReference ref, final PsiClass targetClass) {
-    StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> _addImport(ref, targetClass))), QuickFixBundle.message("add.import"), null);
-  }
-
-  private void _addImport(PsiReference ref, PsiClass targetClass) {
     if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
       return;
     }
@@ -221,6 +216,11 @@ public class AddImportAction implements QuestionAction {
       return;
     }
 
+    StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> _addImport(ref, targetClass))), QuickFixBundle.message("add.import"), null);
+  }
+
+  private void _addImport(PsiReference ref, PsiClass targetClass) {
     int caretOffset = myEditor.getCaretModel().getOffset();
     RangeMarker caretMarker = myEditor.getDocument().createRangeMarker(caretOffset, caretOffset);
     int colByOffset = myEditor.offsetToLogicalPosition(caretOffset).column;

@@ -19,8 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -47,6 +46,11 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   @Override
   public String getText(String varName) {
     return QuickFixBundle.message("create.inner.class.from.usage.text", myKind.getDescription(), varName);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override
@@ -113,15 +117,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     Runnable runnable = () -> {
       int index = list.getSelectedIndex();
       if (index < 0) return;
-      final PsiClass aClass = (PsiClass)list.getSelectedValue();
-      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          doInvoke(aClass, superClassName);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }), getText(), null);
+      doInvoke((PsiClass)list.getSelectedValue(), superClassName);
     };
 
     builder.
@@ -156,7 +152,8 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     }
     CreateFromUsageBaseFix.setupGenericParameters(created, ref);
 
-    created = (PsiClass)aClass.add(created);
-    ref.bindToElement(created);
+    WriteCommandAction.runWriteCommandAction(aClass.getProject(), getText(), null,
+                                             () -> ref.bindToElement(aClass.add(created)),
+                                             aClass.getContainingFile());
   }
 }

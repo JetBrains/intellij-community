@@ -141,11 +141,11 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private void copyImplementation(final PsiMethod sourceMethod) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
     final List<PsiMethod> generatedMethods = new ArrayList<>();
     new WriteCommandAction(myProject, getTargetFiles()) {
       @Override
       protected void run(@NotNull final Result result) throws Throwable {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
         for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
           PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
           myTargetClasses.add(initializingClass);
