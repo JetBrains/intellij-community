@@ -83,7 +83,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   @Override
   public void initComponent() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myModificationTracker.incModificationCount();

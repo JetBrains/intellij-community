@@ -28,8 +28,8 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -324,7 +324,7 @@ public class MavenProjectsManagerWatcher {
     // onSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
   }
 
-  private class MyRootChangesListener extends ModuleRootAdapter {
+  private class MyRootChangesListener implements ModuleRootListener {
     @Override
     public void rootsChanged(ModuleRootEvent event) {
       // todo is this logic necessary?

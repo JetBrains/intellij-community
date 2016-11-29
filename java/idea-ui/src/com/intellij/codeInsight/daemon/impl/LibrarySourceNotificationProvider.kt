@@ -24,8 +24,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.roots.ModuleRootAdapter
 import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,7 +45,7 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
   }
 
   init {
-    project.messageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootAdapter() {
+    project.messageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) = notifications.updateAllNotifications()
     })
   }
@@ -89,11 +89,11 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
   private fun differs(list1: List<PsiMember>, list2: List<PsiMember>): Boolean =
       list1.size != list2.size || list1.map { it.name ?: "" }.sorted() != list2.map { it.name ?: "" }.sorted()
 
-  private fun fields(clazz: PsiClass) = if (clazz is PsiExtensibleClass) clazz.ownFields else clazz.fields.asList()
+  private fun fields(clazz: PsiClass) = (clazz as? PsiExtensibleClass)?.ownFields ?: clazz.fields.asList()
   private fun methods(clazz: PsiClass): List<PsiMethod> =
-      (if (clazz is PsiExtensibleClass) clazz.ownMethods else clazz.methods.asList())
+      ((clazz as? PsiExtensibleClass)?.ownMethods ?: clazz.methods.asList())
           .filter { !(it.isConstructor && it.parameterList.parametersCount == 0) }
-  private fun inners(clazz: PsiClass) = if (clazz is PsiExtensibleClass) clazz.ownInnerClasses else clazz.innerClasses.asList()
+  private fun inners(clazz: PsiClass) = (clazz as? PsiExtensibleClass)?.ownInnerClasses ?: clazz.innerClasses.asList()
 }
 
 private class ColoredNotificationPanel(private val color: Color?) : EditorNotificationPanel() {

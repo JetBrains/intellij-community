@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -45,7 +45,7 @@ public class StringDescriptorManager {
 
   public StringDescriptorManager(final Module module, MessageBus bus) {
     myModule = module;
-    bus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    bus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void rootsChanged(final ModuleRootEvent event) {
         synchronized(myPropertiesFileCache) {
           myPropertiesFileCache.clear();
