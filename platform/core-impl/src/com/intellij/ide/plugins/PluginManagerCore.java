@@ -808,6 +808,9 @@ public class PluginManagerCore {
       for (File file : files) {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
+        if (descriptor.getName() == null) {
+          getLogger().warn("Skipped plugin without name: " + descriptor);
+        }
         if (progress != null) {
           progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
         }
