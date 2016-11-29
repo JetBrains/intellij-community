@@ -15,26 +15,39 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
+
+import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
 
 public class ListSpeedSearch extends SpeedSearchBase<JList> {
   private final Convertor<Object, String> myToStringConvertor;
 
   public ListSpeedSearch(JList list) {
+    this(list, (Convertor<Object, String>)null);
+  }
+
+  public ListSpeedSearch(final JList list, @Nullable Convertor<Object, String> convertor) {
     super(list);
-    myToStringConvertor = null;
-  }
-
-  public ListSpeedSearch(final JList component, final Convertor<Object, String> convertor) {
-    super(component);
     myToStringConvertor = convertor;
+
+    new MySelectAllAction(list, this).registerCustomShortcutSet(list, null);
   }
 
-  public ListSpeedSearch(final JList component, final Function<Object, String> convertor) {
-    this(component, new Convertor<Object, String>() {
+  public ListSpeedSearch(final JList list, @NotNull Function<Object, String> convertor) {
+    this(list, new Convertor<Object, String>() {
       @Override
       public String convert(Object o) {
         return convertor.fun(o);
@@ -73,5 +86,70 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
       return myToStringConvertor.convert(element);
     }
     return element == null ? null : element.toString();
+  }
+
+  @NotNull
+  private TIntArrayList findAllFilteredElements(String s) {
+    TIntArrayList indices = new TIntArrayList();
+    String _s = s.trim();
+
+    Object[] elements = getAllListElements(myComponent);
+    for (int i = 0; i < elements.length; i++) {
+      final Object element = elements[i];
+      if (isMatchingElement(element, _s)) indices.add(i);
+    }
+    return indices;
+  }
+
+  private static class MySelectAllAction extends DumbAwareAction {
+    @NotNull private final JList myList;
+    @NotNull private final ListSpeedSearch mySearch;
+
+    public MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
+      myList = list;
+      mySearch = search;
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));
+      setEnabledInModalContext(true);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(mySearch.isPopupActive() &&
+                                     myList.getSelectionModel().getSelectionMode() == MULTIPLE_INTERVAL_SELECTION);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      ListSelectionModel sm = myList.getSelectionModel();
+
+      String query = mySearch.getEnteredPrefix();
+      if (query == null) return;
+
+      TIntArrayList filtered = mySearch.findAllFilteredElements(query);
+      if (filtered.isEmpty()) return;
+
+      boolean alreadySelected = Arrays.equals(filtered.toNativeArray(), myList.getSelectedIndices());
+
+      if (alreadySelected) {
+        int anchor = myList.getAnchorSelectionIndex();
+
+        myList.setSelectedIndex(anchor);
+        sm.setAnchorSelectionIndex(anchor);
+
+        mySearch.findAndSelectElement(query);
+      }
+      else {
+        int anchor = -1;
+        Object currentElement = mySearch.findElement(query);
+        if (currentElement != null) {
+          List<Object> elements = Arrays.asList(getAllListElements(myList));
+          anchor = ContainerUtil.indexOfIdentity(elements, currentElement);
+        }
+        if (anchor == -1) anchor = filtered.get(0);
+
+        myList.setSelectedIndices(filtered.toNativeArray());
+        sm.setAnchorSelectionIndex(anchor);
+      }
+    }
   }
 }
