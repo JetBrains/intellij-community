@@ -18,19 +18,15 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.ElementClassHint
-import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 
@@ -76,28 +72,16 @@ class GradleIdeaPluginScriptContributor : GradleMethodContextContributor {
   }
 
   override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    val classHint = processor.getHint(ElementClassHint.KEY)
-    val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-    if (shouldProcessMethods && processor.getHint(NameHint.KEY)?.getName(state) == IDEA_METHOD) {
-      val psiManager = GroovyPsiManager.getInstance(place.project)
-      val resolveScope = place.resolveScope
-      val projectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, resolveScope) ?: return true
-      val returnClass = psiManager.createTypeByFQClassName(IDEA_MODEL_FQN, resolveScope) ?: return true
-      val methodBuilder = GrLightMethodBuilder(place.manager, IDEA_METHOD).apply {
-        containingClass = projectClass
-        returnType = returnClass
-      }
-      methodBuilder.addParameter("configuration", GROOVY_LANG_CLOSURE, true)
-      if (!processor.execute(methodBuilder, state)) return false
+    val ideaExtension = GradleExtensionsSettings.GradleExtension().apply {
+      name = IDEA_METHOD
+      rootTypeFqn = IDEA_MODEL_FQN
     }
+    if (!processExtension(processor, state, place, ideaExtension)) return false
 
     val psiManager = GroovyPsiManager.getInstance(place.project)
-    if (psiElement().inside(ideaProjectClosure).accepts(place)) {
-      if (psiElement().inside(ideaIprClosure).accepts(place)) {
+    if (psiElement().inside(ideaIprClosure).inside(ideaProjectClosure).accepts(place)) {
         if (GradleResolverUtil.processDeclarations(psiManager, processor, state, place, IDE_XML_MERGER_FQN)) return false
-      }
     }
-
     return true
   }
 }

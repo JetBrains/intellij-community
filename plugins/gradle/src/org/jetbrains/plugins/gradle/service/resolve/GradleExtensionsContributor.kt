@@ -116,47 +116,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
     }
 
     for (extension in extensionsData.extensions) {
-      if (!shouldProcessMethods && shouldProcessProperties && name == extension.name) {
-        val variable = GrLightVariable(place.manager, name, extension.rootTypeFqn, place)
-        place.putUserData(RESOLVED_CODE, true)
-        if (!processor.execute(variable, state)) return false
-      }
-
-      if (shouldProcessMethods && name == extension.name) {
-        val returnClass = psiManager.createTypeByFQClassName(extension.rootTypeFqn, resolveScope) ?: continue
-        val methodBuilder = GrLightMethodBuilder(place.manager, extension.name).apply {
-          containingClass = projectClass
-          returnType = returnClass
-        }
-        methodBuilder.addParameter("configuration", GROOVY_LANG_CLOSURE, true)
-        place.putUserData(RESOLVED_CODE, true)
-        if (!processor.execute(methodBuilder, state)) return false
-      }
-
-      val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null }
-      val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
-      val placeText = place.text
-      val psiElement = psiElement()
-      if (psiElement.inside(extensionClosure).accepts(place)) {
-        if (shouldProcessMethods && !GradleResolverUtil.processDeclarations(psiManager, processor, state, place, extension.rootTypeFqn)) {
-          return false
-        }
-
-        if (objectTypeFqn == null) break
-        if (place.parent is GrMethodCallExpression) {
-          val methodBuilder = GradleResolverUtil.createMethodWithClosure(placeText, objectTypeFqn, null, place, psiManager)
-          if (methodBuilder != null) {
-            place.putUserData(RESOLVED_CODE, true)
-            if (!processor.execute(methodBuilder, state)) return false
-          }
-        }
-        if (place.parent is GrReferenceExpression || psiElement.withTreeParent(extensionClosure).accepts(place)) {
-          val variable = GrLightVariable(place.manager, placeText, objectTypeFqn, place)
-          place.putUserData(RESOLVED_CODE, true)
-          if (!processor.execute(variable, state)) return false
-        }
-      }
-
+      if (!processExtension(processor, state, place, extension)) return false
       if (name == extension.name) break
     }
 
@@ -298,4 +258,58 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
     }
 
   }
+}
+
+fun processExtension(processor: PsiScopeProcessor,
+                     state: ResolveState,
+                     place: PsiElement,
+                     extension: GradleExtensionsSettings.GradleExtension): Boolean {
+  val classHint = processor.getHint(ElementClassHint.KEY)
+  val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
+  val shouldProcessProperties = ResolveUtil.shouldProcessProperties(classHint)
+  val psiManager = GroovyPsiManager.getInstance(place.project)
+  val resolveScope = place.resolveScope
+  val projectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, resolveScope) ?: return true
+  val name = processor.getHint(NameHint.KEY)?.getName(state)
+
+  if (!shouldProcessMethods && shouldProcessProperties && name == extension.name) {
+    val variable = GrLightVariable(place.manager, name, extension.rootTypeFqn, place)
+    place.putUserData(RESOLVED_CODE, true)
+    if (!processor.execute(variable, state)) return false
+  }
+
+  if (shouldProcessMethods && name == extension.name) {
+    val returnClass = psiManager.createTypeByFQClassName(extension.rootTypeFqn, resolveScope) ?: return true
+    val methodBuilder = GrLightMethodBuilder(place.manager, extension.name).apply {
+      containingClass = projectClass
+      returnType = returnClass
+    }
+    methodBuilder.addParameter("configuration", GROOVY_LANG_CLOSURE, true)
+    place.putUserData(RESOLVED_CODE, true)
+    if (!processor.execute(methodBuilder, state)) return false
+  }
+
+  val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
+  val placeText = place.text
+  val psiElement = psiElement()
+  if (psiElement.inside(extensionClosure).accepts(place)) {
+    if (shouldProcessMethods && !GradleResolverUtil.processDeclarations(psiManager, processor, state, place, extension.rootTypeFqn)) {
+      return false
+    }
+
+    val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null } ?: return true
+    if (place.parent is GrMethodCallExpression) {
+      val methodBuilder = GradleResolverUtil.createMethodWithClosure(placeText, objectTypeFqn, null, place, psiManager)
+      if (methodBuilder != null) {
+        place.putUserData(RESOLVED_CODE, true)
+        if (!processor.execute(methodBuilder, state)) return false
+      }
+    }
+    if (place.parent is GrReferenceExpression || psiElement.withTreeParent(extensionClosure).accepts(place)) {
+      val variable = GrLightVariable(place.manager, placeText, objectTypeFqn, place)
+      place.putUserData(RESOLVED_CODE, true)
+      if (!processor.execute(variable, state)) return false
+    }
+  }
+  return true
 }
