@@ -166,6 +166,7 @@ public class IpnbConnection {
     if (urlConnection instanceof HttpURLConnection) {
       final HttpURLConnection connection = (HttpURLConnection)urlConnection;
       connection.setRequestMethod(method);
+      connection.setReadTimeout(60000);
       final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
       try {
         final StringBuilder builder = new StringBuilder();
