@@ -266,11 +266,11 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   }
 
 
-  public void leaveEditingMode(Project project) {
+  public void leaveEditingMode(Project project, VirtualFile taskDir) {
     WebBrowserManager.getInstance().setShowBrowserHover(true);
     mySplitPane.setFirstComponent(myContentPanel);
     StudyTaskManager.getInstance(project).setToolWindowMode(StudyToolWindowMode.TEXT);
-    StudyUtils.updateToolWindows(project);
+    StudyUtils.updateToolWindows(project, StudyUtils.getTask(project, taskDir));
   }
 
   private JPanel createCourseProgress(@NotNull final Project project) {

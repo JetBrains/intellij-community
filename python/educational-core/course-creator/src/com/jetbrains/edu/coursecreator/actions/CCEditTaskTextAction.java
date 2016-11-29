@@ -2,6 +2,7 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -44,13 +45,24 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       return;
     }
 
-    final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
-    if (selectedEditor == null) {
-      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
-      return;
+    VirtualFile taskDir = null;
+    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    if (virtualFile != null) {
+      taskDir = StudyUtils.getTaskDir(virtualFile);
     }
-    final StudyState studyState = new StudyState(selectedEditor);
-    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, studyState.getTaskDir());
+
+    if (taskDir == null) {
+      final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
+      if (selectedEditor == null) {
+        StudyTaskManager.getInstance(project).setTurnEditingMode(true);
+        return;
+      }
+      final StudyState studyState = new StudyState(selectedEditor);
+      taskDir = studyState.getTaskDir();
+    }
+
+    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
+
     if (taskTextFile == null) {
       LOG.info("Failed to find task.html");
       return;
@@ -60,7 +72,7 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       if (document != null) {
         FileDocumentManager.getInstance().saveDocument(document);
       }
-      window.leaveEditingMode(project);
+      window.leaveEditingMode(project, taskDir);
       return;
     }
     window.enterEditingMode(taskTextFile, project);
