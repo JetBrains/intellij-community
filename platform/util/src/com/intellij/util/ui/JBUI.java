@@ -313,11 +313,13 @@ public class JBUI {
    */
   public static abstract class JBIcon implements Icon {
     private float myInitialJBUIScale = currentJBUIScale();
+    private float myAligningJBUIScale = -1f;
 
     protected JBIcon() {}
 
     protected JBIcon(JBIcon icon) {
       myInitialJBUIScale = icon.myInitialJBUIScale;
+      myAligningJBUIScale = icon.myAligningJBUIScale;
     }
 
     static float currentJBUIScale() {
@@ -329,8 +331,12 @@ public class JBUI {
     /**
      * @return the scale factor aligning the icon size metrics to conform to up-to-date JBUI.scale
      */
-    private float getAligningScale() {
-      return currentJBUIScale() / myInitialJBUIScale;
+    private float aligningJBUIScale() {
+      float curJBUIScale = currentJBUIScale();
+      if (myAligningJBUIScale > 0 && curJBUIScale == myInitialJBUIScale) {
+        return myAligningJBUIScale;
+      }
+      return myAligningJBUIScale = curJBUIScale / myInitialJBUIScale;
     }
 
     /**
@@ -345,6 +351,7 @@ public class JBUI {
      */
     protected void setJBUIPreScaled(boolean preScaled) {
       myInitialJBUIScale = preScaled ? currentJBUIScale() : 1f;
+      myAligningJBUIScale = -1f;
     }
 
     /**
@@ -368,7 +375,7 @@ public class JBUI {
      * Scales the value to conform to JBUI.scale
      */
     public float scaleVal(float value) {
-      return value * getAligningScale();
+      return value * aligningJBUIScale();
     }
   }
 
