@@ -475,6 +475,12 @@ public class Py3TypeTest extends PyTestCase {
            "expr = max(1, 2, 3)");
   }
 
+  // PY-21692
+  public void testSumResult() {
+    doTest("int",
+           "expr = sum([1, 2, 3])");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

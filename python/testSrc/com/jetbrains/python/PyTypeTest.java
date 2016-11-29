@@ -1524,6 +1524,12 @@ public class PyTypeTest extends PyTestCase {
            "expr = max(1, 2, 3)");
   }
 
+  // PY-21692
+  public void testSumResult() {
+    doTest("int",
+           "expr = sum([1, 2, 3])");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

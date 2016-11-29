@@ -232,6 +232,16 @@ def max(*args, key=None, default=None):
     pass
 
 
+def sum(iterable, start=0):
+    """Sums start and the items of an iterable from left to right and returns
+    the total.
+
+    :type iterable: collections.Iterable[T]
+    :rtype: T
+    """
+    pass
+
+
 def next(iterator, default=None):
     """Return the next item from the iterator.
 
