@@ -157,18 +157,16 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
     final EmptyIcon icon = (EmptyIcon)o;
 
-    if (scaleVal(height, Scale.JBUI) != icon.scaleVal(height, Scale.JBUI)) return false;
-    if (scaleVal(width, Scale.JBUI) != icon.scaleVal(width, Scale.JBUI)) return false;
-    if (getScale() != icon.getScale()) return false;
+    if (scaleVal(height, Scale.EFFECTIVE) != icon.scaleVal(height, Scale.EFFECTIVE)) return false;
+    if (scaleVal(width, Scale.EFFECTIVE) != icon.scaleVal(width, Scale.EFFECTIVE)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = scaleVal(width, Scale.JBUI);
-    result = 31 * result + scaleVal(height, Scale.JBUI);
-    result = 31 * result + (getScale() != +0.0f ? Float.floatToIntBits(getScale()) : 0);
+    int result = scaleVal(width, Scale.EFFECTIVE);
+    result = 31 * result + scaleVal(height, Scale.EFFECTIVE);
     return result;
   }
 
