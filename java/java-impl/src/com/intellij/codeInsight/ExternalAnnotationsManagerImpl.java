@@ -25,7 +25,6 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -401,7 +400,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           continue;
         }
 
-        CommandProcessor.getInstance().executeCommand(myPsiManager.getProject(), () -> {
+        WriteCommandAction.runWriteCommandAction(myPsiManager.getProject(), ExternalAnnotationsManagerImpl.class.getName(), null, () -> {
           PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
           try {
             for (XmlTag annotationTag : tagsToProcess) {
@@ -412,7 +411,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           catch (IncorrectOperationException e) {
             LOG.error(e);
           }
-        }, ExternalAnnotationsManagerImpl.class.getName(), null);
+        });
       }
       notifyAfterAnnotationChanging(listOwner, annotationFQN, processedAnything);
       return processedAnything;

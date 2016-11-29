@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,12 +50,17 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   protected void createSuppression(@NotNull final Project project,
                                    @NotNull final PsiElement element,
                                    @NotNull final PsiElement container) throws IncorrectOperationException {
     PsiElement declaredElement = getElementToAnnotate(element, container);
     if (declaredElement == null) {
-      suppressWithComment(project, element, container);
+      WriteCommandAction.runWriteCommandAction(project, null, null, () -> suppressWithComment(project, element, container), container.getContainingFile());
     }
     else {
       JavaSuppressionUtil.addSuppressAnnotation(project, container, (PsiVariable)declaredElement, myID);

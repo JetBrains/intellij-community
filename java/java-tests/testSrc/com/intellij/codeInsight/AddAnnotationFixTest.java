@@ -273,12 +273,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final PsiModifierListOwner container = DeannotateIntentionAction.getContainer(editor, file);
     assertNotNull(container);
     startListening(container, AnnotationUtil.NOT_NULL, true);
-    new WriteCommandAction(myProject){
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        ExternalAnnotationsManager.getInstance(myProject).deannotate(container, AnnotationUtil.NOT_NULL);
-      }
-    }.execute();
+    ExternalAnnotationsManager.getInstance(myProject).deannotate(container, AnnotationUtil.NOT_NULL);
     stopListeningAndCheckEvents();
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -325,21 +320,11 @@ public class AddAnnotationFixTest extends UsefulTestCase {
       JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText("@Annotation(value=\"bar\")", null);
 
     startListening(method, AnnotationUtil.NULLABLE, true);
-    new WriteCommandAction(myProject) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        manager.editExternalAnnotation(method, AnnotationUtil.NULLABLE, annotationFromText.getParameterList().getAttributes());
-      }
-    }.execute();
+    manager.editExternalAnnotation(method, AnnotationUtil.NULLABLE, annotationFromText.getParameterList().getAttributes());
     stopListeningAndCheckEvents();
 
     startListening(parameter, AnnotationUtil.NOT_NULL, true);
-    new WriteCommandAction(myProject) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        manager.editExternalAnnotation(parameter, AnnotationUtil.NOT_NULL, annotationFromText.getParameterList().getAttributes());
-      }
-    }.execute();
+    manager.editExternalAnnotation(parameter, AnnotationUtil.NOT_NULL, annotationFromText.getParameterList().getAttributes());
     stopListeningAndCheckEvents();
 
     assertMethodAndParameterAnnotationsValues(manager, method, parameter, "\"bar\"");

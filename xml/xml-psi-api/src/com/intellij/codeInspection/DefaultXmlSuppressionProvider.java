@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -118,9 +117,6 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
 
   protected void suppress(PsiFile file, final PsiElement suppressionElement, String inspectionId, final int offset) {
     final Project project = file.getProject();
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) {
-      return;
-    }
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
     assert doc != null;
 
