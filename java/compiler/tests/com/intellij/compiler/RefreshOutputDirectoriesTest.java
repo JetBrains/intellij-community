@@ -2,8 +2,8 @@ package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +63,7 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
   }
 
   private void subscribeToRootChanges() {
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myRootsChangedCount++;
