@@ -392,12 +392,12 @@ public class JBTabsImpl extends JComponent
     if (cmp.isShowing()) {
       final int width = cmp.getWidth();
       final int height = cmp.getHeight();
-      img = UIUtil.createImage((Graphics2D)info.getComponent().getGraphics(), width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
+      img = UIUtil.createImage(info.getComponent(), width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = img.createGraphics();
       cmp.paint(g);
     }
     else {
-      img = UIUtil.createImage((Graphics2D)info.getComponent().getGraphics(), 500, 500, BufferedImage.TYPE_INT_ARGB);
+      img = UIUtil.createImage(info.getComponent(), 500, 500, BufferedImage.TYPE_INT_ARGB);
     }
     return img;
   }
@@ -1370,7 +1370,7 @@ public class JBTabsImpl extends JComponent
     if (blocked && !myPaintBlocked) {
       if (takeSnapshot) {
         if (getWidth() > 0 && getHeight() > 0) {
-          myImage = UIUtil.createImage((Graphics2D)getGraphics(), getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+          myImage = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
           final Graphics2D g = myImage.createGraphics();
           super.paint(g);
           g.dispose();
@@ -3283,7 +3283,7 @@ public class JBTabsImpl extends JComponent
     Dimension size = label.getPreferredSize();
     label.setBounds(0, 0, size.width, size.height);
 
-    BufferedImage img = UIUtil.createImage((Graphics2D)getGraphics(), size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage img = UIUtil.createImage(this, size.width, size.height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = img.createGraphics();
     label.paintOffscreen(g);
     g.dispose();

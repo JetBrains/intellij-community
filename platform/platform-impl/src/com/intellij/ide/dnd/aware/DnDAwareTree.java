@@ -108,7 +108,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     c.setBackground(tree.getBackground());
     c.setFont(tree.getFont());
     c.setSize(c.getPreferredSize());
-    final BufferedImage image = UIUtil.createImage((Graphics2D)c.getGraphics(), c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = UIUtil.createImage(c, c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = (Graphics2D)image.getGraphics();
     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     c.paint(g2);

@@ -186,7 +186,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       if (myDragPane == null) return;
       int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
       int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
-      BufferedImage image = UIUtil.createImage((Graphics2D)e.getComponent().getGraphics(), width, height, BufferedImage.TYPE_INT_RGB);
+      BufferedImage image = UIUtil.createImage(e.getComponent(), width, height, BufferedImage.TYPE_INT_RGB);
       Graphics graphics = image.getGraphics();
       graphics.setColor(UIUtil.getBgFillColor(getParent()));
       graphics.fillRect(0, 0, width, height);

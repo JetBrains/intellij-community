@@ -1127,7 +1127,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         });
 
         pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
-        myMaskImage = UIUtil.createImage((Graphics2D)pickerDialog.getGraphics(), SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
+        myMaskImage = UIUtil.createImage(pickerDialog, SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D maskG = myMaskImage.createGraphics();
         maskG.setColor(Color.BLUE);
         maskG.fillRect(0, 0, SIZE, SIZE);
@@ -1137,7 +1137,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         maskG.fillRect(0, 0, SIZE, SIZE);
         maskG.dispose();
 
-        myPipetteImage = UIUtil.createImage((Graphics2D)pickerDialog.getGraphics(), AllIcons.Ide.Pipette.getIconWidth(), AllIcons.Ide.Pipette.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        myPipetteImage = UIUtil.createImage(pickerDialog, AllIcons.Ide.Pipette.getIconWidth(), AllIcons.Ide.Pipette.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = myPipetteImage.createGraphics();
         //noinspection ConstantConditions
         AllIcons.Ide.Pipette.paintIcon(null, graphics, 0, 0);

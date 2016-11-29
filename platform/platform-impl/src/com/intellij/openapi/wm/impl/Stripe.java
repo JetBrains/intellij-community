@@ -509,7 +509,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   public void processDropButton(final StripeButton button, JComponent buttonImage, Point screenPoint) {
     if (!isDroppingButton()) {
-      final BufferedImage image = UIUtil.createImage((Graphics2D)button.getGraphics(), button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = UIUtil.createImage(button, button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;

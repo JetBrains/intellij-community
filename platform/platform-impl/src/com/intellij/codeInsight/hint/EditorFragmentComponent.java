@@ -85,7 +85,7 @@ public class EditorFragmentComponent extends JPanel {
       editor.getScrollingModel().scrollHorizontally(0);
     }
 
-    final BufferedImage textImage = UIUtil.createImage((Graphics2D)getGraphics(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+    final BufferedImage textImage = UIUtil.createImage(this, textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
     Graphics textGraphics = textImage.getGraphics();
     EditorUIUtil.setupAntialiasing(textGraphics);
 
@@ -97,7 +97,7 @@ public class EditorFragmentComponent extends JPanel {
       rowHeader = editor.getGutterComponentEx();
       markersImageWidth = Math.max(1, rowHeader.getWidth());
 
-      markersImage = UIUtil.createImage((Graphics2D)editor.getComponent().getGraphics(), markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+      markersImage = UIUtil.createImage(editor.getComponent(), markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
       Graphics markerGraphics = markersImage.getGraphics();
       EditorUIUtil.setupAntialiasing(markerGraphics);
 

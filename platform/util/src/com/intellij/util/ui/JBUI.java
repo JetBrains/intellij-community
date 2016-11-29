@@ -16,11 +16,13 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +127,9 @@ public class JBUI {
      * @see #pixScale(Graphics2D)
      * @see #pixScale(float)
      */
-    PIX,
+    PIX;
+
+    private final Key<Float> key = Key.create(name());
   }
 
   /**
@@ -703,11 +707,15 @@ public class JBUI {
     // ScaleType.USR - tracked
     // ScaleType.SYS - tracked
     // ScaleType.PIX - derived
-    Map<ScaleType, Float> myTrackedJBUIScale = new HashMap<ScaleType, Float>();
+    KeyFMap myTrackedJBUIScale = KeyFMap.EMPTY_MAP;
 
-    JBUIScaleTracker() {
-      myTrackedJBUIScale.put(ScaleType.USR, JBIcon.currentJBUIScale());
-      myTrackedJBUIScale.put(ScaleType.SYS, sysScale());
+    {
+      put(ScaleType.USR.key, JBIcon.currentJBUIScale());
+      put(ScaleType.SYS.key, sysScale());
+    }
+
+    private void put(Key<Float> key, Float value) {
+      myTrackedJBUIScale = myTrackedJBUIScale.plus(key, value);
     }
 
     @Override
@@ -717,7 +725,7 @@ public class JBUI {
 
     private boolean updateJBUIScale(float scale, ScaleType type) {
       if (needUpdateJBUIScale(scale, type)) {
-        myTrackedJBUIScale.put(type, scale);
+        put(type.key, scale);
         return true;
       }
       return false;
@@ -746,10 +754,9 @@ public class JBUI {
 
     @Override
     public float getJBUIScale(ScaleType type) {
-      if (type == ScaleType.PIX) {
-        return pixScale(this); // derive
-      }
-      return myTrackedJBUIScale.get(type);
+      return type == ScaleType.PIX ?
+             pixScale(this) : // derive
+             myTrackedJBUIScale.get(type.key);
     }
   }
 
