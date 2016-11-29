@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public final class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
   public static final LanguageSubstitutors INSTANCE = new LanguageSubstitutors();
   private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
-  private static final Key<Language> SUBSTITUTED_LANG_KEY = Key.create("SUBSTITUTED_LANG_KEY");
+  private static final Key<Key<Language>> PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY = Key.create("PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY");
   private static final Key<Boolean> REPARSING_SCHEDULED = Key.create("REPARSING_SCHEDULED");
 
   private LanguageSubstitutors() {
@@ -46,26 +46,27 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     for (LanguageSubstitutor substitutor : forKey(lang)) {
       Language language = substitutor.getLanguage(file, project);
       if (language != null) {
-        processLanguageSubstitution(file, lang, language);
+        processLanguageSubstitution(file, lang, language, project);
         return language;
       }
     }
     return lang;
   }
 
-
   private static void processLanguageSubstitution(@NotNull final VirtualFile file,
                                                   @NotNull Language originalLang,
-                                                  @NotNull final Language substitutedLang) {
+                                                  @NotNull final Language substitutedLang,
+                                                  @NotNull Project project) {
     if (file instanceof VirtualFileWindow) {
       // Injected files are created with substituted language, no need to reparse:
       //   com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl#doneInjecting
       return;
     }
-    Language prevSubstitutedLang = SUBSTITUTED_LANG_KEY.get(file);
+    Key<Language> projectKey = getOrCreateProjectKey(project);
+    Language prevSubstitutedLang = projectKey.get(file);
     final Language prevLang = ObjectUtils.notNull(prevSubstitutedLang, originalLang);
     if (!prevLang.is(substitutedLang)) {
-      if (file.replace(SUBSTITUTED_LANG_KEY, prevSubstitutedLang, substitutedLang)) {
+      if (file.replace(projectKey, prevSubstitutedLang, substitutedLang)) {
         if (prevSubstitutedLang == null) {
           return; // no need to reparse for the first language substitution
         }
@@ -85,6 +86,21 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
         }, ModalityState.defaultModalityState());
       }
     }
+  }
+
+  @NotNull
+  private static Key<Language> getOrCreateProjectKey(@NotNull Project project) {
+    Key<Language> key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
+    if (key == null) {
+      synchronized (PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY) {
+        key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
+        if (key == null) {
+          key = new Key<Language>("Substituted lang key for " + project.getName());
+          PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.set(project, key);
+        }
+      }
+    }
+    return key;
   }
 
   public static void cancelReparsing(@NotNull VirtualFile file) {
