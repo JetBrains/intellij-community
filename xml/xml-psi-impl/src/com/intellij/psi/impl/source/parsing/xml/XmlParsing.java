@@ -18,7 +18,7 @@ package com.intellij.psi.impl.source.parsing.xml;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.CustomParsingType;
+import com.intellij.psi.tree.ICustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -263,7 +263,7 @@ public class XmlParsing {
         advance();
         error.error(XmlErrorMessages.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
-      else if (tt instanceof CustomParsingType || tt instanceof ILazyParseableElementType) {
+      else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
         advance();
       }

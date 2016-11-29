@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.ILazyParseableElementTypeBase;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
@@ -188,7 +188,7 @@ public class LazyParseableElement extends CompositeElement {
 
     DebugUtil.startPsiModification("lazy-parsing");
     try {
-      ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
+      ILazyParseableElementTypeBase type = (ILazyParseableElementTypeBase)getElementType();
       ASTNode parsedNode = type.parseContents(this);
 
       if (parsedNode == null && text.length() > 0) {
