@@ -59,7 +59,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   private static final Logger LOG = Logger.getInstance(ModuleAttachProcessor.class);
 
   @Override
-  public boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
+  public boolean attachToProject(@NotNull Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
     if (!Files.exists(projectDir)) {
       Path projectDirParent = projectDir.getParent();
       assert projectDirParent != null;
@@ -76,17 +76,10 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject));
     }
 
-    Boolean isAttached =
-      PathKt.directoryStreamIfExists(projectDir, path -> path.getFileName().toString().endsWith(ModuleManagerImpl.IML_EXTENSION), files -> {
-        for (Path file : files) {
-          VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathKt.getSystemIndependentPath(file));
-          if (imlFile != null) {
-            attachModule(project, imlFile, callback);
-            return true;
-          }
-        }
-        return false;
-      });
+    Boolean isAttached = findMainModule(project, projectDir, callback);
+    if (Boolean.FALSE.equals(isAttached)) {
+      isAttached = findMainModule(project, projectDir.resolve(Project.DIRECTORY_STORE_FOLDER), callback);
+    }
     if (Boolean.TRUE.equals(isAttached)) {
       return true;
     }
@@ -95,6 +88,19 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
                                              projectDir +
                                              " uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
                                     "Open Project", Messages.getQuestionIcon()) != Messages.YES;
+  }
+
+  private static Boolean findMainModule(@NotNull Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
+    return PathKt.directoryStreamIfExists(projectDir, path -> path.getFileName().toString().endsWith(ModuleManagerImpl.IML_EXTENSION), files -> {
+      for (Path file : files) {
+        VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathKt.getSystemIndependentPath(file));
+        if (imlFile != null) {
+          attachModule(project, imlFile, callback);
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   private static void attachModule(Project project, VirtualFile imlFile, @Nullable ProjectOpenedCallback callback) {
