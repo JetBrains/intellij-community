@@ -294,7 +294,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       removeAllElements();
       if (firstItem != null) addElement(firstItem);
 
-      Sdk[] jdks = sortSdks(jdksModel);
+      Sdk[] jdks = sortSdks(jdksModel.getSdks());
       for (Sdk jdk : jdks) {
         if (sdkFilter == null || sdkFilter.value(jdk)) {
           addElement(new ActualJdkComboBoxItem(jdk));
@@ -306,9 +306,9 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     }
 
     @NotNull
-    private static Sdk[] sortSdks(@NotNull final ProjectSdksModel jdksModel) {
+    private static Sdk[] sortSdks(@NotNull final Sdk[] sdks) {
       MultiMap<Comparator<Sdk>, Sdk> comparatorToSdkMap = new MultiMap<>();
-      for (Sdk sdk : jdksModel.getSdks()) {
+      for (Sdk sdk : sdks) {
         final SdkTypeId sdkType = sdk.getSdkType();
         if (sdkType instanceof SdkType) {
           comparatorToSdkMap.putValue(((SdkType)sdkType).getComparator(), sdk);
