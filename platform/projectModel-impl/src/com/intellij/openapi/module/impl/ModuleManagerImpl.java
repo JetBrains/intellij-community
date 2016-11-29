@@ -440,7 +440,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     if (!sorted.isEmpty()) {
-      Collections.sort(sorted, (item1, item2) -> item1.getModuleName().compareTo(item2.getModuleName()));
+      Collections.sort(sorted, Comparator.comparing(SaveItem::getModuleName));
 
       Element modules = new Element(ELEMENT_MODULES);
       for (SaveItem saveItem : sorted) {
