@@ -94,12 +94,12 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
       processSuperMethods = false;
     }
 
-    if (!FileModificationService.getInstance().prepareFileForWrite(targetMethod.getContainingFile())) return;
+    List<PsiElement> toModify = new ArrayList<>();
+    toModify.add(targetMethod);
     if (processSuperMethods) {
-      for (PsiMethod superMethod : superMethods) {
-        if (!FileModificationService.getInstance().prepareFileForWrite(superMethod.getContainingFile())) return;
-      }
+      Collections.addAll(toModify, superMethods);
     }
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(toModify)) return;
     WriteAction.run(() -> {
       processMethod(project, targetMethod, unhandledExceptions);
 
