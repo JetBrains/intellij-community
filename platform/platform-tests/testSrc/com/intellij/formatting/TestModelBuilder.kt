@@ -137,13 +137,19 @@ class AttributesProvider {
   }
 
   private fun getIndent(attributes: List<String>): Indent? {
-    val type = attributes.find { it.startsWith("i_") }?.substring(2)
+    val type = attributes.find { it.startsWith("i_") }?.substring(2) ?: return null
     return when (type) {
       "cont" -> Indent.getContinuationIndent()
       "none" -> Indent.getNoneIndent()
       "norm" -> Indent.getNormalIndent()
       "label" -> Indent.getLabelIndent()
-      else -> null
+      else -> {
+        if (type.startsWith("space_")) {
+          val spacesCount = type.substringAfter("space_").toInt()
+          return Indent.getSpaceIndent(spacesCount)
+        }
+        return null
+      }
     }
   }
 

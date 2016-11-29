@@ -25,7 +25,7 @@ enum class Label {
 }
 
 private class TestBlockTreeBuilder {
-  private val stack = mutableListOf(TestBlock.Composite(""))
+  private val stack = mutableListOf(TestBlock.Composite("i_none"))
   private var recentSeenAttributes: String? = null
 
   fun attributes(attributes: String) {
@@ -62,7 +62,7 @@ private class TestBlockTreeBuilder {
 
   fun rootBlock(): TestBlock.Composite {
     if (recentSeenAttributes != null) leafBlock("")
-    
+
     return stack.first()
   }
 

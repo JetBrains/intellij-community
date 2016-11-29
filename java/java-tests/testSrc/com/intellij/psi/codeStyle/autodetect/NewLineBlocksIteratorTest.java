@@ -17,10 +17,10 @@ package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingModelXmlReader;
-import com.intellij.formatting.TestBlock;
-import com.intellij.formatting.TestFormattingModel;
+import com.intellij.formatting.engine.FormatterEngineTestsKt;
+import com.intellij.formatting.engine.TestData;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +58,14 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
   }
   
   public void testFirstBlockOnNewLineNotStartsIt() throws IOException, JDOMException {
-    String text = "var x = r'''\n" +
-                  "''';";
-    
-    Iterator<Block> it = newIteratorFromTestFormattingModel(text);
-    checkStartOffsets(new int[] {0}, it);
+    String text = "[]varx []=r'''\n" +
+                  "'''";
+
+    TestData data = FormatterEngineTestsKt.extractFormattingTestData(text);
+    Document document = EditorFactory.getInstance().createDocument(data.getTextToFormat());
+    NewLineBlocksIterator iterator = new NewLineBlocksIterator(data.getRootBlock(), document);
+
+    checkStartOffsets(new int[] {0}, iterator);
   }
   
   
@@ -73,11 +76,5 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
       iterator.next();
     }
   }
-  
-  protected Iterator<Block> newIteratorFromTestFormattingModel(String text) throws IOException, JDOMException {
-    TestFormattingModel model = new TestFormattingModel(text);
-    Document document = model.getDocument();
-    TestBlock block = new FormattingModelXmlReader(model).readTestBlock(getTestDataPath(), getFileName() + ".xml");
-    return new NewLineBlocksIterator(block, document);
-  }
+
 }
