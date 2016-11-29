@@ -15,11 +15,10 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.openapi.util.Key
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
-import com.intellij.psi.*
-import com.intellij.psi.scope.BaseScopeProcessor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
@@ -44,11 +43,15 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
     val dependenciesClosure = groovyClosure().inMethod(or(psiMethod(GRADLE_API_PROJECT, "dependencies"),
                                                           psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")))
     val dependencyConfigurationClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "add"))
+    val moduleDependencyConfigurationClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "module"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
     if (dependencyConfigurationClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY, closure), Closure.DELEGATE_FIRST)
+    }
+    if (moduleDependencyConfigurationClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY, closure), Closure.DELEGATE_FIRST)
     }
     if (dependenciesClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(GRADLE_API_DEPENDENCY_HANDLER, closure), Closure.DELEGATE_FIRST)
@@ -58,18 +61,25 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
 
   override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     val psiManager = GroovyPsiManager.getInstance(place.project)
-    val methodName = if (methodCallInfo.isNotEmpty()) methodCallInfo[0] else return true
+    val methodName = methodCallInfo.firstOrNull() ?: return true
 
     val classHint = processor.getHint(ElementClassHint.KEY)
     val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
     if (shouldProcessMethods && place is GrReferenceExpression && psiElement().inside(dependenciesClosure).accepts(place)) {
       if (methodCallInfo.size == 2) {
-        val psiClass = psiManager.findClassWithCache(GRADLE_API_DEPENDENCY_HANDLER, place.getResolveScope()) ?: return true
+        val resolveScope = place.getResolveScope()
+        val psiClass = psiManager.findClassWithCache(GRADLE_API_DEPENDENCY_HANDLER, resolveScope) ?: return true
         if (canBeMethodOf(methodName, psiClass)) {
           return true
         }
-        val componentProcessor = AddDependencyNotationProcessor(processor, place, psiClass)
-        if (!psiClass.processDeclarations(componentProcessor, state, null, place)) return false
+
+        val returnClass = psiManager.createTypeByFQClassName("org.gradle.api.artifacts.Dependency", resolveScope) ?: return true
+        val wrappedBase = GrLightMethodBuilder(place.manager, "add").apply {
+          returnType = returnClass
+          containingClass = psiClass
+        }
+        wrappedBase.addParameter("dependencyNotation", TypesUtil.getJavaLangObject(place).createArrayType())
+        if (!processor.execute(wrappedBase, state)) return false
       }
     }
     if (psiElement().inside(dependencyConfigurationClosure).accepts(place)) {
@@ -78,28 +88,5 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
                                                  GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY)) return false
     }
     return true
-  }
-
-  class AddDependencyNotationProcessor(val delegate: PsiScopeProcessor, val place: PsiElement, val psiClass: PsiClass) : BaseScopeProcessor() {
-    override fun execute(method: PsiElement, state: ResolveState): Boolean {
-      method as? PsiMethod ?: return true
-
-      val wrappedBase = GrLightMethodBuilder(place.manager, "add").apply {
-        navigationElement = method
-        containingClass = psiClass
-      }
-      wrappedBase.addParameter("configurationName", CommonClassNames.JAVA_LANG_OBJECT)
-      wrappedBase.addParameter("dependencyNotation", CommonClassNames.JAVA_LANG_OBJECT, true)
-      if (!delegate.execute(wrappedBase, state)) return false
-      return true
-    }
-
-    override fun <T : Any?> getHint(hintKey: Key<T>) = if (hintKey == com.intellij.psi.scope.ElementClassHint.KEY) {
-      @Suppress("UNCHECKED_CAST")
-      ElementClassHint { it == com.intellij.psi.scope.ElementClassHint.DeclarationKind.METHOD } as T
-    }
-    else {
-      null
-    }
   }
 }
