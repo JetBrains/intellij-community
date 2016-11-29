@@ -158,13 +158,20 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     Module[] existingModules = model.getModules();
 
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
+
+    Map<String, ModulePath> modulePathMap = new THashMap<>(myModulePaths.size());
+    for (ModulePath modulePath : myModulePaths) {
+      modulePathMap.put(modulePath.getPath(), modulePath);
+    }
+
     for (Module existingModule : existingModules) {
-      ModulePath correspondingPath = findCorrespondingPath(existingModule);
+      ModulePath correspondingPath = modulePathMap.get(existingModule.getModuleFilePath());
       if (correspondingPath == null) {
         model.disposeModule(existingModule);
       }
       else {
         myModulePaths.remove(correspondingPath);
+        modulePathMap.remove(correspondingPath.getPath());
 
         String groupStr = correspondingPath.getModuleGroup();
         String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
@@ -177,14 +184,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     loadModules((ModuleModelImpl)model);
 
     ApplicationManager.getApplication().runWriteAction(() -> model.commit());
-  }
-
-  private ModulePath findCorrespondingPath(@NotNull Module existingModule) {
-    for (ModulePath modulePath : myModulePaths) {
-      if (modulePath.getPath().equals(existingModule.getModuleFilePath())) return modulePath;
-    }
-
-    return null;
   }
 
   public static final class ModulePath {
