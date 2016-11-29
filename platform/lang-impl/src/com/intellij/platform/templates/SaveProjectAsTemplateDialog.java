@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -122,20 +122,20 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    File file = getTemplateFile();
-    if (file.exists()) {
+    Path file = getTemplateFile();
+    if (PathKt.exists(file)) {
       if (Messages.showYesNoDialog(myPanel,
-                                   FileUtil.getNameWithoutExtension(file) + " exists already.\n" +
+                                   FileUtil.getNameWithoutExtension(file.getFileName().toString()) + " exists already.\n" +
                                    "Do you want to replace it with the new one?", "Template Already Exists",
                                    Messages.getWarningIcon()) == Messages.NO) {
         return;
       }
-      file.delete();
+      PathKt.delete(file);
     }
     super.doOKAction();
   }
 
-  File getTemplateFile() {
+  Path getTemplateFile() {
     String name = myName.getText();
     return ArchivedTemplatesFactory.getTemplateFile(name);
   }

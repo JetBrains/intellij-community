@@ -168,8 +168,9 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     Element element = new Element("state");
     writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
     if (!getPatterns().isEmpty()) {
+      SkipDefaultsSerializationFilter filter = new SkipDefaultsSerializationFilter();
       for (ClassPattern pattern : getPatterns()) {
-        element.addContent(XmlSerializer.serialize(pattern, new SkipDefaultsSerializationFilter()));
+        element.addContent(XmlSerializer.serialize(pattern, filter));
       }
     }
 

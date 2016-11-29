@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -59,7 +60,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,7 +100,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     if (dialog.showAndGet()) {
 
       final Module moduleToSave = dialog.getModuleToSave();
-      final File file = dialog.getTemplateFile();
+      final Path file = dialog.getTemplateFile();
       final String description = dialog.getDescription();
 
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -108,13 +113,13 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
         @Override
         public void onSuccess() {
-          Messages.showInfoMessage(FileUtil.getNameWithoutExtension(file) + " was successfully created.\n" +
+          Messages.showInfoMessage(FileUtil.getNameWithoutExtension(file.getFileName().toString()) + " was successfully created.\n" +
                                    "It's available now in Project Wizard", "Template Created");
         }
 
         @Override
         public void onCancel() {
-          file.delete();
+          PathKt.delete(file);
         }
       });
     }
@@ -126,7 +131,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   public static void saveProject(final Project project,
-                                 final File zipFile,
+                                 @NotNull Path zipFile,
                                  Module moduleToSave,
                                  final String description,
                                  boolean replaceParameters,
@@ -139,23 +144,22 @@ public class SaveProjectAsTemplateAction extends AnAction {
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;
     try {
-      FileUtil.ensureExists(zipFile.getParentFile());
-      stream = new ZipOutputStream(new FileOutputStream(zipFile));
+      stream = new ZipOutputStream(PathKt.outputStream(zipFile));
 
       final VirtualFile dir = getDirectoryToSave(project, moduleToSave);
 
       List<LocalArchivedTemplate.RootDescription> roots = collectStructure(project, moduleToSave);
       LocalArchivedTemplate.RootDescription basePathRoot = findOrAddBaseRoot(roots, dir);
 
-      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, basePathRoot.myRelativePath, stream, true, indicator);
+      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, basePathRoot.myRelativePath, stream, true);
       if (replaceParameters) {
         String text = getInputFieldsText(parameters);
-        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, basePathRoot.myRelativePath, stream, false, indicator);
+        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, basePathRoot.myRelativePath, stream, false);
       }
 
       String metaDescription = getTemplateMetaText(shouldEscape, roots);
-      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true,
-                indicator);
+      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true
+      );
 
       FileIndex index = moduleToSave == null
                         ? ProjectRootManager.getInstance(project).getFileIndex()
@@ -203,7 +207,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
   private static void writeFile(String path,
                                 final String text,
-                                Project project, String prefix, ZipOutputStream stream, boolean overwrite, ProgressIndicator indicator) throws IOException {
+                                Project project, String prefix, ZipOutputStream stream, boolean overwrite) throws IOException {
     final VirtualFile descriptionFile = getDescriptionFile(project, path);
     if (descriptionFile == null) {
       stream.putNextEntry(new ZipEntry(prefix + "/" + path));
