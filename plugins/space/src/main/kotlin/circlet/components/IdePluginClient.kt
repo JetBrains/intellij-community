@@ -1,50 +1,65 @@
 package circlet.components
 
-import circlet.client.*
-import circlet.client.auth.*
-import circlet.ring.*
+import circlet.*
+import circlet.login.*
+import circlet.reactive.*
 import circlet.utils.*
+import com.intellij.concurrency.*
 import com.intellij.ide.passwordSafe.*
 import com.intellij.notification.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
-import com.intellij.util.net.ssl.*
 import klogging.*
-import logging.*
 import nl.komponents.kovenant.*
-import org.apache.http.client.utils.*
-import org.jetbrains.hub.oauth2.client.*
-import runtime.exceptions.*
-import runtime.json.*
+import org.joda.time.*
+import runtime.*
 import runtime.lifetimes.*
-import rx.subjects.*
-import rx.subjects.Promise
-import java.util.*
-import java.util.Base64
 
 private val log = KLoggers.logger("plugin/IdePluginClient.kt")
 
-class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
-    val DISPLAY_ID = "circlet.components.IdePluginClient"
-    val PASS_ID = "circlet.components.IdePluginClient.Pass"
-    private val serverConfig = ServerConfig()
-    private val passwords = PasswordSafe.getInstance()
+enum class ConnectingState {
+    Disconnect,
+    Connected,
+    AuthFailed,
+    TryConnect
+}
 
-    var connectionState : IdePluginConnectionState? = null
+class IdePLuginClientData(val enabled : Boolean) {}
 
-    fun connect() {
-        if (connectionState != null)
-        {
-            log.error("Can't connect twice")
-            return
+@State(name = "IdePluginClient", storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
+class IdePluginClient(project : Project) :
+    AbstractProjectComponent(project),
+    PersistentStateComponent<IdePLuginClientData>,
+    ILifetimedComponent by LifetimedComponent(project) {
+
+    val state = Property(ConnectingState.Disconnect)
+    val enabled = Property(false)
+    val askPasswordExplicitlyAllowed = Property(false)
+    val client = Property<CircletClient?>(null)
+
+    init {
+        enabled.whenTrue(componentLifetime) { enabledLt ->
+            state.value = ConnectingState.TryConnect
+
+            enabledLt.add {
+                disconnect()
+            }
         }
 
-        val connectedStateLifetimeDef = Lifetime.create(Lifetime.Eternal)
-        val connectingProgressLifetimeDef = Lifetime.create(connectedStateLifetimeDef.lifetime)
-        val state = IdePluginConnectionState(connectedStateLifetimeDef)
-        connectionState = state
+        state.view(componentLifetime) { lt, state ->
+            when(state){
+                ConnectingState.TryConnect -> tryReconnect(lt)
+                ConnectingState.AuthFailed -> {
 
+                }
+                else -> {
+
+                }
+            }
+        }
+
+/*
         ProgressManager.getInstance().run(externalTask(myProject, true, object: IExternalTask {
             override val lifetime: Lifetime get() = connectingProgressLifetimeDef.lifetime
             override val cancel: () -> Unit get() = { disconnect() }
@@ -54,113 +69,93 @@ class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
             override val isIndeterminate: Boolean get() = true
             override val progress: Double get() = 0.5
         }))
+*/
+    }
 
-        task {
-            Thread.currentThread().contextClassLoader = this.javaClass.classLoader
+    fun enable() {
+        askPasswordExplicitlyAllowed.value = true
+        enabled.value = true
+    }
 
-            RingAuth(CertificateManager.getInstance().sslContext, CertificateManager.HOSTNAME_VERIFIER, serverConfig, connectedStateLifetimeDef.lifetime).apply {
-                connectionState?.message = "Connecting to hub"
+    fun disable() {
+        enabled.value = false
+    }
 
-                refreshTokenStored() then {
-                    val me = user(it)
+    private fun tryReconnect(lifetime: Lifetime) {
+        val loginComponent = myProject.getComponent<CircletLoginComponent>()
+        if (loginComponent.isEmpty())
+        {
+            if (askPasswordExplicitlyAllowed.value)
+                askPassword(loginComponent)
+        }
+        connectWithToken(lifetime, loginComponent.loginData.value.token)
+    }
 
-                    connectionState?.message = "Connecting to circlet server"
-                    val token = it.accessTokenSource.accessToken
-                    log.info("got access token: $token")
-                    val builder = URIBuilder(serverConfig.serviceWebSocketUrl).
-                        setParameter("token", Base64.getEncoder().encodeToString(token.accessToken.toByteArray())).
-                        setParameter("user", Base64.getEncoder().encodeToString(me.toByteArray()))
-                    val uri = builder.toString()
-                    log.info("connect to circlet: $uri")
+    private fun askPassword(loginComponent: CircletLoginComponent) {
+        LoginDialog(loginComponent).show()
 
-                    val session = log.io {
-                        connectToServer(uri) { cnctn, lifetime ->
-                            log.info("connected to ")
-                            state.connection = cnctn
-                            state.connectionState = ConnectionStates.Connected
-                            lifetime.add {
-                                disconnect()
-                            }
-                            connectingProgressLifetimeDef.terminate()
-                        }
+
+        val auth = CircletAuthentication("http://localhost:8084/api/v1/authenticate")
+        if (loginComponent.loginData.value.token.isEmpty()) {
+            auth.authenticate(loginComponent.loginData.value.login, loginComponent.loginData.value.login).then {
+                loginComponent.loginData.value = JetBrainsAccountLoginData(
+                    loginComponent.loginData.value.login,
+                    loginComponent.loginData.value.pass,
+                    it
+                )
+            }.failure {
+                loginComponent.loginData.value = JetBrainsAccountLoginData(
+                    loginComponent.loginData.value.login,
+                    loginComponent.loginData.value.pass,
+                    ""
+                )
+                state
+                log.info { "Error: $it" }
+            }
+        }
+    }
+
+    private fun connectWithToken(lifetime : Lifetime, token: String) {
+        val clientLocal = CircletClient("ws://localhost:8084/api/v1/connect", token)
+        client.value = clientLocal
+        // check if token is correct???
+
+        clientLocal.profile.isMyProfileReady()
+            .flatMap {
+                if (!it) {
+                    clientLocal.profile.createMyProfile("Hey! ${Random.nextBytes(10)}")
+                } else {
+                    clientLocal.profile.getMyProfile().map {
+                        log.warn { "My Profile: $it" }
                     }
-                    state.session = session
-
-                } then {
-                    // successful connection.
-                    val notification = Notification(DISPLAY_ID, "Circlet", "Connected to server", NotificationType.INFORMATION)
-                    Notifications.Bus.notify(notification, myProject)
-
-                } catch { th ->
-                    disconnect()
-                    when (th){
-                        is ProcessCancalledException ->{
-                            val notification = Notification(DISPLAY_ID, "Circlet", "Connection cancelled", NotificationType.INFORMATION)
-                            Notifications.Bus.notify(notification, myProject)
-                        }
-                        is ExpectedException -> {
-                            val notification = Notification(DISPLAY_ID, "Circlet", "Connection failed. ${th.message ?: ""}", NotificationType.ERROR)
-                            Notifications.Bus.notify(notification, myProject)
-                        }
-                        else -> {
-                            log.error(th)
-                        }
-                    }
+                    clientLocal.profile.editMyName("Hey! ${Random.nextBytes(10)}")
                 }
             }
-        }
-    }
-
-    private data class TokenDataStored(val token : String, val expires : Long, val serverUri : String, val clientId : String, val scope : List<String>) {}
-
-    private fun RingAuth.refreshTokenStored(): Promise<AccessTokenInfo> {
-        val refreshCode = passwords.getPassword(myProject, javaClass, PASS_ID) ?: ""
-        if (!refreshCode.isNullOrEmpty())
-        {
-            val stored = parseJson<TokenDataStored>(refreshCode)
-            return Promise<AccessTokenInfo> { resolved, rejected ->
-                resolved(AccessTokenInfo(object : AccessTokenSource() {
-                    override fun loadToken() =
-                        AccessToken(stored.token, Calendar.getInstance().apply { setTimeInMillis(1) }, stored.scope)
-                }, HubInfo(stored.serverUri, stored.clientId)))
+            // .flatMap { client.profile.editMyName("Hey! ${Random.nextBytes(10)}") }
+            .then {
+                log.warn { "Result: $it" }
             }
-        } else {
-            return hubInfo() thenAwait {
-                log.info("got hub info $it")
-                connectionState?.message = "Getting auth code"
-                authCode(it)
-            } thenAwait {
-                log.info("got auth code")
-                connectionState?.message = "Getting refresh token"
-                refreshToken(it)
-            } thenAwait {
-                log.info("got refresh token")
-                connectionState?.message = "Getting access token"
-                authToken(it)
-            } then {
-                // last: store to cache...
-                val accessToken = it.accessTokenSource.accessToken
-                val toStore = printJson(TokenDataStored(accessToken.accessToken, accessToken.expiresAt.timeInMillis, it.hubInfo.serverUri, it.hubInfo.clientId, accessToken.scope))
-                passwords.storePassword(myProject, javaClass, PASS_ID, toStore)
-                it
+            .failure {
+                log.warn { "Error: $it" }
             }
-        }
-    }
+   }
 
     fun disconnect(){
-        // may disconnect in both connected and connecting states.
 
-        val state = connectionState ?: return
+        state.value = ConnectingState.Disconnect
 
-        connectionState = null
+        val notification = Notification(
+            "IdePluginClient.ID",
+            "Circlet",
+            "Disconnected from server",
+            NotificationType.INFORMATION)
 
-        // successful connection.
-        val notification = Notification(DISPLAY_ID, "Circlet", "Disconnected from server", NotificationType.INFORMATION)
         Notifications.Bus.notify(notification, myProject)
-
-        state.Close()
     }
 
-    enum class ConnectionStates { Connecting, Connected }
+    override fun loadState(state: IdePLuginClientData) {}
+    override fun getState(): IdePLuginClientData = IdePLuginClientData(enabled.value)
 
 }
+
+

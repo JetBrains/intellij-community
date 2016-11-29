@@ -4,14 +4,14 @@ import circlet.components.*
 import circlet.utils.*
 import com.intellij.openapi.actionSystem.*
 
-class ConnectAction : AnAction() {
+class DisableAction : AnAction() {
 
     override fun update(e: AnActionEvent?) {
         e ?: return
         val project = e.project
         project ?: return
 
-        e.presentation.isEnabled = project.component<IdePluginClient>().connectionState == null
+        e.presentation.isEnabled = project.component<IdePluginClient>().enabled.value
     }
 
     override fun actionPerformed(e: AnActionEvent?) {
@@ -19,7 +19,6 @@ class ConnectAction : AnAction() {
         val project = e.project
         project ?: return
 
-        project.component<IdePluginClient>().connect()
+        project.component<IdePluginClient>().disable()
     }
 }
-

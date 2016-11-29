@@ -28,12 +28,16 @@
         <component>
             <implementation-class>circlet.components.IdePluginClient</implementation-class>
         </component>
+        <component>
+            <implementation-class>circlet.components.CircletLoginComponent</implementation-class>
+        </component>
     </project-components>
 
     <actions>
 
-        <action class="circlet.actions.ConnectAction" text="Connect To Circlet..." id="ConnectAction"/>
-        <action class="circlet.actions.DisconnectAction" text="Disconnect From Circlet..." id="DisconnectAction"/>
+        <action class="circlet.actions.EnableAction" text="Enable Circlet..." id="ConnectAction"/>
+        <action class="circlet.actions.DisableAction" text="Disable Circlet..." id="DisconnectAction"/>
+
         <action class="circlet.actions.TestCircletAction" text="Test Circlet..." id="TestCircletAction"/>
 
         <group text="Circlet" id="CircletGroup" popup="true">

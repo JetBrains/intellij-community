@@ -12,22 +12,8 @@ private val log = KLoggers.logger("plugin/TestCircletAction.kt")
 class TestCircletAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
-        val project = e.project ?: return
-        e.presentation.isEnabled = project.component<IdePluginClient>().connectionState != null
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val client = project.component<IdePluginClient>()
-        val connection = client.connectionState?.connection ?: return
-
-        ServerApi(connection).spaces() then {
-            it.forEach {
-                log.info { "Space: ${it.name}" }
-            }
-        } catch {
-            // >>> wtf...
-        }
-
     }
 }
