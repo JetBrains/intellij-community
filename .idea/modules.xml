@@ -30,7 +30,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-tests/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-tests/android-tests.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" filepath="$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" group="platform" />
@@ -95,7 +95,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" filepath="$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/designer.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/designer.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer-tests/designer-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer-tests/designer-tests.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/designer-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/designer-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-tests.iml" group="plugins" />
