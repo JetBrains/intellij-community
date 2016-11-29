@@ -465,6 +465,11 @@ public class Py3TypeTest extends PyTestCase {
            "expr = input()");
   }
 
+  public void testMinResult() {
+    doTest("int",
+           "expr = min(1, 2, 3)");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

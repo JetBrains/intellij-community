@@ -1514,6 +1514,11 @@ public class PyTypeTest extends PyTestCase {
            "    expr = things if things else []");
   }
 
+  public void testMinResult() {
+    doTest("int",
+           "expr = min(1, 2, 3)");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
