@@ -353,7 +353,12 @@ public class IpnbParser {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
           dataRaw.text = outputCell.getText();
-          dataRaw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+          if (((IpnbLatexOutputCell)outputCell).isMarkdown()) {
+            dataRaw.markdown = ((IpnbLatexOutputCell)outputCell).getLatex();
+          }
+          else {
+            dataRaw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+          }
           raw.data = dataRaw;
           raw.execution_count = outputCell.getPromptNumber();
           raw.output_type = "execute_result";
@@ -430,7 +435,10 @@ public class IpnbParser {
         outputCell = new IpnbHtmlOutputCell(html == null ? data.html : html, text, prompt, metadata);
       }
       else if (latex != null || (data != null && data.latex != null)) {
-        outputCell = new IpnbLatexOutputCell(latex == null ? data.latex : latex, prompt, text, metadata);
+        outputCell = new IpnbLatexOutputCell(latex == null ? data.latex : latex, false, prompt, text, metadata);
+      }
+      else if (data != null && data.markdown != null) {
+        outputCell = new IpnbLatexOutputCell(data.markdown, true, prompt, text, metadata);
       }
       else if (stream != null || name != null) {
         outputCell = new IpnbStreamOutputCell(stream == null ? name : stream, text, prompt, metadata);
@@ -461,6 +469,7 @@ public class IpnbParser {
     @SerializedName("image/jpeg") List<String> jpeg;
     @SerializedName("text/latex") List<String> latex;
     @SerializedName("text/plain") List<String> text;
+    @SerializedName("text/markdown") List<String> markdown;
   }
 
   static class RawCellAdapter implements JsonSerializer<IpnbCellRaw> {
@@ -591,6 +600,7 @@ public class IpnbParser {
       dataRaw.svg = getStringOrArray("image/svg+xml", object);
       dataRaw.jpeg = getStringOrArray("image/jpeg", object);
       dataRaw.latex = getStringOrArray("text/latex", object);
+      dataRaw.markdown = getStringOrArray("text/markdown", object);
       dataRaw.text = getStringOrArray("text/plain", object);
       return dataRaw;
     }
@@ -769,6 +779,10 @@ public class IpnbParser {
       if (cellRaw.latex != null) {
         final JsonElement latex = gson.toJsonTree(cellRaw.latex);
         jsonObject.add("text/latex", latex);
+      }
+      if (cellRaw.markdown != null) {
+        final JsonElement markdown = gson.toJsonTree(cellRaw.markdown);
+        jsonObject.add("text/markdown", markdown);
       }
       if (cellRaw.text != null) {
         final JsonElement text = gson.toJsonTree(cellRaw.text);

@@ -300,7 +300,11 @@ public class IpnbConnection {
       final String plainText = (String)data.get("text/plain");
       if (data.containsKey("text/latex")) {
         final String text = (String)data.get("text/latex");
-        myOutput = new IpnbLatexOutputCell(Lists.newArrayList(text), null, Lists.newArrayList(plainText), null);
+        myOutput = new IpnbLatexOutputCell(Lists.newArrayList(text), false, null, Lists.newArrayList(plainText), null);
+      }
+      else if (data.containsKey("text/markdown")) {
+        final String text = (String)data.get("text/markdown");
+        myOutput = new IpnbLatexOutputCell(Lists.newArrayList(text), true, null, Lists.newArrayList(plainText), null);
       }
       else if (data.containsKey("text/html")) {
         final String html = (String)data.get("text/html");
