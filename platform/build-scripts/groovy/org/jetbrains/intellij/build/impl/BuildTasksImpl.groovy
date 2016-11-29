@@ -327,6 +327,10 @@ idea.fatal.error.notification=disabled
 
   private void checkProductLayout() {
     ProductModulesLayout layout = buildContext.productProperties.productLayout
+    if (layout.mainJarName == null) {
+      buildContext.messages.error("productProperties.productLayout.mainJarName is not specified")
+    }
+
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
     def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
     checkPaths(layout.licenseFilesToBuildSearchableOptions, "productProperties.productLayout.licenseFilesToBuildSearchableOptions")
