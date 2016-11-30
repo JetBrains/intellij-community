@@ -136,8 +136,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   override final fun getProjectBasePath(): String {
     if (isDirectoryBased) {
       val path = PathUtilRt.getParentPath(storageManager.expandMacro(PROJECT_CONFIG_DIR))
-      if (Registry.`is`("store.basedir.parent.detection", true) && path.startsWith("${Project.DIRECTORY_STORE_FOLDER}.")) {
-        return PathUtilRt.getParentPath(path)
+      if (Registry.`is`("store.basedir.parent.detection", true) && PathUtilRt.getFileName(path).startsWith("${Project.DIRECTORY_STORE_FOLDER}.")) {
+        return PathUtilRt.getParentPath(PathUtilRt.getParentPath(path))
       }
       return path
     }
