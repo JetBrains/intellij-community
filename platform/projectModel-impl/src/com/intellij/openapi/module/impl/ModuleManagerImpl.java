@@ -73,7 +73,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
-  private List<ModulePath> myModulePathsToLoad;
+  private LinkedHashSet<ModulePath> myModulePathsToLoad;
   private final List<ModulePath> myFailedModulePaths = new SmartList<>();
   @NonNls public static final String ELEMENT_MODULES = "modules";
   @NonNls public static final String ELEMENT_MODULE = "module";
@@ -148,8 +148,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @Override
   public void loadState(Element state) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
-    myModulePathsToLoad = new ArrayList<>(getPathsToModuleFiles(state));
+    myModulePathsToLoad = getPathsToModuleFiles(state);
     if (isFirstLoadState) {
+      // someone else must call loadModules in a appropriate time (e.g. on projectComponentsInitialized)
       return;
     }
 
@@ -185,8 +186,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   @NotNull
-  public static List<ModulePath> getPathsToModuleFiles(@NotNull Element element) {
-    final List<ModulePath> paths = new ArrayList<>();
+  public static LinkedHashSet<ModulePath> getPathsToModuleFiles(@NotNull Element element) {
+    final LinkedHashSet<ModulePath> paths = new LinkedHashSet<>();
     final Element modules = element.getChild(ELEMENT_MODULES);
     if (modules != null) {
       for (final Element moduleElement : modules.getChildren(ELEMENT_MODULE)) {
