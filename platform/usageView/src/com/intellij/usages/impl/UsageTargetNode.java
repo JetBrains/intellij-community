@@ -24,10 +24,10 @@ import javax.swing.tree.DefaultTreeModel;
 /**
  * @author max
  */
-public class UsageTargetNode extends Node {
+class UsageTargetNode extends Node {
   private final UsageTarget myTarget;
 
-  public UsageTargetNode(@NotNull UsageTarget target, @NotNull DefaultTreeModel model) {
+  UsageTargetNode(@NotNull UsageTarget target, @NotNull DefaultTreeModel model) {
     super(model);
     myTarget = target;
     setUserObject(target);
