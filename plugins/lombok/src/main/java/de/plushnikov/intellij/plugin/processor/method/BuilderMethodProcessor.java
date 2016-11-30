@@ -5,7 +5,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -46,9 +45,7 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
 
-      final PsiType psiBuilderType = builderHandler.getBuilderType(psiClass, psiMethod);
-
-      final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
+      final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiMethod);
       PsiClass builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
       if (null == builderClass) {
         builderClass = builderHandler.createBuilderClass(psiClass, psiMethod, psiAnnotation);

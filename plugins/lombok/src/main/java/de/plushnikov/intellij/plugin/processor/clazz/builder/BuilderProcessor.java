@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -75,9 +74,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
       }
     }
 
-    final PsiType psiBuilderType = builderHandler.getBuilderType(psiClass);
-
-    final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
+    final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation);
     PsiClass builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
     if (null == builderClass) {
       builderClass = builderHandler.createBuilderClass(psiClass, psiAnnotation);

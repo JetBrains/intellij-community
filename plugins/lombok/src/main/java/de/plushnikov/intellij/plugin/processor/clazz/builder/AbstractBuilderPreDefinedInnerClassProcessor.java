@@ -5,7 +5,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -67,14 +66,8 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   }
 
   private void processMethodAnnotation(List<? super PsiElement> result, PsiMethod psiParentMethod, PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, PsiClass psiParentClass) {
-    final PsiType psiBuilderType = builderHandler.getBuilderType(psiParentClass, psiParentMethod);
-    final String builderClassName;
-
-    if (null == psiParentMethod) {
-      builderClassName = builderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiBuilderType);
-    } else {
-      builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiBuilderType);
-    }
+    // use parent class as source!
+    final String builderClassName = builderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
 
     // apply only to inner BuilderClass
     if (builderClassName.equals(psiClass.getName())) {
