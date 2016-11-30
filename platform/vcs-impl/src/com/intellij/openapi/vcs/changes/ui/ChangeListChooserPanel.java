@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -233,7 +234,6 @@ public class ChangeListChooserPanel extends JPanel {
 
     public MyEditorComboBox() {
       super(PREF_WIDTH);
-      myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
       JBColor fg = new JBColor(0x00b53d, 0x24953c);
       TextIcon icon = new TextIcon("New", fg, ColorUtil.toAlpha(fg, 40), JBUI.scale(2));
       icon.setFont(RelativeFont.TINY.derive(getFont()));
@@ -241,14 +241,21 @@ public class ChangeListChooserPanel extends JPanel {
       JLabel label = new JLabel(icon);
       JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(true);
-      panel.setBackground(myEditorTextField.getBackground());
       panel.setBorder(JBUI.Borders.empty(1, 1, 1, 4));
       panel.add(label, BorderLayout.CENTER);
+      myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "") {
+        @Override
+        protected EditorEx createEditor() {
+          EditorEx editor = super.createEditor();
+          panel.setBackground(editor.getBackgroundColor());
+          return editor;
+        }
+      };
       myEditorTextField.addDocumentListener(new DocumentAdapter() {
         @Override
         public void documentChanged(DocumentEvent e) {
           String changeListName = e.getDocument().getText();
-          label.setVisible(!StringUtil.isEmptyOrSpaces(changeListName) && getExistingChangelistByName(changeListName) == null);
+          panel.setVisible(!StringUtil.isEmptyOrSpaces(changeListName) && getExistingChangelistByName(changeListName) == null);
         }
       });
       ObjectUtils.assertNotNull(myEditorTextField.getDocument()).putUserData(ChangeListCompletionContributor.COMBO_BOX_KEY, this);
