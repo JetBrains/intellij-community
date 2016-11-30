@@ -65,6 +65,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestMethod();
   }
 
+  public void testEscapingStringValue() throws Exception {
+    doTestMethod();
+  }
+
   public void testIdeadev2326() throws Exception {
     doTestMethod();
   }
