@@ -15,10 +15,12 @@
  */
 package com.intellij.usageView;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -248,6 +250,29 @@ public class UsageInfo {
     if (rangeInElement == null) return null;
     return new ProperTextRange(Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getStartOffset()),
                                Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
+  }
+
+  public int compareToByStartOffset(@NotNull UsageInfo info) {
+    VirtualFile containingFile0 = getVirtualFile();
+    int shift0 = 0;
+    if (containingFile0 instanceof VirtualFileWindow) {
+      shift0 = ((VirtualFileWindow)containingFile0).getDocumentWindow().injectedToHost(0);
+      containingFile0 = ((VirtualFileWindow)containingFile0).getDelegate();
+    }
+    VirtualFile containingFile1 = info.getVirtualFile();
+    int shift1 = 0;
+    if (containingFile1 instanceof VirtualFileWindow) {
+      shift1 = ((VirtualFileWindow)containingFile1).getDocumentWindow().injectedToHost(0);
+      containingFile1 = ((VirtualFileWindow)containingFile1).getDelegate();
+    }
+    if (containingFile0 == null && containingFile1 == null || !Comparing.equal(containingFile0, containingFile1)) {
+      return 0;
+    }
+
+    Segment range0 = mySmartPointer.getPsiRange();
+    Segment range1 = info.mySmartPointer.getPsiRange();
+    if (range0 == null || range1 == null) return 0;
+    return range0.getStartOffset() + shift0 - range1.getStartOffset() - shift1;
   }
 
   @NotNull
