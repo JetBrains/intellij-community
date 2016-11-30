@@ -27,17 +27,17 @@ import java.io.File;
  */
 public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
   private static final ConfigurationErrorType INVALID_MODULE = new ConfigurationErrorType(ProjectBundle.message("element.kind.name.module"), false);
-  private final ModuleManagerImpl.ModulePath myModulePath;
+  private final ModulePath myModulePath;
   private final ModuleManagerImpl myModuleManager;
 
-  private ModuleLoadingErrorDescription(final String description, final ModuleManagerImpl.ModulePath modulePath, ModuleManagerImpl moduleManager,
+  private ModuleLoadingErrorDescription(final String description, final ModulePath modulePath, ModuleManagerImpl moduleManager,
                                         final String elementName) {
     super(elementName, description, INVALID_MODULE);
     myModulePath = modulePath;
     myModuleManager = moduleManager;
   }
 
-  public ModuleManagerImpl.ModulePath getModulePath() {
+  public ModulePath getModulePath() {
     return myModulePath;
   }
 
@@ -51,7 +51,7 @@ public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription
     return ProjectBundle.message("module.remove.from.project.confirmation", getElementName());
   }
 
-  public static ModuleLoadingErrorDescription create(final String description, final ModuleManagerImpl.ModulePath modulePath,
+  public static ModuleLoadingErrorDescription create(final String description, final ModulePath modulePath,
                                                      ModuleManagerImpl moduleManager) {
     String path = modulePath.getPath();
     int start = path.lastIndexOf(File.separatorChar)+1;

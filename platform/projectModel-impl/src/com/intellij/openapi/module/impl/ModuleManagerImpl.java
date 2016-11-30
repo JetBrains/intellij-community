@@ -170,7 +170,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       else {
         myModulePaths.remove(correspondingPath);
 
-        String groupStr = correspondingPath.getModuleGroup();
+        String groupStr = correspondingPath.getGroup();
         String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
         if (!Arrays.equals(group, model.getModuleGroupPath(existingModule))) {
           groupInterner.setModuleGroupPath(model, existingModule, group);
@@ -181,24 +181,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     loadModules((ModuleModelImpl)model);
 
     ApplicationManager.getApplication().runWriteAction(() -> model.commit());
-  }
-
-  public static final class ModulePath {
-    private final String myPath;
-    private final String myModuleGroup;
-
-    public ModulePath(String path, String moduleGroup) {
-      myPath = path;
-      myModuleGroup = moduleGroup;
-    }
-
-    public String getPath() {
-      return myPath;
-    }
-
-    public String getModuleGroup() {
-      return myModuleGroup;
-    }
   }
 
   @NotNull
@@ -249,7 +231,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
         }
-        final String groupPathString = modulePath.getModuleGroup();
+        final String groupPathString = modulePath.getGroup();
         if (groupPathString != null) {
           final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
 
@@ -411,7 +393,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Override
     protected String getGroupPathString() {
-      return myModulePath.getModuleGroup();
+      return myModulePath.getGroup();
     }
 
     @Override
