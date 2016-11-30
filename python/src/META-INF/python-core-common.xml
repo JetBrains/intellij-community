@@ -710,6 +710,10 @@
     <!-- PyQt -->
     <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
 
+    <!-- PyFunctionTypeAnnotation -->
+    <visitorFilter language="PyFunctionTypeComment"
+                   implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
+
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
   </extensions>
 

@@ -351,4 +351,17 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testPyDunderSlotsInspection() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
   }
+
+  // PY-21645
+  public void testInspectionsDisabledInFunctionTypeComments() {
+    myFixture.enableInspections(PyIncorrectDocstringInspection.class); 
+    myFixture.enableInspections(PyMissingOrEmptyDocstringInspection.class);
+    myFixture.enableInspections(PySingleQuotedDocstringInspection.class); 
+    myFixture.enableInspections(PyByteLiteralInspection.class); 
+    myFixture.enableInspections(PyMandatoryEncodingInspection.class); 
+    myFixture.enableInspections(PyNonAsciiCharInspection.class); 
+
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
+    myFixture.checkHighlighting(true, false, true);
+  }
 }
