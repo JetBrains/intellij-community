@@ -33,6 +33,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_RESOLUTION_STRATEGY = "org.gradle.api.artifacts.ResolutionStrategy";
   @NonNls public static final String GRADLE_API_CONFIGURATION = "org.gradle.api.artifacts.Configuration";
   @NonNls public static final String GRADLE_API_ARTIFACT_HANDLER = "org.gradle.api.artifacts.dsl.ArtifactHandler";
+  @NonNls public static final String GRADLE_API_PUBLISH_ARTIFACT = "org.gradle.api.artifacts.PublishArtifact";
   @NonNls public static final String GRADLE_API_DEPENDENCY_HANDLER = "org.gradle.api.artifacts.dsl.DependencyHandler";
   @NonNls public static final String GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ExternalModuleDependency";
   @NonNls public static final String GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ClientModule";
