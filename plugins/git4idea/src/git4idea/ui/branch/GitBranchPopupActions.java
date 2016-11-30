@@ -51,7 +51,11 @@ class GitBranchPopupActions {
     myRepository = repository;
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
+  ActionGroup createActions() {
+    return createActions(null, "");
+  }
+
+  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
@@ -61,8 +65,7 @@ class GitBranchPopupActions {
     if (toInsert != null) {
       popupGroup.addAll(toInsert);
     }
-
-    popupGroup.addSeparator("Local Branches");
+    popupGroup.addSeparator("Local Branches" + repoInfo);
     List<GitBranch> localBranches = new ArrayList<>(myRepository.getBranches().getLocalBranches());
     Collections.sort(localBranches);
     for (GitBranch localBranch : localBranches) {
@@ -71,7 +74,7 @@ class GitBranchPopupActions {
       }
     }
 
-    popupGroup.addSeparator("Remote Branches");
+    popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<GitBranch> remoteBranches = new ArrayList<>(myRepository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
     for (GitBranch remoteBranch : remoteBranches) {

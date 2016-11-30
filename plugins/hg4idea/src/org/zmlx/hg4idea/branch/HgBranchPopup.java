@@ -108,14 +108,14 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     popupGroup.addSeparator("Repositories");
     for (HgRepository repository : DvcsUtil.sortRepositories(myRepositoryManager.getRepositories())) {
       popupGroup.add(new RootAction<>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
-                                      new HgBranchPopupActions(repository.getProject(), repository).createActions(null),
+                                      new HgBranchPopupActions(repository.getProject(), repository).createActions(),
                                       HgUtil.getDisplayableBranchOrBookmarkText(repository)));
     }
     return popupGroup;
   }
 
   protected void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
-    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions));
+    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions, myRepoTitleInfo));
   }
 }
 

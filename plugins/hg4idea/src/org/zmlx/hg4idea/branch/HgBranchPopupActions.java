@@ -68,7 +68,11 @@ public class HgBranchPopupActions {
     myRepository = repository;
   }
 
-  ActionGroup createActions(@Nullable DefaultActionGroup toInsert) {
+  ActionGroup createActions() {
+    return createActions(null, "");
+  }
+
+  ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgNewBookmarkAction(Collections.singletonList(myRepository), myRepository));
@@ -78,7 +82,7 @@ public class HgBranchPopupActions {
       popupGroup.addAll(toInsert);
     }
 
-    popupGroup.addSeparator("Bookmarks");
+    popupGroup.addSeparator("Bookmarks" + repoInfo);
     List<String> bookmarkNames = getSortedNamesWithoutHashes(myRepository.getBookmarks());
     String currentBookmark = myRepository.getCurrentBookmark();
     for (String bookmark : bookmarkNames) {
@@ -89,7 +93,7 @@ public class HgBranchPopupActions {
       popupGroup.add(bookmarkAction);
     }
 
-    popupGroup.addSeparator("Branches");
+    popupGroup.addSeparator("Branches" + repoInfo);
     List<String> branchNamesList = new ArrayList<>(myRepository.getOpenedBranches());//only opened branches have to be shown
     Collections.sort(branchNamesList);
     for (String branch : branchNamesList) {
