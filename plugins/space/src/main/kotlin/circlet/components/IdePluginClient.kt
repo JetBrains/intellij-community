@@ -4,14 +4,19 @@ import circlet.*
 import circlet.login.*
 import circlet.reactive.*
 import circlet.utils.*
+import com.intellij.concurrency.*
 import com.intellij.notification.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
+import com.intellij.util.ui.*
 import com.intellij.xml.util.*
 import klogging.*
 import nl.komponents.kovenant.*
 import runtime.*
+import runtime.klogger.*
 import runtime.lifetimes.*
+import java.util.concurrent.*
+import kotlin.concurrent.*
 
 private val log = KLoggers.logger("plugin/IdePluginClient.kt")
 
@@ -22,24 +27,19 @@ enum class ConnectingState {
     TryConnect
 }
 
-class IdePLuginClientData(val enabled : Boolean) {}
-
-@State(name = "IdePluginClient", storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
 class IdePluginClient(val project : Project) :
     AbstractProjectComponent(project),
-    PersistentStateComponent<IdePLuginClientData>,
     ILifetimedComponent by LifetimedComponent(project) {
 
-    val loginDataComponent = project.component<CircletLoginComponent>()
+    val loginDataComponent = component<CircletLoginComponent>()
 
     val state = Property(ConnectingState.Disconnected)
-    val enabled = Property(false)
     val askPasswordExplicitlyAllowed = Property(false)
     val client = Property<CircletClient?>(null)
 
     init {
 
-        enabled.whenTrue(componentLifetime) { enabledLt ->
+        loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
             state.value = ConnectingState.TryConnect
 
             enabledLt.add {
@@ -75,19 +75,24 @@ class IdePluginClient(val project : Project) :
 
     fun enable() {
         askPasswordExplicitlyAllowed.value = true
-        enabled.value = true
+        loginDataComponent.enabled.value = true
     }
 
     fun disable() {
-        enabled.value = false
+        loginDataComponent.enabled.value = false
     }
 
     private fun tryReconnect(lifetime: Lifetime) {
-        val loginComponent = myProject.getComponent<CircletLoginComponent>()
+
+        val ask = askPasswordExplicitlyAllowed.value
+        askPasswordExplicitlyAllowed.value = false
+
+        val loginComponent = component<CircletLoginComponent>()
 
         task {
-            loginComponent.
-                getAccessToken(loginComponent.login, loginComponent.pass).
+            log.catch {
+                loginComponent.
+                    getAccessToken(loginComponent.login, loginComponent.pass).
                     thenLater(lifetime) {
                         val errorMessage = it.errorMessage
                         if (errorMessage == null || errorMessage.isEmpty()) {
@@ -96,17 +101,22 @@ class IdePluginClient(val project : Project) :
                             connectWithToken(lifetime, token)
                         } else {
                             state.value = ConnectingState.AuthFailed
+                            if (ask)
+                                askPassword()
                         }
                     }. failureLater(lifetime) {
-                        state.value = ConnectingState.Connected
-                        if (askPasswordExplicitlyAllowed.value)
-                            askPassword()
-                    }
+                        JobScheduler.getScheduler().schedule({
+                            if (!lifetime.isTerminated)
+                                tryReconnect(lifetime)
+                        }, 5000, TimeUnit.MILLISECONDS)
+                        state.value = ConnectingState.TryConnect
+                }
+            }
         }
     }
 
     fun askPassword() {
-        LoginDialog(LoginDialogViewModel(myProject.getComponent<CircletLoginComponent>())).show()
+        LoginDialog(LoginDialogViewModel(component<CircletLoginComponent>())).show()
     }
 
     private fun connectWithToken(lifetime : Lifetime, token: String) {
@@ -164,14 +174,6 @@ class IdePluginClient(val project : Project) :
             { a, b -> project.component<IdePluginClient>().askPassword() })
             .notify(project)
     }
-
-    override fun loadState(state: IdePLuginClientData) {
-        enabled.value = state.enabled
-    }
-
-    override fun getState(): IdePLuginClientData =
-        IdePLuginClientData(enabled.value)
-
 }
 
 

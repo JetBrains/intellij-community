@@ -11,7 +11,7 @@ class EnableAction : AnAction() {
         val project = e.project
         project ?: return
 
-        e.presentation.isEnabled = !project.component<IdePluginClient>().enabled.value
+        e.presentation.isEnabled = !component<CircletLoginComponent>().enabled.value
     }
 
     override fun actionPerformed(e: AnActionEvent?) {

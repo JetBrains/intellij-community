@@ -68,11 +68,11 @@ class LifetimedComponent(project: Project) : ILifetimedComponent {
         get() = lifetime
 }
 
-interface ILifetimedDisposableApplicationComponent : Disposable {
+interface ILifetimedApplicationComponent : Disposable {
     val componentLifetime: Lifetime
 }
 
-class LifetimedDisposableApplicationComponent() : ILifetimedDisposableApplicationComponent {
+class LifetimedApplicationComponent() : ILifetimedApplicationComponent {
     private val lifetimeDefinition = Lifetime.create(Lifetime.Eternal)
 
     init {

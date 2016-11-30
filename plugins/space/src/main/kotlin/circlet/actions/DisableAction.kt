@@ -11,7 +11,7 @@ class DisableAction : AnAction() {
         val project = e.project
         project ?: return
 
-        val enabled = project.component<IdePluginClient>().enabled.value
+        val enabled = component<CircletLoginComponent>().enabled.value
 
         e.presentation.isEnabled = enabled
         e.presentation.isVisible = enabled

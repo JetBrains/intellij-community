@@ -10,7 +10,7 @@ class ReEnterCredentials : AnAction() {
         e ?: return
         val project = e.project
         project ?: return
-        val component = project.component<IdePluginClient>()
+        val component = project.component<CircletLoginComponent>()
 
         e.presentation.isEnabled = component.enabled.value
         e.presentation.isVisible = component.enabled.value

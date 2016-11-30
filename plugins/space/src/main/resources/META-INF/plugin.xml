@@ -22,14 +22,14 @@
     </extensions>
 
     <application-components>
+        <component>
+            <implementation-class>circlet.components.CircletLoginComponent</implementation-class>
+        </component>
     </application-components>
 
     <project-components>
         <component>
             <implementation-class>circlet.components.IdePluginClient</implementation-class>
-        </component>
-        <component>
-            <implementation-class>circlet.components.CircletLoginComponent</implementation-class>
         </component>
     </project-components>
 
