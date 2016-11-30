@@ -19,8 +19,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import java.util.*
 
 /**
@@ -42,19 +44,41 @@ fun processDeclarations(aClass: PsiClass,
     aClass.processDeclarations(processor, state, null, place)
   }
   else {
-    val isSetterCandidate = name.startsWith("set")
-    val processedSignatures = HashSet<List<String>>()
-    for (method in aClass.findMethodsByName(name, true)) {
-      if (!isSetterCandidate) {
-        processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
+    val lValue: Boolean = place is GrReferenceExpression && PsiUtil.isLValue(place);
+    if (!lValue) {
+      val isSetterCandidate = name.startsWith("set")
+      val isGetterCandidate = name.startsWith("get")
+      val processedSignatures = HashSet<List<String>>()
+      if (isGetterCandidate || !isSetterCandidate) {
+        val propertyName = name.removePrefix("get").decapitalize()
+        for (method in aClass.findMethodsByName(propertyName, true)) {
+          processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
+          place.putUserData(RESOLVED_CODE, true)
+          if (!processor.execute(method, state)) return false
+        }
+        for (method in aClass.findMethodsByName("set" + propertyName.capitalize(), true)) {
+          if (processedSignatures.contains(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))) continue
+          processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
+          place.putUserData(RESOLVED_CODE, true)
+          if (!processor.execute(method, state)) return false
+        }
       }
-      place.putUserData(RESOLVED_CODE, true)
-      if (!processor.execute(method, state)) return false
-    }
-
-    if (!isSetterCandidate) {
-      for (method in aClass.findMethodsByName("set" + name.capitalize(), true)) {
+      if (!isGetterCandidate && !isSetterCandidate) {
+        for (method in aClass.findMethodsByName("get" + name.capitalize(), true)) {
+          if (processedSignatures.contains(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))) continue
+          processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
+          place.putUserData(RESOLVED_CODE, true)
+          if (!processor.execute(method, state)) return false
+        }
+      }
+      for (method in aClass.findMethodsByName(name, true)) {
         if (processedSignatures.contains(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))) continue
+        place.putUserData(RESOLVED_CODE, true)
+        if (!processor.execute(method, state)) return false
+      }
+    }
+    else {
+      for (method in aClass.findMethodsByName(name, true)) {
         place.putUserData(RESOLVED_CODE, true)
         if (!processor.execute(method, state)) return false
       }
