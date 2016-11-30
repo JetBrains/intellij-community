@@ -559,6 +559,13 @@ public interface PsiElement extends UserDataHolder, Iconable {
   @Contract(pure=true)
   String toString();
 
+  /**
+   * This method shouldn't be called by clients directly, because there are no guarantees of it being symmetric.
+   * It's called by {@link PsiManager#areElementsEquivalent(PsiElement, PsiElement)} internally, which clients should invoke instead.<p/>
+   *
+   * Implementations of this method should return {@code true} if the parameter is resolve-equivalent to {@code this}, i.e. it represents
+   * the same entity from the language perspective. See also {@link PsiManager#areElementsEquivalent(PsiElement, PsiElement)} documentation.
+   */
   @Contract(pure=true)
   boolean isEquivalentTo(PsiElement another);
 }
