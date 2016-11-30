@@ -734,6 +734,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-21707
+  public void testMultilineFormatString() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
