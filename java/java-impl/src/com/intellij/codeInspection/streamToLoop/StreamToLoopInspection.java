@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -50,8 +49,6 @@ import static com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperatio
  */
 public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
-
-  private HighlightDisplayKey myKey;
 
   // To quickly filter out most of the non-interesting method calls
   private static final Set<String> SUPPORTED_TERMINALS = StreamEx.of("count", "sum", "summaryStatistics", "reduce", "collect",
