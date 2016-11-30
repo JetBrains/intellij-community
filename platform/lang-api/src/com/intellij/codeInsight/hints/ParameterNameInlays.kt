@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
-class InlayInfo(val text: String, val offset: Int)
+data class InlayInfo(val text: String, val offset: Int)
 
 open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>) {
   

@@ -73,7 +73,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     setTitle("Configure Parameter Name Hints Blacklist");
     init();
 
-    myOptionsPanel.setVisible(false);
+    myOptionsPanel.setVisible(true);
   }
 
   private void updateOkEnabled() {
@@ -103,7 +103,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
     ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
     settings.setShowParamNameContainedInMethodName(myShowIfParamNameContainedInMethod.isSelected());
-    settings.setShowWhenMultipleParamsWithSameType(myShowWhenMultipleParamsWithSameType.isSelected());
+    settings.setShowForParamsWithSameType(myShowWhenMultipleParamsWithSameType.isSelected());
   }
 
   private static void storeBlackListDiff(@NotNull Language language, @NotNull String text) {
@@ -147,7 +147,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
     ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
     myShowIfParamNameContainedInMethod.setSelected(settings.isShowParamNameContainedInMethodName());
-    myShowWhenMultipleParamsWithSameType.setSelected(settings.getShowWhenMultipleParamsWithSameType());
+    myShowWhenMultipleParamsWithSameType.setSelected(settings.isShowForParamsWithSameType());
 
     initLanguageCombo(languages, selected);
   }

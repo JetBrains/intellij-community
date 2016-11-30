@@ -50,7 +50,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val myAddedPatterns = hashMapOf<String, Set<String>>()
 
   var isShowParamNameContainedInMethodName: Boolean = false
-  var showWhenMultipleParamsWithSameType: Boolean = false
+  var isShowForParamsWithSameType: Boolean = false
 
   fun addIgnorePattern(language: Language, pattern: String) {
     val patternsBefore = getAddedPatterns(language)
@@ -85,7 +85,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
       .setAttribute("value", isShowParamNameContainedInMethodName.toString())
 
     root.getOrCreateChild(XmlTagHelper.SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE)
-      .setAttribute("value", showWhenMultipleParamsWithSameType.toString())
+      .setAttribute("value", isShowForParamsWithSameType.toString())
 
     return root
   }
@@ -95,7 +95,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     myRemovedPatterns.clear()
 
     isShowParamNameContainedInMethodName = false
-    showWhenMultipleParamsWithSameType = false
+    isShowForParamsWithSameType = false
 
     val allBlackLists = state
       .getChild(XmlTagHelper.BLACKLISTS)
@@ -108,7 +108,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     }
 
     isShowParamNameContainedInMethodName = state.getBooleanValue(XmlTagHelper.SHOW_IF_PARAM_NAME_CONTAINED, true)
-    showWhenMultipleParamsWithSameType = state.getBooleanValue(XmlTagHelper.SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE, false)
+    isShowForParamsWithSameType = state.getBooleanValue(XmlTagHelper.SHOW_WHEN_MULTIPLE_PARAMS_WITH_SAME_TYPE, false)
   }
 
   private fun Element.getBooleanValue(childName: String, defaultValue: Boolean): Boolean {
