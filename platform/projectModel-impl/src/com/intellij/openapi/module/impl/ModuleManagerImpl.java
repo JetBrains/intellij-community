@@ -73,7 +73,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
-  private List<ModulePath> myModulePaths;
+  private List<ModulePath> myModulePathsToLoad;
   private final List<ModulePath> myFailedModulePaths = new SmartList<>();
   @NonNls public static final String ELEMENT_MODULES = "modules";
   @NonNls public static final String ELEMENT_MODULE = "module";
@@ -147,9 +147,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @Override
   public void loadState(Element state) {
-    List<ModulePath> prevPaths = myModulePaths;
-    myModulePaths = new ArrayList<>(getPathsToModuleFiles(state));
-    if (prevPaths == null) {
+    boolean isFirstLoadState = myModulePathsToLoad == null;
+    myModulePathsToLoad = new ArrayList<>(getPathsToModuleFiles(state));
+    if (isFirstLoadState) {
       return;
     }
 
@@ -157,8 +157,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     Module[] existingModules = model.getModules();
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    Map<String, ModulePath> modulePathMap = new THashMap<>(myModulePaths.size());
-    for (ModulePath modulePath : myModulePaths) {
+    Map<String, ModulePath> modulePathMap = new THashMap<>(myModulePathsToLoad.size());
+    for (ModulePath modulePath : myModulePathsToLoad) {
       modulePathMap.put(modulePath.getPath(), modulePath);
     }
 
@@ -168,7 +168,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         model.disposeModule(existingModule);
       }
       else {
-        myModulePaths.remove(correspondingPath);
+        myModulePathsToLoad.remove(correspondingPath);
 
         String groupStr = correspondingPath.getGroup();
         String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
@@ -179,8 +179,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     loadModules((ModuleModelImpl)model);
-
     ApplicationManager.getApplication().runWriteAction(() -> model.commit());
+    // clear only if successfully loaded
+    myModulePathsToLoad.clear();
   }
 
   @NotNull
@@ -206,22 +207,23 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   protected void loadModules(@NotNull ModuleModelImpl moduleModel) {
-    if (myModulePaths == null || myModulePaths.isEmpty()) {
+    if (myModulePathsToLoad == null || myModulePathsToLoad.isEmpty()) {
       return;
     }
-    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
     final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progressIndicator != null) {
       progressIndicator.setText("Loading modules...");
       progressIndicator.setText2("");
     }
-    myFailedModulePaths.clear();
-    myFailedModulePaths.addAll(myModulePaths);
-    final List<Module> modulesWithUnknownTypes = new ArrayList<>();
-    List<ModuleLoadingErrorDescription> errors = new ArrayList<>();
 
-    for (ModulePath modulePath : myModulePaths) {
+    myFailedModulePaths.clear();
+    myFailedModulePaths.addAll(myModulePathsToLoad);
+
+    List<Module> modulesWithUnknownTypes = new ArrayList<>();
+    List<ModuleLoadingErrorDescription> errors = new ArrayList<>();
+    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
+    for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator != null) {
         progressIndicator.checkCanceled();
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
@@ -233,16 +235,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
         final String groupPathString = modulePath.getGroup();
         if (groupPathString != null) {
-          final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
-
-          groupInterner.setModuleGroupPath(moduleModel, module, groupPath); //model should be updated too
+          // model should be updated too
+          groupInterner.setModuleGroupPath(moduleModel, module, groupPathString.split(MODULE_GROUP_SEPARATOR));
         }
         myFailedModulePaths.remove(modulePath);
       }
       catch (IOException e) {
-        errors
-          .add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                    modulePath, this));
+        errors.add(ModuleLoadingErrorDescription
+                     .create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
       }
       catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
         errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
@@ -254,7 +254,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
 
-  public int getModulePathsCount() { return myModulePaths == null ? 0 : myModulePaths.size(); }
+  public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }
 
   private double myProgressStep;
 
