@@ -154,6 +154,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   protected void addProfile(InspectionProfileModifiableModel model) {
     final SingleInspectionProfilePanel panel = createPanel(model);
     myPanels.add(panel);
+    panel.setVisible(false);
+    myProfilePanelHolder.add(panel);
     myProfiles.getProfilesComboBox().addProfile(model);
     myProfiles.getProfilesComboBox().selectProfile(model);
   }
@@ -525,7 +527,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     for (InspectionProfileImpl profile : profiles) {
       InspectionProfileModifiableModel inspectionProfile = new InspectionProfileModifiableModel(profile);
       modifiableProfiles.add(inspectionProfile);
-      myPanels.add(createPanel(inspectionProfile));
+      final SingleInspectionProfilePanel panel = createPanel(inspectionProfile);
+      myPanels.add(panel);
+      panel.setVisible(false);
+      myProfilePanelHolder.add(panel);
     }
     myProfiles.getProfilesComboBox().reset(modifiableProfiles);
     myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
@@ -638,15 +643,14 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myProfilePanelHolder;
+    final SingleInspectionProfilePanel panel = getSelectedPanel();
+    return panel == null ? null : panel.getPreferredFocusedComponent();
   }
 
   private void showProfile(InspectionProfileImpl profile) {
     final SingleInspectionProfilePanel panel = getProfilePanel(profile);
-    myProfilePanelHolder.removeAll();
-    myProfilePanelHolder.add(panel);
-    panel.setVisible(true);
-    myProfilePanelHolder.revalidate();
-    myProfilePanelHolder.repaint();
+    for (Component component : myProfilePanelHolder.getComponents()) {
+      component.setVisible(component == panel);
+    }
   }
 }
