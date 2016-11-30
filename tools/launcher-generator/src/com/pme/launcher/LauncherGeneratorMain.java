@@ -69,7 +69,7 @@ public class LauncherGeneratorMain {
     }
 
     Element appInfoRoot = appInfo.getRootElement();
-    String splashUrl = appInfoRoot.getChild("logo").getAttributeValue("url");
+    String splashUrl = getChild(appInfoRoot, "logo").getAttributeValue("url");
     if (splashUrl.startsWith("/")) {
       splashUrl = splashUrl.substring(1);
     }
@@ -89,7 +89,7 @@ public class LauncherGeneratorMain {
       System.exit(6);
     }
 
-    String icoUrl = appInfoRoot.getChild("icon").getAttributeValue("ico");
+    String icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
     if (icoUrl == null) {
       System.err.println(".ico file URL not specified in application info file " + appInfoFileName);
       System.exit(11);
@@ -125,11 +125,11 @@ public class LauncherGeneratorMain {
       System.exit(8);
     }
 
-    String companyName = appInfoRoot.getChild("company").getAttributeValue("name");
-    Element names = appInfoRoot.getChild("names");
+    String companyName = getChild(appInfoRoot, "company").getAttributeValue("name");
+    Element names = getChild(appInfoRoot, "names");
     String productShortName = names.getAttributeValue("product");
     String productFullName = names.getAttributeValue("fullname");
-    Element versionElement = appInfoRoot.getChild("version");
+    Element versionElement = getChild(appInfoRoot, "version");
     int majorVersion = Integer.parseInt(versionElement.getAttributeValue("major"));
     String minorVersionString = versionElement.getAttributeValue("minor");
     Pattern p = Pattern.compile("(\\d+)(\\.(\\d+))?");
@@ -139,7 +139,7 @@ public class LauncherGeneratorMain {
     }
     int minorVersion = Integer.parseInt(matcher.group(1));
     int bugfixVersion = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
-    String buildNumber = appInfoRoot.getChild("build").getAttributeValue("number");
+    String buildNumber = getChild(appInfoRoot, "build").getAttributeValue("number");
     String versionString = "" + majorVersion + "." + minorVersion + "." + bugfixVersion + "." + buildNumber;
 
     int year = new GregorianCalendar().get(Calendar.YEAR);
@@ -175,6 +175,10 @@ public class LauncherGeneratorMain {
       e.printStackTrace();
       System.exit(10);
     }
+  }
+
+  private static Element getChild(Element appInfoRoot, String logo) {
+    return appInfoRoot.getChild(logo, appInfoRoot.getNamespace());
   }
 
   private static Map<String, Integer> loadResourceIDs(String arg) throws IOException {
