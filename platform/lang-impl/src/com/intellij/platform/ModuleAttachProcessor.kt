@@ -114,19 +114,18 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
   }
 
   override fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-    if (!projectDir.exists()) {
-      val projectDirParent = projectDir.parent!!
-      val newProject = ProjectManagerEx.getInstanceEx().newProject(projectDirParent.fileName.toString(), projectDirParent.toString(), true, false) ?: return false
-
-      val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirParent.systemIndependentPath)
+    val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
+    if (!dotIdeaDir.exists()) {
+      val newProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.fileName.toString(), projectDir.toString(), true, false) ?: return false
+      val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.systemIndependentPath)
       PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject)
       newProject.save()
       runWriteAction { Disposer.dispose(newProject) }
     }
 
-    var isAttached = findMainModule(project, projectDir, callback)
+    var isAttached = findMainModule(project, dotIdeaDir, callback)
     if (!isAttached) {
-      isAttached = findMainModule(project, projectDir.resolve(Project.DIRECTORY_STORE_FOLDER), callback)
+      isAttached = findMainModule(project, projectDir, callback)
     }
     if (isAttached) {
       return true
