@@ -16,7 +16,6 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -458,6 +457,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       Disposer.dispose(FrameWrapper.this);
       super.dispose();
       rootPane = null;
+      setMenuBar(null);
     }
 
     public Object getData(String dataId) {
