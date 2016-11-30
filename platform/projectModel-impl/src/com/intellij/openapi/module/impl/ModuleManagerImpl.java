@@ -154,9 +154,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     final ModifiableModuleModel model = getModifiableModel();
-
     Module[] existingModules = model.getModules();
-
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
     Map<String, ModulePath> modulePathMap = new THashMap<>(myModulePaths.size());
@@ -165,13 +163,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     for (Module existingModule : existingModules) {
-      ModulePath correspondingPath = modulePathMap.get(existingModule.getModuleFilePath());
+      ModulePath correspondingPath = modulePathMap.remove(existingModule.getModuleFilePath());
       if (correspondingPath == null) {
         model.disposeModule(existingModule);
       }
       else {
         myModulePaths.remove(correspondingPath);
-        modulePathMap.remove(correspondingPath.getPath());
 
         String groupStr = correspondingPath.getModuleGroup();
         String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
