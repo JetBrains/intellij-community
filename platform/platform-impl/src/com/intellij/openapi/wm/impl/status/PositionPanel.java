@@ -155,7 +155,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
             int selectionEndLine = editor.getDocument().getLineNumber(selectionEnd);
             if (selectionEndLine > selectionStartLine) {
               message.append(", ");
-              message.append(UIBundle.message("position.panel.selected.lines.count", selectionEndLine - selectionStartLine + 1));
+              message.append(UIBundle.message("position.panel.selected.line.breaks.count", selectionEndLine - selectionStartLine));
             }
             message.append("     ");
           }
