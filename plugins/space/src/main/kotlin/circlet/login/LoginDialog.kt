@@ -16,7 +16,6 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : JDialog(JOptionPane.get
         isModal = true
         val cs = GridBagConstraints()
         cs.fill = GridBagConstraints.HORIZONTAL
-   //     preferredSize = Dimension(400.px, 200.px)
         contentPane.add(
             JPanel(GridBagLayout()).apply {
                 add(JLabel().apply {
