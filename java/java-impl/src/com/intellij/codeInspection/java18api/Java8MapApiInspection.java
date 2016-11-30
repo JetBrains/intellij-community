@@ -29,7 +29,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -383,13 +382,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
               refs = StreamEx.of(PsiTreeUtil.collectElementsOfType(value, PsiReferenceExpression.class))
                 .filter(ref -> ref.getQualifierExpression() == null && ref.isReferenceTo(element)).toList();
               if (!refs.isEmpty()) {
-                String name = ((PsiReferenceExpression)key).getReferenceName();
-                // like "myVariableName" => "mvn"
-                nameCandidate = IntStreamEx.ofChars(name).mapFirst(Character::toUpperCase).filter(Character::isUpperCase).charsToString()
-                  .toLowerCase(Locale.ENGLISH);
-                if (nameCandidate.isEmpty()) {
-                  nameCandidate = "k";
-                }
+                nameCandidate = getNameCandidate(((PsiReferenceExpression)key).getReferenceName());
               }
             }
           }
@@ -417,6 +410,29 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
         ct.deleteAndRestoreComments(removed);
       }
       CodeStyleManager.getInstance(project).reformat(result);
+    }
+
+    @NotNull
+    private static String getNameCandidate(String name) {
+      // Either last uppercase letter (if it's not the last letter) or the first letter, removing leading underscores
+      // token -> t
+      // myAccessToken -> t
+      // SQL -> s
+      // __name -> n
+      // __1 -> k
+      String nameCandidate;
+      name = name.replaceFirst("^[_\\d]+", "");
+      if (name.isEmpty()) return "k";
+      nameCandidate = name.substring(0, 1);
+      for (int pos = name.length() - 1; pos > 0; pos--) {
+        if (Character.isUpperCase(name.charAt(pos))) {
+          if (pos != name.length() - 1) {
+            nameCandidate = name.substring(pos, pos + 1);
+          }
+          break;
+        }
+      }
+      return nameCandidate.toLowerCase(Locale.ENGLISH);
     }
   }
 
