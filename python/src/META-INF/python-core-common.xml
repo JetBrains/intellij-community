@@ -711,6 +711,10 @@
 
     <!-- PyQt -->
     <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
+    
+    <!-- PyFunctionTypeAnnotation -->
+    <visitorFilter language="PyFunctionTypeComment"
+                   implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
   </extensions>
 
   <actions>
