@@ -208,18 +208,19 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   protected void loadModules(@NotNull ModuleModelImpl moduleModel) {
+    myFailedModulePaths.clear();
+
     if (myModulePathsToLoad == null || myModulePathsToLoad.isEmpty()) {
       return;
     }
+
+    myFailedModulePaths.addAll(myModulePathsToLoad);
 
     final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progressIndicator != null) {
       progressIndicator.setText("Loading modules...");
       progressIndicator.setText2("");
     }
-
-    myFailedModulePaths.clear();
-    myFailedModulePaths.addAll(myModulePathsToLoad);
 
     List<Module> modulesWithUnknownTypes = new ArrayList<>();
     List<ModuleLoadingErrorDescription> errors = new ArrayList<>();
