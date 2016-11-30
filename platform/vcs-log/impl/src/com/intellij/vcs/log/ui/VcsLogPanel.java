@@ -16,21 +16,32 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
+
+import static com.intellij.vcs.log.VcsLogDataKeys.*;
 
 public class VcsLogPanel extends JBPanel implements DataProvider {
   @NotNull private final VcsLogManager myManager;
+  @NotNull private final AbstractVcsLogUi myUi;
 
   public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull AbstractVcsLogUi logUi) {
     super(new BorderLayout());
     myManager = manager;
-    add(logUi.getMainComponent(), BorderLayout.CENTER);
+    myUi = logUi;
+    add(myUi.getMainComponent(), BorderLayout.CENTER);
   }
 
   @Nullable
@@ -38,6 +49,21 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
   public Object getData(@NonNls String dataId) {
     if (VcsLogInternalDataKeys.LOG_MANAGER.is(dataId)) {
       return myManager;
+    }
+    else if (VCS_LOG.is(dataId)) {
+      return myUi.getVcsLog();
+    }
+    else if (VCS_LOG_UI.is(dataId)) {
+      return myUi;
+    }
+    else if (VCS_LOG_DATA_PROVIDER.is(dataId)) {
+      return myManager.getDataManager();
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
+      List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
+      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ArrayUtil.toObjectArray(ContainerUtil.map(hashes, commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())),
+                                     VcsRevisionNumber.class);
     }
     return null;
   }

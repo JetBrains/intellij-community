@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -208,6 +209,11 @@ public class VcsLogUtil {
 
   public static boolean maybeRegexp(@NotNull String text) {
     return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
+  }
+
+  @NotNull
+  public static TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
+    return new TextRevisionNumber(hash.asString(), hash.toShortString());
   }
 
   @NotNull

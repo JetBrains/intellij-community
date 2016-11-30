@@ -9,10 +9,8 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -22,7 +20,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -253,16 +254,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (VcsLogDataKeys.VCS_LOG.is(dataId)) {
-      return myLog;
-    }
-    else if (VcsLogDataKeys.VCS_LOG_UI.is(dataId)) {
-      return myUi;
-    }
-    else if (VcsLogDataKeys.VCS_LOG_DATA_PROVIDER.is(dataId)) {
-      return myLogData;
-    }
-    else if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+    if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       return ArrayUtil.toObjectArray(myChangesBrowser.getCurrentDisplayedChanges(), Change.class);
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
@@ -273,13 +265,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                                                                                   VcsUserUtil.getShortPresentation(detail.getCommitter()),
                                                                                   new Date(detail.getCommitTime()),
                                                                                   detail.getChanges(),
-                                                                                  convertToRevisionNumber(detail.getId())));
-    }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<CommitId> hashes = myLog.getSelectedCommits();
-      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil
-        .toObjectArray(ContainerUtil.map(hashes, commitId -> convertToRevisionNumber(commitId.getHash())), VcsRevisionNumber.class);
+                                                                                  VcsLogUtil.convertToRevisionNumber(detail.getId())));
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
       int[] selectedRows = myGraphTable.getSelectedRows();
@@ -311,11 +297,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull
   public SearchTextField getTextFilter() {
     return myTextFilter;
-  }
-
-  @NotNull
-  private static TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
-    return new TextRevisionNumber(hash.asString(), hash.toShortString());
   }
 
   public void showDetails(boolean state) {
