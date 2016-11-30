@@ -54,7 +54,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     myDetachedMode = presentation.isDetachedMode();
   }
 
-  static class TargetsRootNode extends DefaultMutableTreeNode {
+  public static class TargetsRootNode extends DefaultMutableTreeNode {
     TargetsRootNode(String name) {
       super(name);
     }

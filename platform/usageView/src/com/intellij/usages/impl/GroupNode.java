@@ -324,7 +324,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return myGroup;
   }
 
-  int getRecursiveUsageCount() {
+  public int getRecursiveUsageCount() {
     return myRecursiveUsageCount;
   }
 

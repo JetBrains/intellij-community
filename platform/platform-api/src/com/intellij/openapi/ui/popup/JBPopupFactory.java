@@ -245,7 +245,7 @@ public abstract class JBPopupFactory {
   public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
-                                                   ActionSelectionAid selectionAidMethod,
+                                                   ActionSelectionAid aid,
                                                    boolean showDisabledActions,
                                                    @Nullable Runnable disposeCallback,
                                                    int maxRowCount,
