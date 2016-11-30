@@ -20,8 +20,8 @@ import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.reporting.ReportEntry;
-import org.junit.platform.engine.support.descriptor.JavaClassSource;
-import org.junit.platform.engine.support.descriptor.JavaMethodSource;
+import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -281,11 +281,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   static String getClassName(TestIdentifier description) {
     return description.getSource().map(source -> {
-      if (source instanceof JavaMethodSource) {
-        return ((JavaMethodSource)source).getJavaClass().getName();
+      if (source instanceof MethodSource) {
+        return ((MethodSource)source).getClassName();
       }
-      if (source instanceof JavaClassSource) {
-        return ((JavaClassSource)source).getJavaClass().getName();
+      if (source instanceof ClassSource) {
+        return ((ClassSource)source).getClassName();
       }
       try {
         return (String)source.getClass().getDeclaredMethod("getClassName").invoke(source);
@@ -298,8 +298,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   static String getMethodName(TestIdentifier testIdentifier) {
     return testIdentifier.getSource().map((source) -> {
-      if (source instanceof JavaMethodSource) {
-        return ((JavaMethodSource)source).getJavaMethodName();
+      if (source instanceof MethodSource) {
+        return ((MethodSource)source).getMethodName();
       }
       try {
         return (String)source.getClass().getDeclaredMethod("getMethodName").invoke(source);
