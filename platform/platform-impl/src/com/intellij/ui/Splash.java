@@ -19,6 +19,8 @@ import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -127,6 +129,14 @@ public class Splash extends JDialog implements StartupProgress {
       myProgress = progress;
       myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
     }
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    removeAll();
+    DialogWrapper.cleanupRootPane(rootPane);
+    rootPane = null;
   }
 
   private void paintProgress(Graphics g) {

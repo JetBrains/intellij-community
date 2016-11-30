@@ -846,6 +846,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         myWindowListener = null;
       }
 
+      for (WindowListener listener : getWindowListeners()) {
+        LOG.info("Clearing stale window listener: " + listener);
+        removeWindowListener(listener);
+      }
+
       if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
         myFocusTrackback.dispose();
         myFocusTrackback = null;
@@ -858,16 +863,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
       super.dispose();
 
-
-      removeAll(); // remove root pane from a component's list
-      if (rootPane != null) { // Workaround for bug in native code to hold rootPane
-        try {
-          Disposer.clearOwnFields(rootPane);
-          rootPane = null;
-        }
-        catch (Exception ignored) {
-        }
-      }
+      removeAll();
+      DialogWrapper.cleanupRootPane(rootPane);
+      rootPane = null;
 
       // http://bugs.sun.com/view_bug.do?bug_id=6614056
       try {

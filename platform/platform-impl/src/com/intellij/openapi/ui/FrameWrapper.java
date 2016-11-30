@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,6 +26,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -59,6 +61,8 @@ import java.io.File;
 import java.util.Map;
 
 public class FrameWrapper implements Disposable, DataProvider {
+  private static final Logger LOG = Logger.getInstance(FrameWrapper.class);
+
   private String myDimensionKey = null;
   private JComponent myComponent = null;
   private JComponent myPreferredFocus = null;
@@ -230,13 +234,16 @@ public class FrameWrapper implements Disposable, DataProvider {
     myImage = null;
     myDisposed = true;
 
-    if (frame != null) {
-      JRootPane rootPane = ((RootPaneContainer)frame).getRootPane();
-      if (rootPane != null) {
-        DialogWrapper.unregisterKeyboardActions(rootPane);
-      }
+    if (statusBar != null) {
+      Disposer.dispose(statusBar);
+    }
 
+    if (frame != null) {
       frame.setVisible(false);
+
+      JRootPane rootPane = ((RootPaneContainer)frame).getRootPane();
+      frame.removeAll();
+      DialogWrapper.cleanupRootPane(rootPane);
 
       if (frame instanceof JFrame) {
         FocusTrackback.release((JFrame)frame);
@@ -246,10 +253,11 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
 
       frame.dispose();
-    }
 
-    if (statusBar != null) {
-      Disposer.dispose(statusBar);
+      for (WindowListener listener : frame.getWindowListeners()) {
+        LOG.info("Clearing stale window listener: " + listener);
+        frame.removeWindowListener(listener);
+      }
     }
   }
 
@@ -449,6 +457,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       myDisposing = true;
       Disposer.dispose(FrameWrapper.this);
       super.dispose();
+      rootPane = null;
     }
 
     public Object getData(String dataId) {
@@ -533,6 +542,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       myDisposing = true;
       Disposer.dispose(FrameWrapper.this);
       super.dispose();
+      rootPane = null;
     }
 
     public Object getData(String dataId) {
