@@ -155,10 +155,11 @@ public class Disposer {
     return ourDebugMode;
   }
 
-  public static void clearOwnFields(@Nullable Object object) {
+  public static void clearOwnFields(@Nullable Object object, @NotNull Condition<? super Field> selectCondition) {
     if (object == null) return;
     for (Field each : ReflectionUtil.collectFields(object.getClass())) {
       if ((each.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) continue;
+      if (!selectCondition.value(each)) continue;
       try {
         ReflectionUtil.resetField(object, each);
       }
