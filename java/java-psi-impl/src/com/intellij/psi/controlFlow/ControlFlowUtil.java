@@ -1462,7 +1462,8 @@ public class ControlFlowUtil {
           // 'procedure' pointed by call instruction should be processed regardless of whether it was already visited or not
           // clear procedure text and return instructions aftewards
           int i;
-          for (i = instruction.procBegin; i < instruction.procEnd || instructions.get(i) instanceof ReturnInstruction; i++) {
+          for (i = instruction.procBegin;
+               i < instruction.procEnd || i < instructions.size() && instructions.get(i) instanceof ReturnInstruction; i++) {
             clientVisitor.processedInstructions[i] = false;
           }
           clientVisitor.procedureEntered(instruction.procBegin, i);
