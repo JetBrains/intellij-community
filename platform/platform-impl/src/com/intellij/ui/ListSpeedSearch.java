@@ -39,20 +39,15 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     this(list, (Convertor<Object, String>)null);
   }
 
+  public ListSpeedSearch(final JList list, @NotNull Function<Object, String> convertor) {
+    this(list, (Convertor<Object, String>)convertor::fun);
+  }
+
   public ListSpeedSearch(final JList list, @Nullable Convertor<Object, String> convertor) {
     super(list);
     myToStringConvertor = convertor;
 
     new MySelectAllAction(list, this).registerCustomShortcutSet(list, null);
-  }
-
-  public ListSpeedSearch(final JList list, @NotNull Function<Object, String> convertor) {
-    this(list, new Convertor<Object, String>() {
-      @Override
-      public String convert(Object o) {
-        return convertor.fun(o);
-      }
-    });
   }
 
   protected void selectElement(Object element, String selectedText) {
