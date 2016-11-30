@@ -72,7 +72,7 @@ public class PsiClassUtil {
     }
   }
 
-  protected static <T extends PsiElement> Collection<T> filterPsiElements(@NotNull PsiClass psiClass, @NotNull Class<T> disiredClass) {
+  private static <T extends PsiElement> Collection<T> filterPsiElements(@NotNull PsiClass psiClass, @NotNull Class<T> disiredClass) {
     Collection<T> result = new ArrayList<T>();
     for (PsiElement psiElement : psiClass.getChildren()) {
       if (disiredClass.isAssignableFrom(psiElement.getClass())) {
@@ -132,7 +132,7 @@ public class PsiClassUtil {
    * Creates a PsiType for a PsiClass enriched with generic substitution information if available
    */
   @NotNull
-  public static PsiType getTypeWithGenerics(@NotNull PsiClass psiClass, @NotNull PsiTypeParameter... classTypeParameters) {
+  private static PsiType getTypeWithGenerics(@NotNull PsiClass psiClass, @NotNull PsiTypeParameter... classTypeParameters) {
     PsiType result;
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     if (classTypeParameters.length > 0) {
