@@ -738,6 +738,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testSixWithMetaclass() {
     doTest();
   }
+  
+  // PY-21707
+  public void testMultilineFormatString() {
+    doTest();
+  }
 
   @NotNull
   @Override
