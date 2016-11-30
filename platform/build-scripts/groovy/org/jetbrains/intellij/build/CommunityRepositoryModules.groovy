@@ -210,7 +210,7 @@ class CommunityRepositoryModules {
       withModule("junit5_rt", "junit5-rt.jar")
       withProjectLibrary("junit5_rt")
       withProjectLibrary("opentest4j")
-      withModuleLibrary("junit-jupiter-api-5.0.0-M2.jar", "junit5_rt_tests", "")
+      withModuleLibrary("junit-jupiter-api-5.0.0-M3.jar", "junit5_rt_tests", "")
     },
     plugin("ByteCodeViewer") {
       mainJarName = "byteCodeViewer.jar"
