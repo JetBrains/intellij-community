@@ -3,7 +3,6 @@ package com.jetbrains.edu.coursecreator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
@@ -32,10 +31,8 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("edu.coursecreator.subtask");
@@ -68,13 +65,8 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     if (task == null || !task.hasSubtasks()) {
       return null;
     }
-    EditorNotificationPanel panel = new EditorNotificationPanel() {
-      @Override
-      public Color getBackground() {
-        Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-        return color == null ? super.getBackground() : color;
-      }
-    };
+    EditorNotificationPanel panel = new EditorNotificationPanel();
+    panel.background(EditorColors.GUTTER_BACKGROUND);
     String header = (isTestFile ? "test" : "task") + " file";
     int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
     int subtaskSize = task.getLastSubtaskIndex() + 1;

@@ -87,27 +87,13 @@ public class DiffNotifications {
 
   @NotNull
   public static JPanel createNotification(@NotNull String text, @Nullable final Color background, boolean showHideAction) {
-    final MyEditorNotificationPanel panel = new MyEditorNotificationPanel();
+    final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.text(text);
-    panel.setBackgroundColor(background);
+    panel.background(background);
     if (showHideAction) {
       HyperlinkLabel link = panel.createActionLabel("Hide", () -> panel.setVisible(false));
       link.setToolTipText("Hide this notification");
     }
     return panel;
-  }
-
-  private static class MyEditorNotificationPanel extends EditorNotificationPanel {
-    @Nullable private Color myBackground;
-
-    public void setBackgroundColor(@Nullable Color value) {
-      myBackground = value;
-    }
-
-    @Override
-    @Nullable
-    public Color getBackground() {
-      return myBackground != null ? myBackground : super.getBackground();
-    }
   }
 }
