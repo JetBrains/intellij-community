@@ -4,14 +4,16 @@ import circlet.components.*
 import circlet.utils.*
 import com.intellij.openapi.actionSystem.*
 
-class EnableAction : AnAction() {
+class ReEnterCredentials : AnAction() {
 
     override fun update(e: AnActionEvent?) {
         e ?: return
         val project = e.project
         project ?: return
+        val component = project.component<IdePluginClient>()
 
-        e.presentation.isEnabled = !project.component<IdePluginClient>().enabled.value
+        e.presentation.isEnabled = component.enabled.value
+        e.presentation.isVisible = component.enabled.value
     }
 
     override fun actionPerformed(e: AnActionEvent?) {
@@ -19,7 +21,6 @@ class EnableAction : AnAction() {
         val project = e.project
         project ?: return
 
-        project.component<IdePluginClient>().enable()
+        project.component<IdePluginClient>().askPassword()
     }
 }
-

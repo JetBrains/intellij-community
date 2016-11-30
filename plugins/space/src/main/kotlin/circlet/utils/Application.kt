@@ -1,5 +1,6 @@
 package circlet.utils
 
+import com.intellij.notification.*
 import com.intellij.openapi.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
@@ -40,6 +41,7 @@ fun createApplicationLifetime(): Lifetime {
 
 val application: Application
     get() = ApplicationManager.getApplication()
+
 val applicationEx: ApplicationEx
     get() = ApplicationManagerEx.getApplicationEx()
 
@@ -83,5 +85,10 @@ class LifetimedDisposableApplicationComponent() : ILifetimedDisposableApplicatio
 
     final override val componentLifetime: Lifetime
         get() = lifetimeDefinition.lifetime
+}
+
+fun Notification.notify(lifetime: Lifetime, project: Project?) {
+    lifetime.add{ this.expire() }
+    Notifications.Bus.notify(this, project)
 }
 

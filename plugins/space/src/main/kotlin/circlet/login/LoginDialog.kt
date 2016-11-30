@@ -1,73 +1,111 @@
 package circlet.login
 
-import circlet.components.*
+import circlet.reactive.*
+import circlet.utils.*
 import java.awt.*
 import javax.swing.*
+import javax.swing.border.*
+import javax.swing.event.*
+import kotlin.concurrent.*
 
-class LoginDialog(val loginComponent: CircletLoginComponent) : JDialog(JOptionPane.getRootFrame(), true) {
+class LoginDialog(val viewModel: LoginDialogViewModel) : JDialog(JOptionPane.getRootFrame(), true), DocumentListener {
+    val loginField = JTextField(30)
+    val passwordField = JPasswordField(30)
+
     init {
         isModal = true
         val cs = GridBagConstraints()
         cs.fill = GridBagConstraints.HORIZONTAL
-
-        val dataOnStart = loginComponent.loginData.value
-
+   //     preferredSize = Dimension(400.px, 200.px)
         contentPane.add(
             JPanel(GridBagLayout()).apply {
                 add(JLabel().apply {
-                    cs.gridx = 0;
-                    cs.gridy = 0;
-                    cs.gridwidth = 1;
+                    cs.gridx = 0
+                    cs.gridy = 0
+                    cs.gridwidth = 1
+                    cs.weightx = 0.0
+                    cs.fill = GridBagConstraints.NONE
+                    cs.anchor = GridBagConstraints.LINE_START
+                    cs.insets = Insets(5.px, 5.px, 5.px, 5.px)
                     text = "Login:"
                 }, cs)
 
-                add(JTextField(20).apply {
-                    cs.gridx = 1;
-                    cs.gridy = 0;
-                    cs.gridwidth = 2;
-                    text = dataOnStart.login
+                add(loginField.apply {
+                    cs.gridx = 1
+                    cs.gridy = 0
+                    cs.weightx = 1.0
+                    cs.gridwidth = 2
+                    cs.insets = Insets(5.px, 0.px, 5.px, 5.px)
+                    cs.fill = GridBagConstraints.HORIZONTAL
+                    text = viewModel.login.value
+                    document.addDocumentListener(this@LoginDialog)
                 }, cs)
+
                 add(JLabel().apply {
-                    cs.gridx = 0;
-                    cs.gridy = 1;
-                    cs.gridwidth = 1;
+                    cs.gridx = 0
+                    cs.gridy = 1
+                    cs.gridwidth = 1
+                    cs.weightx = 0.0
+                    cs.anchor = GridBagConstraints.LINE_START
+                    cs.insets = Insets(5.px, 5.px, 5.px, 5.px)
+                    cs.fill = GridBagConstraints.NONE
                     text = "Password:"
                 }, cs)
-                add(JPasswordField(20).apply {
-                    cs.gridx = 1;
-                    cs.gridy = 1;
-                    cs.gridwidth = 2;
-                    text = dataOnStart.pass
+
+                add(passwordField.apply {
+                    cs.gridx = 1
+                    cs.gridy = 1
+                    cs.gridwidth = 2
+                    cs.weightx = 1.0
+                    cs.insets = Insets(5.px, 0.px, 5.px, 5.px)
+                    cs.fill = GridBagConstraints.HORIZONTAL
+                    text = viewModel.pass.value
+                    document.addDocumentListener(this@LoginDialog)
                 }, cs)
 
-                pack()
-                isResizable = false
-                setLocationRelativeTo(parent)
+            }, BorderLayout.PAGE_START)
+
+
+        contentPane.add(JPanel(BorderLayout()).apply {
+            border = EmptyBorder(5.px, 5.px, 5.px, 5.px)
+            add(JLabel().apply {
+                viewModel.loginStatus.bind(viewModel.lifetime, { status ->
+                    text = status.presentStatus()
+                })
             }, BorderLayout.CENTER)
+        })
 
         contentPane.add(JPanel().apply {
-            add(JButton("Cancel").apply {
-                addActionListener { cancel() }
-            })
-            add(JButton("Save").apply {
+            add(JButton("Sign in").apply {
                 addActionListener { login() }
-            })
-            add(JButton("Clear").apply {
-                addActionListener { reset() }
+                viewModel.signInEnabled.bind(viewModel.lifetime, { value ->
+                    isEnabled = true
+                }, {})
             })
         }, BorderLayout.PAGE_END)
+
+        isResizable = false
+        setLocationRelativeTo(parent)
         pack()
-
-
+        timerTask { }
     }
 
     private fun login() {
+        viewModel.commit()
+        dispose()
     }
 
-    private fun cancel() {
+    private fun refresh() {
+        viewModel.login.value = loginField.text
+        viewModel.pass.value = passwordField.text
     }
 
-    private fun reset() {
-    }
+    override fun changedUpdate(e: DocumentEvent?) = refresh()
+    override fun insertUpdate(e: DocumentEvent?) = refresh()
+    override fun removeUpdate(e: DocumentEvent?) = refresh()
 
+    override fun dispose() {
+        viewModel.lifetimeDef.terminate()
+        super.dispose()
+    }
 }

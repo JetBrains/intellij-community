@@ -11,7 +11,10 @@ class DisableAction : AnAction() {
         val project = e.project
         project ?: return
 
-        e.presentation.isEnabled = project.component<IdePluginClient>().enabled.value
+        val enabled = project.component<IdePluginClient>().enabled.value
+
+        e.presentation.isEnabled = enabled
+        e.presentation.isVisible = enabled
     }
 
     override fun actionPerformed(e: AnActionEvent?) {
@@ -22,3 +25,4 @@ class DisableAction : AnAction() {
         project.component<IdePluginClient>().disable()
     }
 }
+

@@ -12,7 +12,7 @@ plugins {
 gradle.taskGraph.whenReady {taskGraph ->
     project.tasks.prepareSandbox.doLast{
         def pluginName = project.intellij.pluginName
-        def toDelete = "$project.rootDir/plugin/build/idea-sandbox/plugins/$pluginName/lib/slf4j-api-1.7.21.jar"
+        def toDelete = "$project.rootDir/app-idea/build/idea-sandbox/plugins/$pluginName/lib/slf4j-api-1.7.21.jar"
         delete toDelete
         println("delete: $toDelete")
     }

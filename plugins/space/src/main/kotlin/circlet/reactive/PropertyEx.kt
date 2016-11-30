@@ -112,7 +112,7 @@ fun <T> IProperty<T?>.setValue(lifetime: Lifetime, value : T?) {
 
 
 // bind property to UI control
-fun <T> IProperty<T>.bind(lifetime: Lifetime, setValue: (value: T) -> Unit, valueUpdated: ((value: T) -> Unit) -> Unit) {
+fun <T> IProperty<T>.bind(lifetime: Lifetime, setValue: (value: T) -> Unit, valueUpdated: ((value: T) -> Unit) -> Unit = {}) {
     val guard = Boxed(false)
 
     advise(lifetime) {
