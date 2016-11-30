@@ -44,6 +44,7 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,6 +99,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private Map<Key, Object> myUserData;
   private IElementType myCachedTokenType;
+
+  private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<LazyParseableToken>();
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     @NotNull
@@ -616,6 +619,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public IElementType getTokenType() {
       return myTokenType;
     }
+
+    void initToken(@NotNull IElementType type,
+                   @NotNull PsiBuilderImpl builder,
+                   StartMarker parent,
+                   int start,
+                   int end) {
+      this.myParentNode = parent;
+      this.myBuilder = builder;
+      this.myTokenType = type;
+      this.myTokenStart = start;
+      this.myTokenEnd = end;
+    }
   }
 
   private static class TokenNode extends Token implements LighterASTTokenNode {
@@ -633,6 +648,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public void clean() {
+      myBuilder.myChameleonCache.remove(getStartOffset());
       super.clean();
       myParentStructure = null;
       myParsed = null;
@@ -853,10 +869,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Override
   public int rawTokenIndex() {
     return myCurrentLexeme;
-  }
-
-  public int rawTokenOffset(int tokenIndex) {
-    return myLexStarts[tokenIndex];
   }
 
   @Override
@@ -1783,24 +1795,45 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return;
       }
 
-      final Token lexeme;
-      if (type instanceof ILightLazyParseableElementType) {
-        lexeme = myLazyPool.alloc();
-        LazyParseableToken lazyParseableToken = (LazyParseableToken)lexeme;
-        lazyParseableToken.myParentStructure = this;
-        lazyParseableToken.myStartIndex = startLexemeIndex;
-        lazyParseableToken.myEndIndex = endLexemeIndex;
-      }
-      else {
-        lexeme = myPool.alloc();
-      }
-      lexeme.myParentNode = parent;
-      lexeme.myBuilder = builder;
-      lexeme.myTokenType = type;
-      lexeme.myTokenStart = start;
-      lexeme.myTokenEnd = end;
+      Token lexeme = obtainToken(type, builder, startLexemeIndex, endLexemeIndex, parent, start, end);
       ensureCapacity();
       nodes[count++] = lexeme;
+    }
+
+    @NotNull
+    private Token obtainToken(@NotNull IElementType type,
+                              @NotNull PsiBuilderImpl builder,
+                              int startLexemeIndex,
+                              int endLexemeIndex, StartMarker parent, int start, int end) {
+      if (type instanceof ILightLazyParseableElementType) {
+        return obtainLazyToken(type, builder, startLexemeIndex, endLexemeIndex, parent, start, end);
+      }
+
+      Token lexeme = myPool.alloc();
+      lexeme.initToken(type, builder, parent, start, end);
+      return lexeme;
+    }
+
+    @NotNull
+    private Token obtainLazyToken(@NotNull IElementType type,
+                                  @NotNull PsiBuilderImpl builder,
+                                  int startLexemeIndex,
+                                  int endLexemeIndex, StartMarker parent, int start, int end) {
+      int startInFile = start + builder.myOffset;
+      LazyParseableToken token = builder.myChameleonCache.get(startInFile);
+      if (token == null) {
+        token = myLazyPool.alloc();
+        token.myStartIndex = startLexemeIndex;
+        token.myEndIndex = endLexemeIndex;
+        token.initToken(type, builder, parent, start, end);
+        builder.myChameleonCache.put(startInFile, token);
+      } else {
+        if (token.myBuilder != builder || token.myStartIndex != startLexemeIndex || token.myEndIndex != endLexemeIndex) {
+          throw new AssertionError("Wrong chameleon cached");
+        }
+      }
+      token.myParentStructure = this;
+      return token;
     }
 
     @NotNull
