@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,8 +75,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   public boolean REPLACE_TRIVIAL_FOREACH;
   public boolean SUGGEST_FOREACH;
-
-  private HighlightDisplayKey myKey;
 
   @Nullable
   @Override
@@ -721,17 +720,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @NotNull
     private TextRange getRange(PsiLoopStatement statement) {
-      boolean wholeStatement = false;
-      if(myIsOnTheFly) {
-        if (myKey == null) {
-          myKey = HighlightDisplayKey.find(getShortName());
-        }
-        if (myKey != null) {
-          InspectionProfile profile = InspectionProjectProfileManager.getInstance(statement.getProject()).getCurrentProfile();
-          HighlightDisplayLevel level = profile.getErrorLevel(myKey, statement);
-          wholeStatement = HighlightDisplayLevel.DO_NOT_SHOW.equals(level);
-        }
-      }
+      boolean wholeStatement = myIsOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), statement);
       if(statement instanceof PsiForeachStatement) {
         PsiJavaToken rParenth = ((PsiForeachStatement)statement).getRParenth();
         if (wholeStatement && rParenth != null) {

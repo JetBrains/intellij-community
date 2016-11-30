@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamToLoop;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -23,7 +24,9 @@ import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -48,6 +51,8 @@ import static com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperatio
 public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
+  private HighlightDisplayKey myKey;
+
   // To quickly filter out most of the non-interesting method calls
   private static final Set<String> SUPPORTED_TERMINALS = StreamEx.of("count", "sum", "summaryStatistics", "reduce", "collect",
                                                                      "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch",
@@ -64,7 +69,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiReferenceExpression expression = call.getMethodExpression();
-        if (!SUPPORTED_TERMINALS.contains(expression.getReferenceName()) || !isSupportedCodeLocation(call)) return;
+        PsiElement nameElement = expression.getReferenceNameElement();
+        if (nameElement == null || !SUPPORTED_TERMINALS.contains(nameElement.getText()) || !isSupportedCodeLocation(call)) return;
         PsiMethod method = call.resolveMethod();
         if(method == null) return;
         PsiClass aClass = method.getContainingClass();
@@ -74,7 +80,13 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           Operation op = createOperationFromCall(StreamVariable.STUB, currentCall);
           if(op == null) return;
           if(op instanceof SourceOperation) {
-            holder.registerProblem(call, "Replace stream API chain with loop", new ReplaceStreamWithLoopFix());
+            TextRange range;
+            if(isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), call)) {
+              range = new TextRange(0, call.getTextLength());
+            } else {
+              range = nameElement.getTextRange().shiftRight(-call.getTextOffset());
+            }
+            holder.registerProblem(call, range, "Replace stream API chain with loop", new ReplaceStreamWithLoopFix());
             return;
           }
           PsiExpression qualifier = currentCall.getMethodExpression().getQualifierExpression();
