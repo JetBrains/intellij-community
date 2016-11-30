@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -98,9 +99,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     PsiElement cur = call;
     PsiElement parent = cur.getParent();
     while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
-      // TODO: support in single expression lambdas
       if(parent instanceof PsiLambdaExpression) {
-        return false;
+        return true;
       }
       if(parent instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
@@ -278,21 +278,26 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     @Nullable
     private static PsiMethodCallExpression ensureCodeBlock(PsiMethodCallExpression expression, PsiElementFactory factory) {
-      PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
-      if(statement == null) return null;
-      if(!(statement.getParent() instanceof PsiCodeBlock)) {
-        PsiElement nameElement = expression.getMethodExpression().getReferenceNameElement();
-        if(nameElement == null) return null;
-        int delta = nameElement.getTextOffset() - statement.getTextOffset();
-        PsiElement blockStatement = statement.replace(factory.createStatementFromText("{" + statement.getText() + "}", statement));
-        PsiStatement newStatement = ((PsiBlockStatement)blockStatement).getCodeBlock().getStatements()[0];
-        int targetOffset = newStatement.getTextOffset() + delta;
-        PsiElement element = PsiUtilCore.getElementAtOffset(newStatement.getContainingFile(), targetOffset);
-        PsiMethodCallExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-        LOG.assertTrue(newExpression != null);
-        return newExpression;
+      PsiElement parent = RefactoringUtil.getParentStatement(expression, false);
+      if (parent == null) return null;
+      if (parent instanceof PsiStatement && parent.getParent() instanceof PsiCodeBlock) return expression;
+      PsiElement nameElement = expression.getMethodExpression().getReferenceNameElement();
+      if (nameElement == null) return null;
+      int delta = nameElement.getTextOffset() - parent.getTextOffset();
+      PsiElement newParent;
+      if (parent instanceof PsiExpression) {
+        newParent = LambdaUtil
+          .extractSingleExpressionFromBody(((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(parent)).getBody());
+      } else {
+        PsiElement blockStatement = parent.replace(factory.createStatementFromText("{" + parent.getText() + "}", parent));
+        newParent = ((PsiBlockStatement)blockStatement).getCodeBlock().getStatements()[0];
       }
-      return expression;
+      LOG.assertTrue(newParent != null);
+      int targetOffset = newParent.getTextOffset() + delta;
+      PsiElement element = PsiUtilCore.getElementAtOffset(newParent.getContainingFile(), targetOffset);
+      PsiMethodCallExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      LOG.assertTrue(newExpression != null);
+      return newExpression;
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {
@@ -382,7 +387,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     private boolean isUsed(String varName) {
       return myUsedNames.contains(varName) || JavaLexer.isKeyword(varName, LanguageLevel.HIGHEST) ||
-             // TODO: cleaner solution
              !varName.equals(JavaCodeStyleManager.getInstance(myStatement.getProject()).suggestUniqueVariableName(varName, myStatement, true));
     }
 
