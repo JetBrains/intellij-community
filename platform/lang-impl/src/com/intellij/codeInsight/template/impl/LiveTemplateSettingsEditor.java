@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -336,11 +337,20 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
         sb.append(ownName);
       }
+
+      String contexts = "Applicable in " + sb.toString();
+      change.setText("Change");
+
       final boolean noContexts = sb.length() == 0;
-      String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
-      ctxLabel.setText(StringUtil.first(contexts, 100, true));
-      ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
-      change.setText(noContexts ? "Define" : "Change");
+      if (noContexts) {
+        if (!allowNoContexts) {
+          ctxLabel.setForeground(JBColor.RED);
+        }
+        contexts = "No applicable contexts" + (allowNoContexts ? "" : " yet");
+        ctxLabel.setIcon(AllIcons.General.BalloonWarning);
+        change.setText("Define");
+      }
+      ctxLabel.setText(StringUtil.first(contexts + ". ", 100, true));
 
       myTemplateOptionsPanel.removeAll();
       myTemplateOptionsPanel.add(createTemplateOptionsPanel());
