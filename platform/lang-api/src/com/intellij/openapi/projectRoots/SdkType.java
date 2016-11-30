@@ -94,9 +94,10 @@ public abstract class SdkType implements SdkTypeId {
 
   /**
    * Returns comparator which is used to order sdks in project or module settings combo boxes.
-   * If different sdk types return the same comparator object then they are sorted together.
+   * If different sdk types return the same comparator instance then they are sorted together.
    */
 
+  @NotNull
   public Comparator<Sdk> getComparator() {
     return ALPHABETICAL_COMPARATOR;
   }

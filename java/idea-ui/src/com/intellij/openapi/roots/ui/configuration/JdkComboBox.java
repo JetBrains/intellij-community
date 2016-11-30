@@ -305,19 +305,41 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       }
     }
 
+    private static class MyComparatorWrapper {
+      @NotNull
+      private final Comparator<Sdk> myComparator;
+
+      MyComparatorWrapper(@NotNull final Comparator<Sdk> comparator) {
+        myComparator = comparator;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        return myComparator == ((MyComparatorWrapper)o).myComparator;
+      }
+
+      @Override
+      public int hashCode() {
+        return myComparator.hashCode();
+      }
+    }
+
     @NotNull
     private static Sdk[] sortSdks(@NotNull final Sdk[] sdks) {
-      MultiMap<Comparator<Sdk>, Sdk> comparatorToSdkMap = new MultiMap<>();
+      MultiMap<MyComparatorWrapper, Sdk> comparatorToSdkMap = new MultiMap<>();
       for (Sdk sdk : sdks) {
         final SdkTypeId sdkType = sdk.getSdkType();
         if (sdkType instanceof SdkType) {
-          comparatorToSdkMap.putValue(((SdkType)sdkType).getComparator(), sdk);
+          comparatorToSdkMap.putValue(new MyComparatorWrapper(((SdkType)sdkType).getComparator()), sdk);
         } else {
-          comparatorToSdkMap.putValue(SdkType.ALPHABETICAL_COMPARATOR, sdk);
+          comparatorToSdkMap.putValue(new MyComparatorWrapper(SdkType.ALPHABETICAL_COMPARATOR), sdk);
         }
       }
 
-      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> entry.getValue().stream().sorted(entry.getKey()))
+      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> entry.getValue().stream().sorted(entry.getKey().myComparator))
         .toArray(size -> new Sdk[size]);
     }
 
