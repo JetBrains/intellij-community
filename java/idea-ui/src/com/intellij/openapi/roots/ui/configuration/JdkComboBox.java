@@ -30,10 +30,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -305,41 +305,15 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       }
     }
 
-    private static class MyComparatorWrapper {
-      @NotNull
-      private final Comparator<Sdk> myComparator;
-
-      MyComparatorWrapper(@NotNull final Comparator<Sdk> comparator) {
-        myComparator = comparator;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        return myComparator == ((MyComparatorWrapper)o).myComparator;
-      }
-
-      @Override
-      public int hashCode() {
-        return myComparator.hashCode();
-      }
-    }
-
     @NotNull
     private static Sdk[] sortSdks(@NotNull final Sdk[] sdks) {
-      MultiMap<MyComparatorWrapper, Sdk> comparatorToSdkMap = new MultiMap<>();
+      final ContainerUtil.KeyOrderedMultiMap<MyComparatorWrapper, Sdk> comparatorToSdkMap = new ContainerUtil.KeyOrderedMultiMap<>();
       for (Sdk sdk : sdks) {
         final SdkTypeId sdkType = sdk.getSdkType();
-        if (sdkType instanceof SdkType) {
-          comparatorToSdkMap.putValue(new MyComparatorWrapper(((SdkType)sdkType).getComparator()), sdk);
-        } else {
-          comparatorToSdkMap.putValue(new MyComparatorWrapper(SdkType.ALPHABETICAL_COMPARATOR), sdk);
-        }
+        comparatorToSdkMap.putValue(new MyComparatorWrapper(sdkType instanceof SdkType ? (SdkType)sdkType : null), sdk);
       }
 
-      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> entry.getValue().stream().sorted(entry.getKey().myComparator))
+      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> entry.getValue().stream().sorted(entry.getKey().getComparator()))
         .toArray(size -> new Sdk[size]);
     }
 
@@ -352,6 +326,32 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
             addElement(new SuggestedJdkItem(type, homePath));
           }
         }
+      }
+    }
+
+    private static class MyComparatorWrapper implements Comparable<MyComparatorWrapper> {
+      @Nullable
+      private SdkType mySdkType = null;
+
+      private MyComparatorWrapper(@Nullable final SdkType type) {
+        mySdkType = type;
+      }
+
+      @Nullable
+      private String getNameToCompare() {
+        return mySdkType == null ? null : mySdkType.getPresentableName();
+      }
+
+      @NotNull
+      private Comparator<Sdk> getComparator() {
+        return mySdkType == null ? SdkType.ALPHABETICAL_COMPARATOR : mySdkType.getComparator();
+      }
+
+      @Override
+      public int compareTo(@NotNull final MyComparatorWrapper comparatorWrapper) {
+        if (getComparator() == comparatorWrapper.getComparator()) return 0;
+
+        return StringUtil.compare(getNameToCompare(), comparatorWrapper.getNameToCompare(), true);
       }
     }
 
