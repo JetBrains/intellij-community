@@ -39,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
@@ -50,7 +51,6 @@ import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +74,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private List<ModulePath> myModulePaths;
-  private final List<ModulePath> myFailedModulePaths = new ArrayList<>();
+  private final List<ModulePath> myFailedModulePaths = new SmartList<>();
   @NonNls public static final String ELEMENT_MODULES = "modules";
   @NonNls public static final String ELEMENT_MODULE = "module";
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
@@ -148,7 +148,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @Override
   public void loadState(Element state) {
     List<ModulePath> prevPaths = myModulePaths;
-    readExternal(state);
+    myModulePaths = new ArrayList<>(getPathsToModuleFiles(state));
     if (prevPaths == null) {
       return;
     }
@@ -202,7 +202,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   @NotNull
-  public static ModulePath[] getPathsToModuleFiles(@NotNull Element element) {
+  public static List<ModulePath> getPathsToModuleFiles(@NotNull Element element) {
     final List<ModulePath> paths = new ArrayList<>();
     final Element modules = element.getChild(ELEMENT_MODULES);
     if (modules != null) {
@@ -220,11 +220,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         paths.add(new ModulePath(filepath, group));
       }
     }
-    return paths.toArray(new ModulePath[paths.size()]);
-  }
-
-  public void readExternal(@NotNull Element element) {
-    myModulePaths = new ArrayList<>(Arrays.asList(getPathsToModuleFiles(element)));
+    return paths;
   }
 
   protected void loadModules(@NotNull ModuleModelImpl moduleModel) {
@@ -459,7 +455,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @Override
   @NotNull
-  public Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists {
+  public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
     incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);

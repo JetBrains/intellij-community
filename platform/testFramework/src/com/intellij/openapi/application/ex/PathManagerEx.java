@@ -408,8 +408,7 @@ public class PathManagerEx {
     try {
       Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
       assert element != null;
-      ModuleManagerImpl.ModulePath[] files = ModuleManagerImpl.getPathsToModuleFiles(element);
-      for (ModuleManagerImpl.ModulePath file : files) {
+      for (ModuleManagerImpl.ModulePath file : ModuleManagerImpl.getPathsToModuleFiles(element)) {
         String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(file.getPath()));
         ourCommunityModules.add(name);
       }
