@@ -862,17 +862,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
+    } else {
+      pushUnknown();
     }
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
 
     PsiStatement body = statement.getBody();
     if (body != null) {
       body.accept(this);
     }
 
-    if (condition != null) {
-      addInstruction(new GotoInstruction(getStartOffset(statement)));
-    }
+    addInstruction(new GotoInstruction(getStartOffset(statement)));
 
     finishElement(statement);
   }
