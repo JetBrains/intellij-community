@@ -95,6 +95,11 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires M2; }")
   }
 
+  fun testRequiresJavaBase() {
+    mainClass("java.util.List")
+    mainModule("module MAIN { requires java.base; }")
+  }
+
   private fun mainModule(@Language("JAVA") @NonNls text: String) {
     addFile("module-info.java", text, ModuleDescriptor.MAIN)
 

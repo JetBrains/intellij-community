@@ -34,7 +34,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private final RefModule myRefModule;
 
   private Map<String, List<String>> myExportedPackageNames;
-  private Map<String, Dependency> myRequiredModules;
+  private List<RequiredModule> myRequiredModules;
 
   public RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
     super(javaModule.getModuleName(), javaModule, manager);
@@ -75,8 +75,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   }
 
   @NotNull
-  public Map<String, Dependency> getRequiredModules() {
-    return myRequiredModules != null ? myRequiredModules : Collections.emptyMap();
+  public List<RequiredModule> getRequiredModules() {
+    return myRequiredModules != null ? myRequiredModules : Collections.emptyList();
   }
 
   @Override
@@ -89,9 +89,9 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
           PsiElement element = addReference(referenceElement.getReference());
           if (element instanceof PsiJavaModule) {
             PsiJavaModule requiredModule = (PsiJavaModule)element;
-            Map<String, List<String>> packageNames = getExportedPackagesSnapshot(requiredModule);
-            if (myRequiredModules == null) myRequiredModules = new THashMap<>(1);
-            myRequiredModules.put(requiredModule.getModuleName(), new Dependency(packageNames, statement.isPublic()));
+            Map<String, List<String>> packagesExportedByModule = getPackagesExportedByModule(requiredModule);
+            if (myRequiredModules == null) myRequiredModules = new ArrayList<>(1);
+            myRequiredModules.add(new RequiredModule(requiredModule.getModuleName(), packagesExportedByModule, statement.isPublic()));
           }
         }
       }
@@ -140,7 +140,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   }
 
   @NotNull
-  private static Map<String, List<String>> getExportedPackagesSnapshot(@NotNull PsiJavaModule javaModule) {
+  private static Map<String, List<String>> getPackagesExportedByModule(@NotNull PsiJavaModule javaModule) {
     Map<String, List<String>> exportedPackages = new THashMap<>();
     for (PsiExportsStatement statement : javaModule.getExports()) {
       String packageName = statement.getPackageName();

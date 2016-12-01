@@ -66,14 +66,14 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
       if (refModule != null && psiJavaModule != null) {
         Set<String> moduleImportedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
         if (moduleImportedPackages != null) {
-          Map<String, RefJavaModule.Dependency> requiredModules = refJavaModule.getRequiredModules();
+          List<RefJavaModule.RequiredModule> requiredModules = refJavaModule.getRequiredModules();
           if (!requiredModules.isEmpty()) {
             List<CommonProblemDescriptor> descriptors = new ArrayList<>();
-            for (Map.Entry<String, RefJavaModule.Dependency> entry : requiredModules.entrySet()) {
-              String requiredModuleName = entry.getKey();
-              RefJavaModule.Dependency dependency = entry.getValue();
+            for (RefJavaModule.RequiredModule requiredModule : requiredModules) {
+              String requiredModuleName = requiredModule.moduleName;
 
-              if (isDependencyUnused(dependency.packageNames, moduleImportedPackages, refJavaModule.getName())) {
+              if (PsiJavaModule.JAVA_BASE.equals(requiredModuleName) ||
+                  isDependencyUnused(requiredModule.packagesExportedByModule, moduleImportedPackages, refJavaModule.getName())) {
                 PsiRequiresStatement requiresStatement = ContainerUtil.find(
                   psiJavaModule.getRequires(), statement -> requiredModuleName.equals(statement.getModuleName()));
                 if (requiresStatement != null) {
