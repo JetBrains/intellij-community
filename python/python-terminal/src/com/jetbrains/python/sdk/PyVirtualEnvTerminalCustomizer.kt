@@ -60,6 +60,8 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
           //for other shells we read envs from activate script by the default shell and pass them to the process
           val reader = PyVirtualEnvReader(path)
           reader.activate?.let {
+            // we add only envs that are setup by the activate script, because adding other variables from the different shell
+            // can break the actual shell
             envs.putAll(reader.readShellEnv().mapKeys { k -> k.key.toUpperCase() }.filterKeys { k ->
               k in arrayOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT", "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH")
             })
