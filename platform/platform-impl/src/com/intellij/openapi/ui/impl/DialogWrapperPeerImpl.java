@@ -823,8 +823,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     @SuppressWarnings("deprecation")
     public void hide() {
       super.hide();
-      if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
-        myFocusTrackback.setWillBeSheduledForRestore();
+      if (myFocusTrackback != null && !(myFocusTrackback.isScheduledForRestore() || myFocusTrackback.isWillBeScheduledForRestore())) {
+        myFocusTrackback.setWillBeScheduledForRestore();
         IdeFocusManager mgr = getFocusManager();
         Runnable r = () -> {
           if (myFocusTrackback != null)  myFocusTrackback.restoreFocus();
@@ -851,7 +851,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         removeWindowListener(listener);
       }
 
-      if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
+      if (myFocusTrackback != null && !(myFocusTrackback.isScheduledForRestore() || myFocusTrackback.isWillBeScheduledForRestore())) {
         myFocusTrackback.dispose();
         myFocusTrackback = null;
       }

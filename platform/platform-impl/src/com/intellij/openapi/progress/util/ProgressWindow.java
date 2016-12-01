@@ -271,7 +271,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     if (isDialogShowing()) {
       if (myFocusTrackback != null) {
-        myFocusTrackback.setWillBeSheduledForRestore();
+        myFocusTrackback.setWillBeScheduledForRestore();
       }
     }
 
