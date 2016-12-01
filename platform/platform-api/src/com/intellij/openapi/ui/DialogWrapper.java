@@ -971,6 +971,19 @@ public abstract class DialogWrapper {
     }
   }
 
+  public static void cleanupWindowListeners(@Nullable Window window) {
+    if (window == null) return;
+    for (WindowListener listener : window.getWindowListeners()) {
+      if (listener.getClass().getName().startsWith("com.intellij.")) {
+        LOG.warn("Stale listener: " + listener);
+      }
+      else {
+        LOG.info("Stale listener: " + listener);
+      }
+      window.removeWindowListener(listener);
+    }
+  }
+
 
   /**
    * This method is invoked by default implementation of "Cancel" action. It just closes dialog

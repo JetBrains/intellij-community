@@ -39,10 +39,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 public class FocusTrackback {
 
@@ -79,8 +77,7 @@ public class FocusTrackback {
     myMustBeShown = mustBeShown;
 
 
-    final Application app = ApplicationManager.getApplication();
-    if (app == null || app.isHeadlessEnvironment() || wrongOS()) return;
+    if (isHeadlessOrWrongOS()) return;
 
     register(parent);
 
@@ -135,6 +132,11 @@ public class FocusTrackback {
     }
   }
 
+  private static boolean isHeadlessOrWrongOS() {
+    Application app = ApplicationManager.getApplication();
+    return app == null || app.isHeadlessEnvironment() || wrongOS();
+  }
+
   private void setLocalFocusOwner(Component component) {
     myLocalFocusOwner = new WeakReference<>(component);
   }
@@ -171,10 +173,10 @@ public class FocusTrackback {
   }
 
   private List<FocusTrackback> getCleanStackForRoot() {
-    return getCleanStackForRoot(myRoot);
+    return myRoot == null ? Collections.emptyList() : getCleanStackForRoot(myRoot);
   }
 
-  private static List<FocusTrackback> getCleanStackForRoot(final Window root) {
+  private static List<FocusTrackback> getCleanStackForRoot(@NotNull Window root) {
     List<FocusTrackback> stack = getStackForRoot(root);
 
     final FocusTrackback[] stackArray = stack.toArray(new FocusTrackback[stack.size()]);
@@ -190,8 +192,7 @@ public class FocusTrackback {
   }
 
   public void restoreFocus() {
-    final Application app = ApplicationManager.getApplication();
-    if (app == null || wrongOS() || myConsumed || isScheduledForRestore()) return;
+    if (isHeadlessOrWrongOS() || myConsumed || isScheduledForRestore()) return;
 
     Project project = null;
     DataManager dataManager = DataManager.getInstance();

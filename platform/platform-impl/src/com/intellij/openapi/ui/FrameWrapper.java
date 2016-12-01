@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -60,7 +59,6 @@ import java.io.File;
 import java.util.Map;
 
 public class FrameWrapper implements Disposable, DataProvider {
-  private static final Logger LOG = Logger.getInstance(FrameWrapper.class);
 
   private String myDimensionKey = null;
   private JComponent myComponent = null;
@@ -253,10 +251,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       frame.dispose();
 
-      for (WindowListener listener : frame.getWindowListeners()) {
-        LOG.info("Clearing stale window listener: " + listener);
-        frame.removeWindowListener(listener);
-      }
+      DialogWrapper.cleanupWindowListeners(frame);
     }
   }
 
