@@ -247,6 +247,12 @@
       first-show="2"
       successive-show="4"/>
     <feature
+      id="editor.delete.line"
+      tip-file="DeleteLine.html"
+      min-usage-count="1"
+      first-show="2"
+      successive-show="1"/>
+    <feature
       id="scratch"
       tip-file="Scratch.html"
       min-usage-count="10"
