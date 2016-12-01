@@ -105,8 +105,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     try {
       if (myProject != null) {
         FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        VirtualFile[] openFiles = editorManager.getOpenFiles();
-        for (VirtualFile openFile : openFiles) {
+        for (VirtualFile openFile : editorManager.getOpenFiles()) {
           editorManager.closeFile(openFile);
         }
       }
