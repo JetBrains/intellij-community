@@ -294,7 +294,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (log == null) return;
     List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
     if (details.isEmpty()) return;
-    String text = StringUtil.join(details, commit -> getPresentableText(commit, true), "\n");
+    String text = StringUtil.join(details, VcsLogGraphTable::getPresentableText, "\n");
     CopyPasteManager.getInstance().setContents(new StringSelection(text));
   }
 
@@ -304,7 +304,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @NotNull
-  private static String getPresentableText(@NotNull VcsFullCommitDetails commit, boolean withMessage) {
+  private static String getPresentableText(@NotNull VcsFullCommitDetails commit) {
     // implementation reflected by com.intellij.openapi.vcs.history.FileHistoryPanelImpl.getPresentableText()
     StringBuilder sb = new StringBuilder();
     sb.append(commit.getId().toShortString()).append(" ");
@@ -314,9 +314,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (!Comparing.equal(commit.getAuthor(), commit.getCommitter())) {
       sb.append(" (committed by ").append(commit.getCommitter().getName()).append(")");
     }
-    if (withMessage) {
-      sb.append(" ").append(commit.getSubject());
-    }
+    sb.append(" ").append(commit.getSubject());
     return sb.toString();
   }
 
