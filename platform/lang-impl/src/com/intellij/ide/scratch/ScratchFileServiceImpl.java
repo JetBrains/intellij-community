@@ -31,7 +31,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -102,7 +101,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   }
 
   private void initFileOpenedListener(MessageBus messageBus) {
-    final FileEditorManagerAdapter editorListener = new FileEditorManagerAdapter() {
+    final FileEditorManagerListener editorListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!isEditable(file)) return;

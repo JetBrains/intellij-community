@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -397,10 +396,4 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   @Override
   public void childRemoved(@NotNull PsiTreeChangeEvent event) {}
-
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {}
 }

@@ -12,7 +12,6 @@
       <interface-class>com.intellij.openapi.wm.ToolWindowManager</interface-class>
       <implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl</headless-implementation-class>
-      <option name="workspace" value="true"/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>

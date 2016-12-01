@@ -17,7 +17,7 @@ class StudyTestResultsToolWindowFactory : ToolWindowFactory {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val currentTask = StudyUtils.getCurrentTask(project)
     if (currentTask != null) {
-      val consoleView = ConsoleViewImpl(project, true);
+      val consoleView = ConsoleViewImpl(project, true)
       toolWindow.isToHideOnEmptyContent = true
 
       val contentManager = toolWindow.contentManager
@@ -33,12 +33,7 @@ class StudyTestResultsToolWindowFactory : ToolWindowFactory {
   }
 
   fun getFileEditorManagerListener(toolWindow: ToolWindow): FileEditorManagerListener {
-
     return object : FileEditorManagerListener {
-
-      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-      }
-
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
         toolWindow.setAvailable(false, {})
       }

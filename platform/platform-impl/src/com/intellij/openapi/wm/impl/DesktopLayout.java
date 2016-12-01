@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
@@ -31,7 +30,7 @@ import java.util.*;
 /**
  * @author Vladimir Kondratyev
  */
-public final class DesktopLayout implements JDOMExternalizable {
+public final class DesktopLayout {
   @NonNls static final String TAG = "layout";
   /**
    * Map between <code>id</code>s and registered <code>WindowInfo</code>s.
@@ -72,8 +71,7 @@ public final class DesktopLayout implements JDOMExternalizable {
    * @param layout to be copied.
    */
   public final void copyFrom(@NotNull DesktopLayout layout) {
-    final WindowInfoImpl[] infos = layout.getAllInfos();
-    for (WindowInfoImpl info1 : infos) {
+    for (WindowInfoImpl info1 : layout.getAllInfos()) {
       WindowInfoImpl info = myRegisteredId2Info.get(info1.getId());
       if (info != null) {
         info.copyFrom(info1);
@@ -287,11 +285,9 @@ public final class DesktopLayout implements JDOMExternalizable {
     info.setSplit(split);
   }
 
-  @Override
-  public final void readExternal(final Element layoutElement) {
+  public final void readExternal(@NotNull Element layoutElement) {
     myUnregisteredInfos = null;
-    for (Object o : layoutElement.getChildren()) {
-      final Element e = (Element)o;
+    for (Element e : layoutElement.getChildren()) {
       if (WindowInfoImpl.TAG.equals(e.getName())) {
         String id = e.getAttributeValue(ID_ATTR);
         assert id != null;
@@ -305,14 +301,20 @@ public final class DesktopLayout implements JDOMExternalizable {
     }
   }
 
-  @Override
-  public final void writeExternal(final Element layoutElement) {
-    final WindowInfoImpl[] infos = getAllInfos();
-    for (WindowInfoImpl info : infos) {
-      final Element element = new Element(WindowInfoImpl.TAG);
-      info.writeExternal(element);
-      layoutElement.addContent(element);
+  @Nullable
+  public final Element writeExternal(@NotNull String tagName) {
+    WindowInfoImpl[] infos = getAllInfos();
+    if (infos.length == 0) {
+      return null;
     }
+
+    Element state = new Element(tagName);
+    for (WindowInfoImpl info : infos) {
+      Element element = new Element(WindowInfoImpl.TAG);
+      info.writeExternal(element);
+      state.addContent(element);
+    }
+    return state;
   }
 
   @NotNull

@@ -27,8 +27,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -445,7 +445,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   private void installEditorFactoryListener() {
-    FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
+    FileEditorManagerListener fileEditorListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (myConsoleEditor == null || !Comparing.equal(file, getVirtualFile())) {

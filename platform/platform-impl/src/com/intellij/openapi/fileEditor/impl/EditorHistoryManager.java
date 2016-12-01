@@ -361,7 +361,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   /**
    * Updates history
    */
-  private final class MyEditorManagerListener extends FileEditorManagerAdapter{
+  private final class MyEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file){
       fileOpenedImpl(file, null, null);

@@ -49,7 +49,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
@@ -154,7 +153,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   };
 
-  private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerAdapter() {
+  private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
     @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent e) {
       disposeHighlighter();

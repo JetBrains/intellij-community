@@ -713,9 +713,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     state.addContent(frameState);
 
     // Save default layout
-    Element layoutElement = new Element(DesktopLayout.TAG);
-    state.addContent(layoutElement);
-    myLayout.writeExternal(layoutElement);
+    Element layoutElement = myLayout.writeExternal(DesktopLayout.TAG);
+    if (layoutElement != null) {
+      state.addContent(layoutElement);
+    }
     return state;
   }
 

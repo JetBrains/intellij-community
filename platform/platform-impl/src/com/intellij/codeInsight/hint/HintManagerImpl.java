@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -926,7 +925,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * selected editor by mouse. These clicks are not AnActions so they are not
    * fired by ActionManager.
    */
-  private final class MyEditorManagerListener extends FileEditorManagerAdapter {
+  private final class MyEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       hideHints(0, false, true);

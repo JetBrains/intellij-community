@@ -4114,7 +4114,6 @@ com/intellij/util/indexing/UnindexedFilesUpdater.class:/lib/idea.jar
 com/intellij/util/indexing/FileBasedIndexProjectHandler$1.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$1.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$2.class:/lib/idea.jar
-com/intellij/openapi/fileEditor/FileEditorManagerAdapter.class:/lib/openapi.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$3.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$5.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$6.class:/lib/idea.jar
