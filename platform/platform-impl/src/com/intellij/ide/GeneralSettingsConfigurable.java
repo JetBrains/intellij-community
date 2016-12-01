@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:
@@ -62,10 +62,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
-      int newInactiveTimeoutSeconds = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
-      if (newInactiveTimeoutSeconds > 0 && TimeUnit.SECONDS.toHours(newInactiveTimeoutSeconds) < 24) {
-        settings.setInactiveTimeout(newInactiveTimeoutSeconds);
-      }
+      settings.setInactiveTimeout(Integer.parseInt(myComponent.myTfInactiveTimeout.getText()));//See range validation inside settings
     }
     catch (NumberFormatException ignored) { }
     settings.setUseSafeWrite(myComponent.myChkUseSafeWrite.isSelected());
@@ -111,7 +108,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
     int inactiveTimeout = -1;
     try {
-      inactiveTimeout = Integer.parseInt(myComponent.myTfInactiveTimeout.getText());
+      inactiveTimeout = UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(Integer.parseInt(myComponent.myTfInactiveTimeout.getText()));
     }
     catch (NumberFormatException ignored) { }
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
