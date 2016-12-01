@@ -49,6 +49,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -67,6 +68,7 @@ import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -347,37 +349,48 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return false;
   }
 
-  protected static void findAndInvokeIntentionAction(@NotNull Collection<HighlightInfo> infos, @NotNull String intentionActionName, @NotNull Editor editor,
-                                                     @NotNull PsiFile file) throws IncorrectOperationException {
-    IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
+  protected static void findAndInvokeIntentionAction(@NotNull Collection<HighlightInfo> infos,
+                                                     @NotNull String intentionActionName,
+                                                     @NotNull Editor editor,
+                                                     @NotNull PsiFile file) {
+    List<IntentionAction> actions = getIntentionActions(infos, editor, file);
+    IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
-    assertNotNull(intentionActionName, intentionAction);
+    String message = String.format("Could not find action by name %s.\n" +
+                                   "Actions: [%s]\n" +
+                                   "HighlightInfos: [%s]", intentionActionName,
+                                   StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
+                                   StringUtil.join(infos, ", "));
+    assertNotNull(message, intentionAction);
     CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
   }
 
-  protected static IntentionAction findIntentionAction(@NotNull Collection<HighlightInfo> infos, @NotNull String intentionActionName, @NotNull Editor editor,
+  @Nullable
+  protected static IntentionAction findIntentionAction(@NotNull Collection<HighlightInfo> infos,
+                                                       @NotNull String intentionActionName,
+                                                       @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
+    List<IntentionAction> actions = getIntentionActions(infos, editor, file);
+    return LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
+  }
+
+  @NotNull
+  private static List<IntentionAction> getIntentionActions(@NotNull Collection<HighlightInfo> infos,
+                                                           @NotNull Editor editor,
+                                                           @NotNull PsiFile file) {
+
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(editor, file);
-    IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
-    if (intentionAction == null) {
-      final List<IntentionAction> availableActions = new ArrayList<>();
-
-      for (HighlightInfo info :infos) {
-        if (info.quickFixActionRanges != null) {
-          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-            IntentionAction action = pair.first.getAction();
-            if (action.isAvailable(file.getProject(), editor, file)) availableActions.add(action);
-          }
+    final List<IntentionAction> quickFixActions = new ArrayList<>();
+    for (HighlightInfo info : infos) {
+      if (info.quickFixActionRanges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+          IntentionAction action = pair.first.getAction();
+          if (action.isAvailable(file.getProject(), editor, file)) quickFixActions.add(action);
         }
       }
-
-      intentionAction = LightQuickFixTestCase.findActionWithText(
-        availableActions,
-        intentionActionName
-      );
     }
-    return intentionAction;
+    return ContainerUtil.concat(actions, quickFixActions);
   }
 
   public void checkHighlighting(Editor editor, boolean checkWarnings, boolean checkInfos) {
