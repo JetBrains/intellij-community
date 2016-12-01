@@ -19,20 +19,26 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor.Companion.getDocumentation
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleExtensionsData
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
 /**
  * @author Vladislav.Soroka
@@ -96,6 +102,52 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
 
       extensionsData.tasks.firstOrNull { it.name == propCandidate }?.let(processVariable)
       extensionsData.findProperty(propCandidate)?.let(processVariable)
+    }
+    else {
+      val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
+      val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull() ?: return
+      if (!GroovyPsiManager.isInheritorCached(qualifierType, GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER)) return
+
+      val classHint = processor.getHint(com.intellij.psi.scope.ElementClassHint.KEY)
+      val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
+      val shouldProcessProperties = ResolveUtil.shouldProcessProperties(classHint)
+      if (GradleResolverUtil.canBeMethodOf(propCandidate, aClass)) return
+
+      if (!shouldProcessMethods && shouldProcessProperties && place is GrReferenceExpression && place.parent !is GrApplicationStatement) {
+        val fqName = TypesUtil.getQualifiedName(domainObjectType) ?: return
+        val psiManager = GroovyPsiManager.getInstance(place.project)
+        val psiClass = psiManager.findClassWithCache(fqName, place.resolveScope) ?: return
+
+        val name = processor.getHint(com.intellij.psi.scope.NameHint.KEY)?.getName(state)
+        if (GradleResolverUtil.canBeMethodOf(name, psiClass)) return
+        if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), psiClass)) return
+        if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), psiClass)) return
+
+        val variable = object : GrLightVariable(place.manager, propCandidate, domainObjectType, place) {
+          override fun getNavigationElement(): PsiElement {
+            val navigationElement = super.getNavigationElement()
+            return navigationElement
+          }
+        }
+        if (!processor.execute(variable, state)) return
+      }
+      if (shouldProcessMethods && place is GrReferenceExpression) {
+        val call = PsiTreeUtil.getParentOfType(place, GrMethodCall::class.java) ?: return
+        val args = call.argumentList
+        var argsCount = GradleResolverUtil.getGrMethodArumentsCount(args)
+        argsCount += call.closureArguments.size
+        argsCount++ // Configuration name is delivered as an argument.
+
+        // at runtime, see org.gradle.internal.metaobject.ConfigureDelegate.invokeMethod
+        val wrappedBase = GrLightMethodBuilder(place.manager, "configure").apply {
+          returnType = domainObjectType
+          containingClass = aClass
+          addParameter("configureClosure", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, true)
+          val method = aClass.findMethodsByName("create", true).firstOrNull { it.parameterList.parametersCount == argsCount }
+          if (method != null) navigationElement = method
+        }
+        if (!processor.execute(wrappedBase, state)) return
+      }
     }
   }
 }

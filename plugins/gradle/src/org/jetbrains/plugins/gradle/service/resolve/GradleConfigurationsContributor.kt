@@ -86,52 +86,52 @@ class GradleConfigurationsContributor : GradleMethodContextContributor {
     val psiManager = GroovyPsiManager.getInstance(place.project)
     val psiElement = psiElement()
 
-    if (psiElement.inside(configurationClosure).accepts(place)) {
-      val closure = PsiTreeUtil.getParentOfType(place, GrClosableBlock::class.java) ?: return true
-      val call = getContainingCall(closure) ?: return true
-      val result = resolveActualCall(call)
-      for (psiType in result.substitutor.substitutionMap.values) {
-        if (psiType != null && psiType.equalsToText(GRADLE_API_CONFIGURATION)) {
-          if (!GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GRADLE_API_CONFIGURATION)) return false
-          return false
-        }
-      }
-    }
+//    if (psiElement.inside(configurationClosure).accepts(place)) {
+//      val closure = PsiTreeUtil.getParentOfType(place, GrClosableBlock::class.java) ?: return true
+//      val call = getContainingCall(closure) ?: return true
+//      val result = resolveActualCall(call)
+//      for (psiType in result.substitutor.substitutionMap.values) {
+//        if (psiType != null && psiType.equalsToText(GRADLE_API_CONFIGURATION)) {
+//          if (!GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GRADLE_API_CONFIGURATION)) return false
+//          return false
+//        }
+//      }
+//    }
 
     if (psiElement.inside(configurationsClosure).accepts(place)) {
       val name = place.text
-      if (place.parent is GrReferenceExpression || place.parent is GrArgumentList ||
-        psiElement.withTreeParent(configurationsClosure).accepts(place)) {
-        val variable = GrLightVariable(place.manager, name, GRADLE_API_CONFIGURATION, place)
-        if (!processor.execute(variable, state)) return false
-      }
-      val classHint = processor.getHint(ElementClassHint.KEY)
-      val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-
-      if (shouldProcessMethods && place is GrReferenceExpression) {
-        val resolveScope = place.getResolveScope()
-        val psiClass = psiManager.findClassWithCache(GRADLE_API_CONFIGURATION_CONTAINER, resolveScope) ?: return true
-        if (GradleResolverUtil.canBeMethodOf(name, psiClass)) {
-          return true
-        }
-
-        val call = PsiTreeUtil.getParentOfType(place, GrMethodCall::class.java) ?: return true
-        val args = call.argumentList
-        var argsCount = GradleResolverUtil.getGrMethodArumentsCount(args)
-        argsCount += call.closureArguments.size
-        argsCount++ // Configuration name is delivered as an argument.
-
-        // at runtime, see org.gradle.internal.metaobject.ConfigureDelegate.invokeMethod
-        val returnClass = psiManager.createTypeByFQClassName(GRADLE_API_CONFIGURATION, resolveScope) ?: return true
-        val wrappedBase = GrLightMethodBuilder(place.manager, "configure").apply {
-          returnType = returnClass
-          containingClass = psiClass
-          addParameter("configureClosure", GROOVY_LANG_CLOSURE, true)
-          val method = psiClass.findMethodsByName("create", true).firstOrNull { it.parameterList.parametersCount == argsCount }
-          if (method != null) navigationElement = method
-        }
-        if (!processor.execute(wrappedBase, state)) return false
-      }
+//      if (place.parent is GrReferenceExpression || place.parent is GrArgumentList ||
+//        psiElement.withTreeParent(configurationsClosure).accepts(place)) {
+//        val variable = GrLightVariable(place.manager, name, GRADLE_API_CONFIGURATION, place)
+//        if (!processor.execute(variable, state)) return false
+//      }
+//      val classHint = processor.getHint(ElementClassHint.KEY)
+//      val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
+//
+//      if (shouldProcessMethods && place is GrReferenceExpression) {
+//        val resolveScope = place.getResolveScope()
+//        val psiClass = psiManager.findClassWithCache(GRADLE_API_CONFIGURATION_CONTAINER, resolveScope) ?: return true
+//        if (GradleResolverUtil.canBeMethodOf(name, psiClass)) {
+//          return true
+//        }
+//
+//        val call = PsiTreeUtil.getParentOfType(place, GrMethodCall::class.java) ?: return true
+//        val args = call.argumentList
+//        var argsCount = GradleResolverUtil.getGrMethodArumentsCount(args)
+//        argsCount += call.closureArguments.size
+//        argsCount++ // Configuration name is delivered as an argument.
+//
+//        // at runtime, see org.gradle.internal.metaobject.ConfigureDelegate.invokeMethod
+//        val returnClass = psiManager.createTypeByFQClassName(GRADLE_API_CONFIGURATION, resolveScope) ?: return true
+//        val wrappedBase = GrLightMethodBuilder(place.manager, "configure").apply {
+//          returnType = returnClass
+//          containingClass = psiClass
+//          addParameter("configureClosure", GROOVY_LANG_CLOSURE, true)
+//          val method = psiClass.findMethodsByName("create", true).firstOrNull { it.parameterList.parametersCount == argsCount }
+//          if (method != null) navigationElement = method
+//        }
+//        if (!processor.execute(wrappedBase, state)) return false
+//      }
     }
 
     return true

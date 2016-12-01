@@ -57,6 +57,7 @@ fun processDeclarations(aClass: PsiClass,
           if (!processor.execute(method, state)) return false
         }
         for (method in aClass.findMethodsByName("set" + propertyName.capitalize(), true)) {
+          if(PsiType.VOID != method.returnType) continue
           if (processedSignatures.contains(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))) continue
           processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
           place.putUserData(RESOLVED_CODE, true)
