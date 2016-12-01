@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
 
 public class TestFailedEvent extends TreeNodeEvent {
 
@@ -46,10 +50,27 @@ public class TestFailedEvent extends TreeNodeEvent {
     myLocalizedFailureMessage = testFailed.getFailureMessage();
     myStacktrace = testFailed.getStacktrace();
     myTestError = testError;
-    myComparisonFailureActualText = testFailed.getActual();
-    myComparisonFailureExpectedText = testFailed.getExpected();
+
     myExpectedFilePath = expectedFilePath;
+    String expected = testFailed.getExpected();
+    if (expected == null && expectedFilePath != null) {
+      try {
+        expected = FileUtil.loadFile(new File(expectedFilePath));
+      }
+      catch (IOException ignore) {}
+    }
+    myComparisonFailureExpectedText = expected;
+
     myActualFilePath = actualFilePath;
+    String actual = testFailed.getActual();
+    if (actual == null && actualFilePath != null) {
+      try {
+        actual = FileUtil.loadFile(new File(actualFilePath));
+      }
+      catch (IOException ignore) {}
+    }
+    myComparisonFailureActualText = actual;
+
     myDurationMillis = parseDuration(testFailed.getAttributes().get("duration"));
   }
 
@@ -94,10 +115,17 @@ public class TestFailedEvent extends TreeNodeEvent {
     myLocalizedFailureMessage = localizedFailureMessage;
     myStacktrace = stackTrace;
     myTestError = testError;
-    myComparisonFailureActualText = comparisonFailureActualText;
-    myComparisonFailureExpectedText = comparisonFailureExpectedText;
     myExpectedFilePath = expectedFilePath;
+    if (comparisonFailureExpectedText == null && expectedFilePath != null) {
+      try {
+        comparisonFailureExpectedText = FileUtil.loadFile(new File(expectedFilePath));
+      }
+      catch (IOException ignore) {}
+    }
+    myComparisonFailureActualText = comparisonFailureActualText;
+
     myActualFilePath = null;
+    myComparisonFailureExpectedText = comparisonFailureExpectedText;
     myDurationMillis = durationMillis;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,16 +87,19 @@ public class ComparisonFailureData {
     attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessageLength) : trace);
  
     if (notification != null) {
-      attrs.put("expected", notification.getExpected());
-      attrs.put("actual", notification.getActual());
-
       final String filePath = notification.getFilePath();
       if (filePath != null) {
         attrs.put("expectedFile", filePath);
       }
+      else {
+        attrs.put("expected", notification.getExpected());
+      }
       final String actualFilePath = notification.getActualFilePath();
       if (actualFilePath != null) {
         attrs.put("actualFile", actualFilePath);
+      }
+      else {
+        attrs.put("actual", notification.getActual());
       }
       final int expectedIdx = trace.indexOf("expected:<");
       final String comparisonFailureMessage;
