@@ -286,7 +286,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           myFocusTrackback.restoreFocus();
         }
         else {
-          myFocusTrackback.consume();
+          myFocusTrackback.dispose();
         }
       }
 
