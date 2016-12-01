@@ -354,7 +354,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
-    SwingUtilities.windowForComponent(myPopup.getContent()).addWindowFocusListener(new WindowFocusListener() {
+    Window window = SwingUtilities.windowForComponent(myPopup.getContent());
+    WindowFocusListener windowFocusListener = new WindowFocusListener() {
       @Override
       public void windowGainedFocus(WindowEvent e) {
       }
@@ -363,7 +364,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public void windowLostFocus(WindowEvent e) {
         myPopup.cancel();
       }
-    });
+    };
+    window.addWindowFocusListener(windowFocusListener);
+    Disposer.register(myPopup, () -> window.removeWindowFocusListener(windowFocusListener));
+
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ApplicationManager.getApplication().runReadAction(() -> myFilteringStructure.rebuild());
 

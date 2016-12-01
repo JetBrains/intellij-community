@@ -951,7 +951,7 @@ public abstract class DialogWrapper {
     if (rootPane == null) return;
     RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
     unregisterKeyboardActions(rootPane);
-    Disposer.clearOwnFields(rootPane, field -> field.getDeclaringClass() != Component.class);
+    Disposer.clearOwnFields(rootPane, field -> !field.getDeclaringClass().getName().startsWith("java.awt."));
   }
 
   private static void unregisterKeyboardActions(@Nullable JRootPane rootPane) {
