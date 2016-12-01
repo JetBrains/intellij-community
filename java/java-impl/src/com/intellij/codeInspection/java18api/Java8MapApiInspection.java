@@ -309,6 +309,29 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
     return new MapCheckCondition(valueReference, mapExpression, keyExpression, fullCondition, negated, containsKey);
   }
 
+  @NotNull
+  static String getNameCandidate(String name) {
+    // Either last uppercase letter (if it's not the last letter) or the first letter, removing leading underscores
+    // token -> t
+    // myAccessToken -> t
+    // SQL -> s
+    // __name -> n
+    // __1 -> k
+    String nameCandidate;
+    name = name.replaceFirst("^[_\\d]+", "");
+    if (name.isEmpty()) return "k";
+    nameCandidate = name.substring(0, 1);
+    for (int pos = name.length() - 1; pos > 0; pos--) {
+      if (Character.isUpperCase(name.charAt(pos))) {
+        if (pos != name.length() - 1) {
+          nameCandidate = name.substring(pos, pos + 1);
+        }
+        break;
+      }
+    }
+    return nameCandidate.toLowerCase(Locale.ENGLISH);
+  }
+
   private static class ReplaceWithSingleMapOperation implements LocalQuickFix {
     private final String myMethodName;
     private final SmartPsiElementPointer<PsiMethodCallExpression> myCallPointer;
@@ -410,29 +433,6 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
         ct.deleteAndRestoreComments(removed);
       }
       CodeStyleManager.getInstance(project).reformat(result);
-    }
-
-    @NotNull
-    private static String getNameCandidate(String name) {
-      // Either last uppercase letter (if it's not the last letter) or the first letter, removing leading underscores
-      // token -> t
-      // myAccessToken -> t
-      // SQL -> s
-      // __name -> n
-      // __1 -> k
-      String nameCandidate;
-      name = name.replaceFirst("^[_\\d]+", "");
-      if (name.isEmpty()) return "k";
-      nameCandidate = name.substring(0, 1);
-      for (int pos = name.length() - 1; pos > 0; pos--) {
-        if (Character.isUpperCase(name.charAt(pos))) {
-          if (pos != name.length() - 1) {
-            nameCandidate = name.substring(pos, pos + 1);
-          }
-          break;
-        }
-      }
-      return nameCandidate.toLowerCase(Locale.ENGLISH);
     }
   }
 
