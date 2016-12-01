@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
@@ -354,11 +353,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           tooltip.hide();
         }
         else {
-          final JRootPane rootPane = myComponent.getRootPane();
-          if (rootPane != null) {
-            final Rectangle bounds = myComponent.getBounds();
-            final JLayeredPane layeredPane = rootPane.getLayeredPane();
-
+          JRootPane rootPane = myComponent.getRootPane();
+          JLayeredPane layeredPane = rootPane == null ? null : rootPane.getLayeredPane();
+          if (layeredPane != null) {
+            Rectangle bounds = myComponent.getBounds();
             try {
               if (myFocusBackComponent != null) {
                 LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
