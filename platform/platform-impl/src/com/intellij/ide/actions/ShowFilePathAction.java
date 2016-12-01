@@ -167,7 +167,7 @@ public class ShowFilePathAction extends AnAction {
     List<String> fileUrls = new ArrayList<>();
     VirtualFile eachParent = file;
     while (eachParent != null) {
-      int index = files.size() == 0 ? 0 : files.size();
+      int index = files.size();
       files.add(index, eachParent);
       fileUrls.add(index, getPresentableUrl(eachParent));
       if (eachParent.getParent() == null && eachParent.getFileSystem() instanceof JarFileSystem) {
