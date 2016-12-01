@@ -23,10 +23,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -35,7 +33,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
@@ -290,32 +290,23 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    VcsLog log = VcsLogDataKeys.VCS_LOG.getData(dataContext);
-    if (log == null) return;
-    List<VcsFullCommitDetails> details = VcsLogUtil.collectFirstPackOfLoadedSelectedDetails(log);
-    if (details.isEmpty()) return;
-    String text = StringUtil.join(details, VcsLogGraphTable::getPresentableText, "\n");
-    CopyPasteManager.getInstance().setContents(new StringSelection(text));
+    StringBuilder sb = new StringBuilder();
+
+    int[] selectedRows = getSelectedRows();
+    for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
+      int row = selectedRows[i];
+      sb.append(getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN).toString());
+      sb.append(" ").append(getModel().getValueAt(row, GraphTableModel.AUTHOR_COLUMN).toString());
+      sb.append(" ").append(getModel().getValueAt(row, GraphTableModel.DATE_COLUMN).toString());
+      if (i != selectedRows.length - 1) sb.append("\n");
+    }
+
+    CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
   }
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return getSelectedRowCount() > 0;
-  }
-
-  @NotNull
-  private static String getPresentableText(@NotNull VcsFullCommitDetails commit) {
-    // implementation reflected by com.intellij.openapi.vcs.history.FileHistoryPanelImpl.getPresentableText()
-    StringBuilder sb = new StringBuilder();
-    sb.append(commit.getId().toShortString()).append(" ");
-    sb.append(commit.getAuthor().getName());
-    long time = commit.getAuthorTime();
-    sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
-    if (!Comparing.equal(commit.getAuthor(), commit.getCommitter())) {
-      sb.append(" (committed by ").append(commit.getCommitter().getName()).append(")");
-    }
-    sb.append(" ").append(commit.getSubject());
-    return sb.toString();
   }
 
   @Override
