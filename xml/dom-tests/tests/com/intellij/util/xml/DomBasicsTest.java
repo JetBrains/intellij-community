@@ -515,7 +515,7 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     element[0] = null;
     ((StableElement) stable).invalidate();
-    assertTrue(stable.equals(stable));
+    assertEquals(stable, stable);
     assertEquals(oldElement.toString(), stable.toString());
   }
 
