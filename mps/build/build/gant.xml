@@ -1,4 +1,4 @@
-<project name="Platform build scripts" default="build">
+<project name="Platform build scripts" default="install">
     <property name="gant.script" value="${basedir}/mps_build.gant"/>
     <property name="community.folder" value="${basedir}/../community"/>
     <property name="community.out" value="${basedir}/../out/intellij idea"/>
@@ -14,13 +14,20 @@
     <target name="clone" depends="check" if="${community.need.clone}"
             description="Clone IDEA Community repository to local folder">
         <echo message="IDEA Community folder does not exists. Cloning..."/>
-        <exec executable="git" dir="../">
+        <exec executable="git" dir="${basedir}/../">
             <arg value="clone"/>
             <arg value="git://git.jetbrains.org/idea/community.git"/>
         </exec>
     </target>
 
-    <target name="reset" depends="clone" description="Reset current IDEA Community state to HEAD">
+    <target name="fetch" depends="clone" description="Perform git fetch on IDEA Community repository">
+        <exec executable="git" dir="${community.folder}">
+            <arg value="fetch"/>
+            <arg value="-p"/>
+        </exec>
+    </target>
+
+    <target name="reset" depends="fetch" description="Reset current IDEA Community state to HEAD">
         <echo message="Reset all changes in IDEA Community folder to HEAD state."/>
         <exec executable="git" dir="${community.folder}">
             <arg value="reset"/>
@@ -29,14 +36,14 @@
         </exec>
     </target>
 
-    <target name="check.commit">
-        <condition property="idea.commit.is.set">
-            <isset property="${idea.commit}"/>
+    <target name="check-commit">
+        <condition property="idea.commit.is.set" value="true" else="false">
+            <isset property="idea.commit"/>
         </condition>
         <echo message="Commit/branch/tag value: ${idea.commit}"/>
     </target>
 
-    <target name="checkout" depends="reset,check.commit" if="${idea.commit.is.set}"
+    <target name="checkout" depends="reset,check-commit" if="${idea.commit.is.set}"
             description="Checkout IDEA Community by commit/branch/tag set in idea.commit property">
         <echo message="Check out IDEA Community by commit/branch/tag: ${idea.commit}"/>
         <exec executable="git" dir="${community.folder}">
@@ -103,7 +110,7 @@
         <echo message="MPS platform build finished."/>
     </target>
 
-    <target name="copy" description="Copy platform libs to MPS">
+    <target name="install" depends="build" description="Copy platform libs to MPS">
         <echo message="Copy platform and zip with platform sources to MPS sources."/>
 
         <delete dir="${mps.folder}/lib"/>
@@ -123,6 +130,9 @@
         <copy todir="${mps.folder}/lib">
             <fileset dir="${community.out}/dist.all/lib"/>
         </copy>
+
+        <!--Copy build.txt to MPS lib folder-->
+        <copy file="${community.out}/dist.all/build.txt" todir="${mps.folder}/lib"/>
 
         <!--Copy platform sources to MPS lib folder-->
         <copy file="${community.out}/artifacts/platform-sources.zip" todir="${mps.folder}/lib/src"/>
