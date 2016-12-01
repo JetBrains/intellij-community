@@ -102,12 +102,17 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (isModified()) {
-      final Project project = StudyUtils.getStudyProject();
-      if (project != null) {
-        StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-        taskManager.setEnableTestingFromSamples(myEnableTestingFromSamples.isSelected());
-        
+    final Project project = StudyUtils.getStudyProject();
+    if (project != null) {
+      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+      
+      if (isTestingFromSamplesEnabled() != taskManager.isEnableTestingFromSamples()){
+        taskManager.setEnableTestingFromSamples(isTestingFromSamplesEnabled());
+      }
+
+      final StepicUser user = taskManager.getUser();
+      final boolean isCredentialsModified = !getLogin().equals(user.getEmail()) || !getPassword().equals(user.getPassword());
+      if (isCredentialsModified) {
         final String login = getLogin();
         final String password = getPassword();
         if (!StringUtil.isEmptyOrSpaces(login) && !StringUtil.isEmptyOrSpaces(password)) {
@@ -128,9 +133,9 @@ public class StepicStudyOptions implements StudyOptionsProvider {
           }
         }
       }
-      else {
-        LOG.warn("No study object is opened");
-      }
+    }
+    else {
+      LOG.warn("No study object is opened");
     }
   }
 
