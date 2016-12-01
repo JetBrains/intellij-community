@@ -33,10 +33,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -210,12 +206,7 @@ public class GroovyConsole {
   private static ProcessHandler createProcessHandler(Module module) {
     try {
       final JavaParameters javaParameters = createJavaParameters(module);
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      assert sdk != null;
-      SdkTypeId sdkType = sdk.getSdkType();
-      assert sdkType instanceof JavaSdkType;
-      final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
-      final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true);
+      final GeneralCommandLine commandLine = javaParameters.toCommandLine();
       return new OSProcessHandler(commandLine) {
         @Override
         public boolean isSilentlyDestroyOnClose() {
@@ -239,6 +230,7 @@ public class GroovyConsole {
     }
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
     res.setWorkingDirectory(ModuleRootManager.getInstance(module).getContentRoots()[0].getPath());
+    res.setUseDynamicClasspath(true);
     return res;
   }
 

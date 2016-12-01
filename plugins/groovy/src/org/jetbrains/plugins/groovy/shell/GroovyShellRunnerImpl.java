@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
@@ -92,14 +87,8 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
   @Override
   protected Process createProcess() throws ExecutionException {
     JavaParameters javaParameters = myShellRunner.createJavaParameters(myModule);
-
-    final Sdk sdk = ModuleRootManager.getInstance(myModule).getSdk();
-    assert sdk != null;
-    SdkTypeId sdkType = sdk.getSdkType();
-    assert sdkType instanceof JavaSdkType;
-    final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
-
-    myCommandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true);
+    javaParameters.setUseDynamicClasspath(true);
+    myCommandLine = javaParameters.toCommandLine();
     return myCommandLine.createProcess();
   }
 
