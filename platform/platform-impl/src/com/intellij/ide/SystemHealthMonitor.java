@@ -40,6 +40,7 @@ import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -473,9 +474,9 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   /**
    * Collect usage stats for action invocations.
    */
-  public static void countActionInvocation(@NotNull Class actionClass, @NotNull AnActionEvent event) {
+  public static void countActionInvocation(@NotNull Class actionClass, @NotNull Presentation templatePresentation, @NotNull AnActionEvent event) {
     synchronized (ACTION_INVOCATIONS_LOCK) {
-      String actionName = getActionClassName(actionClass);
+      String actionName = getActionName(actionClass, templatePresentation);
       InvocationKind invocationKind = getInvocationKindFromEvent(event);
       Multiset<InvocationKind> invocations = ourActionInvocations.get(actionName);
       if (invocations == null) {
@@ -533,14 +534,21 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   /**
    * Gets an action name based on its class. For Android Studio code, we use simple names for plugins we use canonical names.
    */
-  private static String getActionClassName(Class actionClass) {
+  static String getActionName(@NotNull Class actionClass, @NotNull Presentation templatePresentation) {
     Class currentClass = actionClass;
     while (currentClass.isAnonymousClass()) {
-      currentClass = currentClass.getSuperclass();
+      currentClass = currentClass.getEnclosingClass();
     }
     String packageName = currentClass.getPackage().getName();
-    if (packageName.startsWith("com.android.") || packageName.startsWith("com.intellij.") || packageName.startsWith("org.jetbrains.")) {
-      return currentClass.getSimpleName();
+    if (packageName.startsWith("com.android.") || packageName.startsWith("com.intellij.") || packageName.startsWith("org.jetbrains.") ||
+        packageName.startsWith("or.intellij.") || packageName.startsWith("com.jetbrains.") || packageName.startsWith("git4idea.")) {
+
+      String actionName = currentClass.getSimpleName();
+      // ExecutorAction points to many different Run/Debug actions, we use the template text to distinguish.
+      if (actionName.equals("ExecutorAction")) {
+        actionName += "#" + templatePresentation.getText();
+      }
+      return actionName;
     }
     return currentClass.getCanonicalName();
   }
