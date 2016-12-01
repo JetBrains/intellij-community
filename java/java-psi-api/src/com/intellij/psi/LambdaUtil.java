@@ -140,6 +140,7 @@ public class LambdaUtil {
     return false;
   }
 
+  @Contract("null -> false")
   private static boolean isAssignmentOrInvocationContext(PsiElement context) {
     return isAssignmentContext(context) || isInvocationContext(context);
   }
