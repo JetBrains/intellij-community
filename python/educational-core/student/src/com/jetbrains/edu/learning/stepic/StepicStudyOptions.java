@@ -40,30 +40,17 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   private JPanel myPane;
   private JBCheckBox myEnableTestingFromSamples;
 
-  private boolean myCredentialsModified;
-
   public StepicStudyOptions() {
     myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        myCredentialsModified = true;
         erasePassword();
       }
     });
-
-    myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        myCredentialsModified = true;
-      }
-    });
-
-    myEnableTestingFromSamples.addChangeListener(e -> myCredentialsModified = true);
   }
 
   private void erasePassword() {
     setPassword("");
-    myCredentialsModified = true;
   }
 
   @NotNull
@@ -88,6 +75,10 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   private void setPassword(@NotNull final String password) {
     myPasswordField.setText(password);
   }
+  
+  private boolean isTestingFromSamplesEnabled() {
+    return myEnableTestingFromSamples.isSelected();
+  }
 
   @Override
   public void reset() {
@@ -98,7 +89,6 @@ public class StepicStudyOptions implements StudyOptionsProvider {
       setLogin(user.getEmail());
       setPassword(user.getPassword());
       myEnableTestingFromSamples.setSelected(taskManager.isEnableTestingFromSamples());
-      resetCredentialsModification();
     }
     else {
       LOG.warn("No study object is opened");
@@ -112,11 +102,12 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myCredentialsModified) {
+    if (isModified()) {
       final Project project = StudyUtils.getStudyProject();
       if (project != null) {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         taskManager.setEnableTestingFromSamples(myEnableTestingFromSamples.isSelected());
+        
         final String login = getLogin();
         final String password = getPassword();
         if (!StringUtil.isEmptyOrSpaces(login) && !StringUtil.isEmptyOrSpaces(password)) {
@@ -141,7 +132,6 @@ public class StepicStudyOptions implements StudyOptionsProvider {
         LOG.warn("No study object is opened");
       }
     }
-    resetCredentialsModification();
   }
 
   @Nullable
@@ -151,11 +141,15 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   }
 
   public boolean isModified() {
-    return myCredentialsModified;
-  }
+    final Project project = StudyUtils.getStudyProject();
+    if (project == null) return false;
 
-  public void resetCredentialsModification() {
-    myCredentialsModified = false;
+    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    final StepicUser user = taskManager.getUser();
+    
+    return !getLogin().equals(user.getEmail()) 
+           || !getPassword().equals(user.getPassword())
+           || !isTestingFromSamplesEnabled() == taskManager.isEnableTestingFromSamples(); 
   }
 
   private void createUIComponents() {

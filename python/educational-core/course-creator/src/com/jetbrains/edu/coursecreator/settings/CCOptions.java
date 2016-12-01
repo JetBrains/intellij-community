@@ -5,31 +5,11 @@ import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class CCOptions implements StudyOptionsProvider {
   private JRadioButton myHtmlRadioButton;
   private JRadioButton myMarkdownRadioButton;
   private JPanel myPanel;
-  private boolean myIsModified = false;
-
-
-  public CCOptions() {
-    myHtmlRadioButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myIsModified = true;
-      }
-    });
-    
-    myMarkdownRadioButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myIsModified = true;
-      }
-    });
-  }
 
   @Nullable
   @Override
@@ -47,7 +27,8 @@ public class CCOptions implements StudyOptionsProvider {
 
   @Override
   public boolean isModified() {
-    return myIsModified;
+    final boolean htmlAsDefaultTaskFormat = CCSettings.getInstance().useHtmlAsDefaultTaskFormat();
+    return myHtmlRadioButton.isSelected() != htmlAsDefaultTaskFormat;
   }
 
   @Override
