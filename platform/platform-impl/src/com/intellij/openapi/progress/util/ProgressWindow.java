@@ -304,6 +304,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
   }
 
+  @Nullable
+  protected ProgressDialog getDialog() {
+    return myDialog;
+  }
+
   public void background() {
     final Runnable backgroundHandler = myBackgroundHandler;
     if (backgroundHandler != null) {

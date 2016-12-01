@@ -47,6 +47,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -939,6 +940,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void endRead() {
     myLock.readUnlock();
+  }
+
+  public void runWriteActionWithProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent,
+                                         @NotNull Consumer<ProgressIndicator> action) {
+    Class<?> clazz = action.getClass();
+    startWrite(clazz);
+    try {
+      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent);
+      ProgressManager.getInstance().runProcess(() -> action.consume(indicator), indicator);
+    }
+    finally {
+      endWrite(clazz);
+    }
   }
 
   @Override
