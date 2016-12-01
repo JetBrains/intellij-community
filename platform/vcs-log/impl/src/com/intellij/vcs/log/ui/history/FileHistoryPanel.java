@@ -16,38 +16,40 @@
 package com.intellij.vcs.log.ui.history;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class FileHistoryPanel extends JPanel implements Disposable {
+public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
   @NotNull private final VcsLogData myLogData;
+  @NotNull private final FileHistoryUi myUi;
 
   @NotNull private Runnable myContainingBranchesListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui, @NotNull VcsLogData logData, @NotNull VisiblePack visiblePack) {
+    myUi = ui;
     myLogData = logData;
-    myGraphTable = new VcsLogGraphTable(ui, logData, visiblePack);
-    myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
+    myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack);
+    myDetailsPanel = new DetailsPanel(logData, myUi.getColorManager(), this);
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
     ProgressStripe progressStripe =
@@ -72,7 +74,7 @@ public class FileHistoryPanel extends JPanel implements Disposable {
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     myDetailsSplitter.setFirstComponent(progressStripe);
-    myDetailsSplitter.setSecondComponent(ui.isShowDetails() ? myDetailsPanel : null);
+    myDetailsSplitter.setSecondComponent(myUi.getProperties().get(MainVcsLogUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     updateWhenDetailsAreLoaded();
@@ -81,7 +83,7 @@ public class FileHistoryPanel extends JPanel implements Disposable {
     add(myDetailsSplitter, BorderLayout.CENTER);
     add(createActionsToolbar(), BorderLayout.WEST);
 
-    Disposer.register(ui, this);
+    Disposer.register(myUi, this);
   }
 
   @NotNull
@@ -125,6 +127,15 @@ public class FileHistoryPanel extends JPanel implements Disposable {
 
   public void showDetails(boolean show) {
     myDetailsSplitter.setSecondComponent(show ? myDetailsPanel : null);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
+      return myUi.getProperties();
+    }
+    return null;
   }
 
   @Override

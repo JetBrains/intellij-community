@@ -30,8 +30,10 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogImpl;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -112,6 +114,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public abstract Component getMainComponent();
 
   protected abstract VcsLogFilterCollection getFilters();
+
+  @NotNull
+  public abstract VcsLogUiProperties getProperties();
 
   public abstract boolean isShowRootNames();
 

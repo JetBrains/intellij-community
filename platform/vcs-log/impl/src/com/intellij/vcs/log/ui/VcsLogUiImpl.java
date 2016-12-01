@@ -143,6 +143,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myMainFrame.getFilterUi();
   }
 
+  @Override
   @NotNull
   public MainVcsLogUiProperties getProperties() {
     return myUiProperties;

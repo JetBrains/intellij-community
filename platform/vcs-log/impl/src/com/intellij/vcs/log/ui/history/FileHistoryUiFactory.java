@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.history;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -33,7 +34,8 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
 
   @Override
   public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
-    return new FileHistoryUi(logData, project, colorManager,
+    FileHistoryUiProperties properties = ServiceManager.getService(project, FileHistoryUiProperties.class);
+    return new FileHistoryUi(logData, project, colorManager, properties,
                              new VisiblePackRefresherImpl(project, logData, PermanentGraph.SortType.Bek), myFilePath);
   }
 }

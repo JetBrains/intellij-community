@@ -22,6 +22,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
@@ -38,15 +40,19 @@ import java.util.List;
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private static final List<String> HIGHLIGHTERS = Arrays.asList(MyCommitsHighlighter.Factory.ID,
                                                                           CurrentBranchHighlighter.Factory.ID);
+  @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
+  private final MyPropertiesChangeListener myPropertiesChangeListener;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull Project project,
                        @NotNull VcsLogColorManager manager,
+                       @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path) {
     super(logData, project, manager, refresher);
+    myUiProperties = uiProperties;
 
     myFilterUi = new FileHistoryFilterUi(path);
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack);
@@ -57,6 +63,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                                                                  f -> HIGHLIGHTERS.contains(f.getId()))) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
     }
+
+    myPropertiesChangeListener = new MyPropertiesChangeListener();
+    myUiProperties.addChangeListener(myPropertiesChangeListener);
   }
 
   @NotNull
@@ -90,10 +99,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return false;
   }
 
-  public boolean isShowDetails() {
-    return true;
-  }
-
   @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
     return HIGHLIGHTERS.contains(id);
@@ -119,5 +124,25 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   protected VcsLogFilterCollection getFilters() {
     return myFilterUi.getFilters();
+  }
+
+  @NotNull
+  public FileHistoryUiProperties getProperties() {
+    return myUiProperties;
+  }
+
+  @Override
+  public void dispose() {
+    myUiProperties.removeChangeListener(myPropertiesChangeListener);
+    super.dispose();
+  }
+
+  private class MyPropertiesChangeListener implements VcsLogUiProperties.PropertiesChangeListener {
+    @Override
+    public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+      if (property == MainVcsLogUiProperties.SHOW_DETAILS) {
+        myFileHistoryPanel.showDetails(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
+      }
+    }
   }
 }

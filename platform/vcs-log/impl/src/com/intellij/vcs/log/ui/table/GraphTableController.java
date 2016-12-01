@@ -32,11 +32,11 @@ import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.CommitPanel;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
@@ -215,12 +215,10 @@ public class GraphTableController {
   }
 
   private void performRootColumnAction() {
-    if (myUi instanceof VcsLogUiImpl) {
-      MainVcsLogUiProperties properties = ((VcsLogUiImpl)myUi).getProperties();
-      if (myUi.isMultipleRoots() && properties.exists(MainVcsLogUiProperties.SHOW_ROOT_NAMES)) {
-        VcsLogUtil.triggerUsage("RootColumnClick");
-        properties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, !properties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES));
-      }
+    VcsLogUiProperties properties = myUi.getProperties();
+    if (myUi.isMultipleRoots() && properties.exists(MainVcsLogUiProperties.SHOW_ROOT_NAMES)) {
+      VcsLogUtil.triggerUsage("RootColumnClick");
+      properties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, !properties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES));
     }
   }
 

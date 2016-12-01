@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -26,6 +27,12 @@ public interface VcsLogUiProperties {
   <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value);
 
   <T> boolean exists(@NotNull VcsLogUiProperty<T> property);
+
+  @CalledInAwt
+  void addChangeListener(@NotNull PropertiesChangeListener listener);
+
+  @CalledInAwt
+  void removeChangeListener(@NotNull PropertiesChangeListener listener);
 
   class VcsLogUiProperty<T> {
     @NotNull private final String myName;
@@ -51,5 +58,9 @@ public interface VcsLogUiProperties {
     public int hashCode() {
       return Objects.hash(myName);
     }
+  }
+
+  interface PropertiesChangeListener {
+    <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
   }
 }

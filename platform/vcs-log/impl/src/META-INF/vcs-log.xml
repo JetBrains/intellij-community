@@ -16,6 +16,8 @@
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"
+                    serviceImplementation="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
@@ -98,6 +100,7 @@
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
+      <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="VcsHistoryActionsGroup"/>
       <reference ref="Vcs.Log.CloseLogTabAction"/>
     </group>
