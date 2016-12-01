@@ -110,6 +110,14 @@ class ProductModulesLayout {
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
 
   /**
+   * Names of the main modules of plugins from {@link #pluginModulesToPublish} list where since-build/until-build range should be restricted.
+   * These plugins will be compatible with builds which number differ from the build which produces these plugins only in the last component,
+   * i.e. plugins produced in 163.1111.22 build will be compatible with 163.1111.* builds. The plugins not included into this list
+   * will be compatible with all builds from the same baseline, i.e. with 163.* builds.
+   */
+  List<String> pluginModulesWithRestrictedCompatibleBuildRange = []
+
+  /**
    * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files
    * will be reordered accordingly to reduct IDE startup time. If {@code null} no reordering will be performed.
    */
