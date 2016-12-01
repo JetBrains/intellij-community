@@ -164,12 +164,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
-        ToolWindowManagerImpl.this.projectOpened();
+        if (project == myProject) {
+          ToolWindowManagerImpl.this.projectOpened();
+        }
       }
 
       @Override
       public void projectClosed(Project project) {
-        ToolWindowManagerImpl.this.projectClosed();
+        if (project == myProject) {
+          ToolWindowManagerImpl.this.projectClosed();
+        }
       }
     });
 
@@ -1859,7 +1863,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     Element layoutToRestoreElement = myLayoutToRestoreLater == null ? null : myLayoutToRestoreLater.writeExternal(LAYOUT_TO_RESTORE);
     if (layoutToRestoreElement != null) {
-      element.addContent(layoutElement);
+      element.addContent(layoutToRestoreElement);
     }
 
     return element;
