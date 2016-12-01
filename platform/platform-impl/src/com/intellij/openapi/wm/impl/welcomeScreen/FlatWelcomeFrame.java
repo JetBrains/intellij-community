@@ -848,6 +848,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     pane.setBackground(getProjectsBackground());
     actionsListPanel.add(pane, BorderLayout.CENTER);
 
+    int width = (int)Math.min(Math.round(list.getPreferredSize().getWidth()), 200);
+    pane.setPreferredSize(JBUI.size(width, -1));
+
     boolean singleProjectGenerator = list.getModel().getSize() == 1;
 
     final Ref<Component> selected = Ref.create();
