@@ -85,8 +85,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private void updateHintNumberLabel() {
     if (myHints.size() > 1) {
       final String color = String.valueOf(ColorUtil.toHex(UIUtil.getHeaderInactiveColor()));
-      myHintLabel
-        .setText(UIUtil.toHtml("Hint" + " <font color=\"" + color + "\">(" + (myShownHintNumber + 1) + "/" + myHints.size() + ")</font>:"));
+      myHintLabel.setText(UIUtil.toHtml("Hint" + " <font color=\"" + color + "\">(" + (myShownHintNumber + 1) + "/" + myHints.size() + ")</font>:"));
     }
     else {
       myHintLabel.setText("Hint: ");
@@ -191,13 +190,21 @@ public class CCCreateAnswerPlaceholderPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.remove(myShownHintNumber);
-      myShownHintNumber += myShownHintNumber < myHints.size() ? 0 : -1;
-      showHint();
+      if (myHints.isEmpty()) {
+        myHints.add(HINT_PLACEHOLDER);
+        showHint();
+      }
+      else {
+        myShownHintNumber += myShownHintNumber < myHints.size() ? 0 : -1;
+        showHint();
+      }
     }
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myHints.size() > 1);
+      final boolean hasMoreHints = myHints.size() > 0 && !myHints.get(myShownHintNumber).equals(HINT_PLACEHOLDER) 
+                                   && !myHints.get(myShownHintNumber).isEmpty();
+      e.getPresentation().setEnabled(hasMoreHints);
     }
   }
 }
