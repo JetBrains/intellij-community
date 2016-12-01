@@ -65,8 +65,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     if (task == null || !task.hasSubtasks()) {
       return null;
     }
-    EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.background(EditorColors.GUTTER_BACKGROUND);
+    EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
     String header = (isTestFile ? "test" : "task") + " file";
     int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
     int subtaskSize = task.getLastSubtaskIndex() + 1;

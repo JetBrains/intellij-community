@@ -66,8 +66,7 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
     final String message = worker.createMessage(descriptors);
     if (message == null) return null;
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.background(LightColors.RED);
+    final EditorNotificationPanel panel = new EditorNotificationPanel(LightColors.RED);
     panel.setText(message);
     panel.createActionLabel("Edit JSON Schema Mappings", () -> {
       ShowSettingsUtil.getInstance().editConfigurable(myProject, new JsonSchemaMappingsConfigurable(myProject));

@@ -87,9 +87,8 @@ public class DiffNotifications {
 
   @NotNull
   public static JPanel createNotification(@NotNull String text, @Nullable final Color background, boolean showHideAction) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+    final EditorNotificationPanel panel = new EditorNotificationPanel(background);
     panel.text(text);
-    panel.background(background);
     if (showHideAction) {
       HyperlinkLabel link = panel.createActionLabel("Hide", () -> panel.setVisible(false));
       link.setToolTipText("Hide this notification");
