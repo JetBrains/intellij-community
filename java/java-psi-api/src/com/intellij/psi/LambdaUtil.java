@@ -127,9 +127,17 @@ public class LambdaUtil {
   @Contract("null -> false")
   public static boolean isValidLambdaContext(@Nullable PsiElement context) {
     context = PsiUtil.skipParenthesizedExprUp(context);
-    return isAssignmentOrInvocationContext(context) ||
-           context instanceof PsiTypeCastExpression ||
-           context instanceof PsiConditionalExpression && isAssignmentOrInvocationContext(PsiUtil.skipParenthesizedExprUp(context.getParent()));
+    if (isAssignmentOrInvocationContext(context) || context instanceof PsiTypeCastExpression) {
+      return true;
+    }
+    if (context instanceof PsiConditionalExpression) {
+      PsiElement parentContext = PsiUtil.skipParenthesizedExprUp(context.getParent());
+      if (isAssignmentOrInvocationContext(parentContext)) return true;
+      if (parentContext instanceof PsiConditionalExpression) {
+        return isValidLambdaContext(parentContext);
+      }
+    }
+    return false;
   }
 
   private static boolean isAssignmentOrInvocationContext(PsiElement context) {
