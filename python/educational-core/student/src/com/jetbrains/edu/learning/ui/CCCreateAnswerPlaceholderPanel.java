@@ -35,7 +35,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private List<String> myHints = new ArrayList<>();
   private int myShownHintNumber = 0;
 
-  public CCCreateAnswerPlaceholderPanel(String placeholderText, List<String> hints) {
+  public CCCreateAnswerPlaceholderPanel(@NotNull String placeholderText, @NotNull List<String> hints) {
     if (hints.isEmpty()) {
       myHints.add(HINT_PLACEHOLDER);
     }
@@ -51,7 +51,7 @@ public class CCCreateAnswerPlaceholderPanel {
     myHintTextArea.addFocusListener(createFocusListenerToSetDefaultHintText());
 
     actionsPanel.add(createHintToolbarComponent(), BorderLayout.WEST);
-    showHint(myHints.get(myShownHintNumber));
+    showHint();
     myPlaceholderTextArea.setText(placeholderText);
   }
 
@@ -85,15 +85,17 @@ public class CCCreateAnswerPlaceholderPanel {
   private void updateHintNumberLabel() {
     if (myHints.size() > 1) {
       final String color = String.valueOf(ColorUtil.toHex(UIUtil.getHeaderInactiveColor()));
-      myHintLabel.setText(UIUtil.toHtml("Hint" + " <font color=\"" + color + "\">(" + (myShownHintNumber + 1) + "/" + myHints.size() + ")</font>:"));
+      myHintLabel
+        .setText(UIUtil.toHtml("Hint" + " <font color=\"" + color + "\">(" + (myShownHintNumber + 1) + "/" + myHints.size() + ")</font>:"));
     }
     else {
       myHintLabel.setText("Hint: ");
     }
   }
 
-  public void showHint(String hintText) {
-    if (myHints.get(myShownHintNumber).equals(HINT_PLACEHOLDER)) {
+  public void showHint() {
+    String hintText = myHints.get(myShownHintNumber);
+    if (hintText.equals(HINT_PLACEHOLDER)) {
       myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
     }
     else {
@@ -137,7 +139,8 @@ public class CCCreateAnswerPlaceholderPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.set(myShownHintNumber, myHintTextArea.getText());
-      showHint(myHints.get(++myShownHintNumber));
+      myShownHintNumber++;
+      showHint();
     }
 
     @Override
@@ -155,7 +158,8 @@ public class CCCreateAnswerPlaceholderPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.set(myShownHintNumber, myHintTextArea.getText());
-      showHint(myHints.get(--myShownHintNumber));
+      myShownHintNumber--;
+      showHint();
     }
 
     @Override
@@ -172,9 +176,9 @@ public class CCCreateAnswerPlaceholderPanel {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.add("");
       myShownHintNumber++;
-      showHint("");
+      myHints.add(myShownHintNumber, "");
+      showHint();
     }
   }
 
@@ -188,7 +192,7 @@ public class CCCreateAnswerPlaceholderPanel {
     public void actionPerformed(AnActionEvent e) {
       myHints.remove(myShownHintNumber);
       myShownHintNumber += myShownHintNumber < myHints.size() ? 0 : -1;
-      showHint(myHints.get(myShownHintNumber));
+      showHint();
     }
 
     @Override
