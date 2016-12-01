@@ -17,11 +17,10 @@
 
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.ManageSchemesComboAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +36,7 @@ public class CodeStyleSchemesPanel {
 
   private final CodeStyleSchemesModel myModel;
   private JPanel myPanel;
-  private JButton myManageButton;
-  private JButton myResetButton;
+  @SuppressWarnings("unused") private JButton myManageButton;
 
   private boolean myIsReset = false;
   private final Font myDefaultComboFont;
@@ -71,19 +69,6 @@ public class CodeStyleSchemesPanel {
       }
     });
     
-    myManageButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        showManageSchemesDialog();
-      }
-    });
-
-    myResetButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        resetCurrentSchemeToDefaults();
-      }
-    });
   }
 
   private void onCombo() {
@@ -129,10 +114,7 @@ public class CodeStyleSchemesPanel {
     finally {
       myIsReset = false;
     }
-
-
   }
-
 
   public void onSelectedSchemeChanged() {
     myIsReset = true;
@@ -153,11 +135,6 @@ public class CodeStyleSchemesPanel {
     return myPanel;
   }
 
-  private void showManageSchemesDialog() {
-    ManageCodeStyleSchemesDialog manageSchemesDialog = new ManageCodeStyleSchemesDialog(myPanel, myModel);
-    manageSchemesDialog.show();
-  }
-
   public void usePerProjectSettingsOptionChanged() {
     if (myModel.isProjectScheme(myModel.getSelectedScheme())) {
       myCombo.setSelectedItem(myModel.getProjectScheme());
@@ -167,15 +144,21 @@ public class CodeStyleSchemesPanel {
     }
   }
 
-  private void resetCurrentSchemeToDefaults() {
-    CodeStyleScheme selectedScheme = getSelectedScheme();
-    if (selectedScheme != null) {
-      if (Messages
-            .showOkCancelDialog(ApplicationBundle.message("settings.code.style.reset.to.defaults.message"),
-                                ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) == Messages.OK) {
-        selectedScheme.resetToDefaults();
-        myModel.fireSchemeChanged(selectedScheme);
+  private void createUIComponents() {
+    ManageSchemesComboAction manageSchemesComboAction = new ManageSchemesComboAction(new CodeStyleSchemesActions(myModel) {
+      @NotNull
+      @Override
+      protected JComponent getParentComponent() {
+        return myPanel;
       }
-    }
+
+      @Nullable
+      @Override
+      protected CodeStyleScheme getCurrentScheme() {
+        return getSelectedScheme();
+      }
+    });
+    myManageButton = manageSchemesComboAction.createCombo();
   }
+
 }

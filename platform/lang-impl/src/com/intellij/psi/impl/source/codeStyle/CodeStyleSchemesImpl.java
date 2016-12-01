@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
-  protected static final String DEFAULT_SCHEME_NAME = "Default";
 
   @NonNls
   static final String CODE_STYLES_DIR_PATH = "codestyles";
@@ -119,9 +118,9 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
 
   @Override
   public CodeStyleScheme getDefaultScheme() {
-    CodeStyleScheme defaultScheme = mySchemeManager.findSchemeByName(DEFAULT_SCHEME_NAME);
+    CodeStyleScheme defaultScheme = mySchemeManager.findSchemeByName(CodeStyleSchemeImpl.DEFAULT_SCHEME_NAME);
     if (defaultScheme == null) {
-      defaultScheme = new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null);
+      defaultScheme = new CodeStyleSchemeImpl(CodeStyleSchemeImpl.DEFAULT_SCHEME_NAME, true, null);
       addScheme(defaultScheme);
     }
     return defaultScheme;
