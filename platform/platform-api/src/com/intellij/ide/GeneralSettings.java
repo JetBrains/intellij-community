@@ -51,9 +51,9 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
-  private int myInactiveTimeout; // Number of seconds of inactivity after which IDEA automatically saves all files
+  private int myInactiveTimeout = 15; // Number of seconds of inactivity after which IDEA automatically saves all files
   private boolean myUseSafeWrite = true;
-  private final PropertyChangeSupport myPropertyChangeSupport;
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private boolean myUseDefaultBrowser = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
@@ -65,8 +65,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   }
 
   public GeneralSettings() {
-    myInactiveTimeout = 15;
-    myPropertyChangeSupport = new PropertyChangeSupport(this);
   }
 
   public void addPropertyChangeListener(PropertyChangeListener listener){
@@ -169,7 +167,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   }
 
   /**
-   * @return <code>true</code> if IDEA saves all files after "idle" timeout.
+   * @return {@code true} if IDEA saves all files after "idle" timeout.
    */
   public boolean isAutoSaveIfInactive(){
     return myAutoSaveIfInactive;
@@ -181,18 +179,18 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   /**
    * @return timeout in seconds after which IDEA saves all files if there was no user activity.
-   * The method always return non positive (more then zero) value.
+   * The method always return positive (more then zero) value.
    */
   public int getInactiveTimeout(){
-    return myInactiveTimeout;
+    return UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(myInactiveTimeout);
   }
 
-  public void setInactiveTimeout(int inactiveTimeout) {
+  public void setInactiveTimeout(int inactiveTimeoutSeconds) {
     int oldInactiveTimeout = myInactiveTimeout;
 
-    myInactiveTimeout = inactiveTimeout;
+    myInactiveTimeout = UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(inactiveTimeoutSeconds);
     myPropertyChangeSupport.firePropertyChange(
-        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(inactiveTimeout)
+        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(myInactiveTimeout)
     );
   }
 
