@@ -21,6 +21,7 @@ import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -53,7 +54,8 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
 
   @Override
   protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {
-    defaultActions.add(1, new CopyToProjectAction());
+    defaultActions.add(0, new CopyToProjectAction());
+    defaultActions.add(1, new Separator());
   }
 
   private class CopyToProjectAction extends AnAction {
