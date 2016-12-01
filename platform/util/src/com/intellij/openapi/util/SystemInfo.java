@@ -225,9 +225,11 @@ public class SystemInfo extends SystemInfoRt {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "JetBrains");
   }
 
-  /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 17) */
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
   public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
-  /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
+  //</editor-fold>
 }
