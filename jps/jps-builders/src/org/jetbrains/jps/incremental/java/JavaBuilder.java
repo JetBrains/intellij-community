@@ -469,8 +469,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
-          forkSdk.getFirst(), 
-          getExternalJavacHeapSize(context), 
+          forkSdk.getFirst() + "/bin/java",
+          forkSdk.getFirst() + "/lib/tools.jar",
+          getExternalJavacHeapSize(context),
           vmOptions, options, platformCp, classPath, modulePath, sourcePath,
           files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );

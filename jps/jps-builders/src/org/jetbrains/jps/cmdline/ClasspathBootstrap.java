@@ -172,7 +172,7 @@ public class ClasspathBootstrap {
     }
   }
 
-  public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
+  public static List<File> getExternalJavacProcessClasspath(String javaPath, String toolsPath, JavaCompilingTool compilingTool) {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     // util
@@ -208,8 +208,8 @@ public class ClasspathBootstrap {
     try {
       final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
       // sdkHome is not the same as the sdk used to run this process
-      final File candidate = new File(sdkHome, "lib/tools.jar");
-      if (candidate.exists()) {
+      File candidate = toolsPath == null ? null : new File(toolsPath);
+      if (candidate != null && candidate.exists()) {
         cp.add(candidate);
       }
       else {
@@ -223,7 +223,8 @@ public class ClasspathBootstrap {
               relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
             }
             if (relPath != null) {
-              final File targetFile = new File(sdkHome, relPath);
+              File javaHome = new File(javaPath).getParentFile().getParentFile();
+              File targetFile = new File(javaHome, relPath);
               cp.add(targetFile);  // tools.jar
             }
           }

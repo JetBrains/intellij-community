@@ -109,7 +109,8 @@ public class ExternalJavacManager {
   }
   
 
-  public boolean forkJavac(final String javaHome, final int heapSize, List<String> vmOptions, List<String> options,
+  public boolean forkJavac(String javaPath, String toolsPath,
+                           int heapSize, List<String> vmOptions, List<String> options,
                            Collection<File> platformCp,
                            Collection<File> classpath,
                            Collection<File> modulePath,
@@ -128,7 +129,7 @@ public class ExternalJavacManager {
     }
     try {
       final ExternalJavacProcessHandler processHandler = launchExternalJavacProcess(
-        uuid, javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool
+        uuid, javaPath, toolsPath, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool
       );
       processHandler.addProcessListener(new ProcessAdapter() {
         public void onTextAvailable(ProcessEvent event, Key outputType) {
@@ -200,14 +201,15 @@ public class ExternalJavacManager {
     myChannelRegistrar.close().awaitUninterruptibly();
   }
 
-  private ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid, String sdkHomePath,
-                                                                        int heapSize,
-                                                                        int port,
-                                                                        File workingDir,
-                                                                        List<String> vmOptions,
-                                                                        JavaCompilingTool compilingTool) throws Exception {
+  private ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid,
+                                                                 String javaPath, String toolsPath,
+                                                                 int heapSize,
+                                                                 int port,
+                                                                 File workingDir,
+                                                                 List<String> vmOptions,
+                                                                 JavaCompilingTool compilingTool) throws Exception {
     final List<String> cmdLine = new ArrayList<String>();
-    appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
+    appendParam(cmdLine, javaPath);
     //appendParam(cmdLine, "-XX:MaxPermSize=150m");
     //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
     appendParam(cmdLine, "-Djava.awt.headless=true");
@@ -259,7 +261,7 @@ public class ExternalJavacManager {
 
     appendParam(cmdLine, "-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
+    final List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(javaPath, toolsPath, compilingTool);
     final StringBuilder classpath = new StringBuilder();
     for (File file : cp) {
       if (classpath.length() > 0) {
@@ -299,10 +301,6 @@ public class ExternalJavacManager {
       }
     }
     cmdLine.add(param);
-  }
-
-  private static String getVMExecutablePath(String sdkHome) {
-    return sdkHome + "/bin/java";
   }
 
   protected static class ExternalJavacProcessHandler extends BaseOSProcessHandler {
