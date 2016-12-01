@@ -34,7 +34,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class JUnit5TestExecutionListener implements TestExecutionListener {
@@ -288,7 +287,12 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       if (source instanceof JavaClassSource) {
         return ((JavaClassSource)source).getJavaClass().getName();
       }
-      return null;
+      try {
+        return (String)source.getClass().getDeclaredMethod("getClassName").invoke(source);
+      }
+      catch (Throwable e) {
+        return null;
+      }
     }).orElse(null);
   }
 
@@ -297,7 +301,12 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       if (source instanceof JavaMethodSource) {
         return ((JavaMethodSource)source).getJavaMethodName();
       }
-      return null;
+      try {
+        return (String)source.getClass().getDeclaredMethod("getMethodName").invoke(source);
+      }
+      catch (Throwable e) {
+        return null;
+      }
     }).orElse(null);
   }
 }
