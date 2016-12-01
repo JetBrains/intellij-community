@@ -764,7 +764,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   @Override
   public String dumpState() {
     return String.format("\nuse soft wraps: %b, tab width: %d, additional columns: %b, " +
-                         "update in progress: %b, bulk update in progress: %b, active: %b, dirty: %b, deferred regions: %s" +
+                         "update in progress: %b, bulk update in progress: %b, active: %d, dirty: %b, deferred regions: %s" +
                          "\nappliance manager state: %s\nsoft wraps mapping info: %s\nsoft wraps: %s",
                          myUseSoftWraps, myTabWidth, myForceAdditionalColumns, myUpdateInProgress, myBulkUpdateInProgress, myActive,
                          myDirty, myDeferredFoldRegions.toString(),
