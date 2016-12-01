@@ -764,13 +764,15 @@ class Test {
 class Test {
   void main() {
     timeoutExecution(1000);
+    createSpace(true);
   }
-  void timeoutExecution(int timeout) {
-  }
+  void timeoutExecution(int timeout) {}
+  void createSpace(boolean space) {}
 }
 """)
 
     onLineStartingWith("timeoutExec").assertNoInlays()
+    onLineStartingWith("createSpace").assertNoInlays()
   }
 
   fun `test show if multiple params but name contained`() {
@@ -779,14 +781,18 @@ class Test {
 class Test {
   void main() {
     timeoutExecution(1000, "xxx");
+    createSpace(true, 10);
   }
-  void timeoutExecution(int timeout, String message) {
-  }
+  void timeoutExecution(int timeout, String message) {}
+  void createSpace(boolean space, int a) {}
 }
 """)
 
     onLineStartingWith("timeout")
       .assertInlays("timeout->1000", "message->\"xxx\"")
+
+    onLineStartingWith("createSpace")
+      .assertInlays("space->true", "a->10")
   }
 
   fun `test show same params`() {
