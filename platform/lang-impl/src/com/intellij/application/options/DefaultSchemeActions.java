@@ -15,10 +15,7 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeExporterEP;
 import com.intellij.openapi.options.SchemeImporterEP;
@@ -57,9 +54,10 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
 
   public final Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
-    actions.add(new SaveAsAction());
-    actions.add(new DeleteAction());
+    actions.add(new CopyAction());
     actions.add(new ResetAction());
+    actions.add(new DeleteAction());
+    actions.add(new Separator());
     if (!mySchemeExporterNames.isEmpty()) {
       actions.add(new ExportGroup());
     }
@@ -85,9 +83,9 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   }
   
   
-  private class SaveAsAction extends AnAction {
-    public SaveAsAction() {
-      super("Save As");
+  private class CopyAction extends AnAction {
+    public CopyAction() {
+      super("Copy...");
     }
 
     @Override
@@ -117,7 +115,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   private class ImportGroup extends ActionGroup {
 
     public ImportGroup() {
-      super("Import From", true);
+      super("Import", true);
     }
 
     @NotNull
@@ -148,7 +146,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
 
   private class ExportGroup extends ActionGroup {
     public ExportGroup() {
-      super("Export To", true);
+      super("Export As", true);
     }
 
     @NotNull
