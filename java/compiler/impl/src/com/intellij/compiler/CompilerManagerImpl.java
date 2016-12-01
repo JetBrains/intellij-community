@@ -30,10 +30,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -351,6 +348,18 @@ public class CompilerManagerImpl extends CompilerManager {
     final SdkTypeId type = sdk.getSdkType();
     if (type instanceof JavaSdkType) {
       javaHome = sdk.getHomePath();
+      if (javaHome != null) {
+        final JavaSdk javaSdk = JavaSdk.getInstance();
+        if (!javaSdk.isValidSdkHome(javaHome)) {
+          // this can be a java-dependent SDK, implementing JavaSdkType
+          // hack, because there is no direct way to obtain the java sdk, this sdk depends on 
+          final String binPath = ((JavaSdkType)type).getBinPath(sdk);
+          javaHome = binPath != null? new File(binPath).getParent() : null;
+          if (javaHome != null && !javaSdk.isValidSdkHome(javaHome)) {
+            javaHome = null;
+          }
+        }
+      }
     }
     if (javaHome == null) {
       throw new IOException("Was not able to determine JDK for project " + myProject.getName());
