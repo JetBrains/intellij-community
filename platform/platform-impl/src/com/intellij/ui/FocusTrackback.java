@@ -375,6 +375,7 @@ public class FocusTrackback {
   }
 
   public void dispose() {
+    if (myRoot == null) return;
     consume();
     getStackForRoot(myRoot).remove(this);
     myScheduledForRestore = false;
