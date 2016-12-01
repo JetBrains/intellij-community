@@ -481,6 +481,17 @@ public class Py3TypeTest extends PyTestCase {
            "expr = sum([1, 2, 3])");
   }
 
+  public void testDecimalDividedByInt() {
+    doTest("Union[int, Decimal]",
+           "class Decimal(object):\n" +
+           "    def __div__(self, other):\n" +
+           "        \"\"\"\n" +
+           "        :rtype: Decimal" +
+           "        \"\"\"\n" +
+           "        pass\n" +
+           "expr = Decimal() / 5");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
