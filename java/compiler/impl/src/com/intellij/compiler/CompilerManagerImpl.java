@@ -37,7 +37,6 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -347,15 +346,13 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
-    String javaPath = null;
-    String toolsPath = null;
+    String javaHome = null;
     final Sdk sdk = runtime.getFirst();
     final SdkTypeId type = sdk.getSdkType();
     if (type instanceof JavaSdkType) {
-      javaPath = StringUtil.nullize(((JavaSdkType)type).getVMExecutablePath(sdk), true);
-      toolsPath = StringUtil.nullize(((JavaSdkType)type).getToolsPath(sdk), true);
+      javaHome = sdk.getHomePath();
     }
-    if (javaPath == null) {
+    if (javaHome == null) {
       throw new IOException("Was not able to determine JDK for project " + myProject.getName());
     }
 
@@ -380,7 +377,7 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final ExternalJavacManager javacManager = getJavacManager();
     boolean compiledOk = javacManager != null && javacManager.forkJavac(
-      javaPath, toolsPath, -1, Collections.emptyList(), options, platformCp, classpath, modulePath, sourcePath, files, outs, diagnostic, outputCollector,
+      javaHome, -1, Collections.emptyList(), options, platformCp, classpath, modulePath, sourcePath, files, outs, diagnostic, outputCollector,
       new JavacCompilerTool(), CanceledStatus.NULL
     );
 
