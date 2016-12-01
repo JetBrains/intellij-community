@@ -52,6 +52,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -197,7 +198,36 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     final JPanel toolbar = new JPanel();
     toolbar.setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
 
-    myProfilePanelHolder = new JPanel();
+    myProfilePanelHolder = new JPanel() {
+      @Override
+      public void doLayout() {
+        Rectangle bounds = new Rectangle(getWidth(), getHeight());
+        JBInsets.removeFrom(bounds, getInsets());
+        for (Component component : getComponents()) {
+          component.setBounds(bounds);
+        }
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        for (Component component : getComponents()) {
+          if (component.isVisible()) {
+            return component.getPreferredSize();
+          }
+        }
+        return super.getPreferredSize();
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        for (Component component : getComponents()) {
+          if (component.isVisible()) {
+            return component.getMinimumSize();
+          }
+        }
+        return super.getMinimumSize();
+      }
+    };
 
     wholePanel.add(toolbar, BorderLayout.PAGE_START);
     wholePanel.add(myProfilePanelHolder, BorderLayout.CENTER);
