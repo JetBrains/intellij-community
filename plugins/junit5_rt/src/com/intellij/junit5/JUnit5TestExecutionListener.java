@@ -287,12 +287,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       if (source instanceof ClassSource) {
         return ((ClassSource)source).getClassName();
       }
-      try {
-        return (String)source.getClass().getDeclaredMethod("getClassName").invoke(source);
-      }
-      catch (Throwable e) {
-        return null;
-      }
+      return null;
     }).orElse(null);
   }
 
@@ -301,12 +296,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       if (source instanceof MethodSource) {
         return ((MethodSource)source).getMethodName();
       }
-      try {
-        return (String)source.getClass().getDeclaredMethod("getMethodName").invoke(source);
-      }
-      catch (Throwable e) {
-        return null;
-      }
+      return null;
     }).orElse(null);
   }
 }
