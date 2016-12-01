@@ -100,7 +100,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = myPlaceholder?.hints?.isEmpty() == false
+      e.presentation.isEnabled = myPlaceholder != null
     }
   }
 
