@@ -5050,14 +5050,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myTimer = UIUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, new ActionListener() {
         @Override
         public void actionPerformed(@NotNull ActionEvent e) {
+          if (isDisposed()) {
+            stop();
+            return;
+          }
           myCommandProcessor.executeCommand(myProject, new DocumentRunnable(myDocument, myProject) {
             @Override
             public void run() {
-              // We experienced situation when particular editor was disposed but the timer was still on.
-              if (isDisposed()) {
-                myTimer.stop();
-                return;
-              }
               int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
               VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition : getCaretModel().getVisualPosition();
               int column = caretPosition.column;
