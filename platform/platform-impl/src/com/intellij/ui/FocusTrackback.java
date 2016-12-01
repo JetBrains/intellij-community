@@ -236,7 +236,9 @@ public class FocusTrackback {
   }
 
   private ActionCallback _restoreFocus() {
-    final List<FocusTrackback> stack = getCleanStack();
+    if (isConsumed()) return ActionCallback.REJECTED;
+
+    List<FocusTrackback> stack = getCleanStack();
 
     if (!stack.contains(this)) return ActionCallback.REJECTED;
 
@@ -538,9 +540,15 @@ public class FocusTrackback {
 
 
   private class MyFocusCommand extends FocusCommand {
+
     @NotNull
     public ActionCallback run() {
       return _restoreFocus();
+    }
+
+    @Override
+    public boolean isExpired() {
+      return isConsumed();
     }
 
     public String toString() {
