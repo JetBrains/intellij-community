@@ -555,6 +555,34 @@ bool LoadJVMLibrary()
   return true;
 }
 
+bool IsHiDPIJBRE() // JetBrains RE supporting HiDPI
+{
+  if (!env) return false;
+
+  jclass cls = env->FindClass("sun/java2d/SunGraphicsEnvironment");
+  if (!cls) return false;
+
+  jmethodID method = env->GetMethodID(cls, "isUIScaleOn", "()Z");
+  if (!method) return false;
+
+  return true;
+}
+
+void SetProcessDPIAwareProperty()
+{
+    typedef BOOL (WINAPI SetProcessDPIAwareFunc)(void);
+    HMODULE hLibUser32Dll = ::LoadLibraryA("user32.dll");
+
+    if (hLibUser32Dll != NULL) {
+        SetProcessDPIAwareFunc *lpSetProcessDPIAware =
+            (SetProcessDPIAwareFunc*)::GetProcAddress(hLibUser32Dll, "SetProcessDPIAware");
+        if (lpSetProcessDPIAware != NULL) {
+            lpSetProcessDPIAware();
+        }
+        ::FreeLibrary(hLibUser32Dll);
+    }
+}
+
 bool CreateJVM()
 {
   JavaVMInitArgs initArgs;
@@ -583,6 +611,9 @@ bool CreateJVM()
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, buf.str().c_str(), error.c_str(), MB_OK);
   }
+
+  // Set DPI-awareness here or let HiDPI JBRE do that.
+  if (!IsHiDPIJBRE()) SetProcessDPIAwareProperty();
 
   return result == JNI_OK;
 }
