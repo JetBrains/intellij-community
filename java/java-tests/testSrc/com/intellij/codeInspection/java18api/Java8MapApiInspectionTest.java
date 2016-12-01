@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.java18api.Java8MapApiInspection;
+import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 /**
  * @author Tagir Valeev
@@ -33,6 +34,18 @@ public class Java8MapApiInspectionTest extends LightQuickFixParameterizedTestCas
 
   public void test() throws Exception {
     doAllTests();
+  }
+
+  public static class ImplTest {
+    @Test
+    public void testNameCandidate() {
+      assertEquals("e", Java8MapApiInspection.getNameCandidate("element"));
+      assertEquals("t", Java8MapApiInspection.getNameCandidate("accessToken"));
+      assertEquals("s", Java8MapApiInspection.getNameCandidate("SQL"));
+      assertEquals("n", Java8MapApiInspection.getNameCandidate("myUserName"));
+      assertEquals("v", Java8MapApiInspection.getNameCandidate("___VAR"));
+      assertEquals("k", Java8MapApiInspection.getNameCandidate("_1"));
+    }
   }
 
   @Override

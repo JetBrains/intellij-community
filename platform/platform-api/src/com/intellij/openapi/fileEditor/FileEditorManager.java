@@ -49,7 +49,7 @@ public abstract class FileEditorManager {
    *
    *
    * @param file file to open
-   * @param focusEditor <code>true</code> if need to focus
+   * @param focusEditor {@code true} if need to focus
    * @return array of opened editors
    */
   @NotNull
@@ -68,20 +68,20 @@ public abstract class FileEditorManager {
    * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor.
    * This method ignores {@link FileEditorPolicy#HIDE_DEFAULT_EDITOR} policy.
    *
-   * @return opened text editor. The method returns <code>null</code> in case if text editor wasn't opened.
+   * @return opened text editor. The method returns {@code null} in case if text editor wasn't opened.
    */
   @Nullable
   public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
-   * @return currently selected text editor. The method returns <code>null</code> in case
+   * @return currently selected text editor. The method returns {@code null} in case
    * there is no selected editor at all or selected editor is not a text one.
    */
   @Nullable
   public abstract Editor getSelectedTextEditor();
 
   /**
-   * @return <code>true</code> if <code>file</code> is opened, <code>false</code> otherwise
+   * @return {@code true} if {@code file} is opened, {@code false} otherwise
    */
   public abstract boolean isFileOpen(@NotNull VirtualFile file);
 
@@ -108,7 +108,7 @@ public abstract class FileEditorManager {
    * @param file cannot be null
    *
    * @return editor which is currently selected in the currently selected file.
-   * The method returns <code>null</code> if <code>file</code> is not opened.
+   * The method returns {@code null} if {@code file} is not opened.
    */
   @Nullable
   public abstract FileEditor getSelectedEditor(@NotNull VirtualFile file);
@@ -116,7 +116,7 @@ public abstract class FileEditorManager {
   /**
    * @param file cannot be null
    *
-   * @return current editors for the specified <code>file</code>
+   * @return current editors for the specified {@code file}
    */
   @NotNull
   public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
@@ -124,7 +124,7 @@ public abstract class FileEditorManager {
   /**
    * @param file cannot be null
    *
-   * @return all editors for the specified <code>file</code>
+   * @return all editors for the specified {@code file}
    */
   @NotNull
   public abstract FileEditor[] getAllEditors(@NotNull VirtualFile file);
@@ -151,7 +151,7 @@ public abstract class FileEditorManager {
 
 
   /**
-   * Adds specified <code>listener</code>
+   * Adds specified {@code listener}
    * @param listener listener to be added
    * @deprecated Use MessageBus instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
@@ -163,7 +163,7 @@ public abstract class FileEditorManager {
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Removes specified <code>listener</code>
+   * Removes specified {@code listener}
    *
    * @param listener listener to be removed
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
@@ -186,7 +186,7 @@ public abstract class FileEditorManager {
 
   /**
    * Returns data associated with given editor/caret context. Data providers are registered via
-   * {@link #registerExtraEditorDataProvider(EditorDataProvider, com.intellij.openapi.Disposable)} method.
+   * {@link #registerExtraEditorDataProvider(EditorDataProvider, Disposable)} method.
    */
   @Nullable
   public abstract Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
@@ -195,7 +195,7 @@ public abstract class FileEditorManager {
    * Selects a specified file editor tab for the specified editor.
    * @param file a file to switch the file editor tab for. The function does nothing if the file is not currently open in the editor.
    * @param fileEditorProviderId the ID of the file editor to open; matches the return value of
-   * {@link com.intellij.openapi.fileEditor.FileEditorProvider#getEditorTypeId()}
+   * {@link FileEditorProvider#getEditorTypeId()}
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId);
 }

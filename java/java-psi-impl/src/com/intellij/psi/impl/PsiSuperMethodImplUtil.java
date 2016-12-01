@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,7 +261,7 @@ public class PsiSuperMethodImplUtil {
     for (Map.Entry<MethodSignature, HierarchicalMethodSignatureImpl> entry : map.entrySet()) {
       HierarchicalMethodSignatureImpl hierarchicalMethodSignature = entry.getValue();
       MethodSignature methodSignature = entry.getKey();
-      if (result.get(methodSignature) == null && PsiUtil.isAccessible(aClass.getProject(), hierarchicalMethodSignature.getMethod(), aClass, aClass)) {
+      if (result.get(methodSignature) == null) {
         LOG.assertTrue(hierarchicalMethodSignature.getMethod().isValid());
         result.put(methodSignature, hierarchicalMethodSignature);
       }
@@ -275,7 +275,6 @@ public class PsiSuperMethodImplUtil {
                                @NotNull Map<MethodSignature, HierarchicalMethodSignatureImpl> map,
                                @NotNull HierarchicalMethodSignature hierarchicalMethodSignature,
                                @NotNull MethodSignature signature) {
-    if (!PsiUtil.isAccessible(aClass.getProject(), hierarchicalMethodSignature.getMethod(), aClass, aClass)) return;
     HierarchicalMethodSignatureImpl existing = map.get(signature);
     if (existing == null) {
       HierarchicalMethodSignatureImpl copy = copy(hierarchicalMethodSignature);
@@ -334,7 +333,6 @@ public class PsiSuperMethodImplUtil {
     PsiClass containingClass = method.getContainingClass();
     if (!superMethod.isConstructor() &&
         !aClass.equals(superClass) &&
-        PsiUtil.isAccessible(aClass.getProject(), superMethod, aClass, aClass) &&
         MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature) && superClass != null) {
       if (superClass.isInterface() ||
           CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {

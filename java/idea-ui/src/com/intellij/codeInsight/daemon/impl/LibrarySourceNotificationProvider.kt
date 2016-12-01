@@ -34,7 +34,6 @@ import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
-import java.awt.Color
 
 class LibrarySourceNotificationProvider(private val project: Project, notifications: EditorNotifications) :
     EditorNotifications.Provider<EditorNotificationPanel>() {
@@ -60,7 +59,8 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
         if (offender != null) {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
-            val panel = ColoredNotificationPanel(LightColors.RED)
+            val panel = EditorNotificationPanel()
+            panel.background(LightColors.RED)
             panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
             panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
               OpenFileDescriptor(project, clsFile, -1).navigate(true)
@@ -94,8 +94,4 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
       ((clazz as? PsiExtensibleClass)?.ownMethods ?: clazz.methods.asList())
           .filter { !(it.isConstructor && it.parameterList.parametersCount == 0) }
   private fun inners(clazz: PsiClass) = (clazz as? PsiExtensibleClass)?.ownInnerClasses ?: clazz.innerClasses.asList()
-}
-
-private class ColoredNotificationPanel(private val color: Color?) : EditorNotificationPanel() {
-  override fun getBackground(): Color? = color ?: super.getBackground()
 }

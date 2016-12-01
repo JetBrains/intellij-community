@@ -39,13 +39,13 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
 
   private static PySubstitutionChunkReference[] getReferencesFromFormatString(@NotNull final PyStringLiteralExpression element) {
     final List<PyStringFormatParser.SubstitutionChunk> chunks = PyStringFormatParser.filterSubstitutions(
-      PyStringFormatParser.parseNewStyleFormat(element.getStringValue()));
+      PyStringFormatParser.parseNewStyleFormat(element.getText()));
     return getReferencesFromChunks(element, chunks, false);
   }
 
   private static PySubstitutionChunkReference[] getReferencesFromPercentString(@NotNull final PyStringLiteralExpression element) {
     final List<PyStringFormatParser.SubstitutionChunk>
-      chunks = PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(element.getStringValue()));
+      chunks = PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(element.getText()));
     return getReferencesFromChunks(element, chunks, true);
   }
 

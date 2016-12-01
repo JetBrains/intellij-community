@@ -789,4 +789,21 @@ class Test {
       .assertInlays("timeout->1000", "message->\"xxx\"")
   }
 
+  fun `test show same params`() {
+    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    setup("""
+class Test {
+  void main() {
+    String c = "c";
+    String d = "d";
+    test(c, d);
+  }
+  void test(String parent, String child) {
+  }
+}
+""")
+
+    onLineStartingWith("test").assertInlays("parent->c", "child->d")
+  }
+
 }

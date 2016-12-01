@@ -46,9 +46,10 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
   private final MessageBusConnection myConnection;
 
-  public ModuleManagerComponent(Project project, MessageBus bus) {
+  public ModuleManagerComponent(@NotNull Project project, @NotNull MessageBus bus) {
     super(project, bus);
-    myConnection = bus.connect(project);
+
+    myConnection = bus.connect();
     myConnection.setDefaultHandler(new MessageHandler() {
       @Override
       public void handle(Method event, Object... params) {
@@ -57,6 +58,12 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     });
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
+
+    // default project doesn't have modules
+    if (project.isDefault()) {
+      return;
+    }
+
     myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void projectComponentsInitialized(@NotNull final Project project) {
@@ -70,7 +77,6 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
         }
       }
     });
-
   }
 
   @Override

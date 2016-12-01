@@ -159,12 +159,17 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
               // TODO - do we need option to remove blank line after?
               return; // Nothing to do since the comment is the same
             }
+            int totalNewline = 0;
             PsiElement next = getNextSibling(range.getLast());
-            if (next != null) {
+            while (next != null && totalNewline <= 1) {
               final String text = next.getText();
-              if (StringUtil.isEmptyOrSpaces(text) && countNewline(text) > 1) {
-                return;
+              if (!StringUtil.isEmptyOrSpaces(text)) {
+                break;
               }
+              totalNewline += countNewline(text); 
+            }
+            if (totalNewline > 1) {
+              return;
             }
             point = range.getFirst();
           }

@@ -126,7 +126,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addSeparator("Repositories");
     for (GitRepository repository : DvcsUtil.sortRepositories(myRepositoryManager.getRepositories())) {
       popupGroup.add(new RootAction<>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
-                                      new GitBranchPopupActions(repository.getProject(), repository).createActions(null),
+                                      new GitBranchPopupActions(repository.getProject(), repository).createActions(),
                                       GitBranchUtil.getDisplayableBranchText(repository)));
     }
     return popupGroup;
@@ -134,6 +134,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   @Override
   protected void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
-    popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions));
+    popupGroup
+      .addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions, myRepoTitleInfo));
   }
 }

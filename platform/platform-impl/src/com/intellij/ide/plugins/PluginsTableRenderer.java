@@ -48,7 +48,7 @@ import java.util.Set;
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
-  private SimpleColoredComponent myName;
+  protected SimpleColoredComponent myName;
   private JLabel myStatus;
   private RatesPanel myRating;
   private JLabel myDownloads;
@@ -60,7 +60,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   private JPanel myBottomPanel;
   private JPanel myInfoPanel;
 
-  private final IdeaPluginDescriptor myPluginDescriptor;
+  protected final IdeaPluginDescriptor myPluginDescriptor;
   private final boolean myPluginsView;
 
   // showFullInfo: true for Plugin Repository view, false for Installed Plugins view

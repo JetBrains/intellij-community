@@ -1463,7 +1463,10 @@ public class JavaDocInfoGenerator {
     }
 
     if (value != null) {
-      buffer.append(value);
+      String valueText = StringUtil.escapeXml(value.toString());
+      if (value instanceof String) valueText = '"' + valueText + '"';
+      if (valueField.equals(myElement)) buffer.append(valueText); // don't generate link to itself
+      else generateLink(buffer, valueField, valueText, true);
     }
     else {
       buffer.append(element.getText());

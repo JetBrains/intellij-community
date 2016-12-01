@@ -16,7 +16,6 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.util.InvalidDataException;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,9 +68,7 @@ public interface ModifiableModuleModel {
    * @return the module instance.
    * @throws InvalidDataException if the data in the .iml file is semantically incorrect.
    * @throws IOException if an I/O error occurred when loading the module file.
-   * @throws JDOMException if the file contains invalid XML data.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
-   * @throws LoadCancelledException if loading the module was cancelled by some of the components.
    */
   @NotNull Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists;
 

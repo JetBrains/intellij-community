@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiRequiresStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,14 +32,16 @@ public interface RefJavaModule extends RefElement {
   Map<String, List<String>> getExportedPackageNames();
 
   @NotNull
-  Map<String, Dependency> getRequiredModules();
+  List<RequiredModule> getRequiredModules();
 
-  class Dependency {
-    @NotNull public final Map<String, List<String>> packageNames;
+  class RequiredModule {
+    @NotNull public final String moduleName;
+    @NotNull public final Map<String, List<String>> packagesExportedByModule;
     public final boolean isPublic;
 
-    public Dependency(@NotNull Map<String, List<String>> packageNames, boolean isPublic) {
-      this.packageNames = packageNames;
+    public RequiredModule(@NotNull String moduleName, @NotNull Map<String, List<String>> packagesExportedByModule, boolean isPublic) {
+      this.moduleName = moduleName;
+      this.packagesExportedByModule = packagesExportedByModule;
       this.isPublic = isPublic;
     }
   }

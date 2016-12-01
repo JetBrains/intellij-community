@@ -34,7 +34,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
 
   override fun getParameterHints(element: PsiElement): List<InlayInfo> {
     if (element is PsiCallExpression) {
-      return JavaParameterHintManager(element).descriptors  
+      return JavaParameterHintManager(element).descriptors.toList()
     }
     return emptyList()
   }

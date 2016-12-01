@@ -199,21 +199,14 @@ public class FindManagerImpl extends FindManager {
         DataContext dataContext = e.getDataContext();
         Project project = CommonDataKeys.PROJECT.getData(dataContext);
         Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-        String selection = null;
+        final String selection = editor != null ? editor.getSelectionModel().getSelectedText() : null;
 
-        if (editor != null) {
-          SelectionModel selectionModel = editor.getSelectionModel();
-          if (selectionModel.hasSelection()) {
-            selection = selectionModel.getSelectedText();
-          }
-        }
-        String finalSelection = selection;
         return new DataContextWrapper(dataContext) {
           @Nullable
           @Override
           public Object getData(@NonNls String dataId) {
             if (CommonDataKeys.PROJECT.is(dataId)) return project;
-            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return finalSelection;
+            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return selection;
             return super.getData(dataId);
           }
         };

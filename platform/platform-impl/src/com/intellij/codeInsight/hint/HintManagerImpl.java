@@ -946,8 +946,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     @Override
     public void projectClosed(Project project) {
       ApplicationManager.getApplication().assertIsDispatchThread();
+
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();
+      ApplicationManager.getApplication().invokeLater(() -> hideHints(0, false, false));
 
       myQuestionAction = null;
       myQuestionHint = null;

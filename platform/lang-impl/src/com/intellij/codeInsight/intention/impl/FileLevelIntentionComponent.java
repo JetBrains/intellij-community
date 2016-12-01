@@ -48,7 +48,6 @@ import java.util.List;
  */
 public class FileLevelIntentionComponent extends EditorNotificationPanel {
   private final Project myProject;
-  private final Color myBackground;
 
   public FileLevelIntentionComponent(final String description,
                                      @NotNull HighlightSeverity severity,
@@ -58,7 +57,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      @NotNull final PsiFile psiFile,
                                      @NotNull final Editor editor, @Nullable String tooltip) {
     myProject = project;
-    myBackground = getColor(severity);
+    background(getColor(severity));
 
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
@@ -104,11 +103,6 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
         }
       }.installOn(myGearLabel);
     }
-  }
-
-  @Override
-  public Color getBackground() {
-    return myBackground;
   }
 
   @NotNull

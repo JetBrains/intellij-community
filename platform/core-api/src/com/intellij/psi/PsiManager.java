@@ -71,8 +71,12 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element
-   * (for example, a class with the same full-qualified name). Can be used to match two versions of the
-   * PSI tree with each other after a reparse.
+   * or can are considered equivalent for resolve purposes. Can be used to match two versions of the
+   * PSI tree with each other after a reparse.<p/>
+   *
+   * For example, Java classes with the same full-qualified name are equivalent, which is useful when working
+   * with both library source and class roots. Source and compiled classes are definitely different ({@code equals()} returns false),
+   * but for reference resolve or inheritance checks they're equivalent.
    *
    * @param element1 the first element to check for equivalence
    * @param element2 the second element to check for equivalence

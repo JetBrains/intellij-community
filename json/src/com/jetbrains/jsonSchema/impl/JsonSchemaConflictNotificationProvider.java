@@ -30,7 +30,6 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,12 +66,8 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
     final String message = worker.createMessage(descriptors);
     if (message == null) return null;
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel() {
-      @Override
-      public Color getBackground() {
-        return LightColors.RED;
-      }
-    };
+    final EditorNotificationPanel panel = new EditorNotificationPanel();
+    panel.background(LightColors.RED);
     panel.setText(message);
     panel.createActionLabel("Edit JSON Schema Mappings", () -> {
       ShowSettingsUtil.getInstance().editConfigurable(myProject, new JsonSchemaMappingsConfigurable(myProject));

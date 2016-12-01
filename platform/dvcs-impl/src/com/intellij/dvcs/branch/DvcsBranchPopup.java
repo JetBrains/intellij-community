@@ -48,6 +48,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   @NotNull protected final Repo myCurrentRepository;
   @NotNull protected final ListPopupImpl myPopup;
+  @NotNull protected final String myRepoTitleInfo;
 
   protected DvcsBranchPopup(@NotNull Repo currentRepository,
                             @NotNull AbstractRepositoryManager<Repo> repositoryManager,
@@ -60,8 +61,10 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     myVcs = currentRepository.getVcs();
     myVcsSettings = vcsSettings;
     myMultiRootBranchConfig = multiRootBranchConfig;
-    String title = createPopupTitle(currentRepository);
-    myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions());
+    String title = myVcs.getDisplayName() + " Branches";
+    myRepoTitleInfo = (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC)
+                 ? " in " + DvcsUtil.getShortRepositoryName(currentRepository) : "";
+    myPopup = new BranchActionGroupPopup(title + myRepoTitleInfo, myProject, preselectActionCondition, createActions());
 
     initBranchSyncPolicyIfNotInitialized();
     setCurrentBranchInfo();
@@ -83,15 +86,6 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
         myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.DONT_SYNC);
       }
     }
-  }
-
-  @NotNull
-  private String createPopupTitle(@NotNull Repo currentRepository) {
-    String title = myVcs.getDisplayName() + " Branches";
-    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC) {
-      title += " in " + DvcsUtil.getShortRepositoryName(currentRepository);
-    }
-    return title;
   }
 
   protected void setCurrentBranchInfo() {

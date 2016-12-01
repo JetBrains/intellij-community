@@ -55,8 +55,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
                                                RenameableUsage, TypeSafeDataProvider, UsagePresentation {
-  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = usageInfo -> new UsageInfo2UsageAdapter(usageInfo);
-  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = (o1, o2) -> o1.getNavigationOffset() - o2.getNavigationOffset();
+  public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
+  private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
 
   private final UsageInfo myUsageInfo;
   @NotNull
@@ -72,33 +72,30 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     myMergedUsageInfos = usageInfo;
 
     Point data =
-    ApplicationManager.getApplication().runReadAction(new Computable<Point>() {
-      @Override
-      public Point compute() {
-        PsiElement element = getElement();
-        PsiFile psiFile = usageInfo.getFile();
-        Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+    ApplicationManager.getApplication().runReadAction((Computable<Point>)() -> {
+      PsiElement element = getElement();
+      PsiFile psiFile = usageInfo.getFile();
+      Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
 
-        int offset;
-        int lineNumber;
-        if (document == null) {
-          // element over light virtual file
+      int offset;
+      int lineNumber;
+      if (document == null) {
+        // element over light virtual file
+        offset = element == null ? 0 : element.getTextOffset();
+        lineNumber = -1;
+      }
+      else {
+        int startOffset = myUsageInfo.getNavigationOffset();
+        if (startOffset == -1) {
           offset = element == null ? 0 : element.getTextOffset();
           lineNumber = -1;
         }
         else {
-          int startOffset = myUsageInfo.getNavigationOffset();
-          if (startOffset == -1) {
-            offset = element == null ? 0 : element.getTextOffset();
-            lineNumber = -1;
-          }
-          else {
-            offset = -1;
-            lineNumber = getLineNumber(document, startOffset);
-          }
+          offset = -1;
+          lineNumber = getLineNumber(document, startOffset);
         }
-        return new Point(offset, lineNumber);
       }
+      return new Point(offset, lineNumber);
     });
     myOffset = data.x;
     myLineNumber = data.y;
@@ -379,30 +376,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   // by start offset
   @Override
   public int compareTo(@NotNull final UsageInfo2UsageAdapter o) {
-    VirtualFile containingFile = getFile();
-    int shift1 = 0;
-    if (containingFile instanceof VirtualFileWindow) {
-      shift1 = ((VirtualFileWindow)containingFile).getDocumentWindow().injectedToHost(0);
-      containingFile = ((VirtualFileWindow)containingFile).getDelegate();
-    }
-    VirtualFile oContainingFile = o.getFile();
-    int shift2 = 0;
-    if (oContainingFile instanceof VirtualFileWindow) {
-      shift2 = ((VirtualFileWindow)oContainingFile).getDocumentWindow().injectedToHost(0);
-      oContainingFile = ((VirtualFileWindow)oContainingFile).getDelegate();
-    }
-    if (containingFile == null && oContainingFile == null || !Comparing.equal(containingFile, oContainingFile)) {
-      return 0;
-    }
-    Segment s1 = getFirstSegment();
-    Segment s2 = o.getFirstSegment();
-    if (s1 == null || s2 == null) return 0;
-    return s1.getStartOffset() + shift1 - s2.getStartOffset() - shift2;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return super.equals(obj);
+    return getUsageInfo().compareToByStartOffset(o.getUsageInfo());
   }
 
   @Override

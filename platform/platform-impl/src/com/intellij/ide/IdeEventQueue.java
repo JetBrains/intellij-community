@@ -60,6 +60,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -235,14 +236,15 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-
-  public void addIdleListener(@NotNull final Runnable runnable, final int timeout) {
-    LOG.assertTrue(timeout > 0);
+  public void addIdleListener(@NotNull final Runnable runnable, final int timeoutMillis) {
+    if(timeoutMillis <= 0 || TimeUnit.MILLISECONDS.toHours(timeoutMillis) >= 24) {
+      throw new IllegalArgumentException("This timeout value is unsupported: " + timeoutMillis);
+    }
     synchronized (myLock) {
       myIdleListeners.add(runnable);
-      final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeout);
+      final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeoutMillis);
       myListener2Request.put(runnable, request);
-      UIUtil.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeout));
+      UIUtil.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeoutMillis));
     }
   }
 

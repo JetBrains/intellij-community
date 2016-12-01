@@ -29,6 +29,17 @@ Inspection detects calls to <code>Map.get</code> which could be replaced with <c
       }
     </pre>
   </li>
+  <li><b>Map.merge</b> method could be used to replace the code like this:
+    <pre>
+      Integer val = map.get(key);
+      if (val == null) {
+        map.put(key, 1);
+      } else {
+        map.put(key, val + 1);
+      }
+    </pre>
+  </li>
+
 </ul>
 <p>This conversion is available since Java 8 only.</p>
 <small>New in 2016.3</small>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,4 +52,8 @@ public class AdvHighlighting8Test extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/unrelatedConcreteInConstructors/B.java", BASE_PATH + "/unrelatedConcreteInConstructors", false, false);
   }
 
+  public void testPackageLocalMethodVisibleInHierarchy() throws Exception {
+    doTest(BASE_PATH + "/packageLocalMethod/foo/bar/C.java",
+           BASE_PATH + "/packageLocalMethod", false, false);
+  }
 }

@@ -18,7 +18,6 @@ import org.editorconfig.core.EditorConfig;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -43,13 +42,10 @@ public class EditorConfigNotifierProvider extends EditorNotifications.Provider<E
 
     final List<EditorConfig.OutPair> pairs = SettingsProviderComponent.getInstance().getOutPairs(project, Utils.getFilePath(project, file));
     if (!pairs.isEmpty()) {
-      final EditorNotificationPanel panel = new EditorNotificationPanel() {
-        @Override
-        public Color getBackground() {
-          return LightColors.GREEN;
-        }
-      }.text("EditorConfig is overriding Code Style settings for this file").
-        icon(EditorconfigIcons.Editorconfig);
+      final EditorNotificationPanel panel = new EditorNotificationPanel()
+        .background(LightColors.GREEN)
+        .text("EditorConfig is overriding Code Style settings for this file")
+        .icon(EditorconfigIcons.Editorconfig);
       panel.createActionLabel("OK", () -> {
         PropertiesComponent.getInstance(project).setValue(EDITOR_CONFIG_ACCEPTED, true);
         EditorNotifications.getInstance(project).updateAllNotifications();

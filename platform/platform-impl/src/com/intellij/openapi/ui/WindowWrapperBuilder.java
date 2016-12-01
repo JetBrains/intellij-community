@@ -91,6 +91,7 @@ public class WindowWrapperBuilder {
       @Override
       public void windowOpened(WindowEvent e) {
         onShowCallback.run();
+        e.getWindow().removeWindowListener(this);
       }
     });
   }

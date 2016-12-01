@@ -22,12 +22,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class JBSpinner extends JSpinner {
-  public JBSpinner(UINumericRange range) {
+public class JBIntSpinner extends JSpinner {
+  public JBIntSpinner(UINumericRange range) {
     this(range.initial, range.min, range.max);
   }
 
-  public JBSpinner(int value, int minValue, int maxValue) {
+  public JBIntSpinner(int value, int minValue, int maxValue) {
     setModel(new SpinnerNumberModel(value, minValue, maxValue, 1));
     final NumberEditor editor = new NumberEditor(this, "#");
     JFormattedTextField textField = editor.getTextField();
@@ -87,7 +87,7 @@ public class JBSpinner extends JSpinner {
     public void mousePressed(MouseEvent e) {
       mySelect = false;
       Component component = e.getComponent();
-      if (component == JBSpinner.this) {
+      if (component == JBIntSpinner.this) {
         JTextField textField = getTextField();
         if (textField.isEnabled() ) {
           MouseEvent event = SwingUtilities.convertMouseEvent(component, e, textField);

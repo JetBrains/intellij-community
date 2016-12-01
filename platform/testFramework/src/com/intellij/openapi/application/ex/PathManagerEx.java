@@ -26,6 +26,7 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.impl.ModulePath;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -408,10 +409,8 @@ public class PathManagerEx {
     try {
       Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
       assert element != null;
-      ModuleManagerImpl.ModulePath[] files = ModuleManagerImpl.getPathsToModuleFiles(element);
-      for (ModuleManagerImpl.ModulePath file : files) {
-        String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(file.getPath()));
-        ourCommunityModules.add(name);
+      for (ModulePath file : ModuleManagerImpl.getPathsToModuleFiles(element)) {
+        ourCommunityModules.add(FileUtil.getNameWithoutExtension(PathUtil.getFileName(file.getPath())));
       }
       return ourCommunityModules;
     }

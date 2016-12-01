@@ -947,21 +947,24 @@ public abstract class DialogWrapper {
     }
   }
 
-  public static void unregisterKeyboardActions(final JRootPane rootPane) {
+  public static void cleanupRootPane(@Nullable JRootPane rootPane) {
+    if (rootPane == null) return;
+    RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
+    unregisterKeyboardActions(rootPane);
+    Disposer.clearOwnFields(rootPane, field -> field.getDeclaringClass() != Component.class);
+  }
+
+  private static void unregisterKeyboardActions(@Nullable JRootPane rootPane) {
+    int[] flags = {JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW};
     for (JComponent eachComp : UIUtil.uiTraverser(rootPane).traverse().filter(JComponent.class)) {
       ActionMap actionMap = eachComp.getActionMap();
-      KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
-      for (KeyStroke eachStroke : strokes) {
+      if (actionMap == null) continue;
+      for (KeyStroke eachStroke : eachComp.getRegisteredKeyStrokes()) {
         boolean remove = true;
-        if (actionMap != null) {
-          for (int i : new int[]{JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW}) {
-            final InputMap inputMap = eachComp.getInputMap(i);
-            final Object key = inputMap.get(eachStroke);
-            if (key != null) {
-              final Action action = actionMap.get(key);
-              if (action instanceof UIResource) remove = false;
-            }
-          }
+        for (int i : flags) {
+          Object key = eachComp.getInputMap(i).get(eachStroke);
+          Action action = key == null ? null : actionMap.get(key);
+          remove &= !(action instanceof UIResource);
         }
         if (remove) eachComp.unregisterKeyboardAction(eachStroke);
       }

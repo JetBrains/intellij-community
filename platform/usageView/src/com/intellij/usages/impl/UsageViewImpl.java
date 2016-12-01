@@ -27,10 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -46,7 +43,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -59,7 +55,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.enumeration.EmptyEnumeration;
@@ -85,12 +84,11 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author max
  */
-public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
+public class UsageViewImpl implements UsageView {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
@@ -109,7 +107,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
-  private final UsageModelTracker myModelTracker;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
   public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
@@ -196,7 +193,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
     myRootPanel = new MyPanel(myTree);
     Disposer.register(this, myRootPanel);
-    myModelTracker = new UsageModelTracker(project);
+    UsageModelTracker myModelTracker = new UsageModelTracker(project);
     Disposer.register(this, myModelTracker);
 
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
@@ -233,7 +230,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
           collapseAll();
 
-          myModelTracker.addListener(this);
+          myModelTracker.addListener(isPropertyChange-> {
+            if (!isPropertyChange) {
+              myChangesDetected = true;
+            }
+            updateLater();
+          }, this);
 
           if (myPresentation.isShowCancelButton()) {
             addButtonToLowerPane(this::close, UsageViewBundle.message("usage.view.cancel.button"));
@@ -460,14 +462,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
 
     return list.toArray(new UsageGroupingRule[list.size()]);
-  }
-
-  @Override
-  public void modelChanged(boolean isPropertyChange) {
-    if (!isPropertyChange) {
-      myChangesDetected = true;
-    }
-    updateLater();
   }
 
   private void initTree() {
@@ -871,48 +865,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void doReRun() {
-    final AtomicInteger usageCountWithoutDefinition = new AtomicInteger(0);
-    final Project project = myProject;
-    Task.Backgroundable task = new Task.Backgroundable(project, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
-        setSearchInProgress(true);
-        associateProgress(indicator);
-
-        Processor<Usage> processor = usage -> {
-          if (searchHasBeenCancelled()) return false;
-          tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
-
-          boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
-
-          if (incrementCounter) {
-            final int usageCount = usageCountWithoutDefinition.incrementAndGet();
-            if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
-              if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-                UsageViewManagerImpl
-                  .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(),
-                                            UsageViewImpl.this);
-              }
-            }
-            ApplicationManager.getApplication().runReadAction(() -> appendUsage(usage));
-          }
-          return !indicator.isCanceled();
-        };
-
-        myChangesDetected = false;
-        PsiManager.getInstance(project).startBatchFilesProcessingMode();
-        try {
-          myUsageSearcherFactory.create().generate(processor);
-          drainQueuedUsageNodes();
-        }
-        finally {
-          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
-        }
-        setSearchInProgress(false);
-      }
-    };
-    ProgressManager.getInstance().run(task);
+    close();
+    com.intellij.usages.UsageViewManager.getInstance(getProject()).
+      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, true, myPresentation, null);
   }
 
   private void reset() {
@@ -1151,7 +1106,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     synchronized (lock) {
       isDisposed = true;
       ToolTipManager.sharedInstance().unregisterComponent(myTree);
-      myModelTracker.removeListener(this);
       myUpdateAlarm.cancelAllRequests();
     }
     disposeSmartPointers();

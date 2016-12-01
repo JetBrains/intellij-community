@@ -13,6 +13,10 @@ RUN_PATH = u'$RUN_PATH$'
 CONFIG_PATH = u'$CONFIG_PATH$'
 SYSTEM_PATH = u'$SYSTEM_PATH$'
 
+if sys.version_info[0] * 10 + sys.version_info[1] < 27:
+    print('error: Python 2.7 or newer is required')
+    exit(1)
+
 
 def print_usage(cmd):
     print(('Usage:\n' +

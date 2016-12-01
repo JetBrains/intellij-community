@@ -16,32 +16,39 @@
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class JavaParameterHintManager {
 
   @NotNull
-  private final List<InlayInfo> myDescriptors;
+  private final Set<InlayInfo> myDescriptors;
 
   public JavaParameterHintManager(@NotNull PsiCallExpression callExpression) {
     PsiExpression[] callArguments = getArguments(callExpression);
     JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
+    if (!(resolveResult.getElement() instanceof PsiMethod)) {
+      myDescriptors = Collections.emptySet();
+      return;
+    }
 
-    List<InlayInfo> descriptors = Collections.emptyList();
-    if (resolveResult.getElement() instanceof PsiMethod
-        && isMethodToShowParams(callExpression, resolveResult)
-        && hasUnclearExpressions(callArguments))
-    {
-      PsiMethod method = (PsiMethod)resolveResult.getElement();
+    final PsiMethod method = (PsiMethod)resolveResult.getElement();
+
+    Set<InlayInfo> descriptors = Collections.emptySet();
+    if (isMethodToShowParams(callExpression, method)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       descriptors = buildDescriptorsForLiteralArguments(callArguments, parameters, resolveResult);
     }
@@ -49,11 +56,7 @@ public class JavaParameterHintManager {
     myDescriptors = descriptors;
   }
 
-  private static boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
-    PsiElement element = resolveResult.getElement();
-    if (!(element instanceof PsiMethod)) return false;
-
-    PsiMethod method = (PsiMethod)element;
+  private static boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull PsiMethod method) {
     if (isSetter(method)) return false;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -68,6 +71,16 @@ public class JavaParameterHintManager {
     }
 
     return true;
+  }
+
+  private static Set<String> getDuplicatedParamTypes(PsiParameter[] parameters) {
+    List<String> duplicatedTypes = Arrays
+      .stream(parameters)
+      .map((p) -> p.getType().getCanonicalText())
+      .collect(Collectors.toList());
+
+    ContainerUtil.newHashSet(duplicatedTypes).forEach((e) -> duplicatedTypes.remove(e));
+    return ContainerUtil.newHashSet(duplicatedTypes);
   }
 
   private static boolean isParamNameContainedInMethodName(@NotNull PsiParameter parameter, @NotNull PsiMethod method) {
@@ -137,26 +150,55 @@ public class JavaParameterHintManager {
   }
 
   @NotNull
-  public List<InlayInfo> getDescriptors() {
+  public Set<InlayInfo> getDescriptors() {
     return myDescriptors;
   }
 
   @NotNull
-  private static List<InlayInfo> buildDescriptorsForLiteralArguments(@NotNull PsiExpression[] callArguments,
-                                                                     @NotNull PsiParameter[] parameters,
-                                                                     @NotNull JavaResolveResult resolveResult) {
+  private static Set<InlayInfo> buildDescriptorsForLiteralArguments(@NotNull PsiExpression[] callArguments,
+                                                                    @NotNull PsiParameter[] parameters,
+                                                                    @NotNull JavaResolveResult resolveResult) {
 
-    List<InlayInfo> descriptors = ContainerUtil.newArrayList();
+    final Set<InlayInfo> descriptors = ContainerUtil.newHashSet();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+
+    if (ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType()) {
+      final List<InlayInfo> hintsForNonLiterals = getHintsForParamsWithSameType(callArguments, parameters, substitutor);
+      descriptors.addAll(hintsForNonLiterals);
+    }
+
     for (int i = 0; i < Math.min(callArguments.length, parameters.length); i++) {
       PsiExpression arg = callArguments[i];
       PsiParameter param = parameters[i];
 
       if (isVarargParam(param.getType(), arg.getType()) && hasUnclearExpressionStartingFrom(i, callArguments)
-          || shouldInlineParameterName(arg, param, resolveResult)) {
+          || isUnclearExpression(arg) && isAssignable(arg, param, substitutor)) {
         descriptors.add(createInlayInfo(arg, param));
       }
     }
+
     return descriptors;
+  }
+
+  private static List<InlayInfo> getHintsForParamsWithSameType(@NotNull PsiExpression[] callArguments,
+                                                               @NotNull PsiParameter[] parameters,
+                                                               @NotNull PsiSubstitutor substitutor)
+  {
+    final Set<String> duplicatedTypes = getDuplicatedParamTypes(parameters);
+
+    final int minArraySize = Math.min(callArguments.length, parameters.length);
+    List<PsiExpression> args = ContainerUtil.list(callArguments).subList(0, minArraySize);
+    List<PsiParameter> params = ContainerUtil.list(parameters).subList(0, minArraySize);
+
+    return StreamEx
+      .zip(args, params, (a, b) -> Pair.create(a, b))
+      .filter((pair) -> {
+        PsiParameter param = pair.getSecond();
+        return duplicatedTypes.contains(param.getType().getCanonicalText());
+      })
+      .filter((pair) -> isAssignable(pair.first, pair.second, substitutor))
+      .map((pair) -> createInlayInfo(pair.first, pair.second))
+      .collect(Collectors.toList());
   }
 
   @NotNull
@@ -165,14 +207,14 @@ public class JavaParameterHintManager {
     return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset());
   }
 
-  private static boolean shouldInlineParameterName(@NotNull PsiExpression argument,
-                                                   @NotNull PsiParameter parameter,
-                                                   @NotNull JavaResolveResult resolveResult) {
+  private static boolean isAssignable(@NotNull PsiExpression argument,
+                                      @NotNull PsiParameter parameter,
+                                      @NotNull PsiSubstitutor substitutor) {
     PsiType argType = argument.getType();
     PsiType paramType = parameter.getType();
 
-    if (argType != null && isUnclearExpression(argument)) {
-      PsiType parameterType = resolveResult.getSubstitutor().substitute(paramType);
+    if (argType != null) {
+      PsiType parameterType = substitutor.substitute(paramType);
       return TypeConversionUtil.isAssignable(parameterType, argType);
     }
 

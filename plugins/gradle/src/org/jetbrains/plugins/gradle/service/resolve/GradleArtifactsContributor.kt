@@ -94,11 +94,8 @@ class GradleArtifactsContributor : GradleMethodContextContributor {
     var argsCount = GradleResolverUtil.getGrMethodArumentsCount(args)
     argsCount++ // Configuration name is delivered as an argument.
 
-    for (method in artifactHandlerClass.findMethodsByName("add", false)) {
-      if (method.parameterList.parametersCount == argsCount) {
-        builder.navigationElement = method
-      }
-    }
+    val method = artifactHandlerClass.findMethodsByName("add", false).firstOrNull { it.parameterList.parametersCount == argsCount }
+    if (method != null) builder.navigationElement = method
 
     return processor.execute(builder, state)
   }

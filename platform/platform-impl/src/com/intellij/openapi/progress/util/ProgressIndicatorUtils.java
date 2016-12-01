@@ -22,7 +22,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -46,7 +48,7 @@ public class ProgressIndicatorUtils {
   }
 
   @NotNull
-  public static ProgressIndicator forceWriteActionPriority(@NotNull final ProgressIndicator progress, @NotNull final Disposable builder) {
+  public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
@@ -54,7 +56,7 @@ public class ProgressIndicatorUtils {
             progress.cancel();
           }
         }
-      }, builder);
+      }, parentDisposable);
     return progress;
   }
 
@@ -101,10 +103,11 @@ public class ProgressIndicatorUtils {
     return runInReadActionWithWriteActionPriority(action, null);
   }
 
-  public static boolean runWithWriteActionPriority(@NotNull final Runnable action,
-                                                   @NotNull final ProgressIndicator progressIndicator) {
+  public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
     final ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
-
+    if (application.isDispatchThread()) {
+      throw new IllegalStateException("Must not call from EDT");
+    }
     if (application.isWriteActionPending()) {
       // first catch: check if write action acquisition started: especially important when current thread has read action, because
       // tryRunReadAction below would just run without really checking if a write action is pending
