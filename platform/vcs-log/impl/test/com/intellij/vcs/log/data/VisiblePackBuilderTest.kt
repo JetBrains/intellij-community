@@ -29,6 +29,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
@@ -173,13 +174,13 @@ class VisiblePackBuilderTest {
 
   fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
-  fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionImpl(null, null, null, null, null, null, null)
+  fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionBuilder().build()
 
   fun filters(branch: VcsLogBranchFilter? = null, user: VcsLogUserFilter? = null)
-      = VcsLogFilterCollectionImpl(branch, user, null, null, null, null, null)
+      = VcsLogFilterCollectionBuilder().with(branch).with(user).build()
 
   fun filters(branch: List<String>? = null, user: VcsUser? = null)
-      = VcsLogFilterCollectionImpl(branchFilter(branch), userFilter(user), null, null, null, null, null)
+      = VcsLogFilterCollectionBuilder().with(branchFilter(branch)).with(userFilter(user)).build()
 
   fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
     return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch, branch.toHashSet()) else null

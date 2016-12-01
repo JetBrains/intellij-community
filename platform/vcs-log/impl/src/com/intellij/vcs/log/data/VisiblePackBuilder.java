@@ -29,7 +29,7 @@ import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.util.StopWatch;
@@ -167,7 +167,7 @@ class VisiblePackBuilder {
     });
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
     return new VisiblePack(dataPack, visibleGraph, false,
-                           new VcsLogFilterCollectionImpl(null, null, new VcsLogHashFilterImpl(hashes), null, null, null, null));
+                           new VcsLogFilterCollectionBuilder().with(new VcsLogHashFilterImpl(hashes)).build());
   }
 
   @Nullable
@@ -276,8 +276,9 @@ class VisiblePackBuilder {
 
       VcsLogFilterCollection rootSpecificCollection = filterCollection;
       if (rootSpecificCollection.getStructureFilter() != null) {
-        rootSpecificCollection =
-          replaceStructureFilter(filterCollection, ContainerUtil.newHashSet(VcsLogUtil.getFilteredFilesForRoot(root, filterCollection)));
+        rootSpecificCollection = new VcsLogFilterCollectionBuilder(filterCollection)
+          .with(new VcsLogStructureFilterImpl(ContainerUtil.newHashSet(VcsLogUtil.getFilteredFilesForRoot(root, filterCollection))))
+          .build();
       }
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
@@ -285,15 +286,6 @@ class VisiblePackBuilder {
     }
 
     return commits;
-  }
-
-  @NotNull
-  private static VcsLogFilterCollection replaceStructureFilter(@NotNull VcsLogFilterCollection filterCollection,
-                                                               @NotNull Set<FilePath> files) {
-    return new VcsLogFilterCollectionImpl(filterCollection.getBranchFilter(), filterCollection.getUserFilter(),
-                                          filterCollection.getHashFilter(), filterCollection.getDateFilter(),
-                                          filterCollection.getTextFilter(), new VcsLogStructureFilterImpl(files),
-                                          filterCollection.getRootFilter());
   }
 
   @Nullable
