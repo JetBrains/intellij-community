@@ -80,7 +80,7 @@ public class CommentTracker {
    */
   public void deleteAndRestoreComments(@NotNull PsiElement element) {
     grabComments(element);
-    insertCommentsBefore(element);
+    insertCommentsBefore(element instanceof PsiVariable ? element.getParent() : element);
     element.delete();
   }
 
