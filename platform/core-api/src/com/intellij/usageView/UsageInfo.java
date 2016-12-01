@@ -20,10 +20,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -252,27 +249,25 @@ public class UsageInfo {
                                Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
   }
 
-  public int compareToByStartOffset(@NotNull UsageInfo info) {
+  private Pair<VirtualFile, Integer> offset() {
     VirtualFile containingFile0 = getVirtualFile();
     int shift0 = 0;
     if (containingFile0 instanceof VirtualFileWindow) {
       shift0 = ((VirtualFileWindow)containingFile0).getDocumentWindow().injectedToHost(0);
       containingFile0 = ((VirtualFileWindow)containingFile0).getDelegate();
     }
-    VirtualFile containingFile1 = info.getVirtualFile();
-    int shift1 = 0;
-    if (containingFile1 instanceof VirtualFileWindow) {
-      shift1 = ((VirtualFileWindow)containingFile1).getDocumentWindow().injectedToHost(0);
-      containingFile1 = ((VirtualFileWindow)containingFile1).getDelegate();
-    }
-    if (containingFile0 == null && containingFile1 == null || !Comparing.equal(containingFile0, containingFile1)) {
+    Segment range0 = mySmartPointer.getPsiRange();
+    if (range0 == null) return null;
+    return Pair.create(containingFile0, range0.getStartOffset() + shift0);
+  }
+
+  public int compareToByStartOffset(@NotNull UsageInfo info) {
+    Pair<VirtualFile, Integer> offset0 = offset();
+    Pair<VirtualFile, Integer> offset1 = info.offset();
+    if (offset0 == null || offset0.first == null || offset1 == null || offset1.first == null || !Comparing.equal(offset0.first, offset1.first)) {
       return 0;
     }
-
-    Segment range0 = mySmartPointer.getPsiRange();
-    Segment range1 = info.mySmartPointer.getPsiRange();
-    if (range0 == null || range1 == null) return 0;
-    return range0.getStartOffset() + shift0 - range1.getStartOffset() - shift1;
+    return offset0.second - offset1.second;
   }
 
   @NotNull
