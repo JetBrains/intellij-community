@@ -41,9 +41,23 @@ import java.util.function.Consumer;
  * This class encapsulates remote settings, so one should extend it for any python project that supports remote generation, at least
  * Instead of {@link #generateProject(Project, VirtualFile, PyNewProjectSettings, Module)} inheritor shall use
  * {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module, PyProjectSynchronizer)}*
+ * or {@link #configureProjectNoSettings(Project, VirtualFile, Module)} (see difference below)
  * <br/>
  * If your project does not support remote projects generation, be sure to set flag in ctor:{@link #PythonProjectGenerator(boolean)}
  * <br/>
+ * <h2>Module vs PyCharm projects</h2>
+ * <p>
+ *   When you create project in PyCharm it always calls {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module, PyProjectSynchronizer)},
+ *   but in Intellij Plugin settings are not ready to the moment of project creation, so there are 2 ways to support plugin:
+ *   <ol>
+ *     <li>Do not lean on settings at all. You simply implement {@link #configureProjectNoSettings(Project, VirtualFile, Module)}
+ *     This way is common for project templates.
+ *    </li>
+ *    <li>Implement framework as facet. {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module, PyProjectSynchronizer)}
+ *     will never be called in this case, so you can use "onFacetCreated" event of facet provider</li>
+ *   </li>
+ *   </ol>
+ * </p>
  *
  * @param <T> project settings
  */
@@ -119,7 +133,12 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
                                     @NotNull final VirtualFile baseDir,
                                     @Nullable final T settings,
                                     @NotNull final Module module) {
-    assert settings != null : "No project settings provided";
+    if (settings == null) {
+      // We are in Intellij Module and framework is implemented as project template, not facet.
+      // See class doc for mote info
+      configureProjectNoSettings(project, baseDir, module);
+      return;
+    }
 
     /*Instead of this method overwrite ``configureProject``*/
 
@@ -142,7 +161,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
         userProvidedPath = null; // According to checkSynchronizationAvailable should be cleared
         final String message = String.format("Local/Remote synchronization is not configured correctly.\n%s\n" +
                                              "You may need to sync local and remote project manually.\n\n Do you want to continue? \n\n" +
-          "Say 'Yes' to stay with misconfigured  mappings or 'No' to start manual configuration process.",
+                                             "Say 'Yes' to stay with misconfigured  mappings or 'No' to start manual configuration process.",
                                              syncError);
         if (Messages.showYesNoDialog(project,
                                      message,
@@ -154,6 +173,17 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
     }
 
     configureProject(project, baseDir, settings, module, synchronizer);
+  }
+
+  /**
+   * Same as {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module, PyProjectSynchronizer)}
+   * but with out of settings. Called by Intellij Plugin when framework is installed as project template.
+   */
+  protected void configureProjectNoSettings(@NotNull final Project project,
+                                            @NotNull final VirtualFile baseDir,
+                                            @NotNull final Module module) {
+    throw new IllegalStateException(String.format("%s does not support project creation with out of settings. " +
+                                                  "See %s doc for detail", getClass(), PythonProjectGenerator.class));
   }
 
   /**
