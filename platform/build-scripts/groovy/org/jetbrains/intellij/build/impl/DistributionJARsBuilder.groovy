@@ -250,7 +250,8 @@ class DistributionJARsBuilder {
           def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
           ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
           setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber,
-                                   productLayout.prepareCustomPluginRepositoryForPublishedPlugins)
+                                   productLayout.prepareCustomPluginRepositoryForPublishedPlugins,
+                                   productLayout.pluginModulesWithRestrictedCompatibleBuildRange.contains(plugin.mainModule))
           layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
         }
       }
@@ -393,18 +394,15 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String buildNumber, boolean setExactNumberInUntilBuild) {
+  private void setPluginVersionAndSince(String pluginXmlPath, String buildNumber, boolean setExactNumberInUntilBuild, boolean useRestrictedCompatibleBuildRange) {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<version>[\\d.]*</version>",
                                    replace: "<version>${buildNumber}</version>")
     def sinceBuild
     def untilBuild
-    /* Plugins from builds with numbers like 163.1111 (nightly builds) will be marked as compatible with all 163.* builds; it's required to
-       allow us to use such plugins in other nightly builds and in IDEA built from sources (with build number 163.SNAPSHOT).
-       Plugins from builds with numbers like 163.1111.22 (EAP/release builds) will be marked as compatible with all 163.1111.* builds. Usually there are no API changes in EAP/release branches so it's convenient to be able to publish a single plugin for different IDEs built
-       from the same EAP/release branch. */
     if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+/)) {
-      sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+      int end = useRestrictedCompatibleBuildRange ? buildNumber.lastIndexOf('.') : buildNumber.indexOf('.')
+      sinceBuild = buildNumber.substring(0, end)
       untilBuild = sinceBuild + ".*"
     }
     else {
