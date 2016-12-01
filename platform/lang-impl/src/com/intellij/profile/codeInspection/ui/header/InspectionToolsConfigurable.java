@@ -154,7 +154,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   protected void addProfile(InspectionProfileModifiableModel model) {
     final SingleInspectionProfilePanel panel = createPanel(model);
     myPanels.add(panel);
-    panel.setVisible(false);
     myProfilePanelHolder.add(panel);
     myProfiles.getProfilesComboBox().addProfile(model);
     myProfiles.getProfilesComboBox().selectProfile(model);
@@ -198,7 +197,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     final JPanel toolbar = new JPanel();
     toolbar.setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
 
-    myProfilePanelHolder = new JPanel(new BorderLayout());
+    myProfilePanelHolder = new JPanel();
 
     wholePanel.add(toolbar, BorderLayout.PAGE_START);
     wholePanel.add(myProfilePanelHolder, BorderLayout.CENTER);
@@ -529,7 +528,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       modifiableProfiles.add(inspectionProfile);
       final SingleInspectionProfilePanel panel = createPanel(inspectionProfile);
       myPanels.add(panel);
-      panel.setVisible(false);
       myProfilePanelHolder.add(panel);
     }
     myProfiles.getProfilesComboBox().reset(modifiableProfiles);
