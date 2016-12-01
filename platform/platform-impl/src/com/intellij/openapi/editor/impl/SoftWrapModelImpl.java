@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +31,6 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareVisualSizeManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -96,11 +94,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   @NotNull
   private final EditorImpl myEditor;
 
-  /**
-   * We don't want to use soft wraps-aware processing from non-EDT and profiling shows that 'is EDT' check that is called too
-   * often is rather expensive. Hence, we use caching here for performance improvement.
-   */
-  private SoftReference<Thread> myLastEdt = new SoftReference<>(null);
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
   private int myActive;
   private boolean myUseSoftWraps;
@@ -207,25 +200,11 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    if (!myUseSoftWraps || (!myEditor.myUseNewRendering && myEditor.isOneLineMode()) || myEditor.isPurePaintingMode()) {
-      return false;
-    }
-    
-    // We check that current thread is EDT because attempt to retrieve information about visible area width may fail otherwise
-    Application application = ApplicationManager.getApplication();
-    Thread lastEdt = myLastEdt.get();
-    Thread currentThread = Thread.currentThread();
-    if (lastEdt != currentThread) {
-      if (application.isDispatchThread()) {
-        myLastEdt = new SoftReference<>(currentThread);
-      }
-      else {
-        myLastEdt = new SoftReference<>(null);
-        return false;
-      }
-    }
-
-    return !myApplianceManager.getAvailableArea().isEmpty();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myUseSoftWraps &&
+           (myEditor.myUseNewRendering || !myEditor.isOneLineMode()) &&
+           !myEditor.isPurePaintingMode() &&
+           !myApplianceManager.getAvailableArea().isEmpty();
   }
 
   @Override
