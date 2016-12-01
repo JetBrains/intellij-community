@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +96,10 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseJavaBatchLoc
     if (args.length != 1) return null;
 
     PsiType argType = args[0].getType();
+    boolean exactType = args[0] instanceof PsiNewExpression;
     final String plainMessage = SuspiciousMethodCallUtil
-      .getSuspiciousMethodCallMessage(methodCall, args[0], argType, reportConvertibleMethodCalls, patternMethods, indices);
-    if (plainMessage != null) {
+      .getSuspiciousMethodCallMessage(methodCall, args[0], argType, exactType || reportConvertibleMethodCalls, patternMethods, indices);
+    if (plainMessage != null && !exactType) {
       final PsiType dfaType = GuessManager.getInstance(methodCall.getProject()).getControlFlowExpressionType(args[0]);
       if (dfaType != null && SuspiciousMethodCallUtil
                                .getSuspiciousMethodCallMessage(methodCall, args[0], dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
