@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
@@ -664,7 +662,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
                                  JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
         applyEditorTo(configurationCopy);
         classFilter = TestClassFilter
-          .create(configurationCopy.getTestObject().getSourceScope(), configurationCopy.getConfigurationModule().getModule());
+          .create(SourceScope.modulesWithDependencies(configurationCopy.getModules()), configurationCopy.getConfigurationModule().getModule());
       }
       catch (JUnitUtil.NoJUnitException e) {
         throw NoFilterException.noJUnitInModule(module);
