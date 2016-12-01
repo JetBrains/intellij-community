@@ -145,8 +145,8 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       assertTrue(fragment.getStartOffset(ThreeSide.RIGHT) <= fragment.getEndOffset(ThreeSide.RIGHT))
 
       assertTrue(fragment.getStartOffset(ThreeSide.LEFT) != fragment.getEndOffset(ThreeSide.LEFT) ||
-                   fragment.getStartOffset(ThreeSide.BASE) != fragment.getEndOffset(ThreeSide.BASE) ||
-                   fragment.getStartOffset(ThreeSide.RIGHT) != fragment.getEndOffset(ThreeSide.RIGHT))
+                 fragment.getStartOffset(ThreeSide.BASE) != fragment.getEndOffset(ThreeSide.BASE) ||
+                 fragment.getStartOffset(ThreeSide.RIGHT) != fragment.getEndOffset(ThreeSide.RIGHT))
     }
   }
 
@@ -369,7 +369,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       init {
         val builder = this@TestBuilder
         if (builder.text.before == null && builder.text.after == null ||
-          base != null && builder.text.base == null) {
+            base != null && builder.text.base == null) {
           builder.text.before = DocumentImpl(parseSource(before))
           builder.text.after = DocumentImpl(parseSource(after))
           if (base != null) builder.text.base = DocumentImpl(parseSource(base))
@@ -456,7 +456,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
   internal fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
 
-  internal  fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
+  internal fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
     doTest(TestType.SPLITTER, {
       postprocess(squash, trim)
       f()

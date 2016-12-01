@@ -21,95 +21,95 @@ import com.intellij.testFramework.UsefulTestCase
 class LineNumberConvertorCorrectorTest : UsefulTestCase() {
   fun testUnmodified() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 12, Side.RIGHT)
-        },
-        {
-          checkStrictSymmetrical()
-          ensureMatchedCount(10, 12)
-        }
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 12, Side.RIGHT)
+      },
+      {
+        checkStrictSymmetrical()
+        ensureMatchedCount(10, 12)
+      }
     )
   }
 
   fun testEqual1() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 10, Side.RIGHT)
-        },
-        {
-          change(4, 3, 5, Side.LEFT)
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 10, Side.RIGHT)
+      },
+      {
+        change(4, 3, 5, Side.LEFT)
 
-          checkStrictSymmetrical()
-          ensureMatchedCount(12, 7)
-        }
+        checkStrictSymmetrical()
+        ensureMatchedCount(12, 7)
+      }
     )
   }
 
   fun testEqual2() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 10, Side.RIGHT)
-        },
-        {
-          change(4, 5, 3, Side.RIGHT)
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 10, Side.RIGHT)
+      },
+      {
+        change(4, 5, 3, Side.RIGHT)
 
-          checkStrictSymmetrical()
-          ensureMatchedCount(5, 8)
-        }
+        checkStrictSymmetrical()
+        ensureMatchedCount(5, 8)
+      }
     )
   }
 
   fun testEqual3() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 10, Side.RIGHT)
-        },
-        {
-          change(4, 3, 3, Side.LEFT)
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 10, Side.RIGHT)
+      },
+      {
+        change(4, 3, 3, Side.LEFT)
 
-          checkStrictSymmetrical()
-          ensureMatchedCount(10, 7)
-        }
+        checkStrictSymmetrical()
+        ensureMatchedCount(10, 7)
+      }
     )
   }
 
   fun testEqual4() {
     doTest(
-        {
-          equal(0, 0, 15, Side.LEFT)
-          equal(0, 0, 15, Side.RIGHT)
-        },
-        {
-          change(4, 3, 5, Side.LEFT)
-          checkStrictSymmetrical()
-          change(1, 2, 1, Side.RIGHT)
-          checkStrictSymmetrical()
-          change(12, 3, 1, Side.LEFT)
-          checkStrictSymmetrical()
+      {
+        equal(0, 0, 15, Side.LEFT)
+        equal(0, 0, 15, Side.RIGHT)
+      },
+      {
+        change(4, 3, 5, Side.LEFT)
+        checkStrictSymmetrical()
+        change(1, 2, 1, Side.RIGHT)
+        checkStrictSymmetrical()
+        change(12, 3, 1, Side.LEFT)
+        checkStrictSymmetrical()
 
-          ensureMatchedCount(13, 8)
-        }
+        ensureMatchedCount(13, 8)
+      }
     )
   }
 
   fun testInsideModifiedRange() {
     doTest(
-        {
-          equal(0, 0, 15, Side.LEFT)
-          equal(0, 0, 15, Side.RIGHT)
-        },
-        {
-          change(0, 10, 15, Side.LEFT)
-          checkStrictSymmetrical()
-          change(0, 8, 6, Side.LEFT)
-          checkStrictSymmetrical()
-          change(2, 4, 2, Side.LEFT)
-          checkStrictSymmetrical()
-        }
+      {
+        equal(0, 0, 15, Side.LEFT)
+        equal(0, 0, 15, Side.RIGHT)
+      },
+      {
+        change(0, 10, 15, Side.LEFT)
+        checkStrictSymmetrical()
+        change(0, 8, 6, Side.LEFT)
+        checkStrictSymmetrical()
+        change(2, 4, 2, Side.LEFT)
+        checkStrictSymmetrical()
+      }
     )
   }
 

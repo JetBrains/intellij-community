@@ -464,7 +464,7 @@ class ComparisonUtilAutoTest : DiffTestCase() {
       val chunkContent2 = text2.subSequence(start2, end2)
       val chunkContent3 = text3.subSequence(start3, end3)
       assertFalse(isEqualsCharSequences(chunkContent2, chunkContent1, ignoreSpacesChanged) &&
-                    isEqualsCharSequences(chunkContent2, chunkContent3, ignoreSpacesChanged))
+                  isEqualsCharSequences(chunkContent2, chunkContent3, ignoreSpacesChanged))
 
       last1 = fragment.endOffset1
       last2 = fragment.endOffset2

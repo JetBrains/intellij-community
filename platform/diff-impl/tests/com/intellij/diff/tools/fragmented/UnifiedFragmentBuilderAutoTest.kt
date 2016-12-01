@@ -137,7 +137,8 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       if (c1 == c2) {
         index1++
         index2++
-      } else {
+      }
+      else {
         index1++
       }
     }

@@ -88,7 +88,8 @@ abstract class MergeTestBase : DiffTestCase() {
       val builder = TestBuilder(viewer, toolbar.toolbarActions ?: emptyList())
       builder.assertChangesCount(changesCount)
       builder.f()
-    } finally {
+    }
+    finally {
       Disposer.dispose(viewer)
     }
   }
@@ -382,7 +383,11 @@ abstract class MergeTestBase : DiffTestCase() {
         val document = viewer.editor.document;
         val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
 
-        val resolved = if (change.isResolved) BOTH else if (change.isResolved(Side.LEFT)) LEFT else if (change.isResolved(Side.RIGHT)) RIGHT else NONE
+        val resolved =
+          if (change.isResolved) BOTH
+          else if (change.isResolved(Side.LEFT)) LEFT
+          else if (change.isResolved(Side.RIGHT)) RIGHT
+          else NONE
 
         val starts = Trio.from { change.getStartLine(it) }
         val ends = Trio.from { change.getStartLine(it) }
