@@ -3,8 +3,10 @@ package circlet.login
 import circlet.components.*
 import circlet.reactive.*
 import circlet.utils.*
+import com.intellij.concurrency.*
 import nl.komponents.kovenant.*
 import runtime.lifetimes.*
+import java.util.concurrent.*
 
 enum class LoginStatus {Success, Fail, InProrgess }
 
@@ -15,7 +17,6 @@ class LoginAuthStatus(val status: LoginStatus, val statusText: String) {
             LoginStatus.Fail -> statusText
             LoginStatus.InProrgess -> "Checking credentials..."
         }
-
 }
 
 class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
@@ -33,23 +34,29 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
 
     init {
         login.view(lifetime, { lt, loginText ->
+
             pass.view(lt) { ltlt, passText ->
                 val refreshLt = refreshLifetimes.next()
-                loginStatus.value = LoginAuthStatus(LoginStatus.InProrgess, "")
-                token.value = ""
-                task {
-                    loginComponent.getAccessToken(loginText, passText).thenLater(refreshLt) {
-                        val errorMessage = it.errorMessage
-                        if (errorMessage == null || errorMessage.isEmpty()) {
-                            loginStatus.value = LoginAuthStatus(LoginStatus.Success, "")
-                            token.value = it.token ?: ""
-                        } else {
-                            loginStatus.value = LoginAuthStatus(LoginStatus.Fail, errorMessage)
+                JobScheduler.getScheduler().schedule({
+                    if (!refreshLt.isTerminated)
+                    {
+                        loginStatus.value = LoginAuthStatus(LoginStatus.InProrgess, "")
+                        token.value = ""
+                        task {
+                            loginComponent.getAccessToken(loginText, passText).thenLater(refreshLt) {
+                                val errorMessage = it.errorMessage
+                                if (errorMessage == null || errorMessage.isEmpty()) {
+                                    loginStatus.value = LoginAuthStatus(LoginStatus.Success, "")
+                                    token.value = it.token ?: ""
+                                } else {
+                                    loginStatus.value = LoginAuthStatus(LoginStatus.Fail, errorMessage)
+                                }
+                            }.failureLater(refreshLt) {
+                                loginStatus.value = LoginAuthStatus(LoginStatus.Fail, it.message!!)
+                            }
                         }
-                    }.failureLater(refreshLt) {
-                        loginStatus.value = LoginAuthStatus(LoginStatus.Fail, it.message!!)
                     }
-                }
+                }, 2000, TimeUnit.MILLISECONDS)
             }
         })
         loginStatus.view(lifetime) { _, status ->

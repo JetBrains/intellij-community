@@ -9,8 +9,6 @@ import com.intellij.openapi.project.*
 import klogging.*
 import runtime.*
 
-class JetBrainsAccountLoginData(val login: String, val pass : String, val token: String)
-
 private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
 
 data class IdePLuginClientData (
@@ -41,7 +39,6 @@ class CircletLoginComponent() :
     val enabled = Property(false)
 
     fun getAccessToken(login : String, pass : String) : Promise<AuthenticationResponse> {
-        Thread.sleep(2000)
         log.info( "Checking credentials for ${login}" )
         return CircletAuthentication(authUrl).authenticate(login, pass)
     }
