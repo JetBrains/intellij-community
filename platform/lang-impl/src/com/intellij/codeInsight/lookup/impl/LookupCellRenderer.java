@@ -26,8 +26,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -457,8 +459,9 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     // assume a single font can display all lookup item chars
     Set<Font> fonts = ContainerUtil.newHashSet();
+    FontPreferences fontPreferences = myLookup.getFontPreferences();
     for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(EditorUtil.fontForChar(sampleString.charAt(i), Font.PLAIN, myLookup.getTopLevelEditor()).getFont());
+      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences).getFont());
     }
 
     eachFont: for (Font font : fonts) {
