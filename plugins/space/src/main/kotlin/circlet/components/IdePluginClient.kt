@@ -88,12 +88,13 @@ class IdePluginClient(val project : Project) :
         askPasswordExplicitlyAllowed.value = false
 
         val loginComponent = component<CircletLoginComponent>()
+        val modality = application.currentModalityState
 
         task {
             log.catch {
                 loginComponent.
                     getAccessToken(loginComponent.login, loginComponent.pass).
-                    thenLater(lifetime) {
+                    thenLater(lifetime, modality) {
                         val errorMessage = it.errorMessage
                         if (errorMessage == null || errorMessage.isEmpty()) {
                             state.value = ConnectingState.Connected
@@ -104,7 +105,7 @@ class IdePluginClient(val project : Project) :
                             if (ask)
                                 askPassword()
                         }
-                    }. failureLater(lifetime) {
+                    }. failureLater(lifetime, modality) {
                         JobScheduler.getScheduler().schedule({
                             if (!lifetime.isTerminated)
                                 tryReconnect(lifetime)
@@ -112,6 +113,8 @@ class IdePluginClient(val project : Project) :
                         state.value = ConnectingState.TryConnect
                 }
             }
+        } success {
+
         }
     }
 

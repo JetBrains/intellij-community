@@ -4,9 +4,12 @@ import circlet.components.*
 import circlet.reactive.*
 import circlet.utils.*
 import com.intellij.concurrency.*
+import klogging.*
 import nl.komponents.kovenant.*
 import runtime.lifetimes.*
 import java.util.concurrent.*
+
+private val log = KLoggers.logger("app-idea/LoginDialogViewModel.kt")
 
 enum class LoginStatus {Success, Fail, InProrgess }
 
@@ -34,16 +37,16 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
 
     init {
         login.view(lifetime, { lt, loginText ->
-
-            pass.view(lt) { ltlt, passText ->
-                val refreshLt = refreshLifetimes.next()
+           pass.view(lt) { ltlt, passText ->
+               loginStatus.value = LoginAuthStatus(LoginStatus.InProrgess, "")
+               val refreshLt = refreshLifetimes.next()
                 JobScheduler.getScheduler().schedule({
                     if (!refreshLt.isTerminated)
                     {
-                        loginStatus.value = LoginAuthStatus(LoginStatus.InProrgess, "")
                         token.value = ""
                         task {
                             loginComponent.getAccessToken(loginText, passText).thenLater(refreshLt) {
+                                log.info( "Checking credentials resulted in ${it.errorMessage}, ${it.errorTag}, ${it.token}" )
                                 val errorMessage = it.errorMessage
                                 if (errorMessage == null || errorMessage.isEmpty()) {
                                     loginStatus.value = LoginAuthStatus(LoginStatus.Success, "")

@@ -1,20 +1,27 @@
 package circlet.utils
 
+import com.intellij.openapi.application.*
 import runtime.*
 import runtime.lifetimes.*
 
-fun<T> Promise<T>.thenLater(lifetime : Lifetime, handler: (T) -> Unit): Promise<T> =
+fun<T> Promise<T>.thenLater(lifetime : Lifetime, modalityState: ModalityState = ModalityState.current(), handler: (T) -> Unit): Promise<T> =
     this.then {
-        application.invokeLater {
+        application.invokeLater({
             if (!lifetime.isTerminated)
                 handler(it)
-        }
+        }, modalityState)
     }
 
-fun<T> Promise<T>.failureLater(lifetime : Lifetime, handler: (Throwable) -> Unit) =
+fun<T> Promise<T>.failureLater(lifetime : Lifetime, modalityState: ModalityState = ModalityState.current(), handler: (Throwable) -> Unit) =
     this.failure {
-        application.invokeLater {
+        if (application.isDispatchThread)
+        {
             if (!lifetime.isTerminated)
                 handler(it)
+        } else {
+            application.invokeLater({
+                if (!lifetime.isTerminated)
+                    handler(it)
+            }, modalityState)
         }
     }

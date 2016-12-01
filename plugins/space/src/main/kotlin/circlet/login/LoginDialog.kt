@@ -4,12 +4,10 @@ import circlet.reactive.*
 import circlet.utils.*
 import com.intellij.icons.*
 import com.intellij.openapi.ui.*
-import com.intellij.util.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.border.*
 import javax.swing.event.*
-import kotlin.concurrent.*
 
 class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPane.getRootFrame(), true), DocumentListener {
 
@@ -32,7 +30,11 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
             add(JLabel().apply {
                 viewModel.loginStatus.bind(viewModel.lifetime, { status ->
                     text = status.presentStatus()
-                    icon = if (status.status == LoginStatus.Success) AllIcons.General.InspectionsOK else AllIcons.General.InspectionsError
+                    icon = when (status.status) {
+                        LoginStatus.Fail -> AllIcons.General.Error
+                        LoginStatus.Success -> AllIcons.General.InspectionsOK
+                        LoginStatus.InProrgess -> null
+                    }
                 })
             }, BorderLayout.CENTER)
         }
