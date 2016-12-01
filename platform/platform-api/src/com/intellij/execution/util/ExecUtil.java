@@ -23,6 +23,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,26 +37,12 @@ import java.util.List;
 import java.util.Map;
 
 public class ExecUtil {
-  private static class ExecutableExistsLazyValue extends NotNullLazyValue<Boolean> {
-    private final String myPathname;
-
-    public ExecutableExistsLazyValue(String pathname) {
-      myPathname = pathname;
-    }
-
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File(myPathname).canExecute();
-    }
-  }
-
-  private static final NotNullLazyValue<Boolean> hasGkSudo = new ExecutableExistsLazyValue("/usr/bin/gksudo");
-  private static final NotNullLazyValue<Boolean> hasKdeSudo = new ExecutableExistsLazyValue("/usr/bin/kdesudo");
-  private static final NotNullLazyValue<Boolean> hasPkExec = new ExecutableExistsLazyValue("/usr/bin/pkexec");
-  private static final NotNullLazyValue<Boolean> hasGnomeTerminal = new ExecutableExistsLazyValue("/usr/bin/gnome-terminal");
-  private static final NotNullLazyValue<Boolean> hasKdeTerminal = new ExecutableExistsLazyValue("/usr/bin/konsole");
-  private static final NotNullLazyValue<Boolean> hasXTerm = new ExecutableExistsLazyValue("/usr/bin/xterm");
+  private static final NotNullLazyValue<Boolean> hasGkSudo = new PathExecLazyValue("gksudo");
+  private static final NotNullLazyValue<Boolean> hasKdeSudo = new PathExecLazyValue("kdesudo");
+  private static final NotNullLazyValue<Boolean> hasPkExec = new PathExecLazyValue("pkexec");
+  private static final NotNullLazyValue<Boolean> hasGnomeTerminal = new PathExecLazyValue("gnome-terminal");
+  private static final NotNullLazyValue<Boolean> hasKdeTerminal = new PathExecLazyValue("konsole");
+  private static final NotNullLazyValue<Boolean> hasXTerm = new PathExecLazyValue("xterm");
 
   private ExecUtil() { }
 
@@ -236,15 +223,15 @@ public class ExecUtil {
       return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command);
     }
     else if (hasKdeTerminal.getValue()) {
-      return Arrays.asList("/usr/bin/konsole", "-e", command);
+      return Arrays.asList("konsole", "-e", command);
     }
     else if (hasGnomeTerminal.getValue()) {
-      return title != null ? Arrays.asList("/usr/bin/gnome-terminal", "-t", title, "-x", command)
-                           : Arrays.asList("/usr/bin/gnome-terminal", "-x", command);
+      return title != null ? Arrays.asList("gnome-terminal", "-t", title, "-x", command)
+                           : Arrays.asList("gnome-terminal", "-x", command);
     }
     else if (hasXTerm.getValue()) {
-      return title != null ? Arrays.asList("/usr/bin/xterm", "-T", title, "-e", command)
-                           : Arrays.asList("/usr/bin/xterm", "-e", command);
+      return title != null ? Arrays.asList("xterm", "-T", title, "-e", command)
+                           : Arrays.asList("xterm", "-e", command);
     }
 
     throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);

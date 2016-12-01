@@ -16,13 +16,13 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -112,24 +112,12 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean is64Bit = !is32Bit;
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/xdg-open").canExecute();
-    }
-  };
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
   public static boolean hasXdgOpen() {
     return isXWindow && ourHasXdgOpen.getValue();
   }
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgMime = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/xdg-mime").canExecute();
-    }
-  };
+  private static final NotNullLazyValue<Boolean> ourHasXdgMime = new PathExecLazyValue("xdg-mime");
   public static boolean hasXdgMime() {
     return isXWindow && ourHasXdgMime.getValue();
   }

@@ -295,7 +295,7 @@ public class ShowFilePathAction extends AnAction {
       });
     }
     else if (SystemInfo.hasXdgOpen()) {
-      GeneralCommandLine cmd = new GeneralCommandLine("/usr/bin/xdg-open", dir);
+      GeneralCommandLine cmd = new GeneralCommandLine("xdg-open", dir);
       ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
