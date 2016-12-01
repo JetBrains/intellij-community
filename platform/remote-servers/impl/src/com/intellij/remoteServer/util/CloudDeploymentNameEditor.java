@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,13 +50,13 @@ public class CloudDeploymentNameEditor<T extends DeploymentNameConfiguration> ex
     myNameTextField.setEnabled(myCustomNameCheckBox.isSelected());
   }
 
-  public void resetEditorFrom(T settings) {
+  public void resetEditorFrom(@NotNull T settings) {
     myCustomNameCheckBox.setSelected(!settings.isDefaultDeploymentName());
     updateNameEnabled();
     myNameTextField.setText(settings.getDeploymentName());
   }
 
-  public void applyEditorTo(T settings) throws ConfigurationException {
+  public void applyEditorTo(@NotNull T settings) throws ConfigurationException {
     settings.setDefaultDeploymentName(!myCustomNameCheckBox.isSelected());
     settings.setDeploymentName(myNameTextField.getText());
   }

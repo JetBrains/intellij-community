@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
   }
 
   @Override
-  protected void applyEditorTo(final PyToxConfiguration s) {
+  protected void applyEditorTo(@NotNull final PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(myForm, s);
     s.setArguments(asArray(myArgumentsField));
     s.setRunOnlyEnvs(asArray(myRunOnlyTestsField));
@@ -66,7 +66,7 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
   }
 
   @Override
-  protected void resetEditorFrom(final PyToxConfiguration s) {
+  protected void resetEditorFrom(@NotNull final PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myForm);
     myArgumentsField.setText(fromArray(s.getArguments()));
     myRunOnlyTestsField.setText(fromArray(s.getRunOnlyEnvs()));

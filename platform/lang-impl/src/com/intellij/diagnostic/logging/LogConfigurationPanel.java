@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   @Override
-  protected void resetEditorFrom(final RunConfigurationBase configuration) {
+  protected void resetEditorFrom(@NotNull final RunConfigurationBase configuration) {
     ArrayList<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
@@ -249,7 +249,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   @Override
-  protected void applyEditorTo(final RunConfigurationBase configuration) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull final RunConfigurationBase configuration) throws ConfigurationException {
     myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();

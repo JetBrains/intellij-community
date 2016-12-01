@@ -146,13 +146,13 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
     }
 
     @Override
-    protected void resetEditorFrom(RemoteDebugConfiguration configuration) {
+    protected void resetEditorFrom(@NotNull RemoteDebugConfiguration configuration) {
       hostField.setText(StringUtil.notNullize(configuration.host, "localhost"));
       portField.setNumber(configuration.port);
     }
 
     @Override
-    protected void applyEditorTo(RemoteDebugConfiguration configuration) {
+    protected void applyEditorTo(@NotNull RemoteDebugConfiguration configuration) {
       configuration.setHost(hostField.getText());
       configuration.setPort(portField.getNumber());
     }

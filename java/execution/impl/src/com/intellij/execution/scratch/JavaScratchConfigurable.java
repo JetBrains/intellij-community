@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.GridBagConstraints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -114,7 +115,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   }
 
   @Override
-  public void applyEditorTo(JavaScratchConfiguration configuration) throws ConfigurationException {
+  public void applyEditorTo(@NotNull JavaScratchConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
     configuration.MAIN_CLASS_NAME = myMainClass.getComponent().getText().trim();
@@ -132,7 +133,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   }
 
   @Override
-  public void resetEditorFrom(JavaScratchConfiguration configuration) {
+  public void resetEditorFrom(@NotNull JavaScratchConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
     myMainClass.getComponent().setText(configuration.MAIN_CLASS_NAME != null ? configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\.") : "");

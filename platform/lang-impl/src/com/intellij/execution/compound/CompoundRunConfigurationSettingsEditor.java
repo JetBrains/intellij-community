@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,14 +91,14 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   }
 
   @Override
-  protected void resetEditorFrom(CompoundRunConfiguration compoundRunConfiguration) {
+  protected void resetEditorFrom(@NotNull CompoundRunConfiguration compoundRunConfiguration) {
     myModel.clear();
     myModel.addAll(compoundRunConfiguration.getSetToRun());
     mySnapshot = compoundRunConfiguration;
   }
 
   @Override
-  protected void applyEditorTo(CompoundRunConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull CompoundRunConfiguration s) throws ConfigurationException {
     Set<RunConfiguration> checked = new HashSet<>();
     for (int i = 0; i < myModel.getSize(); i++) {
       RunConfiguration configuration = myModel.get(i);

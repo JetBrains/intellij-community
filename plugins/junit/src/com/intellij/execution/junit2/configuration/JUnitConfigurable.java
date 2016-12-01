@@ -292,7 +292,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     if (group.getSelection() == null) group.setSelected(radioButtons[0].getModel(), true);
   }
 
-  public void applyEditorTo(final JUnitConfiguration configuration) {
+  public void applyEditorTo(@NotNull final JUnitConfiguration configuration) {
     myModel.apply(getModuleSelector().getModule(), configuration);
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     applyHelpersTo(configuration);
@@ -320,7 +320,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
   }
 
-  public void resetEditorFrom(final JUnitConfiguration configuration) {
+  public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {
     final int count = configuration.getRepeatCount();
     myRepeatCountField.setText(String.valueOf(count));
     myRepeatCountField.setEnabled(count > 1);
