@@ -99,6 +99,9 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
+    <group id="Vcs.FileHistory.ContextMenu">
+      <reference id="Vcs.CopyRevisionNumberAction"/>
+    </group>
     <group id="Vcs.FileHistory.Toolbar">
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="VcsHistoryActionsGroup"/>

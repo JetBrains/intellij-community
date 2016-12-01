@@ -83,6 +83,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     add(myDetailsSplitter, BorderLayout.CENTER);
     add(createActionsToolbar(), BorderLayout.WEST);
 
+    PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
+
     Disposer.register(myUi, this);
   }
 
