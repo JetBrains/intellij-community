@@ -25,6 +25,8 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
@@ -45,6 +47,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
+  private static final Logger LOG = Logger.getInstance(CodeInspectionAction.class);
+  private static final String LAST_SELECTED_PROFILE_PROP = "run.code.analysis.last.selected.profile";
+
   private GlobalInspectionContextImpl myGlobalInspectionContext;
   protected InspectionProfileImpl myExternalProfile;
 
@@ -127,6 +132,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable(project);
         dialog.setOKActionEnabled(canExecute);
         if (canExecute) {
+          PropertiesComponent.getInstance(project).setValue(LAST_SELECTED_PROFILE_PROP, (myExternalProfile.isProjectLevel() ? 'p' : 'a') + myExternalProfile.getName());
           manager.setProfile(myExternalProfile.getName());
         }
       }
@@ -178,12 +184,32 @@ public class CodeInspectionAction extends BaseAnalysisAction {
                               InspectionProfileManager inspectionProfileManager,
                               InspectionProjectProfileManager inspectionProjectProfileManager,
                               InspectionManagerEx inspectionManager) {
-    InspectionProfileImpl selectedProfile = getGlobalInspectionContext(inspectionManager.getProject()).getCurrentProfile();
+    InspectionProfileImpl selectedProfile = getProfileToUse(inspectionManager.getProject(), inspectionProfileManager, inspectionProjectProfileManager);
     List<InspectionProfileImpl> profiles = new ArrayList<>();
     profiles.addAll(inspectionProfileManager.getProfiles());
     profiles.addAll(inspectionProjectProfileManager.getProfiles());
     profilesCombo.reset(profiles);
     profilesCombo.selectProfile(selectedProfile);
+  }
+
+  @NotNull
+  private InspectionProfileImpl getProfileToUse(@NotNull Project project,
+                                               @NotNull InspectionProfileManager appProfileManager,
+                                               @NotNull InspectionProjectProfileManager projectProfileManager) {
+    final String lastSelectedProfile = PropertiesComponent.getInstance(project).getValue(LAST_SELECTED_PROFILE_PROP);
+    if (lastSelectedProfile != null) {
+      final char type = lastSelectedProfile.charAt(0);
+      final String lastSelectedProfileName = lastSelectedProfile.substring(1);
+      if (type == 'a') {
+        final InspectionProfileImpl profile = appProfileManager.getProfile(lastSelectedProfileName, false);
+        if (profile != null) return profile;
+      } else {
+        LOG.assertTrue(type == 'p', "Unexpected last selected profile: \'" + lastSelectedProfile + "\'");
+        final InspectionProfileImpl profile = projectProfileManager.getProfile(lastSelectedProfileName, false);
+        if (profile != null && profile.isProjectLevel()) return profile;
+      }
+    }
+    return getGlobalInspectionContext(project).getCurrentProfile();
   }
 
   private static class AdditionalPanel {
