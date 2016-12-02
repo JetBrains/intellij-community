@@ -21,6 +21,9 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
 
+@Deprecated("Please use SchemeManager")
+abstract class SchemesManager<T : Scheme> : SchemeManager<T>()
+
 interface ExternalizableScheme : Scheme {
   fun setName(value: String)
 }
