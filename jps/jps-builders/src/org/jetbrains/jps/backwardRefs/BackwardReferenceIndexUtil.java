@@ -15,47 +15,65 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.openapi.util.Factory;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class BackwardReferenceIndexUtil {
   static void registerFile(String filePath,
                            Set<? extends JavacRef> refs,
                            List<JavacDef> defs,
-                           BackwardReferenceIndexWriter writer) {
+                           final BackwardReferenceIndexWriter writer) {
     final int fileId = writer.enumeratePath(filePath);
     int funExprId = 0;
 
-    final List<LightRef> definitions = new ArrayList<LightRef>(defs.size());
+    final Map<LightRef, Void> definitions = new HashMap<LightRef, Void>(defs.size());
+    final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<LightRef, Collection<LightRef>>();
+
     for (JavacDef def : defs) {
       if (def instanceof JavacDef.JavacClassDef) {
         JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
         final LightRef.JavaLightClassRef aClass = writer.asClassUsage(sym);
-        definitions.add(aClass);
+        definitions.put(aClass, null);
 
         final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
-        final LightRef.JavaLightClassRef[] lightSuperClasses = new LightRef.JavaLightClassRef[superClasses.length];
-        for (int i = 0; i < superClasses.length; i++) {
-          JavacRef superClass = superClasses[i];
-          lightSuperClasses[i] = writer.asClassUsage(superClass);
-        }
+        for (JavacRef superClass : superClasses) {
+          LightRef.JavaLightClassRef superClassRef = writer.asClassUsage(superClass);
 
-        writer.writeHierarchy(fileId, aClass, lightSuperClasses);
+          Collection<LightRef> children = backwardHierarchyMap.get(superClassRef);
+          if (children == null) {
+            backwardHierarchyMap.put(superClassRef, children = new SmartList<LightRef>());
+          }
+          children.add(aClass);
+        }
       }
       else if (def instanceof JavacDef.JavacFunExprDef) {
         final LightRef.JavaLightClassRef functionalType = writer.asClassUsage(def.getDefinedElement());
         int id = funExprId++;
         LightRef.JavaLightFunExprDef result = new LightRef.JavaLightFunExprDef(id);
-        definitions.add(result);
-        writer.writeHierarchy(fileId, result, functionalType);
+        definitions.put(result, null);
+
+        ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType, new Factory<Collection<LightRef>>() {
+          @Override
+          public Collection<LightRef> create() {
+            return new SmartList<LightRef>();
+          }
+        }).add(result);
       }
     }
 
-    writer.writeClassDefinitions(fileId, definitions);
-    writer.writeReferences(fileId, refs);
+    Map<LightRef, Void> convertedRefs = new HashMap<LightRef, Void>(refs.size());
+    for (JavacRef ref : refs) {
+      LightRef key = writer.enumerateNames(ref);
+      if (key != null) {
+        convertedRefs.put(key, null);
+      }
+    }
+    writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
   }
 }

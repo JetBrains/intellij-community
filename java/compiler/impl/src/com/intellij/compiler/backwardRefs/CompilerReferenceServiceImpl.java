@@ -46,6 +46,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.StorageException;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -266,7 +267,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     myReadDataLock.lock();
     try {
       if (myReader == null) return null;
-      return myReader.getDirectInheritors(searchElement, useScope, myDirtyModulesHolder.getDirtyScope(), searchFileType, searchType);
+      try {
+        return myReader.getDirectInheritors(searchElement, useScope, myDirtyModulesHolder.getDirtyScope(), searchFileType, searchType);
+      }
+      catch (StorageException e) {
+        throw new RuntimeException(e);
+      }
     } finally {
       myReadDataLock.unlock();
     }
@@ -291,10 +297,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       if (myReader == null) return null;
       TIntHashSet referentFileIds = new TIntHashSet();
       for (LightRef ref : compilerElementInfo.searchElements) {
-        final TIntHashSet referents = myReader.findReferentFileIds(ref, compilerElementInfo.place == ElementPlace.SRC);
-        if (referents == null) return null;
-        referentFileIds.addAll(referents.toArray());
-      }
+        try {
+          final TIntHashSet referents = myReader.findReferentFileIds(ref, compilerElementInfo.place == ElementPlace.SRC);
+          if (referents == null) return null;
+          referentFileIds.addAll(referents.toArray());
+        }
+        catch (StorageException e) {
+          throw new RuntimeException(e);
+        }
+         }
       return referentFileIds;
 
     } finally {

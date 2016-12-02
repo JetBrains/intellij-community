@@ -24,6 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,27 +33,25 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 class CompilerReferenceReader {
   private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
 
   private final CompilerBackwardReferenceIndex myIndex;
 
-  private final Object myHierarchyLock = new Object(); //access to hierarchy & definition maps
-  private final Object myReferenceLock = new Object(); //access to reference & file enumerator maps
-
   private CompilerReferenceReader(File buildDir) throws IOException {
     myIndex = new CompilerBackwardReferenceIndex(buildDir);
   }
 
   @Nullable
-  TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) {
+  TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
     LightRef.LightClassHierarchyElementDef hierarchyElement = ref instanceof LightRef.LightClassHierarchyElementDef ?
                                                               (LightRef.LightClassHierarchyElementDef)ref :
                                                               ((LightRef.LightMember)ref).getOwner();
@@ -76,38 +76,22 @@ class CompilerReferenceReader {
                                                  @NotNull GlobalSearchScope searchScope,
                                                  @NotNull GlobalSearchScope dirtyScope,
                                                  @NotNull FileType fileType,
-                                                 @NotNull CompilerHierarchySearchType searchType) {
-    Collection<CompilerBackwardReferenceIndex.LightDefinition> candidates;
-    synchronized (myHierarchyLock) {
-      candidates = myIndex.getBackwardHierarchyMap().get(searchElement);
-    }
-    if (candidates == null) return Collections.emptyMap();
-
+                                                 @NotNull CompilerHierarchySearchType searchType) throws StorageException {
     GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
     LanguageLightRefAdapter adapter = CompilerReferenceServiceImpl.findAdapterForFileType(fileType);
     LOG.assertTrue(adapter != null, "adapter is null for file type: " + fileType);
     Class<? extends LightRef> requiredLightRefClass = searchType.getRequiredClass(adapter);
-    Map<VirtualFile, Object[]> candidatesPerFile;
-    synchronized (myReferenceLock) {
-      candidatesPerFile = candidates
-        .stream()
-        .filter(def -> requiredLightRefClass.isInstance(def.getRef()))
-        .map(definition -> {
-          final VirtualFile file = findFile(definition.getFileId());
-          if (file != null && effectiveSearchScope.contains(file)) {
-            return new Object() {
-              final VirtualFile containingFile = file;
-              final LightRef def = definition.getRef();
-            };
-          }
-          else {
-            return null;
-          }
-        })
-        .filter(Objects::nonNull)
-        .collect(groupingBy(x -> x.containingFile, mapping(x -> x.def, collectingAndThen(toList(), l -> searchType.convertToIds(l, myIndex.getByteSeqEum())))));
-    }
 
+    Map<VirtualFile, Object[]> candidatesPerFile = new HashMap<>();
+    myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(searchElement).forEach((fileId, defs) -> {
+        final List<LightRef> requiredCandidates = defs.stream().filter(requiredLightRefClass::isInstance).collect(toList());
+        if (requiredCandidates.isEmpty()) return true;
+        final VirtualFile file = findFile(fileId);
+        if (file != null && effectiveSearchScope.contains(file)) {
+          candidatesPerFile.put(file, searchType.convertToIds(defs, myIndex.getByteSeqEum()));
+        }
+        return true;
+      });
     return candidatesPerFile.isEmpty() ? Collections.emptyMap() : candidatesPerFile;
   }
 
@@ -133,19 +117,18 @@ class CompilerReferenceReader {
     }
   }
 
-  private void addUsages(LightRef usage, TIntHashSet sink) {
-    final Collection<Integer> usageFiles;
-    synchronized (myReferenceLock) {
-      usageFiles = myIndex.getBackwardReferenceMap().get(usage);
-      if (usageFiles != null) {
-        for (int fileId : usageFiles) {
-          final VirtualFile file = findFile(fileId);
+  private void addUsages(LightRef usage, TIntHashSet sink) throws StorageException {
+    myIndex.get(CompilerIndices.BACK_USAGES).getData(usage).forEach(
+      new ValueContainer.ContainerAction<Void>() {
+        @Override
+        public boolean perform(int id, Void value) {
+          final VirtualFile file = findFile(id);
           if (file != null) {
             sink.add(((VirtualFileWithId)file).getId());
           }
+          return true;
         }
-      }
-    }
+      });
   }
 
   private VirtualFile findFile(int id) {
@@ -160,38 +143,55 @@ class CompilerReferenceReader {
   }
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  private LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity) {
+  private LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity)
+    throws StorageException {
     Set<LightRef.NamedLightRef> result = new THashSet<>();
     Queue<LightRef.NamedLightRef> q = new Queue<>(10);
     q.addLast(hierarchyElement);
-    synchronized (myHierarchyLock) {
-      while (!q.isEmpty()) {
-        LightRef.NamedLightRef curClass = q.pullFirst();
-        if (result.add(curClass)) {
-          if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
-            final Collection<Integer> definitionFiles = myIndex.getBackwardClassDefinitionMap().get(curClass);
-            if (definitionFiles == null) {
-              //diagnostic
-              String baseHierarchyElement = getNameEnumerator().getName(hierarchyElement.getName());
-              String curHierarchyElement = getNameEnumerator().getName(curClass.getName());
-              LOG.error("Can't get definition files for :" + curHierarchyElement + " base class: " + baseHierarchyElement);
-            }
-            if (definitionFiles.size() != 1) {
-              return null;
-            }
+    while (!q.isEmpty()) {
+      LightRef.NamedLightRef curClass = q.pullFirst();
+      if (result.add(curClass)) {
+        if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
+          DefCount count = getDefinitionCount(curClass);
+          if (count == DefCount.NONE) {
+            //diagnostic
+            String baseHierarchyElement = getNameEnumerator().getName(hierarchyElement.getName());
+            String curHierarchyElement = getNameEnumerator().getName(curClass.getName());
+            LOG.error("Can't get definition files for :" + curHierarchyElement + " base class: " + baseHierarchyElement);
           }
-          final Collection<CompilerBackwardReferenceIndex.LightDefinition> subClassDefs = myIndex.getBackwardHierarchyMap().get(curClass);
-          if (subClassDefs != null) {
-            for (CompilerBackwardReferenceIndex.LightDefinition subclass : subClassDefs) {
-              final LightRef ref = subclass.getRef();
-              if (ref instanceof LightRef.LightClassHierarchyElementDef) {
-                q.addLast((LightRef.LightClassHierarchyElementDef) ref);
-              }
-            }
+          if (count != DefCount.ONE) {
+            return null;
           }
         }
+        myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
+          for (LightRef child : children) {
+            q.addLast((LightRef.LightClassHierarchyElementDef) child);
+          }
+          return true;
+        });
       }
     }
     return result.toArray(new LightRef.NamedLightRef[result.size()]);
+  }
+
+  private enum DefCount { NONE, ONE, MANY}
+  @NotNull
+  private DefCount getDefinitionCount(LightRef def) throws StorageException {
+    DefCount[] result = new DefCount[]{DefCount.NONE};
+    myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Void>() {
+      @Override
+      public boolean perform(int id, Void value) {
+        if (result[0] == DefCount.NONE) {
+          result[0] = DefCount.ONE;
+          return true;
+        }
+        if (result[0] == DefCount.ONE) {
+          result[0] = DefCount.MANY;
+          return true;
+        }
+        return false;
+      }
+    });
+    return result[0];
   }
 }
