@@ -53,7 +53,6 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
@@ -80,6 +79,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Konstantin Bulenkov
@@ -211,7 +211,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
     private JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
-    public ParameterizedRunnable<List<NotificationType>> myEventListener;
+    public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
 
     public FlatWelcomeScreen() {
