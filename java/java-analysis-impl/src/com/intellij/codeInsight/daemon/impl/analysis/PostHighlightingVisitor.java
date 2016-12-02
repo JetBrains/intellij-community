@@ -336,7 +336,7 @@ class PostHighlightingVisitor {
                                                 quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
         }
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
-          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToDependencyInjectionAnnotationsFix(project, annoName, "fields"));
+          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToImplicitlyWrittenFieldsFix(project, annoName));
           return true;
         });
         return info;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -544,6 +544,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String s, @NotNull String s2) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull String qualifiedName) {
     return QuickFixes.EMPTY_FIX;
   }
 

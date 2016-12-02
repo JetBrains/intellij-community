@@ -683,6 +683,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull final String qualifiedName) {
+    EntryPointsManagerBase entryPointsManagerBase = EntryPointsManagerBase.getInstance(project);
+    return entryPointsManagerBase.new AddImplicitlyWriteAnnotation(qualifiedName);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
     return new CreateGetterOrSetterFix(createGetter, createSetter, field);
   }
