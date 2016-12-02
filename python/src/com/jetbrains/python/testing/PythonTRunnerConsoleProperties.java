@@ -33,6 +33,9 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
 
   private final boolean myIsEditable;
 
+  /**
+   * @param editable if user should have ability to print something to test stdin
+   */
   public PythonTRunnerConsoleProperties(@NotNull ModuleRunConfiguration config, @NotNull Executor executor, boolean editable) {
     super(config, FRAMEWORK_NAME, executor);
     myIsEditable = editable;
