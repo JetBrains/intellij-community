@@ -79,7 +79,16 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   @Override
   public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return matchesScope(file, project, fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
+    if (matchesScope(file, project, fileIndex)) {
+      if (myPattern == null) {
+        return true;
+      }
+      String packageName = getPackageName(file, fileIndex);
+      if (packageName != null && myPattern.matcher(packageName).matches()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean matchesScope(VirtualFile file, Project project, ProjectFileIndex fileIndex) {
@@ -107,7 +116,9 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   }
 
   private static String getPackageName(VirtualFile file, ProjectFileIndex fileIndex) {
-    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(file.isDirectory() ? file :  file.getParent()), file.getNameWithoutExtension());
+    VirtualFile dir = file.isDirectory() ? file : file.getParent();
+    if (dir == null) return null;
+    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(dir), file.getNameWithoutExtension());
   }
 
   @NotNull
