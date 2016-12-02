@@ -79,10 +79,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
@@ -1084,7 +1081,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     DataContext context = getDataContext();
 
-    Graphics graphics = myEditorComponent.getGraphics();
+    Graphics graphics = SystemProperties.isTrueSmoothScrollingEnabled() ?
+                        GraphicsUtil.safelyGetGraphics(myEditorComponent) : myEditorComponent.getGraphics();
     if (graphics != null) { // editor component is not showing
       processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();
