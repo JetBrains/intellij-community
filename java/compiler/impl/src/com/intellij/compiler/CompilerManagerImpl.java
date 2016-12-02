@@ -30,10 +30,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -346,11 +343,20 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
-    String javaHome = null;
     final Sdk sdk = runtime.getFirst();
     final SdkTypeId type = sdk.getSdkType();
+    String javaHome = null;
     if (type instanceof JavaSdkType) {
       javaHome = sdk.getHomePath();
+      if (!isJdkOrJre(javaHome)) {
+        // this can be a java-dependent SDK, implementing JavaSdkType
+        // hack, because there is no direct way to obtain the java sdk, this sdk depends on
+        final String binPath = ((JavaSdkType)type).getBinPath(sdk);
+        javaHome = binPath != null? new File(binPath).getParent() : null;
+        if (!isJdkOrJre(javaHome)) {
+          javaHome = null;
+        }
+      }
     }
     if (javaHome == null) {
       throw new IOException("Was not able to determine JDK for project " + myProject.getName());
@@ -399,6 +405,10 @@ public class CompilerManagerImpl extends CompilerManager {
       result.add(new CompiledClass(fileObject.getName(), fileObject.getClassName(), content != null ? content.toByteArray() : null));
     }
     return result;
+  }
+
+  private static boolean isJdkOrJre(@Nullable String path) {
+    return path != null && (JdkUtil.checkForJre(path) || JdkUtil.checkForJdk(path));
   }
 
   private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
