@@ -21,6 +21,11 @@
     <isset property="testpatterns" />
   </condition>
 
+  <condition property="test.jvm.memory" value="${test.jvm.memory}"
+             else="-Xmx1024m -Dsun.io.useCanonCaches=false">
+    <isset property="test.jvm.memory" />
+  </condition>
+
   <condition property="compile.parallel" value="${parallel.build}" else="true">
     <isset property="parallel.build" />
   </condition>
@@ -86,6 +91,7 @@
         <sysproperty key="out" value="${out.dir}" />
         <sysproperty key="buildNumber" value="${build.number}" />
         <sysproperty key="idea.test.patterns" value="${test.patterns}" />
+        <sysproperty key="test.jvm.memory" value="${test.jvm.memory}" />
         <sysproperty key="product" value="${product.name}" />
         <sysproperty key="productPropertiesPath" value="${productPropertiesPath}" />
         <sysproperty key="studio.ui.tests" value="${studio.ui.tests}" />
