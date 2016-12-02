@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
  */
 package com.intellij.refactoring.migration;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.util.ArrayList;
 
 public class MigrationMap {
   private String myName;
   private String myDescription;
   private final ArrayList<MigrationMapEntry> myEntries = new ArrayList<>();
+  private String myFileName;
 
   public MigrationMap() {
 
@@ -87,6 +90,17 @@ public class MigrationMap {
 
   public String toString() {
     return getName();
+  }
+
+  public String getFileName() {
+    if (myFileName == null) {
+      return FileUtil.sanitizeFileName(myName, false);
+    }
+    return myFileName;
+  }
+
+  public void setFileName(String fileName) {
+    myFileName = fileName;
   }
 }
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
@@ -37,8 +38,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 public class MigrationMapSet {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationMapSet");
@@ -59,6 +59,7 @@ public class MigrationMapSet {
   @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
     "/com/intellij/refactoring/migration/res/Swing__1_0_3____1_1_.xml",
   };
+  private Set<String> myDeletedMaps = new TreeSet<>();
 
   public MigrationMapSet() {
   }
@@ -97,6 +98,25 @@ public class MigrationMapSet {
       loadMaps();
     }
     myMaps.remove(map);
+    String name = map.getFileName();
+    if (isPredefined(name)) {
+      myDeletedMaps.add(name);
+    }
+  }
+
+  private static boolean isPredefined(String name) {
+    for (PredefinedMigrationProvider provider : Extensions.getExtensions(PredefinedMigrationProvider.EP_NAME)) {
+      URL migrationMap = provider.getMigrationMap();
+      String fileName = FileUtil.getNameWithoutExtension(new File(migrationMap.getFile()));
+      if (fileName.equals(name)) return true;
+    }
+
+    for (String defaultTemplate : DEFAULT_MAPS) {
+      String fileName = FileUtil.getNameWithoutExtension(StringUtil.getShortName(defaultTemplate, '/'));
+
+      if (fileName.equals(name)) return true;
+    }
+    return false;
   }
 
   public MigrationMap[] getMaps() {
@@ -113,30 +133,44 @@ public class MigrationMapSet {
   private static File getMapDirectory() {
     File dir = new File(PathManager.getConfigPath() + File.separator + "migration");
 
-    if (!dir.exists()){
-      if (!dir.mkdir()){
-        LOG.error("cannot create directory: " + dir.getAbsolutePath());
-        return null;
-      }
-
-      for (PredefinedMigrationProvider provider : Extensions.getExtensions(PredefinedMigrationProvider.EP_NAME)) {
-        URL migrationMap = provider.getMigrationMap();
-        copyMap(dir, migrationMap, new File(migrationMap.getFile()).getName());
-      }
-
-      for (String defaultTemplate : DEFAULT_MAPS) {
-        URL url = MigrationMapSet.class.getResource(defaultTemplate);
-        LOG.assertTrue(url != null);
-        String fileName = defaultTemplate.substring(defaultTemplate.lastIndexOf("/") + 1);
-        copyMap(dir, url, fileName);
-      }
+    if (!dir.exists() && !dir.mkdir()) {
+      LOG.error("cannot create directory: " + dir.getAbsolutePath());
+      return null;
     }
 
     return dir;
   }
 
+  private void copyPredefinedMaps(File dir) {
+    File deletedFiles = new File(dir, "deleted.txt");
+    if (deletedFiles.isFile()) {
+      try {
+        myDeletedMaps.addAll(Arrays.asList(FileUtil.loadFile(deletedFiles, true).split("\n")));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
+    for (PredefinedMigrationProvider provider : Extensions.getExtensions(PredefinedMigrationProvider.EP_NAME)) {
+      URL migrationMap = provider.getMigrationMap();
+      String fileName = new File(migrationMap.getFile()).getName();
+      if (myDeletedMaps.contains(FileUtil.getNameWithoutExtension(fileName))) continue;
+      copyMap(dir, migrationMap, fileName);
+    }
+
+    for (String defaultTemplate : DEFAULT_MAPS) {
+      URL url = MigrationMapSet.class.getResource(defaultTemplate);
+      LOG.assertTrue(url != null);
+      String fileName = defaultTemplate.substring(defaultTemplate.lastIndexOf("/") + 1);
+      if (myDeletedMaps.contains(FileUtil.getNameWithoutExtension(fileName))) continue;
+      copyMap(dir, url, fileName);
+    }
+  }
+
   private static void copyMap(File dir, URL url, String fileName) {
     File targetFile = new File(dir, fileName);
+    if (targetFile.isFile()) return;
 
     try {
       FileOutputStream outputStream = new FileOutputStream(targetFile);
@@ -155,8 +189,7 @@ public class MigrationMapSet {
     }
   }
 
-  private static File[] getMapFiles() {
-    File dir = getMapDirectory();
+  private static File[] getMapFiles(final File dir) {
     if (dir == null) {
       return new File[0];
     }
@@ -171,11 +204,16 @@ public class MigrationMapSet {
   private void loadMaps() {
     myMaps = new ArrayList<>();
 
-    File[] files = getMapFiles();
+
+    File dir = getMapDirectory();
+    copyPredefinedMaps(dir);
+
+    File[] files = getMapFiles(dir);
     for(int i = 0; i < files.length; i++){
       try{
         MigrationMap map = readMap(files[i]);
         if (map != null){
+          map.setFileName(FileUtil.getNameWithoutExtension(files[i]));
           myMaps.add(map);
         }
       }
@@ -254,7 +292,7 @@ public class MigrationMapSet {
       return;
     }
 
-    File[] files = getMapFiles();
+    File[] files = getMapFiles(dir);
 
     @NonNls String[] filePaths = new String[myMaps.size()];
     Document[] documents = new Document[myMaps.size()];
@@ -263,11 +301,15 @@ public class MigrationMapSet {
     for(int i = 0; i < myMaps.size(); i++){
       MigrationMap map = myMaps.get(i);
 
-      filePaths[i] = dir + File.separator + namesProvider.generateUniqueName(FileUtil.sanitizeFileName(map.getName(), false)) + ".xml";
+      filePaths[i] = dir + File.separator + namesProvider.generateUniqueName(map.getFileName()) + ".xml";
       documents[i] = saveMap(map);
     }
 
     JDOMUtil.updateFileSet(files, filePaths, documents, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+
+    if (!myDeletedMaps.isEmpty()) {
+      FileUtil.writeToFile(new File(dir, "deleted.txt"), StringUtil.join(myDeletedMaps, "\n"));
+    }
   }
 
   private static Document saveMap(MigrationMap map) {
