@@ -19,6 +19,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,15 @@ public abstract class KeymapManagerEx extends KeymapManager {
   public abstract String getActionBinding(String actionId);
 
   public abstract SchemeManager<Keymap> getSchemeManager();
+
+  /**
+   * @deprecated Please use {@link #getSchemeManager()}
+   */
+  @SuppressWarnings("deprecation")
+  @Deprecated
+  public final SchemesManager<Keymap> getSchemesManager() {
+    return (SchemesManager<Keymap>)getSchemeManager();
+  }
 
   public abstract void addWeakListener(@NotNull KeymapManagerListener listener);
 
