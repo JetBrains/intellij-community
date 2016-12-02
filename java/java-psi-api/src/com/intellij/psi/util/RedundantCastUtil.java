@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -506,7 +506,7 @@ public class RedundantCastUtil {
       PsiExpression operand = typeCast.getOperand();
       if (operand == null) return;
 
-      PsiElement expr = deparenthesizeExpression(operand);
+      PsiExpression expr = deparenthesizeExpression(operand);
 
       final PsiType topCastType = typeCast.getType();
       if (expr instanceof PsiTypeCastExpression) {
@@ -540,7 +540,7 @@ public class RedundantCastUtil {
             if (opposite == null || conditionalType instanceof PsiPrimitiveType &&
                                     !Comparing.equal(conditionalType, opposite.getType())) return;
           }
-        } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
+        } else if (parent instanceof PsiSynchronizedStatement && expr != null && expr.getType() instanceof PsiPrimitiveType) {
           return;
         } else if (expr instanceof PsiLambdaExpression || expr instanceof PsiMethodReferenceExpression) {
           if (parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {
@@ -562,8 +562,8 @@ public class RedundantCastUtil {
         int idx = ArrayUtil.find(expressions, parent);
         PsiElement grandGrandPa = grandPa.getParent();
         if (grandGrandPa instanceof PsiCall) {
-          PsiElement resolve = ((PsiCall)grandGrandPa).resolveMethod();
-          if (resolve instanceof PsiMethod) {
+          PsiMethod resolve = ((PsiCall)grandGrandPa).resolveMethod();
+          if (resolve != null) {
             PsiCall expression = (PsiCall)grandGrandPa.copy();
             PsiExpressionList argumentList = expression.getArgumentList();
             LOG.assertTrue(argumentList != null);
@@ -660,7 +660,7 @@ public class RedundantCastUtil {
           final PsiExpression opposite = PsiTreeUtil.isAncestor(thenExpression, typeCast, false) ? elseExpression : thenExpression;
           if (opposite != null &&
               !(opposite.getType() instanceof PsiPrimitiveType) &&
-              !(PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent) instanceof PsiPrimitiveType)) {
+              !(PsiTypesUtil.getExpectedTypeByParent(parent) instanceof PsiPrimitiveType)) {
             return;
           }
         }
@@ -830,7 +830,7 @@ public class RedundantCastUtil {
       }
     } else if (parent instanceof PsiConditionalExpression) {
       if (opType instanceof PsiPrimitiveType && !(((PsiConditionalExpression)parent).getType() instanceof PsiPrimitiveType)) {
-        if (PsiPrimitiveType.getUnboxedType(PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent)) != null) {
+        if (PsiPrimitiveType.getUnboxedType(PsiTypesUtil.getExpectedTypeByParent(parent)) != null) {
           return true;
         }
       }
@@ -839,7 +839,7 @@ public class RedundantCastUtil {
   }
 
   private static boolean isCastToSerializable(PsiType castType) {
-    return castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE);
+    return InheritanceUtil.isInheritor(castType, CommonClassNames.JAVA_IO_SERIALIZABLE);
   }
 
   private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {
