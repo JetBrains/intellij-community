@@ -28,6 +28,8 @@ import static com.intellij.testGuiFramework.framework.GuiTestUtil.setUpDefaultPr
  */
 public class GuiTestCase extends GuiTestBase {
 
+  public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
+
   public GuiTestCase() {
     super();
   }
@@ -40,7 +42,7 @@ public class GuiTestCase extends GuiTestBase {
     myRobot = new FastRobot();
 
     setIdeSettings();
-    GitSettings.INSTANCE.setup();
+    if (IS_UNDER_TEAMCITY) GitSettings.INSTANCE.setup();
   }
 
   @Override
