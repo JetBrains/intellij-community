@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
     }
 
+    @Override
     protected String getRunnerFileFromHelpers() {
       return PYDEV_RUN_IN_CONSOLE_PY;
     }

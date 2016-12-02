@@ -31,7 +31,6 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -189,9 +188,10 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       @NotNull
       public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         ProcessHandler processHandler = startProcess();
-        return new DefaultExecutionResult(null, processHandler, AnAction.EMPTY_ARRAY);
+        return new DefaultExecutionResult(processHandler);
       }
 
+      @Override
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();

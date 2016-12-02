@@ -38,6 +38,10 @@ public class DefaultExecutionResult implements ExecutionResult {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }
 
+  public DefaultExecutionResult(@NotNull ProcessHandler processHandler) {
+    this(null, processHandler, AnAction.EMPTY_ARRAY);
+  }
+
   public DefaultExecutionResult(ExecutionConsole console, @NotNull ProcessHandler processHandler, @NotNull AnAction... actions) {
     myConsole = console;
     myProcessHandler = processHandler;
