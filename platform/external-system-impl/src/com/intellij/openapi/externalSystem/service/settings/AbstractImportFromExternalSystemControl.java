@@ -265,7 +265,7 @@ public abstract class AbstractImportFromExternalSystemControl<
       }
     }
 
-    if(!myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat)) return false;
+    if(wizardContext.isCreatingNewProject() && !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat)) return false;
     return true;
   }
 }
