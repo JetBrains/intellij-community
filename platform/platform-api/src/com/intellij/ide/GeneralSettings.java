@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
