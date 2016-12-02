@@ -96,6 +96,8 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return getName();
   }
 
+  @Override
+  @NotNull
   public KeymapImpl deriveKeymap(@NotNull String newName) {
     if (canModify()) {
       return copy();
@@ -107,6 +109,22 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
       newKeymap.myCanModify = canModify();
       return newKeymap;
     }
+  }
+
+  /**
+   * @deprecated Please use {@link #deriveKeymap(String)} instead. New method was introduced to ensure that you don't forget to set new keymap name.
+   */
+  @Deprecated
+  public KeymapImpl deriveKeymap() {
+    String name;
+    try {
+      name = getName();
+    }
+    catch (Exception e) {
+      // avoid possible NPE
+      name = "unnamed";
+    }
+    return deriveKeymap(name + " (copy)");
   }
 
   @NotNull
