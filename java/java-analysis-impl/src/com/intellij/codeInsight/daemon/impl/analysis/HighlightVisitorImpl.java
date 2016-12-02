@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.Feature;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
@@ -760,6 +761,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitKeyword(PsiKeyword keyword) {
     super.visitKeyword(keyword);
+
+    if (JavaLexer.isSoftKeyword(keyword.getText(), myLanguageLevel)) {
+      myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create());
+    }
+
     PsiElement parent = keyword.getParent();
     String text = keyword.getText();
     if (parent instanceof PsiModifierList) {
