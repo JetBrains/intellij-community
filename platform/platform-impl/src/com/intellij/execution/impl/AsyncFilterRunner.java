@@ -24,20 +24,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.*;
 
 /**
  * @author peter
@@ -47,7 +42,8 @@ class AsyncFilterRunner {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("console filters", 1);
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
-  private final Map<AtomicBoolean, Future<FilterResults>> myPendingFilterResults = new LinkedHashMap<>();
+  private final Queue<LineHighlighter> myQueue = new ConcurrentLinkedQueue<>();
+  private final List<FilterResult> myResults = new ArrayList<>();
 
   AsyncFilterRunner(EditorHyperlinkSupport hyperlinks, Editor editor) {
     myHyperlinks = hyperlinks;
@@ -57,48 +53,29 @@ class AsyncFilterRunner {
   void highlightHyperlinks(final Filter customFilter, final int startLine, final int endLine) {
     if (endLine < 0) return;
 
-    Computable<FilterResults> bgComputation = highlightHyperlinksAsync(customFilter, startLine, endLine);
+    queueTasks(customFilter, startLine, endLine);
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      bgComputation.compute().applyHighlights(myHyperlinks);
-    } else {
-      runFiltersInBackground(bgComputation);
+      runTasks();
+      highlightAvailableResults();
+    } else if (isQuick(ourExecutor.submit(this::runFiltersInBackground))) {
+      highlightAvailableResults();
     }
   }
 
-  private void runFiltersInBackground(Computable<FilterResults> bgComputation) {
-    AtomicBoolean handled = new AtomicBoolean();
-    Future<FilterResults> future = ourExecutor.submit(() -> {
-      FilterResults results = computeWithWritePriority(bgComputation);
-      if (!results.myResults.isEmpty()) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          results.applyHighlights(myHyperlinks);
-          myPendingFilterResults.remove(handled);
-        }, ModalityState.any(), o -> handled.get());
+  private void runFiltersInBackground() {
+    while (true) {
+      boolean finished = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(this::runTasks);
+      if (hasResults()) {
+        ApplicationManager.getApplication().invokeLater(this::highlightAvailableResults, ModalityState.any());
       }
-      return results;
-    });
-    myPendingFilterResults.put(handled, future);
-    handleSynchronouslyIfQuick(handled, future, 5);
-  }
-
-  @NotNull
-  private FilterResults computeWithWritePriority(Computable<FilterResults> bgComputation) {
-    Ref<FilterResults> applyResults = Ref.create(FilterResults.EMPTY);
-    Runnable computeInReadAction = () -> {
-      if (myEditor.isDisposed()) return;
-      applyResults.set(bgComputation.compute());
-    };
-    while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(computeInReadAction)) {
+      if (finished) return;
       ProgressIndicatorUtils.yieldToPendingWriteActions();
     }
-    return applyResults.get();
   }
 
-  private boolean handleSynchronouslyIfQuick(AtomicBoolean handled, Future<FilterResults> future, long timeout) {
+  private static boolean isQuick(Future<?> future) {
     try {
-      future.get(timeout, TimeUnit.MILLISECONDS).applyHighlights(myHyperlinks);
-      handled.set(true);
-      myPendingFilterResults.remove(handled);
+      future.get(5, TimeUnit.MILLISECONDS);
       return true;
     }
     catch (TimeoutException ignored) {
@@ -108,46 +85,93 @@ class AsyncFilterRunner {
       throw new RuntimeException(e);
     }
   }
-  
+
+  private void highlightAvailableResults() {
+    for (FilterResult result : takeAvailableResults()) {
+      result.applyHighlights();
+    }
+  }
+
+  private boolean hasResults() {
+    synchronized (myResults) {
+      return !myResults.isEmpty();
+    }
+  }
+
+  @NotNull
+  private List<FilterResult> takeAvailableResults() {
+    synchronized (myResults) {
+      List<FilterResult> results = new ArrayList<>(myResults);
+      myResults.clear();
+      return results;
+    }
+  }
+
+  private void addLineResult(@Nullable FilterResult result) {
+    if (result == null) return;
+
+    synchronized (myResults) {
+      myResults.add(result);
+    }
+  }
+
+  @SuppressWarnings("UnusedReturnValue")
   public boolean waitForPendingFilters(long timeoutMs) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     
     long started = System.currentTimeMillis();
-    while(!myPendingFilterResults.isEmpty()) {
-      Map.Entry<AtomicBoolean, Future<FilterResults>> next = myPendingFilterResults.entrySet().iterator().next();
+    while (!myQueue.isEmpty()) {
+      if (hasResults()) {
+        highlightAvailableResults();
+      } else {
+        TimeoutUtil.sleep(1);
+      }
 
       timeoutMs -= System.currentTimeMillis() - started;
       if (timeoutMs < 1) return false;
-      
-      if (!handleSynchronouslyIfQuick(next.getKey(), next.getValue(), timeoutMs)) return false;
     }
     
     return true;
   }
 
-  @NotNull
-  private Computable<FilterResults> highlightHyperlinksAsync(Filter filter, int startLine, int endLine) {
+  private void queueTasks(Filter filter, int startLine, int endLine) {
     Document document = myEditor.getDocument();
     int markerOffset = document.getLineEndOffset(endLine);
     RangeMarker marker = document.createRangeMarker(markerOffset, markerOffset);
-    List<LineHighlighter> tasks = IntStreamEx.rangeClosed(startLine, endLine).mapToObj(line -> processLine(document, filter, line)).toList();
-    return () -> {
-      List<Filter.Result> results = new ArrayList<>();
-      for (LineHighlighter task : tasks) {
-        ProgressManager.checkCanceled();
-        if (!marker.isValid() || marker.getEndOffset() == 0) return FilterResults.EMPTY;
-        ContainerUtil.addIfNotNull(results, task.compute());
-      }
-      return new FilterResults(markerOffset, marker, results);
-    };
+    for (int line = startLine; line <= endLine; line++) {
+      myQueue.offer(processLine(document, filter, line, markerOffset, marker));
+    }
   }
 
   @NotNull
-  private static LineHighlighter processLine(Document document, Filter filter, int line) {
+  private LineHighlighter processLine(Document document, Filter filter, int line, int initialMarkerOffset, RangeMarker marker) {
     int lineEnd = document.getLineEndOffset(line);
     int endOffset = lineEnd + (lineEnd < document.getTextLength() ? 1 /* for \n */ : 0);
     CharSequence text = EditorHyperlinkSupport.getLineSequence(document, line, true);
-    return () -> checkRange(filter, endOffset, filter.applyFilter(text.toString(), endOffset));
+    return () -> runFilterForLine(initialMarkerOffset, marker, filter, endOffset, text);
+  }
+
+  @Nullable
+  private FilterResult runFilterForLine(int initialMarkerOffset, RangeMarker marker, Filter filter, int endOffset, CharSequence lineText) {
+    if (!marker.isValid() || marker.getEndOffset() == 0) return null;
+
+    Filter.Result result = checkRange(filter, endOffset, filter.applyFilter(lineText.toString(), endOffset));
+    return result == null ? null : () -> {
+      if (marker.isValid()) {
+        myHyperlinks.highlightHyperlinks(result, marker.getStartOffset() - initialMarkerOffset);
+      }
+    };
+  }
+
+  private void runTasks() {
+    if (myEditor.isDisposed()) return;
+
+    while (!myQueue.isEmpty()) {
+      ProgressManager.checkCanceled();
+      LineHighlighter highlighter = myQueue.peek();
+      addLineResult(highlighter.runFilterForLine());
+      LOG.assertTrue(highlighter == myQueue.remove());
+    }
   }
 
   private static Filter.Result checkRange(Filter filter, int endOffset, Filter.Result result) {
@@ -163,28 +187,12 @@ class AsyncFilterRunner {
     return result;
   }
 
-  private interface LineHighlighter extends NullableComputable<Filter.Result> { }
+  private interface LineHighlighter {
+    @Nullable FilterResult runFilterForLine();
+  }
 
-  private static class FilterResults {
-    static final FilterResults EMPTY = new FilterResults(0, null, Collections.emptyList());
-    private int myInitialMarkerOffset;
-    private RangeMarker myMarker;
-    private List<Filter.Result> myResults;
-
-    FilterResults(int initialMarkerOffset, RangeMarker marker, List<Filter.Result> results) {
-      myInitialMarkerOffset = initialMarkerOffset;
-      myMarker = marker;
-      myResults = results;
-    }
-
-    void applyHighlights(EditorHyperlinkSupport hyperlinks) {
-      if (myResults.isEmpty() || !myMarker.isValid()) return;
-
-      int delta = myMarker.getStartOffset() - myInitialMarkerOffset;
-      for (Filter.Result result : myResults) {
-        hyperlinks.highlightHyperlinks(result, delta);
-      }
-    }
+  private interface FilterResult {
+    void applyHighlights();
   }
 
 }
