@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -423,5 +424,14 @@ public class EditorImplTest extends AbstractEditorTest {
     runFoldingOperation(()-> region.setExpanded(true));
     runFoldingOperation(()-> region.setExpanded(false));
     assertFalse(region.isExpanded());
+  }
+
+  public void testEditingNearInlayInBulkMode() throws Exception {
+    initText("a<caret>bc");
+    addInlay(1);
+    runWriteCommand(()-> DocumentUtil.executeInBulk(myEditor.getDocument(), true,
+                                                    ()-> myEditor.getDocument().insertString(1, " ")));
+    checkResultByText("a<caret> bc");
+    assertTrue(myEditor.getInlayModel().hasInlineElementAt(1));
   }
 }
