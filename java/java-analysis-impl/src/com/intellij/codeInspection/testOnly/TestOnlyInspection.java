@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,7 +171,8 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
   private static void reportProblem(PsiElement e, PsiMember target, ProblemsHolder h) {
     String message = InspectionsBundle.message(target instanceof PsiClass
                                                ? "inspection.test.only.problems.test.only.class.reference"
-                                               : "inspection.test.only.problems.test.only.method.call");
+                                               : target instanceof PsiField ? "inspection.test.only.problems.test.only.field.reference"
+                                                                            : "inspection.test.only.problems.test.only.method.call");
     h.registerProblem(e, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 }

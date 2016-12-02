@@ -16,7 +16,7 @@
     <file>B.java</file>
     <line>11</line>
     <package>&lt;default&gt;</package>
-    <description>Test-only method is called in production code</description>
+    <description>Test-only field is referenced in production code</description>
   </problem>
 
   <problem>
@@ -55,19 +55,19 @@
     <file>B.java</file>
     <line>18</line>
     <package>&lt;default&gt;</package>
-    <description>Test-only method is called in production code</description>
+    <description>Test-only field is referenced in production code</description>
   </problem>
   <problem>
     <file>B.java</file>
     <line>19</line>
     <package>&lt;default&gt;</package>
-    <description>Test-only method is called in production code</description>
+    <description>Test-only field is referenced in production code</description>
   </problem>
   <problem>
     <file>B.java</file>
     <line>20</line>
     <package>&lt;default&gt;</package>
-    <description>Test-only method is called in production code</description>
+    <description>Test-only field is referenced in production code</description>
   </problem>
 
   <problem>
