@@ -158,13 +158,14 @@
   </xs:complexType>
   <xs:complexType name="essentialPluginType">
     <xs:simpleContent>
-      <xs:extension base="xs:string"/>
-      <xs:annotation>
-        <xs:documentation>
-          Specifies ID of a plugin which is essential part of the IDE so it cannot be disabled and shouldn't be shown in Settings |
-          Plugins.
-        </xs:documentation>
-      </xs:annotation>
+      <xs:extension base="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies ID of a plugin which is essential part of the IDE so it cannot be disabled and shouldn't be shown in Settings |
+            Plugins.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
   <xs:complexType name="welcome-screenType">
