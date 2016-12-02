@@ -54,7 +54,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
         eventLoop@
         for (event in events) {
           var storage: StateStorage?
-          if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(event.propertyName)) {
+          if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
             val oldPath = event.oldPath
             storage = filePathToStorage.remove(oldPath)
             if (storage != null) {
