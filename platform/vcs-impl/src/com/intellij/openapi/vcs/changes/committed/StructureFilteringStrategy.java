@@ -42,7 +42,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -192,7 +191,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     public void reset() {
       myFilePaths.clear();
       myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
-      myStructureTree.setModel(TreeModelBuilder.createEmpty(myProject));
+      myStructureTree.setModel(TreeModelBuilder.buildEmpty(myProject));
     }
 
     public void append(final List<CommittedChangeList> changeLists) {
@@ -209,7 +208,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
         }
       }
 
-      myStructureTree.setModel(new TreeModelBuilder(myProject, false).buildModelFromFilePaths(myFilePaths));
+      myStructureTree.setModel(TreeModelBuilder.buildFromFilePaths(myProject, false, myFilePaths));
       localState.applyTo(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
       myStructureTree.revalidate();
       myStructureTree.repaint();

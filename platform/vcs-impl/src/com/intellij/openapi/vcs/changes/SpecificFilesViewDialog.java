@@ -95,8 +95,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   private void initData(@NotNull final List<VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, myView.isShowFlatten());
-    final DefaultTreeModel model = builder.buildModelFromFiles(files);
+    final DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.isShowFlatten(), files);
     myView.setModel(model);
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
