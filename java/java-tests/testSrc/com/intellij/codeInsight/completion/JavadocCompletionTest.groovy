@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.completion
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
-import com.intellij.lang.StdLanguages
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
@@ -33,18 +34,13 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
+
 /**
  * @author mike
  */
 class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   private CodeStyleSettings settings
   private JavaCodeStyleSettings javaSettings
-  
-  @Override
-  protected void tearDown() throws Exception {
-    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
-    super.tearDown()
-  }
 
   @Override
   protected String getBasePath() {
@@ -52,70 +48,76 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     super.setUp()
     settings = CodeStyleSettingsManager.getSettings(getProject())
     javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class)
     myFixture.enableInspections(new JavaDocLocalInspection())
   }
 
-  void testNamesInPackage() throws Exception {
+  @Override
+  protected void tearDown() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
+    super.tearDown()
+  }
+
+  void testNamesInPackage() {
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("package-info.java", "p/package-info.java"))
     complete()
     assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "see", "since", "version")
   }
 
-  void testNamesInClass() throws Exception {
+  void testNamesInClass() {
     configureByFile("ClassTagName.java")
     assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "param", "see", "serial", "since", "version")
   }
 
-  void testNamesInField() throws Exception {
+  void testNamesInField() {
     configureByFile("FieldTagName.java")
     assertStringItems("deprecated", "see", "serial", "serialField", "since")
   }
 
-  void testNamesInMethod0() throws Exception {
+  void testNamesInMethod0() {
     configureByFile("MethodTagName0.java")
     assertStringItems("deprecated", "exception", "param", "return", "see", "serialData", "since", "throws")
   }
 
-  void testNamesInMethod1() throws Exception {
+  void testNamesInMethod1() {
     configureByFile("MethodTagName1.java")
     assertStringItems("see", "serialData", "since", "throws")
   }
 
-  void testParamValueCompletion() throws Exception {
+  void testParamValueCompletion() {
     configureByFile("ParamValue0.java")
     assertStringItems("a", "b", "c")
   }
 
-  void testParamValueWithPrefixCompletion() throws Exception {
+  void testParamValueWithPrefixCompletion() {
     configureByFile("ParamValue1.java")
     assertStringItems("a1", "a2", "a3")
   }
 
-  void testDescribedParameters() throws Exception {
+  void testDescribedParameters() {
     configureByFile("ParamValue2.java")
     assertStringItems("a2", "a3")
   }
 
-  void testSee0() throws Exception {
+  void testSee0() {
     configureByFile("See0.java")
     myFixture.assertPreferredCompletionItems(0, "foo", "clone", "equals", "hashCode")
   }
 
-  void testSee1() throws Exception {
+  void testSee1() {
     configureByFile("See1.java")
     assertStringItems("notify", "notifyAll")
   }
 
-  void testSee2() throws Exception {
+  void testSee2() {
     configureByFile("See2.java")
     assertStringItems("notify", "notifyAll")
   }
 
-  void testSee3() throws Exception {
+  void testSee3() {
     configureByFile("See3.java")
 
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myField")))
@@ -126,41 +128,41 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     return ObjectUtils.assertNotNull(myFixture.getLookupElementStrings())
   }
 
-  void testSee4() throws Exception {
+  void testSee4() {
     configureByFile("See4.java")
 
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("A", "B", "C")))
   }
 
-  void testSee5() throws Exception {
+  void testSee5() {
     configureByFile("See5.java")
 
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myName")))
   }
 
-  void testIDEADEV10620() throws Exception {
+  void testIDEADEV10620() {
     configureByFile("IDEADEV10620.java")
 
     checkResultByFile("IDEADEV10620-after.java")
   }
 
-  void testException0() throws Exception {
+  void testException0() {
     configureByFile("Exception0.java")
     assertStringItems("deprecated", "exception", "param", "see", "serialData", "since", "throws")
   }
 
-  void testException1() throws Exception {
+  void testException1() {
     configureByFile("Exception1.java")
     assertTrue(myItems.length > 18)
   }
 
-  void testException2() throws Exception {
+  void testException2() {
     myFixture.configureByFile("Exception2.java")
     myFixture.complete(CompletionType.SMART)
     assertStringItems("IllegalStateException", "IOException")
   }
 
-  void testInlineLookup() throws Exception {
+  void testInlineLookup() {
     configureByFile("InlineTagName.java")
     assertStringItems("code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "value")
   }
@@ -176,7 +178,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  private void checkFinishWithSharp() throws Exception {
+  private void checkFinishWithSharp() {
     myFixture.configureByFile("FinishWithSharp.java")
     myFixture.completeBasic()
     type('#')
@@ -218,17 +220,17 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     configureByFile(getTestName(false) + ".java")
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  void testInlinePackageReferenceCompletion() throws Exception {
+  void testInlinePackageReferenceCompletion() {
     configureByFile("InlineReference.java")
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("io", "lang", "util")))
   }
 
-  void testQualifyClassReferenceInPackageStatement() throws Exception {
+  void testQualifyClassReferenceInPackageStatement() {
     configureByFile(getTestName(false) + ".java")
     myFixture.type('\n')
     checkResultByFile(getTestName(false) + "_after.java")
@@ -582,9 +584,9 @@ class Foo {
 '''
   }
 
-  void testCustomReferenceProvider() throws Exception {
+  void testCustomReferenceProvider() {
     PsiReferenceRegistrarImpl registrar =
-      (PsiReferenceRegistrarImpl) ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA)
+      (PsiReferenceRegistrarImpl)ReferenceProvidersRegistry.getInstance().getRegistrar(JavaLanguage.INSTANCE)
     PsiReferenceProvider provider = new PsiReferenceProvider() {
       @Override
       @NotNull
