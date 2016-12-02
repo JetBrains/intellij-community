@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -35,10 +36,14 @@ public interface RegExpTT {
     IElementType LBRACE = new RegExpElementType("LBRACE");
     IElementType RBRACE = new RegExpElementType("RBRACE");
 
+    // "["
     IElementType CLASS_BEGIN = new RegExpElementType("CLASS_BEGIN");
+    // "]"
     IElementType CLASS_END = new RegExpElementType("CLASS_END");
     IElementType ANDAND = new RegExpElementType("ANDAND");
+    // "[:"
     IElementType BRACKET_EXPRESSION_BEGIN = new RegExpElementType("BRACKET_EXPRESSION_BEGIN");
+    // ":]"
     IElementType BRACKET_EXPRESSION_END = new RegExpElementType("BRACKET_EXPRESSION_END");
 
     IElementType GROUP_BEGIN = new RegExpElementType("GROUP_BEGIN");
@@ -100,7 +105,7 @@ public interface RegExpTT {
     IElementType MINUS = new RegExpElementType("MINUS");
     IElementType CHARACTER = new RegExpElementType("CHARACTER");
 
-    IElementType BAD_CHARACTER = new RegExpElementType("BAD_CHARACTER");
+    IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
     IElementType BAD_OCT_VALUE = new RegExpElementType("BAD_OCT_VALUE");
     IElementType BAD_HEX_VALUE = new RegExpElementType("BAD_HEX_VALUE");
 
@@ -129,8 +134,6 @@ public interface RegExpTT {
     // \g'name'
     IElementType RUBY_QUOTED_NAMED_GROUP_CALL = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_CALL");
 
-    TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
-
     TokenSet CHARACTERS = TokenSet.create(CHARACTER,
             ESC_CTRL_CHARACTER,
             ESC_CHARACTER,
@@ -147,16 +150,11 @@ public interface RegExpTT {
     TokenSet SIMPLE_CLASSES = TokenSet.create(DOT, CHAR_CLASS);
 
     // caret is just a character in classes after the first position: [a^] matches "a" or "^"
-    TokenSet CHARACTERS2 = TokenSet.orSet(CHARACTERS, SIMPLE_CLASSES, TokenSet.create(CARET, LBRACE));
+    TokenSet CHARACTERS2 = TokenSet.orSet(CHARACTERS, SIMPLE_CLASSES);
 
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 
-    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN,
-            NON_CAPT_GROUP,
-            POS_LOOKAHEAD,
-            NEG_LOOKAHEAD,
-            POS_LOOKBEHIND,
-            NEG_LOOKBEHIND);
+    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }

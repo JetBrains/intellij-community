@@ -40,13 +40,13 @@ REGEXP_FILE
             RegExpCharImpl: <?>
               PsiElement(CHARACTER)('?')
             RegExpCharImpl: <^>
-              PsiElement(CARET)('^')
+              PsiElement(CHARACTER)('^')
             RegExpCharImpl: <_>
               PsiElement(CHARACTER)('_')
             RegExpCharImpl: <`>
               PsiElement(CHARACTER)('`')
             RegExpCharImpl: <{>
-              PsiElement(LBRACE)('{')
+              PsiElement(CHARACTER)('{')
             RegExpCharImpl: <|>
               PsiElement(CHARACTER)('|')
             RegExpCharImpl: <}>

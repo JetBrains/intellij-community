@@ -75,6 +75,7 @@ import java.util.EnumSet;
 %xstate CLASS1
 %xstate NEGATE_CLASS1
 %state CLASS2
+%state NEGATE_CLASS2
 %state PROP
 %state NAMED
 %xstate OPTIONS
@@ -210,7 +211,7 @@ HEX_CHAR=[0-9a-fA-F]
 
 /* "{" \d+(,\d*)? "}" */
 /* "}" outside counted closure is treated as regular character */
-{LBRACE}              { if (yystate() != CLASS2) yypushstate(EMBRACED); return RegExpTT.LBRACE; }
+{LBRACE}              { if (yystate() != CLASS2) { yypushstate(EMBRACED); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
 
 <EMBRACED> {
   "^"                 { return RegExpTT.CARET;  }
@@ -223,7 +224,6 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 "-"                   { return RegExpTT.MINUS; }
-"^"                   { return RegExpTT.CARET; }
 
 <CLASS2> {
   {LBRACKET}          { if (allowNestedCharacterClasses) {
@@ -254,6 +254,7 @@ HEX_CHAR=[0-9a-fA-F]
 {LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
 {LBRACKET} / "^" {ESCAPE} {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
 
+{LBRACKET} / "^"          { yypushstate(NEGATE_CLASS2); return RegExpTT.CLASS_BEGIN; }
 {LBRACKET}                { yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
@@ -265,6 +266,11 @@ HEX_CHAR=[0-9a-fA-F]
 
 <NEGATE_CLASS1> {
   "^"                     { yybegin(CLASS1); return RegExpTT.CARET; }
+  .                       { assert false : yytext(); }
+}
+
+<NEGATE_CLASS2> {
+  "^"                     { yybegin(CLASS2); return RegExpTT.CARET; }
   .                       { assert false : yytext(); }
 }
 
@@ -281,7 +287,6 @@ HEX_CHAR=[0-9a-fA-F]
 
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
   [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
-  "^"                   { return RegExpTT.CARET; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
 
@@ -353,6 +358,8 @@ HEX_CHAR=[0-9a-fA-F]
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
   {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
 }
+
+"^"                   { return RegExpTT.CARET; }
 
 /* "dangling ]" */
 <YYINITIAL> {RBRACKET}    { return RegExpTT.CHARACTER; }

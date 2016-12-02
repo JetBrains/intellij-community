@@ -51,6 +51,16 @@ public class RegExpLexerTest extends LexerTestCase {
                     "CLASS_END (']')", lexer);
   }
 
+  public void testCarets() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("^\\^[^^]", "CARET ('^')\n" +
+                       "ESC_CHARACTER ('\\^')\n" +
+                       "CLASS_BEGIN ('[')\n" +
+                       "CARET ('^')\n" +
+                       "CHARACTER ('^')\n" +
+                       "CLASS_END (']')", lexer);
+  }
+
   public void testPosixBracketExpression() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.POSIX_BRACKET_EXPRESSIONS));
     doTest("[[:xdigit:]]", "CLASS_BEGIN ('[')\n" +

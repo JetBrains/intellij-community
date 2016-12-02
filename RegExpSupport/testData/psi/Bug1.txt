@@ -4,7 +4,7 @@ REGEXP_FILE
       RegExpClassImpl: <[{]>
         PsiElement(CLASS_BEGIN)('[')
         RegExpCharImpl: <{>
-          PsiElement(LBRACE)('{')
+          PsiElement(CHARACTER)('{')
         PsiElement(CLASS_END)(']')
       RegExpClosureImpl: <[\w\.]*>
         RegExpClassImpl: <[\w\.]>

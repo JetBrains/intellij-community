@@ -23,135 +23,134 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class RegExpHighlighter extends SyntaxHighlighterBase {
-    private static final Map<IElementType, TextAttributesKey> keys1;
-    private static final Map<IElementType, TextAttributesKey> keys2;
+import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
-    static final TextAttributesKey META = TextAttributesKey.createTextAttributesKey(
-      "REGEXP.META",
-      DefaultLanguageHighlighterColors.KEYWORD
-    );
-  static final TextAttributesKey INVALID_CHARACTER_ESCAPE = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.INVALID_STRING_ESCAPE",
-    DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE
-  );
-  static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.BAD_CHARACTER",
-    HighlighterColors.BAD_CHARACTER
-  );
-  static final TextAttributesKey REDUNDANT_ESCAPE = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.REDUNDANT_ESCAPE",
-    DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE
-  );
-  static final TextAttributesKey PARENTHS = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.PARENTHS",
-    DefaultLanguageHighlighterColors.PARENTHESES
-  );
-  static final TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.BRACES",
-    DefaultLanguageHighlighterColors.BRACES
-  );
-  static final TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.BRACKETS",
-    DefaultLanguageHighlighterColors.BRACKETS
-  );
-  static final TextAttributesKey COMMA = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.COMMA",
-    DefaultLanguageHighlighterColors.COMMA
-  );
-  static final TextAttributesKey ESC_CHARACTER = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.ESC_CHARACTER",
-    DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE
-  );
-  static final TextAttributesKey CHAR_CLASS = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.CHAR_CLASS",
-    DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE
-  );
-  static final TextAttributesKey QUOTE_CHARACTER = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.QUOTE_CHARACTER",
-    DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE
-  );
-  static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(
-    "REGEXP.COMMENT",
-    DefaultLanguageHighlighterColors.LINE_COMMENT
-  );
+public class RegExpHighlighter extends SyntaxHighlighterBase {
+  private static final Map<IElementType, TextAttributesKey> ourMap = new HashMap<>();
+
+  static final TextAttributesKey CHARACTER = createTextAttributesKey("REGEXP.CHARACTER", DefaultLanguageHighlighterColors.STRING);
+  static final TextAttributesKey DOT = createTextAttributesKey("REGEXP.DOT", DefaultLanguageHighlighterColors.DOT);
+  static final TextAttributesKey META = createTextAttributesKey("REGEXP.META", DefaultLanguageHighlighterColors.KEYWORD);
+  static final TextAttributesKey INVALID_CHARACTER_ESCAPE = createTextAttributesKey("REGEXP.INVALID_STRING_ESCAPE", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
+  static final TextAttributesKey BAD_CHARACTER = createTextAttributesKey("REGEXP.BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
+  static final TextAttributesKey REDUNDANT_ESCAPE = createTextAttributesKey("REGEXP.REDUNDANT_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+  static final TextAttributesKey PARENTHS = createTextAttributesKey("REGEXP.PARENTHS", DefaultLanguageHighlighterColors.PARENTHESES);
+  static final TextAttributesKey BRACES = createTextAttributesKey("REGEXP.BRACES", DefaultLanguageHighlighterColors.BRACES);
+  static final TextAttributesKey BRACKETS = createTextAttributesKey("REGEXP.BRACKETS", DefaultLanguageHighlighterColors.BRACKETS);
+  static final TextAttributesKey COMMA = createTextAttributesKey("REGEXP.COMMA", DefaultLanguageHighlighterColors.COMMA);
+  static final TextAttributesKey ESC_CHARACTER = createTextAttributesKey("REGEXP.ESC_CHARACTER", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+  static final TextAttributesKey CHAR_CLASS = createTextAttributesKey("REGEXP.CHAR_CLASS", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
+  static final TextAttributesKey QUOTE_CHARACTER = createTextAttributesKey("REGEXP.QUOTE_CHARACTER", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+  static final TextAttributesKey COMMENT = createTextAttributesKey("REGEXP.COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
+  static final TextAttributesKey QUANTIFIER = createTextAttributesKey("REGEXP.QUANTIFIER", DefaultLanguageHighlighterColors.NUMBER);
+  static final TextAttributesKey OPTIONS = createTextAttributesKey("REGEXP.OPTIONS", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
+  static final TextAttributesKey NAME = createTextAttributesKey("REGEXP.NAME", DefaultLanguageHighlighterColors.IDENTIFIER);
 
   private final Project myProject;
-    private final ParserDefinition myParserDefinition;
+  private final ParserDefinition myParserDefinition;
 
-    public RegExpHighlighter(Project project, ParserDefinition parserDefinition) {
-        myProject = project;
-        myParserDefinition = parserDefinition;
-    }
+  public RegExpHighlighter(Project project, ParserDefinition parserDefinition) {
+    myProject = project;
+    myParserDefinition = parserDefinition;
+  }
 
-    static {
-        keys1 = new HashMap<>();
-        keys2 = new HashMap<>();
+  static {
+    ourMap.put(RegExpTT.CHARACTER, CHARACTER);
+    ourMap.put(RegExpTT.COLON, CHARACTER);
+    ourMap.put(RegExpTT.MINUS, CHARACTER);
+    ourMap.put(RegExpTT.DOT, DOT);
 
-        fillMap(keys1, RegExpTT.KEYWORDS, META);
+    ourMap.put(RegExpTT.NAME, NAME);
+    ourMap.put(RegExpTT.BACKREF, NAME);
 
-        keys1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
-        keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
+    ourMap.put(RegExpTT.UNION, META);
+    ourMap.put(RegExpTT.CARET, META);
+    ourMap.put(RegExpTT.DOLLAR, META);
+    ourMap.put(RegExpTT.ANDAND, META);
 
-        keys1.put(TokenType.BAD_CHARACTER, BAD_CHARACTER);
-        keys1.put(RegExpTT.BAD_HEX_VALUE, INVALID_CHARACTER_ESCAPE);
-        keys1.put(RegExpTT.BAD_OCT_VALUE, INVALID_CHARACTER_ESCAPE);
+    ourMap.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
+    ourMap.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
 
-        keys1.put(RegExpTT.PROPERTY, CHAR_CLASS);
+    ourMap.put(RegExpTT.BAD_CHARACTER, BAD_CHARACTER);
+    ourMap.put(RegExpTT.BAD_HEX_VALUE, INVALID_CHARACTER_ESCAPE);
+    ourMap.put(RegExpTT.BAD_OCT_VALUE, INVALID_CHARACTER_ESCAPE);
 
-        keys1.put(RegExpTT.ESC_CHARACTER, ESC_CHARACTER);
-        keys1.put(RegExpTT.UNICODE_CHAR, ESC_CHARACTER);
-        keys1.put(RegExpTT.HEX_CHAR, ESC_CHARACTER);
-        keys1.put(RegExpTT.OCT_CHAR, ESC_CHARACTER);
-        keys1.put(RegExpTT.CHAR_CLASS, ESC_CHARACTER);
-        keys1.put(RegExpTT.BOUNDARY, ESC_CHARACTER);
-        keys1.put(RegExpTT.CTRL, ESC_CHARACTER);
-        keys1.put(RegExpTT.ESC_CTRL_CHARACTER, ESC_CHARACTER);
-        keys1.put(RegExpTT.CATEGORY_SHORT_HAND, ESC_CHARACTER);
+    ourMap.put(RegExpTT.ESC_CHARACTER, ESC_CHARACTER);
+    ourMap.put(RegExpTT.UNICODE_CHAR, ESC_CHARACTER);
+    ourMap.put(RegExpTT.HEX_CHAR, ESC_CHARACTER);
+    ourMap.put(RegExpTT.OCT_CHAR, ESC_CHARACTER);
+    ourMap.put(RegExpTT.CTRL_CHARACTER, ESC_CHARACTER);
 
-        keys1.put(RegExpTT.REDUNDANT_ESCAPE, REDUNDANT_ESCAPE);
+    ourMap.put(RegExpTT.PROPERTY, CHAR_CLASS);
+    ourMap.put(RegExpTT.CHAR_CLASS, CHAR_CLASS);
+    ourMap.put(RegExpTT.BOUNDARY, CHAR_CLASS);
+    ourMap.put(RegExpTT.CTRL, CHAR_CLASS);
+    ourMap.put(RegExpTT.ESC_CTRL_CHARACTER, CHAR_CLASS);
+    ourMap.put(RegExpTT.NAMED_CHARACTER, CHAR_CLASS);
+    ourMap.put(RegExpTT.CATEGORY_SHORT_HAND, CHAR_CLASS);
+    ourMap.put(RegExpTT.CATEGORY_SHORT_HAND, CHAR_CLASS);
+    ourMap.put(RegExpTT.RUBY_NAMED_GROUP_REF, CHAR_CLASS);
+    ourMap.put(RegExpTT.RUBY_NAMED_GROUP_CALL, CHAR_CLASS);
+    ourMap.put(RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF, CHAR_CLASS);
+    ourMap.put(RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL, CHAR_CLASS);
 
-        keys1.put(RegExpTT.QUOTE_BEGIN, QUOTE_CHARACTER);
-        keys1.put(RegExpTT.QUOTE_END, QUOTE_CHARACTER);
+    ourMap.put(RegExpTT.REDUNDANT_ESCAPE, REDUNDANT_ESCAPE);
 
-        keys1.put(RegExpTT.NON_CAPT_GROUP, PARENTHS);
-        keys1.put(RegExpTT.POS_LOOKBEHIND, PARENTHS);
-        keys1.put(RegExpTT.NEG_LOOKBEHIND, PARENTHS);
-        keys1.put(RegExpTT.POS_LOOKAHEAD, PARENTHS);
-        keys1.put(RegExpTT.NEG_LOOKAHEAD, PARENTHS);
-        keys1.put(RegExpTT.SET_OPTIONS, PARENTHS);
-        keys1.put(RegExpTT.PYTHON_NAMED_GROUP, PARENTHS);
-        keys1.put(RegExpTT.PYTHON_NAMED_GROUP_REF, PARENTHS);
-        keys1.put(RegExpTT.RUBY_NAMED_GROUP, PARENTHS);
-        keys1.put(RegExpTT.RUBY_QUOTED_NAMED_GROUP, PARENTHS);
-        keys1.put(RegExpTT.GROUP_BEGIN, PARENTHS);
-        keys1.put(RegExpTT.GROUP_END, PARENTHS);
+    ourMap.put(RegExpTT.QUOTE_BEGIN, QUOTE_CHARACTER);
+    ourMap.put(RegExpTT.QUOTE_END, QUOTE_CHARACTER);
 
-        keys1.put(RegExpTT.LBRACE, BRACES);
-        keys1.put(RegExpTT.RBRACE, BRACES);
+    ourMap.put(RegExpTT.NON_CAPT_GROUP, PARENTHS);
+    ourMap.put(RegExpTT.POS_LOOKBEHIND, PARENTHS);
+    ourMap.put(RegExpTT.NEG_LOOKBEHIND, PARENTHS);
+    ourMap.put(RegExpTT.POS_LOOKAHEAD, PARENTHS);
+    ourMap.put(RegExpTT.NEG_LOOKAHEAD, PARENTHS);
+    ourMap.put(RegExpTT.SET_OPTIONS, PARENTHS);
+    ourMap.put(RegExpTT.PYTHON_NAMED_GROUP, PARENTHS);
+    ourMap.put(RegExpTT.PYTHON_NAMED_GROUP_REF, PARENTHS);
+    ourMap.put(RegExpTT.PYTHON_COND_REF, PARENTHS);
+    ourMap.put(RegExpTT.RUBY_NAMED_GROUP, PARENTHS);
+    ourMap.put(RegExpTT.RUBY_QUOTED_NAMED_GROUP, PARENTHS);
+    ourMap.put(RegExpTT.GROUP_BEGIN, PARENTHS);
+    ourMap.put(RegExpTT.GROUP_END, PARENTHS);
+    ourMap.put(RegExpTT.GT, PARENTHS);
+    ourMap.put(RegExpTT.QUOTE, PARENTHS);
 
-        keys1.put(RegExpTT.CLASS_BEGIN, BRACKETS);
-        keys1.put(RegExpTT.CLASS_END, BRACKETS);
+    ourMap.put(RegExpTT.LBRACE, BRACES);
+    ourMap.put(RegExpTT.RBRACE, BRACES);
 
-        keys1.put(RegExpTT.COMMA, COMMA);
+    ourMap.put(RegExpTT.CLASS_BEGIN, BRACKETS);
+    ourMap.put(RegExpTT.CLASS_END, BRACKETS);
+    ourMap.put(RegExpTT.BRACKET_EXPRESSION_BEGIN, BRACKETS);
+    ourMap.put(RegExpTT.BRACKET_EXPRESSION_END, BRACKETS);
 
-        keys1.put(RegExpTT.COMMENT, COMMENT);
-    }
+    ourMap.put(RegExpTT.COMMA, COMMA);
 
-    @NotNull
-    public Lexer getHighlightingLexer() {
-        return myParserDefinition.createLexer(myProject);
-    }
+    ourMap.put(RegExpTT.NUMBER, QUANTIFIER);
+    ourMap.put(RegExpTT.STAR, QUANTIFIER);
+    ourMap.put(RegExpTT.PLUS, QUANTIFIER);
+    ourMap.put(RegExpTT.QUEST, QUANTIFIER);
 
-    @NotNull
-    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-        return pack(keys1.get(tokenType), keys2.get(tokenType));
-    }
+    ourMap.put(RegExpTT.COMMENT, COMMENT);
+
+    ourMap.put(RegExpTT.OPTIONS_ON, OPTIONS);
+    ourMap.put(RegExpTT.OPTIONS_OFF, OPTIONS);
+  }
+
+  @Override
+  @NotNull
+  public Lexer getHighlightingLexer() {
+    return myParserDefinition.createLexer(myProject);
+  }
+
+  @Override
+  @NotNull
+  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+    return pack(ourMap.get(tokenType));
+  }
 }

@@ -5,5 +5,5 @@ REGEXP_FILE
         PsiElement(CLASS_BEGIN)('[')
         PsiElement(CARET)('^')
         RegExpCharImpl: <^>
-          PsiElement(CARET)('^')
+          PsiElement(CHARACTER)('^')
         PsiElement(CLASS_END)(']')
