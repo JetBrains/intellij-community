@@ -58,11 +58,11 @@ public class PsiErrorElementUtil {
 
   private static boolean hasErrorElements(@NotNull PsiElement element) {
     HighlightErrorFilter[] filters = null;
-    for (PsiErrorElement errorElement : SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class)) {
+    for (PsiErrorElement error : SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class)) {
       if (filters == null) {
         filters = HighlightErrorFilter.EP_NAME.getExtensions(element.getProject());
       }
-      if (shouldHighlightErrorElement(errorElement, filters)) {
+      if (shouldHighlightErrorElement(error, filters)) {
         return true;
       }
     }
