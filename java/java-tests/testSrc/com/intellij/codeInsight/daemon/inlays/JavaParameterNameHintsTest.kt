@@ -759,7 +759,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    ParameterNameHintsSettings.getInstance().isShowParamNameContainedInMethodName = false
+    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
     setup("""
 class Test {
   void main() {
@@ -776,7 +776,7 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    ParameterNameHintsSettings.getInstance().isShowParamNameContainedInMethodName = false
+    ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName = true
     setup("""
 class Test {
   void main() {

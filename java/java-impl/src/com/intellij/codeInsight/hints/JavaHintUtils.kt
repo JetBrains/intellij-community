@@ -53,7 +53,7 @@ object JavaInlayHintsProvider {
     if (params.isEmpty()) return false
     if (params.size == 1) {
       if (isBuilderLike(callExpression, method) || isSetterNamed(method)) return false
-      if (!ParameterNameHintsSettings.getInstance().isShowParamNameContainedInMethodName
+      if (ParameterNameHintsSettings.getInstance().isDoNotShowIfMethodNameContainsParameterName
           && isParamNameContainedInMethodName(params[0], method)) return false
     }
     return true

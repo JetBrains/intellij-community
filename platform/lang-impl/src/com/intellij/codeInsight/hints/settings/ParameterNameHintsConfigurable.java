@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,8 +51,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   private ComboBox<Language> myCurrentLanguageCombo;
 
   private JBCheckBox myShowWhenMultipleParamsWithSameType;
-  private JBCheckBox myShowIfParamNameContainedInMethod;
+  private JBCheckBox myDoNotShowIfParameterNameContainedInMethodName;
   private JPanel myOptionsPanel;
+  private JPanel myBlacklistPanel;
 
   private final Language myInitiallySelectedLanguage;
   private final String myNewPreselectedItem;
@@ -70,10 +72,12 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     myNewPreselectedItem = newPreselectedPattern;
     myBlackLists = ContainerUtil.newHashMap();
 
-    setTitle("Configure Parameter Name Hints Blacklist");
+    setTitle("Configure Parameter Name Hints");
     init();
 
     myOptionsPanel.setVisible(true);
+    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder("Options"));
+    myBlacklistPanel.setBorder(IdeBorderFactory.createTitledBorder("Blacklist"));
   }
 
   private void updateOkEnabled() {
@@ -102,7 +106,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     });
 
     ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
-    settings.setShowParamNameContainedInMethodName(myShowIfParamNameContainedInMethod.isSelected());
+    settings.setDoNotShowIfMethodNameContainsParameterName(myDoNotShowIfParameterNameContainedInMethodName.isSelected());
     settings.setShowForParamsWithSameType(myShowWhenMultipleParamsWithSameType.isSelected());
   }
 
@@ -142,11 +146,11 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       }
     });
 
-    myShowIfParamNameContainedInMethod = new JBCheckBox();
+    myDoNotShowIfParameterNameContainedInMethodName = new JBCheckBox();
     myShowWhenMultipleParamsWithSameType = new JBCheckBox();
 
     ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
-    myShowIfParamNameContainedInMethod.setSelected(settings.isShowParamNameContainedInMethodName());
+    myDoNotShowIfParameterNameContainedInMethodName.setSelected(settings.isDoNotShowIfMethodNameContainsParameterName());
     myShowWhenMultipleParamsWithSameType.setSelected(settings.isShowForParamsWithSameType());
 
     initLanguageCombo(languages, selected);
