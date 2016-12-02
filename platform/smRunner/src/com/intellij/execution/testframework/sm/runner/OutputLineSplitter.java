@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 public abstract class OutputLineSplitter {
@@ -101,7 +102,8 @@ public abstract class OutputLineSplitter {
       //    we can safely flush buffer.
 
       // TODO if editable:
-      if (myStdinSupportEnabled && !isMostLikelyServiceMessagePart(text)) {
+      if (myStdinSupportEnabled && !isInTeamcityMessage()) {
+        // We should not flush in the middle of TC message because of [PY-7659]
         flushStdOutBuffer();
       }
     }
@@ -150,8 +152,12 @@ public abstract class OutputLineSplitter {
     }
   }
 
-  protected boolean isMostLikelyServiceMessagePart(@NotNull final String text) {
-    return text.startsWith(TEAMCITY_SERVICE_MESSAGE_PREFIX);
+  /**
+   * @return if current stdout cache contains part of TC message.
+   */
+  protected boolean isInTeamcityMessage() {
+    final Optional<String> firstChunk = myStdOutChunks.stream().map(o -> o.getText()).findFirst();
+    return firstChunk.isPresent() && firstChunk.get().startsWith(TEAMCITY_SERVICE_MESSAGE_PREFIX);
   }
 
   protected abstract void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput);
