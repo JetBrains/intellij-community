@@ -949,9 +949,15 @@ public abstract class DialogWrapper {
 
   public static void cleanupRootPane(@Nullable JRootPane rootPane) {
     if (rootPane == null) return;
+    rootPane.setContentPane(new JPanel());
+    rootPane.setGlassPane(new JPanel());
     RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
     unregisterKeyboardActions(rootPane);
-    Disposer.clearOwnFields(rootPane, field -> !field.getDeclaringClass().getName().startsWith("java.awt."));
+    Disposer.clearOwnFields(rootPane, field -> {
+      // keep AWT and Swing fields intact
+      String name = field.getDeclaringClass().getName();
+      return !(name.startsWith("java.") || name.startsWith("javax."));
+    });
   }
 
   private static void unregisterKeyboardActions(@Nullable JRootPane rootPane) {
