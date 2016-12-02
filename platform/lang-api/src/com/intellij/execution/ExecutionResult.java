@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The result of executing a process.
@@ -38,6 +39,7 @@ public interface ExecutionResult {
    *
    * @return the list of toolbar actions to display.
    */
+  @NotNull
   AnAction[] getActions();
 
 
