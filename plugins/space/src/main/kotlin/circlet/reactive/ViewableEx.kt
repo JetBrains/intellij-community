@@ -1,6 +1,7 @@
 package circlet.reactive
 
 import runtime.lifetimes.*
+import runtime.reactive.*
 
 fun <T : Any> IViewableSet<T>.createIsEmpty(lifetime: Lifetime): IReadonlyProperty<Boolean> {
     val property = Property(this.isEmpty())

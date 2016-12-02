@@ -1,12 +1,12 @@
 package circlet.login
 
 import circlet.components.*
-import circlet.reactive.*
 import circlet.utils.*
 import com.intellij.concurrency.*
 import klogging.*
 import nl.komponents.kovenant.*
 import runtime.lifetimes.*
+import runtime.reactive.*
 import java.util.concurrent.*
 
 private val log = KLoggers.logger("app-idea/LoginDialogViewModel.kt")

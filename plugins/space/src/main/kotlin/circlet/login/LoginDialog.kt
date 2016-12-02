@@ -1,9 +1,9 @@
 package circlet.login
 
-import circlet.reactive.*
 import circlet.utils.*
 import com.intellij.icons.*
 import com.intellij.openapi.ui.*
+import runtime.reactive.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.border.*

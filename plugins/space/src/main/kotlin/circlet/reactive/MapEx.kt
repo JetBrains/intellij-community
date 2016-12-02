@@ -2,6 +2,7 @@ package circlet.reactive
 
 import runtime.collections.*
 import runtime.lifetimes.*
+import runtime.reactive.*
 
 //todo remove
 public fun <K: Any, V: Any> IViewableMap<K, V>.tryGetKeyByValue(v: V) : K? = this.asSequence().firstOrNull { it.value == v }?.key

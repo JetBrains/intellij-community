@@ -2,21 +2,19 @@ package circlet.components
 
 import circlet.*
 import circlet.login.*
-import circlet.reactive.*
 import circlet.utils.*
 import com.intellij.concurrency.*
 import com.intellij.notification.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
-import com.intellij.util.ui.*
 import com.intellij.xml.util.*
 import klogging.*
 import nl.komponents.kovenant.*
 import runtime.*
 import runtime.klogger.*
 import runtime.lifetimes.*
+import runtime.reactive.*
 import java.util.concurrent.*
-import kotlin.concurrent.*
 
 private val log = KLoggers.logger("plugin/IdePluginClient.kt")
 
