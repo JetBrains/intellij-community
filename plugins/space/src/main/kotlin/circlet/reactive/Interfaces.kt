@@ -23,7 +23,7 @@ interface IReadonlyProperty<out T> : ISink<T>, IViewable<T> {
         // while viewing a property change right at the moment of <param>lifetime</param>'s termination
         // but before <param>handler</param> gets removed (e.g. p.view(lf) { /*here*/ }; lf += { p.set(..) })
         val lf = if (!lifetime.isEternal) Lifetime.create(lifetime).lifetime else lifetime
-        SequentialLifetimes(lf).let {
+        runtime.reactive.SequentialLifetimes(lf).let {
             advise(lf) {v ->
                 handler(it.next(), v)
             }
@@ -52,9 +52,8 @@ interface IViewable<out T> {
 
 interface IProperty<T> : IReadonlyProperty<T>, IViewable<T> {
     override var value : T
+    operator fun timesAssign(v : T) { value = v }
 }
-
-
 
 enum class AddRemove {Add, Remove}
 

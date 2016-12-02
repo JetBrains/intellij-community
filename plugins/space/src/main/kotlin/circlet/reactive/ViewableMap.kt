@@ -3,6 +3,7 @@ package circlet.reactive
 import klogging.*
 import runtime.klogger.*
 import runtime.lifetimes.*
+import runtime.reactive.*
 
 private val log = KLoggers.logger("app-idea/ViewableMap.kt")
 

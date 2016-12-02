@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import klogging.*
 import runtime.*
+import runtime.reactive.*
 
 private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
 

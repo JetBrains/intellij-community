@@ -33,7 +33,7 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
     val token = Property("")
     val signInEnabled = Property(false)
 
-    val refreshLifetimes = SequentialLifetimes(lifetime)
+    val refreshLifetimes = runtime.reactive.SequentialLifetimes(lifetime)
 
     init {
         login.view(lifetime, { lt, loginText ->
