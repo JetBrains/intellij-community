@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -63,13 +64,15 @@ public class RefreshSessionImpl extends RefreshSession {
     myModalityState = modalityState;
     myTransaction = ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(modalityState);
     LOG.assertTrue(modalityState == ModalityState.NON_MODAL || modalityState != ModalityState.any(), "Refresh session should have a specific modality");
+    myStartTrace = rememberStartTrace();
+  }
 
-    if (modalityState == ModalityState.NON_MODAL) {
-      myStartTrace = null;
+  private Throwable rememberStartTrace() {
+    if (ApplicationManager.getApplication().isUnitTestMode() &&
+        (myIsAsync || !ApplicationManager.getApplication().isDispatchThread())) {
+      return new Throwable();
     }
-    else {
-      myStartTrace = new Throwable(); // please report exceptions here to peter
-    }
+    return myModalityState == ModalityState.NON_MODAL ? null : new Throwable();
   }
 
   public RefreshSessionImpl(@NotNull List<VFileEvent> events) {
@@ -193,6 +196,12 @@ public class RefreshSessionImpl extends RefreshSession {
         PersistentFS.getInstance().processEvents(mergeEventsAndReset());
         scan();
       }
+    }
+    catch (AssertionError e) {
+      if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {
+        throw new AssertionError("VFS changes are not allowed during highlighting", myStartTrace);
+      }
+      throw e;
     }
     finally {
       try {

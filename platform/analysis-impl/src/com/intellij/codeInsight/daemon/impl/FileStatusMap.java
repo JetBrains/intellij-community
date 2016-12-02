@@ -46,6 +46,8 @@ import java.util.concurrent.ConcurrentMap;
 
 public class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
+  public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING =
+    "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
@@ -170,7 +172,7 @@ public class FileStatusMap implements Disposable {
 
   private void assertAllowModifications() {
     try {
-      assert myAllowDirt : "PSI/document/model changes are not allowed during highlighting";
+      assert myAllowDirt : CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING;
     }
     finally {
       myAllowDirt = true; //give next test a chance
