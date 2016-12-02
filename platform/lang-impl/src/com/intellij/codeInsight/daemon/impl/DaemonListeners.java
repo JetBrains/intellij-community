@@ -22,6 +22,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetManagerAdapter;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.PowerSaveMode;
@@ -336,6 +339,28 @@ public class DaemonListeners implements Disposable {
         }
       });
     }
+
+    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
+      @Override
+      public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
+        stopDaemonAndRestartAllFiles("facet renamed: " + oldName + " -> " + facet.getName());
+      }
+
+      @Override
+      public void facetAdded(@NotNull Facet facet) {
+        stopDaemonAndRestartAllFiles("facet added: " + facet.getName());
+      }
+
+      @Override
+      public void facetRemoved(@NotNull Facet facet) {
+        stopDaemonAndRestartAllFiles("facet removed: " + facet.getName());
+      }
+
+      @Override
+      public void facetConfigurationChanged(@NotNull Facet facet) {
+        stopDaemonAndRestartAllFiles("facet changed: " + facet.getName());
+      }
+    });
   }
 
   private boolean worthBothering(final Document document, Project project) {
