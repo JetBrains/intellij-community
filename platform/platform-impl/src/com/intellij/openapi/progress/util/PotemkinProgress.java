@@ -17,18 +17,11 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapperDialog;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 
 /**
  * A progress indicator for processes running in EDT. Paints itself in checkCanceled calls.
@@ -36,31 +29,12 @@ import java.awt.image.BufferedImage;
  * @author peter
  */
 public class PotemkinProgress extends ProgressWindow {
-  private final BufferedImage myScreenshot;
   private long myLastUiUpdate = System.currentTimeMillis();
 
   public PotemkinProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent) {
     super(false,false, project, parentComponent, null);
     setTitle(title);
-
-    ProgressDialog dialog = getDialog();
-    Window parentWindow = dialog == null ? null : dialog.getParentWindow();
-    myScreenshot = parentWindow instanceof IdeFrame ? takeScreenshot(((IdeFrame)parentWindow).getComponent()) : null;
-
     installCheckCanceledPaintingHook();
-  }
-
-  /**
-   * Remember how everything looked. We must not call custom paint methods during write action,
-   * because they might access the model which might be inconsistent at that moment.
-   */
-  @NotNull
-  private static BufferedImage takeScreenshot(@NotNull JComponent component) {
-    BufferedImage image = UIUtil.createImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_RGB);
-    Graphics2D graphics = image.createGraphics();
-    component.paint(graphics);
-    graphics.dispose();
-    return image;
   }
 
   private void installCheckCanceledPaintingHook() {
@@ -87,7 +61,7 @@ public class PotemkinProgress extends ProgressWindow {
     }
 
     if (rootPane != null && timeToPaint()) {
-      paintProgress(rootPane, dialog);
+      paintProgress(dialog);
     }
   }
 
@@ -110,35 +84,16 @@ public class PotemkinProgress extends ProgressWindow {
     return true;
   }
 
-  private void paintProgress(@NotNull JRootPane rootPane, @NotNull ProgressDialog dialog) {
+  /**
+   * Repaint just the dialog panel. We must not call custom paint methods during write action,
+   * because they might access the model which might be inconsistent at that moment.
+   */
+  private static void paintProgress(@NotNull ProgressDialog dialog) {
     dialog.myRepaintRunnable.run();
 
     JPanel dialogPanel = dialog.getPanel();
-    if (myScreenshot != null) {
-      IdeGlassPaneImpl glassPane = (IdeGlassPaneImpl)IdeGlassPaneUtil.find(rootPane);
-      glassPane.activateIfNeeded();
-      glassPane.validate();
-
-      rootPane.getGraphics().drawImage(paintToBuffer(rootPane, dialogPanel), 0, 0, null);
-    } else {
-      dialogPanel.validate();
-      dialogPanel.paintImmediately(dialogPanel.getBounds());
-    }
+    dialogPanel.validate();
+    dialogPanel.paintImmediately(dialogPanel.getBounds());
   }
 
-  @NotNull
-  private Image paintToBuffer(JRootPane rootPane, JPanel dialogPanel) {
-    Image buffer = rootPane.createVolatileImage(rootPane.getWidth(), rootPane.getHeight());
-
-    Graphics g = buffer.getGraphics();
-    assert myScreenshot != null;
-    UIUtil.drawImage(g, myScreenshot, null, 0, 0);
-
-    Container container = SwingUtilities.getAncestorOfClass(DialogWrapperDialog.class, dialogPanel);
-    assert container instanceof JComponent;
-    g.translate(container.getX() - rootPane.getX(), container.getY() - rootPane.getY());
-    container.paint(g);
-    g.dispose();
-    return buffer;
-  }
 }

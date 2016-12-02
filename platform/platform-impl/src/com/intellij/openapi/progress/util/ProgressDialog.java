@@ -18,7 +18,6 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -305,7 +304,7 @@ class ProgressDialog implements Disposable {
     }
     if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
       ((DialogWrapperPeerImpl)myPopup.getPeer()).setAutoRequestFocus(false);
-      if (ProgressIndicatorProvider.getGlobalProgressIndicator() instanceof PotemkinProgress) {
+      if (isWriteActionProgress()) {
         myPopup.setModal(false); // display the dialog and continue with EDT execution, don't block it forever
       }
     }
@@ -325,6 +324,10 @@ class ProgressDialog implements Disposable {
     });
 
     myPopup.show();
+  }
+
+  private boolean isWriteActionProgress() {
+    return myProgressWindow instanceof PotemkinProgress;
   }
 
   boolean wasShown() {
@@ -356,7 +359,7 @@ class ProgressDialog implements Disposable {
     @NotNull
     @Override
     protected DialogWrapperPeer createPeer(@NotNull final Component parent, final boolean canBeParent) {
-      if (System.getProperty("vintage.progress") == null) {
+      if (useLightPopup()) {
         try {
           return new GlassPaneDialogWrapperPeer(this, parent, canBeParent);
         }
@@ -378,7 +381,7 @@ class ProgressDialog implements Disposable {
     @NotNull
     @Override
     protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
-      if (System.getProperty("vintage.progress") == null) {
+      if (useLightPopup()) {
         try {
           return new GlassPaneDialogWrapperPeer(this, canBeParent);
         }
@@ -389,6 +392,10 @@ class ProgressDialog implements Disposable {
       else {
         return super.createPeer(WindowManager.getInstance().suggestParentWindow(myProgressWindow.myProject), canBeParent, applicationModalIfPossible);
       }
+    }
+
+    private boolean useLightPopup() {
+      return System.getProperty("vintage.progress") == null && !isWriteActionProgress();
     }
 
     @NotNull

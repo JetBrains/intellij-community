@@ -17,18 +17,11 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.EdtExecutorService;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -37,40 +30,20 @@ public class TestWriteActionUnderProgress extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    app.runWriteActionWithProgress("Progress in main frame", null, null, TestWriteActionUnderProgress::runIndeterminateProgress);
-
-    showDialog(app);
-  }
-
-  private static void showDialog(ApplicationImpl app) {
-    DialogWrapper dialog = new DialogWrapper(null) {
-      {
-        setTitle("Some Modal Dialog");
-        init();
-      }
-      @Nullable
-      @Override
-      protected JComponent createCenterPanel() {
-        return new JTextField("Waiting for the progress...");
-      }
-    };
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-      app.runWriteActionWithProgress("Progress in modal dialog", null, dialog.getRootPane(), TestWriteActionUnderProgress::runDeterminateProgress);
-      dialog.close(0);
-    }, 2500, TimeUnit.MILLISECONDS);
-    app.invokeLater(() -> {
-      dialog.setSize(100, 100);
-      dialog.setLocation(100, 100);
-    }, ModalityState.any());
-    dialog.show();
+    app.runWriteActionWithProgress("Write Action Progress", null, null, indicator -> {
+      runIndeterminateProgress(indicator);
+      runDeterminateProgress(indicator);
+    });
   }
 
   private static void runDeterminateProgress(ProgressIndicator indicator) {
+    indicator.setIndeterminate(false);
     int iterations = 3000;
+    indicator.setText("");
     for (int i = 0; i < iterations; i++) {
       TimeoutUtil.sleep(1);
       indicator.setFraction(((double)i + 1) / ((double)iterations));
-      indicator.setText(String.valueOf(i));
+      indicator.setText2(String.valueOf(i));
       ProgressManager.checkCanceled();
     }
   }
