@@ -1476,7 +1476,8 @@ public class ControlFlowUtil {
           // clear procedure text and return instructions aftewards
           int i;
           for (i = instruction.procBegin;
-               i < instruction.procEnd || i < instructions.size() && instructions.get(i) instanceof ReturnInstruction; i++) {
+               i < clientVisitor.processedInstructions.length &&
+               (i < instruction.procEnd || i < instructions.size() && instructions.get(i) instanceof ReturnInstruction); i++) {
             clientVisitor.processedInstructions[i] = false;
           }
           clientVisitor.procedureEntered(instruction.procBegin, i);
