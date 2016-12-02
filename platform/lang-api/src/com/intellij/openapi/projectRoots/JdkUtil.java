@@ -198,6 +198,9 @@ public class JdkUtil {
       commandLine.addParameter("-jar");
       commandLine.addParameter(jarPath);
     }
+    else {
+      throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));
+    }
 
     if (!passProgramParametersViaClassPathJar) {
       commandLine.addParameters(javaParameters.getProgramParametersList().getList());

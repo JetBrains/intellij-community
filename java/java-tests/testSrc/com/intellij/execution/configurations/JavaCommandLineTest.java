@@ -22,32 +22,38 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.testFramework.LightIdeaTestCase;
-import junit.framework.Assert;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import org.junit.Test;
 
-public class JavaCommandLineTest extends LightIdeaTestCase {
-  public void testJdk() {
+import static org.junit.Assert.*;
+
+public class JavaCommandLineTest extends BareTestFixtureTestCase {
+  @Test
+  public void testJdkMissing() {
     try {
       new JavaParameters().toCommandLine();
-      fail("CantRunException (main class is not specified) expected");
+      fail("'JDK missing' expected");
     }
     catch (CantRunException e) {
-      Assert.assertEquals(ExecutionBundle.message("run.configuration.error.no.jdk.specified"), e.getMessage());
+      assertEquals(ExecutionBundle.message("run.configuration.error.no.jdk.specified"), e.getMessage());
     }
   }
 
-  public void testMainClass() {
+  @Test
+  public void testMainClassMissing() {
     try {
       JavaParameters javaParameters = new JavaParameters();
       javaParameters.setJdk(getProjectJDK());
       javaParameters.toCommandLine();
-      fail("CantRunException (main class is not specified) expected");
+      fail("'main class missing' expected");
     }
     catch (CantRunException e) {
       assertEquals(ExecutionBundle.message("main.class.is.not.specified.error.message"), e.getMessage());
     }
   }
 
+  @Test
   public void testJarParameter() throws CantRunException {
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.setJdk(getProjectJDK());
@@ -56,12 +62,13 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     assertTrue(commandLineString, commandLineString.contains("-jar my-jar-file.jar"));
   }
 
+  @Test
   public void testClasspath() throws CantRunException {
     JavaParameters javaParameters;
     String commandLineString;
 
     javaParameters = new JavaParameters();
-    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     javaParameters.setJdk(internalJdk);
     javaParameters.getClassPath().add("my-jar-file.jar");
     javaParameters.setMainClass("Main");
@@ -99,13 +106,18 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     return commandLineString;
   }
 
+  @Test
   public void testCreateProcess() {
     try {
       new KillableColoredProcessHandler(new GeneralCommandLine());
-      fail("ExecutionException (executable is not specified) expected");
+      fail("'executable missing' expected");
     }
     catch (ExecutionException e) {
       assertEquals(IdeBundle.message("run.configuration.error.executable.not.specified"), e.getMessage());
     }
+  }
+
+  private static Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17();
   }
 }
