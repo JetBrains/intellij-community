@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -30,12 +29,11 @@ import java.util.ResourceBundle;
 public class InspectionsBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls private static final String BUNDLE = "messages.InspectionsBundle";
+  private static final String BUNDLE = "messages.InspectionsBundle";
 
-  private InspectionsBundle() {
-  }
+  private InspectionsBundle() { }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE)String key, @NotNull @NonNls Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
