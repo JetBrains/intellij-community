@@ -43,7 +43,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   final RangeMarkerTree<InlayImpl> myInlayTree;
-  boolean myStickToLargerOffsetsOnUpdate = true;
+  boolean myStickToLargerOffsetsOnUpdate;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -75,6 +75,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
       @Override
       public void beforeDocumentChange(DocumentEvent event) {
+        if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
         if (event.getOldLength() == 0 &&
             offset == myEditor.getCaretModel().getOffset() &&

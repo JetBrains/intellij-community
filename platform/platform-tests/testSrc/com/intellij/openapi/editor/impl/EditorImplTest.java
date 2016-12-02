@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -454,5 +455,19 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testLineLengthMatchingLogicalPositionCacheFrequency() throws Exception {
     initText("\t" + StringUtil.repeat(" ", 1023));
     assertEquals(new LogicalPosition(0, 1027), myEditor.offsetToLogicalPosition(1024));
+  }
+
+  public void testEditingNearInlayInBulkMode() throws Exception {
+    initText("a<caret>bc");
+    EditorTestUtil.addInlay(myEditor, 1);
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        DocumentUtil.executeInBulk(myEditor.getDocument(), true,
+                                   ()-> myEditor.getDocument().insertString(1, " "));
+      }
+    }.execute();
+    checkResultByText("a<caret> bc");
+    assertTrue(myEditor.getInlayModel().hasInlineElementAt(1));
   }
 }
