@@ -41,9 +41,11 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -278,6 +280,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JBLabel myPatchInfo;
     private JEditorPane myMessageArea;
     private JEditorPane myLicenseArea;
+    private JBScrollPane myScrollPane;
 
     public UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -325,6 +328,21 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (myLicenseInfo != null) {
         configureMessageArea(myLicenseArea, myLicenseInfo.first, myLicenseInfo.second, null);
       }
+    }
+
+    private void createUIComponents() {
+      myUpdateMessage = new JEditorPane("text/html", "") {
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+          Dimension size = super.getPreferredScrollableViewportSize();
+          size.height = Math.min(size.height, JBUI.scale(400));
+          return size;
+        }
+      };
+      myScrollPane = new JBScrollPane(myUpdateMessage,
+                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      myScrollPane.setBorder(JBUI.Borders.empty());
     }
   }
 

@@ -75,6 +75,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     area.setBackground(UIUtil.getPanelBackground());
     area.setBorder(IdeBorderFactory.createEmptyBorder());
     area.setText(text);
+    area.setCaretPosition(0);
     area.setEditable(false);
 
     if (listener == null && myEnableLink) {
