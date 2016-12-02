@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class RegexpFilterTest {
   private static final String FILE = RegexpFilter.FILE_PATH_MACROS;
@@ -77,6 +78,13 @@ public class RegexpFilterTest {
     Filter.Result result = applyFilter(line);
     HLInfo info = (HLInfo)result.hyperlinkInfo;
     info.checkInfo("C:\\d ir\\file.ext", 0, 1);
+  }
+
+  @Test
+  public void testNonAbsolutePath() {
+    createFilter("$FILE_PATH$ def");
+    String line = "abc def";
+    assertNull(applyFilter(line));
   }
 
   private Filter.Result applyFilter(String line) {
