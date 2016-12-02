@@ -39,7 +39,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.*;
-import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -53,6 +52,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author nik
@@ -228,7 +228,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return compile(false, compileStatusNotification -> getCompilerManager().rebuild(compileStatusNotification));
   }
 
-  protected CompilationLog compile(final boolean errorsExpected, final ParameterizedRunnable<CompileStatusNotification> action) {
+  protected CompilationLog compile(final boolean errorsExpected, final Consumer<CompileStatusNotification> action) {
     CompilationLog log = compile(action);
     if (errorsExpected && log.myErrors.length == 0) {
       Assert.fail("compilation finished without errors");
@@ -239,7 +239,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return log;
   }
 
-  private CompilationLog compile(final ParameterizedRunnable<CompileStatusNotification> action) {
+  private CompilationLog compile(final Consumer<CompileStatusNotification> action) {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -250,32 +250,29 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
         generatedFilePaths.add(relativePath);
       }
     }, getTestRootDisposable());
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
 
-        final CompileStatusNotification callback = new CompileStatusNotification() {
-          @Override
-          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-            try {
-              if (aborted) {
-                Assert.fail("compilation aborted");
-              }
-              ExitStatus status = CompileDriver.getExternalBuildExitStatus(compileContext);
-              result.set(new CompilationLog(status == ExitStatus.UP_TO_DATE,
-                                            generatedFilePaths,
-                                            compileContext.getMessages(CompilerMessageCategory.ERROR),
-                                            compileContext.getMessages(CompilerMessageCategory.WARNING)));
+      final CompileStatusNotification callback = new CompileStatusNotification() {
+        @Override
+        public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+          try {
+            if (aborted) {
+              Assert.fail("compilation aborted");
             }
-            finally {
-              semaphore.up();
-            }
+            ExitStatus status = CompileDriver.getExternalBuildExitStatus(compileContext);
+            result.set(new CompilationLog(status == ExitStatus.UP_TO_DATE,
+                                          generatedFilePaths,
+                                          compileContext.getMessages(CompilerMessageCategory.ERROR),
+                                          compileContext.getMessages(CompilerMessageCategory.WARNING)));
           }
-        };
-        PlatformTestUtil.saveProject(myProject);
-        CompilerTestUtil.saveApplicationSettings();
-        action.run(callback);
-      }
+          finally {
+            semaphore.up();
+          }
+        }
+      };
+      PlatformTestUtil.saveProject(myProject);
+      CompilerTestUtil.saveApplicationSettings();
+      action.accept(callback);
     });
 
     final long start = System.currentTimeMillis();
