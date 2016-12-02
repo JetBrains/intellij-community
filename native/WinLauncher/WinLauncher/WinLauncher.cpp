@@ -555,17 +555,24 @@ bool LoadJVMLibrary()
   return true;
 }
 
-bool IsHiDPIJBRE() // JetBrains RE supporting HiDPI
+bool IsJBRE()
 {
   if (!env) return false;
 
-  jclass cls = env->FindClass("sun/java2d/SunGraphicsEnvironment");
+  jclass cls = env->FindClass("java/lang/System");
   if (!cls) return false;
 
-  jmethodID method = env->GetMethodID(cls, "isUIScaleOn", "()Z");
+  jmethodID method = env->GetStaticMethodID(cls, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
   if (!method) return false;
 
-  return true;
+  jstring jvendor = (jstring)env->CallStaticObjectMethod(cls, method, env->NewStringUTF("java.vendor"));
+  if (!jvendor) return false;
+
+  const char *cvendor = env->GetStringUTFChars(jvendor, NULL);
+  bool isJB = strstr(cvendor, "JetBrains") != NULL;
+  env->ReleaseStringUTFChars(jvendor, cvendor);
+
+  return isJB;
 }
 
 void SetProcessDPIAwareProperty()
@@ -612,8 +619,8 @@ bool CreateJVM()
     MessageBoxA(NULL, buf.str().c_str(), error.c_str(), MB_OK);
   }
 
-  // Set DPI-awareness here or let HiDPI JBRE do that.
-  if (!IsHiDPIJBRE()) SetProcessDPIAwareProperty();
+  // Set DPI-awareness here or let JBRE do that.
+  if (!IsJBRE()) SetProcessDPIAwareProperty();
 
   return result == JNI_OK;
 }
