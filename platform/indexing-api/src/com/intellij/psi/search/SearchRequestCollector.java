@@ -90,7 +90,7 @@ public class SearchRequestCollector {
                                             UsageSearchContext.IN_FOREIGN_LANGUAGES |
                                             UsageSearchContext.IN_PLAIN_TEXT
                                           : (short)(searchContext ^ UsageSearchContext.IN_CODE);
-          final GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
+          GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
           requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
                                         new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
         }

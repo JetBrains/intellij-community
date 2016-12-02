@@ -794,7 +794,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               int mask = value.intValue();
               for (RequestWithProcessor single : data) {
                 final PsiSearchRequest request = single.request;
-                if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file1)) {
+                if ((mask & request.searchContext) != 0 && request.searchScope.contains(file1)) {
                   MultiMap<VirtualFile, RequestWithProcessor> result1 =
                     intersectionWithContainerNameFiles == null || !intersectionWithContainerNameFiles.contains(file1) ? restResult : intersectionResult;
                   result1.putValue(file1, single);
@@ -815,14 +815,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     short searchContext = 0;
     boolean caseSensitive = true;
     for (RequestWithProcessor r : data) {
-      String name = r.request.containerName;
-      if (name != null) {
+      String containerName = r.request.containerName;
+      if (containerName != null) {
         if (commonName == null) {
-          commonName = r.request.containerName;
+          commonName = containerName;
           searchContext = r.request.searchContext;
           caseSensitive = r.request.caseSensitive;
         }
-        else if (commonName.equals(name)) {
+        else if (commonName.equals(containerName)) {
           searchContext |= r.request.searchContext;
           caseSensitive &= r.request.caseSensitive;
         }
