@@ -152,6 +152,12 @@ public class ShowFilePathAction extends AnAction {
     }
   }
 
+  @Nullable
+  private static VirtualFile getFile(AnActionEvent e) {
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
+  }
+
   public static void show(@NotNull VirtualFile file, @NotNull MouseEvent e) {
     show(file, popup -> {
       if (e.getComponent().isShowing()) {
@@ -284,19 +290,10 @@ public class ShowFilePathAction extends AnAction {
       ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
     else if (fileManagerApp.getValue() != null) {
-      PooledThreadExecutor.INSTANCE.submit(() -> {
-        try {
-          GeneralCommandLine cmd = new GeneralCommandLine(fileManagerApp.getValue(), toSelect != null ? toSelect : dir);
-          ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      });
+      schedule(new GeneralCommandLine(fileManagerApp.getValue(), toSelect != null ? toSelect : dir));
     }
     else if (SystemInfo.hasXdgOpen()) {
-      GeneralCommandLine cmd = new GeneralCommandLine("xdg-open", dir);
-      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+      schedule(new GeneralCommandLine("xdg-open", dir));
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       Desktop.getDesktop().open(new File(dir));
@@ -306,10 +303,15 @@ public class ShowFilePathAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static VirtualFile getFile(AnActionEvent e) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
-    return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
+  private static void schedule(GeneralCommandLine cmd) {
+    PooledThreadExecutor.INSTANCE.submit(() -> {
+      try {
+        ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    });
   }
 
   public static void showDialog(Project project, String message, String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
