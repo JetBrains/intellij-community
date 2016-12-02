@@ -192,13 +192,22 @@ bool FindJVMInRegistryKey(const char* key, bool wow64_32)
 
 bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
 {
-  const char* keyName = LoadStdString(IDS_JDK_ONLY) == std::string("true")
-    ? "Java Development Kit"
-    : "Java Runtime Environment";
-
+  char* keyName = "Java Runtime Environment";
+  bool foundJava = false;
   char buf[_MAX_PATH];
-  sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-  return FindJVMInRegistryKey(buf, wow64_32);
+  //search jre in registry if the product doesn't require tools.jar
+  if (LoadStdString(IDS_JDK_ONLY) != std::string("true")) {
+    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
+    foundJava = FindJVMInRegistryKey(buf, wow64_32);
+  }
+
+  //search jdk in registry if the product requires tools.jar or jre isn't installed.
+  if (!foundJava) {
+    keyName = "Java Development Kit";
+    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
+    foundJava = FindJVMInRegistryKey(buf, wow64_32);
+  }
+  return foundJava;
 }
 
 bool FindJVMInRegistry()
