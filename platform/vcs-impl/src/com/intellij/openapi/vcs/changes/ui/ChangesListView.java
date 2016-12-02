@@ -99,15 +99,15 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(@NotNull DefaultTreeModel model) {
+  public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
     DefaultTreeModel oldModel = getModel();
-    setModel(model);
-    ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-    expandPath(new TreePath(root.getPath()));
-    state.applyTo(this, getRoot());
-    expandDefaultChangeList(oldModel, root);
+    setModel(newModel);
+    ChangesBrowserNode newRoot = getRoot();
+    expandPath(new TreePath(newRoot.getPath()));
+    state.applyTo(this, newRoot);
+    expandDefaultChangeList(oldModel, newRoot);
   }
 
   private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
