@@ -458,6 +458,7 @@ public class GenericsHighlightUtil {
 
       if (!hasConcrete && defaults != null) {
         final PsiMethod defaultMethod = defaults.get(0);
+        if (MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) continue;
         final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
         if (defaultMethodContainingClass == null) continue;
         final PsiMethod unrelatedMethod = abstracts != null ? abstracts.get(0) : defaults.get(1);
