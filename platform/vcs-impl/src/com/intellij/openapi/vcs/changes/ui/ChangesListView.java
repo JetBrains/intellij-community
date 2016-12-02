@@ -69,8 +69,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
-  private ActionGroup myMenuGroup;
-
   public ChangesListView(@NotNull Project project) {
     myProject = project;
 
@@ -346,18 +344,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {
-    myMenuGroup = menuGroup;
-    updateMenu();
+    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
     editSourceRegistration();
   }
 
   protected void editSourceRegistration() {
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
-  }
-
-  private void updateMenu() {
-    PopupHandler.installPopupHandler(this, myMenuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
   }
 
   @Override
