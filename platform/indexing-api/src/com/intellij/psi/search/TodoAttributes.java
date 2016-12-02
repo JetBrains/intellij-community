@@ -40,7 +40,7 @@ public class TodoAttributes implements Cloneable {
   @NonNls private static final String ELEMENT_OPTION = "option";
   @NonNls private static final String USE_CUSTOM_COLORS_ATT = "useCustomColors";
 
-  public TodoAttributes(@NotNull Element element, @NotNull TextAttributes defaultTodoAttributes) throws InvalidDataException {
+  public TodoAttributes(@NotNull Element element, @NotNull TextAttributes defaultTodoAttributes) {
     String icon = element.getAttributeValue(ATTRIBUTE_ICON, ICON_DEFAULT);
 
     if (ICON_DEFAULT.equals(icon)){
@@ -56,14 +56,8 @@ public class TodoAttributes implements Cloneable {
       throw new InvalidDataException(icon);
     }
 
-    if (element.getChild(ELEMENT_OPTION) == null) {
-      myTextAttributes = defaultTodoAttributes;
-    }
-    else {
-      myTextAttributes = new TextAttributes(element);
-    }
-
     myShouldUseCustomColors = Boolean.parseBoolean(element.getAttributeValue(USE_CUSTOM_COLORS_ATT));
+    myTextAttributes = myShouldUseCustomColors && element.getChild(ELEMENT_OPTION) != null ? new TextAttributes(element) : defaultTodoAttributes;
   }
 
   TodoAttributes(@NotNull Icon icon, @NotNull TextAttributes textAttributes){
@@ -108,9 +102,8 @@ public class TodoAttributes implements Cloneable {
       element.setAttribute(ATTRIBUTE_ICON, icon);
     }
 
-    myTextAttributes.writeExternal(element);
-
     if (shouldUseCustomTodoColor()) {
+      myTextAttributes.writeExternal(element);
       element.setAttribute(USE_CUSTOM_COLORS_ATT, "true");
     }
   }
