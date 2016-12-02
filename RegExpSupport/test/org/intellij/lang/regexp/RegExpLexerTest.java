@@ -43,6 +43,42 @@ public class RegExpLexerTest extends LexerTestCase {
                          "QUOTE_END ('\\E')", lexer);
   }
 
+  public void testEditorReplacement() {
+    RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.TRANSFORMATION_ESCAPES));
+    String text = "\\U$1\\E\\u$3\\l$4\\L$2\\E";
+    doTest(text, "CHAR_CLASS ('\\U')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('1')\n" +
+                 "CHAR_CLASS ('\\E')\n" +
+                 "CHAR_CLASS ('\\u')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('3')\n" +
+                 "CHAR_CLASS ('\\l')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('4')\n" +
+                 "CHAR_CLASS ('\\L')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('2')\n" +
+                 "CHAR_CLASS ('\\E')", lexer);
+
+    lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+
+    doTest(text, "INVALID_CHARACTER_ESCAPE_TOKEN ('\\U')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('1')\n" +
+                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\E')\n" +
+                 "INVALID_UNICODE_ESCAPE_TOKEN ('\\u')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('3')\n" +
+                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\l')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('4')\n" +
+                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\L')\n" +
+                 "DOLLAR ('$')\n" +
+                 "CHARACTER ('2')\n" +
+                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\E')", lexer);
+  }
+
   public void testIntersection() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES));
     doTest("[a&&]", "CLASS_BEGIN ('[')\n" +

@@ -34,6 +34,7 @@ import java.util.EnumSet;
     private boolean allowEmptyCharacterClass;
     private boolean allowHorizontalWhitespaceClass;
     private boolean allowPosixBracketExpressions;
+    private boolean allowTransformationEscapes;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -46,6 +47,7 @@ import java.util.EnumSet;
       this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
       this.allowPosixBracketExpressions = capabilities.contains(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
+      this.allowTransformationEscapes = capabilities.contains(RegExpCapability.TRANSFORMATION_ESCAPES);
     }
 
     private void yypushstate(int state) {
@@ -109,6 +111,7 @@ BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G"
 CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X" | "R"
 XML_CLASS="c" | "C" | "i" | "I"
 PROP="p" | "P"
+TRANSFORMATION= "l" | "L" | "U" | "E"
 
 HEX_CHAR=[0-9a-fA-F]
 
@@ -130,7 +133,8 @@ HEX_CHAR=[0-9a-fA-F]
 
 /* unicode escapes */
 {ESCAPE} "u" {HEX_CHAR}{4}   { return RegExpTT.UNICODE_CHAR; }
-{ESCAPE} "u" {HEX_CHAR}{0,3} { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" {HEX_CHAR}{1,3} { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 
 /* octal escapes */
 {ESCAPE} "0" [0-7]{1,3}      { return RegExpTT.OCT_CHAR; }
@@ -186,6 +190,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} "k'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
 {ESCAPE} "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL; }
 {ESCAPE} "g'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL; }
+{ESCAPE} {TRANSFORMATION}     { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 

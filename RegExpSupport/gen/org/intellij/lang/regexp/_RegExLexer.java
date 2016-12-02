@@ -130,55 +130,55 @@ class _RegExLexer implements FlexLexer {
 
   /* The ZZ_CMAP_A table has 3056 entries */
   static final char ZZ_CMAP_A[] = zzUnpackCMap(
-    "\10\0\2\60\1\63\1\64\1\65\1\63\22\0\1\16\1\72\1\0\1\73\1\21\1\0\1\67\1\57"+
-    "\1\4\1\5\1\23\1\24\1\62\1\15\1\3\1\0\1\2\7\52\2\1\1\66\1\0\1\56\1\71\1\70"+
-    "\1\22\1\0\2\32\1\41\1\37\1\47\1\45\1\33\1\53\1\42\2\13\2\61\1\54\1\13\1\44"+
-    "\1\46\1\35\1\36\2\13\3\35\1\13\1\34\1\10\1\12\1\11\1\20\1\14\1\0\1\27\1\30"+
-    "\1\40\1\37\2\27\1\31\1\53\1\42\1\13\1\55\2\13\1\26\1\13\1\43\1\13\1\26\1\35"+
-    "\1\26\1\51\2\35\1\50\1\13\1\33\1\6\1\25\1\7\7\0\1\64\24\0\1\13\12\0\1\13\4"+
-    "\0\1\13\5\0\27\13\1\0\12\13\4\0\14\13\16\0\5\13\7\0\1\13\1\0\1\13\1\0\5\13"+
-    "\1\0\2\13\2\0\4\13\1\0\1\13\6\0\1\13\1\0\3\13\1\0\1\13\1\0\4\13\1\0\23\13"+
-    "\1\0\13\13\10\0\6\13\1\0\26\13\2\0\1\13\6\0\10\13\10\0\13\13\5\0\3\13\15\0"+
-    "\12\17\4\0\6\13\1\0\1\13\17\0\2\13\7\0\2\13\12\17\3\13\2\0\2\13\1\0\16\13"+
-    "\15\0\11\13\13\0\1\13\16\0\12\17\6\13\4\0\2\13\4\0\1\13\5\0\6\13\4\0\1\13"+
-    "\11\0\1\13\3\0\1\13\7\0\11\13\7\0\5\13\17\0\26\13\3\0\1\13\2\0\1\13\7\0\12"+
-    "\13\4\0\12\17\1\13\4\0\10\13\2\0\2\13\2\0\26\13\1\0\7\13\1\0\1\13\3\0\4\13"+
-    "\3\0\1\13\20\0\1\13\15\0\2\13\1\0\1\13\5\0\6\13\4\0\2\13\1\0\2\13\1\0\2\13"+
-    "\1\0\2\13\17\0\4\13\1\0\1\13\7\0\12\17\2\0\3\13\20\0\11\13\1\0\2\13\1\0\2"+
-    "\13\1\0\5\13\3\0\1\13\2\0\1\13\30\0\1\13\13\0\10\13\2\0\1\13\3\0\1\13\1\0"+
-    "\6\13\3\0\3\13\1\0\4\13\3\0\2\13\1\0\1\13\1\0\2\13\3\0\2\13\3\0\3\13\3\0\14"+
-    "\13\13\0\10\13\1\0\2\13\10\0\3\13\5\0\4\13\1\0\5\13\3\0\1\13\3\0\2\13\15\0"+
-    "\13\13\2\0\1\13\21\0\1\13\12\0\6\13\5\0\22\13\3\0\10\13\1\0\11\13\1\0\1\13"+
-    "\2\0\7\13\11\0\1\13\1\0\2\13\14\0\12\17\7\0\2\13\1\0\1\13\2\0\2\13\1\0\1\13"+
-    "\2\0\1\13\6\0\4\13\1\0\7\13\1\0\3\13\1\0\1\13\1\0\1\13\2\0\2\13\1\0\4\13\1"+
-    "\0\2\13\11\0\1\13\2\0\5\13\1\0\1\13\11\0\12\17\2\0\14\13\1\0\24\13\13\0\5"+
-    "\13\3\0\6\13\4\0\4\13\3\0\1\13\3\0\2\13\7\0\3\13\4\0\15\13\14\0\1\13\1\0\6"+
-    "\13\1\0\1\13\5\0\1\13\2\0\13\13\1\0\15\13\1\0\4\13\2\0\7\13\1\0\1\13\1\0\4"+
-    "\13\2\0\1\13\1\0\4\13\2\0\7\13\1\0\1\13\1\0\4\13\2\0\16\13\2\0\6\13\2\0\15"+
-    "\13\2\0\1\13\1\0\10\13\7\0\15\13\1\0\6\13\23\0\1\13\4\0\1\13\3\0\11\13\1\0"+
-    "\1\13\5\0\17\13\1\0\16\13\2\0\14\13\13\0\1\13\15\0\7\13\7\0\16\13\15\0\2\13"+
-    "\12\17\3\0\3\13\11\0\4\13\1\0\4\13\3\0\2\13\11\0\10\13\1\0\1\13\1\0\1\13\1"+
-    "\0\1\13\1\0\6\13\1\0\7\13\1\0\1\13\3\0\3\13\1\0\7\13\3\0\4\13\2\0\6\13\14"+
-    "\0\2\64\7\0\1\13\15\0\1\13\2\0\1\13\4\0\1\13\2\0\12\13\1\0\1\13\3\0\5\13\6"+
-    "\0\1\13\1\0\1\13\1\0\1\13\1\0\4\13\1\0\13\13\2\0\4\13\5\0\5\13\4\0\1\13\4"+
-    "\0\2\13\13\0\5\13\6\0\4\13\3\0\2\13\14\0\10\13\7\0\10\13\1\0\7\13\6\0\2\13"+
-    "\12\0\5\13\5\0\2\13\3\0\7\13\6\0\3\13\12\17\2\13\13\0\11\13\2\0\27\13\2\0"+
-    "\7\13\1\0\3\13\1\0\4\13\1\0\4\13\2\0\6\13\3\0\1\13\1\0\1\13\2\0\5\13\1\0\12"+
-    "\13\12\17\5\13\1\0\3\13\1\0\10\13\4\0\7\13\3\0\1\13\3\0\2\13\1\0\1\13\3\0"+
-    "\2\13\2\0\5\13\2\0\1\13\1\0\1\13\30\0\3\13\3\0\6\13\2\0\6\13\2\0\6\13\11\0"+
-    "\7\13\4\0\5\13\3\0\5\13\5\0\1\13\1\0\10\13\1\0\5\13\1\0\1\13\1\0\2\13\1\0"+
-    "\2\13\1\0\12\13\6\0\12\13\2\0\6\13\2\0\6\13\2\0\6\13\2\0\3\13\3\0\14\13\1"+
-    "\0\16\13\1\0\2\13\1\0\2\13\1\0\10\13\6\0\4\13\4\0\16\13\2\0\1\13\1\0\14\13"+
-    "\1\0\2\13\3\0\1\13\2\0\4\13\1\0\2\13\12\0\10\13\6\0\6\13\1\0\3\13\1\0\12\13"+
-    "\3\0\1\13\12\0\4\13\13\0\12\17\1\13\1\0\1\13\3\0\7\13\1\0\1\13\1\0\4\13\1"+
-    "\0\17\13\1\0\2\13\14\0\3\13\4\0\2\13\1\0\1\13\20\0\4\13\10\0\1\13\13\0\10"+
-    "\13\5\0\3\13\2\0\1\13\2\0\2\13\2\0\4\13\1\0\14\13\1\0\1\13\1\0\7\13\1\0\21"+
-    "\13\1\0\4\13\2\0\10\13\1\0\7\13\1\0\14\13\1\0\4\13\1\0\5\13\1\0\1\13\3\0\14"+
-    "\13\2\0\13\13\1\0\10\13\2\0\22\17\1\0\2\13\1\0\1\13\2\0\1\13\1\0\12\13\1\0"+
-    "\4\13\1\0\1\13\1\0\1\13\6\0\1\13\4\0\1\13\1\0\1\13\1\0\1\13\1\0\3\13\1\0\2"+
-    "\13\1\0\1\13\2\0\1\13\1\0\1\13\1\0\1\13\1\0\1\13\1\0\1\13\1\0\2\13\1\0\1\13"+
-    "\2\0\4\13\1\0\7\13\1\0\4\13\1\0\4\13\1\0\1\13\1\0\12\13\1\0\5\13\1\0\3\13"+
-    "\1\0\5\13\1\0\5\13");
+    "\10\0\2\62\1\65\1\66\1\67\1\65\22\0\1\16\1\74\1\0\1\75\1\21\1\0\1\71\1\61"+
+    "\1\4\1\5\1\23\1\24\1\64\1\15\1\3\1\0\1\2\7\54\2\1\1\70\1\0\1\60\1\73\1\72"+
+    "\1\22\1\0\2\32\1\41\1\37\1\47\1\50\1\33\1\55\1\42\2\13\1\46\1\63\1\56\1\13"+
+    "\1\44\1\51\1\35\1\36\1\13\1\45\3\35\1\13\1\34\1\10\1\12\1\11\1\20\1\14\1\0"+
+    "\1\27\1\30\1\40\1\37\2\27\1\31\1\55\1\42\1\13\1\57\1\45\1\13\1\26\1\13\1\43"+
+    "\1\13\1\26\1\35\1\26\1\53\2\35\1\52\1\13\1\33\1\6\1\25\1\7\7\0\1\66\24\0\1"+
+    "\13\12\0\1\13\4\0\1\13\5\0\27\13\1\0\12\13\4\0\14\13\16\0\5\13\7\0\1\13\1"+
+    "\0\1\13\1\0\5\13\1\0\2\13\2\0\4\13\1\0\1\13\6\0\1\13\1\0\3\13\1\0\1\13\1\0"+
+    "\4\13\1\0\23\13\1\0\13\13\10\0\6\13\1\0\26\13\2\0\1\13\6\0\10\13\10\0\13\13"+
+    "\5\0\3\13\15\0\12\17\4\0\6\13\1\0\1\13\17\0\2\13\7\0\2\13\12\17\3\13\2\0\2"+
+    "\13\1\0\16\13\15\0\11\13\13\0\1\13\16\0\12\17\6\13\4\0\2\13\4\0\1\13\5\0\6"+
+    "\13\4\0\1\13\11\0\1\13\3\0\1\13\7\0\11\13\7\0\5\13\17\0\26\13\3\0\1\13\2\0"+
+    "\1\13\7\0\12\13\4\0\12\17\1\13\4\0\10\13\2\0\2\13\2\0\26\13\1\0\7\13\1\0\1"+
+    "\13\3\0\4\13\3\0\1\13\20\0\1\13\15\0\2\13\1\0\1\13\5\0\6\13\4\0\2\13\1\0\2"+
+    "\13\1\0\2\13\1\0\2\13\17\0\4\13\1\0\1\13\7\0\12\17\2\0\3\13\20\0\11\13\1\0"+
+    "\2\13\1\0\2\13\1\0\5\13\3\0\1\13\2\0\1\13\30\0\1\13\13\0\10\13\2\0\1\13\3"+
+    "\0\1\13\1\0\6\13\3\0\3\13\1\0\4\13\3\0\2\13\1\0\1\13\1\0\2\13\3\0\2\13\3\0"+
+    "\3\13\3\0\14\13\13\0\10\13\1\0\2\13\10\0\3\13\5\0\4\13\1\0\5\13\3\0\1\13\3"+
+    "\0\2\13\15\0\13\13\2\0\1\13\21\0\1\13\12\0\6\13\5\0\22\13\3\0\10\13\1\0\11"+
+    "\13\1\0\1\13\2\0\7\13\11\0\1\13\1\0\2\13\14\0\12\17\7\0\2\13\1\0\1\13\2\0"+
+    "\2\13\1\0\1\13\2\0\1\13\6\0\4\13\1\0\7\13\1\0\3\13\1\0\1\13\1\0\1\13\2\0\2"+
+    "\13\1\0\4\13\1\0\2\13\11\0\1\13\2\0\5\13\1\0\1\13\11\0\12\17\2\0\14\13\1\0"+
+    "\24\13\13\0\5\13\3\0\6\13\4\0\4\13\3\0\1\13\3\0\2\13\7\0\3\13\4\0\15\13\14"+
+    "\0\1\13\1\0\6\13\1\0\1\13\5\0\1\13\2\0\13\13\1\0\15\13\1\0\4\13\2\0\7\13\1"+
+    "\0\1\13\1\0\4\13\2\0\1\13\1\0\4\13\2\0\7\13\1\0\1\13\1\0\4\13\2\0\16\13\2"+
+    "\0\6\13\2\0\15\13\2\0\1\13\1\0\10\13\7\0\15\13\1\0\6\13\23\0\1\13\4\0\1\13"+
+    "\3\0\11\13\1\0\1\13\5\0\17\13\1\0\16\13\2\0\14\13\13\0\1\13\15\0\7\13\7\0"+
+    "\16\13\15\0\2\13\12\17\3\0\3\13\11\0\4\13\1\0\4\13\3\0\2\13\11\0\10\13\1\0"+
+    "\1\13\1\0\1\13\1\0\1\13\1\0\6\13\1\0\7\13\1\0\1\13\3\0\3\13\1\0\7\13\3\0\4"+
+    "\13\2\0\6\13\14\0\2\66\7\0\1\13\15\0\1\13\2\0\1\13\4\0\1\13\2\0\12\13\1\0"+
+    "\1\13\3\0\5\13\6\0\1\13\1\0\1\13\1\0\1\13\1\0\4\13\1\0\13\13\2\0\4\13\5\0"+
+    "\5\13\4\0\1\13\4\0\2\13\13\0\5\13\6\0\4\13\3\0\2\13\14\0\10\13\7\0\10\13\1"+
+    "\0\7\13\6\0\2\13\12\0\5\13\5\0\2\13\3\0\7\13\6\0\3\13\12\17\2\13\13\0\11\13"+
+    "\2\0\27\13\2\0\7\13\1\0\3\13\1\0\4\13\1\0\4\13\2\0\6\13\3\0\1\13\1\0\1\13"+
+    "\2\0\5\13\1\0\12\13\12\17\5\13\1\0\3\13\1\0\10\13\4\0\7\13\3\0\1\13\3\0\2"+
+    "\13\1\0\1\13\3\0\2\13\2\0\5\13\2\0\1\13\1\0\1\13\30\0\3\13\3\0\6\13\2\0\6"+
+    "\13\2\0\6\13\11\0\7\13\4\0\5\13\3\0\5\13\5\0\1\13\1\0\10\13\1\0\5\13\1\0\1"+
+    "\13\1\0\2\13\1\0\2\13\1\0\12\13\6\0\12\13\2\0\6\13\2\0\6\13\2\0\6\13\2\0\3"+
+    "\13\3\0\14\13\1\0\16\13\1\0\2\13\1\0\2\13\1\0\10\13\6\0\4\13\4\0\16\13\2\0"+
+    "\1\13\1\0\14\13\1\0\2\13\3\0\1\13\2\0\4\13\1\0\2\13\12\0\10\13\6\0\6\13\1"+
+    "\0\3\13\1\0\12\13\3\0\1\13\12\0\4\13\13\0\12\17\1\13\1\0\1\13\3\0\7\13\1\0"+
+    "\1\13\1\0\4\13\1\0\17\13\1\0\2\13\14\0\3\13\4\0\2\13\1\0\1\13\20\0\4\13\10"+
+    "\0\1\13\13\0\10\13\5\0\3\13\2\0\1\13\2\0\2\13\2\0\4\13\1\0\14\13\1\0\1\13"+
+    "\1\0\7\13\1\0\21\13\1\0\4\13\2\0\10\13\1\0\7\13\1\0\14\13\1\0\4\13\1\0\5\13"+
+    "\1\0\1\13\3\0\14\13\2\0\13\13\1\0\10\13\2\0\22\17\1\0\2\13\1\0\1\13\2\0\1"+
+    "\13\1\0\12\13\1\0\4\13\1\0\1\13\1\0\1\13\6\0\1\13\4\0\1\13\1\0\1\13\1\0\1"+
+    "\13\1\0\3\13\1\0\2\13\1\0\1\13\2\0\1\13\1\0\1\13\1\0\1\13\1\0\1\13\1\0\1\13"+
+    "\1\0\2\13\1\0\1\13\2\0\4\13\1\0\7\13\1\0\4\13\1\0\4\13\1\0\1\13\1\0\12\13"+
+    "\1\0\5\13\1\0\3\13\1\0\5\13\1\0\5\13");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -195,15 +195,15 @@ class _RegExLexer implements FlexLexer {
     "\1\51\1\52\1\0\1\53\1\54\1\55\1\56\1\57"+
     "\1\60\1\10\1\61\1\62\1\63\1\64\1\10\1\64"+
     "\1\65\2\66\1\67\1\70\1\71\1\72\1\73\1\74"+
-    "\1\10\1\75\1\76\1\77\1\0\1\100\1\101\1\102"+
-    "\1\103\1\0\1\104\1\105\1\106\1\107\1\110\1\0"+
-    "\1\111\1\0\1\112\1\0\1\113\1\114\1\115\2\71"+
-    "\1\72\1\116\1\117\1\120\1\121\1\122\1\123\1\124"+
-    "\1\0\1\112\1\0\1\125\2\71\1\72\1\126\1\112"+
-    "\1\71\1\72\1\71\1\127\4\71";
+    "\1\75\1\10\1\76\1\77\1\100\1\0\1\101\1\102"+
+    "\1\103\1\104\1\0\1\105\1\106\1\107\1\110\1\111"+
+    "\1\0\1\112\1\0\1\113\1\0\1\114\1\115\1\116"+
+    "\2\72\1\117\1\120\1\121\1\122\1\123\1\124\1\125"+
+    "\1\126\1\0\1\113\1\0\1\127\2\72\1\117\1\130"+
+    "\1\113\1\72\1\117\1\72\1\131\4\72";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[137];
+    int [] result = new int[138];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -228,27 +228,27 @@ class _RegExLexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\74\0\170\0\264\0\360\0\u012c\0\u0168\0\u01a4"+
-    "\0\u01e0\0\u021c\0\u0258\0\u0294\0\u02d0\0\u030c\0\u0348\0\u0384"+
-    "\0\u03c0\0\u03c0\0\u03fc\0\u03c0\0\u03c0\0\u0438\0\u0474\0\u03c0"+
-    "\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0"+
-    "\0\u03c0\0\u04b0\0\u03c0\0\u04ec\0\u03c0\0\u0528\0\u03c0\0\u03c0"+
-    "\0\u03c0\0\u0564\0\u03c0\0\u05a0\0\u03c0\0\u05dc\0\u03c0\0\u0618"+
-    "\0\u03c0\0\u03c0\0\u0438\0\u03c0\0\u03c0\0\u03c0\0\u0654\0\u0690"+
-    "\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u06cc\0\u0708\0\u03c0"+
-    "\0\u0744\0\u0780\0\u03c0\0\u07bc\0\u07f8\0\u03c0\0\u03c0\0\u03c0"+
-    "\0\u03c0\0\u03c0\0\u03c0\0\u0834\0\u0870\0\u03c0\0\u03c0\0\u08ac"+
-    "\0\u03c0\0\u03c0\0\u03c0\0\u08e8\0\u0924\0\u03c0\0\u03c0\0\u0960"+
-    "\0\u03c0\0\u03c0\0\u03c0\0\u099c\0\u03c0\0\u03c0\0\u03c0\0\u03c0"+
-    "\0\u09d8\0\u0a14\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u0a50\0\u03c0"+
-    "\0\u0a8c\0\u0ac8\0\u0b04\0\u03c0\0\u03c0\0\u03c0\0\u0b40\0\u0b7c"+
-    "\0\u0bb8\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0\0\u03c0"+
-    "\0\u0bf4\0\u0c30\0\u0c6c\0\u03c0\0\u0ca8\0\u03c0\0\u0ce4\0\u03c0"+
-    "\0\u03c0\0\u0d20\0\u0d5c\0\u0d98\0\u03c0\0\u0dd4\0\u0e10\0\u0e4c"+
-    "\0\u0e88";
+    "\0\0\0\76\0\174\0\272\0\370\0\u0136\0\u0174\0\u01b2"+
+    "\0\u01f0\0\u022e\0\u026c\0\u02aa\0\u02e8\0\u0326\0\u0364\0\u03a2"+
+    "\0\u03e0\0\u03e0\0\u041e\0\u03e0\0\u03e0\0\u045c\0\u049a\0\u03e0"+
+    "\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u03e0"+
+    "\0\u03e0\0\u04d8\0\u03e0\0\u0516\0\u03e0\0\u0554\0\u03e0\0\u03e0"+
+    "\0\u03e0\0\u0592\0\u03e0\0\u05d0\0\u03e0\0\u060e\0\u03e0\0\u064c"+
+    "\0\u03e0\0\u03e0\0\u045c\0\u03e0\0\u03e0\0\u03e0\0\u068a\0\u06c8"+
+    "\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u0706\0\u0744\0\u03e0"+
+    "\0\u0782\0\u07c0\0\u03e0\0\u07fe\0\u083c\0\u03e0\0\u03e0\0\u03e0"+
+    "\0\u03e0\0\u03e0\0\u03e0\0\u087a\0\u08b8\0\u03e0\0\u03e0\0\u08f6"+
+    "\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u0934\0\u0972\0\u03e0\0\u03e0"+
+    "\0\u09b0\0\u03e0\0\u03e0\0\u03e0\0\u09ee\0\u03e0\0\u03e0\0\u03e0"+
+    "\0\u03e0\0\u0a2c\0\u0a6a\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u0aa8"+
+    "\0\u03e0\0\u0ae6\0\u0b24\0\u0b62\0\u03e0\0\u03e0\0\u03e0\0\u0ba0"+
+    "\0\u0bde\0\u0c1c\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u03e0\0\u03e0"+
+    "\0\u03e0\0\u0c5a\0\u0c98\0\u0cd6\0\u03e0\0\u0d14\0\u03e0\0\u0d52"+
+    "\0\u03e0\0\u03e0\0\u0d90\0\u0dce\0\u0e0c\0\u03e0\0\u0e4a\0\u0e88"+
+    "\0\u0ec6\0\u0f04";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[137];
+    int [] result = new int[138];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -273,83 +273,80 @@ class _RegExLexer implements FlexLexer {
   private static final String ZZ_TRANS_PACKED_0 =
     "\3\21\1\22\1\23\1\24\1\25\1\21\1\26\1\21"+
     "\1\27\2\21\1\30\1\31\1\21\1\32\1\33\1\34"+
-    "\1\35\1\36\1\37\32\21\1\40\2\21\1\40\1\21"+
-    "\1\40\5\21\1\41\12\21\1\42\61\21\1\43\2\44"+
+    "\1\35\1\36\1\37\34\21\1\40\2\21\1\40\1\21"+
+    "\1\40\5\21\1\41\12\21\1\42\63\21\1\43\2\44"+
     "\4\43\1\45\3\43\1\46\3\43\1\44\1\32\5\43"+
-    "\24\46\1\44\3\46\3\43\1\46\1\47\11\43\11\50"+
-    "\1\51\1\52\50\50\3\0\26\50\1\53\42\50\3\0"+
+    "\26\46\1\44\3\46\3\43\1\46\1\47\11\43\11\50"+
+    "\1\51\1\52\52\50\3\0\26\50\1\53\44\50\3\0"+
     "\6\50\6\21\1\25\1\21\1\54\1\55\1\56\2\21"+
-    "\1\30\42\21\1\57\2\21\1\57\1\21\1\57\1\21"+
+    "\1\30\44\21\1\57\2\21\1\57\1\21\1\57\1\21"+
     "\1\60\4\21\6\50\1\25\1\50\1\26\1\50\1\27"+
-    "\2\50\1\30\2\50\1\61\42\50\1\40\1\21\1\40"+
+    "\2\50\1\30\2\50\1\61\44\50\1\40\1\21\1\40"+
     "\6\50\6\43\1\62\1\43\1\63\1\43\1\27\21\43"+
-    "\1\64\1\43\1\64\2\43\1\64\2\43\1\64\7\43"+
-    "\1\64\4\43\1\64\20\43\1\62\1\43\1\63\1\43"+
-    "\1\27\61\43\5\65\1\66\5\65\1\67\1\65\1\70"+
-    "\10\65\24\67\1\65\3\67\3\65\1\67\4\65\1\71"+
-    "\5\65\63\13\1\72\10\13\13\65\1\46\12\65\24\46"+
-    "\1\65\3\46\3\65\1\46\6\65\1\73\16\65\1\46"+
-    "\12\65\24\46\1\65\3\46\1\65\1\74\1\65\1\46"+
-    "\17\65\1\66\5\65\1\46\12\65\24\46\1\65\3\46"+
-    "\3\65\1\46\13\65\2\44\2\65\1\66\5\65\1\46"+
-    "\3\65\1\44\6\65\24\46\1\44\3\46\3\65\1\46"+
-    "\12\65\13\75\1\46\4\75\1\32\5\75\24\46\1\75"+
-    "\3\46\3\75\1\46\4\75\1\76\5\75\116\0\1\77"+
-    "\62\0\1\100\1\101\5\0\1\102\53\0\1\103\1\104"+
-    "\1\105\4\106\1\103\1\107\1\103\1\107\1\110\1\103"+
-    "\1\111\1\112\1\103\1\107\5\106\2\113\1\114\1\115"+
-    "\3\116\3\117\1\120\2\121\2\122\1\110\1\123\1\110"+
-    "\1\124\1\125\1\104\1\126\1\127\1\130\2\103\1\112"+
-    "\1\110\1\103\1\112\1\103\1\112\6\103\47\0\1\131"+
-    "\25\0\2\44\14\0\1\44\32\0\1\44\22\0\2\46"+
-    "\1\0\2\46\5\0\5\46\6\0\30\46\3\0\1\46"+
-    "\23\0\1\132\73\0\1\133\1\134\5\0\1\102\45\0"+
-    "\1\135\5\0\1\103\1\104\1\105\4\106\1\103\3\107"+
+    "\1\64\1\43\1\64\2\43\1\64\2\43\1\64\1\43"+
+    "\1\64\7\43\1\64\4\43\1\64\20\43\1\62\1\43"+
+    "\1\63\1\43\1\27\63\43\5\65\1\66\5\65\1\67"+
+    "\1\65\1\70\10\65\26\67\1\65\3\67\3\65\1\67"+
+    "\4\65\1\71\5\65\65\13\1\72\10\13\13\65\1\46"+
+    "\12\65\26\46\1\65\3\46\3\65\1\46\6\65\1\73"+
+    "\16\65\1\46\12\65\26\46\1\65\3\46\1\65\1\74"+
+    "\1\65\1\46\17\65\1\66\5\65\1\46\12\65\26\46"+
+    "\1\65\3\46\3\65\1\46\13\65\2\44\2\65\1\66"+
+    "\5\65\1\46\3\65\1\44\6\65\26\46\1\44\3\46"+
+    "\3\65\1\46\12\65\13\75\1\46\4\75\1\32\5\75"+
+    "\26\46\1\75\3\46\3\75\1\46\4\75\1\76\5\75"+
+    "\120\0\1\77\64\0\1\100\1\101\5\0\1\102\55\0"+
+    "\1\103\1\104\1\105\4\106\1\103\1\107\1\103\1\107"+
     "\1\110\1\103\1\111\1\112\1\103\1\107\5\106\2\113"+
-    "\1\114\1\115\3\116\3\117\1\120\2\121\2\122\1\110"+
-    "\1\123\1\110\1\124\1\125\1\104\1\126\1\127\1\130"+
+    "\1\114\1\115\3\116\3\117\1\120\2\121\2\122\3\123"+
+    "\1\110\1\124\1\125\1\126\1\104\1\127\1\130\1\131"+
     "\2\103\1\112\1\110\1\103\1\112\1\103\1\112\6\103"+
-    "\67\0\1\136\17\0\1\67\12\0\24\67\1\0\3\67"+
-    "\3\0\1\67\25\0\1\70\12\0\24\70\1\0\3\70"+
-    "\3\0\1\70\23\0\1\137\66\0\1\140\37\0\1\141"+
-    "\11\0\1\142\1\143\6\0\1\144\1\0\1\144\1\145"+
-    "\1\146\1\147\11\0\1\100\73\0\1\150\1\151\62\0"+
-    "\2\104\47\0\1\104\23\0\1\152\47\0\1\152\27\0"+
-    "\1\153\143\0\1\154\1\155\14\0\74\156\1\0\2\157"+
-    "\3\0\1\160\20\0\2\157\1\0\1\157\4\0\3\157"+
-    "\3\0\1\157\1\0\1\157\2\0\1\157\22\0\2\161"+
-    "\24\0\2\161\1\0\1\161\4\0\3\161\3\0\1\161"+
-    "\1\0\1\161\2\0\1\161\77\0\1\162\1\163\25\0"+
-    "\1\164\140\0\1\165\12\0\1\166\73\0\1\167\1\170"+
-    "\1\0\5\171\1\0\66\171\11\0\1\150\64\0\1\172"+
-    "\47\0\1\172\52\0\1\173\43\0\2\174\24\0\2\174"+
-    "\1\0\1\174\4\0\3\174\3\0\1\174\1\0\1\174"+
-    "\2\0\1\174\22\0\2\175\4\0\1\176\17\0\2\175"+
-    "\1\0\1\175\4\0\3\175\3\0\1\175\1\0\1\175"+
-    "\2\0\1\175\22\0\2\177\24\0\2\177\1\0\1\177"+
-    "\4\0\3\177\3\0\1\177\1\0\1\177\2\0\1\177"+
-    "\21\0\5\171\1\200\66\171\2\0\1\201\47\0\1\201"+
-    "\30\0\1\116\65\0\2\202\4\0\1\174\17\0\2\202"+
-    "\1\0\1\202\4\0\3\202\3\0\1\202\1\0\1\202"+
-    "\2\0\1\202\22\0\2\203\24\0\2\203\1\0\1\203"+
-    "\4\0\3\203\3\0\1\203\1\0\1\203\2\0\1\203"+
-    "\22\0\2\204\4\0\1\174\17\0\2\204\1\0\1\204"+
-    "\4\0\3\204\3\0\1\204\1\0\1\204\2\0\1\204"+
-    "\22\0\2\205\24\0\2\205\1\0\1\205\4\0\3\205"+
-    "\3\0\1\205\1\0\1\205\2\0\1\205\22\0\2\206"+
-    "\4\0\1\174\17\0\2\206\1\0\1\206\4\0\3\206"+
-    "\3\0\1\206\1\0\1\206\2\0\1\206\22\0\2\207"+
-    "\4\0\1\174\17\0\2\207\1\0\1\207\4\0\3\207"+
-    "\3\0\1\207\1\0\1\207\2\0\1\207\22\0\2\210"+
-    "\4\0\1\174\17\0\2\210\1\0\1\210\4\0\3\210"+
-    "\3\0\1\210\1\0\1\210\2\0\1\210\22\0\2\211"+
-    "\4\0\1\174\17\0\2\211\1\0\1\211\4\0\3\211"+
-    "\3\0\1\211\1\0\1\211\2\0\1\211\22\0\2\211"+
-    "\4\0\1\176\17\0\2\211\1\0\1\211\4\0\3\211"+
-    "\3\0\1\211\1\0\1\211\2\0\1\211\21\0";
+    "\47\0\1\132\27\0\2\44\14\0\1\44\34\0\1\44"+
+    "\22\0\2\46\1\0\2\46\5\0\5\46\6\0\32\46"+
+    "\3\0\1\46\23\0\1\133\75\0\1\134\1\135\5\0"+
+    "\1\102\47\0\1\136\5\0\1\103\1\104\1\105\4\106"+
+    "\1\103\3\107\1\110\1\103\1\111\1\112\1\103\1\107"+
+    "\5\106\2\113\1\114\1\115\3\116\3\117\1\120\2\121"+
+    "\2\122\3\123\1\110\1\124\1\125\1\126\1\104\1\127"+
+    "\1\130\1\131\2\103\1\112\1\110\1\103\1\112\1\103"+
+    "\1\112\6\103\71\0\1\137\17\0\1\67\12\0\26\67"+
+    "\1\0\3\67\3\0\1\67\25\0\1\70\12\0\26\70"+
+    "\1\0\3\70\3\0\1\70\23\0\1\140\70\0\1\141"+
+    "\37\0\1\142\13\0\1\143\1\144\6\0\1\145\1\0"+
+    "\1\145\1\146\1\147\1\150\11\0\1\100\75\0\1\151"+
+    "\1\152\64\0\2\104\51\0\1\104\23\0\1\153\51\0"+
+    "\1\153\27\0\1\154\147\0\1\155\1\156\14\0\76\157"+
+    "\1\0\2\160\3\0\1\161\20\0\2\160\1\0\1\160"+
+    "\4\0\3\160\5\0\2\160\3\0\1\160\22\0\2\162"+
+    "\24\0\2\162\1\0\1\162\4\0\3\162\5\0\2\162"+
+    "\3\0\1\162\101\0\1\163\1\164\25\0\1\165\144\0"+
+    "\1\166\12\0\1\167\75\0\1\170\1\171\1\0\5\172"+
+    "\1\0\70\172\11\0\1\151\66\0\1\173\51\0\1\173"+
+    "\52\0\1\174\45\0\2\175\24\0\2\175\1\0\1\175"+
+    "\4\0\3\175\5\0\2\175\3\0\1\175\22\0\2\176"+
+    "\4\0\1\177\17\0\2\176\1\0\1\176\4\0\3\176"+
+    "\5\0\2\176\3\0\1\176\22\0\2\200\24\0\2\200"+
+    "\1\0\1\200\4\0\3\200\5\0\2\200\3\0\1\200"+
+    "\21\0\5\172\1\201\70\172\2\0\1\202\51\0\1\202"+
+    "\30\0\1\116\67\0\2\203\4\0\1\175\17\0\2\203"+
+    "\1\0\1\203\4\0\3\203\5\0\2\203\3\0\1\203"+
+    "\22\0\2\204\24\0\2\204\1\0\1\204\4\0\3\204"+
+    "\5\0\2\204\3\0\1\204\22\0\2\205\4\0\1\175"+
+    "\17\0\2\205\1\0\1\205\4\0\3\205\5\0\2\205"+
+    "\3\0\1\205\22\0\2\206\24\0\2\206\1\0\1\206"+
+    "\4\0\3\206\5\0\2\206\3\0\1\206\22\0\2\207"+
+    "\4\0\1\175\17\0\2\207\1\0\1\207\4\0\3\207"+
+    "\5\0\2\207\3\0\1\207\22\0\2\210\4\0\1\175"+
+    "\17\0\2\210\1\0\1\210\4\0\3\210\5\0\2\210"+
+    "\3\0\1\210\22\0\2\211\4\0\1\175\17\0\2\211"+
+    "\1\0\1\211\4\0\3\211\5\0\2\211\3\0\1\211"+
+    "\22\0\2\212\4\0\1\175\17\0\2\212\1\0\1\212"+
+    "\4\0\3\212\5\0\2\212\3\0\1\212\22\0\2\212"+
+    "\4\0\1\177\17\0\2\212\1\0\1\212\4\0\3\212"+
+    "\5\0\2\212\3\0\1\212\21\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[3780];
+    int [] result = new int[3906];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -391,14 +388,14 @@ class _RegExLexer implements FlexLexer {
     "\1\1\1\11\1\1\1\11\1\1\3\11\1\1\1\11"+
     "\1\1\1\11\1\1\1\11\1\1\2\11\1\1\3\11"+
     "\2\1\5\11\2\1\1\11\1\0\1\1\1\11\2\1"+
-    "\6\11\2\1\2\11\1\1\3\11\2\1\2\11\1\1"+
+    "\6\11\2\1\2\11\1\1\4\11\2\1\2\11\1\1"+
     "\3\11\1\0\4\11\1\0\1\1\4\11\1\0\1\11"+
     "\1\0\1\1\1\0\3\11\3\1\7\11\1\0\1\1"+
     "\1\0\1\11\1\1\1\11\1\1\2\11\3\1\1\11"+
     "\4\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[137];
+    int [] result = new int[138];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -470,6 +467,7 @@ class _RegExLexer implements FlexLexer {
     private boolean allowEmptyCharacterClass;
     private boolean allowHorizontalWhitespaceClass;
     private boolean allowPosixBracketExpressions;
+    private boolean allowTransformationEscapes;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -482,6 +480,7 @@ class _RegExLexer implements FlexLexer {
       this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
       this.allowPosixBracketExpressions = capabilities.contains(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
+      this.allowTransformationEscapes = capabilities.contains(RegExpCapability.TRANSFORMATION_ESCAPES);
     }
 
     private void yypushstate(int state) {
@@ -753,107 +752,107 @@ class _RegExLexer implements FlexLexer {
           case 1: 
             { yypopstate(); return RegExpTT.COMMENT;
             }
-          case 88: break;
+          case 90: break;
           case 2: 
             { return RegExpTT.CHARACTER;
             }
-          case 89: break;
+          case 91: break;
           case 3: 
             { return RegExpTT.DOT;
             }
-          case 90: break;
+          case 92: break;
           case 4: 
             { capturingGroupCount++; return RegExpTT.GROUP_BEGIN;
             }
-          case 91: break;
+          case 93: break;
           case 5: 
             { return RegExpTT.GROUP_END;
             }
-          case 92: break;
+          case 94: break;
           case 6: 
             { if (yystate() != CLASS2) { yypushstate(EMBRACED); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;
             }
-          case 93: break;
+          case 95: break;
           case 7: 
             { yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN;
             }
-          case 94: break;
+          case 96: break;
           case 8: 
             { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
             }
-          case 95: break;
+          case 97: break;
           case 9: 
             { return RegExpTT.MINUS;
             }
-          case 96: break;
+          case 98: break;
           case 10: 
             { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER;
             }
-          case 97: break;
+          case 99: break;
           case 11: 
             { return RegExpTT.CARET;
             }
-          case 98: break;
+          case 100: break;
           case 12: 
             { return RegExpTT.DOLLAR;
             }
-          case 99: break;
+          case 101: break;
           case 13: 
             { return RegExpTT.QUEST;
             }
-          case 100: break;
+          case 102: break;
           case 14: 
             { return RegExpTT.STAR;
             }
-          case 101: break;
+          case 103: break;
           case 15: 
             { return RegExpTT.PLUS;
             }
-          case 102: break;
+          case 104: break;
           case 16: 
             { return RegExpTT.UNION;
             }
-          case 103: break;
+          case 105: break;
           case 17: 
             { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER;
             }
-          case 104: break;
+          case 106: break;
           case 18: 
             { if (commentMode) { yypushstate(COMMENT); return RegExpTT.COMMENT; } else return RegExpTT.CHARACTER;
             }
-          case 105: break;
+          case 107: break;
           case 19: 
             { yypopstate(); yypushback(1);
             }
-          case 106: break;
+          case 108: break;
           case 20: 
             { return RegExpTT.NUMBER;
             }
-          case 107: break;
+          case 109: break;
           case 21: 
             { yypopstate(); return RegExpTT.RBRACE;
             }
-          case 108: break;
+          case 110: break;
           case 22: 
             { return RegExpTT.NAME;
             }
-          case 109: break;
+          case 111: break;
           case 23: 
             { return RegExpTT.COMMA;
             }
-          case 110: break;
+          case 112: break;
           case 24: 
             { assert false : yytext();
             }
-          case 111: break;
+          case 113: break;
           case 25: 
             { yybegin(CLASS2); return RegExpTT.CHARACTER;
             }
-          case 112: break;
+          case 114: break;
           case 26: 
             { yybegin(CLASS1); return RegExpTT.CARET;
             }
-          case 113: break;
+          case 115: break;
           case 27: 
             { if (allowNestedCharacterClasses) {
                            yypushstate(CLASS2);
@@ -861,81 +860,81 @@ class _RegExLexer implements FlexLexer {
                         }
                         return RegExpTT.CHARACTER;
             }
-          case 114: break;
+          case 116: break;
           case 28: 
             { yypopstate(); return RegExpTT.CLASS_END;
             }
-          case 115: break;
+          case 117: break;
           case 29: 
             { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER;
             }
-          case 116: break;
+          case 118: break;
           case 30: 
             { yybegin(CLASS2); return RegExpTT.CARET;
             }
-          case 117: break;
+          case 119: break;
           case 31: 
             { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE;
             }
-          case 118: break;
+          case 120: break;
           case 32: 
             { yypopstate(); return RegExpTT.CATEGORY_SHORT_HAND;
             }
-          case 119: break;
+          case 121: break;
           case 33: 
             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER;
             }
-          case 120: break;
+          case 122: break;
           case 34: 
             { yybegin(YYINITIAL); return RegExpTT.GROUP_END;
             }
-          case 121: break;
+          case 123: break;
           case 35: 
             { handleOptions(); return RegExpTT.OPTIONS_ON;
             }
-          case 122: break;
+          case 124: break;
           case 36: 
             { handleOptions(); return RegExpTT.OPTIONS_OFF;
             }
-          case 123: break;
+          case 125: break;
           case 37: 
             { yybegin(YYINITIAL); return RegExpTT.COLON;
             }
-          case 124: break;
+          case 126: break;
           case 38: 
             { yybegin(YYINITIAL); return RegExpTT.GT;
             }
-          case 125: break;
+          case 127: break;
           case 39: 
             { yybegin(YYINITIAL); return RegExpTT.QUOTE;
             }
-          case 126: break;
+          case 128: break;
           case 40: 
             { return RegExpTT.BAD_CHARACTER;
             }
-          case 127: break;
+          case 129: break;
           case 41: 
             { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS;
             }
-          case 128: break;
+          case 130: break;
           case 42: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN;
             }
-          case 129: break;
+          case 131: break;
           case 43: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { yypushstate(NEGATE_CLASS2); return RegExpTT.CLASS_BEGIN;
             }
-          case 130: break;
+          case 132: break;
           case 44: 
             { return RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 131: break;
+          case 133: break;
           case 45: 
             { if (allowOctalNoLeadingZero) {
                                   CharSequence s = yytext();
@@ -957,76 +956,80 @@ class _RegExLexer implements FlexLexer {
                                 }
                                 return RegExpTT.BACKREF;
             }
-          case 132: break;
+          case 134: break;
           case 46: 
             { return (allowOctalNoLeadingZero ? RegExpTT.OCT_CHAR : RegExpTT.BAD_OCT_VALUE);
             }
-          case 133: break;
+          case 135: break;
           case 47: 
             { return (yystate() == CLASS2) ? RegExpTT.REDUNDANT_ESCAPE : RegExpTT.ESC_CHARACTER;
             }
-          case 134: break;
+          case 136: break;
           case 48: 
             { return RegExpTT.ESC_CHARACTER;
             }
-          case 135: break;
+          case 137: break;
           case 49: 
             { return (yystate() == CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 136: break;
+          case 138: break;
           case 50: 
             { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 137: break;
+          case 139: break;
           case 51: 
             { return RegExpTT.ESC_CTRL_CHARACTER;
             }
-          case 138: break;
+          case 140: break;
           case 52: 
             { return yystate() != CLASS2 ? RegExpTT.BOUNDARY : RegExpTT.ESC_CHARACTER;
             }
-          case 139: break;
+          case 141: break;
           case 53: 
             { return RegExpTT.CHAR_CLASS;
             }
-          case 140: break;
+          case 142: break;
           case 54: 
             { if (xmlSchemaMode) return RegExpTT.CHAR_CLASS; else return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
             }
-          case 141: break;
+          case 143: break;
           case 55: 
             { yypushstate(PROP); return RegExpTT.PROPERTY;
             }
-          case 142: break;
-          case 56: 
-            { yypushstate(QUOTED); return RegExpTT.QUOTE_BEGIN;
-            }
-          case 143: break;
-          case 57: 
-            { return RegExpTT.BAD_HEX_VALUE;
-            }
           case 144: break;
-          case 58: 
-            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+          case 56: 
+            { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
             }
           case 145: break;
-          case 59: 
-            { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
+          case 57: 
+            { yypushstate(QUOTED); return RegExpTT.QUOTE_BEGIN;
             }
           case 146: break;
-          case 60: 
-            { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER;
+          case 58: 
+            { return RegExpTT.BAD_HEX_VALUE;
             }
           case 147: break;
-          case 61: 
-            { yypopstate(); return RegExpTT.QUOTE_END;
+          case 59: 
+            { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
             }
           case 148: break;
-          case 62: 
-            { yybegin(CLASS2); return RegExpTT.REDUNDANT_ESCAPE;
+          case 60: 
+            { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
             }
           case 149: break;
+          case 61: 
+            { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER;
+            }
+          case 150: break;
+          case 62: 
+            { yypopstate(); return RegExpTT.QUOTE_END;
+            }
+          case 151: break;
           case 63: 
+            { yybegin(CLASS2); return RegExpTT.REDUNDANT_ESCAPE;
+            }
+          case 152: break;
+          case 64: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
@@ -1036,8 +1039,8 @@ class _RegExLexer implements FlexLexer {
                             }
                             return RegExpTT.CHARACTER;
             }
-          case 150: break;
-          case 64: 
+          case 153: break;
+          case 65: 
             { if (allowPosixBracketExpressions) {
                             yybegin(BRACKET_EXPRESSION);
                             return RegExpTT.BRACKET_EXPRESSION_BEGIN;
@@ -1046,71 +1049,75 @@ class _RegExLexer implements FlexLexer {
                             return RegExpTT.CHARACTER;
                           }
             }
-          case 151: break;
-          case 65: 
+          case 154: break;
+          case 66: 
             { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER;
             }
-          case 152: break;
-          case 66: 
+          case 155: break;
+          case 67: 
             { yybegin(CLASS2); return RegExpTT.BRACKET_EXPRESSION_END;
             }
-          case 153: break;
-          case 67: 
+          case 156: break;
+          case 68: 
             { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF;
             }
-          case 154: break;
-          case 68: 
+          case 157: break;
+          case 69: 
             { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP;
             }
-          case 155: break;
-          case 69: 
+          case 158: break;
+          case 70: 
             { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP;
             }
-          case 156: break;
-          case 70: 
+          case 159: break;
+          case 71: 
             { return RegExpTT.NON_CAPT_GROUP;
             }
-          case 157: break;
-          case 71: 
+          case 160: break;
+          case 72: 
             { return RegExpTT.POS_LOOKAHEAD;
             }
-          case 158: break;
-          case 72: 
+          case 161: break;
+          case 73: 
             { return RegExpTT.NEG_LOOKAHEAD;
             }
-          case 159: break;
-          case 73: 
+          case 162: break;
+          case 74: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN;
             }
-          case 160: break;
-          case 74: 
+          case 163: break;
+          case 75: 
             { return RegExpTT.OCT_CHAR;
             }
-          case 161: break;
-          case 75: 
+          case 164: break;
+          case 76: 
             { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL;
             }
-          case 162: break;
-          case 76: 
+          case 165: break;
+          case 77: 
             { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL;
             }
-          case 163: break;
-          case 77: 
+          case 166: break;
+          case 78: 
             { if (xmlSchemaMode) { yypushback(1); return RegExpTT.CHAR_CLASS; } else return RegExpTT.CTRL;
             }
-          case 164: break;
-          case 78: 
+          case 167: break;
+          case 79: 
+            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+            }
+          case 168: break;
+          case 80: 
             { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF;
             }
-          case 165: break;
-          case 79: 
+          case 169: break;
+          case 81: 
             { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF;
             }
-          case 166: break;
-          case 80: 
+          case 170: break;
+          case 82: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
@@ -1120,35 +1127,35 @@ class _RegExLexer implements FlexLexer {
                                      }
                                      return RegExpTT.CHARACTER;
             }
-          case 167: break;
-          case 81: 
+          case 171: break;
+          case 83: 
             { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP;
             }
-          case 168: break;
-          case 82: 
+          case 172: break;
+          case 84: 
             { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF;
             }
-          case 169: break;
-          case 83: 
+          case 173: break;
+          case 85: 
             { return RegExpTT.POS_LOOKBEHIND;
             }
-          case 170: break;
-          case 84: 
+          case 174: break;
+          case 86: 
             { return RegExpTT.NEG_LOOKBEHIND;
             }
-          case 171: break;
-          case 85: 
+          case 175: break;
+          case 87: 
             { return RegExpTT.HEX_CHAR;
             }
-          case 172: break;
-          case 86: 
+          case 176: break;
+          case 88: 
             { return RegExpTT.COMMENT;
             }
-          case 173: break;
-          case 87: 
+          case 177: break;
+          case 89: 
             { return RegExpTT.UNICODE_CHAR;
             }
-          case 174: break;
+          case 178: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

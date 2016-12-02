@@ -51,5 +51,10 @@ public enum RegExpCapability {
   /**
    * supports for property negations like \p{^Alnum}
    */
-  CARET_NEGATED_PROPERTIES
+  CARET_NEGATED_PROPERTIES,
+
+  /**
+   * \\u, \l, \\U, \L, and \E
+   */
+  TRANSFORMATION_ESCAPES
 }
