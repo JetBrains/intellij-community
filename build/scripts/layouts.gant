@@ -80,6 +80,8 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
       fileset(dir: "$home/lib") {
         include(name: "jdom.jar")
         include(name: "jna.jar")
+        include(name: "jna-platform.jar")
+        include(name: "oromatcher.jar")
         include(name: "trove4j.jar")
         include(name: "asm-all.jar")
         include(name: "nanoxml-*.jar")
