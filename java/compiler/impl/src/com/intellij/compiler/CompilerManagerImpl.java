@@ -54,7 +54,8 @@ import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -343,21 +344,18 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
-    String javaHome = null;
     final Sdk sdk = runtime.getFirst();
     final SdkTypeId type = sdk.getSdkType();
+    String javaHome = null;
     if (type instanceof JavaSdkType) {
       javaHome = sdk.getHomePath();
-      if (javaHome != null) {
-        final JavaSdk javaSdk = JavaSdk.getInstance();
-        if (!javaSdk.isValidSdkHome(javaHome)) {
-          // this can be a java-dependent SDK, implementing JavaSdkType
-          // hack, because there is no direct way to obtain the java sdk, this sdk depends on 
-          final String binPath = ((JavaSdkType)type).getBinPath(sdk);
-          javaHome = binPath != null? new File(binPath).getParent() : null;
-          if (javaHome != null && !javaSdk.isValidSdkHome(javaHome)) {
-            javaHome = null;
-          }
+      if (!isJdkOrJre(javaHome)) {
+        // this can be a java-dependent SDK, implementing JavaSdkType
+        // hack, because there is no direct way to obtain the java sdk, this sdk depends on
+        final String binPath = ((JavaSdkType)type).getBinPath(sdk);
+        javaHome = binPath != null? new File(binPath).getParent() : null;
+        if (!isJdkOrJre(javaHome)) {
+          javaHome = null;
         }
       }
     }
@@ -408,6 +406,10 @@ public class CompilerManagerImpl extends CompilerManager {
       result.add(new CompiledClass(fileObject.getName(), fileObject.getClassName(), content != null ? content.toByteArray() : null));
     }
     return result;
+  }
+
+  private static boolean isJdkOrJre(@Nullable String path) {
+    return path != null && (JdkUtil.checkForJre(path) || JdkUtil.checkForJdk(path));
   }
 
   private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
