@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -78,12 +77,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     setRootVisible(false);
     setDragEnabled(true);
 
+    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+
+    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true);
+    setCellRenderer(renderer);
+
     new TreeSpeedSearch(this, TO_TEXT_CONVERTER);
     SmartExpander.installOn(this);
-    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
-    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.FALSE, false)).installOn(this);
-
-    setCellRenderer(new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true));
+    new TreeLinkMouseListener(renderer).installOn(this);
   }
 
   @Override
