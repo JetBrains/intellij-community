@@ -44,6 +44,12 @@ public class TodoFilter implements Cloneable {
     myTodoPatterns = new SmartHashSet<>();
   }
 
+  public TodoFilter(@NotNull Element element, @NotNull List<TodoPattern> patterns) {
+    setName("");
+    myTodoPatterns = new SmartHashSet<>();
+    readExternal(element, patterns);
+  }
+
   /**
    * @return <code>true</code> if and only if specified <code>psiFile</code> has
    * <code>TodoItem</code>s accepted by the filter.
@@ -106,20 +112,14 @@ public class TodoFilter implements Cloneable {
     return myTodoPatterns.isEmpty();
   }
 
-  /**
-   * @param element  with filter's data.
-   * @param patterns all available patterns
-   */
-  public void readExternal(Element element, @NotNull List<TodoPattern> patterns) {
+  private void readExternal(@NotNull Element element, @NotNull List<TodoPattern> patterns) {
     myName = element.getAttributeValue(ATTRIBUTE_NAME);
     if (myName == null) {
       throw new IllegalArgumentException();
     }
+
     myTodoPatterns.clear();
-    for (Element child : element.getChildren()) {
-      if (!ELEMENT_PATTERN.equals(child.getName())) {
-        continue;
-      }
+    for (Element child : element.getChildren(ELEMENT_PATTERN)) {
       try {
         int index = Integer.parseInt(child.getAttributeValue(ATTRIBUTE_INDEX));
         if (index < 0 || index > patterns.size() - 1) {
