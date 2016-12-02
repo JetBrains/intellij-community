@@ -17,6 +17,7 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommandLineWrapperUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
@@ -103,22 +104,6 @@ public class JdkUtil {
     return null;
   }
 
-  /** @deprecated to be removed in IDEA 2018 */
-  @Nullable
-  public static String getJarMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
-    VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
-    if (manifestFile != null) {
-      try (InputStream stream = manifestFile.getInputStream()) {
-        return new Manifest(stream).getMainAttributes().getValue(attribute);
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-      }
-    }
-
-    return null;
-  }
-
   public static boolean checkForJdk(@NotNull String homePath) {
     return checkForJdk(new File(FileUtil.toSystemDependentName(homePath)));
   }
@@ -162,18 +147,27 @@ public class JdkUtil {
            new File(homePath, "classes").isDirectory();              // custom build
   }
 
-  public static GeneralCommandLine setupJVMCommandLine(final String exePath,
-                                                       final SimpleJavaParameters javaParameters,
-                                                       final boolean forceDynamicClasspath) {
-    final GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
+  public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
+    Sdk jdk = javaParameters.getJdk();
+    if (jdk == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
+    SdkTypeId type = jdk.getSdkType();
+    if (!(type instanceof JavaSdkType)) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
+    String exePath = ((JavaSdkType)type).getVMExecutablePath(jdk);
+    if (exePath == null) throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
 
+    GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
+    setupCommandLine(commandLine, javaParameters);
+    return commandLine;
+  }
+
+  private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
     final ParametersList vmParameters = javaParameters.getVMParametersList();
     commandLine.withEnvironment(javaParameters.getEnv());
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
     final Class commandLineWrapper;
     boolean passProgramParametersViaClassPathJar = false;
-    if (forceDynamicClasspath &&
+    if (javaParameters.isDynamicClasspath() &&
         !explicitClassPath(vmParameters) &&
         javaParameters.getModulePath().isEmpty() &&
         (commandLineWrapper = getCommandLineWrapperClass()) != null) {
@@ -209,8 +203,6 @@ public class JdkUtil {
     }
 
     commandLine.withWorkDirectory(javaParameters.getWorkingDirectory());
-
-    return commandLine;
   }
 
   private static boolean explicitClassPath(ParametersList vmParameters) {
@@ -224,7 +216,7 @@ public class JdkUtil {
   private static void appendOldCommandLineWrapper(SimpleJavaParameters javaParameters,
                                                   GeneralCommandLine commandLine,
                                                   ParametersList vmParametersList,
-                                                  Class commandLineWrapper) {
+                                                  Class commandLineWrapper) throws CantRunException {
     File vmParamsFile = null;
     if (javaParameters.isDynamicVMOptions() && useDynamicVMOptions()) {
       try {
@@ -283,8 +275,7 @@ public class JdkUtil {
       commandLine.addParameter(classpath);
     }
     catch (IOException e) {
-      LOG.info(e);
-      throwUnableToCreateTempFile();
+      throwUnableToCreateTempFile(e);
     }
 
     appendEncoding(javaParameters, commandLine, vmParametersList);
@@ -305,7 +296,7 @@ public class JdkUtil {
                                                GeneralCommandLine commandLine,
                                                ParametersList vmParametersList,
                                                Class commandLineWrapper,
-                                               boolean storeProgramParametersInJar) {
+                                               boolean storeProgramParametersInJar) throws CantRunException {
     try {
       final Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
@@ -353,13 +344,12 @@ public class JdkUtil {
       }
     }
     catch (IOException e) {
-      LOG.info(e);
-      throwUnableToCreateTempFile();
+      throwUnableToCreateTempFile(e);
     }
   }
 
-  private static void throwUnableToCreateTempFile() {
-    throw new RuntimeException(new CantRunException("Failed to create temp file with long classpath in " + FileUtilRt.getTempDirectory()));
+  private static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
+    throw new CantRunException("Failed to a create temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
   private static boolean isClassPathJarEnabled(SimpleJavaParameters javaParameters, String currentPath) {
@@ -460,4 +450,37 @@ public class JdkUtil {
   public static boolean useClasspathJar() {
     return PropertiesComponent.getInstance().getBoolean("idea.dynamic.classpath.jar", true);
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated to be removed in IDEA 2018 */
+  @Nullable
+  public static String getJarMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
+    VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
+    if (manifestFile != null) {
+      try (InputStream stream = manifestFile.getInputStream()) {
+        return new Manifest(stream).getMainAttributes().getValue(attribute);
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+      }
+    }
+
+    return null;
+  }
+
+  /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2018) */
+  public static GeneralCommandLine setupJVMCommandLine(final String exePath,
+                                                       final SimpleJavaParameters javaParameters,
+                                                       final boolean forceDynamicClasspath) {
+    try {
+      javaParameters.setUseDynamicClasspath(forceDynamicClasspath);
+      GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
+      setupCommandLine(commandLine, javaParameters);
+      return commandLine;
+    }
+    catch (CantRunException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  //</editor-fold>
 }

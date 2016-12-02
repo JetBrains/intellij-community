@@ -180,22 +180,21 @@ public class GrabDependencies implements IntentionAction {
     for (String grabText : queries.keySet()) {
       final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
       //debug
-      //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+      //javaParameters.getVMParametersList().add("-Xdebug");
+      //javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       try {
         DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true);
+        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
+        javaParameters.getProgramParametersList().add(queries.get(grabText));
+        javaParameters.setUseDynamicClasspath(true);
+        lines.put(grabText, javaParameters.toCommandLine());
       }
       catch (CantRunException e) {
-        NOTIFICATION_GROUP.createNotification("Can't run @Grab: " + ExceptionUtil.getMessage(e), ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
+        String title = "Can't run @Grab: " + ExceptionUtil.getMessage(e);
+        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
         return;
       }
-      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
-
-      javaParameters.getProgramParametersList().add(queries.get(grabText));
-
-      javaParameters.setUseDynamicClasspath(true);
-
-      lines.put(grabText, javaParameters.toCommandLine());
     }
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab Annotations") {

@@ -15,11 +15,12 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -94,8 +95,16 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     myCharset = charset;
   }
 
+  public boolean isDynamicClasspath() {
+    return myUseDynamicClasspath;
+  }
+
   public void setUseDynamicClasspath(boolean useDynamicClasspath) {
     myUseDynamicClasspath = useDynamicClasspath;
+  }
+
+  public void setUseDynamicClasspath(@Nullable Project project) {
+    myUseDynamicClasspath = JdkUtil.useDynamicClasspath(project);
   }
 
   public boolean isDynamicVMOptions() {
@@ -139,12 +148,13 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     myJarPath = jarPath;
   }
 
+  /**
+   * @throws CantRunException when incorrect Java SDK is specified
+   * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
+   */
   @NotNull
-  public GeneralCommandLine toCommandLine() {
-    Sdk jdk = getJdk();
-    if (jdk == null) throw new IllegalArgumentException("SDK should be defined");
-    String exePath = ((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk);
-    return JdkUtil.setupJVMCommandLine(exePath, this, myUseDynamicClasspath);
+  public GeneralCommandLine toCommandLine() throws CantRunException {
+    return JdkUtil.setupJVMCommandLine(this);
   }
 
   @NotNull
