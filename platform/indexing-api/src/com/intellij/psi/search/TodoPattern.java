@@ -18,34 +18,32 @@ package com.intellij.psi.search;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class TodoPattern implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.TodoPattern");
 
   private IndexPattern myIndexPattern;
 
-  /**
-   * Specify Icon and text attributes.
-   */
   private TodoAttributes myAttributes;
 
   @NonNls private static final String CASE_SENS_ATT = "case-sensitive";
   @NonNls private static final String PATTERN_ATT = "pattern";
 
-  public TodoPattern(@NotNull TodoAttributes attributes){
+  public TodoPattern(@NotNull TodoAttributes attributes) {
     this("", attributes, false);
   }
 
-  public TodoPattern(@NotNull @NonNls String patternString, @NotNull TodoAttributes attributes, boolean caseSensitive) {
+  public TodoPattern(@NotNull Element state, @NotNull TextAttributes defaultTodoAttributes) {
+    myAttributes = new TodoAttributes(state, defaultTodoAttributes);
+    myIndexPattern = new IndexPattern(state.getAttributeValue(PATTERN_ATT, "").trim(), Boolean.parseBoolean(state.getAttributeValue(CASE_SENS_ATT)));
+  }
+
+  public TodoPattern(@NotNull String patternString, @NotNull TodoAttributes attributes, boolean caseSensitive) {
     myIndexPattern = new IndexPattern(patternString, caseSensitive);
     myAttributes = attributes;
   }
@@ -94,21 +92,6 @@ public class TodoPattern implements Cloneable {
 
   public Pattern getPattern(){
     return myIndexPattern.getPattern();
-  }
-
-  public void readExternal(Element element, @NotNull TextAttributes defaultTodoAttributes) {
-    try {
-      myAttributes = new TodoAttributes(element,defaultTodoAttributes);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
-
-    myIndexPattern.setCaseSensitive(Boolean.parseBoolean(element.getAttributeValue(CASE_SENS_ATT)));
-    String attributeValue = element.getAttributeValue(PATTERN_ATT);
-    if (attributeValue != null){
-      myIndexPattern.setPatternString(attributeValue.trim());
-    }
   }
 
   public void writeExternal(Element element) {
