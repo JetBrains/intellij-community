@@ -39,7 +39,7 @@ public class JavadocManagerImpl implements JavadocManager {
   public JavadocManagerImpl(Project project) {
     myInfos = new ArrayList<JavadocTagInfo>();
 
-    myInfos.add(new SimpleDocTagInfo("author", LanguageLevel.JDK_1_3, false, PsiClass.class, PsiPackage.class));
+    myInfos.add(new SimpleDocTagInfo("author", LanguageLevel.JDK_1_3, false, PsiClass.class, PsiPackage.class, PsiMethod.class));
     myInfos.add(new SimpleDocTagInfo("deprecated", LanguageLevel.JDK_1_3, false, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("serialData", LanguageLevel.JDK_1_3, false, PsiMethod.class));
     myInfos.add(new SimpleDocTagInfo("serialField", LanguageLevel.JDK_1_3, false, PsiField.class));
