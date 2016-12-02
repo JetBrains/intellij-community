@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -36,6 +37,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -213,10 +215,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
 
+        Lazy<Map<String, TemplateContextType>> idToType = TemplateContext.getIdToType();
         for (TemplateImpl t : template.getElements()) {
           TemplateImpl defaultTemplate = getDefaultTemplate(t);
           if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
-            templateSetElement.addContent(serializeTemplate(t, defaultTemplate));
+            templateSetElement.addContent(serializeTemplate(t, defaultTemplate, idToType));
           }
         }
 
@@ -583,7 +586,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate) {
+  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -622,7 +625,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       element.addContent(variableElement);
     }
 
-    Element contextElement = template.getTemplateContext().writeTemplateContext(defaultTemplate == null ? null : defaultTemplate.getTemplateContext());
+    Element contextElement = template.getTemplateContext().writeTemplateContext(defaultTemplate == null ? null : defaultTemplate.getTemplateContext(), idToType);
     if (contextElement != null) {
       element.addContent(contextElement);
     }
