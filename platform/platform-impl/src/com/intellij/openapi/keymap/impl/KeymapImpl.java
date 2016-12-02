@@ -96,17 +96,34 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return getName();
   }
 
+  @Override
+  @NotNull
   public KeymapImpl deriveKeymap(@NotNull String newName) {
+    return _deriveKeymap(newName);
+  }
+
+  @NotNull
+  private KeymapImpl _deriveKeymap(@Nullable String newName) {
     if (canModify()) {
       return copy();
     }
     else {
       KeymapImpl newKeymap = new KeymapImpl();
       newKeymap.myParent = this;
-      newKeymap.setName(newName);
+      if (newName != null) {
+        newKeymap.setName(newName);
+      }
       newKeymap.myCanModify = canModify();
       return newKeymap;
     }
+  }
+
+  /**
+   * @deprecated Please use {@link #deriveKeymap(String)} instead. New method was introduced to ensure that you don't forget to set new keymap name.
+   */
+  @Deprecated
+  public KeymapImpl deriveKeymap() {
+    return _deriveKeymap(null);
   }
 
   @NotNull
