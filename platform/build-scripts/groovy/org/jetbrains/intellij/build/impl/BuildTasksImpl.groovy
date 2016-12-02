@@ -248,39 +248,48 @@ idea.fatal.error.notification=disabled
     compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
                    buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
     buildContext.messages.block("Build platform and plugin JARs") {
-      distributionJARsBuilder.buildJARs()
-      distributionJARsBuilder.buildAdditionalArtifacts()
-    }
-    if (buildContext.productProperties.scrambleMainJar) {
-      scramble()
-    }
-
-    layoutShared()
-
-    def propertiesFile = patchIdeaPropertiesFile()
-    List<BuildTaskRunnable<String>> tasks = [
-      createDistributionForOsTask("win", { BuildContext context ->
-        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
-      }),
-      createDistributionForOsTask("linux", { BuildContext context ->
-        context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
-      }),
-      createDistributionForOsTask("mac", { BuildContext context ->
-        context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
-      })
-    ]
-
-    List<String> paths = runInParallel(tasks).findAll { it != null }
-
-    if (buildContext.productProperties.buildCrossPlatformDistribution) {
-      if (paths.size() == 3) {
-        buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
-          def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-          crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
-        }
+      if (buildContext.shouldBuildDistributions()) {
+        distributionJARsBuilder.buildJARs()
+        distributionJARsBuilder.buildAdditionalArtifacts()
       }
       else {
-        buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
+        buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
+        distributionJARsBuilder.buildNonBundledPlugins()
+      }
+    }
+
+    if (buildContext.shouldBuildDistributions()) {
+      if (buildContext.productProperties.scrambleMainJar) {
+        scramble()
+      }
+
+      layoutShared()
+
+      def propertiesFile = patchIdeaPropertiesFile()
+      List<BuildTaskRunnable<String>> tasks = [
+        createDistributionForOsTask("win", { BuildContext context ->
+          context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
+        }),
+        createDistributionForOsTask("linux", { BuildContext context ->
+          context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
+        }),
+        createDistributionForOsTask("mac", { BuildContext context ->
+          context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
+        })
+      ]
+
+      List<String> paths = runInParallel(tasks).findAll { it != null }
+
+      if (buildContext.productProperties.buildCrossPlatformDistribution) {
+        if (paths.size() == 3) {
+          buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
+            def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
+            crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
+          }
+        }
+        else {
+          buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
+        }
       }
     }
   }

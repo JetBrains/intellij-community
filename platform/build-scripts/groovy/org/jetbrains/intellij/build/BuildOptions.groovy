@@ -38,6 +38,11 @@ class BuildOptions {
   static final String OS_WINDOWS = "windows"
   static final String OS_MAC = "mac"
   static final String OS_ALL = "all"
+  /**
+   * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#pluginModulesToPublish non-bundled plugins}
+   * will be built.
+   */
+  static final String OS_NONE = "none"
 
   /**
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.

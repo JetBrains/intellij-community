@@ -143,7 +143,8 @@ class DistributionJARsBuilder {
 
   void buildJARs() {
     buildLib()
-    buildPlugins()
+    buildBundledPlugins()
+    buildNonBundledPlugins()
 
     def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
     if (loadingOrderFilePath != null) {
@@ -235,13 +236,17 @@ class DistributionJARsBuilder {
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
-  private void buildPlugins() {
-    def ant = buildContext.ant
+  private void buildBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
     buildPlugins(layoutBuilder, getPluginsByModules(productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
+  }
 
+  void buildNonBundledPlugins() {
+    def ant = buildContext.ant
+    def productLayout = buildContext.productProperties.productLayout
+    def layoutBuilder = createLayoutBuilder()
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
       def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {

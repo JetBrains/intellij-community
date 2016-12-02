@@ -271,8 +271,13 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  boolean shouldBuildDistributions() {
+    options.targetOS.toLowerCase() != BuildOptions.OS_NONE
+  }
+
+  @Override
   boolean shouldBuildDistributionForOS(String os) {
-    options.targetOS.toLowerCase() in [BuildOptions.OS_ALL, os]
+    shouldBuildDistributions() && options.targetOS.toLowerCase() in [BuildOptions.OS_ALL, os]
   }
 
   @Override
