@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,32 @@ package com.intellij.psi.search;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class TodoPattern implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.TodoPattern");
 
   private IndexPattern myIndexPattern;
 
-  /**
-   * Specify Icon and text attributes.
-   */
   private TodoAttributes myAttributes;
 
   @NonNls private static final String CASE_SENS_ATT = "case-sensitive";
   @NonNls private static final String PATTERN_ATT = "pattern";
 
-  public TodoPattern(@NotNull TodoAttributes attributes){
+  public TodoPattern(@NotNull TodoAttributes attributes) {
     this("", attributes, false);
   }
 
-  public TodoPattern(@NotNull @NonNls String patternString, @NotNull TodoAttributes attributes, boolean caseSensitive) {
+  public TodoPattern(@NotNull Element state, @NotNull TextAttributes defaultTodoAttributes) {
+    myAttributes = new TodoAttributes(state, defaultTodoAttributes);
+    myIndexPattern = new IndexPattern(state.getAttributeValue(PATTERN_ATT, "").trim(), Boolean.parseBoolean(state.getAttributeValue(CASE_SENS_ATT)));
+  }
+
+  public TodoPattern(@NotNull String patternString, @NotNull TodoAttributes attributes, boolean caseSensitive) {
     myIndexPattern = new IndexPattern(patternString, caseSensitive);
     myAttributes = attributes;
   }
@@ -68,28 +65,28 @@ public class TodoPattern implements Cloneable {
   }
 
   @NotNull
-  public String getPatternString(){
+  public String getPatternString() {
     return myIndexPattern.getPatternString();
   }
 
-  public void setPatternString(@NotNull String patternString){
+  public void setPatternString(@NotNull String patternString) {
     myIndexPattern.setPatternString(patternString);
   }
 
   @NotNull
-  public TodoAttributes getAttributes(){
+  public TodoAttributes getAttributes() {
     return myAttributes;
   }
 
-  public void setAttributes(@NotNull TodoAttributes attributes){
+  public void setAttributes(@NotNull TodoAttributes attributes) {
     myAttributes = attributes;
   }
 
-  public boolean isCaseSensitive(){
+  public boolean isCaseSensitive() {
     return myIndexPattern.isCaseSensitive();
   }
 
-  public void setCaseSensitive(boolean caseSensitive){
+  public void setCaseSensitive(boolean caseSensitive) {
     myIndexPattern.setCaseSensitive(caseSensitive);
   }
 
@@ -97,24 +94,11 @@ public class TodoPattern implements Cloneable {
     return myIndexPattern.getPattern();
   }
 
-  public void readExternal(Element element, @NotNull TextAttributes defaultTodoAttributes) {
-    try {
-      myAttributes = new TodoAttributes(element,defaultTodoAttributes);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
-
-    myIndexPattern.setCaseSensitive(Boolean.valueOf(element.getAttributeValue(CASE_SENS_ATT)).booleanValue());
-    String attributeValue = element.getAttributeValue(PATTERN_ATT);
-    if (attributeValue != null){
-      myIndexPattern.setPatternString(attributeValue.trim());
-    }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     myAttributes.writeExternal(element);
-    element.setAttribute(CASE_SENS_ATT, Boolean.toString(myIndexPattern.isCaseSensitive()));
+    if (myIndexPattern.isCaseSensitive()) {
+      element.setAttribute(CASE_SENS_ATT, "true");
+    }
     element.setAttribute(PATTERN_ATT, myIndexPattern.getPatternString());
   }
 

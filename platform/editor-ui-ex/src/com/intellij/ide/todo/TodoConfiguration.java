@@ -23,7 +23,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -44,7 +43,7 @@ import java.util.List;
     @Storage(value = "other.xml", deprecated = true)
   }
 )
-public class TodoConfiguration implements PersistentStateComponent<Element>, Disposable {
+public class TodoConfiguration implements PersistentStateComponent<Element> {
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
@@ -59,7 +58,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
 
   public TodoConfiguration(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
-    messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    messageBus.connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorSettingsChanged();
@@ -68,8 +67,8 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
     resetToDefaultTodoPatterns();
   }
 
-  @Override
-  public void dispose() {
+  public static TodoConfiguration getInstance() {
+    return ServiceManager.getService(TodoConfiguration.class);
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -81,6 +80,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
 
   @NotNull
   private static TodoPattern[] getDefaultPatterns() {
+    //noinspection SpellCheckingInspection
     return new TodoPattern[]{
       new TodoPattern("\\btodo\\b.*", TodoAttributesUtil.createDefault(), false),
       new TodoPattern("\\bfixme\\b.*", TodoAttributesUtil.createDefault(), false),
@@ -92,10 +92,6 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
     for (int i = 0; i < myTodoPatterns.length; i++) {
       myIndexPatterns[i] = myTodoPatterns[i].getIndexPattern();
     }
-  }
-
-  public static TodoConfiguration getInstance() {
-    return ServiceManager.getService(TodoConfiguration.class);
   }
 
   @NotNull
@@ -159,39 +155,24 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
     myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));
   }
 
-  /**
-   * @deprecated use {@link TodoConfiguration#addPropertyChangeListener(PropertyChangeListener, Disposable)} instead
-   */
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myPropertyChangeMulticaster.addListener(listener);
-  }
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
-    myPropertyChangeMulticaster.addListener(listener,parentDisposable);
-  }
-  /**
-   * @deprecated use {@link TodoConfiguration#addPropertyChangeListener(PropertyChangeListener, Disposable)} instead
-   */
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myPropertyChangeMulticaster.removeListener(listener);
+    myPropertyChangeMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
   public void loadState(Element element) {
     List<TodoPattern> patternsList = new SmartList<>();
-    List<TodoFilter> filtersList = new SmartList<>();
-    for (Element child : element.getChildren()) {
-      if (ELEMENT_PATTERN.equals(child.getName())) {
-        TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
-        pattern.readExternal(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes());
-        patternsList.add(pattern);
-      }
-      else if (ELEMENT_FILTER.equals(child.getName())) {
-        TodoFilter filter = new TodoFilter();
-        filter.readExternal(child, patternsList);
-        filtersList.add(filter);
-      }
+    for (Element child : element.getChildren(ELEMENT_PATTERN)) {
+      patternsList.add(new TodoPattern(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes()));
     }
-    doSetTodoPatterns(patternsList.toArray(new TodoPattern[patternsList.size()]), false);
+
+    TodoPattern[] patterns = patternsList.isEmpty() ? getDefaultPatterns() : patternsList.toArray(new TodoPattern[patternsList.size()]);
+    doSetTodoPatterns(patterns, false);
+
+    List<TodoFilter> filtersList = new SmartList<>();
+    for (Element child : element.getChildren(ELEMENT_FILTER)) {
+      filtersList.add(new TodoFilter(child, Arrays.asList(patterns)));
+    }
 
     if (!(filtersList.isEmpty() && myTodoFilters.length == 0)) {
       setTodoFilters(filtersList.toArray(new TodoFilter[filtersList.size()]));
@@ -205,12 +186,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
     if (!Arrays.equals(myTodoPatterns, getDefaultPatterns())) {
       for (TodoPattern pattern : todoPatterns) {
         Element child = new Element(ELEMENT_PATTERN);
-        try {
-          pattern.writeExternal(child);
-        }
-        catch (WriteExternalException e) {
-          throw new RuntimeException(e);
-        }
+        pattern.writeExternal(child);
         element.addContent(child);
       }
     }
