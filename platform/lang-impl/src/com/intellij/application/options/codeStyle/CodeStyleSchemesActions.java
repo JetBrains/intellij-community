@@ -28,6 +28,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,7 +59,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
     defaultActions.add(1, new Separator());
   }
 
-  private class CopyToProjectAction extends AnAction {
+  private class CopyToProjectAction extends DumbAwareAction {
 
     public CopyToProjectAction() {
       super("Copy To Project");

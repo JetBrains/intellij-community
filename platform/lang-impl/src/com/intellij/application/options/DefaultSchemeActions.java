@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeExporterEP;
 import com.intellij.openapi.options.SchemeImporterEP;
+import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   
   protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {}
   
-  private class ResetAction extends AnAction {
+  private class ResetAction extends DumbAwareAction {
     
     public ResetAction() {
       super("Reset");
@@ -83,7 +84,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   }
   
   
-  private class CopyAction extends AnAction {
+  private class CopyAction extends DumbAwareAction {
     public CopyAction() {
       super("Copy...");
     }
@@ -94,7 +95,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     }
   }
   
-  private class DeleteAction extends AnAction {
+  private class DeleteAction extends DumbAwareAction {
     public DeleteAction() {
       super("Delete");
     }
@@ -129,7 +130,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     }
   }
   
-  private class ImportAction extends AnAction {
+  private class ImportAction extends DumbAwareAction {
 
     private String myImporterName;
 
@@ -160,7 +161,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     }
   }
   
-  private class ExportAction extends AnAction {
+  private class ExportAction extends DumbAwareAction {
     private String myExporterName;
 
     public ExportAction(@NotNull String exporterName) {
