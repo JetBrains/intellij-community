@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.ui.SwingHelper;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -208,7 +209,11 @@ public class DataManagerImpl extends DataManager {
   @Override
   @NotNull
   public DataContext getDataContext() {
-    return getDataContext(getFocusedComponent());
+    Component component = null;
+    if (Registry.is("actionSystem.getContextByRecentMouseEvent")) {
+      component = SwingHelper.getComponentFromRecentMouseEvent();
+    }
+    return getDataContext(component != null ? component : getFocusedComponent());
   }
 
   @Override
