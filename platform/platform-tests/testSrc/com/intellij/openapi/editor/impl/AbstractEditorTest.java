@@ -299,4 +299,8 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       }
     }.execute();
   }
+
+  protected static void runFoldingOperation(Runnable r) {
+    myEditor.getFoldingModel().runBatchFoldingOperation(r);
+  }
 }

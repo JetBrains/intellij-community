@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() throws Exception {
@@ -223,7 +222,7 @@ public class EditorImplTest extends AbstractEditorTest {
     final FoldRegion innerRegion = addCollapsedFoldRegion(0, 4, "...");
     final FoldRegion outerRegion = addCollapsedFoldRegion(0, 9, "...");
 
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+    runFoldingOperation(() -> {
       myEditor.getFoldingModel().removeFoldRegion(outerRegion);
       myEditor.getFoldingModel().removeFoldRegion(innerRegion);
     });
@@ -353,7 +352,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testChangingHighlightersAfterClearingFoldingsDuringFoldingBatchUpdate() throws Exception {
     initText("abc\n\ndef");
     addCollapsedFoldRegion(2, 6, "...");
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+    runFoldingOperation(() -> {
       ((FoldingModelEx)myEditor.getFoldingModel()).clearFoldRegions();
       myEditor.getMarkupModel().addRangeHighlighter(7, 8, 0, new TextAttributes(null, null, null, null, Font.BOLD),
                                                     HighlighterTargetArea.EXACT_RANGE);
@@ -415,5 +414,14 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testLineLengthMatchingLogicalPositionCacheFrequency() throws Exception {
     initText("\t" + StringUtil.repeat(" ", 1023));
     assertEquals(new LogicalPosition(0, 1027), myEditor.offsetToLogicalPosition(1024));
+  }
+
+  public void testSpecialCaseOfCaretPositionUpdateOnFolding() throws Exception {
+    initText("abc\ndef\ngh<caret>i");
+    FoldRegion region = addCollapsedFoldRegion(1, 11, "...");
+    runWriteCommand(()-> myEditor.getDocument().deleteString(7, 8));
+    runFoldingOperation(()-> region.setExpanded(true));
+    runFoldingOperation(()-> region.setExpanded(false));
+    assertFalse(region.isExpanded());
   }
 }
