@@ -242,6 +242,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName, @NotNull String element);
 
   @NotNull
+  public abstract IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull String qualifiedName);
+
+  @NotNull
   public abstract IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field);
 
   @NotNull
