@@ -76,10 +76,15 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters) &&
-          !JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
+          !areNonImportedInheritorsAlreadySuggested(parameters)) {
         suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), session);
       }
     }
+  }
+
+  private static boolean areNonImportedInheritorsAlreadySuggested(@NotNull CompletionParameters parameters) {
+    return JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition()) &&
+           JavaSmartCompletionContributor.getExpectedTypes(parameters).length > 0;
   }
 
   private static boolean suggestAllAnnotations(CompletionParameters parameters) {

@@ -64,11 +64,16 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
           JavaCompletionContributor.mayStartClassName(result) &&
           GrMainCompletionProvider.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters) &&
-          !GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
+          !areNonImportedInheritorsAlreadySuggested(parameters)) {
         result = result.withPrefixMatcher(tracker.betterMatcher);
         suggestNonImportedClasses(parameters, result);
       }
     }
+  }
+
+  private static boolean areNonImportedInheritorsAlreadySuggested(@NotNull CompletionParameters parameters) {
+    return GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition()) &&
+           GroovySmartCompletionContributor.getExpectedTypes(parameters).length > 0;
   }
 
   private static void delegate(CompletionParameters parameters, CompletionResultSet result) {

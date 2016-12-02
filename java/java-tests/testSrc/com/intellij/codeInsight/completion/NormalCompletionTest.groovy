@@ -1735,4 +1735,11 @@ class Bar {
     assert 'Class<? extends Number>' == LookupElementPresentation.renderElement(myFixture.lookupElements[0]).typeText
   }
 
+  void testNonImportedClassAfterNew() {
+    def uClass = myFixture.addClass('package foo; public class U {}')
+    myFixture.configureByText('a.java', 'class X {{ new U<caret>x }}')
+    myFixture.completeBasic()
+    assert myFixture.lookupElements[0].object == uClass
+  }
+
 }
