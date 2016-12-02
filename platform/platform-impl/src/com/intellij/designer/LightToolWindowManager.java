@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -39,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
@@ -92,12 +92,10 @@ public abstract class LightToolWindowManager implements ProjectComponent {
   public void projectOpened() {
     initToolWindow();
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      public void run() {
-        if (getEditorMode() == null) {
-          initListeners();
-          bindToDesigner(getActiveDesigner());
-        }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      if (getEditorMode() == null) {
+        initListeners();
+        bindToDesigner(getActiveDesigner());
       }
     });
   }
@@ -200,7 +198,7 @@ public abstract class LightToolWindowManager implements ProjectComponent {
 
   public final void bind(@NotNull DesignerEditorPanelFacade designer) {
     if (isEditorMode()) {
-      myCreateAction.run(designer);
+      myCreateAction.accept(designer);
     }
   }
 
@@ -247,22 +245,22 @@ public abstract class LightToolWindowManager implements ProjectComponent {
     toolWindow.dispose();
   }
 
-  private final ParameterizedRunnable<DesignerEditorPanelFacade> myCreateAction =
+  private final Consumer<DesignerEditorPanelFacade> myCreateAction =
     designer -> designer.putClientProperty(getComponentName(), createContent(designer));
 
-  private final ParameterizedRunnable<DesignerEditorPanelFacade> myUpdateAnchorAction =
+  private final Consumer<DesignerEditorPanelFacade> myUpdateAnchorAction =
     designer -> {
       LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(getComponentName());
       toolWindow.updateAnchor(getEditorMode());
     };
 
-  private final ParameterizedRunnable<DesignerEditorPanelFacade> myDisposeAction = designer -> disposeContent(designer);
+  private final Consumer<DesignerEditorPanelFacade> myDisposeAction = designer -> disposeContent(designer);
 
-  private void runUpdateContent(ParameterizedRunnable<DesignerEditorPanelFacade> action) {
+  private void runUpdateContent(Consumer<DesignerEditorPanelFacade> action) {
     for (FileEditor editor : myFileEditorManager.getAllEditors()) {
       DesignerEditorPanelFacade designer = getDesigner(editor);
       if (designer != null) {
-        action.run(designer);
+        action.accept(designer);
       }
     }
   }
