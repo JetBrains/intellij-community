@@ -44,6 +44,14 @@ public class CCCreateAnswerPlaceholderPanel {
     }
 
     myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myPlaceholderTextArea.setText(placeholderText);
+    myPlaceholderTextArea.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myPlaceholderTextArea.selectAll();
+      }
+    });
+    
     myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
 
@@ -52,7 +60,6 @@ public class CCCreateAnswerPlaceholderPanel {
 
     actionsPanel.add(createHintToolbarComponent(), BorderLayout.WEST);
     showHint();
-    myPlaceholderTextArea.setText(placeholderText);
   }
 
   @NotNull
