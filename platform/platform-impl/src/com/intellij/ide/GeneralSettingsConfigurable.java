@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -108,7 +107,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
     int inactiveTimeout = -1;
     try {
-      inactiveTimeout = UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(Integer.parseInt(myComponent.myTfInactiveTimeout.getText()));
+      inactiveTimeout = GeneralSettings.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(Integer.parseInt(myComponent.myTfInactiveTimeout.getText()));
     }
     catch (NumberFormatException ignored) { }
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
