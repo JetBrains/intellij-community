@@ -95,7 +95,7 @@ public class BackwardReferenceIndexWriter {
 
   void processDeletedFiles(Collection<String> files) {
     for (String file : files) {
-      writeData(enumeratePath(file), null);
+      writeData(enumeratePath(new File(file).getPath()), null);
     }
   }
 
