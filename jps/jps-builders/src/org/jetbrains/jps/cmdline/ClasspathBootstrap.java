@@ -310,7 +310,13 @@ public class ClasspathBootstrap {
       return new File(classesRoot.getParentFile(), "jps-plugin-system");
     }
     else {
-      return new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar");
+      File jar = new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar");
+      if (jar.exists()) {
+        //running from installed IDE
+        return jar;
+      }
+      //running from standalone JPS distribution
+      return new File(classesRoot.getParentFile(), "jps-plugin-system.jar");
     }
   }
 
