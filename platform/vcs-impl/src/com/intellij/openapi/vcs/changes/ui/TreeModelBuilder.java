@@ -42,7 +42,7 @@ import java.io.File;
 import java.util.*;
 
 public class TreeModelBuilder {
-  @NonNls public static final String ROOT_NODE_VALUE = "root";
+  @NonNls private static final String ROOT_NODE_VALUE = "root";
   public static final String LOCALLY_DELETED_NODE = VcsBundle.message("changes.nodetitle.locally.deleted.files");
 
   private static final int UNVERSIONED_MAX_SIZE = 50;
@@ -80,6 +80,11 @@ public class TreeModelBuilder {
     root = ChangesBrowserNode.create(myProject, ROOT_NODE_VALUE);
     model = new DefaultTreeModel(root);
     myFoldersCache = new HashMap<>();
+  }
+
+  @NotNull
+  public static DefaultTreeModel createEmpty(@NotNull Project project) {
+    return new DefaultTreeModel(ChangesBrowserNode.create(project, ROOT_NODE_VALUE));
   }
 
   @NotNull

@@ -71,7 +71,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   public ChangesListView(@NotNull Project project) {
     myProject = project;
 
-    getModel().setRoot(create(myProject, TreeModelBuilder.ROOT_NODE_VALUE));
+    setModel(TreeModelBuilder.createEmpty(project));
 
     setShowsRootHandles(true);
     setRootVisible(false);
