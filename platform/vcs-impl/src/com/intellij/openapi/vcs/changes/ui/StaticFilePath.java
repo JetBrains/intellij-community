@@ -17,41 +17,41 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class StaticFilePath {
   private final String myKey;
   private final String myPath;
   private final boolean myIsDirectory;
-  // todo?
   private final VirtualFile myVf;
 
-  public StaticFilePath(boolean isDirectory, String path, VirtualFile vf) {
-    myIsDirectory = isDirectory;
-    myPath = path;
-    myVf = vf;
-    myKey = FilePathsHelper.convertPath(path);
+  public StaticFilePath(boolean isDirectory, @NotNull String path, @Nullable VirtualFile vf) {
+    this(isDirectory, path, FilePathsHelper.convertPath(path), vf);
   }
 
-  private StaticFilePath(boolean isDirectory, String path, final String key, final VirtualFile vf) {
+  private StaticFilePath(boolean isDirectory, @NotNull String path, @NotNull String key, @Nullable VirtualFile vf) {
     myIsDirectory = isDirectory;
     myPath = path;
-    myVf = vf;
     myKey = key;
+    myVf = vf;
   }
 
   public boolean isDirectory() {
     return myIsDirectory;
   }
 
+  @NotNull
   public String getPath() {
     return myPath;
   }
 
+  @NotNull
   public String getKey() {
     return myKey;
   }
 
+  @Nullable
   public VirtualFile getVf() {
     return myVf;
   }
@@ -59,7 +59,7 @@ public class StaticFilePath {
   @Nullable
   public StaticFilePath getParent() {
     final int idx = myKey.lastIndexOf('/');
-    return (idx == -1) || (idx == 0) ? null :
-           new StaticFilePath(true, myPath.substring(0, idx), myKey.substring(0, idx), myVf == null ? null : myVf.getParent());
+    if (idx == -1 || idx == 0) return null;
+    return new StaticFilePath(true, myPath.substring(0, idx), myKey.substring(0, idx), myVf == null ? null : myVf.getParent());
   }
 }
