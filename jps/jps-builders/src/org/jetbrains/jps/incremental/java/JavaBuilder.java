@@ -498,10 +498,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static int getExternalJavacHeapSize(CompileContext context) {
-    final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
-    return options.MAXIMUM_HEAP_SIZE;
+    //final JpsProject project = context.getProjectDescriptor().getProject();
+    //final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    //final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
+    //return options.MAXIMUM_HEAP_SIZE;
+    final int maxMbytes = (int)Runtime.getRuntime().maxMemory() / 1048576;
+    return Math.max(maxMbytes * 75 / 100, 256); // minimum 256 Mb, maximum 75% from JPS max heap size 
   }
 
   @Nullable
