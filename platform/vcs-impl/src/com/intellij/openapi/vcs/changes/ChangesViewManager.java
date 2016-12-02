@@ -213,7 +213,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
     visualActionsGroup.add(new ToggleDetailsAction());
-    visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
+    visualActionsGroup.add(new ContextHelpAction(ChangesListView.HELP_ID));
     toolbarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false).getComponent(), BorderLayout.CENTER);
 

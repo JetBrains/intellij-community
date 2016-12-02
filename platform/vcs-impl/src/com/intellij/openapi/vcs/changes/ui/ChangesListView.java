@@ -62,7 +62,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
 
-  @NonNls public static final String ourHelpId = "ideaInterface.changes";
+  @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
@@ -186,7 +186,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     } else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
       sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
     } else if (key == PlatformDataKeys.HELP_ID) {
-      sink.put(PlatformDataKeys.HELP_ID, ourHelpId);
+      sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
     }
     else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
       final TreePath selectionPath = getSelectionPath();
