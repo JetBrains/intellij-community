@@ -19,14 +19,6 @@ package com.intellij.ide.ui;
  * This class is designed to provide reasonable restrictions for UI-specific settings
  */
 public final class UINumericRange {
-  public static final UINumericRange SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC = new UINumericRange(15, 1, 300);
-  public static final UINumericRange EDITOR_QUICK_DOC_DELAY_MS = new UINumericRange(15, 0, 15000);
-  public static final UINumericRange RECENT_FILES_LIMIT = new UINumericRange(50, 1, 5000);
-  public static final UINumericRange MAX_CLIPBOARD_CONTENTS = new UINumericRange(5, 1, 500);
-  public static final UINumericRange CUSTOM_SOFT_WRAP_INDENT= new UINumericRange(0, 0, 200);
-  public static final UINumericRange ERROR_STRIPE_MARK_MIN_HEIGHT = new UINumericRange(2, 0, 125);
-  public static final UINumericRange AUTOREPARSE_DELAY_MS = new UINumericRange(300, 0, 60000);
-
   public final int initial;
   public final int min;
   public final int max;

@@ -45,6 +45,8 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
   public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
 
+  static final UINumericRange SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC = new UINumericRange(15, 1, 300);
+
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
   private boolean myReopenLastProject = true;
@@ -183,13 +185,13 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
    * The method always return positive (more then zero) value.
    */
   public int getInactiveTimeout(){
-    return UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(myInactiveTimeout);
+    return SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(myInactiveTimeout);
   }
 
   public void setInactiveTimeout(int inactiveTimeoutSeconds) {
     int oldInactiveTimeout = myInactiveTimeout;
 
-    myInactiveTimeout = UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(inactiveTimeoutSeconds);
+    myInactiveTimeout = SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(inactiveTimeoutSeconds);
     myPropertyChangeSupport.firePropertyChange(
         PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(myInactiveTimeout)
     );
