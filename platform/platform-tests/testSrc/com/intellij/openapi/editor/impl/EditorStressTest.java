@@ -19,8 +19,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +44,9 @@ public class EditorStressTest extends AbstractEditorTest {
                                                                          new CollapseFoldRegion(),
                                                                          new ExpandFoldRegion(),
                                                                          new ChangeBulkModeState(),
-                                                                         new ChangeEditorVisibility());
+                                                                         new ChangeEditorVisibility(),
+                                                                         new AddInlay(),
+                                                                         new RemoveInlay());
 
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
@@ -204,6 +208,21 @@ public class EditorStressTest extends AbstractEditorTest {
       if (document.isInBulkUpdate()) return;
       JViewport viewport = editor.getScrollPane().getViewport();
       viewport.setExtentSize(viewport.getExtentSize().getWidth() == 0 ? new Dimension(1000, 1000) : new Dimension(0, 0));
+    }
+  }
+
+  private static class AddInlay implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      addInlay(random.nextInt(editor.getDocument().getTextLength() + 1));
+    }
+  }
+
+  private static class RemoveInlay implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
+      if (!inlays.isEmpty()) Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
     }
   }
 }
