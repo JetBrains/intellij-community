@@ -1409,6 +1409,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @Override
   public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
     putUserData(VISUAL_ATTRIBUTES_KEY, attributes == CaretVisualAttributes.DEFAULT ? null : attributes);
+    requestRepaint(myCaretInfo);
   }
 
   @NotNull
