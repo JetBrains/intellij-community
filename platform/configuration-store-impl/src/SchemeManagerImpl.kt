@@ -65,7 +65,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         val roamingType: RoamingType = RoamingType.DEFAULT,
                                                         val presentableName: String? = null,
                                                         private val isUseOldFileNameSanitize: Boolean = false,
-                                                        private val messageBus: MessageBus? = null) : SchemeManager<T>(), SafeWriteRequestor {
+                                                        private val messageBus: MessageBus? = null) : SchemesManager<T>(), SafeWriteRequestor {
   private val isLoadingSchemes = AtomicBoolean()
 
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
