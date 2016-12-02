@@ -17,8 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
@@ -60,11 +58,8 @@ public class PyByteLiteralInspection extends PyInspection {
     }
 
     @Override
-    public void visitComment(PsiComment node) {
-      checkString(node, node.getText());
-    }
-    
-    private void checkString(PsiElement node, String value) {
+    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+      String value = node.getStringValue();
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
       if (file == null) return;
       boolean default_bytes = false;
@@ -100,11 +95,6 @@ public class PyByteLiteralInspection extends PyInspection {
       if (hasNonAscii && isByte) {
         registerProblem(node, "Byte literal contains characters > 255");
       }
-    }
-
-    @Override
-    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
-      checkString(node, node.getStringValue());
     }
   }
 }
