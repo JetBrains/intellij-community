@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import junit.framework.Assert;
 public class JavaCommandLineTest extends LightIdeaTestCase {
   public void testJdk() {
     try {
-      CommandLineBuilder.createFromJavaParameters(new JavaParameters());
+      new JavaParameters().toCommandLine();
       fail("CantRunException (main class is not specified) expected");
     }
     catch (CantRunException e) {
@@ -40,7 +40,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     try {
       JavaParameters javaParameters = new JavaParameters();
       javaParameters.setJdk(getProjectJDK());
-      CommandLineBuilder.createFromJavaParameters(javaParameters);
+      javaParameters.toCommandLine();
       fail("CantRunException (main class is not specified) expected");
     }
     catch (CantRunException e) {
@@ -52,7 +52,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.setJdk(getProjectJDK());
     javaParameters.setJarPath("my-jar-file.jar");
-    String commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    String commandLineString = javaParameters.toCommandLine().getCommandLineString();
     assertTrue(commandLineString, commandLineString.contains("-jar my-jar-file.jar"));
   }
 
@@ -65,7 +65,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     javaParameters.setJdk(internalJdk);
     javaParameters.getClassPath().add("my-jar-file.jar");
     javaParameters.setMainClass("Main");
-    commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    commandLineString = javaParameters.toCommandLine().getCommandLineString();
     assertTrue(containsClassPath(commandLineString));
 
     javaParameters = new JavaParameters();
@@ -74,7 +74,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     javaParameters.setMainClass("Main");
     javaParameters.getVMParametersList().add("-cp");
     javaParameters.getVMParametersList().add("..");
-    commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    commandLineString = javaParameters.toCommandLine().getCommandLineString();
     commandLineString = removeClassPath(commandLineString, "-cp ..");
     assertTrue(!containsClassPath(commandLineString));
 
@@ -84,7 +84,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     javaParameters.setMainClass("Main");
     javaParameters.getVMParametersList().add("-classpath");
     javaParameters.getVMParametersList().add("..");
-    commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    commandLineString = javaParameters.toCommandLine().getCommandLineString();
     commandLineString = removeClassPath(commandLineString, "-classpath ..");
     assertTrue(!containsClassPath(commandLineString));
   }

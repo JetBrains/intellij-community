@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.execution.testframework.Printable;
@@ -122,7 +121,7 @@ public final class ExecutionHandler {
       builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
 
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
-      commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
+      commandLine = builder.getCommandLine().toCommandLine();
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
     }
     catch (RunCanceledException e) {

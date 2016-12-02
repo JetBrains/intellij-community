@@ -17,7 +17,6 @@ package com.intellij.junit4;
 import com.intellij.execution.BaseConfigurationTestCase;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -145,7 +144,8 @@ public class JUnit4IntegrationTest extends BaseConfigurationTestCase {
       ExecutionEnvironment environment = new ExecutionEnvironment(executor, ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings), settings, getProject());
       TestObject state = configuration.getState(executor, environment);
       JavaParameters parameters = state.getJavaParameters();
-      GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters, getProject(), true);
+      parameters.setUseDynamicClasspath(getProject());
+      GeneralCommandLine commandLine = parameters.toCommandLine();
       StringBuffer buf = new StringBuffer();
       StringBuffer err = new StringBuffer();
       OSProcessHandler process = new OSProcessHandler(commandLine);

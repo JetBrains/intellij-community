@@ -22,6 +22,8 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.openapi.project.Project;
 
+/** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2019) */
+@SuppressWarnings("unused")
 public class CommandLineBuilder {
   private CommandLineBuilder() { }
 
@@ -29,17 +31,6 @@ public class CommandLineBuilder {
     return javaParameters.toCommandLine();
   }
 
-  /**
-   * In order to avoid too long cmd problem dynamic classpath can be used - if allowed by both  {@code dynamicClasspath} parameter
-   * and project settings.
-   *
-   * @param javaParameters   parameters.
-   * @param project          a project to get a dynamic classpath setting from.
-   * @param dynamicClasspath whether system properties and project settings will be able to cause using dynamic classpath. If false,
-   *                         classpath will always be passed through the command line.
-   * @return a command line.
-   * @throws CantRunException if there are problems with JDK setup.
-   */
   public static GeneralCommandLine createFromJavaParameters(final SimpleJavaParameters javaParameters,
                                                             final Project project,
                                                             final boolean dynamicClasspath) throws CantRunException {
@@ -52,12 +43,6 @@ public class CommandLineBuilder {
     return javaParameters.toCommandLine();
   }
 
-  /**
-   * @param javaParameters        parameters.
-   * @param forceDynamicClasspath whether dynamic classpath will be used for this execution, to prevent problems caused by too long command line.
-   * @return a command line.
-   * @throws CantRunException if there are problems with JDK setup.
-   */
   public static GeneralCommandLine createFromJavaParameters(final SimpleJavaParameters javaParameters,
                                                             final boolean forceDynamicClasspath) throws CantRunException {
     javaParameters.setUseDynamicClasspath(forceDynamicClasspath);

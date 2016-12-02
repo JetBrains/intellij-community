@@ -151,7 +151,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @Override
       protected GeneralCommandLine createCommandLine() throws ExecutionException {
-        return CommandLineBuilder.createFromJavaParameters(getJavaParameters());
+        return getJavaParameters().toCommandLine();
       }
     };
 
@@ -212,7 +212,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @Override
       protected GeneralCommandLine createCommandLine() throws ExecutionException {
-        return CommandLineBuilder.createFromJavaParameters(getJavaParameters());
+        return getJavaParameters().toCommandLine();
       }
     };
 
@@ -270,7 +270,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       javaParameters.getVMParametersList().add(token);
     }
 
-    GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParameters);
+    GeneralCommandLine commandLine = javaParameters.toCommandLine();
 
 
     DebuggerSession debuggerSession;
