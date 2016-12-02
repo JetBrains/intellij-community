@@ -62,21 +62,22 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
         return DelegatesToInfo(TypesUtil.createType(extension.rootTypeFqn, closure), Closure.DELEGATE_FIRST)
       }
       val objectTypeFqn = extension.namedObjectTypeFqn?.let { if (it.isNotBlank()) it else null } ?: continue
+      val objectType = TypesUtil.createType(objectTypeFqn, closure)
       val objectClosure = groovyClosure().withAncestor(2, extensionClosure)
       if (objectClosure.accepts(closure)) {
-        return DelegatesToInfo(TypesUtil.createType(objectTypeFqn, closure), Closure.DELEGATE_FIRST)
+        return DelegatesToInfo(objectType, Closure.DELEGATE_FIRST)
       }
 
       val objectReference = object : ElementPattern<PsiElement> {
         override fun getCondition() = null
         override fun accepts(o: Any?) = false
         override fun accepts(o: Any?, context: ProcessingContext): Boolean {
-          return o is GrExpression && o.type?.equalsToText(objectTypeFqn) ?: false
+          return o is GrExpression && o.type?.isAssignableFrom(objectType) ?: false
         }
       }
       if (psiElement().withParent(
         psiElement().withFirstChild(objectReference)).accepts(closure)) {
-        return DelegatesToInfo(TypesUtil.createType(objectTypeFqn, closure), Closure.DELEGATE_FIRST)
+        return DelegatesToInfo(objectType, Closure.DELEGATE_FIRST)
       }
     }
     return null
@@ -212,12 +213,13 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
           }
           true
         }
-        if(propExecutionResult != null && propExecutionResult) return false
+        if (propExecutionResult != null && propExecutionResult) return false
       }
     }
 
     return true
   }
+
   companion object {
     val closureInLeftShiftMethod = groovyClosure().withTreeParent(
       groovyBinaryExpression().with(object : PatternCondition<GrBinaryExpression?>("leftShiftCondition") {
@@ -266,25 +268,22 @@ fun processExtension(processor: PsiScopeProcessor,
                      extension: GradleExtensionsSettings.GradleExtension): Boolean {
   val classHint = processor.getHint(ElementClassHint.KEY)
   val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-  val shouldProcessProperties = ResolveUtil.shouldProcessProperties(classHint)
   val psiManager = GroovyPsiManager.getInstance(place.project)
   val resolveScope = place.resolveScope
   val projectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, resolveScope) ?: return true
   val name = processor.getHint(NameHint.KEY)?.getName(state)
 
-  if (!shouldProcessMethods && shouldProcessProperties && name == extension.name) {
-    val variable = GrLightVariable(place.manager, name, extension.rootTypeFqn, place)
-    place.putUserData(RESOLVED_CODE, true)
-    if (!processor.execute(variable, state)) return false
-  }
+  if (name == extension.name) {
 
-  if (shouldProcessMethods && name == extension.name) {
     val returnClass = psiManager.createTypeByFQClassName(extension.rootTypeFqn, resolveScope) ?: return true
-    val methodBuilder = GrLightMethodBuilder(place.manager, extension.name).apply {
+    val methodName = if (shouldProcessMethods) extension.name else "get" + extension.name.capitalize()
+    val methodBuilder = GrLightMethodBuilder(place.manager, methodName).apply {
       containingClass = projectClass
       returnType = returnClass
     }
-    methodBuilder.addParameter("configuration", GROOVY_LANG_CLOSURE, true)
+    if (shouldProcessMethods) {
+      methodBuilder.addParameter("configuration", GROOVY_LANG_CLOSURE, true)
+    }
     place.putUserData(RESOLVED_CODE, true)
     if (!processor.execute(methodBuilder, state)) return false
   }

@@ -22,12 +22,14 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
+import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_CONTAINER
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor.Companion.getDocumentation
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleExtensionsData
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -36,9 +38,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
 
 /**
  * @author Vladislav.Soroka
@@ -113,22 +118,33 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       val shouldProcessProperties = ResolveUtil.shouldProcessProperties(classHint)
       if (GradleResolverUtil.canBeMethodOf(propCandidate, aClass)) return
 
+      val domainObjectFqn = TypesUtil.getQualifiedName(domainObjectType) ?: return
+      val psiManager = GroovyPsiManager.getInstance(place.project)
+      val psiClass = psiManager.findClassWithCache(domainObjectFqn, place.resolveScope) ?: return
+      if (GradleResolverUtil.canBeMethodOf(propCandidate, psiClass)) return
+      if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), psiClass)) return
+      if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), psiClass)) return
+
+      val closure = PsiTreeUtil.getParentOfType(place, GrClosableBlock::class.java)
+      if (closure != null) {
+        val info = getDelegatesToInfo(closure)
+        if (info != null) {
+          val fqNameToDelegate = TypesUtil.getQualifiedName(info.typeToDelegate) ?: return
+          val classToDelegate = psiManager.findClassWithCache(fqNameToDelegate, place.resolveScope) ?: return
+          if (GradleResolverUtil.canBeMethodOf(propCandidate, classToDelegate)) return
+          if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), classToDelegate)) return
+          if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), classToDelegate)) return
+        }
+      }
+
       if (!shouldProcessMethods && shouldProcessProperties && place is GrReferenceExpression && place.parent !is GrApplicationStatement) {
-        val fqName = TypesUtil.getQualifiedName(domainObjectType) ?: return
-        val psiManager = GroovyPsiManager.getInstance(place.project)
-        val psiClass = psiManager.findClassWithCache(fqName, place.resolveScope) ?: return
-
-        val name = processor.getHint(com.intellij.psi.scope.NameHint.KEY)?.getName(state)
-        if (GradleResolverUtil.canBeMethodOf(name, psiClass)) return
-        if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), psiClass)) return
-        if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), psiClass)) return
-
         val variable = object : GrLightVariable(place.manager, propCandidate, domainObjectType, place) {
           override fun getNavigationElement(): PsiElement {
             val navigationElement = super.getNavigationElement()
             return navigationElement
           }
         }
+        place.putUserData(RESOLVED_CODE, true)
         if (!processor.execute(variable, state)) return
       }
       if (shouldProcessMethods && place is GrReferenceExpression) {
@@ -142,10 +158,14 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         val wrappedBase = GrLightMethodBuilder(place.manager, "configure").apply {
           returnType = domainObjectType
           containingClass = aClass
-          addParameter("configureClosure", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, true)
+          addParameter("configureClosure", GROOVY_LANG_CLOSURE, true).apply {
+            putUserData(DELEGATES_TO_KEY, domainObjectFqn)
+            putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
+          }
           val method = aClass.findMethodsByName("create", true).firstOrNull { it.parameterList.parametersCount == argsCount }
           if (method != null) navigationElement = method
         }
+        place.putUserData(RESOLVED_CODE, true)
         if (!processor.execute(wrappedBase, state)) return
       }
     }
