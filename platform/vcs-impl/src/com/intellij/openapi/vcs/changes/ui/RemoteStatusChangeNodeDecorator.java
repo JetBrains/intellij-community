@@ -15,15 +15,11 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class RemoteStatusChangeNodeDecorator implements ChangeNodeDecorator {
   protected final RemoteRevisionsCache myRemoteRevisionsCache;
@@ -42,11 +38,6 @@ public class RemoteStatusChangeNodeDecorator implements ChangeNodeDecorator {
       component.append(" ");
       component.append(VcsBundle.message("change.nodetitle.change.is.outdated"), SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
-  }
-
-  @Nullable
-  public List<Pair<String, Stress>> stressPartsOfFileName(Change change, String parentPath) {
-    return null;
   }
 
   public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {

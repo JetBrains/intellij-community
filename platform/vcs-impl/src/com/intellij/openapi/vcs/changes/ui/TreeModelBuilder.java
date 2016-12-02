@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -338,11 +337,6 @@ public class TreeModelBuilder {
       insertChangeNode(vf, policy, rootsHeadNode, createChangeNode(change, new ChangeNodeDecorator() {
         @Override
         public void decorate(Change change1, SimpleColoredComponent component, boolean isShowFlatten) {
-        }
-
-        @Override
-        public List<Pair<String, Stress>> stressPartsOfFileName(Change change1, String parentPath) {
-          return null;
         }
 
         @Override
