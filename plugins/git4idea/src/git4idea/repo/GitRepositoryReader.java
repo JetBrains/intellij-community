@@ -81,10 +81,12 @@ class GitRepositoryReader {
 
   @NotNull
   GitBranchState readState(@NotNull Collection<GitRemote> remotes) {
-    Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> branches = readBranches(remotes);
+    Map<String, RefInfo> refs = readRefs();
+    Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> branches = createBranchesFromData(remotes, refs);
     Map<GitLocalBranch, Hash> localBranches = branches.first;
 
-    HeadInfo headInfo = readHead();
+    //HeadInfo headInfo = readHead(refs);
+    HeadInfo headInfo = readHead(refs);
     Repository.State state = readRepositoryState(headInfo);
 
     GitLocalBranch currentBranch;
@@ -92,6 +94,9 @@ class GitRepositoryReader {
     if (!headInfo.isBranch || !localBranches.isEmpty()) {
       currentBranch = findCurrentBranch(headInfo, state, localBranches.keySet());
       currentRevision = getCurrentRevision(headInfo, currentBranch == null ? null : localBranches.get(currentBranch));
+      if (currentBranch != null && headInfo.isSymbolicRef()) {
+        currentBranch = new GitSymbolicRef(headInfo.symbolicRefName, currentBranch);
+      }
     }
     else if (headInfo.content != null) {
       currentBranch = new GitLocalBranch(headInfo.content);
@@ -214,10 +219,9 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> readBranches(@NotNull Collection<GitRemote> remotes) {
+  private Map<String, RefInfo> readRefs() {
     Map<String, String> data = readBranchRefsFromFiles();
-    Map<String, Hash> resolvedRefs = resolveRefs(data);
-    return createBranchesFromData(remotes, resolvedRefs);
+    return resolveRefs(data);
   }
 
   @NotNull
@@ -231,14 +235,14 @@ class GitRepositoryReader {
 
   @NotNull
   private static Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
-                                                                                                    @NotNull Map<String, Hash> data) {
+                                                                                                    @NotNull Map<String, RefInfo> data) {
     Map<GitLocalBranch, Hash> localBranches = ContainerUtil.newHashMap();
     Map<GitRemoteBranch, Hash> remoteBranches = ContainerUtil.newHashMap();
-    for (Map.Entry<String, Hash> entry : data.entrySet()) {
-      String refName = entry.getKey();
-      Hash hash = entry.getValue();
+    for (Map.Entry<String, RefInfo> entry : data.entrySet()) {
+      String refName = entry.getValue().refName;
+      Hash hash = entry.getValue().hash;
       if (refName.startsWith(REFS_HEADS_PREFIX)) {
-        localBranches.put(new GitLocalBranch(refName), hash);
+        localBranches.put(fromRefInfo(entry.getValue()), hash);
       }
       else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
         GitRemoteBranch remoteBranch = parseRemoteBranch(refName, remotes);
@@ -251,6 +255,12 @@ class GitRepositoryReader {
       }
     }
     return Pair.create(localBranches, remoteBranches);
+  }
+
+  private static GitLocalBranch fromRefInfo(RefInfo refInfo) {
+    return refInfo.isSymbolicRef ?
+           new GitSymbolicRef(refInfo.refName, new GitLocalBranch(refInfo.referencedRef)) :
+           new GitLocalBranch(refInfo.refName);
   }
 
   @Nullable
@@ -319,7 +329,7 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private HeadInfo readHead() {
+  private HeadInfo readHead(Map<String, RefInfo> refs) {
     String headContent;
     try {
       headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
@@ -333,9 +343,19 @@ class GitRepositoryReader {
     if (hash != null) {
       return new HeadInfo(false, headContent);
     }
+
     String target = getTarget(headContent);
     if (target != null) {
-      return new HeadInfo(true, target);
+      if (!refs.containsKey(target)) {
+        LOG.error(new RepoStateException("Unknown ref in HEAD: " + target));
+        return new HeadInfo(false, null);
+      } else {
+        RefInfo last = refs.get(target);
+        while (last.isSymbolicRef) {
+          last = refs.get(last.referencedRef);
+        }
+        return new HeadInfo(true, last.refName, target.equals(last.refName) ? null : target);
+      }
     }
     LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
     return new HeadInfo(false, null);
@@ -399,8 +419,8 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private static Map<String, Hash> resolveRefs(@NotNull Map<String, String> data) {
-    final Map<String, Hash> resolved = getResolvedHashes(data);
+  private static Map<String, RefInfo> resolveRefs(@NotNull Map<String, String> data) {
+    final Map<String, RefInfo> resolved = getResolvedHashes(data);
     Map<String, String> unresolved = ContainerUtil.filter(data, new Condition<String>() {
       @Override
       public boolean value(String refName) {
@@ -424,8 +444,8 @@ class GitRepositoryReader {
             LOG.debug("Unresolved symbolic link [" + refName + "] pointing to [" + refValue + "]"); // transitive link
           }
           else {
-            Hash targetValue = resolved.get(link);
-            resolved.put(refName, targetValue);
+            RefInfo referencedRef = resolved.get(link);
+            resolved.put(refName, new RefInfo(refName, referencedRef.hash, getRightRefName(referencedRef)));
             iterator.remove();
             progressed = true;
           }
@@ -442,14 +462,18 @@ class GitRepositoryReader {
     return resolved;
   }
 
+  private static String getRightRefName(RefInfo refInfo) {
+    return refInfo.referencedRef != null ? refInfo.referencedRef : refInfo.refName;
+  }
+
   @NotNull
-  private static Map<String, Hash> getResolvedHashes(@NotNull Map<String, String> data) {
-    Map<String, Hash> resolved = ContainerUtil.newHashMap();
+  private static Map<String, RefInfo> getResolvedHashes(@NotNull Map<String, String> data) {
+    Map<String, RefInfo> resolved = ContainerUtil.newHashMap();
     for (Map.Entry<String, String> entry : data.entrySet()) {
       String refName = entry.getKey();
       Hash hash = parseHash(entry.getValue());
       if (hash != null && !duplicateEntry(resolved, refName, hash)) {
-        resolved.put(refName, hash);
+        resolved.put(refName, new RefInfo(refName, hash));
       }
     }
     return resolved;
@@ -478,9 +502,9 @@ class GitRepositoryReader {
     }
   }
 
-  private static boolean duplicateEntry(@NotNull Map<String, Hash> resolved, @NotNull String refName, @NotNull Object newValue) {
+  private static boolean duplicateEntry(@NotNull Map<String, RefInfo> resolved, @NotNull String refName, @NotNull Object newValue) {
     if (resolved.containsKey(refName)) {
-      LOG.error("Duplicate entry for [" + refName + "]. resolved: [" + resolved.get(refName).asString() + "], current: " + newValue + "]");
+      LOG.error("Duplicate entry for [" + refName + "]. resolved: [" + resolved.get(refName).hash.asString() + "], current: " + newValue + "]");
       return true;
     }
     return false;
@@ -492,10 +516,58 @@ class GitRepositoryReader {
   private static class HeadInfo {
     @Nullable private final String content;
     private final boolean isBranch;
+    @Nullable private final String symbolicRefName;
 
     HeadInfo(boolean branch, @Nullable String content) {
+      this(branch, content, null);
+    }
+
+    HeadInfo(boolean branch, @Nullable String content, @Nullable String symbolicRefName) {
       isBranch = branch;
       this.content = content;
+      this.symbolicRefName = symbolicRefName;
+    }
+
+    boolean isSymbolicRef() {
+      return symbolicRefName != null;
+    }
+  }
+
+  private static class RefInfo {
+    private final String refName;
+    private final Hash hash;
+    private final boolean isSymbolicRef;
+    @Nullable private final String referencedRef;
+
+    RefInfo(String refName, Hash hash, @NotNull String referencedRef) {
+      this.refName = refName;
+      this.hash = hash;
+      this.isSymbolicRef = true;
+      this.referencedRef = referencedRef;
+    }
+
+    public RefInfo(String refName, Hash hash) {
+      this.refName = refName;
+      this.hash = hash;
+      this.isSymbolicRef = false;
+      this.referencedRef = null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      RefInfo info = (RefInfo)o;
+
+      if (refName != null ? !refName.equals(info.refName) : info.refName != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return refName != null ? refName.hashCode() : 0;
     }
   }
 }

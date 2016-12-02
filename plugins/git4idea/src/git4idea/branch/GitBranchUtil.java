@@ -76,8 +76,9 @@ public class GitBranchUtil {
    */
   @Nullable
   public static GitBranchTrackInfo getTrackInfoForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch branch) {
+    GitRemoteBranch remoteBranch = branch.findTrackedBranch(repository);
     for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
-      if (trackInfo.getLocalBranch().equals(branch)) {
+      if (trackInfo.getLocalBranch().equals(branch) || trackInfo.getRemoteBranch().equals(remoteBranch)) {
         return trackInfo;
       }
     }
@@ -288,7 +289,12 @@ public class GitBranchUtil {
     }
 
     GitBranch branch = repository.getCurrentBranch();
-    String branchName = (branch == null ? "" : branch.getName());
+    String branchName;
+    if (branch instanceof GitSymbolicRef) {
+      branchName = (branch == null ? "" : ((GitSymbolicRef)branch).getPrintableName());
+    } else {
+      branchName = (branch == null ? "" : branch.getName());
+    }
     return prefix + branchName;
   }
 

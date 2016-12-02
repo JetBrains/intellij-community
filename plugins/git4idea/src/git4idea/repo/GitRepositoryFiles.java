@@ -316,4 +316,9 @@ public class GitRepositoryFiles {
   Collection<VirtualFile> getRootDirs() {
     return ContainerUtil.newHashSet(myMainDir, myWorktreeDir);
   }
+
+  @NotNull
+  File getBranchFile(@NotNull String fullBranchName) {
+    return file(myMainDir.getPath() + slash(fullBranchName));
+  }
 }
