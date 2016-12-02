@@ -86,7 +86,6 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           exports pkg.<error descr="Cannot resolve symbol 'missing'">missing</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
           exports pkg.main to <error descr="Module not found: M.missing">M.missing</error>, M2, <error descr="Duplicate export: M2">M2</error>;
-          exports pkg.other to <warning descr="Exports to itself">M</warning>;
         }""".trimIndent())
   }
 

@@ -43,7 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -290,10 +293,6 @@ public class ModuleHighlightUtil {
       else if (!targets.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.export", refText);
         results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create());
-      }
-      else if (target == container) {
-        String message = JavaErrorMessages.message("module.self.export");
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).description(message).create());
       }
     }
 

@@ -879,6 +879,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING" displayName="Non-accessible type is exposed"
                      implementationClass="com.intellij.codeInspection.java19modules.Java9NonAccessibleTypeExposedInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
+                     enabledByDefault="true" level="WARNING" displayName="Package exported to its own module"
+                     implementationClass="com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
