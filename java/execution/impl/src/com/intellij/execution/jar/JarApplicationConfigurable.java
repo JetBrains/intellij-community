@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.execution.jar;
 
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
-import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -52,7 +52,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(modulesComboBox, true));
   }
 
-  public void applyEditorTo(final JarApplicationConfiguration configuration) throws ConfigurationException {
+  public void applyEditorTo(@NotNull final JarApplicationConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
@@ -60,7 +60,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
     configuration.setModule(myModuleComponent.getComponent().getSelectedModule());
   }
 
-  public void resetEditorFrom(final JarApplicationConfiguration configuration) {
+  public void resetEditorFrom(@NotNull final JarApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myJarPathComponent.getComponent().setText(FileUtil.toSystemDependentName(configuration.getJarPath()));
     myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled()

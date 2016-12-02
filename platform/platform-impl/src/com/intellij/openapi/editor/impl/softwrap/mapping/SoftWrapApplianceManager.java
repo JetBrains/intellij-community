@@ -101,6 +101,8 @@ public class SoftWrapApplianceManager implements Dumpable {
   private boolean                        myInProgress;
   private boolean                        myIsDirty = true;
   private IncrementalCacheUpdateEvent    myDocumentChangedEvent;
+  @NotNull
+  private final Rectangle                myAvailableArea = new Rectangle(); // mutable
 
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
@@ -113,7 +115,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     myPainter = painter;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> updateLastTopLeftCornerOffset());
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+      updateAvailableArea();
+      updateLastTopLeftCornerOffset();
+    });
   }
 
   public void registerSoftWrapIfNecessary() {
@@ -154,12 +159,9 @@ public class SoftWrapApplianceManager implements Dumpable {
       return;
     }
 
-    Collections.sort(ranges, new Comparator<Segment>() { 
-      @Override
-      public int compare(Segment o1, Segment o2) {
-        int startDiff = o1.getStartOffset() - o2.getStartOffset();
-        return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
-      }
+    Collections.sort(ranges, (o1, o2) -> {
+      int startDiff = o1.getStartOffset() - o2.getStartOffset();
+      return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
     });
     final int[] lastRecalculatedOffset = new int[] {0};
     SoftWrapAwareDocumentParsingListenerAdapter listener = new SoftWrapAwareDocumentParsingListenerAdapter() {
@@ -816,7 +818,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     myCustomIndentValueUsedLastTime = currentCustomIndent;
 
     // Check if we need to recalculate soft wraps due to visible area width change.
-    int currentVisibleAreaWidth = myWidthProvider.getVisibleAreaWidth();
+    int currentVisibleAreaWidth = myAvailableArea.width;
     if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
       return recalculateSoftWraps(); // Recalculate existing dirty regions if any.
     }
@@ -1009,8 +1011,8 @@ public class SoftWrapApplianceManager implements Dumpable {
   @Override
   public String dumpState() {
     return String.format(
-      "recalculation in progress: %b; event being processed: %s",
-      myInProgress, myEventBeingProcessed
+      "recalculation in progress: %b; event being processed: %s, available area: %s, visible width: %d, dirty: %b",
+      myInProgress, myEventBeingProcessed, myAvailableArea.toString(), myVisibleAreaWidth, myIsDirty
     );
   }
 
@@ -1024,9 +1026,14 @@ public class SoftWrapApplianceManager implements Dumpable {
     myPainter = painter;
   }
 
+  @NotNull
   public Rectangle getAvailableArea() {
+    return myAvailableArea;
+  }
+
+  public void updateAvailableArea() {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    return new Rectangle(myWidthProvider.getVisibleAreaWidth(), visibleArea.height);
+    myAvailableArea.setSize(myWidthProvider.getVisibleAreaWidth(), visibleArea.height);
   }
 
   /**

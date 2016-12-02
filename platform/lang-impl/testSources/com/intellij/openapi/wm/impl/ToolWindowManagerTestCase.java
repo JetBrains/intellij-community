@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -36,8 +34,7 @@ public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsight
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myManager = new ToolWindowManagerImpl(getProject(), WindowManagerEx.getInstanceEx(), FileEditorManager.getInstance(getProject()), ActionManager
-      .getInstance(), LafManager.getInstance());
+    myManager = new ToolWindowManagerImpl(getProject(), WindowManagerEx.getInstanceEx(), ActionManager.getInstance());
     myOldManager = (ToolWindowManagerEx)((ComponentManagerImpl)getProject()).registerComponentInstance(ToolWindowManager.class, myManager);
     myManager.projectOpened();
   }

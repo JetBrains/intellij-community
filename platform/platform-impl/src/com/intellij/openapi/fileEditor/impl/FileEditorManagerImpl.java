@@ -80,6 +80,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
     if (Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME).length > 0) {
-      myListenerList.add(new FileEditorManagerAdapter() {
+      myListenerList.add(new FileEditorManagerListener() {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
           EditorsSplitters splitters = getSplitters();
@@ -1205,8 +1206,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return null;
   }
 
-
-
   @Override
   public boolean isFileOpen(@NotNull final VirtualFile file) {
     return !getEditorComposites(file).isEmpty();
@@ -1215,11 +1214,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    Set<VirtualFile> openFiles = new HashSet<>();
+    Set<VirtualFile> openFiles = new THashSet<>();
     for (EditorsSplitters each : getAllSplitters()) {
       openFiles.addAll(Arrays.asList(each.getOpenFiles()));
     }
-
     return VfsUtilCore.toVirtualFileArray(openFiles);
   }
 

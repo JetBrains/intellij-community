@@ -297,8 +297,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void tearDown() throws Exception {
     try {
       FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-      VirtualFile[] openFiles = editorManager.getOpenFiles();
-      for (VirtualFile openFile : openFiles) {
+      for (VirtualFile openFile : editorManager.getOpenFiles()) {
         editorManager.closeFile(openFile);
       }
       deleteVFile();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
 
   private void setTabIcon(String tabName, JLabel jLabel) {
     for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
-      if (nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(myContent, tabName))) {
+      if (tabName != null && nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(myContent, tabName))) {
         JComponent tab = nextTabWithName.getSecond();
         if (tab instanceof Iconable) {
           Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);

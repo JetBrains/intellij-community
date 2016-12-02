@@ -27,7 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
                             @NotNull PermanentGraph.SortType initialSortType) {
     myLogData = logData;
     myVisiblePackBuilder = myLogData.createVisiblePackBuilder();
-    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
+    myFilters = new VcsLogFilterCollectionBuilder().build();
     mySortType = initialSortType;
 
     myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePack -> {

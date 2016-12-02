@@ -628,6 +628,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return ourShadowInstance;
   }
 
+  /**
+   * Behavior of this method must be consistent with idea/ApplicationInfo.xsd schema.
+   */
   private void loadState(Element parentNode) {
     Element versionElement = getChild(parentNode, ELEMENT_VERSION);
     if (versionElement != null) {

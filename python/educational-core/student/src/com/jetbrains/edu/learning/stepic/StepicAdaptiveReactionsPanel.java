@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -9,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -75,15 +73,6 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
 
   private void addFileListener() {
     final FileEditorManagerListener editorManagerListener = new FileEditorManagerListener() {
-      @Override
-      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      }
-
-      @Override
-      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-
-      }
-
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);

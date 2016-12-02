@@ -17,37 +17,24 @@ package org.jetbrains.idea.devkit.run;
 
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
-import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
 
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> implements PanelWithAnchor {
   private final ModulesComboBox myModules = new ModulesComboBox();
@@ -81,7 +68,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   }
 
   @Override
-  public void resetEditorFrom(PluginRunConfiguration prc) {
+  public void resetEditorFrom(@NotNull PluginRunConfiguration prc) {
     myModules.setSelectedModule(prc.getModule());
     getVMParameters().setText(prc.VM_PARAMETERS);
     getProgramParameters().setText(prc.PROGRAM_PARAMETERS);
@@ -90,7 +77,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
 
   @Override
-  public void applyEditorTo(PluginRunConfiguration prc) throws ConfigurationException {
+  public void applyEditorTo(@NotNull PluginRunConfiguration prc) throws ConfigurationException {
     prc.setModule(myModules.getSelectedModule());
     prc.VM_PARAMETERS = getVMParameters().getText();
     prc.PROGRAM_PARAMETERS = getProgramParameters().getText();

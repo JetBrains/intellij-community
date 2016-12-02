@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myModuleSelector.applyTo(configuration);
   }
 
-  public void resetEditorFrom(final RemoteConfiguration configuration) {
+  public void resetEditorFrom(@NotNull final RemoteConfiguration configuration) {
     if (!SystemInfo.isWindows) {
       configuration.USE_SOCKET_TRANSPORT = true;
       myRbShmem.setEnabled(false);

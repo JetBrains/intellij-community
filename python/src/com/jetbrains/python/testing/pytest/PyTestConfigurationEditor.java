@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     setAnchor(myCommonOptionsForm.getAnchor());
   }
 
-  protected void resetEditorFrom(PyTestRunConfiguration s) {
+  protected void resetEditorFrom(@NotNull PyTestRunConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myCommonOptionsForm);
     myKeywordsTextField.setText(s.getKeywords());
     myTestScriptTextField.setText(s.getTestToRun());
@@ -93,7 +93,7 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     myParamsTextField.setText(s.getParams());
   }
 
-  protected void applyEditorTo(PyTestRunConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull PyTestRunConfiguration s) throws ConfigurationException {
     AbstractPythonRunConfiguration.copyParams(myCommonOptionsForm, s);
     s.setTestToRun(myTestScriptTextField.getText().trim());
     s.setKeywords(myKeywordsTextField.getText().trim());

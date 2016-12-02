@@ -1174,8 +1174,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
           FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          VirtualFile[] openFiles = editorManager.getOpenFiles();
-          for (VirtualFile openFile : openFiles) {
+          for (VirtualFile openFile : editorManager.getOpenFiles()) {
             editorManager.closeFile(openFile);
           }
         }

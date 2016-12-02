@@ -21,6 +21,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -46,7 +47,6 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -244,24 +244,25 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         beforeData.addElements(refsToInline);
         project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
 
-        final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-        for(int idx = 0; idx < refsToInline.length; idx++){
-          PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)refsToInline[idx];
-          exprs[idx] = pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement));
-        }
-
-        if (inlineAll.get()) {
-          if (!isInliningVariableInitializer(defToInline)) {
-            defToInline.getParent().delete();
-          } else {
-            defToInline.delete();
+        WriteAction.run(() -> {
+          final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+          for(int idx = 0; idx < refsToInline.length; idx++){
+            PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)refsToInline[idx];
+            exprs[idx] = pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement));
           }
 
-          if (ReferencesSearch.search(local).findFirst() == null) {
-            QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
+          if (inlineAll.get()) {
+            if (!isInliningVariableInitializer(defToInline)) {
+              defToInline.getParent().delete();
+            } else {
+              defToInline.delete();
+            }
           }
-        }
+        });
 
+        if (inlineAll.get() && ReferencesSearch.search(local).findFirst() == null) {
+          QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
+        }
 
         if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
           highlightManager.addOccurrenceHighlights(editor, ContainerUtil.convert(exprs, new PsiExpression[refsToInline.length],
@@ -269,12 +270,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
           WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         }
 
-        for (final SmartPsiElementPointer<PsiExpression> expr : exprs) {
-          InlineUtil.tryToInlineArrayCreationForVarargs(expr.getElement());
-        }
-      }
-      catch (IncorrectOperationException e){
-        LOG.error(e);
+        WriteAction.run(() -> {
+          for (SmartPsiElementPointer<PsiExpression> expr : exprs) {
+            InlineUtil.tryToInlineArrayCreationForVarargs(expr.getElement());
+          }
+        });
       }
       finally {
         final RefactoringEventData afterData = new RefactoringEventData();
@@ -283,7 +283,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(runnable), RefactoringBundle.message("inline.command", localName), null);
+    CommandProcessor.getInstance().executeCommand(project, runnable, RefactoringBundle.message("inline.command", localName), null);
   }
 
   @Nullable

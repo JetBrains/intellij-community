@@ -18,6 +18,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -242,7 +243,7 @@ class ProgressDialog implements Disposable {
     );
   }
 
-  private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
+  static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
 
   synchronized void update() {
     if (myRepaintedFlag) {
@@ -280,6 +281,11 @@ class ProgressDialog implements Disposable {
     });
   }
 
+  @Nullable
+  Window getParentWindow() {
+    return myParentWindow;
+  }
+
   void show() {
     myWasShown = true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
@@ -299,6 +305,9 @@ class ProgressDialog implements Disposable {
     }
     if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
       ((DialogWrapperPeerImpl)myPopup.getPeer()).setAutoRequestFocus(false);
+      if (ProgressIndicatorProvider.getGlobalProgressIndicator() instanceof PotemkinProgress) {
+        myPopup.setModal(false); // display the dialog and continue with EDT execution, don't block it forever
+      }
     }
     myPopup.pack();
 

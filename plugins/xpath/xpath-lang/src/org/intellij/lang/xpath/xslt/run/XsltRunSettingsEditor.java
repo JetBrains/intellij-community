@@ -38,7 +38,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -596,11 +595,11 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     myProject = project;
   }
 
-  protected void resetEditorFrom(XsltRunConfiguration s) {
+  protected void resetEditorFrom(@NotNull XsltRunConfiguration s) {
     myEditor.resetFrom(s);
   }
 
-  protected void applyEditorTo(XsltRunConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull XsltRunConfiguration s) throws ConfigurationException {
     myEditor.applyTo(s);
   }
 

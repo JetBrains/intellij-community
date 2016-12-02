@@ -483,7 +483,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     applyActivationState();
   }
 
-  private void activateIfNeeded() {
+  public void activateIfNeeded() {
     if (!myPreprocessorActive && !myMouseListeners.isEmpty()) {
       myPreprocessorActive = true;
     }

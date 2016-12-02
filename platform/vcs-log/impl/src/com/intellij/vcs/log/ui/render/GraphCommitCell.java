@@ -12,7 +12,9 @@ public class GraphCommitCell {
   @NotNull private final Collection<VcsRef> myRefsToThisCommit;
   @NotNull private final Collection<? extends PrintElement> myPrintElements;
 
-  public GraphCommitCell(@NotNull String text, @NotNull Collection<VcsRef> refsToThisCommit, @NotNull Collection<? extends PrintElement> printElements) {
+  public GraphCommitCell(@NotNull String text,
+                         @NotNull Collection<VcsRef> refsToThisCommit,
+                         @NotNull Collection<? extends PrintElement> printElements) {
     myText = text;
     myRefsToThisCommit = refsToThisCommit;
     myPrintElements = printElements;
@@ -31,5 +33,10 @@ public class GraphCommitCell {
   @NotNull
   public Collection<? extends PrintElement> getPrintElements() {
     return myPrintElements;
+  }
+
+  @Override
+  public String toString() {
+    return myText;
   }
 }

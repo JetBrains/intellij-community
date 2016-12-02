@@ -375,16 +375,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
-        Sdk sdk = params.getJdk();
-        assert sdk != null : "SDK should be defined";
-        final String exePath = ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk);
-
-        GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, params, false);
-
+        GeneralCommandLine commandLine = params.toCommandLine();
         OSProcessHandler processHandler = new OSProcessHandler(commandLine);
-
         processHandler.setShouldDestroyProcessRecursively(false);
-
         return processHandler;
       }
     };

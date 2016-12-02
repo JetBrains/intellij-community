@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ public class AddAllOpenFilesToFavorites extends AnAction implements DumbAware {
     ArrayList<PsiFile> result = new ArrayList<>();
     final FileEditorManager editorManager = FileEditorManager.getInstance(project);
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final VirtualFile[] openFiles = editorManager.getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
+    for (VirtualFile openFile : editorManager.getOpenFiles()) {
       if (!openFile.isValid()) continue;
       final PsiFile psiFile = psiManager.findFile(openFile);
       if (psiFile != null) {

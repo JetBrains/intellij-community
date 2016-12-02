@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcsUtil.VcsUtil;
@@ -130,17 +131,17 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   public VcsLogFilterCollection getFilters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Pair<VcsLogTextFilter, VcsLogHashFilter> filtersFromText = getFiltersFromTextArea(myTextFilterModel.getFilter());
-    return new VcsLogFilterCollectionImpl(myBranchFilterModel.getFilter(),
-                                          myUserFilterModel.getFilter(),
-                                          filtersFromText.second,
-                                          myDateFilterModel.getFilter(),
-                                          filtersFromText.first,
-                                          myStructureFilterModel.getFilter() == null
-                                          ? null
-                                          : myStructureFilterModel.getFilter().getStructureFilter(),
-                                          myStructureFilterModel.getFilter() == null
-                                          ? null
-                                          : myStructureFilterModel.getFilter().getRootFilter());
+    return new VcsLogFilterCollectionBuilder().with(myBranchFilterModel.getFilter())
+      .with(myUserFilterModel.getFilter())
+      .with(filtersFromText.second)
+      .with(myDateFilterModel.getFilter())
+      .with(filtersFromText.first)
+      .with(myStructureFilterModel.getFilter() == null
+            ? null
+            : myStructureFilterModel.getFilter().getStructureFilter())
+      .with(myStructureFilterModel.getFilter() == null
+            ? null
+            : myStructureFilterModel.getFilter().getRootFilter()).build();
   }
 
   @NotNull

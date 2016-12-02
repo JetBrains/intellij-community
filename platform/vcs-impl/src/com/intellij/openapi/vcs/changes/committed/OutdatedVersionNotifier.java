@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -31,7 +30,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +58,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     myCache = cache;
     myProject = project;
     messageBus.connect().subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+      @Override
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
         if (myCache.getCachedIncomingChanges() == null) {
           requestLoadIncomingChanges();
@@ -80,11 +79,9 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     debug("Requesting load of incoming changes");
     if (!myIncomingChangesRequested) {
       myIncomingChangesRequested = true;
-      myCache.loadIncomingChangesAsync(new Consumer<List<CommittedChangeList>>() {
-        public void consume(final List<CommittedChangeList> committedChangeLists) {
-          myIncomingChangesRequested = false;
-          updateAllEditorsLater();
-        }
+      myCache.loadIncomingChangesAsync(committedChangeLists -> {
+        myIncomingChangesRequested = false;
+        updateAllEditorsLater();
       }, true);
     }
   }
@@ -93,33 +90,34 @@ public class OutdatedVersionNotifier implements ProjectComponent {
     LOG.debug(message);
   }
 
+  @Override
   public void projectOpened() {
     final FileEditorManagerListener myFileEditorManagerListener = new MyFileEditorManagerListener();
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener, myProject);
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "OutdatedVersionNotifier";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
   private void updateAllEditorsLater() {
     debug("Queueing update of editors");
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        updateAllEditors();
-      }
-    }, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> updateAllEditors(), myProject.getDisposed());
   }
 
   private void updateAllEditors() {
@@ -160,6 +158,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
+    @Override
     public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       if (myCache.getCachedIncomingChanges() == null) {
         requestLoadIncomingChanges();
@@ -173,12 +172,6 @@ public class OutdatedVersionNotifier implements ProjectComponent {
           }
         }
       }
-    }
-
-    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    }
-
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     }
   }
 

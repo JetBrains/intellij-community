@@ -355,14 +355,10 @@ public class IdeEventQueue extends EventQueue {
 
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = isInputEvent(e);
-    if (myIsInInputEvent) {
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-    } else {
-      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-    }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
+    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     try (AccessToken ignored = startActivity(e)) {
       _dispatchEvent(e, false);
     }
@@ -370,6 +366,7 @@ public class IdeEventQueue extends EventQueue {
       processException(t);
     }
     finally {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
 

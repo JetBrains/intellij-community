@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import org.assertj.core.api.Assertions
 
 class JavaInlayParameterHintsTest : InlayParameterHintsTest() {
-  
+
   fun setup(text: String) = configureFile("a.java", text)
 
   fun `test insert literal arguments`() {
@@ -47,13 +47,13 @@ class Groo {
 }""")
 
     onLineStartingWith("configure(true").assertInlays(
-        "testNow->true",
-        "shouldIgnoreRoots->false",
-        "times->555",
-        "pii->3.141f",
-        """title->"Huge Title"""",
-        "terminate->'c'",
-        "file->null"
+      "testNow->true",
+      "shouldIgnoreRoots->false",
+      "times->555",
+      "pii->3.141f",
+      """title->"Huge Title"""",
+      "terminate->'c'",
+      "file->null"
     )
 
     onLineStartingWith("configure(testNow").assertNoInlays()
@@ -70,10 +70,10 @@ class Fooo {
   
 }
 """)
-    
+
     onLineStartingWith("Throw").assertNoInlays()
   }
-  
+
 
   fun `test show hint for single string literal if there is multiple string params`() {
     setup("""class Groo {
@@ -94,7 +94,7 @@ class Fooo {
     onLineStartingWith("assertEquals").assertInlays("expected->\"fooo\"")
     onLineStartingWith("show").assertInlays("message->\"Hi\"")
   }
-  
+
   fun `test no hints for generic builders`() {
     setup("""
 class Foo {
@@ -112,7 +112,7 @@ class Stream<T> {
   public Stream<T> skip(int n) {}
 }
 """)
-    
+
     onLineStartingWith("new IntStream").assertNoInlays()
     onLineStartingWith("new Stream").assertNoInlays()
   }
@@ -152,7 +152,7 @@ public class VarArgTest {
 """)
 
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "...booleans->false")
+      .assertInlays("test->13", "...booleans->false")
   }
 
   fun `test no hint if varargs null`() {
@@ -191,7 +191,7 @@ public class VarArgTest {
 """)
 
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "...booleans->false")
+      .assertInlays("test->13", "...booleans->false")
   }
 
   fun `test do not inline if parameter length is one or two`() {
@@ -263,7 +263,7 @@ public class CharSymbol {
 """)
 
     onLineStartingWith("count(1")
-        .assertInlays("test->100", "boo->false", """seq->"Hi!"""")
+      .assertInlays("test->100", "boo->false", """seq->"Hi!"""")
   }
 
   fun `test inline positive and negative numbers`() {
@@ -284,10 +284,10 @@ public class CharSymbol {
 """)
 
     onLineStartingWith("count(-")
-        .assertInlays("test->-")
+      .assertInlays("test->-")
 
     onLineStartingWith("count(+")
-        .assertInlays("test->+")
+      .assertInlays("test->+")
   }
 
   fun `test inline literal arguments with crazy settings`() {
@@ -305,10 +305,10 @@ public class Test {
 """)
 
     onLineStartingWith("System")
-        .assertNoInlays()
+      .assertNoInlays()
 
     onLineStartingWith("main(t")
-        .assertInlays("isActive->true", "requestFocus->false", "xoo->2")
+      .assertInlays("isActive->true", "requestFocus->false", "xoo->2")
   }
 
 
@@ -377,10 +377,10 @@ public class Test {
 """)
 
     onLineStartingWith("c.compare")
-        .assertInlays("o1->0", "o2->3")
+      .assertInlays("o1->0", "o2->3")
 
     onLineStartingWith("l.add")
-        .assertInlays("query->1", """obj->"uuu"""")
+      .assertInlays("query->1", """obj->"uuu"""")
   }
 
   fun `test inline constructor literal arguments names`() {
@@ -404,7 +404,7 @@ public class Test {
 """)
 
     onLineStartingWith("Checker r")
-        .assertInlays("isActive->true", "requestFocus->false")
+      .assertInlays("isActive->true", "requestFocus->false")
   }
 
   fun `test inline anonymous class constructor parameters`() {
@@ -425,7 +425,7 @@ public class Test {
 """)
 
     onLineStartingWith("Test t")
-        .assertInlays("counter->10", "shouldTest->false")
+      .assertInlays("counter->10", "shouldTest->false")
   }
 
   fun `test inline if one of vararg params is literal`() {
@@ -448,7 +448,7 @@ public class VarArgTest {
 """)
 
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("...booleans->isCheck")
+      .assertInlays("...booleans->isCheck")
   }
 
   fun `test if any param matches inline all`() {
@@ -466,7 +466,7 @@ public class VarArgTest {
 """)
 
     onLineStartingWith("check(")
-        .assertInlays("x->10", "paramNameLength->1000")
+      .assertInlays("x->10", "paramNameLength->1000")
   }
 
   fun `test inline common name pair if more that 2 args`() {
@@ -485,7 +485,7 @@ public class VarArgTest {
 """)
 
     onLineStartingWith("check(")
-        .assertInlays("beginIndex->10", "endIndex->1000")
+      .assertInlays("beginIndex->10", "endIndex->1000")
   }
 
   fun `test ignore String methods`() {
@@ -517,7 +517,7 @@ public class VarArgTest {
 """)
 
     onLineStartingWith("check(")
-        .assertInlays("beginIndex->10", "endIndex->1000", """x->"su"""" )
+      .assertInlays("beginIndex->10", "endIndex->1000", """x->"su"""")
   }
 
   fun `test inline this`() {
@@ -535,7 +535,7 @@ public class VarArgTest {
 """)
 
     onLineStartingWith("check(t")
-        .assertInlays("test->this", "endIndex->1000")
+      .assertInlays("test->this", "endIndex->1000")
   }
 
   fun `test inline strange methods`() {
@@ -724,7 +724,7 @@ class Key {
     onLineStartingWith("System.set").assertNoInlays()
     onLineStartingWith("new").assertNoInlays()
   }
-  
+
   fun `test poly and binary expressions`() {
     setup("""
 class Test {
@@ -745,7 +745,7 @@ class Test {
     onLineStartingWith("int").assertInlays("isShow->1")
     onLineStartingWith("yyy").assertInlays("followTheSum->200")
   }
-  
+
   fun `test incorrect pattern`() {
     ParameterNameHintsSettings.getInstance().addIgnorePattern(JavaLanguage.INSTANCE, "")
     setup("""
@@ -764,13 +764,15 @@ class Test {
 class Test {
   void main() {
     timeoutExecution(1000);
+    createSpace(true);
   }
-  void timeoutExecution(int timeout) {
-  }
+  void timeoutExecution(int timeout) {}
+  void createSpace(boolean space) {}
 }
 """)
 
     onLineStartingWith("timeoutExec").assertNoInlays()
+    onLineStartingWith("createSpace").assertNoInlays()
   }
 
   fun `test show if multiple params but name contained`() {
@@ -779,14 +781,18 @@ class Test {
 class Test {
   void main() {
     timeoutExecution(1000, "xxx");
+    createSpace(true, 10);
   }
-  void timeoutExecution(int timeout, String message) {
-  }
+  void timeoutExecution(int timeout, String message) {}
+  void createSpace(boolean space, int a) {}
 }
 """)
 
     onLineStartingWith("timeout")
       .assertInlays("timeout->1000", "message->\"xxx\"")
+
+    onLineStartingWith("createSpace")
+      .assertInlays("space->true", "a->10")
   }
 
   fun `test show same params`() {
@@ -804,6 +810,38 @@ class Test {
 """)
 
     onLineStartingWith("test").assertInlays("parent->c", "child->d")
+  }
+
+  fun `test show triple`() {
+    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    setup("""
+class Test {
+  void main() {
+    String c = "c";
+    test(c, c, c);
+  }
+  void test(String parent, String child, String grandParent) {
+  }
+}
+""")
+    onLineStartingWith("test").assertInlays("parent->c", "child->c", "grandParent->c")
+  }
+
+  fun `test show couple of doubles`() {
+    ParameterNameHintsSettings.getInstance().isShowForParamsWithSameType = true
+    setup("""
+class Test {
+  void main() {
+    String c = "c";
+    String d = "d";
+    int v = 10;
+    test(c, d, v, v);
+  }
+  void test(String parent, String child, int vx, int vy) {
+  }
+}
+""")
+    onLineStartingWith("test").assertInlays("parent->c", "child->d", "vx->v", "vy->v")
   }
 
 }

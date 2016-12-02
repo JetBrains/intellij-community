@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.newProject.actions;
+package com.jetbrains.python.newProject.steps;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.TextAccessor;

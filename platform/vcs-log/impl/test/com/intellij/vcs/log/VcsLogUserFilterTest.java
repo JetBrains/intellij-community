@@ -23,7 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import junit.framework.TestCase;
@@ -232,7 +232,7 @@ public abstract class VcsLogUserFilterTest {
 
   @NotNull
   private List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
-    VcsLogFilterCollectionImpl filters = new VcsLogFilterCollectionImpl(null, filter, null, null, null, null, null);
+    VcsLogFilterCollection filters = new VcsLogFilterCollectionBuilder().with(filter).build();
     List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProject.getBaseDir(), filters, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }

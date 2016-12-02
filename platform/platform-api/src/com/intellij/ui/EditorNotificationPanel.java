@@ -60,6 +60,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected Color myBackgroundColor;
   protected ColorKey myBackgroundColorKey;
 
+  public EditorNotificationPanel(@Nullable Color backgroundColor) {
+    this();
+    myBackgroundColor = backgroundColor;
+  }
+
+  public EditorNotificationPanel(@Nullable ColorKey backgroundColorKey) {
+    this();
+    myBackgroundColorKey = backgroundColorKey;
+  }
+
   public EditorNotificationPanel() {
     super(new BorderLayout());
 
@@ -80,16 +90,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public EditorNotificationPanel text(@NotNull String text) {
     myLabel.setText(text);
-    return this;
-  }
-
-  public EditorNotificationPanel background(@Nullable Color color) {
-    myBackgroundColor = color;
-    return this;
-  }
-
-  public EditorNotificationPanel background(@Nullable ColorKey colorKey) {
-    myBackgroundColorKey = colorKey;
     return this;
   }
 

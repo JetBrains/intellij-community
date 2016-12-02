@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +51,6 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -198,13 +195,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
-        Sdk sdk = params.getJdk();
-        if (sdk == null) {
-          throw new ExecutionException("No sdk is defined. Params: " + params);
-        }
-
-        String executablePath = ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk);
-        GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(executablePath, params, false);
+        GeneralCommandLine commandLine = params.toCommandLine();
         OSProcessHandler processHandler = new OSProcessHandler(commandLine);
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;

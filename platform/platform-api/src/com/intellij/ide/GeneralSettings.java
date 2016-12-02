@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -179,18 +180,18 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   /**
    * @return timeout in seconds after which IDEA saves all files if there was no user activity.
-   * The method always return non positive (more then zero) value.
+   * The method always return positive (more then zero) value.
    */
   public int getInactiveTimeout(){
-    return myInactiveTimeout;
+    return UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(myInactiveTimeout);
   }
 
   public void setInactiveTimeout(int inactiveTimeoutSeconds) {
     int oldInactiveTimeout = myInactiveTimeout;
 
-    myInactiveTimeout = inactiveTimeoutSeconds;
+    myInactiveTimeout = UINumericRange.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(inactiveTimeoutSeconds);
     myPropertyChangeSupport.firePropertyChange(
-        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(inactiveTimeoutSeconds)
+        PROP_INACTIVE_TIMEOUT, Integer.valueOf(oldInactiveTimeout), Integer.valueOf(myInactiveTimeout)
     );
   }
 

@@ -59,8 +59,7 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
         if (offender != null) {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
-            val panel = EditorNotificationPanel()
-            panel.background(LightColors.RED)
+            val panel = EditorNotificationPanel(LightColors.RED)
             panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
             panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
               OpenFileDescriptor(project, clsFile, -1).navigate(true)

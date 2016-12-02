@@ -243,16 +243,7 @@ abstract class TerminalOperation extends Operation {
             || collectorArgs.length == 3 && collectorName.equals("partitioningBy")) return null;
         fn = FunctionHelper.create(collectorArgs[0], 1);
         if (fn == null) return null;
-        if (!(resultType instanceof PsiClassType)) return null;
-        PsiClass aClass = ((PsiClassType)resultType).resolve();
-        if (aClass == null) return null;
-        PsiSubstitutor substitutor = ((PsiClassType)resultType).resolveGenerics().getSubstitutor();
-        PsiClass mapClass =
-          JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, aClass.getResolveScope());
-        if (mapClass == null) return null;
-        PsiTypeParameter[] parameters = mapClass.getTypeParameters();
-        if (parameters.length != 2) return null;
-        PsiType resultSubType = substitutor.substitute(parameters[1]);
+        PsiType resultSubType = PsiUtil.substituteTypeParameter(resultType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
         if (resultSubType == null) return null;
         CollectorOperation downstreamCollector;
         if (collectorArgs.length == 1) {
@@ -689,8 +680,7 @@ abstract class TerminalOperation extends Operation {
         if (PsiType.DOUBLE.equalsToText(elementType)) {
           return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null);
         }
-      } else if(InheritanceUtil.isInheritor(PsiUtil.resolveClassInClassTypeOnly(comparator.getType()), false,
-                                     CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+      } else if(InheritanceUtil.isInheritor(comparator.getType(), CommonClassNames.JAVA_UTIL_COMPARATOR)) {
         return new MinMaxTerminalOperation(elementType, "{comparator}.compare({item},{best})" + sign + "0", comparator);
       }
       return null;

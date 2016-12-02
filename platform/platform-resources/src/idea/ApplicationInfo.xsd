@@ -13,13 +13,7 @@
         <xs:element type="packageType" name="package" minOccurs="0"/>
         <xs:element type="licenseeType" name="licensee" minOccurs="0"/>
         <xs:element type="namesType" name="names"/>
-        <xs:element name="essential-plugin" minOccurs="0" maxOccurs="unbounded">
-          <xs:complexType>
-            <xs:simpleContent>
-              <xs:extension base="xs:string"/>
-            </xs:simpleContent>
-          </xs:complexType>
-        </xs:element>
+        <xs:element type="essentialPluginType" name="essential-plugin" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element type="welcome-screenType" name="welcome-screen"/>
         <xs:element type="customize-ide-wizardType" name="customize-ide-wizard" minOccurs="0"/>
         <xs:element type="pluginsPageType" name="plugins-page" minOccurs="0" maxOccurs="unbounded"/>
@@ -41,7 +35,7 @@
     </xs:complexType>
   </xs:element>
   <xs:complexType name="versionType">
-    <xs:attribute type="xs:string" name="major" use="required"/>
+    <xs:attribute type="xs:positiveInteger" name="major" use="required"/>
     <xs:attribute type="xs:string" name="minor" use="required"/>
     <xs:attribute type="xs:string" name="micro"/>
     <xs:attribute type="xs:string" name="patch"/>
@@ -97,9 +91,37 @@
     </xs:attribute>
   </xs:complexType>
   <xs:complexType name="buildType">
-    <xs:attribute type="xs:string" name="number" use="required"/>
-    <xs:attribute type="xs:string" name="date"/>
-    <xs:attribute type="xs:string" name="majorReleaseDate"/>
+    <xs:attribute type="xs:string" name="number" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          In sources this attribute should be set to __BUILD_NUMBER__ placeholder which is replaced by real build number (two or more numbers separated by dots) by the build scripts.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="apiVersion">
+      <xs:annotation>
+        <xs:documentation>
+          This attribute allows to set an alternative build number which will be used instead the real one to detect compatible plugins.
+          Since 162.* builds it is recommended to use composite build numbers instead, i.e. take the build number of IntelliJ sources
+          the product is based on and append a sequential counter to it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="date">
+      <xs:annotation>
+        <xs:documentation>
+          In sources this attribute should be set to __BUILD_DATE__ placeholder which is replaced by real build number (date and UTC time in
+          yyyyMMddHHmm format) by the build scripts.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="majorReleaseDate">
+      <xs:annotation>
+        <xs:documentation>
+          Date when the current major version was firstly released, in yyyyMMdd format. It is used to determine if a user have a valid subscription.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="logoType">
     <xs:attribute type="xs:string" name="url" use="required"/>
@@ -133,6 +155,17 @@
   </xs:complexType>
   <xs:complexType name="licenseeType">
     <xs:attribute type="xs:boolean" name="show"/>
+  </xs:complexType>
+  <xs:complexType name="essentialPluginType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string"/>
+      <xs:annotation>
+        <xs:documentation>
+          Specifies ID of a plugin which is essential part of the IDE so it cannot be disabled and shouldn't be shown in Settings |
+          Plugins.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:simpleContent>
   </xs:complexType>
   <xs:complexType name="welcome-screenType">
     <xs:attribute type="xs:string" name="logo-url" use="required"/>

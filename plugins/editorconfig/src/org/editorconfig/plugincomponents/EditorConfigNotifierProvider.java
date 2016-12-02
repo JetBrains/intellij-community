@@ -42,8 +42,7 @@ public class EditorConfigNotifierProvider extends EditorNotifications.Provider<E
 
     final List<EditorConfig.OutPair> pairs = SettingsProviderComponent.getInstance().getOutPairs(project, Utils.getFilePath(project, file));
     if (!pairs.isEmpty()) {
-      final EditorNotificationPanel panel = new EditorNotificationPanel()
-        .background(LightColors.GREEN)
+      final EditorNotificationPanel panel = new EditorNotificationPanel(LightColors.GREEN)
         .text("EditorConfig is overriding Code Style settings for this file")
         .icon(EditorconfigIcons.Editorconfig);
       panel.createActionLabel("OK", () -> {

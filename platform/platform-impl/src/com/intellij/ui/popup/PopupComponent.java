@@ -16,6 +16,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -192,18 +193,12 @@ public interface PopupComponent {
 
     public void hide(boolean dispose) {
       myPopup.hide();
+      if (!dispose) return;
 
-      Window wnd = getWindow();
-      if (wnd instanceof JWindow) {
-        JRootPane rootPane = ((JWindow)wnd).getRootPane();
-        if (rootPane != null) {
-          ReflectionUtil.resetField(rootPane, "clientProperties");
-          final Container cp = rootPane.getContentPane();
-          if (cp != null) {
-            cp.removeAll();
-          }
-        }
-      }
+      Window window = getWindow();
+      JRootPane rootPane = window instanceof RootPaneContainer ? ((RootPaneContainer)window).getRootPane() : null;
+      DialogWrapper.cleanupRootPane(rootPane);
+      DialogWrapper.cleanupWindowListeners(window);
     }
 
     public void show() {

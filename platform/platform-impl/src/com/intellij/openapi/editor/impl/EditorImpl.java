@@ -1110,6 +1110,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     catch (TooManyListenersException e) {
       LOG.error(e);
     }
+    // update area available for soft wrapping on component shown/hidden
+    myPanel.addHierarchyListener(e -> mySoftWrapModel.getApplianceManager().updateAvailableArea());
 
     myPanel.addComponentListener(new ComponentAdapter() {
       @Override

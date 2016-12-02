@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -65,6 +66,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -778,5 +780,27 @@ public class SwingHelper {
       }
     );
     return pane;
+  }
+
+  @Nullable
+  public static Component getComponentFromRecentMouseEvent() {
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (event instanceof MouseEvent) {
+      MouseEvent mouseEvent = (MouseEvent)event;
+      Component component = mouseEvent.getComponent();
+      if (component != null) {
+        component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
+        if (component != null) {
+          if (component instanceof JTabbedPane) {
+            mouseEvent = SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, component);
+            JTabbedPane tabbedPane = (JTabbedPane)component;
+            int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, mouseEvent.getX(), mouseEvent.getY());
+            if (index != -1) return tabbedPane.getComponentAt(index);
+          }
+          return component;
+        }
+      }
+    }
+    return null;
   }
 }

@@ -694,6 +694,7 @@ public class AbstractPopup implements JBPopup {
 
   private void disposePopup() {
     if (myPopup != null) {
+      resetWindow();
       myPopup.hide(true);
     }
     myPopup = null;
@@ -1380,8 +1381,6 @@ public class AbstractPopup implements JBPopup {
       }
     }
     myMouseOutCanceller = null;
-
-    resetWindow();
 
     if (myFinalRunnable != null) {
       final ActionCallback typeAheadDone = new ActionCallback();

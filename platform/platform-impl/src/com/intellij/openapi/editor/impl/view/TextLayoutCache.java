@@ -90,7 +90,14 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   public void documentChanged(DocumentEvent event) {
     int startLine = myDocument.getLineNumber(event.getOffset());
     int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
-    invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine, true, LineLayout.isBidiLayoutRequired(event.getNewFragment()));
+    invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine, true,
+                    LineLayout.isBidiLayoutRequired(event.getNewFragment()));
+
+    if (myLines.size() != myDocument.getLineCount()) {
+      LOG.error("Error updating text layout cache after " + event,
+                new Attachment("editorState.txt", myView.getEditor().dumpState()));
+      resetToDocumentSize(true);
+    }
   }
 
   @Override
@@ -107,6 +114,9 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     checkDisposed();
     invalidateLines(0, myLines.size() - 1, myDocument.getLineCount() - 1,
                     documentChangedWithoutNotification, documentChangedWithoutNotification);
+    if (myLines.size() != myDocument.getLineCount()) {
+      LOG.error("Error resetting text layout cache", new Attachment("editorState.txt", myView.getEditor().dumpState()));
+    }
   }
 
   void invalidateLines(int startLine, int endLine) {

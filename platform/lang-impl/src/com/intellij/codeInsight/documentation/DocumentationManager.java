@@ -208,11 +208,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           hint.cancel();
         }
       }
-
-
-      @Override
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
-      }
     };
     myActionManager.addAnActionListener(actionListener, project);
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myProject);

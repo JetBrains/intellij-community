@@ -28,7 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
@@ -234,7 +234,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   @NotNull
   private List<String> getFilteredHashes(@Nullable VcsLogBranchFilter branchFilter,
                                          @Nullable VcsLogUserFilter userFilter) throws VcsException {
-    VcsLogFilterCollectionImpl filters = new VcsLogFilterCollectionImpl(branchFilter, userFilter, null, null, null, null, null);
+    VcsLogFilterCollection filters = new VcsLogFilterCollectionBuilder().with(branchFilter).with(userFilter).build();
     List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProjectRoot, filters, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }

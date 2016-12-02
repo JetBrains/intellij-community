@@ -54,7 +54,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
   @Override
@@ -64,7 +64,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     selectOption(options, editor, file);
   }
 
-  private List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
+  private static List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
     List<AnAction> result = new ArrayList<>();
 
     UnwrapDescriptor d = getUnwrapDescription(file);
@@ -80,7 +80,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return LanguageUnwrappers.INSTANCE.forLanguage(file.getLanguage());
   }
 
-  private AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
+  private static AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
     return new MyUnwrapAction(p, ed, u, el);
   }
 
@@ -97,10 +97,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     showPopup(options, editor);
   }
 
-  private void showPopup(final List<AnAction> options, Editor editor) {
+  private static void showPopup(final List<AnAction> options, Editor editor) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
-    DefaultListModel m = new DefaultListModel();
+    DefaultListModel<String> m = new DefaultListModel<>();
     for (AnAction a : options) {
       m.addElement(((MyUnwrapAction)a).getName());
     }
@@ -192,7 +192,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     private void saveCaretPosition(PsiFile file) {
       int offset = myEditor.getCaretModel().getOffset();
       PsiElement el = file.findElementAt(offset);
-
+      if (el == null) return;
       int innerOffset = offset - el.getTextOffset();
       el.putCopyableUserData(CARET_POS_KEY, innerOffset);
     }
