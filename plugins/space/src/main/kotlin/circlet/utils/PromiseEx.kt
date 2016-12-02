@@ -12,7 +12,7 @@ fun<T> Promise<T>.thenLater(lifetime : Lifetime, modalityState: ModalityState = 
         }, modalityState)
     }
 
-fun<T> Promise<T>.failureLater(lifetime : Lifetime, modalityState: ModalityState = ModalityState.current(), handler: (Throwable) -> Unit) =
+fun<T> Promise<T>.failureLater(lifetime : Lifetime, modalityState: ModalityState = ModalityState.current(), handler: (Failure) -> Unit) =
     this.failure {
         if (application.isDispatchThread)
         {
