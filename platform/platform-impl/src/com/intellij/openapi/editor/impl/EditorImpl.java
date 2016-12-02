@@ -29,10 +29,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -509,8 +506,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    myVerticalScrollBar.setOpaque(false);
+    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
+    myVerticalScrollBar.setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
     myPanel = new JPanel();
+
+    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
+    myScrollPane.getHorizontalScrollBar().setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
 
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
@@ -2706,7 +2707,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setUI(ScrollBarUI ui) {
       if (myPersistentUI == null) myPersistentUI = ui;
       super.setUI(myPersistentUI);
-      setOpaque(false);
+
+      /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
+
+        Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+      setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
     }
 
     /**
