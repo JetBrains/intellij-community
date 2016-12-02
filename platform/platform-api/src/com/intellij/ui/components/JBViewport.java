@@ -43,6 +43,8 @@ import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
   private static final MethodInvocator ourCanUseWindowBlitterMethod = new MethodInvocator(JViewport.class, "canUseWindowBlitter");
+  private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
+  private static final MethodInvocator ourGetUseTrueDoubleBufferingMethod = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
 
   private static final RegistryValue CAPABILITIES_DEBUG = Registry.get("idea.true.smooth.scrolling.debug");
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug");
@@ -130,6 +132,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       if (!Boolean.TRUE.equals(isWindowBlitterAvailableFor(this))) {
         myPreviousNotification = notify("Scrolling: cannot use window blitter");
       }
+      else {
+        if (!Boolean.TRUE.equals(isTrueDoubleBufferingAvailableFor(this))) {
+          myPreviousNotification = notify("Scrolling: cannot use true double buffering");
+        }
+      }
     }
   }
 
@@ -141,6 +148,32 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private static Boolean isWindowBlitterAvailableFor(JViewport viewport) {
     if (ourCanUseWindowBlitterMethod.isAvailable()) {
       return (Boolean)ourCanUseWindowBlitterMethod.invoke(viewport);
+    }
+
+    return null;
+  }
+
+  /* True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+     frame buffer content without the usual repainting, even when the EDT is blocked.
+
+     Generally, this requires default RepaintManager, swing.bufferPerWindow = true and
+     no prior direct invocations of JComponent.getGraphics() within JRootPane. */
+  @Nullable
+  private static Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
+    if (ourGetPaintManagerMethod.isAvailable()) {
+      Object paintManager = ourGetPaintManagerMethod.invoke(RepaintManager.currentManager(component));
+
+      if (!"javax.swing.BufferStrategyPaintManager".equals(paintManager.getClass().getName())) {
+        return false;
+      }
+
+      if (ourGetUseTrueDoubleBufferingMethod.isAvailable()) {
+        JRootPane rootPane = component.getRootPane();
+
+        if (rootPane != null) {
+          return (Boolean)ourGetUseTrueDoubleBufferingMethod.invoke(rootPane);
+        }
+      }
     }
 
     return null;
