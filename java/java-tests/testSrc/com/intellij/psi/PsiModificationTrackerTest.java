@@ -27,20 +27,17 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.*;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -399,5 +396,26 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertTrue(mc != tracker.getModificationCount());
     assertTrue(js != tracker.getJavaStructureModificationCount());
     assertTrue(ocb != tracker.getOutOfCodeBlockModificationCount());
+  }
+
+  public void testNoIncrementOnWorkspaceFileChange() throws Exception {
+    FixtureRuleKt.runInLoadComponentStateMode(myProject, () -> {
+      ProjectKt.getStateStore(myProject).save(new SmartList<>());
+
+      PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+      long mc = tracker.getModificationCount();
+
+      VirtualFile ws = myProject.getWorkspaceFile();
+      assertNotNull(ws);
+      new WriteCommandAction.Simple(myProject){
+        @Override
+        protected void run() throws Throwable {
+          VfsUtil.saveText(ws, VfsUtilCore.loadText(ws) + " ");
+        }
+      }.execute();
+      assertEquals(mc, tracker.getModificationCount());
+
+      return null;
+    });
   }
 }
