@@ -55,6 +55,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
   public static final Object SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
   public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
+  public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);

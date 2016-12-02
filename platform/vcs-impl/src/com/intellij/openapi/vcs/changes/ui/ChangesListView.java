@@ -285,7 +285,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   @NotNull
   private Stream<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
-    return getSelectionNodesStream(TreeModelBuilder.LOCALLY_DELETED_NODE)
+    return getSelectionNodesStream(LOCALLY_DELETED_NODE_TAG)
       .flatMap(node -> node.getObjectsUnderStream(LocallyDeletedChange.class))
       .distinct();
   }

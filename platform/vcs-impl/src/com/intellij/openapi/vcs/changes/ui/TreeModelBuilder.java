@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
@@ -43,7 +42,6 @@ import java.util.*;
 
 public class TreeModelBuilder {
   @NonNls private static final String ROOT_NODE_VALUE = "root";
-  public static final String LOCALLY_DELETED_NODE = VcsBundle.message("changes.nodetitle.locally.deleted.files");
 
   private static final int UNVERSIONED_MAX_SIZE = 50;
 
@@ -191,7 +189,7 @@ public class TreeModelBuilder {
 
     if (!locallyDeletedFiles.isEmpty()) {
       resetGrouping();
-      ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, LOCALLY_DELETED_NODE);
+      ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG);
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
       buildLocallyDeletedPaths(locallyDeletedFiles, locallyDeletedNode);
     }
