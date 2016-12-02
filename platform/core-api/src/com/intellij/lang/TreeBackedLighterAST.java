@@ -55,9 +55,6 @@ public class TreeBackedLighterAST extends LighterAST {
     return result;
   }
 
-  public void disposeChildren(@NotNull List<LighterASTNode> children) {
-  }
-
   @NotNull
   public static LighterASTNode wrap(@NotNull ASTNode node) {
     return node.getFirstChildNode() == null && node.getTextLength() > 0 ? new TokenNodeWrapper(node) : new NodeWrapper(node);
