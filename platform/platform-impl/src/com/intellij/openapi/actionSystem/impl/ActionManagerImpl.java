@@ -1187,7 +1187,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (action != null) {
       if (!ourActionsExcludedFromTracking.containsKey(action.getClass())) {
         SystemHealthMonitor.ourStudioActionCount.incrementAndGet();
-        SystemHealthMonitor.countActionInvocation(action.getClass(), event);
+        SystemHealthMonitor.countActionInvocation(action.getClass(), action.getTemplatePresentation(), event);
       }
 
       myPrevPerformedActionId = myLastPreformedActionId;
