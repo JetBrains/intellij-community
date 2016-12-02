@@ -94,6 +94,7 @@ public class JdkUtil {
         homePath + "/lib/rt.jar",
         homePath + "/jre/lib/vm.jar",
         homePath + "/../Classes/classes.jar",
+        homePath + "/lib/jrt-fs.jar",
         homePath + "/jrt-fs.jar");
       if (signatureJar != null) {
         return JarUtil.getJarAttribute(signatureJar, attribute);
@@ -452,7 +453,7 @@ public class JdkUtil {
   public static boolean useDynamicVMOptions() {
     return PropertiesComponent.getInstance().getBoolean("dynamic.vmoptions", true);
   }
-  
+
   public static boolean useClasspathJar() {
     return PropertiesComponent.getInstance().getBoolean("idea.dynamic.classpath.jar", true);
   }
