@@ -23,7 +23,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -190,12 +189,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     if (!Arrays.equals(myTodoPatterns, getDefaultPatterns())) {
       for (TodoPattern pattern : todoPatterns) {
         Element child = new Element(ELEMENT_PATTERN);
-        try {
-          pattern.writeExternal(child);
-        }
-        catch (WriteExternalException e) {
-          throw new RuntimeException(e);
-        }
+        pattern.writeExternal(child);
         element.addContent(child);
       }
     }

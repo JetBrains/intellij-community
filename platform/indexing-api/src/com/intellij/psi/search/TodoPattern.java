@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,28 +67,28 @@ public class TodoPattern implements Cloneable {
   }
 
   @NotNull
-  public String getPatternString(){
+  public String getPatternString() {
     return myIndexPattern.getPatternString();
   }
 
-  public void setPatternString(@NotNull String patternString){
+  public void setPatternString(@NotNull String patternString) {
     myIndexPattern.setPatternString(patternString);
   }
 
   @NotNull
-  public TodoAttributes getAttributes(){
+  public TodoAttributes getAttributes() {
     return myAttributes;
   }
 
-  public void setAttributes(@NotNull TodoAttributes attributes){
+  public void setAttributes(@NotNull TodoAttributes attributes) {
     myAttributes = attributes;
   }
 
-  public boolean isCaseSensitive(){
+  public boolean isCaseSensitive() {
     return myIndexPattern.isCaseSensitive();
   }
 
-  public void setCaseSensitive(boolean caseSensitive){
+  public void setCaseSensitive(boolean caseSensitive) {
     myIndexPattern.setCaseSensitive(caseSensitive);
   }
 
@@ -105,16 +104,18 @@ public class TodoPattern implements Cloneable {
       throw new RuntimeException(e);
     }
 
-    myIndexPattern.setCaseSensitive(Boolean.valueOf(element.getAttributeValue(CASE_SENS_ATT)).booleanValue());
+    myIndexPattern.setCaseSensitive(Boolean.parseBoolean(element.getAttributeValue(CASE_SENS_ATT)));
     String attributeValue = element.getAttributeValue(PATTERN_ATT);
     if (attributeValue != null){
       myIndexPattern.setPatternString(attributeValue.trim());
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     myAttributes.writeExternal(element);
-    element.setAttribute(CASE_SENS_ATT, Boolean.toString(myIndexPattern.isCaseSensitive()));
+    if (myIndexPattern.isCaseSensitive()) {
+      element.setAttribute(CASE_SENS_ATT, "true");
+    }
     element.setAttribute(PATTERN_ATT, myIndexPattern.getPatternString());
   }
 
