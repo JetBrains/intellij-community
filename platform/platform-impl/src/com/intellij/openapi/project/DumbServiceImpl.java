@@ -29,7 +29,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.AppIconScheme;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -165,7 +164,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
     final Application application = ApplicationManager.getApplication();
 
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if ((application.isUnitTestMode() || application.isHeadlessEnvironment()) && !application.isOnAir()) {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.pushState();
@@ -306,10 +305,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void showDumbModeNotification(@NotNull final String message) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-      if (ideFrame != null) {
-        StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-        statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+      final StatusBarEx statusBarEx = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBarEx != null) {
+        statusBarEx.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
       }
     });
   }

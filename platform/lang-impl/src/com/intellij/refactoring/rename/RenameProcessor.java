@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
@@ -406,20 +405,17 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     if (!mySkippedUsages.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         ApplicationManager.getApplication().invokeLater(() -> {
-          final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-          if (ideFrame != null) {
-
-            StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-            HyperlinkListener listener = new HyperlinkListener() {
-              @Override
-              public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-                Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
-                                           StringUtil.join(mySkippedUsages, unresolvableCollisionUsageInfo -> unresolvableCollisionUsageInfo.getDescription(), "<br>") +
-                                           "</html>", "Not All Usages Were Renamed", null);
-              }
+          StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+          if (statusBar != null) {
+            HyperlinkListener listener = e -> {
+              if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+              Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
+                                         StringUtil.join(mySkippedUsages, UnresolvableCollisionUsageInfo::getDescription, "<br>") +
+                                         "</html>", "Not All Usages Were Renamed", null);
             };
-            statusBar.notifyProgressByBalloon(MessageType.WARNING, "<html><body>Unable to rename certain usages. <a href=\"\">Browse</a></body></html>", null, listener);
+            statusBar.notifyProgressByBalloon(MessageType.WARNING,
+                                              "<html><body>Unable to rename certain usages. <a href=\"\">Browse</a></body></html>", null,
+                                              listener);
           }
         }, ModalityState.NON_MODAL);
       }

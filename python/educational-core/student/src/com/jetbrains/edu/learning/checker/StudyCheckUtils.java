@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.content.Content;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -171,8 +170,7 @@ public class StudyCheckUtils {
 
 
   public static boolean hasBackgroundProcesses(@NotNull Project project) {
-    final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
-    final StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
+    final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
     if (statusBar != null) {
       final List<Pair<TaskInfo, ProgressIndicator>> processes = statusBar.getBackgroundProcesses();
       if (!processes.isEmpty()) return true;

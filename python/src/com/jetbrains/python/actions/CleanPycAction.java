@@ -26,7 +26,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,8 @@ public class CleanPycAction extends AnAction {
       }
       FileUtil.asyncDelete(pycFiles);
     }, "Cleaning up .pyc files...", false, e.getProject());
-    final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(e.getProject()).getStatusBar();
+
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(e.getProject());
     statusBar.setInfo("Deleted " + pycFiles.size() + " bytecode file" + (pycFiles.size() != 1 ? "s" : ""));
   }
 
