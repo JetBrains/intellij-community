@@ -47,38 +47,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   protected int myCount = -1;
   protected int myDirectoryCount = -1;
-  public static final Object IGNORED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.ignored.files");
-    }
-  };
-  public static final Object LOCKED_FOLDERS_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.locked.folders");
-    }
-  };
-  public static final Object LOGICALLY_LOCKED_TAG = VcsBundle.message("changes.nodetitle.logicallt.locked.folders");
 
-  public static final Object UNVERSIONED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.unversioned.files");
-    }
-  };
-  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.modified.without.editing");
-    }
-  };
-  public static final Object SWITCHED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.switched.files");
-    }
-  };
-  public static final Object SWITCHED_ROOTS_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.switched.roots");
-    }
-  };
+  public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
+  public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
+  public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
+  public static final Object UNVERSIONED_FILES_TAG = new Tag("changes.nodetitle.unversioned.files");
+  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
+  public static final Object SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
+  public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -253,5 +229,18 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
     renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
                     SimpleTextAttributes.GRAYED_ATTRIBUTES);
+  }
+
+  private static class Tag {
+    @NotNull private final String myKey;
+
+    public Tag(@NotNull String key) {
+      myKey = key;
+    }
+
+    @Override
+    public String toString() {
+      return VcsBundle.message(myKey);
+    }
   }
 }
