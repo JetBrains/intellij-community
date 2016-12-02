@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.options
 
-import com.intellij.configurationStore.SchemeExtensionProvider
 import org.jdom.Element
 import kotlin.properties.Delegates
 
