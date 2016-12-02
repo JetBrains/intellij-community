@@ -21,14 +21,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dyoma
- */
 public class DefaultExecutionResult implements ExecutionResult {
   private final ExecutionConsole myConsole;
   private final ProcessHandler myProcessHandler;
+
   private AnAction[] myActions;
-  @NotNull
   private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
 
   public DefaultExecutionResult() {
@@ -37,11 +34,11 @@ public class DefaultExecutionResult implements ExecutionResult {
     myActions = AnAction.EMPTY_ARRAY;
   }
 
-  public DefaultExecutionResult(@Nullable ExecutionConsole console, @NotNull final ProcessHandler processHandler) {
+  public DefaultExecutionResult(@Nullable ExecutionConsole console, @NotNull ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }
 
-  public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler, final AnAction... actions) {
+  public DefaultExecutionResult(ExecutionConsole console, @NotNull ProcessHandler processHandler, @NotNull AnAction... actions) {
     myConsole = console;
     myProcessHandler = processHandler;
     myActions = actions;
@@ -67,9 +64,8 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myRestartActions;
   }
 
-  // TODO: Find all usages, make sure there is no null and make this method NotNull
-  public void setRestartActions(@Nullable AnAction... restartActions) {
-    myRestartActions = (restartActions != null ? restartActions : AnAction.EMPTY_ARRAY);
+  public void setRestartActions(@NotNull AnAction... restartActions) {
+    myRestartActions = restartActions;
   }
 
   @NotNull
