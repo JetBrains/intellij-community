@@ -949,8 +949,6 @@ public abstract class DialogWrapper {
 
   public static void cleanupRootPane(@Nullable JRootPane rootPane) {
     if (rootPane == null) return;
-    rootPane.setContentPane(new JPanel());
-    rootPane.setGlassPane(new JPanel());
     RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
     unregisterKeyboardActions(rootPane);
     Disposer.clearOwnFields(rootPane, field -> {
@@ -979,15 +977,14 @@ public abstract class DialogWrapper {
 
   public static void cleanupWindowListeners(@Nullable Window window) {
     if (window == null) return;
-    for (WindowListener listener : window.getWindowListeners()) {
-      if (listener.getClass().getName().startsWith("com.intellij.")) {
-        LOG.warn("Stale listener: " + listener);
+    SwingUtilities.invokeLater(() -> {
+      for (WindowListener listener : window.getWindowListeners()) {
+        if (listener.getClass().getName().startsWith("com.intellij.")) {
+          LOG.warn("Stale listener: " + listener);
+          window.removeWindowListener(listener);
+        }
       }
-      else {
-        LOG.info("Stale listener: " + listener);
-      }
-      window.removeWindowListener(listener);
-    }
+    });
   }
 
 
