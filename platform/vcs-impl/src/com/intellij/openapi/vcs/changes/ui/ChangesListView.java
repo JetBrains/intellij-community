@@ -274,15 +274,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   @Nullable
   private static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
-    Change result = null;
     VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
-
     if (before != null) {
       ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
-      result = new Change(before, afterRevision, FileStatus.HIJACKED);
+      return new Change(before, afterRevision, FileStatus.HIJACKED);
     }
-
-    return result;
+    return null;
   }
 
   @NotNull
