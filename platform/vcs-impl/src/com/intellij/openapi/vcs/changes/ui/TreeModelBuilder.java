@@ -274,30 +274,30 @@ public class TreeModelBuilder {
     return result;
   }
 
-  private void insertFilesIntoNode(@NotNull List<VirtualFile> files, @NotNull ChangesBrowserNode baseNode) {
+  private void insertFilesIntoNode(@NotNull List<VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
     Collections.sort(files, VirtualFileHierarchicalComparator.getInstance());
     
     for (VirtualFile file : files) {
-      insertChangeNode(file, baseNode, ChangesBrowserNode.create(myProject, file));
+      insertChangeNode(file, subtreeRoot, ChangesBrowserNode.create(myProject, file));
     }
   }
 
   private void buildLocallyDeletedPaths(@NotNull Collection<LocallyDeletedChange> locallyDeletedChanges,
-                                        @NotNull ChangesBrowserNode baseNode) {
+                                        @NotNull ChangesBrowserNode subtreeRoot) {
     for (LocallyDeletedChange change : locallyDeletedChanges) {
       // whether a folder does not matter
       final StaticFilePath key = new StaticFilePath(false, change.getPresentableUrl(), change.getPath().getVirtualFile());
       ChangesBrowserNode oldNode = myFoldersCache.get(key.getKey());
       if (oldNode == null) {
         ChangesBrowserNode node = ChangesBrowserNode.create(change);
-        ChangesBrowserNode parent = getParentNodeFor(key, baseNode);
+        ChangesBrowserNode parent = getParentNodeFor(key, subtreeRoot);
         myModel.insertNodeInto(node, parent, parent.getChildCount());
         myFoldersCache.put(key.getKey(), node);
       }
     }
   }
 
-  private void buildFilePaths(@NotNull Collection<FilePath> filePaths, @NotNull ChangesBrowserNode baseNode) {
+  private void buildFilePaths(@NotNull Collection<FilePath> filePaths, @NotNull ChangesBrowserNode subtreeRoot) {
     for (FilePath file : filePaths) {
       assert file != null;
       // whether a folder does not matter
@@ -308,7 +308,7 @@ public class TreeModelBuilder {
       ChangesBrowserNode oldNode = myFoldersCache.get(pathKey.getKey());
       if (oldNode == null) {
         final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
-        final ChangesBrowserNode parentNode = getParentNodeFor(pathKey, baseNode);
+        final ChangesBrowserNode parentNode = getParentNodeFor(pathKey, subtreeRoot);
         myModel.insertNodeInto(node, parentNode, 0);
         // we could also ask whether a file or directory, though for deleted files not a good idea
         myFoldersCache.put(pathKey.getKey(), node);
@@ -342,13 +342,13 @@ public class TreeModelBuilder {
   }
 
   private void buildSwitchedFiles(@NotNull MultiMap<String, VirtualFile> switchedFiles) {
-    ChangesBrowserNode baseNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_FILES_TAG);
-    myModel.insertNodeInto(baseNode, myRoot, myRoot.getChildCount());
+    ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_FILES_TAG);
+    myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
     for(String branchName: switchedFiles.keySet()) {
       final List<VirtualFile> switchedFileList = new ArrayList<>(switchedFiles.get(branchName));
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
-        myModel.insertNodeInto(branchNode, baseNode, baseNode.getChildCount());
+        myModel.insertNodeInto(branchNode, subtreeRoot, subtreeRoot.getChildCount());
 
         Collections.sort(switchedFileList, VirtualFileHierarchicalComparator.getInstance());
         for (VirtualFile file : switchedFileList) {
@@ -359,7 +359,7 @@ public class TreeModelBuilder {
   }
 
   private void buildLogicallyLockedFiles(@NotNull Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
-    final ChangesBrowserNode baseNode = createNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
+    final ChangesBrowserNode subtreeRoot = createNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
     final List<VirtualFile> keys = new ArrayList<>(logicallyLockedFiles.keySet());
     Collections.sort(keys, VirtualFileHierarchicalComparator.getInstance());
@@ -367,15 +367,15 @@ public class TreeModelBuilder {
     for (final VirtualFile file : keys) {
       final LogicalLock lock = logicallyLockedFiles.get(file);
       final ChangesBrowserLogicallyLockedFile obj = new ChangesBrowserLogicallyLockedFile(myProject, file, lock);
-      insertChangeNode(obj, baseNode, ChangesBrowserNode.create(myProject, obj));
+      insertChangeNode(obj, subtreeRoot, ChangesBrowserNode.create(myProject, obj));
     }
   }
 
   protected void insertChangeNode(@NotNull Object change,
-                                @NotNull ChangesBrowserNode listNode,
-                                @NotNull ChangesBrowserNode node) {
+                                  @NotNull ChangesBrowserNode subtreeRoot,
+                                  @NotNull ChangesBrowserNode node) {
     final StaticFilePath pathKey = getKey(change);
-    ChangesBrowserNode parentNode = getParentNodeFor(pathKey, listNode);
+    ChangesBrowserNode parentNode = getParentNodeFor(pathKey, subtreeRoot);
     myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));
 
     if (pathKey.isDirectory()) {
@@ -464,14 +464,14 @@ public class TreeModelBuilder {
 
   @NotNull
   private ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath,
-                                              @NotNull ChangesBrowserNode rootNode) {
+                                              @NotNull ChangesBrowserNode subtreeRoot) {
     if (myShowFlatten) {
-      return rootNode;
+      return subtreeRoot;
     }
 
     ChangesGroupingPolicy policy = getGroupingPolicy();
     if (policy != null) {
-      ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(nodePath, rootNode);
+      ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(nodePath, subtreeRoot);
       if (nodeFromPolicy != null) {
         return nodeFromPolicy;
       }
@@ -479,20 +479,20 @@ public class TreeModelBuilder {
 
     final StaticFilePath parentPath = nodePath.getParent();
     if (parentPath == null) {
-      return rootNode;
+      return subtreeRoot;
     }
 
     ChangesBrowserNode parentNode = myFoldersCache.get(parentPath.getKey());
     if (parentNode == null) {
       parentNode = createPathNode(parentPath);
       if (parentNode != null) {
-        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, rootNode);
+        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, subtreeRoot);
         myModel.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
         myFoldersCache.put(parentPath.getKey(), parentNode);
       }
     }
 
-    return ObjectUtils.chooseNotNull(parentNode, rootNode);
+    return ObjectUtils.chooseNotNull(parentNode, subtreeRoot);
   }
 
   @Nullable
