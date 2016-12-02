@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
@@ -112,7 +111,7 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
       val builder = StringBuilder(description)
       builder.append(" (")
       val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts("WebOpenInAction")
-      val exists = shortcuts.size > 0
+      val exists = shortcuts.isNotEmpty()
       if (exists) {
         builder.append(KeymapUtil.getShortcutText(shortcuts[0]))
       }
@@ -141,13 +140,11 @@ private fun createRequest(context: DataContext): OpenInBrowserRequest? {
     if (project != null && project.isInitialized) {
       val psiFile = CommonDataKeys.PSI_FILE.getData(context) ?: PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
       if (psiFile != null && psiFile.virtualFile !is ContentRevisionVirtualFile) {
-        return object : OpenInBrowserRequest() {
-          override val file: PsiFile = psiFile
-
+        return object : OpenInBrowserRequest(psiFile) {
           private val _element by lazy { file.findElementAt(editor.caretModel.offset) }
 
           override val element: PsiElement
-              get() = _element ?: file
+            get() = _element ?: file
         }
       }
     }
