@@ -183,7 +183,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     final PsiElement element = info.getPsiMember();
     final TextRange range = element.getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    WriteAction.run(() -> editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
     int offset = range.getStartOffset();
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
