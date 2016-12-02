@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,19 +30,20 @@ import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.io.DataOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 public class CompilerBackwardReferenceIndex {
+  private final static Logger LOG = Logger.getInstance(CompilerBackwardReferenceIndex.class);
+
   private final static String FILE_ENUM_TAB = "file.path.enum.tab";
   private final static String NAME_ENUM_TAB = "name.tab";
 
-  private static final String VERSION_FILE = ".version";
+  private static final String VERSION_FILE = "version";
   private final Map<ID<?, ?>, InvertedIndex<?, ?, CompiledFileData>> myIndices;
   private final ByteArrayEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
@@ -70,7 +72,7 @@ public class CompilerBackwardReferenceIndex {
     }
     try {
       if (versionDiffers(buildDir)) {
-        FileUtil.writeToFile(new File(myIndicesDir, VERSION_FILE), String.valueOf(CompilerIndices.VERSION));
+        saveVersion(buildDir);
       }
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
@@ -148,11 +150,38 @@ public class CompilerBackwardReferenceIndex {
 
   public static boolean versionDiffers(@NotNull File buildDir) {
     File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
+
     try {
-      return Integer.parseInt(FileUtil.loadFile(versionFile)) != CompilerIndices.VERSION;
+      final DataInputStream is = new DataInputStream(new FileInputStream(versionFile));
+      try {
+        return is.readInt() != CompilerIndices.VERSION;
+      }
+      finally {
+        is.close();
+      }
     }
-    catch (final IOException e) {
-      return true;
+    catch (IOException ex) {
+      LOG.info(ex);
+    }
+    return true;
+  }
+
+  public void saveVersion(@NotNull File buildDir) {
+    File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
+
+    try {
+      FileUtil.createIfDoesntExist(versionFile);
+      final DataOutputStream os = new DataOutputStream(new FileOutputStream(versionFile));
+      try {
+        os.writeInt(CompilerIndices.VERSION);
+      }
+      finally {
+        os.close();
+      }
+    }
+    catch (IOException ex) {
+      LOG.error(ex);
+      throw new BuildDataCorruptedException(ex);
     }
   }
 
