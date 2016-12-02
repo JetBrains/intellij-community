@@ -93,9 +93,8 @@ public class TreeModelBuilder {
   public TreeModelBuilder setChanges(@NotNull List<Change> changes, @Nullable final ChangeNodeDecorator changeNodeDecorator) {
     Collections.sort(changes, PATH_LENGTH_COMPARATOR);
 
-    final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (final Change change : changes) {
-      insertChangeNode(change, policy, myRoot, createChangeNode(change, changeNodeDecorator));
+      insertChangeNode(change, myRoot, createChangeNode(change, changeNodeDecorator));
     }
 
     return this;
@@ -129,8 +128,8 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  private ChangesGroupingPolicy createGroupingPolicy() {
-    if (! myPolicyInitialized) {
+  private ChangesGroupingPolicy getGroupingPolicy() {
+    if (!myPolicyInitialized) {
       myPolicyInitialized = true;
       final ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
       if (factory != null) {
@@ -217,10 +216,9 @@ public class TreeModelBuilder {
       ChangesBrowserChangeListNode listNode = createChangeListNode(list, changes);
       myModel.insertNodeInto(listNode, myRoot, 0);
       resetGrouping();
-      final ChangesGroupingPolicy policy = createGroupingPolicy();
       Collections.sort(changes, PATH_LENGTH_COMPARATOR);
       for (int i = 0; i < changes.size(); i++) {
-        insertChangeNode(changes.get(i), policy, listNode, createChangeListChild(revisionsCache, listNode, changes, i));
+        insertChangeNode(changes.get(i), listNode, createChangeListChild(revisionsCache, listNode, changes, i));
       }
     }
     return myModel;
@@ -277,24 +275,22 @@ public class TreeModelBuilder {
   }
 
   private void insertFilesIntoNode(@NotNull List<VirtualFile> files, @NotNull ChangesBrowserNode baseNode) {
-    ChangesGroupingPolicy policy = createGroupingPolicy();
     Collections.sort(files, VirtualFileHierarchicalComparator.getInstance());
     
     for (VirtualFile file : files) {
-      insertChangeNode(file, policy, baseNode, ChangesBrowserNode.create(myProject, file));
+      insertChangeNode(file, baseNode, ChangesBrowserNode.create(myProject, file));
     }
   }
 
   private void buildLocallyDeletedPaths(@NotNull Collection<LocallyDeletedChange> locallyDeletedChanges,
                                         @NotNull ChangesBrowserNode baseNode) {
-    final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (LocallyDeletedChange change : locallyDeletedChanges) {
       // whether a folder does not matter
       final StaticFilePath key = new StaticFilePath(false, change.getPresentableUrl(), change.getPath().getVirtualFile());
       ChangesBrowserNode oldNode = myFoldersCache.get(key.getKey());
       if (oldNode == null) {
         ChangesBrowserNode node = ChangesBrowserNode.create(change);
-        ChangesBrowserNode parent = getParentNodeFor(key, policy, baseNode);
+        ChangesBrowserNode parent = getParentNodeFor(key, baseNode);
         myModel.insertNodeInto(node, parent, parent.getChildCount());
         myFoldersCache.put(key.getKey(), node);
       }
@@ -302,7 +298,6 @@ public class TreeModelBuilder {
   }
 
   private void buildFilePaths(@NotNull Collection<FilePath> filePaths, @NotNull ChangesBrowserNode baseNode) {
-    final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (FilePath file : filePaths) {
       assert file != null;
       // whether a folder does not matter
@@ -313,7 +308,7 @@ public class TreeModelBuilder {
       ChangesBrowserNode oldNode = myFoldersCache.get(pathKey.getKey());
       if (oldNode == null) {
         final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
-        final ChangesBrowserNode parentNode = getParentNodeFor(pathKey, policy, baseNode);
+        final ChangesBrowserNode parentNode = getParentNodeFor(pathKey, baseNode);
         myModel.insertNodeInto(node, parentNode, 0);
         // we could also ask whether a file or directory, though for deleted files not a good idea
         myFoldersCache.put(pathKey.getKey(), node);
@@ -330,11 +325,10 @@ public class TreeModelBuilder {
     Collections.sort(files, VirtualFileHierarchicalComparator.getInstance());
     
     for (VirtualFile vf : files) {
-      final ChangesGroupingPolicy policy = createGroupingPolicy();
       final ContentRevision cr = new CurrentContentRevision(VcsUtil.getFilePath(vf));
       final Change change = new Change(cr, cr, FileStatus.NOT_CHANGED);
       final String branchName = switchedRoots.get(vf);
-      insertChangeNode(vf, policy, rootsHeadNode, createChangeNode(change, new ChangeNodeDecorator() {
+      insertChangeNode(vf, rootsHeadNode, createChangeNode(change, new ChangeNodeDecorator() {
         @Override
         public void decorate(Change change1, SimpleColoredComponent component, boolean isShowFlatten) {
         }
@@ -356,10 +350,9 @@ public class TreeModelBuilder {
         ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
         myModel.insertNodeInto(branchNode, baseNode, baseNode.getChildCount());
 
-        final ChangesGroupingPolicy policy = createGroupingPolicy();
         Collections.sort(switchedFileList, VirtualFileHierarchicalComparator.getInstance());
         for (VirtualFile file : switchedFileList) {
-          insertChangeNode(file, policy, branchNode, ChangesBrowserNode.create(myProject, file));
+          insertChangeNode(file, branchNode, ChangesBrowserNode.create(myProject, file));
         }
       }
     }
@@ -368,23 +361,21 @@ public class TreeModelBuilder {
   private void buildLogicallyLockedFiles(@NotNull Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     final ChangesBrowserNode baseNode = createNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
-    final ChangesGroupingPolicy policy = createGroupingPolicy();
     final List<VirtualFile> keys = new ArrayList<>(logicallyLockedFiles.keySet());
     Collections.sort(keys, VirtualFileHierarchicalComparator.getInstance());
 
     for (final VirtualFile file : keys) {
       final LogicalLock lock = logicallyLockedFiles.get(file);
       final ChangesBrowserLogicallyLockedFile obj = new ChangesBrowserLogicallyLockedFile(myProject, file, lock);
-      insertChangeNode(obj, policy, baseNode, ChangesBrowserNode.create(myProject, obj));
+      insertChangeNode(obj, baseNode, ChangesBrowserNode.create(myProject, obj));
     }
   }
 
   protected void insertChangeNode(@NotNull Object change,
-                                @Nullable ChangesGroupingPolicy policy,
                                 @NotNull ChangesBrowserNode listNode,
                                 @NotNull ChangesBrowserNode node) {
     final StaticFilePath pathKey = getKey(change);
-    ChangesBrowserNode parentNode = getParentNodeFor(pathKey, policy, listNode);
+    ChangesBrowserNode parentNode = getParentNodeFor(pathKey, listNode);
     myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));
 
     if (pathKey.isDirectory()) {
@@ -473,12 +464,12 @@ public class TreeModelBuilder {
 
   @NotNull
   private ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath,
-                                              @Nullable ChangesGroupingPolicy policy,
                                               @NotNull ChangesBrowserNode rootNode) {
     if (myShowFlatten) {
       return rootNode;
     }
 
+    ChangesGroupingPolicy policy = getGroupingPolicy();
     if (policy != null) {
       ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(nodePath, rootNode);
       if (nodeFromPolicy != null) {
@@ -495,7 +486,7 @@ public class TreeModelBuilder {
     if (parentNode == null) {
       parentNode = createPathNode(parentPath);
       if (parentNode != null) {
-        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, policy, rootNode);
+        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, rootNode);
         myModel.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
         myFoldersCache.put(parentPath.getKey(), parentNode);
       }
