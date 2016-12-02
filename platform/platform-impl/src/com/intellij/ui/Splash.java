@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -36,16 +35,8 @@ import java.util.List;
 
 
 /**
- * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and find
- * section corresponding to IDE logo. It should look like:
- * <p>
- *   &lt;logo url=&quot;/idea_logo.png&quot; textcolor=&quot;919191&quot; progressColor=&quot;264db5&quot; progressY=&quot;235&quot;/&gt;
- * </p>
- * <p>where <code>url</code> is path to your splash image
- * <p><code>textColor</code> is HEX representation of text color for user name
- * <p><code>progressColor</code> is progress bar color
- * <p><code>progressY</code> is Y coordinate of the progress bar
- * <p><code>progressTailIcon</code> is a path to flame effect icon
+ * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
+ * the tag attributes in ApplicationInfo.xsd file.
  *
  * @author Konstantin Bulenkov
  */

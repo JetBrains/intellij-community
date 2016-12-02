@@ -124,14 +124,70 @@
     </xs:attribute>
   </xs:complexType>
   <xs:complexType name="logoType">
-    <xs:attribute type="xs:string" name="url" use="required"/>
-    <xs:attribute type="xs:string" name="textcolor" use="required"/>
-    <xs:attribute type="xs:string" name="progressColor"/>
-    <xs:attribute type="xs:int" name="progressX"/>
-    <xs:attribute type="xs:int" name="progressY"/>
-    <xs:attribute type="xs:int" name="progressHeight"/>
-    <xs:attribute type="xs:string" name="progressTailIcon"/>
-    <xs:attribute type="xs:int" name="licenseOffsetY"/>
+    <xs:annotation>
+      <xs:documentation>
+        Describes the splash screen which is shown when the product is starting.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute type="xs:string" name="url" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file with the splash screen image.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:hexBinary" name="textcolor" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint text on the splash screen. Currently it is used to
+          show information about licensee only.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:hexBinary" name="progressColor">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint progress bar on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="progressX">
+      <xs:annotation>
+        <xs:documentation>
+          The X coordinate of the top left corner of the progress bar on the splash screen. The progress bar will end at the right side of
+          the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="progressY">
+      <xs:annotation>
+        <xs:documentation>
+          The Y coordinate of the top left corner of the progress bar on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="progressHeight">
+      <xs:annotation>
+        <xs:documentation>
+          Height of the progress bar on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="progressTailIcon">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file containing a small image with 'flame effect'. The image will be
+          painted on the progress bar, its center will be located at the current right end of the progress bar.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="licenseOffsetY">
+      <xs:annotation>
+        <xs:documentation>
+          The Y coordinate of a position on the splash screen where information about licensee will be shown. The X coordinate is 15.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="aboutType">
     <xs:attribute type="xs:string" name="url" use="required"/>
@@ -154,7 +210,13 @@
     <xs:attribute type="xs:string" name="code"/>
   </xs:complexType>
   <xs:complexType name="licenseeType">
-    <xs:attribute type="xs:boolean" name="show"/>
+    <xs:attribute type="xs:boolean" name="show">
+      <xs:annotation>
+        <xs:documentation>
+          If 'true' information about licensee will be shown on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="essentialPluginType">
     <xs:simpleContent>
