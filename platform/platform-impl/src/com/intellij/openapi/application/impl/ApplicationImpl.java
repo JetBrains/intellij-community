@@ -942,13 +942,23 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myLock.readUnlock();
   }
 
-  public void runWriteActionWithProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent,
+  public boolean runWriteActionWithProgress(@NotNull String title,
+                                         @Nullable Project project,
+                                         @Nullable JComponent parentComponent,
+                                         @Nullable String cancelText,
                                          @NotNull Consumer<ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
-      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent);
-      ProgressManager.getInstance().runProcess(() -> action.consume(indicator), indicator);
+      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+      try {
+        ProgressManager.getInstance().runProcess(() -> action.consume(indicator), indicator);
+      }
+      catch (ProcessCanceledException ignore) { }
+      finally {
+        indicator.progressFinished();
+      }
+      return !indicator.isCanceled();
     }
     finally {
       endWrite(clazz);

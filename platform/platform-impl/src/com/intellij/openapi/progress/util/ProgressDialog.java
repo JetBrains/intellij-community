@@ -272,12 +272,14 @@ class ProgressDialog implements Disposable {
   }
 
   void hide() {
-    SwingUtilities.invokeLater(() -> {
-      if (myPopup != null) {
-        myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
-        myPopup = null;
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(this::hideImmediately, ModalityState.any());
+  }
+
+  void hideImmediately() {
+    if (myPopup != null) {
+      myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
+      myPopup = null;
+    }
   }
 
   @Nullable

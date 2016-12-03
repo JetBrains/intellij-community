@@ -30,10 +30,8 @@ public class TestWriteActionUnderProgress extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    app.runWriteActionWithProgress("Write Action Progress", null, null, indicator -> {
-      runIndeterminateProgress(indicator);
-      runDeterminateProgress(indicator);
-    });
+    app.runWriteActionWithProgress("Progress", null, null, null, TestWriteActionUnderProgress::runIndeterminateProgress);
+    app.runWriteActionWithProgress("Cancellable Progress", null, null, "Stop", TestWriteActionUnderProgress::runDeterminateProgress);
   }
 
   private static void runDeterminateProgress(ProgressIndicator indicator) {
