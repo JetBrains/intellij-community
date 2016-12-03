@@ -433,7 +433,7 @@ public class FindInProjectUtil {
   public static void initStringToFindFromDataContext(FindModel findModel, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     FindUtil.initStringToFindWithSelection(findModel, editor);
-    if (editor == null) {
+    if (editor == null || !editor.getSelectionModel().hasSelection()) {
       FindUtil.useFindStringFromFindInFileModel(findModel, CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext));
     }
   }
