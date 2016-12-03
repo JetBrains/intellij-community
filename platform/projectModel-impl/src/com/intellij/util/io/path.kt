@@ -224,3 +224,35 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
 }
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")
+
+class PathMatcherEx(pattern: String) : PathMatcher {
+  private val matcher: PathMatcher
+
+  val negate = pattern.startsWith('!')
+  val rawPattern: String
+
+  init {
+    rawPattern = if (negate) pattern.substring(1) else pattern
+    matcher = FileSystems.getDefault().getPathMatcher("glob:$rawPattern")
+  }
+
+  override fun matches(path: Path) = if (negate) !matcher.matches(path) else matcher.matches(path)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other?.javaClass != javaClass) return false
+
+    other as PathMatcherEx
+
+    if (negate != other.negate) return false
+    if (rawPattern != other.rawPattern) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = negate.hashCode()
+    result = 31 * result + rawPattern.hashCode()
+    return result
+  }
+}
