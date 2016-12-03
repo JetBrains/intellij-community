@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -87,6 +88,12 @@ private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
         }
       }
     }
+  }
+
+  @Override
+  protected void onSpeedSearchPatternChanged() {
+    super.onSpeedSearchPatternChanged();
+    ScrollingUtil.ensureSelectionExists(getList());
   }
 
   @Override
