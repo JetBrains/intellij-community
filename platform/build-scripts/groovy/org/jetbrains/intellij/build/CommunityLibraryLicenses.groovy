@@ -334,7 +334,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "six.py", attachedTo: "python-helpers", version: "1.9.0", license: "MIT", url: "http://pythonhosted.org/six/"),
     new LibraryLicense(name: "Slf4j", version: "1.7.10", license: "MIT License", url: "http://slf4j.org/",
                        licenseUrl: "http://slf4j.org/license.html"),
-    new LibraryLicense(name: "SnakeYAML", libraryName: "snakeyaml-1.13.jar", version: "1.13", license: "Apache 2.0",
+    new LibraryLicense(name: "SnakeYAML", libraryName: "snakeyaml", version: "1.17", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://bitbucket.org/asomov/snakeyaml"),
     new LibraryLicense(name: "Snappy-Java", libraryName: "Snappy-Java", version: "0.5.1", license: "Apache 2.0",
                        url: "https://github.com/dain/snappy", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
