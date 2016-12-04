@@ -217,7 +217,8 @@ public class RegExpParser implements PsiParser {
 
     // DEFLIST
     if (parseClassIntersection(builder)) {
-      while (RegExpTT.CHARACTERS2.contains(builder.getTokenType()) ||
+      while (RegExpTT.CHARACTERS.contains(builder.getTokenType()) ||
+             builder.getTokenType() == RegExpTT.CHAR_CLASS ||
              builder.getTokenType() == RegExpTT.CLASS_BEGIN ||
              builder.getTokenType() == RegExpTT.PROPERTY ||
              builder.getTokenType() == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
@@ -257,8 +258,13 @@ public class RegExpParser implements PsiParser {
       else if (token == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
         parseBracketExpression(builder);
       }
-      else if (RegExpTT.CHARACTERS2.contains(token)) {
+      else if (RegExpTT.CHARACTERS.contains(token)) {
         parseSimpleClassdef(builder);
+      }
+      else if (token == RegExpTT.CHAR_CLASS) {
+        final PsiBuilder.Marker m = builder.mark();
+        builder.advanceLexer();
+        m.done(RegExpElementTypes.SIMPLE_CLASS);
       }
       else if (token == RegExpTT.PROPERTY) {
         parseProperty(builder);
@@ -291,7 +297,7 @@ public class RegExpParser implements PsiParser {
   }
 
   private void parseSimpleClassdef(PsiBuilder builder) {
-    assert RegExpTT.CHARACTERS2.contains(builder.getTokenType());
+    assert RegExpTT.CHARACTERS.contains(builder.getTokenType());
 
     final PsiBuilder.Marker marker = builder.mark();
     makeChar(builder);
@@ -301,7 +307,7 @@ public class RegExpParser implements PsiParser {
       builder.advanceLexer();
 
       final IElementType t = builder.getTokenType();
-      if (RegExpTT.CHARACTERS2.contains(t)) {
+      if (RegExpTT.CHARACTERS.contains(t) || t == RegExpTT.CHAR_CLASS) {
         m.drop();
         makeChar(builder);
         marker.done(RegExpElementTypes.CHAR_RANGE);
@@ -449,7 +455,7 @@ public class RegExpParser implements PsiParser {
       marker.drop();
       parseNamedCharacter(builder);
     }
-    else if (RegExpTT.SIMPLE_CLASSES.contains(type)) {
+    else if (type == RegExpTT.DOT || type == RegExpTT.CHAR_CLASS) {
       builder.advanceLexer();
       marker.done(RegExpElementTypes.SIMPLE_CLASS);
     }

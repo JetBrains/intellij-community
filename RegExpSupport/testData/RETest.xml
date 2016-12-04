@@ -37,7 +37,11 @@
   </quantifiers>
   <charclasses>
     <test verify="false">
-      <pattern><![CDATA[[<warning descr="Redundant character range">\w-\w</warning>]]]></pattern>
+      <pattern><![CDATA[[\w-<warning descr="Duplicate predefined character class '\w' inside character class">\w</warning>]]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>[\w-a]</pattern>
       <expected>OK</expected>
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
@@ -106,7 +110,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' in character class">)</warning>]<warning descr="Duplicate character ']' in character class">]</warning>[<warning descr="Duplicate character ']' in character class">]</warning>\E]]]></pattern>
+      <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' inside character class">)</warning>]<warning descr="Duplicate character ']' inside character class">]</warning>[<warning descr="Duplicate character ']' inside character class">]</warning>\E]]]></pattern>
       <expected>OK</expected>
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
@@ -133,7 +137,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' in character class">i</warning>t<warning descr="Duplicate character ':' in character class">:</warning>]+]]></pattern>
+      <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' inside character class">i</warning>t<warning descr="Duplicate character ':' inside character class">:</warning>]+]]></pattern>
       <expected>OK</expected>
     </test>
   </namedchars>
