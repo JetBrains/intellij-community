@@ -256,3 +256,17 @@ class PathMatcherEx(pattern: String) : PathMatcher {
     return result
   }
 }
+
+fun minimatchAll(path: Path, patterns: List<PathMatcherEx>): Boolean {
+  var match = false
+  for (pattern in patterns) {
+    // If we've got a match, only re-test for exclusions.
+    // if we don't have a match, only re-test for inclusions.
+    if (match !== pattern.negate) {
+      continue
+    }
+
+    match = pattern.matches(path)
+  }
+  return match
+}
