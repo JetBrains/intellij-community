@@ -949,12 +949,21 @@ public abstract class DialogWrapper {
 
   public static void cleanupRootPane(@Nullable JRootPane rootPane) {
     if (rootPane == null) return;
+    // Must be preserved:
+    //   Component#appContext, Component#appContext, Container#component
+    //   JRootPane#contentPane due to popup recycling & our border styling
+    // Must be cleared:
+    //   JComponent#clientProperties, contentPane children
     RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
     unregisterKeyboardActions(rootPane);
+    Container contentPane = rootPane.getContentPane();
+    if (contentPane != null) contentPane.removeAll();
     Disposer.clearOwnFields(rootPane, field -> {
-      // keep AWT and Swing fields intact
-      String name = field.getDeclaringClass().getName();
-      return !(name.startsWith("java.") || name.startsWith("javax."));
+      String clazz = field.getDeclaringClass().getName();
+      // keep AWT and Swing fields intact, except some
+      if (!clazz.startsWith("java.") && !clazz.startsWith("javax.")) return true;
+      String name = field.getName();
+      return "clientProperties".equals(name);
     });
   }
 
@@ -968,7 +977,7 @@ public abstract class DialogWrapper {
         for (int i : flags) {
           Object key = eachComp.getInputMap(i).get(eachStroke);
           Action action = key == null ? null : actionMap.get(key);
-          remove &= !(action instanceof UIResource);
+          if (action instanceof UIResource) remove = false;
         }
         if (remove) eachComp.unregisterKeyboardAction(eachStroke);
       }
