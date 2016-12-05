@@ -38,6 +38,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -68,7 +69,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -427,14 +427,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final AtomicBoolean run = new AtomicBoolean();
     Disposable disposable = Disposer.newDisposable();
     final AtomicReference<RuntimeException> stopDaemonReason = new AtomicReference<>();
-    StorageUtil.DEBUG_LOG = "";
+    StorageUtilKt.setDEBUG_LOG("");
     getProject().getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
             new DaemonCodeAnalyzer.DaemonListenerAdapter() {
               @Override
               public void daemonCancelEventOccurred(@NotNull String reason) {
                 RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason +
                                                           "\nStorage write log: ----------\n" +
-                                                          StorageUtil.DEBUG_LOG +"\n--------------");
+                                                          StorageUtilKt.getDEBUG_LOG() + "\n--------------");
                 stopDaemonReason.compareAndSet(null, e);
               }
             });
@@ -459,7 +459,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
     finally {
-      StorageUtil.DEBUG_LOG = null;
+      StorageUtilKt.setDEBUG_LOG(null);
       Disposer.dispose(disposable);
     }
   }

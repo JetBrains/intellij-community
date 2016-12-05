@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
@@ -28,10 +29,12 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -344,7 +347,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
           Application application = ApplicationManager.getApplication();
           if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-            StorageUtil.checkUnknownMacros(project, true);
+            StorageUtilKt.checkUnknownMacros(project, true);
           }
         }
       }, ModalityState.NON_MODAL);

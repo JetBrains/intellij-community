@@ -540,6 +540,6 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     }
 
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
-    StorageUtil.doNotify(macros, project, Collections.singletonMap(substitutor, store))
+    doNotify(macros, project, Collections.singletonMap(substitutor, store))
   }, project.disposed)
 }

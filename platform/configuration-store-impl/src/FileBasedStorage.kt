@@ -24,7 +24,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
@@ -168,7 +167,7 @@ open class FileBasedStorage(file: Path,
 
 fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: Element, lineSeparator: LineSeparator, prependXmlProlog: Boolean): VirtualFile {
   val result = if (file != null && (virtualFile == null || !virtualFile.isValid)) {
-    StorageUtil.getOrCreateVirtualFile(requestor, file)
+    getOrCreateVirtualFile(requestor, file)
   }
   else {
     virtualFile!!
@@ -179,8 +178,8 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
       throw IllegalStateException("Content equals, but it must be handled not on this level: ${result.name}")
     }
-    else if (StorageUtil.DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
-      StorageUtil.DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
+    else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
+      DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
     }
   }
 
@@ -210,7 +209,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
 
   if (!file.isWritable) {
     // may be element is not long-lived, so, we must write it to byte array
-    val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
+    val byteArray = (content as? Element)?.toBufferExposingByteArray(lineSeparator.separatorString) ?: content as BufferExposingByteArrayOutputStream
     throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
   }
 

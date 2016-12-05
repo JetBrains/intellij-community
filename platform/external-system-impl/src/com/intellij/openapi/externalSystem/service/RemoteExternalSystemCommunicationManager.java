@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -32,7 +33,6 @@ import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -137,7 +137,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Alarm.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DependencyScope.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExtensionPointName.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtil.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtilKt.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StdModuleTypes.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(JavaModuleType.class));
