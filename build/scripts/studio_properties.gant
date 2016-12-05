@@ -65,7 +65,7 @@ def getProperties(String home, String buildNumber) {
                       "# *DO NOT* modify this file directly. If there is a value that you would like to override,\n" +
                       "# please add it to your user specific configuration file.\n" +
                       "#\n" +
-                      "# See http://tools.android.com/tech-docs/configuration\n" +
+                      "# See https://developer.android.com/studio/intro/studio-config.html\n" +
                       "#\n"
       mainClassName = enableUITests ? "com.intellij.ide.BootstrapUITestRunner" : "com.intellij.idea.Main"
       macShowProductState = false
