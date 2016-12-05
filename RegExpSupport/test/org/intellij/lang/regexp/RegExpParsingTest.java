@@ -335,4 +335,17 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testParse1() throws IOException { doCodeTest("123 | 456"); }
   public void testParse2() throws IOException { doCodeTest("1**"); }
   public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
+
+  public void testDanglingMetaCharacter1() throws IOException {
+    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
+    doCodeTest("{");
+  }
+  public void testDanglingMetaCharacter2() throws IOException {
+    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
+    doCodeTest("a{a");
+  }
+  public void testDanglingMetaCharacters3() throws IOException {
+    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
+    doCodeTest("{{E1:\\s*(?P<ref>([^\\n]+\\+)?[0-9]+)( *\\|[^\\n]*)?}}");
+  }
 }
