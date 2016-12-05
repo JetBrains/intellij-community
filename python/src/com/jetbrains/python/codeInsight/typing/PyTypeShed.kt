@@ -38,21 +38,24 @@ import java.io.File
  */
 object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
-  private val SUPPORTED_PY3_MINORS = 2..5
-  // TODO: Add `typing` to the white list and fix the tests
+  private val SUPPORTED_PY3_MINORS = 2..6
   // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  private val WHITE_LIST = setOf("six")
+  private val BLACK_LIST = setOf("__builtin__", "builtins")
+  private val THIRD_PARTY_WHITE_LIST = setOf("six")
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */
   fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk : Sdk): Boolean {
     val topLevelPackage = name.firstComponent ?: return false
-    if (topLevelPackage !in WHITE_LIST) {
+    if (topLevelPackage in BLACK_LIST) {
       return false
     }
     if (isInStandardLibrary(root)) {
       return true
+    }
+    if (topLevelPackage !in THIRD_PARTY_WHITE_LIST) {
+      return false
     }
     if (isInThirdPartyLibraries(root)) {
       val pyPIPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: topLevelPackage
