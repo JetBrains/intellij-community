@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -51,6 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author max
  */
 public class UsageViewManagerImpl extends UsageViewManager {
+  private static final Logger LOG = Logger.getInstance(UsageViewManagerImpl.class);
   private final Project myProject;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
 
@@ -123,7 +125,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @Nullable final UsageViewStateListener listener) {
     final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<>();
-
+    long start = System.currentTimeMillis();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -134,7 +136,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
       @Override
       @Nullable
       public NotificationInfo getNotificationInfo() {
-        String notification = usageViewRef.get() != null ? usageViewRef.get().getUsagesCount() + " Usage(s) Found" : "No Usages Found";
+        UsageViewImpl usageView = usageViewRef.get();
+        int count = usageView == null ? 0 : usageView.getUsagesCount();
+        String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
+        LOG.debug(notification +" in "+(System.currentTimeMillis()-start) +"ms.");
         return new NotificationInfo("Find Usages", "Find Usages Finished", notification);
       }
     };
