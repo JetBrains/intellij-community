@@ -20,8 +20,8 @@ import com.intellij.formatting.CompositeTestBlock
 import com.intellij.formatting.engine.testModel.getRoot
 import com.intellij.formatting.toFormattingBlock
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.Assertions
-import com.intellij.testFramework.Assertions.assertThat
+import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.containers.TreeTraversal
 import org.junit.Test
 
@@ -60,7 +60,7 @@ class TestFormattingModelBuilderTest {
     assertLeafRanges(rootBlock, 0..3, 4..7, 8..11)
 
     val children = rootBlock.subBlocks
-    
+
     assertThat(children[0].alignment).isNotNull()
     assertThat(children[1].alignment).isNotNull()
     assertThat(children[0].alignment).isEqualTo(children[2].alignment)

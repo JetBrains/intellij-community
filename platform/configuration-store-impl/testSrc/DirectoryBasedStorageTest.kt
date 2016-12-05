@@ -18,13 +18,12 @@ package com.intellij.configurationStore
 import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.loadElement
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.hasChildren
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule

@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.testFramework.Assertions.assertThat;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author Anna.Kozlova

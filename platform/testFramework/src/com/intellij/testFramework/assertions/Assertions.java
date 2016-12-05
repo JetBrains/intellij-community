@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.testFramework.assertions;
 
-import org.assertj.core.api.AbstractPathAssert;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +27,9 @@ public final class Assertions extends org.assertj.core.api.Assertions {
     return new JdomAssert(element);
   }
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
-  public static AbstractPathAssert<?> assertThat(@Nullable Path actual) {
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  public static PathAssertEx assertThat(@Nullable Path actual) {
     return new PathAssertEx(actual);
   }
 }

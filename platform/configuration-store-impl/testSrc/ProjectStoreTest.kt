@@ -27,7 +27,7 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
-import com.intellij.testFramework.Assertions.assertThat
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath

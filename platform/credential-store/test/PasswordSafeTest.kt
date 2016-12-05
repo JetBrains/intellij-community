@@ -3,7 +3,7 @@ package com.intellij.credentialStore
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.Assertions.assertThat
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import org.junit.ClassRule

@@ -17,7 +17,7 @@ package com.intellij.codeInsight.javadoc
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiJavaFile
-import com.intellij.testFramework.Assertions.assertThat
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 

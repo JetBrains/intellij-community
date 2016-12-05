@@ -47,7 +47,7 @@ import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
 
-import static com.intellij.testFramework.Assertions.assertThat;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class EclipseImlTest extends IdeaTestCase {
   @NonNls private static final String JUNIT = "JUNIT";

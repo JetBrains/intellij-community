@@ -13,53 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.testFramework.assertions
 
-package com.intellij.testFramework
-
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.readText
 import com.intellij.util.io.size
-import com.intellij.util.isEmpty
-import org.assertj.core.api.AbstractAssert
 import org.assertj.core.api.PathAssert
-import org.assertj.core.internal.Objects
-import org.jdom.Element
-import java.io.File
+import org.assertj.core.internal.ComparatorBasedComparisonStrategy
+import org.assertj.core.internal.Iterables
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
-
-class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual, JdomAssert::class.java) {
-  fun isEmpty(): JdomAssert {
-    isNotNull
-
-    if (!actual.isEmpty()) {
-      failWithMessage("Expected to be empty but was\n${JDOMUtil.writeElement(actual!!)}")
-    }
-
-    return this
-  }
-
-  fun isEqualTo(file: File): JdomAssert {
-    return isEqualTo(file.readText())
-  }
-
-  fun isEqualTo(element: Element): JdomAssert {
-    isNotNull
-
-    if (!JDOMUtil.areElementsEqual(actual, element)) {
-      isEqualTo(JDOMUtil.writeElement(element))
-    }
-    return this
-  }
-
-  fun isEqualTo(expected: String): JdomAssert {
-    isNotNull
-
-    Objects.instance().assertEqual(info, JDOMUtil.writeElement(actual!!), expected.trimIndent().removePrefix("""<?xml version="1.0" encoding="UTF-8"?>""").trimStart())
-    return this
-  }
-}
+import java.util.*
 
 class PathAssertEx(actual: Path?) : PathAssert(actual) {
   override fun doesNotExist(): PathAssert {
@@ -72,6 +36,25 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
       }
       failWithMessage(error)
     }
+
     return this
+  }
+
+  fun hasChildren(vararg names: String) {
+    paths.assertIsDirectory(info, actual)
+
+    Iterables(ComparatorBasedComparisonStrategy(
+      Comparator<Any> { o1, o2 ->
+        if (o1 is Path && o2 is Path) {
+          o1.compareTo(o2)
+        }
+        else if (o1 is String && o2 is String) {
+          o1.compareTo(o2)
+        }
+        else {
+          if ((o1 as Path).endsWith(o2 as String)) 0 else -1
+        }
+      }
+    )).assertContainsOnly(info, Files.newDirectoryStream(actual).use { it.toList() }, names)
   }
 }
