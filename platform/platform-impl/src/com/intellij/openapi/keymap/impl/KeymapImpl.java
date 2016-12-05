@@ -13,901 +13,830 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap.impl;
+package com.intellij.openapi.keymap.impl
 
-import com.intellij.configurationStore.SerializableScheme;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.ExternalizableSchemeAdapter;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.KeyStrokeAdapter;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.OrderedSet;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
-import kotlin.reflect.jvm.internal.impl.utils.SmartList;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.configurationStore.SerializableScheme
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.openapi.options.ExternalizableSchemeAdapter
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.KeyStrokeAdapter
+import com.intellij.util.ArrayUtil
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.HashMap
+import com.intellij.util.containers.OrderedSet
+import gnu.trove.THashMap
+import org.jdom.Element
+import java.awt.event.InputEvent
+import java.util.*
+import javax.swing.KeyStroke
+import kotlin.reflect.jvm.internal.impl.utils.SmartList
 
-import javax.swing.*;
-import java.awt.event.InputEvent;
-import java.util.*;
+private val KEY_MAP = "keymap"
+private val KEYBOARD_SHORTCUT = "keyboard-shortcut"
+private val KEYBOARD_GESTURE_SHORTCUT = "keyboard-gesture-shortcut"
+private val KEYBOARD_GESTURE_KEY = "keystroke"
+private val KEYBOARD_GESTURE_MODIFIER = "modifier"
+private val KEYSTROKE_ATTRIBUTE = "keystroke"
+private val FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke"
+private val SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke"
+private val ACTION = "action"
+private val VERSION_ATTRIBUTE = "version"
+private val PARENT_ATTRIBUTE = "parent"
+private val NAME_ATTRIBUTE = "name"
+private val ID_ATTRIBUTE = "id"
+private val MOUSE_SHORTCUT = "mouse-shortcut"
+private val SHIFT = "shift"
+private val CONTROL = "control"
+private val META = "meta"
+private val ALT = "alt"
+private val ALT_GRAPH = "altGraph"
+private val DOUBLE_CLICK = "doubleClick"
+private val EDITOR_ACTION_PREFIX = "Editor"
 
-public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap, SerializableScheme {
-  @NonNls private static final String KEY_MAP = "keymap";
-  @NonNls private static final String KEYBOARD_SHORTCUT = "keyboard-shortcut";
-  @NonNls private static final String KEYBOARD_GESTURE_SHORTCUT = "keyboard-gesture-shortcut";
-  @NonNls private static final String KEYBOARD_GESTURE_KEY = "keystroke";
-  @NonNls private static final String KEYBOARD_GESTURE_MODIFIER = "modifier";
-  @NonNls private static final String KEYSTROKE_ATTRIBUTE = "keystroke";
-  @NonNls private static final String FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke";
-  @NonNls private static final String SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke";
-  @NonNls private static final String ACTION = "action";
-  @NonNls private static final String VERSION_ATTRIBUTE = "version";
-  @NonNls private static final String PARENT_ATTRIBUTE = "parent";
-  @NonNls private static final String NAME_ATTRIBUTE = "name";
-  @NonNls private static final String ID_ATTRIBUTE = "id";
-  @NonNls private static final String MOUSE_SHORTCUT = "mouse-shortcut";
-  @NonNls private static final String SHIFT = "shift";
-  @NonNls private static final String CONTROL = "control";
-  @NonNls private static final String META = "meta";
-  @NonNls private static final String ALT = "alt";
-  @NonNls private static final String ALT_GRAPH = "altGraph";
-  @NonNls private static final String DOUBLE_CLICK = "doubleClick";
-  @NonNls private static final String EDITOR_ACTION_PREFIX = "Editor";
+private val ourEmptyShortcutsArray = Shortcut.EMPTY_ARRAY
 
-  private KeymapImpl myParent;
-  private boolean myCanModify = true;
+open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
+  private var myParent: KeymapImpl? = null
+  private var myCanModify = true
 
-  private final THashMap<String, OrderedSet<Shortcut>> myActionIdToListOfShortcuts = new THashMap<>();
+  private val myActionIdToListOfShortcuts = THashMap<String, OrderedSet<Shortcut>>()
 
   /**
-   * Don't use this field directly! Use it only through <code>getKeystroke2ListOfIds</code>.
+   * Don't use this field directly! Use it only through `getKeystroke2ListOfIds`.
    */
-  private Map<KeyStroke, List<String>> myKeystroke2ListOfIds = null;
-  private Map<KeyboardModifierGestureShortcut, List<String>> myGesture2ListOfIds = null;
+  private var myKeystroke2ListOfIds: MutableMap<KeyStroke, MutableList<String>>? = null
+  private var myGesture2ListOfIds: MutableMap<KeyboardModifierGestureShortcut, MutableList<String>>? = null
 
   /**
-   * Don't use this field directly! Use it only through <code>getMouseShortcut2ListOfIds</code>.
+   * Don't use this field directly! Use it only through `getMouseShortcut2ListOfIds`.
    */
-  private Map<MouseShortcut, List<String>> myMouseShortcut2ListOfIds = null;
+  private var myMouseShortcut2ListOfIds: MutableMap<MouseShortcut, MutableList<String>>? = null
+  private val myListeners = ContainerUtil.createLockFreeCopyOnWriteList<Keymap.Listener>()
+  private var myKeymapManager: KeymapManagerEx? = null
 
-  private static final Shortcut[] ourEmptyShortcutsArray = Shortcut.EMPTY_ARRAY;
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private KeymapManagerEx myKeymapManager;
-
-  @Override
-  public String getPresentableName() {
-    return getName();
+  companion object {
+    fun setCanModify(keymapImpl: KeymapImpl, `val`: Boolean) {
+      keymapImpl.myCanModify = `val`
+    }
   }
 
-  @Override
-  @NotNull
-  public KeymapImpl deriveKeymap(@NotNull String newName) {
+  override fun getPresentableName() = name
+
+  override fun deriveKeymap(newName: String): KeymapImpl {
     if (canModify()) {
-      return copy();
+      return copy()
     }
     else {
-      KeymapImpl newKeymap = new KeymapImpl();
-      newKeymap.myParent = this;
-      newKeymap.setName(newName);
-      newKeymap.myCanModify = canModify();
-      return newKeymap;
+      val newKeymap = KeymapImpl()
+      newKeymap.myParent = this
+      newKeymap.name = newName
+      newKeymap.myCanModify = canModify()
+      return newKeymap
     }
   }
 
-  /**
-   * @deprecated Please use {@link #deriveKeymap(String)} instead. New method was introduced to ensure that you don't forget to set new keymap name.
-   */
-  @Deprecated
-  public KeymapImpl deriveKeymap() {
-    String name;
-    try {
-      name = getName();
+  @Deprecated("Please use {@link #deriveKeymap(String)} instead. " +
+              "New method was introduced to ensure that you don't forget to set new keymap name.")
+  fun deriveKeymap(): KeymapImpl {
+    val name = try {
+      name
     }
-    catch (Exception e) {
+    catch (e: Exception) {
       // avoid possible NPE
-      name = "unnamed";
+      "unnamed"
     }
-    return deriveKeymap(name + " (copy)");
+
+    return deriveKeymap("$name (copy)")
   }
 
-  @NotNull
-  public KeymapImpl copy() {
-    return copyTo(new KeymapImpl());
+  fun copy() = copyTo(KeymapImpl())
+
+  fun copyTo(otherKeymap: KeymapImpl): KeymapImpl {
+    otherKeymap.myParent = myParent
+    otherKeymap.name = name
+    otherKeymap.myCanModify = canModify()
+
+    otherKeymap.cleanShortcutsCache()
+
+    otherKeymap.myActionIdToListOfShortcuts.clear()
+    otherKeymap.myActionIdToListOfShortcuts.ensureCapacity(myActionIdToListOfShortcuts.size)
+    myActionIdToListOfShortcuts.forEachEntry { actionId, shortcuts ->
+      otherKeymap.myActionIdToListOfShortcuts.put(actionId, OrderedSet(shortcuts))
+      true
+    }
+    return otherKeymap
   }
 
-  @NotNull
-  public KeymapImpl copyTo(@NotNull final KeymapImpl otherKeymap) {
-    otherKeymap.myParent = myParent;
-    otherKeymap.setName(getName());
-    otherKeymap.myCanModify = canModify();
-
-    otherKeymap.cleanShortcutsCache();
-
-    otherKeymap.myActionIdToListOfShortcuts.clear();
-    otherKeymap.myActionIdToListOfShortcuts.ensureCapacity(myActionIdToListOfShortcuts.size());
-    myActionIdToListOfShortcuts.forEachEntry(new TObjectObjectProcedure<String, OrderedSet<Shortcut>>() {
-      @Override
-      public boolean execute(String actionId, OrderedSet<Shortcut> shortcuts) {
-        otherKeymap.myActionIdToListOfShortcuts.put(actionId, new OrderedSet<>(shortcuts));
-        return true;
-      }
-    });
-    return otherKeymap;
+  override fun equals(other: Any?): Boolean {
+    if (other !is KeymapImpl) return false
+    if (name != other.name) return false
+    if (myCanModify != other.myCanModify) return false
+    if (myParent != other.myParent) return false
+    if (myActionIdToListOfShortcuts != other.myActionIdToListOfShortcuts) return false
+    return true
   }
 
-  public boolean equals(Object object) {
-    if (!(object instanceof KeymapImpl)) return false;
-    KeymapImpl secondKeymap = (KeymapImpl)object;
-    if (!Comparing.equal(getName(), secondKeymap.getName())) return false;
-    if (myCanModify != secondKeymap.myCanModify) return false;
-    if (!Comparing.equal(myParent, secondKeymap.myParent)) return false;
-    if (!Comparing.equal(myActionIdToListOfShortcuts, secondKeymap.myActionIdToListOfShortcuts)) return false;
-    return true;
+  override fun hashCode() = name.hashCode()
+
+  override fun getParent(): Keymap = myParent!!
+
+  override fun canModify() = myCanModify
+
+  protected open fun getParentShortcuts(actionId: String) = myParent!!.getShortcuts(actionId)
+
+  override fun addShortcut(actionId: String, shortcut: Shortcut) {
+    addShortcutSilently(actionId, shortcut, true)
+    fireShortcutChanged(actionId)
   }
 
-  public int hashCode() {
-    return getName().hashCode();
-  }
-
-  @Override
-  public Keymap getParent() {
-    return myParent;
-  }
-
-  @Override
-  public boolean canModify() {
-    return myCanModify;
-  }
-
-  public void setCanModify(boolean val) {
-    myCanModify = val;
-  }
-
-  protected Shortcut[] getParentShortcuts(String actionId) {
-    return myParent.getShortcuts(actionId);
-  }
-
-  @Override
-  public void addShortcut(String actionId, Shortcut shortcut) {
-    addShortcutSilently(actionId, shortcut, true);
-    fireShortcutChanged(actionId);
-  }
-
-  private void addShortcutSilently(String actionId, Shortcut shortcut, final boolean checkParentShortcut) {
-    OrderedSet<Shortcut> list = myActionIdToListOfShortcuts.get(actionId);
+  private fun addShortcutSilently(actionId: String, shortcut: Shortcut, checkParentShortcut: Boolean) {
+    var list: OrderedSet<Shortcut>? = myActionIdToListOfShortcuts.get(actionId)
     if (list == null) {
-      list = new OrderedSet<>();
-      myActionIdToListOfShortcuts.put(actionId, list);
-      Shortcut[] boundShortcuts = getBoundShortcuts(actionId);
+      list = OrderedSet<Shortcut>()
+      myActionIdToListOfShortcuts.put(actionId, list)
+      val boundShortcuts = getBoundShortcuts(actionId)
       if (boundShortcuts != null) {
-        ContainerUtil.addAll(list, boundShortcuts);
+        list.addAll(boundShortcuts)
       }
       else if (myParent != null) {
-        ContainerUtil.addAll(list, getParentShortcuts(actionId));
+        list.addAll(getParentShortcuts(actionId))
       }
     }
-    list.add(shortcut);
+    list.add(shortcut)
 
     if (checkParentShortcut && myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId))) {
-      myActionIdToListOfShortcuts.remove(actionId);
+      myActionIdToListOfShortcuts.remove(actionId)
     }
-    cleanShortcutsCache();
+    cleanShortcutsCache()
   }
 
-  private void cleanShortcutsCache() {
-    myKeystroke2ListOfIds = null;
-    myMouseShortcut2ListOfIds = null;
+  private fun cleanShortcutsCache() {
+    myKeystroke2ListOfIds = null
+    myMouseShortcut2ListOfIds = null
   }
 
-  @Override
-  public void removeAllActionShortcuts(String actionId) {
-    Shortcut[] allShortcuts = getShortcuts(actionId);
-    for (Shortcut shortcut : allShortcuts) {
-      removeShortcut(actionId, shortcut);
+  override fun removeAllActionShortcuts(actionId: String) {
+    for (shortcut in getShortcuts(actionId)) {
+      removeShortcut(actionId, shortcut)
     }
   }
 
-  @Override
-  public void removeShortcut(String actionId, Shortcut toDelete) {
-    OrderedSet<Shortcut> list = myActionIdToListOfShortcuts.get(actionId);
+  override fun removeShortcut(actionId: String, toDelete: Shortcut) {
+    val list = myActionIdToListOfShortcuts.get(actionId)
     if (list != null) {
-      Iterator<Shortcut> it = list.iterator();
+      val it = list.iterator()
       while (it.hasNext()) {
-        Shortcut each = it.next();
-        if (toDelete.equals(each)) {
-          it.remove();
-          if ((myParent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId)))
-              || (myParent == null && list.isEmpty())) {
-            myActionIdToListOfShortcuts.remove(actionId);
+        val each = it.next()
+        if (toDelete == each) {
+          it.remove()
+          if (myParent != null && areShortcutsEqual(getParentShortcuts(actionId),
+                                                    getShortcuts(actionId)) || myParent == null && list.isEmpty()) {
+            myActionIdToListOfShortcuts.remove(actionId)
           }
-          break;
+          break
         }
       }
     }
     else {
-      Shortcut[] inherited = getBoundShortcuts(actionId);
+      var inherited = getBoundShortcuts(actionId)
       if (inherited == null && myParent != null) {
-        inherited = getParentShortcuts(actionId);
+        inherited = getParentShortcuts(actionId)
       }
 
       if (inherited != null) {
-        boolean affected = false;
-        OrderedSet<Shortcut> newShortcuts = new OrderedSet<>(inherited.length);
-        for (Shortcut eachInherited : inherited) {
-          if (toDelete.equals(eachInherited)) {
+        var affected = false
+        val newShortcuts = OrderedSet<Shortcut>(inherited.size)
+        for (eachInherited in inherited) {
+          if (toDelete == eachInherited) {
             // skip this one
-            affected = true;
+            affected = true
           }
           else {
-            newShortcuts.add(eachInherited);
+            newShortcuts.add(eachInherited)
           }
         }
         if (affected) {
-          myActionIdToListOfShortcuts.put(actionId, newShortcuts);
+          myActionIdToListOfShortcuts.put(actionId, newShortcuts)
         }
       }
     }
-    cleanShortcutsCache();
-    fireShortcutChanged(actionId);
+    cleanShortcutsCache()
+    fireShortcutChanged(actionId)
   }
 
-  private Map<KeyStroke, List<String>> getKeystrokeToListOfIds() {
-    if (myKeystroke2ListOfIds != null) return myKeystroke2ListOfIds;
-
-    myKeystroke2ListOfIds = new THashMap<>();
-    for (String id : ContainerUtil.concat(myActionIdToListOfShortcuts.keySet(), getKeymapManager().getBoundActions())) {
-      addKeystrokesMap(id, myKeystroke2ListOfIds);
-    }
-    return myKeystroke2ListOfIds;
-  }
-
-  private Map<KeyboardModifierGestureShortcut, List<String>> getGesture2ListOfIds() {
-    if (myGesture2ListOfIds == null) {
-      myGesture2ListOfIds = new THashMap<>();
-      fillShortcut2ListOfIds(myGesture2ListOfIds, KeyboardModifierGestureShortcut.class);
-    }
-    return myGesture2ListOfIds;
-  }
-
-  private <T extends Shortcut>void fillShortcut2ListOfIds(final Map<T,List<String>> map, final Class<T> shortcutClass) {
-    for (String id : ContainerUtil.concat(myActionIdToListOfShortcuts.keySet(), getKeymapManager().getBoundActions())) {
-      addAction2ShortcutsMap(id, map, shortcutClass);
-    }
-  }
-
-  private Map<MouseShortcut, List<String>> getMouseShortcut2ListOfIds() {
-    if (myMouseShortcut2ListOfIds == null) {
-      myMouseShortcut2ListOfIds = new THashMap<>();
-
-      fillShortcut2ListOfIds(myMouseShortcut2ListOfIds, MouseShortcut.class);
-    }
-    return myMouseShortcut2ListOfIds;
-  }
-
-  private <T extends Shortcut>void addAction2ShortcutsMap(final String actionId, final Map<T, List<String>> strokesMap, final Class<T> shortcutClass) {
-    OrderedSet<Shortcut> listOfShortcuts = _getShortcuts(actionId);
-    for (Shortcut shortcut : listOfShortcuts) {
-      if (!shortcutClass.isAssignableFrom(shortcut.getClass())) {
-        continue;
+  private val keystrokeToListOfIds: Map<KeyStroke, MutableList<String>>
+    get() {
+      var result = myKeystroke2ListOfIds
+      if (result != null) {
+        return result
       }
-      @SuppressWarnings({"unchecked"})
-      T t = (T)shortcut;
 
-      List<String> listOfIds = strokesMap.get(t);
+      result = THashMap<KeyStroke, MutableList<String>>()
+      myKeystroke2ListOfIds = result
+      for (id in ContainerUtil.concat(myActionIdToListOfShortcuts.keys, keymapManager.boundActions)) {
+        addKeystrokesMap(id, result)
+      }
+      return result
+    }
+
+  private val gesture2ListOfIds: Map<KeyboardModifierGestureShortcut, List<String>>
+    get() {
+      var result = myGesture2ListOfIds
+      if (result == null) {
+        result = THashMap<KeyboardModifierGestureShortcut, MutableList<String>>()
+        myGesture2ListOfIds = result
+        fillShortcutToListOfIds(result, KeyboardModifierGestureShortcut::class.java)
+      }
+      return result
+    }
+
+  private fun <T : Shortcut> fillShortcutToListOfIds(map: MutableMap<T, MutableList<String>>, shortcutClass: Class<T>) {
+    for (id in ContainerUtil.concat(myActionIdToListOfShortcuts.keys, keymapManager.boundActions)) {
+      addAction2ShortcutsMap(id, map, shortcutClass)
+    }
+  }
+
+  private val mouseShortcut2ListOfIds: Map<MouseShortcut, MutableList<String>>
+    get() {
+      var result = myMouseShortcut2ListOfIds
+      if (result == null) {
+        result = THashMap<MouseShortcut, MutableList<String>>()
+        myMouseShortcut2ListOfIds = result
+        fillShortcutToListOfIds(result, MouseShortcut::class.java)
+      }
+      return result
+    }
+
+  private fun <T : Shortcut> addAction2ShortcutsMap(actionId: String, strokesMap: MutableMap<T, MutableList<String>>, shortcutClass: Class<T>) {
+    for (shortcut in _getShortcuts(actionId)) {
+      if (!shortcutClass.isAssignableFrom(shortcut.javaClass)) {
+        continue
+      }
+      @Suppress("UNCHECKED_CAST")
+      val t = shortcut as T
+
+      var listOfIds: MutableList<String>? = strokesMap.get(t)
       if (listOfIds == null) {
-        listOfIds = new ArrayList<>();
-        strokesMap.put(t, listOfIds);
+        listOfIds = SmartList<String>()
+        strokesMap.put(t, listOfIds)
       }
 
       // action may have more that 1 shortcut with same first keystroke
       if (!listOfIds.contains(actionId)) {
-        listOfIds.add(actionId);
+        listOfIds.add(actionId)
       }
     }
   }
 
-  private void addKeystrokesMap(final String actionId, final Map<KeyStroke, List<String>> strokesMap) {
-    OrderedSet<Shortcut> listOfShortcuts = _getShortcuts(actionId);
-    for (Shortcut shortcut : listOfShortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut)) {
-        continue;
+  private fun addKeystrokesMap(actionId: String, strokesMap: MutableMap<KeyStroke, MutableList<String>>) {
+    val listOfShortcuts = _getShortcuts(actionId)
+    for (shortcut in listOfShortcuts) {
+      if (shortcut !is KeyboardShortcut) {
+        continue
       }
-      KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-      List<String> listOfIds = strokesMap.get(firstKeyStroke);
+      val firstKeyStroke = shortcut.firstKeyStroke
+      var listOfIds: MutableList<String>? = strokesMap.get(firstKeyStroke)
       if (listOfIds == null) {
-        listOfIds = new ArrayList<>();
-        strokesMap.put(firstKeyStroke, listOfIds);
+        listOfIds = ArrayList<String>()
+        strokesMap.put(firstKeyStroke, listOfIds)
       }
 
       // action may have more that 1 shortcut with same first keystroke
       if (!listOfIds.contains(actionId)) {
-        listOfIds.add(actionId);
+        listOfIds.add(actionId)
       }
     }
   }
 
-  private OrderedSet<Shortcut> _getShortcuts(final String actionId) {
-    KeymapManagerEx keymapManager = getKeymapManager();
-    OrderedSet<Shortcut> listOfShortcuts = myActionIdToListOfShortcuts.get(actionId);
+  private fun _getShortcuts(actionId: String): OrderedSet<Shortcut> {
+    val keymapManager = keymapManager
+    var listOfShortcuts: OrderedSet<Shortcut>? = myActionIdToListOfShortcuts[actionId]
     if (listOfShortcuts != null) {
-      return listOfShortcuts;
+      return listOfShortcuts
     }
     else {
-      listOfShortcuts = new OrderedSet<>();
+      listOfShortcuts = OrderedSet<Shortcut>()
     }
 
-    final String actionBinding = keymapManager.getActionBinding(actionId);
+    val actionBinding = keymapManager.getActionBinding(actionId)
     if (actionBinding != null) {
-      listOfShortcuts.addAll(_getShortcuts(actionBinding));
+      listOfShortcuts.addAll(_getShortcuts(actionBinding))
     }
 
-    return listOfShortcuts;
+    return listOfShortcuts
   }
 
-
-  protected String[] getParentActionIds(KeyStroke firstKeyStroke) {
-    return myParent.getActionIds(firstKeyStroke);
+  protected open fun getParentActionIds(firstKeyStroke: KeyStroke): Array<String> {
+    return myParent!!.getActionIds(firstKeyStroke)
   }
 
-  protected String[] getParentActionIds(KeyboardModifierGestureShortcut gesture) {
-    return myParent.getActionIds(gesture);
+  protected fun getParentActionIds(gesture: KeyboardModifierGestureShortcut): Array<String> {
+    return myParent!!.getActionIds(gesture)
   }
 
-  private String[] getActionIds(KeyboardModifierGestureShortcut shortcut) {
+  private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): Array<String> {
     // first, get keystrokes from own map
-    final Map<KeyboardModifierGestureShortcut, List<String>> map = getGesture2ListOfIds();
-    List<String> list = new ArrayList<>();
+    val map = gesture2ListOfIds
+    val list = ArrayList<String>()
 
-    for (Map.Entry<KeyboardModifierGestureShortcut, List<String>> entry : map.entrySet()) {
-      if (shortcut.startsWith(entry.getKey())) {
-        list.addAll(entry.getValue());
+    for ((key, value) in map) {
+      if (shortcut.startsWith(key)) {
+        list.addAll(value)
       }
     }
 
     if (myParent != null) {
-      String[] ids = getParentActionIds(shortcut);
-      if (ids.length > 0) {
-        for (String id : ids) {
+      val ids = getParentActionIds(shortcut)
+      if (ids.isNotEmpty()) {
+        for (id in ids) {
           // add actions from parent keymap only if they are absent in this keymap
           if (!myActionIdToListOfShortcuts.containsKey(id)) {
-            list.add(id);
+            list.add(id)
           }
         }
       }
     }
-    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
+    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list))
   }
 
-  @Override
-  public String[] getActionIds(@NotNull KeyStroke firstKeyStroke) {
+  override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> {
     // first, get keystrokes from own map
-    List<String> list = getKeystrokeToListOfIds().get(firstKeyStroke);
+    var list: MutableList<String>? = keystrokeToListOfIds.get(firstKeyStroke)
     if (myParent != null) {
-      String[] ids = getParentActionIds(firstKeyStroke);
-      if (ids.length > 0) {
-        boolean originalListInstance = true;
-        for (String id : ids) {
+      val ids = getParentActionIds(firstKeyStroke)
+      if (ids.isNotEmpty()) {
+        var originalListInstance = true
+        for (id in ids) {
           // add actions from parent keymap only if they are absent in this keymap
           // do not add parent bind actions, if bind-on action is overwritten in the child
-          if (!myActionIdToListOfShortcuts.containsKey(id) &&
-              !myActionIdToListOfShortcuts.containsKey(getActionBinding(id))) {
+          if (!myActionIdToListOfShortcuts.containsKey(id) && !myActionIdToListOfShortcuts.containsKey(getActionBinding(id))) {
             if (list == null) {
-              list = new ArrayList<>();
-              originalListInstance = false;
+              list = ArrayList<String>()
+              originalListInstance = false
             }
             else if (originalListInstance) {
-              list = new ArrayList<>(list);
-              originalListInstance = false;
+              list = ArrayList(list)
+              originalListInstance = false
             }
-            if (!list.contains(id)) list.add(id);
+            if (!list.contains(id)) list.add(id)
           }
         }
       }
     }
     if (list == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtil.EMPTY_STRING_ARRAY
     }
-    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
+    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list))
   }
 
-  @Override
-  public String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke) {
-    String[] ids = getActionIds(firstKeyStroke);
-    ArrayList<String> actualBindings = new ArrayList<>();
-    for (String id : ids) {
-      Shortcut[] shortcuts = getShortcuts(id);
-      for (Shortcut shortcut : shortcuts) {
-        if (!(shortcut instanceof KeyboardShortcut)) {
-          continue;
+  override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke): Array<String> {
+    val ids = getActionIds(firstKeyStroke)
+    val actualBindings = ArrayList<String>()
+    for (id in ids) {
+      val shortcuts = getShortcuts(id)
+      for (shortcut in shortcuts) {
+        if (shortcut !is KeyboardShortcut) {
+          continue
         }
-        if (Comparing.equal(firstKeyStroke, ((KeyboardShortcut)shortcut).getFirstKeyStroke()) &&
-            Comparing.equal(secondKeyStroke, ((KeyboardShortcut)shortcut).getSecondKeyStroke())) {
-          actualBindings.add(id);
-          break;
+        if (Comparing.equal(firstKeyStroke, shortcut.firstKeyStroke) && Comparing.equal(secondKeyStroke, shortcut.secondKeyStroke)) {
+          actualBindings.add(id)
+          break
         }
       }
     }
-    return ArrayUtil.toStringArray(actualBindings);
+    return ArrayUtil.toStringArray(actualBindings)
   }
 
-  @Override
-  public String[] getActionIds(final Shortcut shortcut) {
-    if (shortcut instanceof KeyboardShortcut) {
-      final KeyboardShortcut kb = (KeyboardShortcut)shortcut;
-      final KeyStroke first = kb.getFirstKeyStroke();
-      final KeyStroke second = kb.getSecondKeyStroke();
-      return second != null ? getActionIds(first, second) : getActionIds(first);
+  override fun getActionIds(shortcut: Shortcut): Array<String> {
+    if (shortcut is KeyboardShortcut) {
+      val first = shortcut.firstKeyStroke
+      val second = shortcut.secondKeyStroke
+      return if (second != null) getActionIds(first, second) else getActionIds(first)
     }
-    else if (shortcut instanceof MouseShortcut) {
-      return getActionIds((MouseShortcut)shortcut);
+    else if (shortcut is MouseShortcut) {
+      return getActionIds(shortcut)
     }
-    else if (shortcut instanceof KeyboardModifierGestureShortcut) {
-      return getActionIds((KeyboardModifierGestureShortcut)shortcut);
+    else if (shortcut is KeyboardModifierGestureShortcut) {
+      return getActionIds(shortcut)
     }
     else {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtil.EMPTY_STRING_ARRAY
     }
   }
 
-  protected String[] getParentActionIds(MouseShortcut shortcut) {
-    return myParent.getActionIds(shortcut);
+  protected open fun getParentActionIds(shortcut: MouseShortcut): Array<String> {
+    return myParent!!.getActionIds(shortcut)
   }
 
-  @Override
-  public String[] getActionIds(MouseShortcut shortcut) {
+  override fun getActionIds(shortcut: MouseShortcut): Array<String> {
     // first, get shortcuts from own map
-    List<String> list = getMouseShortcut2ListOfIds().get(shortcut);
+    var list: MutableList<String>? = mouseShortcut2ListOfIds.get(shortcut)
     if (myParent != null) {
-      String[] ids = getParentActionIds(shortcut);
-      if (ids.length > 0) {
-        boolean originalListInstance = true;
-        for (String id : ids) {
+      val ids = getParentActionIds(shortcut)
+      if (ids.isNotEmpty()) {
+        var originalListInstance = true
+        for (id in ids) {
           // add actions from parent keymap only if they are absent in this keymap
           if (!myActionIdToListOfShortcuts.containsKey(id)) {
             if (list == null) {
-              list = new ArrayList<>();
-              originalListInstance = false;
+              list = ArrayList<String>()
+              originalListInstance = false
             }
             else if (originalListInstance) {
-              list = new ArrayList<>(list);
+              list = ArrayList(list)
             }
-            list.add(id);
+            list.add(id)
           }
         }
       }
     }
     if (list == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtil.EMPTY_STRING_ARRAY
     }
-    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
+    return sortInOrderOfRegistration(ArrayUtil.toStringArray(list))
   }
 
-  @NotNull
-  private static String[] sortInOrderOfRegistration(@NotNull String[] ids) {
-    Arrays.sort(ids, ActionManagerEx.getInstanceEx().getRegistrationOrderComparator());
-    return ids;
+  fun isActionBound(actionId: String): Boolean {
+    return keymapManager.boundActions.contains(actionId)
   }
 
-  public boolean isActionBound(@NotNull final String actionId) {
-    return getKeymapManager().getBoundActions().contains(actionId);
+  fun getActionBinding(actionId: String): String? {
+    return keymapManager.getActionBinding(actionId)
   }
 
-  @Nullable
-  public String getActionBinding(@NotNull final String actionId) {
-    return getKeymapManager().getActionBinding(actionId);
-  }
-
-  @NotNull
-  @Override
-  public Shortcut[] getShortcuts(String actionId) {
-    OrderedSet<Shortcut> shortcuts = myActionIdToListOfShortcuts.get(actionId);
+  override fun getShortcuts(actionId: String): Array<Shortcut> {
+    val shortcuts = myActionIdToListOfShortcuts[actionId]
 
     if (shortcuts == null) {
-      Shortcut[] boundShortcuts = getBoundShortcuts(actionId);
-      if (boundShortcuts!= null) return boundShortcuts;
+      val boundShortcuts = getBoundShortcuts(actionId)
+      if (boundShortcuts != null) return boundShortcuts
     }
 
     if (shortcuts == null) {
       if (myParent != null) {
-        return getParentShortcuts(actionId);
+        return getParentShortcuts(actionId)
       }
       else {
-        return ourEmptyShortcutsArray;
+        return ourEmptyShortcutsArray
       }
     }
-    return shortcuts.isEmpty() ? ourEmptyShortcutsArray : shortcuts.toArray(new Shortcut[shortcuts.size()]);
+    return if (shortcuts.isEmpty()) ourEmptyShortcutsArray else shortcuts.toTypedArray()
   }
 
-  @Nullable
-  public Shortcut[] getOwnShortcuts(String actionId) {
-    OrderedSet<Shortcut> own = myActionIdToListOfShortcuts.get(actionId);
-    if (own == null) return null;
-    return own.isEmpty() ? ourEmptyShortcutsArray : own.toArray(new Shortcut[own.size()]);
+  fun getOwnShortcuts(actionId: String): Array<Shortcut>? {
+    val own = myActionIdToListOfShortcuts[actionId] ?: return null
+    return if (own.isEmpty()) ourEmptyShortcutsArray else own.toTypedArray()
   }
 
-  @Nullable
-  private Shortcut[] getBoundShortcuts(String actionId) {
-    KeymapManagerEx keymapManager = getKeymapManager();
-    boolean hasBoundedAction = keymapManager.getBoundActions().contains(actionId);
+  private fun getBoundShortcuts(actionId: String): Array<Shortcut>? {
+    val keymapManager = keymapManager
+    val hasBoundedAction = keymapManager.boundActions.contains(actionId)
     if (hasBoundedAction) {
-      return getOwnShortcuts(keymapManager.getActionBinding(actionId));
+      return getOwnShortcuts(keymapManager.getActionBinding(actionId))
     }
-    return null;
+    return null
   }
 
-  private KeymapManagerEx getKeymapManager() {
-    if (myKeymapManager == null) {
-      myKeymapManager = KeymapManagerEx.getInstanceEx();
+  private val keymapManager: KeymapManagerEx
+    get() {
+      var result = myKeymapManager
+      if (result == null) {
+        result = KeymapManagerEx.getInstanceEx()!!
+        myKeymapManager = result
+      }
+      return result
     }
-    return myKeymapManager;
-  }
 
-  public void readExternal(@NotNull Element keymapElement, @NotNull Keymap[] existingKeymaps) {
-    if (!KEY_MAP.equals(keymapElement.getName())) {
-      throw new InvalidDataException("unknown element: " + keymapElement);
+  open fun readExternal(keymapElement: Element, existingKeymaps: Array<Keymap>) {
+    if (KEY_MAP != keymapElement.name) {
+      throw InvalidDataException("unknown element: " + keymapElement)
     }
 
     if (keymapElement.getAttributeValue(VERSION_ATTRIBUTE) == null) {
-      Converter01.convert(keymapElement);
+      Converter01.convert(keymapElement)
     }
 
-    String parentName = keymapElement.getAttributeValue(PARENT_ATTRIBUTE);
+    val parentName = keymapElement.getAttributeValue(PARENT_ATTRIBUTE)
     if (parentName != null) {
-      for (Keymap existingKeymap : existingKeymaps) {
-        if (parentName.equals(existingKeymap.getName())) {
-          myParent = (KeymapImpl)existingKeymap;
-          myCanModify = true;
-          break;
+      for (existingKeymap in existingKeymaps) {
+        if (parentName == existingKeymap.name) {
+          myParent = existingKeymap as KeymapImpl
+          myCanModify = true
+          break
         }
       }
     }
 
-    setName(keymapElement.getAttributeValue(NAME_ATTRIBUTE));
+    name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
-    Map<String, List<Shortcut>> idToShortcuts = new HashMap<>();
-    final boolean skipInserts = SystemInfo.isMac
-                                && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode());
-    for (Element actionElement : keymapElement.getChildren()) {
-      if (!ACTION.equals(actionElement.getName())) {
-        throw new InvalidDataException("unknown element: " + actionElement + "; Keymap's name=" + getName());
+    val idToShortcuts = THashMap<String, MutableList<Shortcut>>()
+    val skipInserts = SystemInfo.isMac && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
+    for (actionElement in keymapElement.children) {
+      if (ACTION != actionElement.name) {
+        throw InvalidDataException("unknown element: $actionElement; Keymap's name=$name")
       }
 
-      String id = actionElement.getAttributeValue(ID_ATTRIBUTE);
-      if (id == null) {
-        throw new InvalidDataException("Attribute 'id' cannot be null; Keymap's name=" + getName());
-      }
+      val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException(
+        "Attribute 'id' cannot be null; Keymap's name=" + name)
 
-      idToShortcuts.put(id, new SmartList<>());
-      for (Element shortcutElement : actionElement.getChildren()) {
-        if (KEYBOARD_SHORTCUT.equals(shortcutElement.getName())) {
+      idToShortcuts.put(id, SmartList<Shortcut>())
+      for (shortcutElement in actionElement.children) {
+        if (KEYBOARD_SHORTCUT == shortcutElement.name) {
           // Parse first keystroke
 
-          String firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE);
-          if (firstKeyStrokeStr == null) {
-            throw new InvalidDataException("Attribute '" + FIRST_KEYSTROKE_ATTRIBUTE + "' cannot be null; Action's id=" + id + "; Keymap's name=" + getName());
-          }
+          val firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE) ?: throw InvalidDataException(
+            "Attribute '$FIRST_KEYSTROKE_ATTRIBUTE' cannot be null; Action's id=$id; Keymap's name=$name")
           if (skipInserts && firstKeyStrokeStr.contains("INSERT")) {
-            continue;
+            continue
           }
 
-          KeyStroke firstKeyStroke = KeyStrokeAdapter.getKeyStroke(firstKeyStrokeStr);
-          if (firstKeyStroke == null) {
-            // logged when parsed
-            continue;
-          }
+          val firstKeyStroke = KeyStrokeAdapter.getKeyStroke(firstKeyStrokeStr) ?: // logged when parsed
+                               continue
 
           // Parse second keystroke
 
-          KeyStroke secondKeyStroke = null;
-          String secondKeyStrokeStr = shortcutElement.getAttributeValue(SECOND_KEYSTROKE_ATTRIBUTE);
+          var secondKeyStroke: KeyStroke? = null
+          val secondKeyStrokeStr = shortcutElement.getAttributeValue(SECOND_KEYSTROKE_ATTRIBUTE)
           if (secondKeyStrokeStr != null) {
-            secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr);
+            secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr)
             if (secondKeyStroke == null) {
               // logged when parsed
-              continue;
+              continue
             }
           }
-          idToShortcuts.get(id).add(new KeyboardShortcut(firstKeyStroke, secondKeyStroke));
+          idToShortcuts.get(id)!!.add(KeyboardShortcut(firstKeyStroke, secondKeyStroke))
         }
-        else if (KEYBOARD_GESTURE_SHORTCUT.equals(shortcutElement.getName())) {
-          final String strokeText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_KEY);
-          if (strokeText == null) {
-            throw new InvalidDataException("Attribute '" + KEYBOARD_GESTURE_KEY + "' cannot be null; Action's id=" + id + "; Keymap's name=" + getName());
-          }
+        else if (KEYBOARD_GESTURE_SHORTCUT == shortcutElement.name) {
+          val strokeText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_KEY) ?: throw InvalidDataException(
+            "Attribute '$KEYBOARD_GESTURE_KEY' cannot be null; Action's id=$id; Keymap's name=$name")
 
-          KeyStroke stroke = KeyStrokeAdapter.getKeyStroke(strokeText);
-          if (stroke == null) {
-            // logged when parsed
-            continue;
-          }
+          val stroke = KeyStrokeAdapter.getKeyStroke(strokeText) ?: // logged when parsed
+                       continue
 
-          final String modifierText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_MODIFIER);
-          KeyboardGestureAction.ModifierType modifier = null;
-          if (KeyboardGestureAction.ModifierType.dblClick.toString().equalsIgnoreCase(modifierText)) {
-            modifier = KeyboardGestureAction.ModifierType.dblClick;
+          val modifierText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_MODIFIER)
+          var modifier: KeyboardGestureAction.ModifierType? = null
+          if (KeyboardGestureAction.ModifierType.dblClick.toString().equals(modifierText, ignoreCase = true)) {
+            modifier = KeyboardGestureAction.ModifierType.dblClick
           }
-          else if (KeyboardGestureAction.ModifierType.hold.toString().equalsIgnoreCase(modifierText)) {
-            modifier = KeyboardGestureAction.ModifierType.hold;
+          else if (KeyboardGestureAction.ModifierType.hold.toString().equals(modifierText, ignoreCase = true)) {
+            modifier = KeyboardGestureAction.ModifierType.hold
           }
 
           if (modifier == null) {
-            throw new InvalidDataException("Wrong modifier=" + modifierText + " action id=" + id + " keymap=" + getName());
+            throw InvalidDataException("Wrong modifier=$modifierText action id=$id keymap=$name")
           }
 
-          idToShortcuts.get(id).add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke));
+          idToShortcuts.get(id)!!.add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke))
         }
-        else if (MOUSE_SHORTCUT.equals(shortcutElement.getName())) {
-          String keystrokeString = shortcutElement.getAttributeValue(KEYSTROKE_ATTRIBUTE);
-          if (keystrokeString == null) {
-            throw new InvalidDataException("Attribute 'keystroke' cannot be null; Action's id=" + id + "; Keymap's name=" + getName());
-          }
+        else if (MOUSE_SHORTCUT == shortcutElement.name) {
+          val keystrokeString = shortcutElement.getAttributeValue(KEYSTROKE_ATTRIBUTE) ?: throw InvalidDataException(
+            "Attribute 'keystroke' cannot be null; Action's id=$id; Keymap's name=$name")
 
           try {
-            idToShortcuts.get(id).add(KeymapUtil.parseMouseShortcut(keystrokeString));
+            idToShortcuts.get(id)!!.add(KeymapUtil.parseMouseShortcut(keystrokeString))
           }
-          catch (InvalidDataException exc) {
-            throw new InvalidDataException("Wrong mouse-shortcut: '" + keystrokeString + "'; Action's id=" + id + "; Keymap's name=" + getName());
+          catch (exc: InvalidDataException) {
+            throw InvalidDataException("Wrong mouse-shortcut: '$keystrokeString'; Action's id=$id; Keymap's name=$name")
           }
+
         }
         else {
-          throw new InvalidDataException("unknown element: " + shortcutElement + "; Keymap's name=" + getName());
+          throw InvalidDataException("unknown element: $shortcutElement; Keymap's name=$name")
         }
       }
     }
 
     // Add read shortcuts
-    for (String id : idToShortcuts.keySet()) {
+    for (id in idToShortcuts.keys) {
       // It's a trick! After that parent's shortcuts are not added to the keymap
-      myActionIdToListOfShortcuts.put(id, new OrderedSet<>(2));
-      for (Shortcut shortcut : idToShortcuts.get(id)) {
-        addShortcutSilently(id, shortcut, false);
+      myActionIdToListOfShortcuts.put(id, OrderedSet<Shortcut>(2))
+      for (shortcut in idToShortcuts.get(id)!!) {
+        addShortcutSilently(id, shortcut, false)
       }
     }
   }
 
-  @NotNull
-  @Override
-  public Element writeScheme() {
-    Element keymapElement = new Element(KEY_MAP);
-    keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1));
-    keymapElement.setAttribute(NAME_ATTRIBUTE, getName());
+  override fun writeScheme(): Element {
+    val keymapElement = Element(KEY_MAP)
+    keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1))
+    keymapElement.setAttribute(NAME_ATTRIBUTE, name)
 
     if (myParent != null) {
-      keymapElement.setAttribute(PARENT_ATTRIBUTE, myParent.getName());
+      keymapElement.setAttribute(PARENT_ATTRIBUTE, myParent!!.name)
     }
-    writeOwnActionIds(keymapElement);
-    return keymapElement;
+    writeOwnActionIds(keymapElement)
+    return keymapElement
   }
 
-  private void writeOwnActionIds(final Element keymapElement) {
-    String[] ownActionIds = getOwnActionIds();
-    Arrays.sort(ownActionIds);
-    for (String actionId : ownActionIds) {
-      Element actionElement = new Element(ACTION);
-      actionElement.setAttribute(ID_ATTRIBUTE, actionId);
+  private fun writeOwnActionIds(keymapElement: Element) {
+    val ownActionIds = ownActionIds
+    Arrays.sort(ownActionIds)
+    for (actionId in ownActionIds) {
+      val actionElement = Element(ACTION)
+      actionElement.setAttribute(ID_ATTRIBUTE, actionId)
       // Save keyboard shortcuts
-      Shortcut[] shortcuts = getShortcuts(actionId);
-      for (Shortcut shortcut : shortcuts) {
-        if (shortcut instanceof KeyboardShortcut) {
-          KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-          Element element = new Element(KEYBOARD_SHORTCUT);
-          element.setAttribute(FIRST_KEYSTROKE_ATTRIBUTE, getKeyShortcutString(keyboardShortcut.getFirstKeyStroke()));
-          if (keyboardShortcut.getSecondKeyStroke() != null) {
-            element.setAttribute(SECOND_KEYSTROKE_ATTRIBUTE, getKeyShortcutString(keyboardShortcut.getSecondKeyStroke()));
+      val shortcuts = getShortcuts(actionId)
+      for (shortcut in shortcuts) {
+        if (shortcut is KeyboardShortcut) {
+          val element = Element(KEYBOARD_SHORTCUT)
+          element.setAttribute(FIRST_KEYSTROKE_ATTRIBUTE, KeyStrokeAdapter.toString(shortcut.firstKeyStroke))
+          shortcut.secondKeyStroke?.let {
+            element.setAttribute(SECOND_KEYSTROKE_ATTRIBUTE, KeyStrokeAdapter.toString(it))
           }
-          actionElement.addContent(element);
+          actionElement.addContent(element)
         }
-        else if (shortcut instanceof MouseShortcut) {
-          MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
-          Element element = new Element(MOUSE_SHORTCUT);
-          element.setAttribute(KEYSTROKE_ATTRIBUTE, getMouseShortcutString(mouseShortcut));
-          actionElement.addContent(element);
+        else if (shortcut is MouseShortcut) {
+          val element = Element(MOUSE_SHORTCUT)
+          element.setAttribute(KEYSTROKE_ATTRIBUTE, getMouseShortcutString(shortcut))
+          actionElement.addContent(element)
         }
-        else if (shortcut instanceof KeyboardModifierGestureShortcut) {
-          final KeyboardModifierGestureShortcut gesture = (KeyboardModifierGestureShortcut)shortcut;
-          final Element element = new Element(KEYBOARD_GESTURE_SHORTCUT);
-          element.setAttribute(KEYBOARD_GESTURE_SHORTCUT, getKeyShortcutString(gesture.getStroke()));
-          element.setAttribute(KEYBOARD_GESTURE_MODIFIER, gesture.getType().name());
-          actionElement.addContent(element);
+        else if (shortcut is KeyboardModifierGestureShortcut) {
+          val element = Element(KEYBOARD_GESTURE_SHORTCUT)
+          element.setAttribute(KEYBOARD_GESTURE_SHORTCUT, KeyStrokeAdapter.toString(shortcut.stroke))
+          element.setAttribute(KEYBOARD_GESTURE_MODIFIER, shortcut.type.name)
+          actionElement.addContent(element)
         }
         else {
-          throw new IllegalStateException("unknown shortcut class: " + shortcut);
+          throw IllegalStateException("unknown shortcut class: " + shortcut)
         }
       }
-      keymapElement.addContent(actionElement);
+      keymapElement.addContent(actionElement)
     }
-  }
-
-  private static boolean areShortcutsEqual(Shortcut[] shortcuts1, Shortcut[] shortcuts2) {
-    if (shortcuts1.length != shortcuts2.length) {
-      return false;
-    }
-    for (Shortcut shortcut : shortcuts1) {
-      Shortcut parentShortcutEqual = null;
-      for (Shortcut parentShortcut : shortcuts2) {
-        if (shortcut.equals(parentShortcut)) {
-          parentShortcutEqual = parentShortcut;
-          break;
-        }
-      }
-      if (parentShortcutEqual == null) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * @return string representation of passed keystroke.
-   */
-  public static String getKeyShortcutString(KeyStroke keyStroke) {
-    return KeyStrokeAdapter.toString(keyStroke);
-  }
-
-  /**
-   * @return string representation of passed mouse shortcut. This method should
-   *         be used only for serializing of the <code>MouseShortcut</code>
-   */
-  private static String getMouseShortcutString(MouseShortcut shortcut) {
-    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
-      return "Force touch";
-    }
-
-    StringBuilder buffer = new StringBuilder();
-
-    // modifiers
-    int modifiers = shortcut.getModifiers();
-    if ((InputEvent.SHIFT_DOWN_MASK & modifiers) > 0) {
-      buffer.append(SHIFT);
-      buffer.append(' ');
-    }
-    if ((InputEvent.CTRL_DOWN_MASK & modifiers) > 0) {
-      buffer.append(CONTROL);
-      buffer.append(' ');
-    }
-    if ((InputEvent.META_DOWN_MASK & modifiers) > 0) {
-      buffer.append(META);
-      buffer.append(' ');
-    }
-    if ((InputEvent.ALT_DOWN_MASK & modifiers) > 0) {
-      buffer.append(ALT);
-      buffer.append(' ');
-    }
-    if ((InputEvent.ALT_GRAPH_DOWN_MASK & modifiers) > 0) {
-      buffer.append(ALT_GRAPH);
-      buffer.append(' ');
-    }
-
-    // button
-    buffer.append("button").append(shortcut.getButton()).append(' ');
-
-    if (shortcut.getClickCount() > 1) {
-      buffer.append(DOUBLE_CLICK);
-    }
-    return buffer.toString().trim(); // trim trailing space (if any)
   }
 
   /**
    * @return IDs of the action which are specified in the keymap. It doesn't
-   *         return IDs of action from parent keymap.
+   * *         return IDs of action from parent keymap.
    */
-  public String[] getOwnActionIds() {
-    return myActionIdToListOfShortcuts.keySet().toArray(new String[myActionIdToListOfShortcuts.size()]);
+  val ownActionIds: Array<String>
+    get() = myActionIdToListOfShortcuts.keys.toTypedArray()
+
+  fun clearOwnActionsIds() {
+    myActionIdToListOfShortcuts.clear()
+    cleanShortcutsCache()
   }
 
-  public void clearOwnActionsIds() {
-    myActionIdToListOfShortcuts.clear();
-    cleanShortcutsCache();
+  fun hasOwnActionId(actionId: String): Boolean {
+    return myActionIdToListOfShortcuts.containsKey(actionId)
   }
 
-  public boolean hasOwnActionId(@NotNull String actionId) {
-    return myActionIdToListOfShortcuts.containsKey(actionId);
+  fun clearOwnActionsId(actionId: String) {
+    myActionIdToListOfShortcuts.remove(actionId)
+    cleanShortcutsCache()
   }
 
-  public void clearOwnActionsId(String actionId) {
-    myActionIdToListOfShortcuts.remove(actionId);
-    cleanShortcutsCache();
-  }
-
-  @Override
-  public String[] getActionIds() {
-    Set<String> ids = ContainerUtil.newLinkedHashSet();
+  override fun getActionIds(): Array<String> {
+    val ids = ContainerUtil.newLinkedHashSet<String>()
     if (myParent != null) {
-      ContainerUtil.addAll(ids, getParentActionIds());
+      ContainerUtil.addAll<String, String, Set<String>>(ids, *parentActionIds)
     }
-    Collections.addAll(ids, getOwnActionIds());
-    return ArrayUtil.toStringArray(ids);
+    Collections.addAll(ids, *ownActionIds)
+    return ArrayUtil.toStringArray(ids)
   }
 
-  protected String[] getParentActionIds() {
-    return myParent.getActionIds();
-  }
+  protected val parentActionIds: Array<String>
+    get() = myParent!!.actionIds
 
-  @Override
-  public Map<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
-    Map<String, ArrayList<KeyboardShortcut>> result = new HashMap<>();
+  override fun getConflicts(actionId: String, keyboardShortcut: KeyboardShortcut): Map<String, ArrayList<KeyboardShortcut>> {
+    val result = HashMap<String, ArrayList<KeyboardShortcut>>()
 
-    for (String id : getActionIds(keyboardShortcut.getFirstKeyStroke())) {
-      if (id.equals(actionId)) {
-        continue;
+    for (id in getActionIds(keyboardShortcut.firstKeyStroke)) {
+      if (id == actionId) {
+        continue
       }
 
-      if (actionId.startsWith(EDITOR_ACTION_PREFIX) && id.equals("$" + actionId.substring(6))) {
-        continue;
+      if (actionId.startsWith(EDITOR_ACTION_PREFIX) && id == "$" + actionId.substring(6)) {
+        continue
       }
-      if (StringUtil.startsWithChar(actionId, '$') && id.equals(EDITOR_ACTION_PREFIX + actionId.substring(1))) {
-        continue;
-      }
-
-      final String useShortcutOf = getKeymapManager().getActionBinding(id);
-      if (useShortcutOf != null && useShortcutOf.equals(actionId)) {
-        continue;
+      if (StringUtil.startsWithChar(actionId, '$') && id == EDITOR_ACTION_PREFIX + actionId.substring(1)) {
+        continue
       }
 
-      Shortcut[] shortcuts = getShortcuts(id);
-      for (Shortcut shortcut1 : shortcuts) {
-        if (!(shortcut1 instanceof KeyboardShortcut)) {
-          continue;
+      val useShortcutOf = keymapManager.getActionBinding(id)
+      if (useShortcutOf != null && useShortcutOf == actionId) {
+        continue
+      }
+
+      val shortcuts = getShortcuts(id)
+      for (shortcut1 in shortcuts) {
+        if (shortcut1 !is KeyboardShortcut) {
+          continue
         }
 
-        KeyboardShortcut shortcut = (KeyboardShortcut)shortcut1;
-
-        if (!shortcut.getFirstKeyStroke().equals(keyboardShortcut.getFirstKeyStroke())) {
-          continue;
+        if (shortcut1.firstKeyStroke != keyboardShortcut.firstKeyStroke) {
+          continue
         }
 
-        if (keyboardShortcut.getSecondKeyStroke() != null &&
-            shortcut.getSecondKeyStroke() != null &&
-            !keyboardShortcut.getSecondKeyStroke().equals(shortcut.getSecondKeyStroke())) {
-          continue;
+        if (keyboardShortcut.secondKeyStroke != null &&
+            shortcut1.secondKeyStroke != null &&
+            keyboardShortcut.secondKeyStroke != shortcut1.secondKeyStroke) {
+          continue
         }
 
-        ArrayList<KeyboardShortcut> list = result.get(id);
+        var list: ArrayList<KeyboardShortcut>? = result[id]
         if (list == null) {
-          list = new ArrayList<>();
-          result.put(id, list);
+          list = ArrayList<KeyboardShortcut>()
+          result.put(id, list)
         }
 
-        list.add(shortcut);
+        list.add(shortcut1)
       }
     }
 
-    return result;
+    return result
   }
 
-  @Override
-  public void addShortcutChangeListener(Listener listener) {
-    myListeners.add(listener);
+  override fun addShortcutChangeListener(listener: Keymap.Listener) {
+    myListeners.add(listener)
   }
 
-  @Override
-  public void removeShortcutChangeListener(@NotNull Listener listener) {
-    myListeners.remove(listener);
+  override fun removeShortcutChangeListener(listener: Keymap.Listener) {
+    myListeners.remove(listener)
   }
 
-  private void fireShortcutChanged(String actionId) {
-    for (Listener listener : myListeners) {
-      listener.onShortcutChanged(actionId);
+  private fun fireShortcutChanged(actionId: String) {
+    for (listener in myListeners) {
+      listener.onShortcutChanged(actionId)
     }
   }
 
-  @NotNull
-  @Override
-  public String toString() {
-    return getPresentableName();
+  override fun toString(): String {
+    return presentableName
   }
+}
+
+private fun sortInOrderOfRegistration(ids: Array<String>): Array<String> {
+  Arrays.sort(ids, ActionManagerEx.getInstanceEx().registrationOrderComparator)
+  return ids
+}
+
+private fun areShortcutsEqual(shortcuts1: Array<Shortcut>, shortcuts2: Array<Shortcut>): Boolean {
+  if (shortcuts1.size != shortcuts2.size) {
+    return false
+  }
+  for (shortcut in shortcuts1) {
+    var parentShortcutEqual: Shortcut? = null
+    for (parentShortcut in shortcuts2) {
+      if (shortcut == parentShortcut) {
+        parentShortcutEqual = parentShortcut
+        break
+      }
+    }
+    if (parentShortcutEqual == null) {
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * @return string representation of passed mouse shortcut. This method should
+ * *         be used only for serializing of the `MouseShortcut`
+ */
+private fun getMouseShortcutString(shortcut: MouseShortcut): String {
+  if (Registry.`is`("ide.mac.forceTouch") && shortcut is PressureShortcut) {
+    return "Force touch"
+  }
+
+  val buffer = StringBuilder()
+
+  // modifiers
+  val modifiers = shortcut.modifiers
+  if (InputEvent.SHIFT_DOWN_MASK and modifiers > 0) {
+    buffer.append(SHIFT)
+    buffer.append(' ')
+  }
+  if (InputEvent.CTRL_DOWN_MASK and modifiers > 0) {
+    buffer.append(CONTROL)
+    buffer.append(' ')
+  }
+  if (InputEvent.META_DOWN_MASK and modifiers > 0) {
+    buffer.append(META)
+    buffer.append(' ')
+  }
+  if (InputEvent.ALT_DOWN_MASK and modifiers > 0) {
+    buffer.append(ALT)
+    buffer.append(' ')
+  }
+  if (InputEvent.ALT_GRAPH_DOWN_MASK and modifiers > 0) {
+    buffer.append(ALT_GRAPH)
+    buffer.append(' ')
+  }
+
+  // button
+  buffer.append("button").append(shortcut.button).append(' ')
+
+  if (shortcut.clickCount > 1) {
+    buffer.append(DOUBLE_CLICK)
+  }
+  return buffer.toString().trim { it <= ' ' } // trim trailing space (if any)
 }
