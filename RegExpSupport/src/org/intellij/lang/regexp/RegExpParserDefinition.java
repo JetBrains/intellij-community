@@ -49,6 +49,10 @@ public class RegExpParserDefinition implements ParserDefinition {
             CAPABILITIES.add(capability);
             Disposer.register(parentDisposable, () -> CAPABILITIES.remove(capability));
         }
+        else {
+            CAPABILITIES.remove(capability);
+            Disposer.register(parentDisposable, () -> CAPABILITIES.add(capability));
+        }
     }
     
     @NotNull
