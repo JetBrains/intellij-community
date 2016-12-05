@@ -15,39 +15,38 @@
  */
 package com.intellij.codeInspection.inheritance;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
 public class ChangeSuperClassFix implements LocalQuickFix {
   @NotNull
-  private final PsiClass myNewSuperClass;
+  private final SmartPsiElementPointer<PsiClass> myNewSuperClass;
   @NotNull
-  private final PsiClass myOldSuperClass;
+  private final SmartPsiElementPointer<PsiClass> myOldSuperClass;
   private final int myPercent;
+  @NotNull
+  private final String myNewSuperName;
 
   public ChangeSuperClassFix(@NotNull final PsiClass newSuperClass, final int percent, @NotNull final PsiClass oldSuperClass) {
-    myNewSuperClass = newSuperClass;
-    myOldSuperClass = oldSuperClass;
+    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(newSuperClass.getProject());
+    myNewSuperName = ObjectUtils.notNull(newSuperClass.getQualifiedName());
+    myNewSuperClass = smartPointerManager.createSmartPsiElementPointer(newSuperClass);
+    myOldSuperClass = smartPointerManager.createSmartPsiElementPointer(oldSuperClass);
     myPercent = percent;
   }
 
   @NotNull
   @TestOnly
   public PsiClass getNewSuperClass() {
-    return myNewSuperClass;
+    return ObjectUtils.notNull(myNewSuperClass.getElement());
   }
 
   @TestOnly
@@ -58,7 +57,7 @@ public class ChangeSuperClassFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return String.format("Make extends '%s' - %s%%", myNewSuperClass.getQualifiedName(), myPercent);
+    return String.format("Make extends '%s' - %s%%", myNewSuperName, myPercent);
   }
 
   @NotNull
@@ -69,7 +68,10 @@ public class ChangeSuperClassFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor problemDescriptor) {
-    changeSuperClass((PsiClass)problemDescriptor.getPsiElement(), myOldSuperClass, myNewSuperClass);
+    final PsiClass oldSuperClass = myOldSuperClass.getElement();
+    final PsiClass newSuperClass = myNewSuperClass.getElement();
+    if (oldSuperClass == null || newSuperClass == null) return;
+    changeSuperClass((PsiClass)problemDescriptor.getPsiElement(), oldSuperClass, newSuperClass);
   }
 
   /**
@@ -81,42 +83,37 @@ public class ChangeSuperClassFix implements LocalQuickFix {
   private static void changeSuperClass(@NotNull final PsiClass aClass,
                                        @NotNull final PsiClass oldSuperClass,
                                        @NotNull final PsiClass newSuperClass) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
-
-    if (!FileModificationService.getInstance().prepareFileForWrite(aClass.getContainingFile())) return;
-    CommandProcessor.getInstance().executeCommand(newSuperClass.getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-      if (aClass instanceof PsiAnonymousClass) {
-        ((PsiAnonymousClass)aClass).getBaseClassReference().replace(factory.createClassReferenceElement(newSuperClass));
-      }
-      else if (oldSuperClass.isInterface()) {
-        final PsiReferenceList interfaceList = aClass.getImplementsList();
-        if (interfaceList != null) {
-          for (final PsiJavaCodeReferenceElement interfaceRef : interfaceList.getReferenceElements()) {
-            final PsiElement aInterface = interfaceRef.resolve();
-            if (aInterface != null && aInterface.isEquivalentTo(oldSuperClass)) {
-              interfaceRef.delete();
-            }
-          }
-        }
-
-        final PsiReferenceList extendsList = aClass.getExtendsList();
-        if (extendsList != null) {
-          final PsiJavaCodeReferenceElement newClassReference = factory.createClassReferenceElement(newSuperClass);
-          if (extendsList.getReferenceElements().length == 0) {
-            extendsList.add(newClassReference);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+    if (aClass instanceof PsiAnonymousClass) {
+      ((PsiAnonymousClass)aClass).getBaseClassReference().replace(factory.createClassReferenceElement(newSuperClass));
+    }
+    else if (oldSuperClass.isInterface()) {
+      final PsiReferenceList interfaceList = aClass.getImplementsList();
+      if (interfaceList != null) {
+        for (final PsiJavaCodeReferenceElement interfaceRef : interfaceList.getReferenceElements()) {
+          final PsiElement aInterface = interfaceRef.resolve();
+          if (aInterface != null && aInterface.isEquivalentTo(oldSuperClass)) {
+            interfaceRef.delete();
           }
         }
       }
-      else {
-        final PsiReferenceList extendsList = aClass.getExtendsList();
-        if (extendsList != null && extendsList.getReferenceElements().length == 1) {
-          extendsList.getReferenceElements()[0].delete();
-          PsiElement ref = extendsList.add(factory.createClassReferenceElement(newSuperClass));
-          JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(ref);
+
+      final PsiReferenceList extendsList = aClass.getExtendsList();
+      if (extendsList != null) {
+        final PsiJavaCodeReferenceElement newClassReference = factory.createClassReferenceElement(newSuperClass);
+        if (extendsList.getReferenceElements().length == 0) {
+          extendsList.add(newClassReference);
         }
       }
-    }), "Changing inheritance", null);
+    }
+    else {
+      final PsiReferenceList extendsList = aClass.getExtendsList();
+      if (extendsList != null && extendsList.getReferenceElements().length == 1) {
+        extendsList.getReferenceElements()[0].delete();
+        PsiElement ref = extendsList.add(factory.createClassReferenceElement(newSuperClass));
+        JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(ref);
+      }
+    }
   }
 
   public static class LowPriority extends ChangeSuperClassFix implements LowPriorityAction {
