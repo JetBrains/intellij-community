@@ -81,6 +81,13 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     public void actionPerformed(AnActionEvent e) {
       doReset();
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      T currentScheme = getCurrentScheme();
+      p.setEnabled(currentScheme != null && isResetAvailable(currentScheme));
+    }
   }
   
   
@@ -187,6 +194,10 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   protected abstract void doDelete();
   
   protected abstract boolean isDeleteAvailable(@NotNull T scheme);
+  
+  protected boolean isResetAvailable(@NotNull T scheme) {
+    return true;
+  }
   
   protected abstract void doExport(@NotNull T scheme, @NotNull String exporterName);
   
