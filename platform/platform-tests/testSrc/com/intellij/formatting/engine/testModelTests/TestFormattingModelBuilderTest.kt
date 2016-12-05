@@ -20,9 +20,8 @@ import com.intellij.formatting.CompositeTestBlock
 import com.intellij.formatting.engine.testModel.getRoot
 import com.intellij.formatting.toFormattingBlock
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.assertions.Assertions
-import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.containers.TreeTraversal
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class TestFormattingModelBuilderTest {
@@ -38,10 +37,10 @@ class TestFormattingModelBuilderTest {
     val rootFormattingBlock = root.toFormattingBlock(0)
 
     val subBlocks = rootFormattingBlock.subBlocks
-    Assertions.assertThat(subBlocks).hasSize(4)
+    assertThat(subBlocks).hasSize(4)
 
-    Assertions.assertThat(subBlocks.last().subBlocks).hasSize(3)
-    Assertions.assertThat(subBlocks.last().subBlocks.last().subBlocks).hasSize(2)
+    assertThat(subBlocks.last().subBlocks).hasSize(3)
+    assertThat(subBlocks.last().subBlocks.last().subBlocks).hasSize(2)
 
     assertLeafRanges(rootFormattingBlock, 0..3, 12..15, 30..33, 34..37, 50..53, 60..63, 64..67)
   }
@@ -49,9 +48,8 @@ class TestFormattingModelBuilderTest {
   private fun assertLeafRanges(rootFormattingBlock: CompositeTestBlock, vararg ranges: IntRange) {
     val textRanges = ranges.map { TextRange(it.start, it.endInclusive) }
     val leafs = TreeTraversal.LEAVES_DFS.createIterator<Block>(rootFormattingBlock.subBlocks, { it.subBlocks }).toList()
-    Assertions.assertThat(textRanges).isEqualTo(leafs.map { it.textRange })
+    assertThat(textRanges).isEqualTo(leafs.map { it.textRange })
   }
-
 
   @Test
   fun `test alignment parsing`() {
