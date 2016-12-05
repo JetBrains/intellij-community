@@ -79,7 +79,7 @@ public interface Keymap extends Scheme {
 
   void addShortcutChangeListener(Listener listener);
 
-  void removeShortcutChangeListener(Listener listener);
+  void removeShortcutChangeListener(@NotNull Listener listener);
 
   void removeAllActionShortcuts(String actionId);
 

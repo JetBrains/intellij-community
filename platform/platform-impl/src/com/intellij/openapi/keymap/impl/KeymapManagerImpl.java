@@ -17,7 +17,10 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -26,7 +29,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,17 +39,17 @@ import java.util.*;
   storages = @Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS),
   additionalExportFile = KeymapManagerImpl.KEYMAPS_DIR_PATH
 )
-public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ApplicationComponent {
+public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element> {
   static final String KEYMAPS_DIR_PATH = "keymaps";
 
   private final List<KeymapManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<String, String> myBoundShortcuts = new HashMap<>();
 
-  @NonNls private static final String ACTIVE_KEYMAP = "active_keymap";
-  @NonNls private static final String NAME_ATTRIBUTE = "name";
+  private static final String ACTIVE_KEYMAP = "active_keymap";
+  private static final String NAME_ATTRIBUTE = "name";
   private final SchemeManager<Keymap> mySchemeManager;
 
-  public static boolean ourKeymapManagerInitialized = false;
+  public static boolean ourKeymapManagerInitialized;
 
   KeymapManagerImpl(@NotNull DefaultKeymap defaultKeymap, @NotNull SchemeManagerFactory factory) {
     SchemeProcessor<Keymap, KeymapImpl> schemeProcessor = new NonLazySchemeProcessor<Keymap, KeymapImpl>() {
@@ -61,8 +63,8 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
       @NotNull
       @Override
-      public Element writeScheme(@NotNull final KeymapImpl scheme) {
-        return scheme.writeExternal();
+      public Element writeScheme(@NotNull KeymapImpl scheme) {
+        return scheme.writeScheme();
       }
 
       @NotNull
@@ -159,6 +161,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
     return Comparing.equal(id, actionId) ? null : id;
   }
 
+  @Override
   public SchemeManager<Keymap> getSchemeManager() {
     return mySchemeManager;
   }
@@ -236,19 +239,5 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
         myListeners.remove(listener);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "KeymapManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 }

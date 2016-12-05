@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,23 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 
-/**
- * @author max
- * @since Nov 21, 2003
- */
 class DefaultKeymapImpl extends KeymapImpl {
+  @Override
   public boolean canModify() {
     return false;
   }
 
+  @Override
   public String getPresentableName() {
     return DefaultKeymap.getInstance().getKeymapPresentableName(this);
   }
 
-  public void readExternal(Element keymapElement, Keymap[] existingKeymaps) throws InvalidDataException {
+  @Override
+  public void readExternal(@NotNull Element keymapElement, @NotNull Keymap[] existingKeymaps) throws InvalidDataException {
     super.readExternal(keymapElement, existingKeymaps);
 
     if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(getName()) && !SystemInfo.isXWindow) {

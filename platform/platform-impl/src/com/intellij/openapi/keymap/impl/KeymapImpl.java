@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,7 +49,7 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
+public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap, SerializableScheme {
   @NonNls private static final String KEY_MAP = "keymap";
   @NonNls private static final String KEYBOARD_SHORTCUT = "keyboard-shortcut";
   @NonNls private static final String KEYBOARD_GESTURE_SHORTCUT = "keyboard-gesture-shortcut";
@@ -557,18 +558,15 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     return myKeymapManager;
   }
 
-  /**
-   * @param keymapElement element which corresponds to "keymap" tag.
-   */
-  public void readExternal(Element keymapElement, Keymap[] existingKeymaps) throws InvalidDataException {
-    // Check and convert parameters
+  public void readExternal(@NotNull Element keymapElement, @NotNull Keymap[] existingKeymaps) {
     if (!KEY_MAP.equals(keymapElement.getName())) {
       throw new InvalidDataException("unknown element: " + keymapElement);
     }
+
     if (keymapElement.getAttributeValue(VERSION_ATTRIBUTE) == null) {
       Converter01.convert(keymapElement);
     }
-    //
+
     String parentName = keymapElement.getAttributeValue(PARENT_ATTRIBUTE);
     if (parentName != null) {
       for (Keymap existingKeymap : existingKeymaps) {
@@ -579,6 +577,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
         }
       }
     }
+
     setName(keymapElement.getAttributeValue(NAME_ATTRIBUTE));
 
     Map<String, ArrayList<Shortcut>> id2shortcuts = new HashMap<>();
@@ -679,7 +678,9 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     }
   }
 
-  public Element writeExternal() {
+  @NotNull
+  @Override
+  public Element writeScheme() {
     Element keymapElement = new Element(KEY_MAP);
     keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1));
     keymapElement.setAttribute(NAME_ATTRIBUTE, getName());
@@ -898,7 +899,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   }
 
   @Override
-  public void removeShortcutChangeListener(Listener listener) {
+  public void removeShortcutChangeListener(@NotNull Listener listener) {
     myListeners.remove(listener);
   }
 
