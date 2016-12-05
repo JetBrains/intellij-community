@@ -22,6 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -162,11 +163,11 @@ public class PyConsoleUtil {
       public void actionPerformed(AnActionEvent e) {
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
-          AnAction replace = ActionManager.getInstance().getAction("EditorChooseLookupItemReplace");
+          AnAction replace = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
           ActionUtil.performActionDumbAware(replace, e);
           return;
         }
-        AnAction completionAction = ActionManager.getInstance().getAction("CodeCompletion");
+        AnAction completionAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
         if (completionAction != null) {
           ActionUtil.performActionDumbAware(completionAction, e);
         }
