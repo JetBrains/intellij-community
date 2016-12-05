@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon
 
+import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import org.assertj.core.api.Assertions.assertThat
@@ -24,6 +26,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     super.setUp()
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
+  }
+
+  fun testSoftKeywords() {
+    myFixture.configureByText("module-info.java", "module M { }")
+    val results = myFixture.doHighlighting()
+    assertEquals(1, results.size)
+    assertEquals(JavaHighlightInfoTypes.JAVA_KEYWORD, results[0].type)
+    assertEquals(TextRange(0, 6), TextRange(results[0].startOffset, results[0].endOffset))
   }
 
   fun testWrongFileName() {
