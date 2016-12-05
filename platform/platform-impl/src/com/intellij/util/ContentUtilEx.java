@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -195,11 +194,5 @@ public class ContentUtilEx extends ContentsUtil {
       index++;
     }
     return -1;
-  }
-
-  @Nullable
-  public static String getTabNameWithoutPrefix(@NotNull TabbedContent content, @NotNull String fullTabName) {
-    String prefix = content.getTitlePrefix();
-    return prefix == null ? fullTabName : StringUtil.trimStart(fullTabName, getFullPrefix(prefix));
   }
 }

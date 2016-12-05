@@ -19,19 +19,14 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.TabbedContent;
-import com.intellij.util.ContentUtilEx;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.WatermarkIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -57,7 +52,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     }
   };
   private final TabbedContent myContent;
-  @Nullable private Reference<JBPopup> myPopupReference = null;
+  private Reference<JBPopup> myPopupReference = null;
 
   public TabbedContentTabLabel(TabbedContent content, TabContentLayout layout) {
     super(content, layout);
@@ -73,7 +68,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
 
   private void showPopup() {
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
-    ArrayList<String> names = new ArrayList<>();
+    ArrayList<String> names = new ArrayList<String>();
     for (Pair<String, JComponent> tab : myContent.getTabs()) {
       names.add(tab.first);
     }
@@ -86,9 +81,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
       @NotNull
       @Override
       public JComponent fun(Object dom) {
-        String tabName = dom.toString();
-        label.setText(tabName);
-        setIconInPopupLabel(label, tabName);
+        label.setText(dom.toString());
         return label;
       }
     });
@@ -99,65 +92,17 @@ public class TabbedContentTabLabel extends ContentTabLabel {
           myContent.selectContent(index);
         }
       }).createPopup();
-    myPopupReference = new WeakReference<>(popup);
+    myPopupReference = new WeakReference<JBPopup>(popup);
     popup.showUnderneathOf(this);
-  }
-
-  private void setIconInPopupLabel(JLabel label, String tabName) {
-    Icon baseIcon = getBaseIcon();
-    boolean hasIconsInTabs = baseIcon != null;
-    for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
-      if (nextTabWithName.getFirst().equals(tabName)) {
-        JComponent tab = nextTabWithName.getSecond();
-        Icon tabIcon = null;
-        if (tab instanceof Iconable) {
-          tabIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
-          if (hasIconsInTabs && tabIcon == null) {
-            tabIcon = EmptyIcon.create(baseIcon);
-          }
-        }
-        label.setIcon(tabIcon);
-      }
-    }
-  }
-
-  @Nullable
-  private Icon getBaseIcon() {
-    Icon baseIcon = null;
-    for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
-      JComponent tabComponent = nextTabWithName.getSecond();
-      if (tabComponent instanceof Iconable) {
-        Icon tabIcon = ((Iconable)tabComponent).getIcon(Iconable.ICON_FLAG_VISIBILITY);
-        if (tabIcon != null) {
-          baseIcon = tabIcon;
-          break;
-        }
-      }
-    }
-    return baseIcon;
   }
 
   @Override
   public void update() {
     super.update();
     if (myContent != null) {
-      String tabName = myContent.getTabName();
-      setText(tabName);
-      setTabIcon(tabName, this);
+      setText(myContent.getTabName());
     }
     setHorizontalAlignment(LEFT);
-  }
-
-  private void setTabIcon(String tabName, JLabel jLabel) {
-    for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
-      if (tabName != null && nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(myContent, tabName))) {
-        JComponent tab = nextTabWithName.getSecond();
-        if (tab instanceof Iconable) {
-          Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
-          jLabel.setIcon(isSelected() || baseIcon == null ? baseIcon : new WatermarkIcon(baseIcon, .5f));
-        }
-      }
-    }
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ public interface TabbedContent extends Content {
 
   void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab);
   void removeContent(@NotNull JComponent content);
-  void renameContent(@NotNull JComponent tab, @NotNull String newTabName);
   void selectContent(int index);
   List<Pair<String, JComponent>> getTabs();
   String getTitlePrefix();
