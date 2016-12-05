@@ -112,7 +112,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
-    if (((ChangesBrowserNode)oldModel.getRoot()).getCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
+    if (((ChangesBrowserNode)oldModel.getRoot()).getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
       TreeNode toExpand = null;
       for (int i = 0; i < root.getChildCount(); i++) {
         TreeNode node = root.getChildAt(i);

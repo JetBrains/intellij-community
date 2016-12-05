@@ -45,8 +45,8 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   private SimpleTextAttributes myAttributes;
 
-  protected int myCount = -1;
-  protected int myDirectoryCount = -1;
+  private int myFileCount = -1;
+  private int myDirectoryCount = -1;
 
   public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
   public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
@@ -90,15 +90,28 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   @Override
   public void insert(MutableTreeNode newChild, int childIndex) {
     super.insert(newChild, childIndex);
-    myCount = -1;
-    myDirectoryCount = -1;
+    resetFileCounters();
   }
 
-  public int getCount() {
-    if (myCount == -1) {
-      myCount = toStream(children()).mapToInt(ChangesBrowserNode::getCount).sum();
+  @Override
+  public void remove(int childIndex) {
+    super.remove(childIndex);
+    resetFileCounters();
+  }
+
+  protected boolean isFile() {
+    return false;
+  }
+
+  protected boolean isDirectory() {
+    return false;
+  }
+
+  public int getFileCount() {
+    if (myFileCount == -1) {
+      myFileCount = (isFile() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getFileCount).sum();
     }
-    return myCount;
+    return myFileCount;
   }
 
   public int getDirectoryCount() {
@@ -108,8 +121,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return myDirectoryCount;
   }
 
-  protected boolean isDirectory() {
-    return false;
+  private void resetFileCounters() {
+    myFileCount = -1;
+    myDirectoryCount = -1;
   }
 
   @NotNull
@@ -174,7 +188,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   protected String getCountText() {
-    int count = getCount();
+    int count = getFileCount();
     int dirCount = getDirectoryCount();
     String result = "";
 
@@ -230,6 +244,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
     renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
                     SimpleTextAttributes.GRAYED_ATTRIBUTES);
+  }
+
+  @Deprecated
+  public final int getCount() {
+    return getFileCount();
   }
 
   private static class Tag {

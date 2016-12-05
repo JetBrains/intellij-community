@@ -256,7 +256,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
       ChangesBrowserUnversionedFilesNode node = findUnversionedFilesNode();
 
       if (node != null) {
-        result = node.getFilesSize();
+        result = node.getFileCount();
       }
     }
 

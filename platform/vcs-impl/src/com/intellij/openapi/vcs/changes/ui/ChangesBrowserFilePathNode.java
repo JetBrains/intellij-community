@@ -34,9 +34,11 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public ChangesBrowserFilePathNode(FilePath userObject) {
     super(userObject);
-    if (!userObject.isDirectory()) {
-      myCount = 1;
-    }
+  }
+
+  @Override
+  protected boolean isFile() {
+    return !getUserObject().isDirectory();
   }
 
   @Override

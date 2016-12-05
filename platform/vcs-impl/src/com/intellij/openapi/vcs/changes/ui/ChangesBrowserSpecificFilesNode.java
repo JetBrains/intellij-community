@@ -21,12 +21,14 @@ import org.jetbrains.annotations.NotNull;
 public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode {
   protected final boolean myIsMany;
   @NotNull protected final Runnable myDialogShower;
+  private final int myManyFileCount;
+  private final int myManyDirectoryCount;
 
   protected ChangesBrowserSpecificFilesNode(Object userObject, int filesSize, int dirsSize, boolean many, @NotNull Runnable shower) {
     super(userObject);
     // if files presented in the same view recalculate number of dirs and files -> provide -1; otherwise use from model
-    myCount = many ? filesSize : -1;
-    myDirectoryCount = many ? dirsSize : -1;
+    myManyFileCount = filesSize;
+    myManyDirectoryCount = dirsSize;
     myIsMany = many;
     myDialogShower = shower;
   }
@@ -41,13 +43,14 @@ public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode {
     }
   }
 
-  public int getFilesSize() {
-    return myCount;
+  @Override
+  public int getFileCount() {
+    return myIsMany ? myManyFileCount : super.getFileCount();
   }
 
   @Override
-  public int getCount() {
-    return super.getCount() - getDirectoryCount();
+  public int getDirectoryCount() {
+    return myIsMany ? myManyDirectoryCount : super.getDirectoryCount();
   }
 
   public boolean isManyFiles() {
