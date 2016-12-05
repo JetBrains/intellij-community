@@ -14,6 +14,7 @@ import runtime.*
 import runtime.klogger.*
 import runtime.lifetimes.*
 import runtime.reactive.*
+import runtime.random.*
 import java.util.concurrent.*
 
 private val log = KLoggers.logger("plugin/IdePluginClient.kt")
@@ -126,12 +127,12 @@ class IdePluginClient(val project : Project) :
         clientLocal.profile.isMyProfileReady()
             .flatMap {
                 if (!it) {
-                    clientLocal.profile.createMyProfile("Hey! ${Random.nextBytes(10)}")
+                    clientLocal.profile.createMyProfile("Hey! ${Random.nextUID()}")
                 } else {
                     clientLocal.profile.getMyProfile().map {
                         log.debug { "My Profile: $it" }
                     }
-                    clientLocal.profile.editMyName("Hey! ${Random.nextBytes(10)}")
+                    clientLocal.profile.editMyName("Hey! ${Random.nextUID()}")
                 }
             }
             .then {
