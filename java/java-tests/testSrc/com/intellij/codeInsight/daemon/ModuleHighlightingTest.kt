@@ -29,11 +29,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testSoftKeywords() {
-    myFixture.configureByText("module-info.java", "module M { }")
-    val results = myFixture.doHighlighting()
-    assertEquals(1, results.size)
-    assertEquals(JavaHighlightInfoTypes.JAVA_KEYWORD, results[0].type)
-    assertEquals(TextRange(0, 6), TextRange(results[0].startOffset, results[0].endOffset))
+    addFile("pkg/module/C.java", "package pkg.module;\npublic class C { }")
+    myFixture.configureByText("module-info.java", "module M { exports pkg.module; }")
+    val keywords = myFixture.doHighlighting().filter { it.type == JavaHighlightInfoTypes.JAVA_KEYWORD }
+    assertEquals(2, keywords.size)
+    assertEquals(TextRange(0, 6), TextRange(keywords[0].startOffset, keywords[0].endOffset))
+    assertEquals(TextRange(11, 18), TextRange(keywords[1].startOffset, keywords[1].endOffset))
   }
 
   fun testWrongFileName() {
