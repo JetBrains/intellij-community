@@ -184,6 +184,10 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testGroups33() throws IOException { doCodeTest("(?<asdf>[a-c])\\1"); }
   public void testGroups34() throws IOException { doCodeTest("(?<asdf>[a-c])\\k<asdf>"); }
   public void testGroups35() throws IOException { doCodeTest("\\k<adsf>"); }
+  public void testGroups36() throws IOException { doCodeTest("(?P<name>{"); }
+  public void testGroups37() throws IOException { doCodeTest("(?P=name)"); }
+  public void testGroups38() throws IOException { doCodeTest("\\g'name'"); }
+  public void testGroups39() throws IOException { doCodeTest("(?(name)yes-pattern|no-pattern)"); }
 
   public void testEscapes1() throws IOException { doCodeTest("\\q"); }
   public void testEscapes2() throws IOException { doCodeTest("\\#"); }
