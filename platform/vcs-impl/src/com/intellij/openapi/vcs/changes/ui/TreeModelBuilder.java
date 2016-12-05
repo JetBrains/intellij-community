@@ -235,8 +235,7 @@ public class TreeModelBuilder {
   @NotNull
   public TreeModelBuilder setLocallyDeletedPaths(@Nullable Collection<LocallyDeletedChange> locallyDeletedChanges) {
     if (ContainerUtil.isEmpty(locallyDeletedChanges)) return this;
-    ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG);
-    myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
+    ChangesBrowserNode subtreeRoot = createTagNode(ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG);
 
     for (LocallyDeletedChange change : locallyDeletedChanges) {
       // whether a folder does not matter
@@ -281,9 +280,8 @@ public class TreeModelBuilder {
   @NotNull
   public TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, String> switchedRoots) {
     if (ContainerUtil.isEmpty(switchedRoots)) return this;
-    final ChangesBrowserNode rootsHeadNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_ROOTS_TAG);
+    final ChangesBrowserNode rootsHeadNode = createTagNode(ChangesBrowserNode.SWITCHED_ROOTS_TAG);
     rootsHeadNode.setAttributes(SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-    myModel.insertNodeInto(rootsHeadNode, myRoot, myRoot.getChildCount());
 
     final List<VirtualFile> files = new ArrayList<>(switchedRoots.keySet());
     Collections.sort(files, VirtualFileHierarchicalComparator.getInstance());
@@ -309,8 +307,7 @@ public class TreeModelBuilder {
   @NotNull
   public TreeModelBuilder setSwitchedFiles(@NotNull MultiMap<String, VirtualFile> switchedFiles) {
     if (switchedFiles.isEmpty()) return this;
-    ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_FILES_TAG);
-    myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
+    ChangesBrowserNode subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
     for(String branchName: switchedFiles.keySet()) {
       final List<VirtualFile> switchedFileList = new ArrayList<>(switchedFiles.get(branchName));
       if (switchedFileList.size() > 0) {
