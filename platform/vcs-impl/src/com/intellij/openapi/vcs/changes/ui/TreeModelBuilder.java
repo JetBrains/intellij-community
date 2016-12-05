@@ -135,18 +135,19 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setUnversioned(@NotNull List<VirtualFile> unversionedFiles, @NotNull Couple<Integer> sizes) {
+  public TreeModelBuilder setUnversioned(@Nullable List<VirtualFile> unversionedFiles, @NotNull Couple<Integer> sizes) {
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
-    return insertSpecificNodeToModel(unversionedFiles, new ChangesBrowserUnversionedFilesNode(
-      myProject, sizes.getFirst(), sizes.getSecond(), unversionedFiles.size() > UNVERSIONED_MAX_SIZE));
+    boolean manyFiles = unversionedFiles.size() > UNVERSIONED_MAX_SIZE;
+    ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, sizes.first, sizes.second, manyFiles);
+    return insertSpecificNodeToModel(unversionedFiles, node);
   }
 
   @NotNull
   public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, @NotNull Couple<Integer> sizes, boolean updatingMode) {
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
-    return insertSpecificNodeToModel(ignoredFiles,
-                                     new ChangesBrowserIgnoredFilesNode(myProject, sizes.getFirst(), sizes.getSecond(),
-                                                                        ignoredFiles.size() > UNVERSIONED_MAX_SIZE, updatingMode));
+    boolean manyFiles = ignoredFiles.size() > UNVERSIONED_MAX_SIZE;
+    ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, sizes.first, sizes.second, manyFiles, updatingMode);
+    return insertSpecificNodeToModel(ignoredFiles, node);
   }
 
   @NotNull
@@ -163,10 +164,9 @@ public class TreeModelBuilder {
   public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists) {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     for (ChangeList list : changeLists) {
-      final List<Change> changes = new ArrayList<>(list.getChanges());
+      List<Change> changes = ContainerUtil.sorted(list.getChanges(), PATH_LENGTH_COMPARATOR);
       ChangesBrowserChangeListNode listNode = createChangeListNode(list, changes);
       myModel.insertNodeInto(listNode, myRoot, 0);
-      Collections.sort(changes, PATH_LENGTH_COMPARATOR);
       for (int i = 0; i < changes.size(); i++) {
         insertChangeNode(changes.get(i), listNode, createChangeListChild(revisionsCache, listNode, changes, i));
       }
@@ -283,8 +283,7 @@ public class TreeModelBuilder {
     final ChangesBrowserNode rootsHeadNode = createTagNode(ChangesBrowserNode.SWITCHED_ROOTS_TAG);
     rootsHeadNode.setAttributes(SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
 
-    final List<VirtualFile> files = new ArrayList<>(switchedRoots.keySet());
-    Collections.sort(files, VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> files = ContainerUtil.sorted(switchedRoots.keySet(), VirtualFileHierarchicalComparator.getInstance());
 
     for (VirtualFile vf : files) {
       final ContentRevision cr = new CurrentContentRevision(VcsUtil.getFilePath(vf));
@@ -309,12 +308,12 @@ public class TreeModelBuilder {
     if (switchedFiles.isEmpty()) return this;
     ChangesBrowserNode subtreeRoot = createTagNode(ChangesBrowserNode.SWITCHED_FILES_TAG);
     for(String branchName: switchedFiles.keySet()) {
-      final List<VirtualFile> switchedFileList = new ArrayList<>(switchedFiles.get(branchName));
+      List<VirtualFile> switchedFileList = ContainerUtil.sorted(switchedFiles.get(branchName),
+                                                                VirtualFileHierarchicalComparator.getInstance());
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
         myModel.insertNodeInto(branchNode, subtreeRoot, subtreeRoot.getChildCount());
 
-        Collections.sort(switchedFileList, VirtualFileHierarchicalComparator.getInstance());
         for (VirtualFile file : switchedFileList) {
           insertChangeNode(file, branchNode, ChangesBrowserNode.create(myProject, file));
         }
@@ -328,10 +327,9 @@ public class TreeModelBuilder {
     if (ContainerUtil.isEmpty(logicallyLockedFiles)) return this;
     final ChangesBrowserNode subtreeRoot = createTagNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
-    final List<VirtualFile> keys = new ArrayList<>(logicallyLockedFiles.keySet());
-    Collections.sort(keys, VirtualFileHierarchicalComparator.getInstance());
+    List<VirtualFile> keys = ContainerUtil.sorted(logicallyLockedFiles.keySet(), VirtualFileHierarchicalComparator.getInstance());
 
-    for (final VirtualFile file : keys) {
+    for (VirtualFile file : keys) {
       final LogicalLock lock = logicallyLockedFiles.get(file);
       final ChangesBrowserLogicallyLockedFile obj = new ChangesBrowserLogicallyLockedFile(myProject, file, lock);
       insertChangeNode(obj, subtreeRoot, ChangesBrowserNode.create(myProject, obj));
