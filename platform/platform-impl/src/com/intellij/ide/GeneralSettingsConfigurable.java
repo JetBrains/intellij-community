@@ -104,13 +104,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
     isModified |= settings.getConfirmOpenNewProject() != getConfirmOpenNewProject();
     isModified |= settings.getProcessCloseConfirmation() != getProcessCloseConfirmation();
-
-    int inactiveTimeout = -1;
-    try {
-      inactiveTimeout = GeneralSettings.SYSTEM_SETTINGS_SAVE_FILES_AFTER_IDLE_SEC.fit(Integer.parseInt(myComponent.myTfInactiveTimeout.getText()));
-    }
-    catch (NumberFormatException ignored) { }
-    isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
+    isModified |= isModified(myComponent.myTfInactiveTimeout, settings.getInactiveTimeout(), GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC);
 
     isModified |= settings.isUseSafeWrite() != myComponent.myChkUseSafeWrite.isSelected();
 

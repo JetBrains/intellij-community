@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -34,6 +35,9 @@ import java.util.Set;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"))
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
+  public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
+  public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
+
   //Q: make it interface?
   public static final class OptionSet {
     public String LINE_SEPARATOR;
@@ -45,10 +49,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
     public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = false;
-    public long QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = 500;
+    public int QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = QUICK_DOC_DELAY_RANGE.initial;
     public boolean SHOW_INTENTION_BULB = true;
     public boolean IS_CARET_BLINKING = true;
-    public int CARET_BLINKING_PERIOD = 500;
+    public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
@@ -340,11 +344,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public int getBlinkPeriod() {
-    return myOptions.CARET_BLINKING_PERIOD;
+    return BLINKING_RANGE.fit(myOptions.CARET_BLINKING_PERIOD);
   }
 
   public void setBlinkPeriod(int blinkInterval) {
-    myOptions.CARET_BLINKING_PERIOD = blinkInterval;
+    myOptions.CARET_BLINKING_PERIOD = BLINKING_RANGE.fit(blinkInterval);
   }
 
 
@@ -373,18 +377,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
   }
 
-  public long getQuickDocOnMouseOverElementDelayMillis() {
-    return myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS;
+  public int getQuickDocOnMouseOverElementDelayMillis() {
+    return QUICK_DOC_DELAY_RANGE.fit(myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS);
   }
 
-  public void setQuickDocOnMouseOverElementDelayMillis(long delay) throws IllegalArgumentException {
-    if (delay <= 0) {
-      throw new IllegalArgumentException(String.format(
-        "Non-positive delay for the 'show quick doc on mouse over element' value detected! Expected positive value but got %d",
-        delay
-      ));
-    }
-    myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = delay;
+  public void setQuickDocOnMouseOverElementDelayMillis(int delay) {
+    myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = QUICK_DOC_DELAY_RANGE.fit(delay);
   }
 
   public boolean isShowIntentionBulb() {

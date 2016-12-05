@@ -251,10 +251,6 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
   }
 
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
-  }
-
   @MagicConstant(intValues = {CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE, CodeInsightSettings.REFORMAT_BLOCK})
   private int getReformatPastedBlockValue(){
     Object selectedItem = myReformatOnPasteCombo.getSelectedItem();

@@ -218,14 +218,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     return isModified(mySettings);
   }
 
-  private static boolean isModified(JCheckBox checkBox, boolean value) {
-    return checkBox.isSelected() != value;
-  }
-
-  private static boolean isModified(JTextField textField, String value) {
-    return !textField.getText().trim().equals(value);
-  }
-
   private void createUIComponents() {
     myCommenterForm =  new CommenterForm(JavaLanguage.INSTANCE);
     myCommenterPanel = myCommenterForm.getCommenterPanel();

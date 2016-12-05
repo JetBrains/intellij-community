@@ -16,6 +16,7 @@
 
 package com.intellij.application.options.editor;
 
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -33,6 +34,7 @@ import java.awt.event.ItemListener;
  * @author yole
  */
 public class EditorTabsConfigurable implements EditorOptionsProvider {
+  private static final UINumericRange EDITOR_TABS_RANGE = new UINumericRange(10, 1, 100);
   private JPanel myRootPanel;
   private JCheckBox myHideKnownExtensions;
   private JCheckBox myScrollTabLayoutInEditorCheckBox;
@@ -182,17 +184,11 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (isModified(myReuseNotModifiedTabsCheckBox, uiSettings.REUSE_NOT_MODIFIED_TABS)) uiSettingsChanged = true;
     uiSettings.REUSE_NOT_MODIFIED_TABS = myReuseNotModifiedTabsCheckBox.isSelected();
 
-    String temp = myEditorTabLimitField.getText();
-    if (temp.trim().length() > 0) {
-      try {
-        int newEditorTabLimit = Integer.parseInt(temp);
-        if (newEditorTabLimit > 0 && newEditorTabLimit != uiSettings.EDITOR_TAB_LIMIT) {
-          uiSettings.EDITOR_TAB_LIMIT = newEditorTabLimit;
-          uiSettingsChanged = true;
-        }
-      }
-      catch (NumberFormatException ignored) {
-      }
+    if (isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT, EDITOR_TABS_RANGE)) uiSettingsChanged = true;
+    try {
+      uiSettings.EDITOR_TAB_LIMIT = EDITOR_TABS_RANGE.fit(Integer.parseInt(myEditorTabLimitField.getText().trim()));
+    }
+    catch (NumberFormatException ignored) {
     }
     if(uiSettingsChanged){
       uiSettings.fireUISettingsChanged();
@@ -226,10 +222,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   public void disposeUIResources() {
   }
 
-
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
-  }
 
   private static boolean isModified(JTextField textField, int value) {
     try {

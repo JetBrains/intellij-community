@@ -201,7 +201,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     if (super.isModified()) return true;
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     boolean isModified = isModified(myCbBlinkCaret, editorSettings.isBlinkCaret());
-    isModified |= isModified(myBlinkIntervalField, editorSettings.getBlinkPeriod());
+    isModified |= isModified(myBlinkIntervalField, editorSettings.getBlinkPeriod(), EditorSettingsExternalizable.BLINKING_RANGE);
 
     isModified |= isModified(myCbBlockCursor, editorSettings.isBlockCursor());
 
@@ -221,20 +221,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= myShowParameterNameHints.isSelected() != editorSettings.isShowParameterNameHints();
     
     return isModified;
-  }
-
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
-  }
-
-  private static boolean isModified(JTextField textField, int value) {
-    try {
-      int fieldValue = Integer.parseInt(textField.getText().trim());
-      return fieldValue != value;
-    }
-    catch(NumberFormatException e) {
-      return false;
-    }
   }
 
   @Override
