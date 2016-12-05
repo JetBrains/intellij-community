@@ -1,9 +1,50 @@
-<project name="Platform build scripts" default="install">
+<project name="Platform build scripts" default="all">
+
+    <!-- ===================================================== -->
+    <!-- Initialize and load properties                        -->
+    <!-- ===================================================== -->
+
     <property name="gant.script" value="${basedir}/mps_build.gant"/>
     <property name="community.folder" value="${basedir}/../community"/>
     <property name="community.out" value="${basedir}/../out/intellij idea"/>
-
     <property name="mps.folder" value="${basedir}/../.."/>
+    <property name="version.properties.file" value="${mps.folder}/build/version.properties"/>
+
+    <!-- ===================================================== -->
+    <!-- Help task                                             -->
+    <!-- ===================================================== -->
+
+    <target name="usage" description="Shows help">
+        <echo message="  Execute 'ant -projecthelp' for build file help."/>
+        <echo message="  Execute 'ant -help' for Ant help."/>
+        <echo message="${line.separator}"/>
+        <echo message="  Use default target 'all' to build platform and install in parent folder with MPS repository"/>
+        <echo message="${line.separator}"/>
+        <echo message="  You can set required platform branch/commit/tag with property 'idea.commit'. By default it set to 'mps.idea.platform.number' from version.properties"/>
+    </target>
+
+    <!-- ===================================================== -->
+    <!-- Load idea.commit from property file in MPS sources    -->
+    <!-- (Fail safe)                                           -->
+    <!-- ===================================================== -->
+
+    <target name="versions-file" description="Util task to check if version.properties.file exists">
+        <condition property="version.properties.exists" value="true" else="false">
+            <available file="${version.properties.file}"/>
+        </condition>
+    </target>
+
+    <target name="versions" depends="versions-file" if="${version.properties.exists}"
+            description="Try to load properties">
+        <loadproperties srcfile="${version.properties.file}"/>
+    </target>
+
+    <!-- ===================================================== -->
+    <!-- IDEA community repository tasks:                      -->
+    <!-- Check existence of repository in community folder     -->
+    <!-- Clone, fetch, reset, checkout (if idea.commit is set) -->
+    <!-- and pull                                              -->
+    <!-- ===================================================== -->
 
     <target name="check" description="Check if IDEA Community folder exists">
         <condition property="community.need.clone" value="false" else="true">
@@ -36,22 +77,34 @@
         </exec>
     </target>
 
-    <target name="check-commit">
+    <target name="check-commit" depends="versions" description="Check if idea.commit is set to execute checkout task">
         <condition property="idea.commit.is.set" value="true" else="false">
             <isset property="idea.commit"/>
         </condition>
-        <echo message="Commit/branch/tag value: ${idea.commit}"/>
     </target>
 
     <target name="checkout" depends="reset,check-commit" if="${idea.commit.is.set}"
-            description="Checkout IDEA Community by commit/branch/tag set in idea.commit property">
-        <echo message="Check out IDEA Community by commit/branch/tag: ${idea.commit}"/>
-        <exec executable="git" dir="${community.folder}">
+            description="Checkout IDEA Community branch/commit/tag set in idea.commit property">
+        <echo message="Check out IDEA Community branch/commit/tag: ${idea.commit}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="checkout"/>
             <arg value="-f"/>
             <arg value="${idea.commit}"/>
         </exec>
     </target>
+
+    <target name="pull" depends="checkout" description="Update repository">
+        <exec executable="git" dir="${community.folder}">
+            <arg value="pull"/>
+        </exec>
+    </target>
+
+    <!-- ===================================================== -->
+    <!-- Preparations for build:                               -->
+    <!-- Copy list of modules                                  -->
+    <!-- Copy list of libraries                                -->
+    <!-- Apply MPS patches                                     -->
+    <!-- ===================================================== -->
 
     <target name="modules" description="Copy IDEA Community modules and update paths (add community folder)">
         <echo message="Copy and update IDEA Community modules list"/>
@@ -82,11 +135,11 @@
         </replaceregexp>
     </target>
 
-    <target name="patch" depends="checkout" description="Apply MPS patches to IDEA Community sources">
+    <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
         <property name="patchFile"
                   value="${community.folder}/../build/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
-        <exec executable="git" dir="${community.folder}">
+        <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="--check"/>
             <arg value="${patchFile}"/>
@@ -97,21 +150,45 @@
         </exec>
     </target>
 
+    <!-- ===================================================== -->
+    <!-- Download Kotlin                                       -->
+    <!-- ===================================================== -->
+
     <target name="kotlin" description="Download Kotlin for compiling IDEA Community">
         <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true">
             <property name="gant.script" value="${community.folder}/build/scripts/download_kotlin.gant"/>
         </ant>
     </target>
 
-    <target name="build" depends="patch,modules,libraries,kotlin"
-            description="Build patched IDEA Community sources to create MPS platform">
-        <echo message="MPS platform build started..."/>
+    <!-- ===================================================== -->
+    <!-- Main tasks                                            -->
+    <!-- ===================================================== -->
+
+    <!-- Exists as standalone task for TeamCity build -->
+    <target name="prepare" depends="patch,modules,libraries,kotlin" description="Make all build preparation tasks"/>
+
+    <!-- Exists as standalone task for TeamCity build -->
+    <target name="compile" description="Runs building script.">
         <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true"/>
-        <echo message="MPS platform build finished."/>
     </target>
 
-    <target name="install" depends="build" description="Copy platform libs to MPS">
-        <echo message="Copy platform and zip with platform sources to MPS sources."/>
+    <target name="build" depends="pull,prepare,compile"
+            description="Build patched IDEA Community sources to create MPS platform"/>
+
+    <target name="install-check" description="Check that there are build artifacts">
+        <condition property="platform.out.exists">
+            <and>
+                <available file="${basedir}/../out/intellij idea/dist.all"/>
+                <available file="${basedir}/../out/intellij idea/artifacts"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="install" depends="install-check" description="Copy platform libs to MPS">
+
+        <fail message="No platform artifacts found! Run 'build' task first." unless="${platform.out.exists}"/>
+
+        <echo message="Cleaning destination folders in MPS sources..."/>
 
         <delete dir="${mps.folder}/lib"/>
         <delete dir="${mps.folder}/plugins/cvsIntegration/lib"/>
@@ -125,6 +202,8 @@
         <mkdir dir="${mps.folder}/plugins/git4idea/lib"/>
         <mkdir dir="${mps.folder}/plugins/svn4idea/lib"/>
         <mkdir dir="${mps.folder}/plugins/terminal"/>
+
+        <echo message="Copying platform and zip with platform sources to MPS sources..."/>
 
         <!--Copy platform libraries to MPS lib folder-->
         <copy todir="${mps.folder}/lib">
@@ -151,4 +230,6 @@
             <fileset dir="${community.out}/dist.all/plugins/terminal"/>
         </copy>
     </target>
+
+    <target name="all" depends="build,install" description="Build and install MPS platform"/>
 </project>
