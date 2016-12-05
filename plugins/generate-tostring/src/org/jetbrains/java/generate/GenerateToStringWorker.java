@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,9 +121,7 @@ public class GenerateToStringWorker {
     return toStringMethod;
   }
 
-  public void execute(Collection<PsiMember> members, TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
-    // decide what to do if the method already exists
-    ConflictResolutionPolicy resolutionPolicy = exitsMethodDialog(template);
+  public void execute(Collection<PsiMember> members, TemplateResource template, final ConflictResolutionPolicy resolutionPolicy) throws IncorrectOperationException, GenerateCodeException {
     // what insert policy should we use?
     resolutionPolicy.setNewMethodStrategy(getStrategy(config.getInsertNewMethodInitialOption()));
 

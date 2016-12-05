@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.GenerateToStringClassFilter;
 import org.jetbrains.java.generate.config.Config;
+import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 import org.jetbrains.java.generate.view.TemplatesPanel;
@@ -116,9 +117,12 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
 
             if (template.isValidTemplate()) {
+                final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation());
+                // decide what to do if the method already exists
+                ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
                 WriteAction.run(() -> {
                     try {
-                        new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation()).execute(selectedMembers, template);
+                        worker.execute(selectedMembers, template, resolutionPolicy);
                     }
                     catch (Exception e) {
                         GenerationUtil.handleException(project, e);
