@@ -22,6 +22,8 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import javax.tools.*;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -49,6 +51,10 @@ public abstract class JavaCompilerToolExtension {
    * @param content
    */
   public void processData(String dataName, byte[] content) {
+  }
+
+  public List<String> getExternalBuildProcessOptions(@NotNull JavaCompilingTool compilingTool) {
+    return Collections.emptyList();
   }
 
   public static Iterable<JavaCompilerToolExtension> getExtensions() {

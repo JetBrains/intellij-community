@@ -26,7 +26,7 @@ import java.util.*;
 
 public class BackwardReferenceIndexUtil {
   static void registerFile(String filePath,
-                           Set<? extends JavacRef> refs,
+                           Collection<? extends JavacRef> refs,
                            List<JavacDef> defs,
                            final BackwardReferenceIndexWriter writer) {
     final int fileId = writer.enumeratePath(filePath);

@@ -1042,6 +1042,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
+    for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
+      vmOptions.addAll(extension.getExternalBuildProcessOptions(compilingTool));
+    }
+
     compilingTool.processCompilerOptions(context, options);
 
     JAVAC_OPTIONS.set(context, options);
