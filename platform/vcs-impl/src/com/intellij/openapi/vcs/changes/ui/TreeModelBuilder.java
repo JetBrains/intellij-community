@@ -128,11 +128,9 @@ public class TreeModelBuilder {
   @NotNull
   public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
     List<? extends Change> sortedChanges = ContainerUtil.sorted(changes, PATH_LENGTH_COMPARATOR);
-
-    for (final Change change : sortedChanges) {
+    for (Change change : sortedChanges) {
       insertChangeNode(change, myRoot, createChangeNode(change, changeNodeDecorator));
     }
-
     return this;
   }
 
@@ -155,7 +153,6 @@ public class TreeModelBuilder {
   private TreeModelBuilder insertSpecificNodeToModel(@NotNull List<VirtualFile> specificFiles,
                                                      @NotNull ChangesBrowserSpecificFilesNode node) {
     myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
-
     if (!node.isManyFiles()) {
       insertFilesIntoNode(specificFiles, node);
     }
@@ -171,27 +168,12 @@ public class TreeModelBuilder {
                               @Nullable List<VirtualFile> lockedFolders,
                               @Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     setChangeLists(changeLists);
-
-    if (!modifiedWithoutEditing.isEmpty()) {
-      setVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
-    }
-    if (switchedRoots != null && ! switchedRoots.isEmpty()) {
-      setSwitchedRoots(switchedRoots);
-    }
-    if (!switchedFiles.isEmpty()) {
-      setSwitchedFiles(switchedFiles);
-    }
-    if (lockedFolders != null && !lockedFolders.isEmpty()) {
-      setVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
-    }
-    if (logicallyLockedFiles != null && ! logicallyLockedFiles.isEmpty()) {
-      setLogicallyLockedFiles(logicallyLockedFiles);
-    }
-
-    if (!locallyDeletedFiles.isEmpty()) {
-      setLocallyDeletedPaths(locallyDeletedFiles);
-    }
-
+    setVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
+    setSwitchedRoots(switchedRoots);
+    setSwitchedFiles(switchedFiles);
+    setVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
+    setLogicallyLockedFiles(logicallyLockedFiles);
+    setLocallyDeletedPaths(locallyDeletedFiles);
     return this;
   }
 
@@ -244,7 +226,8 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setVirtualFiles(@NotNull Collection<VirtualFile> files, @Nullable Object tag) {
+  public TreeModelBuilder setVirtualFiles(@Nullable Collection<VirtualFile> files, @Nullable Object tag) {
+    if (ContainerUtil.isEmpty(files)) return this;
     insertFilesIntoNode(files, createNode(tag));
     return this;
   }
@@ -273,7 +256,8 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setLocallyDeletedPaths(@NotNull Collection<LocallyDeletedChange> locallyDeletedChanges) {
+  public TreeModelBuilder setLocallyDeletedPaths(@Nullable Collection<LocallyDeletedChange> locallyDeletedChanges) {
+    if (ContainerUtil.isEmpty(locallyDeletedChanges)) return this;
     ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, ChangesBrowserNode.LOCALLY_DELETED_NODE_TAG);
     myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
 
@@ -318,7 +302,8 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setSwitchedRoots(@NotNull Map<VirtualFile, String> switchedRoots) {
+  public TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, String> switchedRoots) {
+    if (ContainerUtil.isEmpty(switchedRoots)) return this;
     final ChangesBrowserNode rootsHeadNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_ROOTS_TAG);
     rootsHeadNode.setAttributes(SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
     myModel.insertNodeInto(rootsHeadNode, myRoot, myRoot.getChildCount());
@@ -346,6 +331,7 @@ public class TreeModelBuilder {
 
   @NotNull
   public TreeModelBuilder setSwitchedFiles(@NotNull MultiMap<String, VirtualFile> switchedFiles) {
+    if (switchedFiles.isEmpty()) return this;
     ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_FILES_TAG);
     myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
     for(String branchName: switchedFiles.keySet()) {
@@ -364,7 +350,8 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setLogicallyLockedFiles(@NotNull Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
+  public TreeModelBuilder setLogicallyLockedFiles(@Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
+    if (ContainerUtil.isEmpty(logicallyLockedFiles)) return this;
     final ChangesBrowserNode subtreeRoot = createNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
     final List<VirtualFile> keys = new ArrayList<>(logicallyLockedFiles.keySet());
