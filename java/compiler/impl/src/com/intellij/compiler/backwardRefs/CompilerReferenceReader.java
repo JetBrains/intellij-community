@@ -88,7 +88,7 @@ class CompilerReferenceReader {
         if (requiredCandidates.isEmpty()) return true;
         final VirtualFile file = findFile(fileId);
         if (file != null && effectiveSearchScope.contains(file)) {
-          candidatesPerFile.put(file, searchType.convertToIds(defs, myIndex.getByteSeqEum()));
+          candidatesPerFile.put(file, searchType.convertToIds(requiredCandidates, myIndex.getByteSeqEum()));
         }
         return true;
       });
