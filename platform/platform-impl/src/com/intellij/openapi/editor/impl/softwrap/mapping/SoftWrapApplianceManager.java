@@ -24,11 +24,15 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +43,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -248,7 +254,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
     myContext.tokenStartOffset = start;
-    IterationState iterationState = new IterationState(myEditor, start, document.getTextLength(), false);
+    IterationState iterationState = new IterationState(myEditor, start, document.getTextLength(), null, false, false, true, false);
     TextAttributes attributes = iterationState.getMergedAttributes();
     myContext.fontType = attributes.getFontType();
     myContext.rangeEndOffset = event.getMandatoryEndOffset();

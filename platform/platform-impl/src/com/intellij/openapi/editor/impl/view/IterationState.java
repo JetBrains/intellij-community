@@ -123,6 +123,8 @@ public class IterationState {
   private final boolean myUseOnlyFullLineHighlighters;
   private final boolean myReverseIteration;
 
+  private boolean myNextIsFoldRegion;
+
   public IterationState(@NotNull EditorEx editor, int start, int end, @Nullable CaretData caretData, boolean useOnlyFullLineHighlighters,
                         boolean useOnlyFontOrForegroundAffectingHighlighters, boolean useFoldRegions, boolean iterateBackwards) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -267,6 +269,7 @@ public class IterationState {
   }
 
   public void advance() {
+    myNextIsFoldRegion = false;
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
     advanceCurrentSelectionIndex();
@@ -282,9 +285,12 @@ public class IterationState {
       myEndOffset = getHighlighterEnd(myStartOffset);
       setEndOffsetIfCloser(getSelectionEnd());
       setEndOffsetIfCloser(getMinSegmentHighlightersEnd());
-      setEndOffsetIfCloser(getFoldRangesEnd(myStartOffset));
+      int foldRangesEnd = getFoldRangesEnd(myStartOffset);
+      setEndOffsetIfCloser(foldRangesEnd);
       setEndOffsetIfCloser(getCaretEnd(myStartOffset));
       setEndOffsetIfCloser(getGuardedBlockEnd(myStartOffset));
+
+      myNextIsFoldRegion = myEndOffset == foldRangesEnd && myEndOffset < myEnd;
     }
 
     reinit();
@@ -625,6 +631,15 @@ public class IterationState {
   public TextAttributes getMergedAttributes() {
     return myMergedAttributes;
   }
+
+  public FoldRegion getCurrentFold() {
+    return myCurrentFold;
+  }
+
+  public boolean nextIsFoldRegion() {
+    return myNextIsFoldRegion;
+  }
+
 
   @NotNull
   public TextAttributes getPastLineEndBackgroundAttributes() {

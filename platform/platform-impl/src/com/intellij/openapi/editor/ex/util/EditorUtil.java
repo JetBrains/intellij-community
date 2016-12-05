@@ -35,7 +35,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
@@ -372,7 +372,7 @@ public final class EditorUtil {
     // hence, we need to perform special calculations to get know that.
     EditorEx editorImpl = (EditorEx)editor;
     int offset = start;
-    IterationState state = new IterationState(editorImpl, start, end, false);
+    IterationState state = new IterationState(editorImpl, start, end, null, false, false, true, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = currentColumn[0];
     int plainSpaceSize = getSpaceWidth(Font.PLAIN, editorImpl);
