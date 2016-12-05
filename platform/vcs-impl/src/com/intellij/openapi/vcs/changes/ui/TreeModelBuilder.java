@@ -160,24 +160,6 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder set(@NotNull List<? extends ChangeList> changeLists,
-                              @NotNull List<LocallyDeletedChange> locallyDeletedFiles,
-                              @NotNull List<VirtualFile> modifiedWithoutEditing,
-                              @NotNull MultiMap<String, VirtualFile> switchedFiles,
-                              @Nullable Map<VirtualFile, String> switchedRoots,
-                              @Nullable List<VirtualFile> lockedFolders,
-                              @Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
-    setChangeLists(changeLists);
-    setModifiedWithoutEditing(modifiedWithoutEditing);
-    setSwitchedRoots(switchedRoots);
-    setSwitchedFiles(switchedFiles);
-    setLockedFolders(lockedFolders);
-    setLogicallyLockedFiles(logicallyLockedFiles);
-    setLocallyDeletedPaths(locallyDeletedFiles);
-    return this;
-  }
-
-  @NotNull
   public DefaultTreeModel build() {
     collapseDirectories(myModel, myRoot);
     sortNodes();
