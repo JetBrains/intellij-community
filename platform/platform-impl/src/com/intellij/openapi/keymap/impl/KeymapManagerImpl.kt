@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.keymap.impl
 
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
@@ -24,18 +26,17 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
-import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.InvalidDataException
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashSet
 import org.jdom.Element
 import java.util.*
+import java.util.function.Function
 
 internal const val KEYMAPS_DIR_PATH = "keymaps"
 
@@ -49,16 +50,14 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
   private val mySchemeManager: SchemeManager<Keymap>
 
   init {
-    mySchemeManager = factory.create(KEYMAPS_DIR_PATH, object : NonLazySchemeProcessor<Keymap, KeymapImpl>() {
-      @Throws(InvalidDataException::class)
-      override fun readScheme(element: Element, duringLoad: Boolean): KeymapImpl {
+    mySchemeManager = factory.create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
+      override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
+                                name: String,
+                                attributeProvider: Function<String, String?>,
+                                isBundled: Boolean): KeymapImpl {
         val keymap = KeymapImpl()
-        keymap.readExternal(element, allIncludingDefaultsKeymaps)
+        keymap.readExternal(dataHolder.read(), allIncludingDefaultsKeymaps)
         return keymap
-      }
-
-      override fun writeScheme(scheme: KeymapImpl): Element {
-        return scheme.writeScheme()
       }
 
       override fun getState(scheme: Keymap) = if (scheme.canModify()) SchemeState.POSSIBLY_CHANGED else SchemeState.NON_PERSISTENT
@@ -156,11 +155,13 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     }
   }
 
+  @Suppress("OverridingDeprecatedMember")
   override fun addKeymapManagerListener(listener: KeymapManagerListener) {
     pollQueue()
     myListeners.add(listener)
   }
 
+  @Suppress("DEPRECATION")
   override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
     pollQueue()
     myListeners.add(listener)
@@ -171,11 +172,13 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     myListeners.removeAll { it is WeakKeymapManagerListener && it.isDead }
   }
 
+  @Suppress("OverridingDeprecatedMember")
   override fun removeKeymapManagerListener(listener: KeymapManagerListener) {
     pollQueue()
     myListeners.remove(listener)
   }
 
+  @Suppress("DEPRECATION")
   override fun addWeakListener(listener: KeymapManagerListener) {
     addKeymapManagerListener(WeakKeymapManagerListener(this, listener))
   }

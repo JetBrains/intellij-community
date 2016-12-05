@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,7 +241,6 @@ public class KeymapUtil {
    * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
    */
   public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
-
     if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
       return new PressureShortcut(2);
     }

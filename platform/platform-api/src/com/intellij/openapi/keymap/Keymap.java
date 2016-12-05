@@ -55,7 +55,7 @@ public interface Keymap extends Scheme {
    * @return all actions that have the specified first keystroke. If there are no
    * such actions then the method returns an empty array.
    */
-  String[] getActionIds(KeyStroke firstKeyStroke);
+  String[] getActionIds(@NotNull KeyStroke firstKeyStroke);
 
   /**
    * @return all actions that have the specified first and second keystrokes. If there are no
@@ -82,12 +82,6 @@ public interface Keymap extends Scheme {
   void removeShortcutChangeListener(@NotNull Listener listener);
 
   void removeAllActionShortcuts(String actionId);
-
-  String[] getAbbreviations();
-
-  void addAbbreviation(String actionId, String abbreviation);
-
-  void removeAbbreviation(String actionId, String abbreviation);
 
   @NotNull
   Keymap deriveKeymap(@NotNull String newName);
