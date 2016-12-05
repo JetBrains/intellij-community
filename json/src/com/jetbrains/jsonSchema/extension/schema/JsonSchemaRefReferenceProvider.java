@@ -58,9 +58,10 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         if (idx <= 0) return null;
         id = text.substring(0, idx);
         ref = text.substring(idx + 1);
+        return new JsonSchemaDefinitionResolver(getElement(), id).setRef(ref).doResolve();
       }
 
-      return new JsonSchemaDefinitionResolver(getElement(), id).setRef(ref).doResolve();
+      return new JsonSchemaDefinitionResolver(getElement(), null).setRef(ref).doResolveInSchemaFile();
     }
   }
 }

@@ -15,24 +15,28 @@
  */
 package com.jetbrains.jsonSchema.schemaFile;
 
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.extensions.AreaPicoContainer;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.junit.Assert;
+
+import java.util.Collections;
 
 /**
  * @author Irina.Chernushina on 4/1/2016.
  */
-public class JsonSchemaFileResolveTest extends LightPlatformCodeInsightFixtureTestCase {
+public class JsonSchemaFileResolveTest extends DaemonAnalyzerTestCase {
   private final static String BASE_PATH = "/tests/testData/jsonSchema/schemaFile/resolve";
   private FileTypeManager myFileTypeManager;
 
@@ -46,20 +50,26 @@ public class JsonSchemaFileResolveTest extends LightPlatformCodeInsightFixtureTe
   protected String getTestDataPath() {
     PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
     if (strategy.equals(PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
-      return PathManager.getHomePath() + "/json" + BASE_PATH;
+      return PathManager.getHomePath() + "/json" + BASE_PATH + "/";
     }
-    return PathManager.getHomePath() + "/community/json" + BASE_PATH;
+    return PathManager.getHomePath() + "/community/json" + BASE_PATH + "/";
   }
 
   public void testResolveLocalRef() throws Exception {
-    AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
-    final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
-
+    JsonSchemaMappingsConfigurationBase.SchemaInfo schemaInfo = null;
     try {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-      PsiReference position = myFixture.getReferenceAtCaretPosition("localRefSchema.json");
+      configureByFile("localRefSchema.json");
+      final String path = VfsUtil.getRelativePath(myFile.getVirtualFile(), myProject.getBaseDir());
+      schemaInfo = new JsonSchemaMappingsConfigurationBase.SchemaInfo("test", path, false, Collections.emptyList());
+      JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).addSchema(schemaInfo);
+      JsonSchemaService.Impl.get(myProject).reset();
+      doHighlighting();
+
+      final int offset = getEditor().getCaretModel().getCurrentCaret().getOffset();
+      final PsiElement atOffset = PsiTreeUtil.findElementOfClassAtOffset(myFile, offset, PsiElement.class, false);
+      Assert.assertNotNull(atOffset);
+      PsiReference position = myFile.findReferenceAt(offset);
       Assert.assertNotNull(position);
       PsiElement resolve = position.resolve();
       Assert.assertNotNull(resolve);
@@ -67,29 +77,7 @@ public class JsonSchemaFileResolveTest extends LightPlatformCodeInsightFixtureTe
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
-      container.unregisterComponent(key);
-      container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
-    }
-  }
-
-  public void testResolveExternalRef() throws Exception {
-    AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
-    final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
-
-    try {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-      PsiReference position = myFixture.getReferenceAtCaretPosition("localRefSchema.json");
-      Assert.assertNotNull(position);
-      PsiElement resolve = position.resolve();
-      Assert.assertNotNull(resolve);
-      Assert.assertEquals("\"baseEnum\"", resolve.getText());
-
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    } finally {
-      container.unregisterComponent(key);
-      container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
+      if (schemaInfo != null) JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).removeSchema(schemaInfo);
     }
   }
 }

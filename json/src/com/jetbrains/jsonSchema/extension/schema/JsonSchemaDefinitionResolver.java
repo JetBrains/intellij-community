@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.*;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +68,19 @@ public class JsonSchemaDefinitionResolver {
   public PsiElement doResolve() {
     PsiElement result = tryResolveByName();
     if (result != null) return result;
+    if (mySchemaId == null) {
+      return tryResolveBySchemaObject();
+    }
+    return null;
+  }
+
+  @Nullable
+  public PsiElement doResolveInSchemaFile() {
+    if (!JsonSchemaFileType.INSTANCE.equals(myElement.getContainingFile().getFileType())) return null;
+    if (myRef == null) initializeName();
+    if (myRef == null) return null;
+    final PsiElement element = resolveInSomeSchema(myRef, myElement.getProject(), null, myElement.getContainingFile().getVirtualFile());
+    if (element != null) return element;
     if (mySchemaId == null) {
       return tryResolveBySchemaObject();
     }

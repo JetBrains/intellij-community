@@ -84,12 +84,14 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     instance.addSchema(inherited);
 
+    doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
 
     LookupImpl lookup = getActiveLookup();
     if (lookup != null) lookup.hide();
     JsonSchemaService.Impl.get(getProject()).reset();
+    doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
 
@@ -157,6 +159,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
   }
 
   private void testSchemaCompletion(VirtualFile moduleFile, final String fileName) {
+    doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
 
@@ -177,17 +180,20 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     LookupImpl lookup = getActiveLookup();
     if (lookup != null) lookup.hide();
 
+    doHighlighting();
     complete();
     assertStringItems("\"one1\"", "\"two1\"");
 
     lookup = getActiveLookup();
     if (lookup != null) lookup.hide();
     JsonSchemaService.Impl.get(getProject()).reset();
+    doHighlighting();
     complete();
     assertStringItems("\"one1\"", "\"two1\"");
   }
 
   public void testJsonSchemaRefsCrossResolve() throws Exception {
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     configureByFiles(null, BASE_SCHEMA_RESOLVE_PATH + "/referencingSchema.json", BASE_SCHEMA_RESOLVE_PATH + "/localRefSchema.json");
 
     String moduleDir = null;
@@ -202,11 +208,6 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     }
     Assert.assertNotNull(moduleDir);
 
-    AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
-    final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
-
     final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
     final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
       new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/localRefSchema.json", false, Collections.emptyList());
@@ -218,8 +219,8 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
     instance.addSchema(inherited);
 
     try {
-      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       JsonSchemaService.Impl.get(getProject()).reset();
+      doHighlighting();
 
       testIsSchemaFile(moduleFile, "localRefSchema.json");
       testIsSchemaFile(moduleFile, "referencingSchema.json");
@@ -233,8 +234,6 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     } finally {
-      container.unregisterComponent(key);
-      container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
     }
 
     instance.removeSchema(inherited);
@@ -276,6 +275,9 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     try {
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+      JsonSchemaService.Impl.get(getProject()).reset();
+      doHighlighting();
+
       int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
       final PsiReference referenceAt = myFile.findReferenceAt(offset);
       Assert.assertNotNull(referenceAt);
@@ -315,6 +317,7 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
 
     instance.addSchema(inherited);
     JsonSchemaService.Impl.get(getProject()).reset();
+    doHighlighting();
 
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     try {

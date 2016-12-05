@@ -6,7 +6,7 @@
       "enum": ["one", "two"]
     },
     "smth": {
-      "$ref" : "#/properties/baseEnum<caret>"
+      "$ref" : "#/properties/baseEnu<caret>m"
     }
   }
 }
