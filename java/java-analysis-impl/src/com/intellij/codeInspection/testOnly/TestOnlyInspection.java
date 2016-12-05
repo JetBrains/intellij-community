@@ -60,6 +60,14 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
       }
 
       @Override
+      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        PsiElement resolve = expression.resolve();
+        if (resolve instanceof PsiMethod) {
+          validate(expression, (PsiMethod)resolve, h);
+        }
+      }
+
+      @Override
       public void visitReferenceExpression(PsiReferenceExpression reference) {
         PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiField) {
