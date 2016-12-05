@@ -133,23 +133,23 @@ class PyTypeShedTest(private val path: String, private val sdkPath: String) : Py
       val typeShedPath = PyTypeShed.directoryPath ?: return emptyList()
       val typeShedFile = File(typeShedPath)
       return getPythonRoots()
-          .asSequence()
-          .filter { PyEnvTaskRunner.isSuitableForTags(loadEnvTags(it), tags) }
-          .map { PythonSdkType.getPythonExecutable(it) }
-          .filterNotNull()
-          .flatMap { sdkPath ->
-            val flavor = PythonSdkFlavor.getFlavor(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
-            val versionString = flavor.getVersionString(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
-            val level = LanguageLevel.fromPythonVersion(versionString.removePrefix(flavor.name).trim())
-            PyTypeShed.findRootsForLanguageLevel(level).asSequence()
-                .flatMap { root: String ->
-                  val results = File("$typeShedPath/$root").walk()
-                      .filter { it.isFile && it.extension == "pyi" }
-                      .map { arrayOf<Any>(it.relativeTo(typeShedFile).toString(), sdkPath) }
-                  results
-                }
-          }
-          .toList()
+        .asSequence()
+        .filter { PyEnvTaskRunner.isSuitableForTags(loadEnvTags(it), tags) }
+        .map { PythonSdkType.getPythonExecutable(it) }
+        .filterNotNull()
+        .flatMap { sdkPath ->
+          val flavor = PythonSdkFlavor.getFlavor(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
+          val versionString = flavor.getVersionString(sdkPath) ?: return@flatMap emptySequence<Array<Any>>()
+          val level = LanguageLevel.fromPythonVersion(versionString.removePrefix(flavor.name).trim())
+          PyTypeShed.findRootsForLanguageLevel(level).asSequence()
+            .flatMap { root: String ->
+              val results = File("$typeShedPath/$root").walk()
+                .filter { it.isFile && it.extension == "pyi" && "third_party" !in it.absolutePath }
+                .map { arrayOf<Any>(it.relativeTo(typeShedFile).toString(), sdkPath) }
+              results
+            }
+        }
+        .toList()
     }
   }
 }
