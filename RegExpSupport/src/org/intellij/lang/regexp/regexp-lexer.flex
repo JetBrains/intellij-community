@@ -97,6 +97,7 @@ RBRACKET="]"
 
 ESCAPE="\\"
 NAME=[:letter:]([:letter:]|_|-|" "|"("|")"|[:digit:])*
+GROUP_NAME=[:letter:]([:letter:]|_|-|" "|[:digit:])*
 ANY=[^]
 
 META1 = {ESCAPE} | {LBRACKET} | "^"
@@ -330,25 +331,25 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <NAMED_GROUP> {
-  {NAME}            { return RegExpTT.NAME; }
+  {GROUP_NAME}      { return RegExpTT.NAME; }
   ">"               { yybegin(YYINITIAL); return RegExpTT.GT; }
   {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
 }
 
 <QUOTED_NAMED_GROUP> {
-  {NAME}            { return RegExpTT.NAME; }
+  {GROUP_NAME}      { return RegExpTT.NAME; }
   "'"               { yybegin(YYINITIAL); return RegExpTT.QUOTE; }
   {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
 }
 
 <PY_NAMED_GROUP_REF> {
-  {NAME}            { return RegExpTT.NAME;   }
+  {GROUP_NAME}      { return RegExpTT.NAME;   }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
   {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
 }
 
 <PY_COND_REF> {
-  {NAME}            { return RegExpTT.NAME; }
+  {GROUP_NAME}      { return RegExpTT.NAME; }
   [:digit:]+        { return RegExpTT.NUMBER; }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
   {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
