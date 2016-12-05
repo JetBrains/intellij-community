@@ -41,9 +41,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class StringUtil extends StringUtilRt {
@@ -129,7 +126,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
+  public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
     return new Function<T, String>() {
       @Override
       public String fun(@NotNull T o) {
@@ -270,7 +267,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int indexOfIgnoreCase(@NotNull String where, char what, int fromIndex) {
     int sourceCount = where.length();
-    for (int i = max(fromIndex, 0); i < sourceCount; i++) {
+    for (int i = Math.max(fromIndex, 0); i < sourceCount; i++) {
       if (charsEqualIgnoreCase(where.charAt(i), what)) {
         return i;
       }
@@ -320,8 +317,8 @@ public class StringUtil extends StringUtilRt {
    * Given a fqName returns the package name for the type or the containing type.
    * <p/>
    * <ul>
-   * <li><code>java.lang.String</code> -> <code>java.lang</code></li>
-   * <li><code>java.util.Map.Entry</code> -> <code>java.util.Map</code></li>
+   * <li>{@code java.lang.String} -> {@code java.lang}</li>
+   * <li>{@code java.util.Map.Entry} -> {@code java.util.Map}</li>
    * </ul>
    *
    * @param fqName    a fully qualified type name. Not supposed to contain any type arguments
@@ -460,7 +457,7 @@ public class StringUtil extends StringUtilRt {
     for (int i = 1; i < s1.length(); i++) {
       for (int j = 1; j < s2.length(); j++) {
 
-        a[i][j] = min(min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1), a[i - 1][j] + 1), a[i][j - 1] + 1);
+        a[i][j] = Math.min(Math.min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1), a[i - 1][j] + 1), a[i][j - 1] + 1);
       }
     }
 
@@ -876,6 +873,9 @@ public class StringUtil extends StringUtilRt {
     return VOWELS.indexOf(c) >= 0;
   }
 
+  /**
+   * Capitalize the first letter of the sentence.
+   */
   @NotNull
   @Contract(pure = true)
   public static String capitalize(@NotNull String s) {
@@ -1209,7 +1209,7 @@ public class StringUtil extends StringUtilRt {
    * Allows to answer if given symbol is white space, tabulation or line feed.
    *
    * @param c symbol to check
-   * @return <code>true</code> if given symbol is white space, tabulation or line feed; <code>false</code> otherwise
+   * @return {@code true} if given symbol is white space, tabulation or line feed; {@code false} otherwise
    */
   @Contract(pure = true)
   public static boolean isWhiteSpace(char c) {
@@ -1388,7 +1388,7 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * @return list containing all words in {@code text}, or {@link ContainerUtil#emptyList()} if there are none.
-   * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are <code>Character.isJavaIdentifierPart(c)</code>.
+   * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are {@code Character.isJavaIdentifierPart(c)}.
    */
   @NotNull
   @Contract(pure = true)
@@ -1645,10 +1645,10 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
-   * Returns <code>null</code> if failed to match appropriate heuristic.
+   * Returns {@code null} if failed to match appropriate heuristic.
    *
    * @param word english word in plural form
-   * @return name in singular form or <code>null</code> if failed to find one.
+   * @return name in singular form or {@code null} if failed to find one.
    */
   @Nullable
   @Contract(pure = true)
@@ -1834,7 +1834,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int i;
-    int minLength = min(s1.length(), s2.length());
+    int minLength = Math.min(s1.length(), s2.length());
     for (i = 0; i < minLength; i++) {
       if (s1.charAt(i) != s2.charAt(i)) {
         break;
@@ -1864,14 +1864,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if target symbol is contained at given char sequence at <code>[start; end)</code> interval.
+   * Allows to answer if target symbol is contained at given char sequence at {@code [start; end)} interval.
    *
    * @param s     target char sequence to check
    * @param start start offset to use within the given char sequence (inclusive)
    * @param end   end offset to use within the given char sequence (exclusive)
    * @param c     target symbol to check
-   * @return <code>true</code> if given symbol is contained at the target range of the given char sequence;
-   * <code>false</code> otherwise
+   * @return {@code true} if given symbol is contained at the target range of the given char sequence;
+   * {@code false} otherwise
    */
   @Contract(pure = true)
   public static boolean contains(@NotNull CharSequence s, int start, int end, char c) {
@@ -1900,8 +1900,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
-    end = min(end, s.length());
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (s.charAt(i) == c) return i;
     }
     return -1;
@@ -1929,8 +1929,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end, boolean caseSensitive) {
-    end = min(end, s.length());
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (charsMatch(s.charAt(i), c, !caseSensitive)) return i;
     }
     return -1;
@@ -1938,8 +1938,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull char[] s, char c, int start, int end, boolean caseSensitive) {
-    end = min(end, s.length);
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length);
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (charsMatch(s[i], c, !caseSensitive)) return i;
     }
     return -1;
@@ -1969,8 +1969,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, int end) {
-    end = min(end, s.length());
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (containsChar(chars, s.charAt(i))) return i;
     }
     return -1;
@@ -2001,14 +2001,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text.
+   * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
    * @param s     target text
    * @param c     target symbol which last occurrence we want to check
    * @param start start offset of the target text (inclusive)
    * @param end   end offset of the target text (exclusive)
    * @return index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
-   * <code>-1</code> otherwise
+   * {@code -1} otherwise
    */
   @Contract(pure = true)
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
@@ -2312,7 +2312,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
     int count = 0;
-    for (int i = start, len = min(text.length(), end); i < len; ++i) {
+    for (int i = start, len = Math.min(text.length(), end); i < len; ++i) {
       if (text.charAt(i) == c) {
         count++;
       }
@@ -2896,7 +2896,6 @@ public class StringUtil extends StringUtilRt {
   public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int start1 = 0;
     int end1 = s1.length();
-    int start2 = 0;
     int end2 = s2.length();
 
     while (start1 < end1) {
@@ -2911,6 +2910,7 @@ public class StringUtil extends StringUtilRt {
       end1--;
     }
 
+    int start2 = 0;
     while (start2 < end2) {
       char c = s2.charAt(start2);
       if (!isWhiteSpace(c)) break;
@@ -3165,7 +3165,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * Strips class name from Object#toString if present.
    * To be used as custom data type renderer for java.lang.Object.
-   * To activate just add <code>StringUtil.toShortString(this)</code>
+   * To activate just add {@code StringUtil.toShortString(this)}
    * expression in <em>Settings | Debugger | Data Views</em>.
    */
   @Contract("null->null;!null->!null")

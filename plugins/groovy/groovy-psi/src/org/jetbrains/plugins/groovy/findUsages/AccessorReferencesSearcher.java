@@ -20,6 +20,7 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -45,8 +46,8 @@ public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, 
       final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)element);
       if (propertyName == null) return;
 
-      queryParameters.getOptimizer().searchWord(propertyName, GroovyScopeUtil
-        .restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope()),
+      SearchScope scope = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getEffectiveSearchScope());
+      queryParameters.getOptimizer().searchWord(propertyName, scope,
                                                 UsageSearchContext.IN_CODE, true, element);
     }
     else if (element instanceof GrField) {

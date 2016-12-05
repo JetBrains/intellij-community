@@ -774,25 +774,26 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                             @NotNull ProgressIndicator progress,
                             @NotNull final MultiMap<VirtualFile, RequestWithProcessor> intersectionResult,
                             @NotNull final MultiMap<VirtualFile, RequestWithProcessor> restResult) {
-    for (final Set<IdIndexEntry> keys : singles.keySet()) {
+    for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : singles.entrySet()) {
+      final Set<IdIndexEntry> keys = entry.getKey();
       if (keys.isEmpty()) {
         continue;
       }
 
-      final Collection<RequestWithProcessor> data = singles.get(keys);
-      final GlobalSearchScope commonScope = uniteScopes(data);
-      final Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, data, keys);
+      final Collection<RequestWithProcessor> processors = entry.getValue();
+      final GlobalSearchScope commonScope = uniteScopes(processors);
+      final Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, processors, keys);
 
       List<VirtualFile> result = new ArrayList<>();
       Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
       processFilesContainingAllKeys(myManager.getProject(), commonScope, null, keys, processor);
       for (final VirtualFile file : result) {
         progress.checkCanceled();
-        for (final IdIndexEntry entry : keys) {
+        for (final IdIndexEntry indexEntry : keys) {
           DumbService.getInstance(myManager.getProject()).runReadActionInSmartMode(
-            () -> FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, file, (file1, value) -> {
+            () -> FileBasedIndex.getInstance().processValues(IdIndex.NAME, indexEntry, file, (file1, value) -> {
               int mask = value.intValue();
-              for (RequestWithProcessor single : data) {
+              for (RequestWithProcessor single : processors) {
                 final PsiSearchRequest request = single.request;
                 if ((mask & request.searchContext) != 0 && request.searchScope.contains(file1)) {
                   MultiMap<VirtualFile, RequestWithProcessor> result1 =
@@ -860,7 +861,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors,
                                            @NotNull Set<RequestWithProcessor> locals,
-                                           @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
+                                           @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals,
                                            @NotNull List<Computable<Boolean>> customs,
                                            @NotNull Map<RequestWithProcessor, Processor<PsiElement>> localProcessors,
                                            @NotNull ProgressIndicator progress) {
@@ -874,7 +875,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         else {
           Set<IdIndexEntry> key = new HashSet<>(getWordEntries(primitive.word, primitive.caseSensitive));
-          registerRequest(singles.getModifiable(key), primitive, processor);
+          registerRequest(globals.getModifiable(key), primitive, processor);
         }
       }
       for (final Processor<Processor<PsiReference>> customAction : collector.takeCustomSearchActions()) {
@@ -882,7 +883,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
 
-    for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : singles.entrySet()) {
+    for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : globals.entrySet()) {
       for (RequestWithProcessor singleRequest : entry.getValue()) {
         PsiSearchRequest primitive = singleRequest.request;
         StringSearcher searcher = new StringSearcher(primitive.word, primitive.caseSensitive, true, false);

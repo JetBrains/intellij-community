@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import gnu.trove.THashMap;
 import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntProcedure;
 
 import java.util.Map;
 
@@ -33,12 +32,9 @@ public class IdDataConsumer {
 
   public Map<IdIndexEntry, Integer> getResult() {
     final Map<IdIndexEntry, Integer> result = new THashMap<>(myResult.size());
-    myResult.forEachEntry(new TIntIntProcedure() {
-      @Override
-      public boolean execute(final int key, final int value) {
-        result.put(new IdIndexEntry(key), value);
-        return true;
-      }
+    myResult.forEachEntry((key, value) -> {
+      result.put(new IdIndexEntry(key), value);
+      return true;
     });
 
     return result;
