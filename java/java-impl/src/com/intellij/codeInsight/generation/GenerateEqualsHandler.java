@@ -57,8 +57,8 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     final PsiMethod equalsMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getEqualsSignature(project, scope));
     final PsiMethod hashCodeMethod = GenerateEqualsHelper.findMethod(aClass, GenerateEqualsHelper.getHashCodeSignature());
 
-    boolean needEquals = equalsMethod == null;
-    boolean needHashCode = hashCodeMethod == null;
+    boolean needEquals = needToGenerateMethod(equalsMethod);
+    boolean needHashCode = needToGenerateMethod(hashCodeMethod);
     if (!needEquals && !needHashCode) {
       String text = aClass instanceof PsiAnonymousClass
                     ? CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.warning.anonymous")
@@ -105,6 +105,10 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     myHashCodeFields = wizard.getHashCodeFields();
     myNonNullFields = wizard.getNonNullFields();
     return DUMMY_RESULT;
+  }
+
+  static boolean needToGenerateMethod(PsiMethod equalsMethod) {
+    return equalsMethod == null || !equalsMethod.isPhysical();
   }
 
   private static boolean hasNonStaticFields(PsiClass aClass) {
