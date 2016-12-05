@@ -100,7 +100,10 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     final LookupElement[] suggestedInitializers = AddVariableInitializerFix.suggestInitializer(field);
 
     for (PsiMethod constructor : constructors) {
-      rExpressions.add(addFieldInitialization(constructor, suggestedInitializers, field, project));
+      PsiExpression initialization = addFieldInitialization(constructor, suggestedInitializers, field, project);
+      if (initialization != null) {
+        rExpressions.add(initialization);
+      }
     }
     AddVariableInitializerFix.runAssignmentTemplate(rExpressions, suggestedInitializers, editor);
   }
