@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
@@ -471,22 +470,23 @@ public class TreeModelBuilder {
       }
     }
 
-    final StaticFilePath parentPath = nodePath.getParent();
-    if (parentPath == null) {
-      return subtreeRoot;
-    }
+    StaticFilePath parentPath = nodePath.getParent();
+    while (parentPath != null) {
+      ChangesBrowserNode oldParentNode = getFolderCache(subtreeRoot).get(parentPath.getKey());
+      if (oldParentNode != null) return oldParentNode;
 
-    ChangesBrowserNode parentNode = getFolderCache(subtreeRoot).get(parentPath.getKey());
-    if (parentNode == null) {
-      parentNode = nodeBuilder.convert(parentPath);
+      ChangesBrowserNode parentNode = nodeBuilder.convert(parentPath);
       if (parentNode != null) {
         ChangesBrowserNode grandPa = getParentNodeFor(parentPath, subtreeRoot, nodeBuilder);
         myModel.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
         getFolderCache(subtreeRoot).put(parentPath.getKey(), parentNode);
+        return parentNode;
       }
+
+      parentPath = parentPath.getParent();
     }
 
-    return ObjectUtils.chooseNotNull(parentNode, subtreeRoot);
+    return subtreeRoot;
   }
 
   @Nullable
