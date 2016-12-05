@@ -844,4 +844,35 @@ class Test {
     onLineStartingWith("test").assertInlays("parent->c", "child->d", "vx->v", "vy->v")
   }
 
+  fun `test show ambigous`() {
+    setup("""
+class Test {
+  void main() {
+    test(10, x);
+  }
+  void test(int a, String bS) {}
+  void test(int a, int bI) {}
+}
+""")
+    
+    onLineStartingWith("test").assertInlays("a->10")
+  }
+
+  fun `test show ambigous constructor`() {
+    setup("""
+class Test {
+  void main() {
+    new X(10, x);
+  }
+}
+
+class X {
+  X(int a, int bI) {}
+  X(int a, String bS) {}
+}
+""")
+    
+    onLineStartingWith("new").assertInlays("a->10")
+  }
+
 }

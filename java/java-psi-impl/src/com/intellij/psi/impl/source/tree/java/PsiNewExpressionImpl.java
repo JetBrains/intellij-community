@@ -134,7 +134,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return resolveConstructor();
   }
 
-  private PsiPolyVariantCachingReference getConstructorFakeReference() {
+  public PsiPolyVariantCachingReference getConstructorFakeReference() {
     return new PsiPolyVariantCachingReference() {
       @Override
       @NotNull

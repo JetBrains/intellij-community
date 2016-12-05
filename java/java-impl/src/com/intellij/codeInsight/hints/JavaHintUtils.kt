@@ -17,17 +17,46 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
+import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
 
 
 object JavaInlayHintsProvider {
 
+  
   fun createHints(callExpression: PsiCallExpression): Set<InlayInfo> {
-    val (element, substitutor) = callExpression.resolveMethodGenerics().let { it.element to it.substitutor }
+    val resolveResult = callExpression.resolveMethodGenerics()
+    val hints = createHintsForResolvedMethod(callExpression, resolveResult)
+    if (hints.isNotEmpty()) return hints
+    
+    return when (callExpression) {
+      is PsiMethodCallExpressionImpl -> createMergedHints(callExpression, callExpression.methodExpression.multiResolve(false))
+      is PsiNewExpressionImpl -> createMergedHints(callExpression, callExpression.constructorFakeReference.multiResolve(false))
+      else -> emptySet()
+    }
+  }
+
+  private fun createMergedHints(callExpression: PsiCallExpression, 
+                                results: Array<out ResolveResult>): Set<InlayInfo> {
+    val resultSet = results
+      .filter { it.element != null }
+      .map { createHintsForResolvedMethod(callExpression, it) }
+      
+    if (resultSet.isEmpty() || resultSet.any { it.isEmpty() }) return emptySet()
+    
+    return resultSet.reduce { left, right -> left.intersect(right) }
+  }
+
+  private fun createHintsForResolvedMethod(callExpression: PsiCallExpression, resolveResult: ResolveResult): Set<InlayInfo> {
+    val element = resolveResult.element
+    val substitutor = (resolveResult as? JavaResolveResult)?.substitutor ?: PsiSubstitutor.EMPTY
+    
     if (element is PsiMethod && isMethodToShow(element, callExpression)) {
       val info = getCallInfo(callExpression, element)
       return createHintSet(info, substitutor)
     }
+    
     return emptySet()
   }
 
