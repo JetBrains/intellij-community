@@ -59,7 +59,7 @@ public class PyExecuteSelectionAction extends AnAction {
       else {
         String line = getLineUnderCaret(editor);
         if (line != null) {
-          execute(e, line);
+          execute(e, line.trim());
           moveCaretDown(editor);
         }
       }
