@@ -587,7 +587,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     KeymapImpl newKeymap = ((KeymapImpl)keymap).deriveKeymap(newKeymapName);
-    newKeymap.setCanModify(true);
+    KeymapImpl.Companion.setCanModify(newKeymap, true);
 
     int indexOf = myEditor.getModel().getElementIndex(keymap);
     if (indexOf >= 0) {
@@ -619,7 +619,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     }
     KeymapImpl newKeymap = ((KeymapImpl)keymap).deriveKeymap(newKeymapName);
-    newKeymap.setCanModify(true);
+    KeymapImpl.Companion.setCanModify(newKeymap, true);
     myEditor.getModel().add(newKeymap);
     myEditor.getModel().setSelectedItem(newKeymap);
     myEditor.getComboBox().getEditor().selectAll();

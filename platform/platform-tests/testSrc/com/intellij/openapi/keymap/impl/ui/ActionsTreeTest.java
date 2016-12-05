@@ -129,7 +129,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     KeymapImpl parent = new KeymapImpl();
     parent.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, shortcut1);
     parent.setName("parent");
-    parent.setCanModify(false);
+    KeymapImpl.Companion.setCanModify(parent, false);
     KeymapImpl child = parent.deriveKeymap("child");
     child.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, shortcut2);
     child.addShortcut(ACTION_EDITOR_DELETE_WITH_SHORTCUT, shortcut2);

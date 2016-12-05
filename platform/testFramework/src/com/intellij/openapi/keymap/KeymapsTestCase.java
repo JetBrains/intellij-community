@@ -21,10 +21,10 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashMap;
@@ -431,7 +431,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       }
     }
     List<Shortcut> sorted = new ArrayList<>(shortcuts);
-    Collections.sort(sorted, (o1, o2) -> getText(o1).compareTo(getText(o2)));
+    Collections.sort(sorted, Comparator.comparing(KeymapsTestCase::getText));
 
     if (OUTPUT_TEST_DATA) {
       System.out.println("put(\"" + keymap.getName() + "\", new String[][] {");
@@ -663,11 +663,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   private static String getText(Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       KeyStroke fst = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-      String s = KeymapImpl.getKeyShortcutString(fst);
+      String s = KeyStrokeAdapter.toString(fst);
 
       KeyStroke snd = ((KeyboardShortcut)shortcut).getSecondKeyStroke();
       if (snd != null) {
-        s += "," + KeymapImpl.getKeyShortcutString(snd);
+        s += "," + KeyStrokeAdapter.toString(snd);
       }
       return s;
     }
