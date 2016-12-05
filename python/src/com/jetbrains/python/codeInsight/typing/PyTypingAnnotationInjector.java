@@ -78,7 +78,10 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
         final int end = m.end(1);
         if (start < end && allowInjectionInComment(host)) {
           Language language = null;
-          if (isFunctionTypeComment(host)) {
+          if ("ignore".equals(annotationText)) {
+            language = null;
+          }
+          else if (isFunctionTypeComment(host)) {
             language = PyFunctionTypeAnnotationDialect.INSTANCE;
           }
           else if (isTypingAnnotation(annotationText)) {
