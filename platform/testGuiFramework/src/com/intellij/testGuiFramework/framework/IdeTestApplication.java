@@ -109,7 +109,6 @@ public class IdeTestApplication {
       ClassLoader ideClassLoader = ourInstance.getIdeClassLoader();
       Class<?> clazz = ideClassLoader.loadClass(GuiTestUtil.class.getCanonicalName());
       method("waitForIdeToStart").in(clazz).invoke();
-      method("setUpDefaultGeneralSettings").in(clazz).invoke();
     }
 
     return ourInstance;
