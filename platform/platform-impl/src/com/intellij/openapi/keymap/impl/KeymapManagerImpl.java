@@ -13,231 +13,171 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap.impl;
+package com.intellij.openapi.keymap.impl
 
-import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.WelcomeWizardUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManagerListener
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.openapi.options.NonLazySchemeProcessor
+import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.util.containers.ContainerUtil
+import gnu.trove.THashSet
+import org.jdom.Element
+import java.util.*
 
-import java.util.*;
+internal const val KEYMAPS_DIR_PATH = "keymaps"
 
-@State(
-  name = "KeymapManager",
-  storages = @Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS),
-  additionalExportFile = KeymapManagerImpl.KEYMAPS_DIR_PATH
-)
-public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element> {
-  static final String KEYMAPS_DIR_PATH = "keymaps";
+private const val ACTIVE_KEYMAP = "active_keymap"
+private const val NAME_ATTRIBUTE = "name"
 
-  private final List<KeymapManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<String, String> myBoundShortcuts = new HashMap<>();
+var ourKeymapManagerInitialized: Boolean = false
 
-  private static final String ACTIVE_KEYMAP = "active_keymap";
-  private static final String NAME_ATTRIBUTE = "name";
-  private final SchemeManager<Keymap> mySchemeManager;
+@State(name = "KeymapManager", storages = arrayOf(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS)), additionalExportFile = KEYMAPS_DIR_PATH)
+class KeymapManagerImpl internal constructor(defaultKeymap: DefaultKeymap, factory: SchemeManagerFactory) : KeymapManagerEx(), PersistentStateComponent<Element> {
+  private val myListeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
+  private val myBoundShortcuts = HashMap<String, String>()
+  private val mySchemeManager: SchemeManager<Keymap>
 
-  public static boolean ourKeymapManagerInitialized;
-
-  KeymapManagerImpl(@NotNull DefaultKeymap defaultKeymap, @NotNull SchemeManagerFactory factory) {
-    SchemeProcessor<Keymap, KeymapImpl> schemeProcessor = new NonLazySchemeProcessor<Keymap, KeymapImpl>() {
-      @NotNull
-      @Override
-      public KeymapImpl readScheme(@NotNull Element element, boolean duringLoad) throws InvalidDataException {
-        KeymapImpl keymap = new KeymapImpl();
-        keymap.readExternal(element, getAllIncludingDefaultsKeymaps());
-        return keymap;
+  init {
+    mySchemeManager = factory.create(KEYMAPS_DIR_PATH, object : NonLazySchemeProcessor<Keymap, KeymapImpl>() {
+      @Throws(InvalidDataException::class)
+      override fun readScheme(element: Element, duringLoad: Boolean): KeymapImpl {
+        val keymap = KeymapImpl()
+        keymap.readExternal(element, allIncludingDefaultsKeymaps)
+        return keymap
       }
 
-      @NotNull
-      @Override
-      public Element writeScheme(@NotNull KeymapImpl scheme) {
-        return scheme.writeScheme();
+      override fun writeScheme(scheme: KeymapImpl): Element {
+        return scheme.writeScheme()
       }
 
-      @NotNull
-      @Override
-      public SchemeState getState(@NotNull Keymap scheme) {
-        return scheme.canModify() ? SchemeState.POSSIBLY_CHANGED : SchemeState.NON_PERSISTENT;
-      }
+      override fun getState(scheme: Keymap) = if (scheme.canModify()) SchemeState.POSSIBLY_CHANGED else SchemeState.NON_PERSISTENT
 
-      @Override
-      public void onCurrentSchemeSwitched(@Nullable Keymap oldScheme, @Nullable Keymap newScheme) {
-        for (KeymapManagerListener listener : myListeners) {
-          listener.activeKeymapChanged(newScheme);
+      override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
+        for (listener in myListeners) {
+          listener.activeKeymapChanged(newScheme)
         }
       }
-    };
-    mySchemeManager = factory.create(KEYMAPS_DIR_PATH, schemeProcessor);
+    })
 
-    String systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() != null
-                                 ? WelcomeWizardUtil.getWizardMacKeymap()
-                                 : defaultKeymap.getDefaultKeymapName();
-    for (Keymap keymap : defaultKeymap.getKeymaps()) {
-      mySchemeManager.addScheme(keymap);
-      if (keymap.getName().equals(systemDefaultKeymap)) {
-        setActiveKeymap(keymap);
+    val systemDefaultKeymap = if (WelcomeWizardUtil.getWizardMacKeymap() != null)
+      WelcomeWizardUtil.getWizardMacKeymap()
+    else
+      defaultKeymap.defaultKeymapName
+    for (keymap in defaultKeymap.keymaps) {
+      mySchemeManager.addScheme(keymap)
+      if (keymap.name == systemDefaultKeymap) {
+        activeKeymap = keymap
       }
     }
-    mySchemeManager.loadSchemes();
+    mySchemeManager.loadSchemes()
 
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourKeymapManagerInitialized = true;
+    ourKeymapManagerInitialized = true
   }
 
-  @Override
-  public Keymap[] getAllKeymaps() {
-    List<Keymap> keymaps = getKeymaps(Conditions.alwaysTrue());
-    return keymaps.toArray(new Keymap[keymaps.size()]);
+  override fun getAllKeymaps() = getKeymaps(Conditions.alwaysTrue<Keymap>()).toTypedArray()
+
+  fun getKeymaps(additionalFilter: Condition<Keymap>) = mySchemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && additionalFilter.value(it)  }
+
+  val allIncludingDefaultsKeymaps: Array<Keymap>
+    get() = mySchemeManager.allSchemes.toTypedArray()
+
+  override fun getKeymap(name: String) = mySchemeManager.findSchemeByName(name)
+
+  override fun getActiveKeymap() = mySchemeManager.currentScheme
+
+  override fun setActiveKeymap(keymap: Keymap?) = mySchemeManager.setCurrent(keymap)
+
+  override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
+    myBoundShortcuts.put(targetActionId, sourceActionId)
   }
 
-  @NotNull
-  public List<Keymap> getKeymaps(@NotNull Condition<Keymap> additionalFilter) {
-    List<Keymap> result = new ArrayList<>();
-    for (Keymap keymap : mySchemeManager.getAllSchemes()) {
-      if (!keymap.getPresentableName().startsWith("$") && additionalFilter.value(keymap)) {
-        result.add(keymap);
+  override fun unbindShortcuts(targetActionId: String) {
+    myBoundShortcuts.remove(targetActionId)
+  }
+
+  override fun getBoundActions() = myBoundShortcuts.keys
+
+  override fun getActionBinding(actionId: String): String? {
+    var visited: MutableSet<String>? = null
+    var id = actionId
+    while (true) {
+      val next = myBoundShortcuts.get(id) ?: break
+      if (visited == null) {
+        visited = THashSet()
+      }
+
+      id = next
+      if (!visited.add(id)) {
+        break
       }
     }
-    return result;
+    return if (id == actionId) null else id
   }
 
-  public Keymap[] getAllIncludingDefaultsKeymaps() {
-    Collection<Keymap> keymaps = mySchemeManager.getAllSchemes();
-    return keymaps.toArray(new Keymap[keymaps.size()]);
+  override fun getSchemeManager() = mySchemeManager
+
+  fun setKeymaps(keymaps: List<Keymap>, active: Keymap?, removeCondition: Condition<Keymap>?) {
+    mySchemeManager.setSchemes(keymaps, active, removeCondition)
   }
 
-  @Override
-  @Nullable
-  public Keymap getKeymap(@NotNull String name) {
-    return mySchemeManager.findSchemeByName(name);
-  }
-
-  @Override
-  public Keymap getActiveKeymap() {
-    return mySchemeManager.getCurrentScheme();
-  }
-
-  @Override
-  public void setActiveKeymap(@Nullable Keymap keymap) {
-    mySchemeManager.setCurrent(keymap);
-  }
-
-  @Override
-  public void bindShortcuts(String sourceActionId, String targetActionId) {
-    myBoundShortcuts.put(targetActionId, sourceActionId);
-  }
-
-  @Override
-  public void unbindShortcuts(String targetActionId) {
-    myBoundShortcuts.remove(targetActionId);
-  }
-
-  @Override
-  public Set<String> getBoundActions() {
-    return myBoundShortcuts.keySet();
-  }
-
-  @Override
-  public String getActionBinding(String actionId) {
-    Set<String> visited = null;
-    String id = actionId, next;
-    while ((next = myBoundShortcuts.get(id)) != null) {
-      if (visited == null) visited = ContainerUtil.newHashSet();
-      if (!visited.add(id = next)) break;
-    }
-    return Comparing.equal(id, actionId) ? null : id;
-  }
-
-  @Override
-  public SchemeManager<Keymap> getSchemeManager() {
-    return mySchemeManager;
-  }
-
-  public void setKeymaps(@NotNull List<Keymap> keymaps, @Nullable Keymap active, @Nullable Condition<Keymap> removeCondition) {
-    mySchemeManager.setSchemes(keymaps, active, removeCondition);
-  }
-
-  @Override
-  public Element getState() {
-    Element result = new Element("component");
-    if (mySchemeManager.getCurrentScheme() != null) {
-      Element e = new Element(ACTIVE_KEYMAP);
-      Keymap currentScheme = mySchemeManager.getCurrentScheme();
-      if (currentScheme != null) {
-        e.setAttribute(NAME_ATTRIBUTE, currentScheme.getName());
-      }
-      result.addContent(e);
-    }
-    return result;
-  }
-
-  @Override
-  public void loadState(@NotNull Element state) {
-    Element child = state.getChild(ACTIVE_KEYMAP);
-    String activeKeymapName = child == null ? null : child.getAttributeValue(NAME_ATTRIBUTE);
-    if (!StringUtil.isEmptyOrSpaces(activeKeymapName)) {
-      mySchemeManager.setCurrentSchemeName(activeKeymapName);
-    }
-  }
-
-  @Override
-  public void addKeymapManagerListener(@NotNull KeymapManagerListener listener) {
-    pollQueue();
-    myListeners.add(listener);
-  }
-
-  @Override
-  public void addKeymapManagerListener(@NotNull final KeymapManagerListener listener, @NotNull Disposable parentDisposable) {
-    pollQueue();
-    myListeners.add(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeKeymapManagerListener(listener);
-      }
-    });
-  }
-
-  private void pollQueue() {
-    // assume it is safe to remove elements during iteration, as is the case with the COWAL
-    for (KeymapManagerListener listener : myListeners) {
-      if (listener instanceof WeakKeymapManagerListener && ((WeakKeymapManagerListener)listener).isDead()) {
-        myListeners.remove(listener);
+  override fun getState(): Element {
+    val result = Element("state")
+    if (mySchemeManager.currentScheme != null) {
+      mySchemeManager.currentScheme?.let {
+        val e = Element(ACTIVE_KEYMAP)
+        e.setAttribute(NAME_ATTRIBUTE, it.name)
+        result.addContent(e)
       }
     }
+    return result
   }
 
-  @Override
-  public void removeKeymapManagerListener(@NotNull KeymapManagerListener listener) {
-    pollQueue();
-    myListeners.remove(listener);
-  }
-
-  @Override
-  public void addWeakListener(@NotNull KeymapManagerListener listener) {
-    addKeymapManagerListener(new WeakKeymapManagerListener(this, listener));
-  }
-
-  @Override
-  public void removeWeakListener(@NotNull KeymapManagerListener listenerToRemove) {
-    // assume it is safe to remove elements during iteration, as is the case with the COWAL
-    for (KeymapManagerListener listener : myListeners) {
-      if (listener instanceof WeakKeymapManagerListener && ((WeakKeymapManagerListener)listener).isWrapped(listenerToRemove)) {
-        myListeners.remove(listener);
-      }
+  override fun loadState(state: Element) {
+    val child = state.getChild(ACTIVE_KEYMAP)
+    val activeKeymapName = child?.getAttributeValue(NAME_ATTRIBUTE)
+    if (!activeKeymapName.isNullOrBlank()) {
+      mySchemeManager.currentSchemeName = activeKeymapName
     }
+  }
+
+  override fun addKeymapManagerListener(listener: KeymapManagerListener) {
+    pollQueue()
+    myListeners.add(listener)
+  }
+
+  override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
+    pollQueue()
+    myListeners.add(listener)
+    Disposer.register(parentDisposable, Disposable { removeKeymapManagerListener(listener) })
+  }
+
+  private fun pollQueue() {
+    myListeners.removeAll { it is WeakKeymapManagerListener && it.isDead }
+  }
+
+  override fun removeKeymapManagerListener(listener: KeymapManagerListener) {
+    pollQueue()
+    myListeners.remove(listener)
+  }
+
+  override fun addWeakListener(listener: KeymapManagerListener) {
+    addKeymapManagerListener(WeakKeymapManagerListener(this, listener))
+  }
+
+  override fun removeWeakListener(listenerToRemove: KeymapManagerListener) {
+    myListeners.removeAll { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
   }
 }
