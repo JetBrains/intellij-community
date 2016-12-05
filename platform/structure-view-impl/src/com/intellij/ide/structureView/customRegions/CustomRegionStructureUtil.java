@@ -79,7 +79,7 @@ public class CustomRegionStructureUtil {
 
   private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<TextRange> ranges) {
     Iterator<PsiElement> iterator = SyntaxTraverser.psiTraverser(rootElement)
-      .regard(element -> isCustomRegionCommentCandidate(element) && !isInsideRanges(element, ranges))
+      .filter(element -> isCustomRegionCommentCandidate(element) && !isInsideRanges(element, ranges))
       .iterator();
 
     List<CustomRegionTreeElement> customRegions = ContainerUtil.newSmartList();
