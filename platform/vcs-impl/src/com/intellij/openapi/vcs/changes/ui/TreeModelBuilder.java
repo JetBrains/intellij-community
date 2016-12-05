@@ -27,6 +27,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -64,7 +65,7 @@ public class TreeModelBuilder {
     return node1.compareUserObjects(node2.getUserObject());
   };
 
-  private final static Comparator<Change> PATH_LENGTH_COMPARATOR = (o1, o2) -> {
+  protected final static Comparator<Change> PATH_LENGTH_COMPARATOR = (o1, o2) -> {
     FilePath fp1 = ChangesUtil.getFilePath(o1);
     FilePath fp2 = ChangesUtil.getFilePath(o2);
 
@@ -174,12 +175,12 @@ public class TreeModelBuilder {
     return this;
   }
 
-  protected ChangesBrowserChangeListNode createChangeListNode(@NotNull ChangeList list, List<Change> changes) {
+  private ChangesBrowserChangeListNode createChangeListNode(@NotNull ChangeList list, List<Change> changes) {
     final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
     return new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
   }
 
-  protected ChangesBrowserNode createChangeListChild(RemoteRevisionsCache revisionsCache, ChangesBrowserChangeListNode node, List<Change> changes, int i) {
+  private ChangesBrowserNode createChangeListChild(RemoteRevisionsCache revisionsCache, ChangesBrowserChangeListNode node, List<Change> changes, int i) {
     return createChangeNode(changes.get(i), new RemoteStatusChangeNodeDecorator(revisionsCache) {
       @NotNull private final ChangeListRemoteState.Reporter myReporter =
         new ChangeListRemoteState.Reporter(i, node.getChangeListRemoteState());
@@ -342,8 +343,15 @@ public class TreeModelBuilder {
   protected void insertChangeNode(@NotNull Object change,
                                   @NotNull ChangesBrowserNode subtreeRoot,
                                   @NotNull ChangesBrowserNode node) {
+    insertChangeNode(change, subtreeRoot, node, this::createPathNode);
+  }
+
+  protected void insertChangeNode(@NotNull Object change,
+                                  @NotNull ChangesBrowserNode subtreeRoot,
+                                  @NotNull ChangesBrowserNode node,
+                                  @NotNull Convertor<StaticFilePath, ChangesBrowserNode> nodeBuilder) {
     final StaticFilePath pathKey = getKey(change);
-    ChangesBrowserNode parentNode = getParentNodeFor(pathKey, subtreeRoot);
+    ChangesBrowserNode parentNode = getParentNodeFor(pathKey, subtreeRoot, nodeBuilder);
     myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));
 
     if (pathKey.isDirectory()) {
@@ -442,8 +450,15 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  private ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath,
-                                              @NotNull ChangesBrowserNode subtreeRoot) {
+  protected ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath,
+                                                @NotNull ChangesBrowserNode subtreeRoot) {
+    return getParentNodeFor(nodePath, subtreeRoot, this::createPathNode);
+  }
+
+  @NotNull
+  protected ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath,
+                                                @NotNull ChangesBrowserNode subtreeRoot,
+                                                @NotNull Convertor<StaticFilePath, ChangesBrowserNode> nodeBuilder) {
     if (myShowFlatten) {
       return subtreeRoot;
     }
@@ -463,9 +478,9 @@ public class TreeModelBuilder {
 
     ChangesBrowserNode parentNode = getFolderCache(subtreeRoot).get(parentPath.getKey());
     if (parentNode == null) {
-      parentNode = createPathNode(parentPath);
+      parentNode = nodeBuilder.convert(parentPath);
       if (parentNode != null) {
-        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, subtreeRoot);
+        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, subtreeRoot, nodeBuilder);
         myModel.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
         getFolderCache(subtreeRoot).put(parentPath.getKey(), parentNode);
       }
@@ -475,8 +490,8 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  protected ChangesBrowserNode createPathNode(StaticFilePath parentPath) {
-    FilePath filePath = parentPath.getVf() == null ? VcsUtil.getFilePath(parentPath.getPath(), true) : VcsUtil.getFilePath(parentPath.getVf());
+  private ChangesBrowserNode createPathNode(@NotNull StaticFilePath path) {
+    FilePath filePath = path.getVf() == null ? VcsUtil.getFilePath(path.getPath(), true) : VcsUtil.getFilePath(path.getVf());
     return ChangesBrowserNode.create(myProject, filePath);
   }
 
