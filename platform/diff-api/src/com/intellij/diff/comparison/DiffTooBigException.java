@@ -23,11 +23,6 @@ public class DiffTooBigException extends ProcessCanceledException {
   public DiffTooBigException() {
   }
 
-  public DiffTooBigException(Throwable cause) {
-    super(cause);
-  }
-
-
   @Override
   public String getMessage() {
     return MESSAGE;

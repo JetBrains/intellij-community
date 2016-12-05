@@ -133,7 +133,7 @@ final class ObjectNode<T> {
           myTree.fireExecuted(myObject);
         }
         catch (ProcessCanceledException e) {
-          throw new ProcessCanceledException(e);
+          throw e;
         }
         catch (Throwable e) {
           LOG.error(e);
