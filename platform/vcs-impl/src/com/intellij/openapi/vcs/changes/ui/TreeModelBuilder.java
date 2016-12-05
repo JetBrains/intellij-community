@@ -212,28 +212,21 @@ public class TreeModelBuilder {
   @NotNull
   private TreeModelBuilder setVirtualFiles(@Nullable Collection<VirtualFile> files, @Nullable Object tag) {
     if (ContainerUtil.isEmpty(files)) return this;
-    insertFilesIntoNode(files, createNode(tag));
+    insertFilesIntoNode(files, createTagNode(tag));
     return this;
   }
 
   @NotNull
-  private ChangesBrowserNode createNode(@Nullable Object tag) {
-    ChangesBrowserNode result;
+  private ChangesBrowserNode createTagNode(@Nullable Object tag) {
+    if (tag == null) return myRoot;
 
-    if (tag != null) {
-      result = ChangesBrowserNode.create(myProject, tag);
-      myModel.insertNodeInto(result, myRoot, myRoot.getChildCount());
-    }
-    else {
-      result = myRoot;
-    }
-
-    return result;
+    ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, tag);
+    myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
+    return subtreeRoot;
   }
 
   private void insertFilesIntoNode(@NotNull Collection<VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
     List<VirtualFile> sortedFiles = ContainerUtil.sorted(files, VirtualFileHierarchicalComparator.getInstance());
-
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.create(myProject, file));
     }
@@ -336,7 +329,7 @@ public class TreeModelBuilder {
   @NotNull
   public TreeModelBuilder setLogicallyLockedFiles(@Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     if (ContainerUtil.isEmpty(logicallyLockedFiles)) return this;
-    final ChangesBrowserNode subtreeRoot = createNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
+    final ChangesBrowserNode subtreeRoot = createTagNode(ChangesBrowserNode.LOGICALLY_LOCKED_TAG);
 
     final List<VirtualFile> keys = new ArrayList<>(logicallyLockedFiles.keySet());
     Collections.sort(keys, VirtualFileHierarchicalComparator.getInstance());
