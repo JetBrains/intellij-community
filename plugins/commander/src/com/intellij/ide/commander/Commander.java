@@ -95,6 +95,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
   public Commander(final Project project, KeymapManager keymapManager, final ToolWindowManager toolWindowManager) {
     super(new BorderLayout());
+
     myProject = project;
     myToolWindowManager = toolWindowManager;
 
@@ -113,16 +114,14 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final ActionMap actionMap = getActionMap();
     actionMap.put(ACTION_BACKCOMMAND, backAction);
     actionMap.put(ACTION_FORWARDCOMMAND, fwdAction);
-    final KeyStroke[] backStrokes = getKeyStrokes(IdeActions.ACTION_GOTO_BACK, keymapManager);
-    for (KeyStroke stroke : backStrokes) {
+    for (KeyStroke stroke : getKeyStrokes(IdeActions.ACTION_GOTO_BACK, keymapManager)) {
       //getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke, "backCommand");
       //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, "backCommand");
       registerKeyboardAction(backAction, ACTION_BACKCOMMAND, stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
       registerKeyboardAction(backAction, ACTION_BACKCOMMAND, stroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
-    final KeyStroke[] fwdStrokes = getKeyStrokes(IdeActions.ACTION_GOTO_FORWARD, keymapManager);
-    for (KeyStroke stroke : fwdStrokes) {
+    for (KeyStroke stroke : getKeyStrokes(IdeActions.ACTION_GOTO_FORWARD, keymapManager)) {
       //getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke, "forwardCommand");
       //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, "forwardCommand");
       registerKeyboardAction(fwdAction, ACTION_FORWARDCOMMAND, stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
