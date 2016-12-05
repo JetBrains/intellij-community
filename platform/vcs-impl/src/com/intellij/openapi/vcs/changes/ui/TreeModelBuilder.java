@@ -160,14 +160,6 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public DefaultTreeModel build() {
-    collapseDirectories(myModel, myRoot);
-    sortNodes();
-
-    return myModel;
-  }
-
-  @NotNull
   public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists) {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     for (ChangeList list : changeLists) {
@@ -367,6 +359,13 @@ public class TreeModelBuilder {
     if (pathKey.isDirectory()) {
       getFolderCache(subtreeRoot).put(pathKey.getKey(), node);
     }
+  }
+
+  @NotNull
+  public DefaultTreeModel build() {
+    collapseDirectories(myModel, myRoot);
+    sortNodes();
+    return myModel;
   }
 
   private void sortNodes() {
