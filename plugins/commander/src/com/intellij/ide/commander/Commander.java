@@ -43,6 +43,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -53,7 +54,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -258,9 +258,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private static KeyStroke[] getKeyStrokes(String actionId, KeymapManager keymapManager) {
-    final Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(actionId);
-    final List<KeyStroke> strokes = new ArrayList<>();
-    for (final Shortcut shortcut : shortcuts) {
+    List<KeyStroke> strokes = new SmartList<>();
+    for (Shortcut shortcut : keymapManager.getActiveKeymap().getShortcuts(actionId)) {
       if (shortcut instanceof KeyboardShortcut) {
         strokes.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
       }
@@ -325,7 +324,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         }
       }
     });
-
 
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
     panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));

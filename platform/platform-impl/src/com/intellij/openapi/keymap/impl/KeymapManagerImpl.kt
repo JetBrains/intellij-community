@@ -42,8 +42,6 @@ internal const val KEYMAPS_DIR_PATH = "keymaps"
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
 
-var ourKeymapManagerInitialized: Boolean = false
-
 @State(name = "KeymapManager", storages = arrayOf(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS)), additionalExportFile = KEYMAPS_DIR_PATH)
 class KeymapManagerImpl internal constructor(defaultKeymap: DefaultKeymap, factory: SchemeManagerFactory) : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val myListeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
@@ -85,6 +83,11 @@ class KeymapManagerImpl internal constructor(defaultKeymap: DefaultKeymap, facto
     mySchemeManager.loadSchemes()
 
     ourKeymapManagerInitialized = true
+  }
+
+  companion object {
+    @JvmField
+    var ourKeymapManagerInitialized: Boolean = false
   }
 
   override fun getAllKeymaps() = getKeymaps(Conditions.alwaysTrue<Keymap>()).toTypedArray()
