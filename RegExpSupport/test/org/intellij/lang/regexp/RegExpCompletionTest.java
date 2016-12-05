@@ -60,7 +60,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     }
 
     public void testNamedCharacter() {
-      myFixture.configureByText(RegExpFileType.INSTANCE, "\\\\N{SMILE<caret>}");
+      myFixture.configureByText(RegExpFileType.INSTANCE, "\\N{SMILE<caret>}");
       final LookupElement[] elements = myFixture.completeBasic();
       final List<String> strings = ContainerUtil.map(elements, LookupElement::getLookupString);
       assertEquals(Arrays.asList("SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
@@ -89,7 +89,9 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     }
 
     public void testPropertyAlpha() throws Throwable {
-        doTest();
+      myFixture.configureByText(RegExpFileType.INSTANCE, "\\P{Alp<caret>}");
+      myFixture.completeBasic();
+      myFixture.checkResult("\\P{Alpha<caret>}");
     }
 
     public void doTest() throws Throwable {

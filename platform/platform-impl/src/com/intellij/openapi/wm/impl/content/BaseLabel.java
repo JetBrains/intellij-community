@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
@@ -114,18 +113,13 @@ public class BaseLabel extends JLabel {
 
       setToolTipText(content.getDescription());
 
-      final boolean show = Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON)) 
-                           || content.getComponent() instanceof Iconable;
-      Icon icon = content.getIcon();
-      if (content.getComponent() instanceof Iconable) { // handling tabbed content after 'split group' action
-        icon = ((Iconable)content.getComponent()).getIcon(Iconable.ICON_FLAG_VISIBILITY);
-      }
+      final boolean show = Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON));
       if (show) {
         if (isSelected) {
-          setIcon(icon);
+          setIcon(content.getIcon());
         }
         else {
-          setIcon(icon != null ? new WatermarkIcon(icon, .5f) : null);
+          setIcon(content.getIcon() != null ? new WatermarkIcon(content.getIcon(), .5f) : null);
         }
       }
       else {

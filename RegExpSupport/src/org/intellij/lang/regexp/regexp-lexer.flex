@@ -74,6 +74,7 @@ import java.util.EnumSet;
 
 %xstate QUOTED
 %xstate EMBRACED
+%xstate QUANTIFIER
 %xstate CLASS1
 %xstate NEGATE_CLASS1
 %state CLASS2
@@ -217,14 +218,19 @@ HEX_CHAR=[0-9a-fA-F]
 
 /* "{" \d+(,\d*)? "}" */
 /* "}" outside counted closure is treated as regular character */
-{LBRACE}              { if (yystate() != CLASS2) { yypushstate(EMBRACED); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+{LBRACE} / [:digit:]+ {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+{LBRACE} / [:digit:]+ "," [:digit:]+ {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+{LBRACE}              { if (yystate() != CLASS2 && !allowDanglingMetacharacters) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
 
+<QUANTIFIER> {
+  [:digit:]+          { return RegExpTT.NUMBER; }
+  ","                 { return RegExpTT.COMMA;  }
+  {RBRACE}            { yypopstate(); return RegExpTT.RBRACE; }
+  {ANY}               { yypopstate(); yypushback(1); }
+}
 <EMBRACED> {
   "^"                 { return RegExpTT.CARET;  }
   {NAME}              { return RegExpTT.NAME;   }
-  [:digit:]+          { return RegExpTT.NUMBER; }
-  ","                 { return RegExpTT.COMMA;  }
-
   {RBRACE}            { yypopstate(); return RegExpTT.RBRACE; }
   {ANY}               { yypopstate(); yypushback(1); }
 }

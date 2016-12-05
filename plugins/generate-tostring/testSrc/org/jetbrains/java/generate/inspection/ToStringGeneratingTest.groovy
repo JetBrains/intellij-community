@@ -151,7 +151,7 @@ class Foo  {
     new WriteCommandAction(myFixture.project, myFixture.file) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        worker.execute(members, template)
+        worker.execute(members, template, policy)
       }
     }.execute()
 

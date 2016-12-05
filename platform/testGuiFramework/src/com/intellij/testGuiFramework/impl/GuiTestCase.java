@@ -15,13 +15,14 @@
  */
 package com.intellij.testGuiFramework.impl;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.testGuiFramework.framework.GuiTestBase;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.fest.swing.core.FastRobot;
 
 import java.lang.reflect.InvocationTargetException;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.setUpDefaultProjectCreationLocationPath;
 
 /**
  * @author Sergey Karashevich
@@ -34,30 +35,43 @@ public class GuiTestCase extends GuiTestBase {
     super();
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public static class GuiSettings {
 
-    setUpDefaultProjectCreationLocationPath();
-    myRobot = new FastRobot();
+    private static final Object lock = new Object();
 
-    setIdeSettings();
-    if (IS_UNDER_TEAMCITY) GitSettings.INSTANCE.setup();
+    private static GuiSettings SETTINGS;
+
+    public static GuiSettings setUp() {
+      synchronized (lock) {
+        if (SETTINGS == null) SETTINGS = new GuiSettings();
+        return SETTINGS;
+      }
+    }
+
+    GuiSettings(){
+      GeneralSettings.getInstance().setShowTipsOnStartup(false);
+      GuiTestUtil.setUpDefaultProjectCreationLocationPath();
+      GuiTestUtil.setUpSdks();
+      HttpConfigurable ideSettings = HttpConfigurable.getInstance();
+      ideSettings.USE_HTTP_PROXY = false;
+      ideSettings.PROXY_HOST = "";
+      ideSettings.PROXY_PORT = 80;
+      if (IS_UNDER_TEAMCITY) GitSettings.INSTANCE.setup();
+    }
+
   }
 
-  @Override
-  public void tearDown() throws InvocationTargetException, InterruptedException {
-    GitSettings.INSTANCE.restore();
-    super.tearDown();
+    @Override
+    public void setUp() throws Exception {
+      super.setUp();
+      myRobot = new FastRobot();
+      GuiSettings.setUp();
+    }
+
+    @Override
+    public void tearDown() throws InvocationTargetException, InterruptedException {
+      GitSettings.INSTANCE.restore();
+      super.tearDown();
+    }
+
   }
-
-  private static void setIdeSettings() {
-    // Clear HTTP proxy settings, in case a test changed them.
-    HttpConfigurable ideSettings = HttpConfigurable.getInstance();
-    ideSettings.USE_HTTP_PROXY = false;
-    ideSettings.PROXY_HOST = "";
-    ideSettings.PROXY_PORT = 80;
-  }
-
-
-}

@@ -17,7 +17,6 @@ package com.intellij.testGuiFramework.framework;
 
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -159,12 +158,8 @@ public final class GuiTestUtil {
   // Called by IdeTestApplication via reflection.
   @SuppressWarnings("unused")
   public static void setUpDefaultGeneralSettings() {
-    //setGuiTestingMode(true);
 
-    GeneralSettings.getInstance().setShowTipsOnStartup(false);
-    setUpDefaultProjectCreationLocationPath();
 
-    setUpSdks();
   }
 
   public static String getSystemJdk() {
@@ -177,11 +172,6 @@ public final class GuiTestUtil {
       fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS);
     }
     return jdkHome;
-  }
-
-  public static void setupGitPath() {
-    //GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
-    //settings.setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
   }
 
   public static void setUpSdks() {
@@ -223,6 +213,9 @@ public final class GuiTestUtil {
         if (path.isDirectory()) {
 
           JavaSdk javaSdk = JavaSdk.getInstance();
+
+          //in case of running different from IntelliJ or Android Studio IDE (PyCharm for example)
+          if (javaSdk == null) return;
 
           String jdk_name = "JDK";
           final Sdk newJdk = javaSdk.createJdk(jdk_name, path.toString(), false);

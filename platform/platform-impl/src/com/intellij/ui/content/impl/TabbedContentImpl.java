@@ -17,12 +17,10 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.ui.WatermarkIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +33,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
+  private final List<Pair<String, JComponent>> myTabs = new ArrayList<Pair<String, JComponent>>();
   private String myPrefix;
 
   public TabbedContentImpl(JComponent component, String displayName, boolean isPinnable, String titlePrefix) {
@@ -83,25 +81,6 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       if (index < myTabs.size()) {
         selectContent(index);
       }
-    }
-  }
-
-  @Override
-  public void renameContent(@NotNull JComponent tab, @NotNull String newTabName) {
-    Pair<String, JComponent> toRemove = null;
-    for (Pair<String, JComponent> existingTab : myTabs) {
-      if (existingTab.second == tab) {
-        toRemove = existingTab;
-        break;
-      }
-    }
-    int index = myTabs.indexOf(toRemove);
-    if (index != -1) {
-      myTabs.remove(index);
-    }
-    myTabs.add(Pair.create(newTabName, tab));
-    if (getComponent() == tab) {
-      super.setDisplayName(newTabName);
     }
   }
 
@@ -169,22 +148,8 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   }
 
   @Override
-  public void setIcon(Icon icon) {
-    for (Pair<String, JComponent> nextTabWithName : getTabs()) {
-      if (nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(this, getTabName()))) {
-        JComponent tab = nextTabWithName.getSecond();
-        if (tab instanceof Iconable) {
-          Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
-          super.setIcon(isSelected() || baseIcon == null ? baseIcon : new WatermarkIcon(baseIcon, .5f));
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
   public void split() {
-    List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
+    List<Pair<String, JComponent>> copy = new ArrayList<Pair<String, JComponent>>(myTabs);
     int selectedTab = ContentUtilEx.getSelectedTab(this);
     ContentManager manager = getManager();
     String prefix = getTitlePrefix();
@@ -196,7 +161,6 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       final String tabName = copy.get(i).first;
       ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
     }
-    setShouldDisposeContent(false);
     Disposer.dispose(this);
   }
 

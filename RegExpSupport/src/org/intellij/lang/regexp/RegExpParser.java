@@ -30,10 +30,6 @@ public class RegExpParser implements PsiParser {
   private static final TokenSet PROPERTY_TOKENS = TokenSet.create(RegExpTT.NUMBER, RegExpTT.COMMA, RegExpTT.NAME, RegExpTT.RBRACE);
   private final EnumSet<RegExpCapability> myCapabilities;
 
-  public RegExpParser() {
-    myCapabilities = EnumSet.noneOf(RegExpCapability.class);
-  }
-
   public RegExpParser(EnumSet<RegExpCapability> capabilities) {
     myCapabilities = capabilities;
   }
@@ -82,7 +78,6 @@ public class RegExpParser implements PsiParser {
   /**
    * BRANCH  ::= ATOM BRANCH | ""
    */
-  @SuppressWarnings({"StatementWithEmptyBody"})
   private boolean parseBranch(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
@@ -97,7 +92,8 @@ public class RegExpParser implements PsiParser {
       return false;
     }
 
-    while (parseAtom(builder)) ;
+    //noinspection StatementWithEmptyBody
+    while (parseAtom(builder)) {}
 
     marker.done(RegExpElementTypes.BRANCH);
     return true;
@@ -140,10 +136,6 @@ public class RegExpParser implements PsiParser {
                                  myCapabilities.contains(RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS);
       if (minOmitted) {
         builder.advanceLexer();
-      }
-      else if (builder.getTokenType() != RegExpTT.NUMBER && myCapabilities.contains(RegExpCapability.DANGLING_METACHARACTERS)) {
-        marker.done(RegExpTT.CHARACTER);
-        return true;
       }
       else {
         checkMatches(builder, RegExpTT.NUMBER, "Number expected");
@@ -214,37 +206,26 @@ public class RegExpParser implements PsiParser {
     if (builder.getTokenType() == RegExpTT.CARET) {
       builder.advanceLexer();
     }
-
-    // DEFLIST
-    if (parseClassIntersection(builder)) {
-      while (RegExpTT.CHARACTERS.contains(builder.getTokenType()) ||
-             builder.getTokenType() == RegExpTT.CHAR_CLASS ||
-             builder.getTokenType() == RegExpTT.CLASS_BEGIN ||
-             builder.getTokenType() == RegExpTT.PROPERTY ||
-             builder.getTokenType() == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
-        parseClassIntersection(builder);
-      }
-    }
+    parseClassIntersection(builder);
 
     checkMatches(builder, RegExpTT.CLASS_END, "Unclosed character class");
     marker.done(RegExpElementTypes.CLASS);
     return marker;
   }
 
-  private boolean parseClassIntersection(PsiBuilder builder) {
+  private void parseClassIntersection(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
     parseClassdef(builder);
     if (RegExpTT.ANDAND != builder.getTokenType()) {
       marker.drop();
-      return true;
+      return;
     }
     while (RegExpTT.ANDAND == builder.getTokenType()) {
       builder.advanceLexer();
       parseClassdef(builder);
     }
     marker.done(RegExpElementTypes.INTERSECTION);
-    return true;
   }
 
   private boolean parseClassdef(PsiBuilder builder) {
@@ -462,10 +443,6 @@ public class RegExpParser implements PsiParser {
     else if (type == RegExpTT.CLASS_BEGIN) {
       marker.drop();
       return parseClass(builder);
-    }
-    else if (type == RegExpTT.LBRACE && myCapabilities.contains(RegExpCapability.DANGLING_METACHARACTERS)) {
-      builder.advanceLexer();
-      marker.done(RegExpElementTypes.CHAR);
     }
     else {
       marker.drop();

@@ -94,7 +94,6 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     ourMap.put(RegExpTT.ESC_CTRL_CHARACTER, CHAR_CLASS);
     ourMap.put(RegExpTT.NAMED_CHARACTER, CHAR_CLASS);
     ourMap.put(RegExpTT.CATEGORY_SHORT_HAND, CHAR_CLASS);
-    ourMap.put(RegExpTT.CATEGORY_SHORT_HAND, CHAR_CLASS);
     ourMap.put(RegExpTT.RUBY_NAMED_GROUP_REF, CHAR_CLASS);
     ourMap.put(RegExpTT.RUBY_NAMED_GROUP_CALL, CHAR_CLASS);
     ourMap.put(RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF, CHAR_CLASS);

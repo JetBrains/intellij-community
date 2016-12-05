@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.console.PyCodeExecutor;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -59,7 +61,7 @@ public class PyExecuteSelectionAction extends AnAction {
       else {
         String line = getLineUnderCaret(editor);
         if (line != null) {
-          execute(e, line);
+          execute(e, line.trim());
           moveCaretDown(editor);
         }
       }
@@ -175,6 +177,15 @@ public class PyExecuteSelectionAction extends AnAction {
       .selectContentDescriptor(dataContext, project, consoles, "Select console to execute in", descriptor -> {
         if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
           consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
+          final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
+          if (toolWindow != null && !toolWindow.getToolWindow().isVisible()) {
+            toolWindow.getToolWindow().show(null);
+            ContentManager contentManager = toolWindow.getToolWindow().getContentManager();
+            Content content = contentManager.findContent(descriptor.getDisplayName());
+            if (content != null) {
+              contentManager.setSelectedContent(content);
+            }
+          }
         }
       });
   }
@@ -219,7 +230,7 @@ public class PyExecuteSelectionAction extends AnAction {
                                    Module context) {
     final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
-    if (toolWindow != null) {
+    if (toolWindow != null && toolWindow.getConsoleContentDescriptors().size() > 0) {
       toolWindow.activate(() -> {
         List<RunContentDescriptor> descs = toolWindow.getConsoleContentDescriptors();
 
@@ -237,6 +248,9 @@ public class PyExecuteSelectionAction extends AnAction {
         public void handleConsoleInitialized(LanguageConsoleView consoleView) {
           if (consoleView instanceof PyCodeExecutor) {
             consumer.consume((PyCodeExecutor)consoleView);
+            if (toolWindow != null) {
+              toolWindow.getToolWindow().show(null);
+            }
           }
         }
       });

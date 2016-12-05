@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -191,39 +192,6 @@ public class HgRefManager implements VcsLogRefManager {
     @Override
     public int hashCode() {
       return Objects.hash(myName, myIsBranch);
-    }
-  }
-
-  private static class SimpleRefGroup implements RefGroup {
-    @NotNull private final String myName;
-    @NotNull private final List<VcsRef> myRefs;
-
-    private SimpleRefGroup(@NotNull String name, @NotNull List<VcsRef> refs) {
-      myName = name;
-      myRefs = refs;
-    }
-
-    @Override
-    public boolean isExpanded() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    @NotNull
-    @Override
-    public List<VcsRef> getRefs() {
-      return myRefs;
-    }
-
-    @NotNull
-    @Override
-    public Color getBgColor() {
-      return myRefs.get(0).getType().getBackgroundColor();
     }
   }
 }
