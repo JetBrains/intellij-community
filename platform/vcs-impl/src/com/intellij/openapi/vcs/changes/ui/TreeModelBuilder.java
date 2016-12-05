@@ -46,10 +46,10 @@ public class TreeModelBuilder {
 
   private static final int UNVERSIONED_MAX_SIZE = 50;
 
-  @NotNull private final Project myProject;
-  private final boolean myShowFlatten;
-  @NotNull private final DefaultTreeModel myModel;
-  @NotNull private final ChangesBrowserNode myRoot;
+  @NotNull protected final Project myProject;
+  protected final boolean myShowFlatten;
+  @NotNull protected final DefaultTreeModel myModel;
+  @NotNull protected final ChangesBrowserNode myRoot;
   @NotNull private final Map<ChangesBrowserNode, ChangesGroupingPolicy> myGroupingPoliciesCache;
   @NotNull private final Map<ChangesBrowserNode, Map<String, ChangesBrowserNode>> myFoldersCache;
 
