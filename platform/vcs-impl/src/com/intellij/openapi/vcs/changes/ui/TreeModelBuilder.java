@@ -165,34 +165,17 @@ public class TreeModelBuilder {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     for (ChangeList list : changeLists) {
       List<Change> changes = ContainerUtil.sorted(list.getChanges(), PATH_LENGTH_COMPARATOR);
-      ChangesBrowserChangeListNode listNode = createChangeListNode(list, changes);
+      ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
+      ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
       myModel.insertNodeInto(listNode, myRoot, 0);
+
       for (int i = 0; i < changes.size(); i++) {
-        insertChangeNode(changes.get(i), listNode, createChangeListChild(revisionsCache, listNode, changes, i));
+        Change change = changes.get(i);
+        RemoteStatusChangeNodeDecorator decorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
+        insertChangeNode(change, listNode, createChangeNode(change, decorator));
       }
     }
     return this;
-  }
-
-  private ChangesBrowserChangeListNode createChangeListNode(@NotNull ChangeList list, List<Change> changes) {
-    final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
-    return new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
-  }
-
-  private ChangesBrowserNode createChangeListChild(RemoteRevisionsCache revisionsCache, ChangesBrowserChangeListNode node, List<Change> changes, int i) {
-    return createChangeNode(changes.get(i), new RemoteStatusChangeNodeDecorator(revisionsCache) {
-      @NotNull private final ChangeListRemoteState.Reporter myReporter =
-        new ChangeListRemoteState.Reporter(i, node.getChangeListRemoteState());
-
-      @Override
-      protected void reportState(boolean state) {
-        myReporter.report(state);
-      }
-
-      @Override
-      public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten1) {
-      }
-    });
   }
 
   protected ChangesBrowserNode createChangeNode(Change change, ChangeNodeDecorator decorator) {

@@ -60,7 +60,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       else if (myClManager.isInUpdate()) {
         appendUpdatingState(renderer);
       }
-      if (! myChangeListRemoteState.getState()) {
+      if (! myChangeListRemoteState.allUpToDate()) {
         renderer.append(spaceAndThinSpace());
         renderer.append(VcsBundle.message("changes.nodetitle.have.outdated.files"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
@@ -69,10 +69,6 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       renderer.append(getUserObject().getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       appendCount(renderer);
     }
-  }
-
-  public ChangeListRemoteState getChangeListRemoteState() {
-    return myChangeListRemoteState;
   }
 
   @Override
