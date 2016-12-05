@@ -15,14 +15,15 @@
  */
 package org.jetbrains.jps.javac.ast.api;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public interface JavacFileReferencesRegistrar {
+  void initialize();
 
-  boolean initialize();
+  boolean isEnabled();
 
   boolean onlyImports();
 
-  void registerFile(String filePath, Set<? extends JavacRef> refs, List<JavacDef> defs);
+  void registerFile(String filePath, Collection<JavacRef> refs, List<JavacDef> defs);
 }

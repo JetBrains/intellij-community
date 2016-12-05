@@ -84,9 +84,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitRegExpCharRange(RegExpCharRange range) {
     final RegExpCharRange.Endpoint from = range.getFrom();
     final RegExpCharRange.Endpoint to = range.getTo();
-    final boolean a = from instanceof RegExpChar;
-    final boolean b = to instanceof RegExpChar;
-    if (a && b) {
+    if (from instanceof RegExpChar && to instanceof RegExpChar) {
       final Character t = ((RegExpChar)to).getValue();
       final Character f = ((RegExpChar)from).getValue();
       if (t != null && f != null) {
@@ -99,8 +97,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         }
       }
     }
-    else if (a != b) {
-      myHolder.createErrorAnnotation(range, "Character class (e.g. '\\\\w') may not be used inside character range");
+    else if (to instanceof RegExpSimpleClass) {
+      myHolder.createErrorAnnotation(to, "Character class not allowed inside character range");
     }
     else if (from.getText().equals(to.getText())) {
       myHolder.createWarningAnnotation(range, "Redundant character range");
@@ -151,12 +149,20 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
-  private void checkForDuplicates(RegExpClassElement element, Set<Character> seen) {
+  private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
     if (element instanceof RegExpChar) {
       final RegExpChar regExpChar = (RegExpChar)element;
       final Character value = regExpChar.getValue();
       if (value != null && !seen.add(value)) {
-        myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' in character class");
+        myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' inside character class");
+      }
+    }
+    else if (element instanceof RegExpSimpleClass) {
+      final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
+      final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
+      if (!seen.add(kind)) {
+        myHolder.createWarningAnnotation(regExpSimpleClass, "Duplicate predefined character class '" + regExpSimpleClass.getText() +
+                                                            "' inside character class");
       }
     }
     else if (element instanceof RegExpClass) {

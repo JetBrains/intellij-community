@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -57,11 +58,48 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   // version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx
+  public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
   public static final boolean isWin2kOrNewer = isWindows && isOsVersionAtLeast("5.0");
   public static final boolean isWinXpOrNewer = isWindows && isOsVersionAtLeast("5.1");
   public static final boolean isWinVistaOrNewer = isWindows && isOsVersionAtLeast("6.0");
   public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
+
+  /**
+   * https://msdn.microsoft.com/en-us/commandline/wsl/about
+   */
+  private static final AtomicNullableLazyValue<File> ourWSLBashFile = new AtomicNullableLazyValue<File>() {
+    @Nullable
+    @Override
+    protected File compute() {
+      if (!isWin10OrNewer) {
+        return null;
+      }
+
+      String windir = System.getenv().get("windir");
+      if (StringUtil.isEmpty(windir)) {
+        return null;
+      }
+
+      return new File(windir + "\\System32\\bash.exe");
+    }
+  };
+
+  /**
+   * @return WSL bash file or null if unavailable
+   */
+  @Nullable
+  public static File getWSLBashFile() {
+    File bashFile = ourWSLBashFile.getValue();
+    return bashFile == null || !bashFile.exists() ? null : bashFile;
+  }
+
+  /**
+   * @return true if we are on Windows 10+ and have WSL installed
+   */
+  public static boolean hasWSL() {
+    return getWSLBashFile() != null;
+  }
 
   public static final boolean isXWindow = isUnix && !isMac;
   // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION

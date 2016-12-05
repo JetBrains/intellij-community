@@ -16,6 +16,7 @@
 package org.jetbrains.jps.javac.ast.api;
 
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.util.Convert;
 import org.jetbrains.annotations.NotNull;
 
 public interface JavacRef {
@@ -64,7 +65,7 @@ public interface JavacRef {
   class JavacClassImpl extends JavacRefBase implements JavacClass {
     private boolean myAnonymous;
 
-    public JavacClassImpl(byte[] name, long flags, boolean anonymous) {
+    public JavacClassImpl(boolean anonymous, long flags, byte[] name) {
       super(name, flags);
       myAnonymous = anonymous;
     }
@@ -78,13 +79,18 @@ public interface JavacRef {
     public boolean isAnonymous() {
       return myAnonymous;
     }
+
+    @Override
+    public String toString() {
+      return Convert.utf2string(getName());
+    }
   }
 
   class JavacMethodImpl extends JavacRefBase implements JavacMethod {
     private final byte[] myOwnerName;
     private final byte myParamCount;
 
-    public JavacMethodImpl(byte[] name, byte[] ownerName, byte paramCount, long flags) {
+    public JavacMethodImpl(byte[] ownerName, byte paramCount, long flags, byte[] name) {
       super(name, flags);
       myOwnerName = ownerName;
       myParamCount = paramCount;
@@ -99,12 +105,17 @@ public interface JavacRef {
     public byte[] getOwnerName() {
       return myOwnerName;
     }
+
+    @Override
+    public String toString() {
+      return Convert.utf2string(getOwnerName()) + "." + Convert.utf2string(getName()) + "(" + myParamCount + ")";
+    }
   }
 
   class JavacFieldImpl extends JavacRefBase implements JavacField {
     private final byte[] myOwnerName;
 
-    public JavacFieldImpl(byte[] name, byte[] ownerName, long flags) {
+    public JavacFieldImpl(byte[] ownerName, long flags, byte[] name) {
       super(name, flags);
       myOwnerName = ownerName;
     }
@@ -113,6 +124,11 @@ public interface JavacRef {
     @Override
     public byte[] getOwnerName() {
       return myOwnerName;
+    }
+
+    @Override
+    public String toString() {
+      return Convert.utf2string(getOwnerName()) + "." + Convert.utf2string(getName());
     }
   }
 

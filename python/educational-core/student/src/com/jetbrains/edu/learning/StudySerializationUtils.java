@@ -476,23 +476,26 @@ public class StudySerializationUtils {
       }
 
       private static JsonObject convertSubtaskInfosToMap(JsonObject stepOptionsJson) {
-        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
-          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
-          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-          for (JsonElement placeholder : placeholders) {
-            JsonObject placeholderObject = placeholder.getAsJsonObject();
-            JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
-            Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
-            for (JsonElement info : infos) {
-              JsonObject object = info.getAsJsonObject();
-              int index = object.getAsJsonPrimitive(INDEX).getAsInt();
-              objectsToInsert.put(index, object);
-            }
-            placeholderObject.remove(SUBTASK_INFOS);
-            JsonObject newInfos = new JsonObject();
-            placeholderObject.add(SUBTASK_INFOS, newInfos);
-            for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
-              newInfos.add(entry.getKey().toString(), entry.getValue());
+        final JsonArray files = stepOptionsJson.getAsJsonArray(FILES);
+        if (files != null) {
+          for (JsonElement taskFileElement : files) {
+            JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+            JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+            for (JsonElement placeholder : placeholders) {
+              JsonObject placeholderObject = placeholder.getAsJsonObject();
+              JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
+              Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
+              for (JsonElement info : infos) {
+                JsonObject object = info.getAsJsonObject();
+                int index = object.getAsJsonPrimitive(INDEX).getAsInt();
+                objectsToInsert.put(index, object);
+              }
+              placeholderObject.remove(SUBTASK_INFOS);
+              JsonObject newInfos = new JsonObject();
+              placeholderObject.add(SUBTASK_INFOS, newInfos);
+              for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
+                newInfos.add(entry.getKey().toString(), entry.getValue());
+              }
             }
           }
         }
@@ -501,14 +504,17 @@ public class StudySerializationUtils {
 
       private static JsonObject convertToSecondVersion(JsonObject stepOptionsJson) {
         Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
-          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
-          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-          for (JsonElement placeholder : placeholders) {
-            JsonObject placeholderObject = placeholder.getAsJsonObject();
-            convertToAbsoluteOffset(taskFileObject, placeholderObject);
-            convertMultipleHints(gson, placeholderObject);
-            convertToSubtaskInfo(placeholderObject);
+        final JsonArray files = stepOptionsJson.getAsJsonArray(FILES);
+        if (files != null) {
+          for (JsonElement taskFileElement : files) {
+            JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+            JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+            for (JsonElement placeholder : placeholders) {
+              JsonObject placeholderObject = placeholder.getAsJsonObject();
+              convertToAbsoluteOffset(taskFileObject, placeholderObject);
+              convertMultipleHints(gson, placeholderObject);
+              convertToSubtaskInfo(placeholderObject);
+            }
           }
         }
         return stepOptionsJson;

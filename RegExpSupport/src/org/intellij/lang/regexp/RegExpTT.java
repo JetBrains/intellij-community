@@ -135,22 +135,17 @@ public interface RegExpTT {
     IElementType RUBY_QUOTED_NAMED_GROUP_CALL = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_CALL");
 
     TokenSet CHARACTERS = TokenSet.create(CHARACTER,
-            ESC_CTRL_CHARACTER,
-            ESC_CHARACTER,
-            CTRL_CHARACTER,
-            CTRL,
-            UNICODE_CHAR,
-            HEX_CHAR, BAD_HEX_VALUE,
-            OCT_CHAR, BAD_OCT_VALUE,
-            REDUNDANT_ESCAPE,
-            MINUS,
-            StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN,
-            StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
-
-    TokenSet SIMPLE_CLASSES = TokenSet.create(DOT, CHAR_CLASS);
-
-    // caret is just a character in classes after the first position: [a^] matches "a" or "^"
-    TokenSet CHARACTERS2 = TokenSet.orSet(CHARACTERS, SIMPLE_CLASSES);
+                                          ESC_CTRL_CHARACTER,
+                                          ESC_CHARACTER,
+                                          CTRL_CHARACTER,
+                                          CTRL,
+                                          UNICODE_CHAR,
+                                          HEX_CHAR, BAD_HEX_VALUE,
+                                          OCT_CHAR, BAD_OCT_VALUE,
+                                          REDUNDANT_ESCAPE,
+                                          MINUS,
+                                          StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN,
+                                          StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
 
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 

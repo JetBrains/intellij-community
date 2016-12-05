@@ -15,34 +15,19 @@
  */
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.util.SmartList;
-import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
-import org.jetbrains.jps.service.JpsServiceManager;
+import com.intellij.util.Consumer;
+import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 import javax.tools.*;
-import java.util.List;
 
 /**
  * Code here should not depend on any javac private API located in tools.jar if no JavacFileReferencesRegistrar-s will be run.
  * A workaround to allow run standalone jps with improperly configured classloader without NoClassDefFoundError (e.g: IDEA-162877)
  */
 public class JavacReferencesCollector {
-  public static void installOn(JavaCompiler.CompilationTask task) {
-    List<JavacFileReferencesRegistrar> fullASTListeners = new SmartList<JavacFileReferencesRegistrar>();
-    List<JavacFileReferencesRegistrar> onlyImportsListeners = new SmartList<JavacFileReferencesRegistrar>();
-    for (JavacFileReferencesRegistrar listener : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
-      if (!listener.initialize()) {
-        continue;
-      }
-      (listener.onlyImports() ? onlyImportsListeners : fullASTListeners).add(listener);
-    }
-
-    final JavacFileReferencesRegistrar[] fullASTListenerArray = fullASTListeners.toArray(new JavacFileReferencesRegistrar[fullASTListeners.size()]);
-    final JavacFileReferencesRegistrar[] onlyImportsListenerArray = onlyImportsListeners.toArray(new JavacFileReferencesRegistrar[onlyImportsListeners.size()]);
-    if (fullASTListenerArray.length == 0 && onlyImportsListenerArray.length == 0) {
-      return;
-    }
-
-    JavacReferenceCollectorListener.installOn(task, fullASTListenerArray, onlyImportsListenerArray);
+  public static void installOn(JavaCompiler.CompilationTask task,
+                               boolean divideImportRefs,
+                               Consumer<JavacFileData> fileDataConsumer) {
+    JavacReferenceCollectorListener.installOn(task, divideImportRefs, fileDataConsumer);
   }
 }

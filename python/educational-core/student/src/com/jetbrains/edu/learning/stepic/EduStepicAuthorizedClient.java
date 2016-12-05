@@ -182,6 +182,7 @@ public class EduStepicAuthorizedClient {
     return stepicUser[0];
   }
 
+  @Nullable
   public static StepicUser login(@NotNull final String email, @NotNull final String password) {
     final List<NameValuePair> parameters = new ArrayList<>();
     if (password.isEmpty()) return null;
