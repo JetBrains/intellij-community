@@ -32,6 +32,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -253,7 +254,7 @@ public class LabelPainter implements ReferencePainter {
 
   @Override
   public boolean isLeftAligned() {
-    return false;
+    return Registry.is("vcs.log.labels.left.aligned");
   }
 
   @Override

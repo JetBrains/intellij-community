@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.ui.render;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.SimpleColoredComponent;
@@ -34,7 +33,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   @NotNull private final MyComponent myComponent;
   @NotNull private final MyComponent myTemplateComponent;
-  @Nullable private final ReferencePainter myTooltipPainter;
+  @NotNull private final ReferencePainter myTooltipPainter;
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
@@ -42,7 +41,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myLogData = logData;
     myGraphTable = table;
 
-    myTooltipPainter = isRedesignedLabels() ? new LabelPainter(myLogData) : null;
+    myTooltipPainter = new LabelPainter(myLogData);
     myComponent = new MyComponent(logData, painter, table);
     myTemplateComponent = new MyComponent(logData, painter, table);
   }
@@ -58,21 +57,23 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return myComponent;
   }
 
-  public static boolean isRedesignedLabels() {
-    return Registry.is("vcs.log.labels.redesign");
-  }
-
   @Nullable
   public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
-    if (myTooltipPainter == null) return null;
-
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       myTooltipPainter.customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground(),
                                         true/*counterintuitive, but true*/, getColumnWidth());
-      if (getReferencesWidth(row) >= getColumnWidth() - point.getX()) {
-        return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
+      if (myTooltipPainter.isLeftAligned()) {
+        double distance = point.getX() - myTemplateComponent.getGraphWidth(cell.getPrintElements());
+        if (distance > 0 && distance <= getReferencesWidth(row, cell)) {
+          return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
+        }
+      }
+      else {
+        if (getColumnWidth() - point.getX() <= getReferencesWidth(row, cell)) {
+          return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
+        }
       }
     }
     return null;
@@ -83,7 +84,10 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private int getReferencesWidth(int row) {
-    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    return getReferencesWidth(row, getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN)));
+  }
+
+  private int getReferencesWidth(int row, @NotNull GraphCommitCell cell) {
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
@@ -122,7 +126,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = isRedesignedLabels() ? new LabelPainter(myLogData) : new RectangleReferencePainter(myLogData);
+      myReferencePainter = new LabelPainter(myLogData);
 
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
       myFont = RectanglePainter.getFont();
@@ -173,7 +177,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
                                             0 /*left aligned painter does not use available width*/);
 
-        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width);
+        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
         appendText(cell, style);
       }
       else {
@@ -208,6 +212,23 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     @NotNull
     private PaintInfo getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
+      double maxIndex = getMaxGraphElementIndex(printElements);
+      BufferedImage image = UIUtil.createImage((int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
+                                               myGraphTable.getRowHeight(),
+                                               BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2 = image.createGraphics();
+      myPainter.draw(g2, printElements);
+
+      int width = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
+      return new PaintInfo(image, width);
+    }
+
+    private int getGraphWidth(@NotNull Collection<? extends PrintElement> printElements) {
+      double maxIndex = getMaxGraphElementIndex(printElements);
+      return (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
+    }
+
+    private double getMaxGraphElementIndex(@NotNull Collection<? extends PrintElement> printElements) {
       double maxIndex = 0;
       for (PrintElement printElement : printElements) {
         maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());
@@ -219,14 +240,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       maxIndex++;
 
       maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, myGraphTable.getVisibleGraph().getRecommendedWidth()));
-      BufferedImage image = UIUtil.createImage((int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
-                                               myGraphTable.getRowHeight(),
-                                               BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g2 = image.createGraphics();
-      myPainter.draw(g2, printElements);
-
-      int width = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
-      return new PaintInfo(image, width);
+      return maxIndex;
     }
 
     @NotNull
