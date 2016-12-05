@@ -1,7 +1,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.testFramework.InMemoryFsRule
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write

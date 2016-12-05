@@ -19,7 +19,7 @@ import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.testFramework.InMemoryFsRule
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write

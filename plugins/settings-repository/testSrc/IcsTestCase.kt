@@ -15,7 +15,7 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.testFramework.InMemoryFsRule
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.io.writeChild
 import org.eclipse.jgit.lib.Repository

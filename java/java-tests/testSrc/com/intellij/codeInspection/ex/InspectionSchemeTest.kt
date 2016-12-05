@@ -17,7 +17,7 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.InMemoryFsRule
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.runInInitMode
 import com.intellij.util.io.readText
