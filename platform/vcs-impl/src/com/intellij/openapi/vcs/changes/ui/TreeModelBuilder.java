@@ -168,10 +168,10 @@ public class TreeModelBuilder {
                               @Nullable List<VirtualFile> lockedFolders,
                               @Nullable Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     setChangeLists(changeLists);
-    setVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
+    setModifiedWithoutEditing(modifiedWithoutEditing);
     setSwitchedRoots(switchedRoots);
     setSwitchedFiles(switchedFiles);
-    setVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
+    setLockedFolders(lockedFolders);
     setLogicallyLockedFiles(logicallyLockedFiles);
     setLocallyDeletedPaths(locallyDeletedFiles);
     return this;
@@ -226,7 +226,17 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setVirtualFiles(@Nullable Collection<VirtualFile> files, @Nullable Object tag) {
+  public TreeModelBuilder setLockedFolders(@Nullable List<VirtualFile> lockedFolders) {
+    return setVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
+  }
+
+  @NotNull
+  public TreeModelBuilder setModifiedWithoutEditing(@NotNull List<VirtualFile> modifiedWithoutEditing) {
+    return setVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
+  }
+
+  @NotNull
+  private TreeModelBuilder setVirtualFiles(@Nullable Collection<VirtualFile> files, @Nullable Object tag) {
     if (ContainerUtil.isEmpty(files)) return this;
     insertFilesIntoNode(files, createNode(tag));
     return this;
