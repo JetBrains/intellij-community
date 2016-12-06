@@ -119,23 +119,23 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testFileRoot() {
-    val file = tempDir.newFile("test.txt")
-    refresh(file)
+    val files = arrayOf(tempDir.newFile("test1.txt"), tempDir.newFile("test2.txt"))
+    files.forEach { refresh(it) }
+    files.forEach { watch(it, false) }
 
-    watch(file, false)
-    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ file.delete() }, mapOf(file to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
+    assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
+    assertEvents({ files.forEach { it.delete() } }, files.map { it to 'D' }.toMap())
+    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
   }
 
   @Test fun testFileRootRecursive() {
-    val file = tempDir.newFile("test.txt")
-    refresh(file)
+    val files = arrayOf(tempDir.newFile("test1.txt"), tempDir.newFile("test2.txt"))
+    files.forEach { refresh(it) }
+    files.forEach { watch(it, true) }
 
-    watch(file, true)
-    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ file.delete() }, mapOf(file to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
+    assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
+    assertEvents({ files.forEach { it.delete() } }, files.map { it to 'D' }.toMap())
+    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
   }
 
   @Test fun testNonCanonicallyNamedFileRoot() {
