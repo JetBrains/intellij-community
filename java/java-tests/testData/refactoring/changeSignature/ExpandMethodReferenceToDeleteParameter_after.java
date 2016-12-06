@@ -7,7 +7,7 @@ interface P {
 
 class A {
   public static void print() {
-    List<Integer> someNumbers = A.returnAllNumbers((a) -> alwaysTrue());
+    List<Integer> someNumbers = A.returnAllNumbers(a -> alwaysTrue());
   }
 
   private static List<Integer> returnAllNumbers(P predicate) {

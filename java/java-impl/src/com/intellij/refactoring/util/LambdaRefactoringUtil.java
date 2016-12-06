@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
@@ -77,19 +78,20 @@ public class LambdaRefactoringUtil {
     final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
 
     final StringBuilder buf = new StringBuilder("(");
-    buf.append(GenericsUtil.getVariableTypeByExpressionType(functionalInterfaceType).getCanonicalText()).append(")(");
+    buf.append(GenericsUtil.getVariableTypeByExpressionType(functionalInterfaceType).getCanonicalText()).append(")");
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 
     final Map<PsiParameter, String> map = new HashMap<>();
     final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(referenceExpression.getProject());
-    final String paramsString = StringUtil.join(parameters, parameter -> {
+    Function<PsiParameter, String> paramPresentationFunction = parameter -> {
       final int parameterIndex = parameterList.getParameterIndex(parameter);
       String baseName;
       if (isReceiver && parameterIndex == 0) {
         final SuggestedNameInfo
-          nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
+          nameInfo =
+          codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
         baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
       }
       else {
@@ -112,9 +114,14 @@ public class LambdaRefactoringUtil {
         return parameterName;
       }
       return "";
-    }, ", ");
-    buf.append(paramsString);
-    buf.append(") -> ");
+    };
+    if (parameters.length == 1) {
+      buf.append(paramPresentationFunction.fun(parameters[0]));
+    }
+    else {
+      buf.append("(").append(StringUtil.join(parameters, paramPresentationFunction, ", ")).append(")");
+    }
+    buf.append(" -> ");
 
 
     final JavaResolveResult resolveResult = referenceExpression.advancedResolve(false);

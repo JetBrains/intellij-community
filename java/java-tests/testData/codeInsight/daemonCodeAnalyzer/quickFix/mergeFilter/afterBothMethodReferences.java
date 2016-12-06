@@ -5,6 +5,6 @@ import java.util.Objects;
 
 public class Main {
   void test(List<String> list) {
-    list.stream().filter((o) -> Objects.nonNull(o) && o.isEmpty()).forEach(System.out::println);
+    list.stream().filter(o -> Objects.nonNull(o) && o.isEmpty()).forEach(System.out::println);
   }
 }
