@@ -124,15 +124,15 @@ class IdePluginClient(val project : Project) :
     private fun connectWithToken(lifetime : Lifetime, token: String) {
         val clientLocal = CircletClient("ws://localhost:8084/api/v1/connect", token)
         client.value = clientLocal
-        clientLocal.profile.isMyProfileReady()
+        clientLocal.services.profile.isMyProfileReady()
             .flatMap {
                 if (!it) {
-                    clientLocal.profile.createMyProfile("Hey! ${Random.nextUID()}")
+                    clientLocal.services.profile.createMyProfile("Hey! ${Random.nextUID()}")
                 } else {
-                    clientLocal.profile.getMyProfile().map {
+                    clientLocal.services.profile.getMyUid().map {
                         log.debug { "My Profile: $it" }
                     }
-                    clientLocal.profile.editMyName("Hey! ${Random.nextUID()}")
+                    clientLocal.services.profile.editName("Hey! ${Random.nextUID()}")
                 }
             }
             .then {
