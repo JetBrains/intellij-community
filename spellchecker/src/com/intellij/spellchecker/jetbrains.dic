@@ -369,6 +369,7 @@ namespaces
 nchar
 nclob
 ndbcluster
+netflix
 nmtoken
 noarchivelog
 noaudit
