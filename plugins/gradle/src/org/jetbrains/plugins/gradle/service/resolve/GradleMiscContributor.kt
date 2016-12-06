@@ -18,12 +18,14 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -65,13 +67,22 @@ class GradleMiscContributor : GradleMethodContextContributor {
 //      return DelegatesToInfo(TypesUtil.createType("org.gradle.api.publish.PublicationContainer", closure), Closure.DELEGATE_FIRST)
 //    }
 
+    val parent = closure.parent
     if (domainCollectionWithTypeClosure.accepts(closure)) {
-      val parent = closure.parent
       if (parent is GrMethodCallExpression) {
         val psiElement = parent.argumentList.allArguments.singleOrNull()?.reference?.resolve()
         if (psiElement is PsiClass) {
           return DelegatesToInfo(TypesUtil.createType(psiElement.qualifiedName, closure), Closure.DELEGATE_FIRST)
         }
+      }
+    }
+
+    // resolve closure type to delegate based on return method type, e.g.
+    // FlatDirectoryArtifactRepository flatDir(Closure configureClosure)
+    if(parent is GrMethodCall) {
+      val psiType = parent.invokedExpression.type
+      if(psiType != null && psiType != PsiType.VOID) {
+        return DelegatesToInfo(psiType, Closure.DELEGATE_FIRST)
       }
     }
     return null
