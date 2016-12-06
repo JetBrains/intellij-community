@@ -845,8 +845,13 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
           module("observable")
           module("designer")
           module("sdk-updates")
+          module("wizard")
         }
         resources("android")
+        jar("adt-ui.jar") {
+          module("adt-ui")
+          module("adt-ui-model")
+        }
 
         fileset(file: "${home}/../../prebuilts/studio/layoutlib/data/layoutlib.jar")
         fileset(dir: "${androidHome}/android/lib") {
@@ -858,9 +863,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         fileset(dir: "${home}/../../out/studio/runtime")
         jar("android-common.jar") {
           module("android-common")
-        }
-        jar("adt-ui.jar") {
-          module("adt-ui")
         }
         jar("repository.jar") {
           module("repository")
