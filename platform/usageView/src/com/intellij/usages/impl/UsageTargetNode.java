@@ -19,33 +19,27 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultTreeModel;
-
 /**
  * @author max
  */
 class UsageTargetNode extends Node {
-  private final UsageTarget myTarget;
-
-  UsageTargetNode(@NotNull UsageTarget target, @NotNull DefaultTreeModel model) {
-    super(model);
-    myTarget = target;
+  UsageTargetNode(@NotNull UsageTarget target) {
     setUserObject(target);
   }
 
   @Override
   public String tree2string(int indent, String lineSeparator) {
-    return myTarget.getName();
+    return getTarget().getName();
   }
 
   @Override
   protected boolean isDataValid() {
-    return myTarget.isValid();
+    return getTarget().isValid();
   }
 
   @Override
   protected boolean isDataReadOnly() {
-    return myTarget.isReadOnly();
+    return getTarget().isReadOnly();
   }
 
   @Override
@@ -55,17 +49,17 @@ class UsageTargetNode extends Node {
 
   @Override
   protected String getText(@NotNull final UsageView view) {
-    return myTarget.getPresentation().getPresentableText();
+    return getTarget().getPresentation().getPresentableText();
   }
 
   @NotNull
   public UsageTarget getTarget() {
-    return myTarget;
+    return (UsageTarget)getUserObject();
   }
 
   @Override
   protected void updateNotify() {
     super.updateNotify();
-    myTarget.update();
+    getTarget().update();
   }
 }
