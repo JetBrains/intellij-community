@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -95,34 +94,8 @@ public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalIn
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().prepareFileForWrite(psiElement.getContainingFile())) return;
-
-      PsiElement comma = findNearestComma(psiElement);
-      if (comma != null) {
-        comma.delete();
-      }
-      else {
-        PsiKeyword keyword = PsiTreeUtil.getPrevSiblingOfType(psiElement, PsiKeyword.class);
-        if (keyword != null && keyword.getTokenType() == JavaTokenType.TO_KEYWORD) {
-          keyword.delete();
-        }
-      }
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
       psiElement.delete();
-    }
-
-    @Nullable
-    private static PsiElement findNearestComma(PsiElement psiElement) {
-      for (PsiElement next = psiElement.getNextSibling(); next != null; next = next.getNextSibling()) {
-        if (next instanceof PsiJavaToken && ((PsiJavaToken)next).getTokenType() == JavaTokenType.COMMA) {
-          return next;
-        }
-      }
-      for (PsiElement prev = psiElement.getPrevSibling(); prev != null; prev = prev.getPrevSibling()) {
-        if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.COMMA) {
-          return prev;
-        }
-      }
-      return null;
     }
   }
 }

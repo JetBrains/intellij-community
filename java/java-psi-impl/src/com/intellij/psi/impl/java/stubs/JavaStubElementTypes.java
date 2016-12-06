@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.ExportsElement;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -40,7 +41,14 @@ public interface JavaStubElementTypes {
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
   JavaModuleElementType MODULE = new JavaModuleElementType();
   JavaRequiresStatementElementType REQUIRES_STATEMENT = new JavaRequiresStatementElementType();
-  JavaExportsStatementElementType EXPORTS_STATEMENT = new JavaExportsStatementElementType();
+
+  JavaExportsStatementElementType EXPORTS_STATEMENT = new JavaExportsStatementElementType() {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ExportsElement();
+    }
+  };
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
     @NotNull
