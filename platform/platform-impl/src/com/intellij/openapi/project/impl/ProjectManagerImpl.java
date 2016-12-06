@@ -31,7 +31,10 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -135,7 +138,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   public static int TEST_PROJECTS_CREATED;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = true;
-  private static final int MAX_LEAKY_PROJECTS = 42;
+  private static final int MAX_LEAKY_PROJECTS = 5;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Nullable
