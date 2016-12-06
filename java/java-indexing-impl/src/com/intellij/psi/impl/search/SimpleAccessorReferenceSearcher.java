@@ -15,14 +15,16 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
@@ -53,10 +55,6 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
       }
 
       SearchScope propScope = scope.intersectWith(method.getUseScope()).intersectWith(additional);
-      if (propScope instanceof GlobalSearchScope) {
-        // optimisation: java method accessors can be referenced by simple property name from non-java only
-        propScope = GlobalSearchScope.removeFileTypesFromScope((GlobalSearchScope)propScope, JavaFileType.INSTANCE);
-      }
       collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, method);
     }
   }

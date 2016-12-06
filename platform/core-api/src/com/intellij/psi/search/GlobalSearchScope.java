@@ -673,60 +673,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static GlobalSearchScope removeFileTypesFromScope(@NotNull GlobalSearchScope scope, @NotNull FileType... fileTypesToRemove) {
-    if (scope == EMPTY_SCOPE) {
-      return EMPTY_SCOPE;
-    }
-    if (fileTypesToRemove.length == 0) throw new IllegalArgumentException("empty fileTypes");
-    return new FileTypeRemovedScope(scope, fileTypesToRemove);
-  }
-
-  private static class FileTypeRemovedScope extends DelegatingGlobalSearchScope {
-    private final FileType[] myFileTypesToRemove;
-
-    private FileTypeRemovedScope(@NotNull GlobalSearchScope scope, @NotNull FileType[] fileTypesToRemove) {
-      super(scope);
-      myFileTypesToRemove = fileTypesToRemove;
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      if (!super.contains(file)) return false;
-
-      final FileType fileType = file.getFileType();
-      for (FileType otherFileType : myFileTypesToRemove) {
-        if (fileType.equals(otherFileType)) return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof FileTypeRemovedScope)) return false;
-      if (!super.equals(o)) return false;
-
-      FileTypeRemovedScope that = (FileTypeRemovedScope)o;
-
-      return Arrays.equals(myFileTypesToRemove, that.myFileTypesToRemove);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + Arrays.hashCode(myFileTypesToRemove);
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "(removed file types: " + Arrays.asList(myFileTypesToRemove) + " from " + myBaseScope +  ")";
-    }
-  }
-
   private static class EmptyScope extends GlobalSearchScope {
     @Override
     public boolean contains(@NotNull VirtualFile file) {
