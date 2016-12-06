@@ -62,7 +62,7 @@ private class JavaSoftKeywordHighlightingVisitor(private val results: MutableLis
   JavaRecursiveElementVisitor() {
 
   override fun visitKeyword(keyword: PsiKeyword) {
-    if (JavaLexer.isSoftKeyword(keyword.text, level)) {
+    if (JavaLexer.isSoftKeyword(keyword.node.chars, level)) {
       val info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create()
       if (info != null) {
         results += info
