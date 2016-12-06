@@ -165,7 +165,9 @@ class CompilerReferenceReader {
         }
         myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
           for (LightRef child : children) {
-            q.addLast((LightRef.LightClassHierarchyElementDef) child);
+            if (child instanceof LightRef.LightClassHierarchyElementDef) {
+              q.addLast((LightRef.LightClassHierarchyElementDef) child);
+            }
           }
           return true;
         });
