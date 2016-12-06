@@ -451,7 +451,7 @@ public class EditorActionUtil {
     int logLineEndOffset = document.getLineEndOffset(logLine);
     LogicalPosition logLineStart = editor.offsetToLogicalPosition(logLineStartOffset);
     VisualPosition visLineStart = editor.logicalToVisualPosition(logLineStart);
-    boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
+    boolean newRendering = editor instanceof EditorImpl;
 
     boolean softWrapIntroducedLine = visLineStart.line != visualLineNumber;
     if (!softWrapIntroducedLine) {
@@ -625,7 +625,7 @@ public class EditorActionUtil {
       caretModel.moveToVisualPosition(visualEndOfLineWithCaret);
     }
     else {
-      if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+      if (editor instanceof EditorImpl) {
         caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(newOffset).leanForward(true));
       }
       else {
@@ -765,7 +765,7 @@ public class EditorActionUtil {
       }
     }
 
-    if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+    if (editor instanceof EditorImpl) {
       int boundaryOffset = ((EditorImpl)editor).findNearestDirectionBoundary(offset, false);
       if (boundaryOffset >= 0) {
         newOffset = Math.max(boundaryOffset, newOffset);

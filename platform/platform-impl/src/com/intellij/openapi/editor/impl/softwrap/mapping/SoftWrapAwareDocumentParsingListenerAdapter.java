@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.editor.FoldRegion;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,34 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * @since 11/23/11 7:04 PM
  */
 public abstract class SoftWrapAwareDocumentParsingListenerAdapter implements SoftWrapAwareDocumentParsingListener {
-  @Override
-  public void onVisualLineStart(@NotNull EditorPosition position) {
-  }
-
-  @Override
-  public void onVisualLineEnd(@NotNull EditorPosition position) {
-  }
-
-  @Override
-  public void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int collapsedFoldingWidthInColumns, int visualLine) {
-  }
-
-  @Override
-  public void onTabulation(@NotNull EditorPosition position, int widthInColumns) {
-  }
-
-  @Override
-  public void beforeSoftWrapLineFeed(@NotNull EditorPosition position) {
-  }
-
-  @Override
-  public void afterSoftWrapLineFeed(@NotNull EditorPosition position) {
-  }
-
-  @Override
-  public void revertToOffset(int offset, int visualLine) {
-  }
-
   @Override
   public void onCacheUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
   }

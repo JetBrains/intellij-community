@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.registry.Registry;
 
 class MoveCaretLeftOrRightHandler extends EditorActionHandler {
   enum Direction {LEFT, RIGHT}
@@ -49,22 +48,11 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
 
       if (start <= caretOffset && end >= caretOffset) { // See IDEADEV-36957
 
-        VisualPosition targetPosition = null;
-        if (Registry.is("editor.new.rendering")) {
-          targetPosition = myDirection == Direction.RIGHT  ? caret.getSelectionEndPosition() : caret.getSelectionStartPosition();
-        }
-        else if (caretModel.supportsMultipleCarets() && editor.isColumnMode()) {
-          targetPosition = myDirection == Direction.RIGHT ?
-                           selectionModel.getSelectionEndPosition() : selectionModel.getSelectionStartPosition();
-        }
+        VisualPosition targetPosition = myDirection == Direction.RIGHT ? caret.getSelectionEndPosition()
+                                                                       : caret.getSelectionStartPosition();
 
         selectionModel.removeSelection();
-        if (targetPosition != null) {
-          caretModel.moveToVisualPosition(targetPosition);
-        }
-        else {
-          caretModel.moveToOffset(myDirection == Direction.RIGHT ^ caret.isAtRtlLocation() ? end : start);
-        }
+        caretModel.moveToVisualPosition(targetPosition);
         if (caret == editor.getCaretModel().getPrimaryCaret()) {
           scrollingModel.scrollToCaret(ScrollType.RELATIVE);
         }

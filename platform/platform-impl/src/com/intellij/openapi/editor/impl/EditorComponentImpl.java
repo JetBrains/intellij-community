@@ -236,17 +236,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  @Override
-  public void revalidate() {
-    // Null-check necessary because JTextView constructor invokes overridden method (updateUI, which calls revalidate)
-    // before our own constructor has had a chance to run
-    //noinspection ConstantConditions
-    if (myEditor != null) {
-      myEditor.resetPaintersWidth();
-    }
-    super.revalidate();
-  }
-
   public void repaintEditorComponent() {
     repaint();
   }

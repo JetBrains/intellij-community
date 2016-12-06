@@ -260,7 +260,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       if (!myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
         LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber, newLeansRight));
         int offset = myEditor.logicalPositionToOffset(log);
-        if (offset >= document.getTextLength() && (!myEditor.myUseNewRendering || columnShift == 0)) {
+        if (offset >= document.getTextLength() && columnShift == 0) {
           int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength(), true, false).column;
           // We want to move caret to the last column if if it's located at the last line and 'Down' is pressed.
           if (lastOffsetColumn > newColumnNumber) {
@@ -508,8 +508,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
-    if (myEditor.myUseNewRendering ? !oldVisualPosition.equals(myVisibleCaret) : 
-        !oldCaretPosition.toVisualPosition().equals(myLogicalCaret.toVisualPosition())) {
+    if (!oldVisualPosition.equals(myVisibleCaret)) {
       CaretEvent event = new CaretEvent(myEditor, this, oldCaretPosition, myLogicalCaret);
       if (fireListeners) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);
@@ -590,14 +589,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     if (!editorSettings.isVirtualSpace()) {
       int lineEndColumn = EditorUtil.getLastVisualLineColumnNumber(myEditor, line);
-      if (column > lineEndColumn && (!myEditor.myUseNewRendering || !myEditor.getSoftWrapModel().isInsideSoftWrap(pos))) {
+      if (column > lineEndColumn && !myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
         column = lineEndColumn;
         leanRight = true;
-      }
-
-      if (!myEditor.myUseNewRendering && column < 0 && line > 0) {
-        line--;
-        column = EditorUtil.getLastVisualLineColumnNumber(myEditor, line);
       }
     }
 
@@ -724,15 +718,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     // There is a possible case that active logical line is represented on multiple lines due to soft wraps processing.
     // We want to highlight those visual lines as 'active' then, so, we calculate 'y' position for the logical line start
     // and height in accordance with the number of occupied visual lines.
-    int y;
-    if (myEditor.myUseNewRendering) {
-      int visualLine = myEditor.offsetToVisualLine(document.getLineStartOffset(logicalLine));
-      y = myEditor.visibleLineToY(visualLine);
-    }
-    else {
-      VisualPosition visualPosition = myEditor.offsetToVisualPosition(document.getLineStartOffset(logicalLine));
-      y = myEditor.visualPositionToXY(visualPosition).y;
-    }
+    int visualLine = myEditor.offsetToVisualLine(document.getLineStartOffset(logicalLine));
+    int y = myEditor.visibleLineToY(visualLine);
     int lineHeight = myEditor.getLineHeight();
     int height = lineHeight;
     List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
@@ -1391,12 +1378,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public boolean isAtRtlLocation() {
-    return myEditor.myUseNewRendering && myEditor.myView.isRtlLocation(getVisualPosition());
+    return myEditor.myView.isRtlLocation(getVisualPosition());
   }
 
   @Override
   public boolean isAtBidiRunBoundary() {
-    return myEditor.myUseNewRendering && myEditor.myView.isAtBidiRunBoundary(getVisualPosition());
+    return myEditor.myView.isAtBidiRunBoundary(getVisualPosition());
   }
 
   @NotNull

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -284,7 +285,7 @@ class ImmediatePainter {
                                        final TextAttributes attributes,
                                        final List<RangeHighlighterEx> highlighters) {
     if (highlighters.size() > 1) {
-      ContainerUtil.quickSort(highlighters, com.intellij.openapi.editor.impl.view.IterationState.BY_LAYER_THEN_ATTRIBUTES);
+      ContainerUtil.quickSort(highlighters, IterationState.BY_LAYER_THEN_ATTRIBUTES);
     }
 
     TextAttributes syntax = attributes;

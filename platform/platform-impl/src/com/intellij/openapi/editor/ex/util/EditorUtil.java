@@ -76,7 +76,7 @@ public final class EditorUtil {
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
-    if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+    if (editor instanceof EditorImpl) {
       LogicalPosition lineEndPosition = editor.visualToLogicalPosition(new VisualPosition(line, Integer.MAX_VALUE));
       int lineEndOffset = editor.logicalPositionToOffset(lineEndPosition);
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
@@ -171,15 +171,9 @@ public final class EditorUtil {
       return result;
     }
 
-    CharSequence editorInfo;
-    if (editor instanceof EditorImpl) {
-      editorInfo = ((EditorImpl)editor).dumpState();
-    }
-    else {
-      editorInfo = "editor's class: " + editor.getClass()
-                   + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
-                   + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
-    }
+    CharSequence editorInfo = "editor's class: " + editor.getClass()
+                              + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
+                              + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
     LogMessageEx.error(LOG, "Can't calculate last visual column", String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
       + "the target logical line: %s. Editor info: %s",
@@ -279,30 +273,23 @@ public final class EditorUtil {
     // if tab size is four and current column is one etc. So, first of all we check if there are tabulation symbols at the target
     // text fragment.
     boolean useOptimization = true;
-    boolean hasTabs;
-    if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
-      hasTabs = false;
-      useOptimization = true;
-    }
-    else {
-      hasTabs = false;
-      int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
-      boolean hasNonTabs = false;
-      for (int i = start; i < scanEndOffset; i++) {
-        char c = text.charAt(i);
-        if (debugBuffer != null) {
-          debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
+    boolean hasTabs = false;
+    int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
+    boolean hasNonTabs = false;
+    for (int i = start; i < scanEndOffset; i++) {
+      char c = text.charAt(i);
+      if (debugBuffer != null) {
+        debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
+      }
+      if (c == '\t') {
+        hasTabs = true;
+        if (hasNonTabs) {
+          useOptimization = false;
+          break;
         }
-        if (c == '\t') {
-          hasTabs = true;
-          if (hasNonTabs) {
-            useOptimization = false;
-            break;
-          }
-        }
-        else {
-          hasNonTabs = true;
-        }
+      }
+      else {
+        hasNonTabs = true;
       }
     }
 
@@ -437,23 +424,17 @@ public final class EditorUtil {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
       useOptimization = softWrap == null;
     }
-    boolean hasTabs = true;
     if (useOptimization) {
-      if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
-        hasTabs = false;
-      }
-      else {
-        boolean hasNonTabs = false;
-        for (int i = start; i < offset; i++) {
-          if (text.charAt(i) == '\t') {
-            if (hasNonTabs) {
-              useOptimization = false;
-              break;
-            }
+      boolean hasNonTabs = false;
+      for (int i = start; i < offset; i++) {
+        if (text.charAt(i) == '\t') {
+          if (hasNonTabs) {
+            useOptimization = false;
+            break;
           }
-          else {
-            hasNonTabs = true;
-          }
+        }
+        else {
+          hasNonTabs = true;
         }
       }
     }
@@ -476,12 +457,10 @@ public final class EditorUtil {
     }
 
     int shift = 0;
-    if (hasTabs) {
-      for (int i = start; i < offset; i++) {
-        char c = text.charAt(i);
-        if (c == '\t') {
-          shift += getTabLength(i + shift - start, tabSize) - 1;
-        }
+    for (int i = start; i < offset; i++) {
+      char c = text.charAt(i);
+      if (c == '\t') {
+        shift += getTabLength(i + shift - start, tabSize) - 1;
       }
     }
     return offset - start + shift;

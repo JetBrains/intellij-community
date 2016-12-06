@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -322,23 +323,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
     Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
     int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
-    if (myEditor.myUseNewRendering) {
-      com.intellij.openapi.editor.impl.view.IterationState state =
-        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset,
-                                                                 null, true, false, true, false);
-      while (!state.atEnd()) {
-        drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
-                                     defaultBackgroundColor, defaultForegroundColor, startX);
-        state.advance();
-      }
-    }
-    else {
-      IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
-      while (!state.atEnd()) {
-        drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
-                                     defaultBackgroundColor, defaultForegroundColor, startX);
-        state.advance();
-      }
+    IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, null, true, false, true, false);
+    while (!state.atEnd()) {
+      drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
+                                   defaultBackgroundColor, defaultForegroundColor, startX);
+      state.advance();
     }
   }
 

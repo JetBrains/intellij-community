@@ -141,13 +141,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   public void scrollToCaret(@NotNull ScrollType scrollType) {
     assertIsDispatchThread();
     myEditor.validateSize();
-    if (myEditor.myUseNewRendering) {
-      AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.getCaretModel().getVisualPosition(), scrollType));
-    }
-    else {
-      LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
-      scrollTo(caretPosition, scrollType);
-    }
+    AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.getCaretModel().getVisualPosition(), scrollType));
   }
 
   private void scrollTo(@NotNull VisualPosition pos, @NotNull ScrollType scrollType) {

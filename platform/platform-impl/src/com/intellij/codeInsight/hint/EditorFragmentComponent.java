@@ -60,7 +60,7 @@ public class EditorFragmentComponent extends JPanel {
   private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
+    boolean newRendering = editor instanceof EditorImpl;
     int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
     final int textImageWidth = Math.min(
       editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,

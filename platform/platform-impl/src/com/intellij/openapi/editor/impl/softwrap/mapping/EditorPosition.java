@@ -52,13 +52,6 @@ class EditorPosition implements Cloneable {
   }
 
   EditorPosition(@NotNull LogicalPosition logical,
-                 int offset,
-                 @NotNull Editor editor)
-  {
-    this(logical, logical.toVisualPosition(), offset, editor);
-  }
-
-  EditorPosition(@NotNull LogicalPosition logical,
                  @NotNull VisualPosition visual,
                  int offset,
                  @NotNull Editor editor)
@@ -76,34 +69,6 @@ class EditorPosition implements Cloneable {
     visualColumn = visual.column;
 
     this.offset = offset;
-  }
-
-  @NotNull
-  public LogicalPosition buildLogicalPosition() {
-    return new LogicalPosition(
-      logicalLine, logicalColumn, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumnDiff, foldedLines, foldingColumnDiff
-    );
-  }
-
-  @NotNull
-  public VisualPosition buildVisualPosition() {
-    return new VisualPosition(visualLine, visualColumn);
-  }
-
-  /**
-   * Asks current position to change its state assuming that it should point to the start of the next visual line.
-   */
-  public void onNewLineSoftWrapAware() {
-    if (myEditor.getSoftWrapModel().getSoftWrap(offset) == null) {
-      onNewLine();
-      return;
-    }
-    
-    softWrapLinesCurrent++;
-    softWrapColumnDiff = -logicalColumn - foldingColumnDiff;
-    visualLine++;
-    visualColumn = 0;
-    x = 0;
   }
 
   public void onNewLine() {

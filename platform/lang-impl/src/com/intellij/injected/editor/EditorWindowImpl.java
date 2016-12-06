@@ -116,7 +116,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myMarkupModelDelegate = new MarkupModelWindow(myDelegate.getMarkupModel(), myDocumentWindow);
     myDocumentMarkupModelDelegate = new MarkupModelWindow(myDelegate.getFilteredDocumentMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
-    mySoftWrapModel = new SoftWrapModelWindow(this);
+    mySoftWrapModel = new SoftWrapModelWindow();
     myInlayModel = new InlayModelWindow();
   }
 

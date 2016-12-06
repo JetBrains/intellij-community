@@ -17,12 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.MockFontLayoutService;
@@ -36,8 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -126,115 +119,6 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
         foldRegion.setExpanded(false);
       }
     });
-  }
-
-  /**
-   * Setups document of the {@link #getEditor() current editor} according to the given text that is expected to contain
-   * information about document lines obtained from the {@link DocumentImpl#dumpState()}. 
-   * 
-   * @param data  string representation of the target document's lines
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  protected static void setupDocument(@NotNull String data) {
-    Scanner scanner = new Scanner(data);
-    Pattern pattern = Pattern.compile("(\\d+)\\s*:\\s*(\\d+)\\s*-\\s*(\\d+)");
-    StringBuilder buffer = new StringBuilder();
-    while (scanner.findInLine(pattern) != null) {
-      final MatchResult match = scanner.match();
-      int startOffset = Integer.parseInt(match.group(2));
-      int endOffset = Integer.parseInt(match.group(3));
-      buffer.append(StringUtil.repeatSymbol('a', endOffset - startOffset)).append('\n');
-    }
-    if (buffer.length() > 0) {
-      buffer.setLength(buffer.length() - 1);
-    }
-    myEditor.getDocument().setText(buffer.toString());
-  }
-
-  /**
-   * Setups {@link Editor#getFoldingModel() folding model} of the {@link #getEditor() current editor} according to the given text
-   * that is expected to contain information obtained from the {@link FoldingModelImpl#toString()}.
-   * 
-   * @param data  string representation of the target fold regions
-   */
-  protected static void setupFolding(@NotNull String data) {
-    Scanner scanner = new Scanner(data);
-    Pattern pattern = Pattern.compile("FoldRegion ([+-])\\((\\d+):(\\d+)");
-    final List<Trinity<Boolean, Integer, Integer>> infos = new ArrayList<>();
-    while (scanner.findInLine(pattern) != null) {
-      final MatchResult match = scanner.match();
-      boolean expanded = "-".equals(match.group(1));
-      int startOffset = Integer.parseInt(match.group(2));
-      int endOffset = Integer.parseInt(match.group(3));
-      infos.add(new Trinity<>(expanded, startOffset, endOffset));
-    }
-    final FoldingModel foldingModel = myEditor.getFoldingModel();
-    foldingModel.runBatchFoldingOperation(() -> {
-      for (Trinity<Boolean, Integer, Integer> info : infos) {
-        final FoldRegion region = foldingModel.addFoldRegion(info.second, info.third, "...");
-        assert region != null;
-        region.setExpanded(info.first);
-      }
-    });
-  }
-
-  /**
-   * Setups {@link Editor#getSoftWrapModel() soft wraps model} of the {@link #getEditor() current editor} according to the given text
-   * that is expected to contain information obtained from the {@link CachingSoftWrapDataMapper#toString()}.
-   *
-   * @param data  string representation of the target soft wraps cache
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  protected static void setupSoftWraps(@NotNull String data) {
-    Scanner scanner = new Scanner(data);
-    Pattern generalPattern =
-      Pattern.compile("visual line: (\\d+), offsets: (\\d+)-(\\d+), logical lines: (\\d+)-(\\d+), logical columns: (\\d+)-(\\d+), "
-                      + "end visual column: (\\d+), fold regions: \\[([^\\]]*)\\], tab data: \\[([^\\]]*)\\]");
-    Pattern foldPattern = Pattern.compile("width in columns: (-?\\d+), fold region: FoldRegion [-+]\\((\\d+):(\\d+)");
-    Pattern tabPattern = Pattern.compile("\\[(\\d+), width: (\\d+)");
-    final SoftWrapModelImpl softWrapModel = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
-    final CachingSoftWrapDataMapper mapper = softWrapModel.getDataMapper();
-    mapper.release();
-    final FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    while (scanner.findInLine(generalPattern) != null) {
-      final MatchResult generalMatch = scanner.match();
-      int visualLine = Integer.parseInt(generalMatch.group(1));
-      int startOffset = Integer.parseInt(generalMatch.group(2));
-      int endOffset = Integer.parseInt(generalMatch.group(3));
-      int startLogicalLine = Integer.parseInt(generalMatch.group(4));
-      int endLogicalLine = Integer.parseInt(generalMatch.group(5));
-      int startLogicalColumn = Integer.parseInt(generalMatch.group(6));
-      int endLogicalColumn = Integer.parseInt(generalMatch.group(7));
-      int endVisualColumn = Integer.parseInt(generalMatch.group(8));
-      
-      List<Pair<Integer, FoldRegion>> foldRegions = new ArrayList<>();
-      Scanner foldScanner = new Scanner(generalMatch.group(9));
-      while (foldScanner.findInLine(foldPattern) != null) {
-        final MatchResult foldMatch = foldScanner.match();
-        int widthInColumns = Integer.parseInt(foldMatch.group(1));
-        int foldStartOffset = Integer.parseInt(foldMatch.group(2));
-        int foldEndOffset = Integer.parseInt(foldMatch.group(3));
-        FoldRegion region = null;
-        for (FoldRegion candidate : foldingModel.getAllFoldRegions()) {
-          if (candidate.getStartOffset() == foldStartOffset && candidate.getEndOffset() == foldEndOffset) {
-            region = candidate;
-            break;
-          }
-        }
-        foldRegions.add(new Pair<>(widthInColumns, region));
-      }
-      
-      List<Pair<Integer, Integer>> tabData = new ArrayList<>();
-      Scanner tabScanner = new Scanner(generalMatch.group(10));
-      while (tabScanner.findInLine(tabPattern) != null) {
-        final MatchResult tabMatch = tabScanner.match();
-        int offset = Integer.parseInt(tabMatch.group(1));
-        int widthInColumns = Integer.parseInt(tabMatch.group(2));
-        tabData.add(new Pair<>(offset, widthInColumns));
-      }
-      
-      mapper.rawAdd(visualLine, startOffset, endOffset, startLogicalLine, startLogicalColumn, endLogicalLine, endLogicalColumn, endVisualColumn, foldRegions, tabData);
-    }
   }
 
   public void assertSelectionRanges(int[][] ranges) {

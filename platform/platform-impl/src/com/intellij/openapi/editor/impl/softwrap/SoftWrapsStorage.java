@@ -129,17 +129,15 @@ public class SoftWrapsStorage implements Dumpable {
    * @param softWrap          soft wrap to store
    * @return                  previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
-  @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  @Nullable
-  public SoftWrap storeOrReplace(SoftWrapImpl softWrap) {
+  public void storeOrReplace(SoftWrapImpl softWrap) {
     int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
-      return myWraps.set(i, softWrap);
+      myWraps.set(i, softWrap);
+      return;
     }
 
     i = -i - 1;
     myWraps.add(i, softWrap);
-    return null;
   }
 
   public void remove(SoftWrapImpl softWrap) {

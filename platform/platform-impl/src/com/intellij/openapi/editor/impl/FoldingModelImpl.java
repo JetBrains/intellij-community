@@ -316,13 +316,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return;
     }
-    if (myEditor.myUseNewRendering) {
-      FoldRegion[] regions = getAllFoldRegions();
-      for (FoldRegion region : regions) {
-        if (!region.isExpanded()) {
-          notifyListenersOnFoldRegionStateChange(region);
-          myFoldRegionsProcessed = true;
-        }
+    FoldRegion[] regions = getAllFoldRegions();
+    for (FoldRegion region : regions) {
+      if (!region.isExpanded()) {
+        notifyListenersOnFoldRegionStateChange(region);
+        myFoldRegionsProcessed = true;
       }
     }
     doClearFoldRegions();

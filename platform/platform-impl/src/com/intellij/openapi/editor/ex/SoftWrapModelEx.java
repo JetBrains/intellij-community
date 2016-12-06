@@ -33,44 +33,6 @@ import java.util.List;
 public interface SoftWrapModelEx extends SoftWrapModel {
 
   /**
-   * Asks current model to map given visual position to logical.
-   *
-   * @param visual            target visual position for which logical position should be mapped
-   * @return                  logical position that corresponds to the given visual position
-   */
-  @NotNull
-  LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual);
-
-  /**
-   * Asks current model to map given document offset to logical position.
-   *
-   * @param offset    target editor document offset
-   * @return          logical position for the given editor document offset
-   */
-  @NotNull
-  LogicalPosition offsetToLogicalPosition(int offset);
-
-  /**
-   * Asks current model to map given logical position to document offset
-   *
-   * @param logicalPosition target editor logical position
-   * @return                document offset for the given editor logical position
-   */
-  int logicalPositionToOffset(@NotNull LogicalPosition logicalPosition);
-
-  /**
-   * Asks current model to adjust visual position that corresponds to the given logical position if necessary.
-   * <p/>
-   * Given visual position is assumed to be the one that is obtained during soft wraps unaware processing.
-   *
-   * @param logical         target logical position for {@code 'logical' -> visual} conversion
-   * @param defaultVisual   visual position of {@code 'logical' -> visual} conversion that is unaware about soft wraps
-   * @return                resulting visual position for the given logical position
-   */
-  @NotNull
-  VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual);
-
-  /**
    * @return    unmodifiable collection of soft wraps currently registered within the current model
    */
   List<? extends SoftWrap> getRegisteredSoftWraps();

@@ -284,7 +284,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (editor == null) {
       return null;
     }
-    if (Registry.is("editor.new.rendering") && !editor.isValid()) {
+    if (!editor.isValid()) {
       return null;
     }
     return new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO));
