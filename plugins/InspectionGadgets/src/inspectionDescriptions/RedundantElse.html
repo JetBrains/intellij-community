@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports redundant <b>else</b> keywords in <b>if</b>&mdash;<b>else</b> statements and statement chains.
+An <b>else</b> keyword is redundant when all previous <b>if</b> branches in the chain don't complete normally
+because they end with <b>return</b>, <b>throw</b>, <b>break</b>, or <b>continue</b> statement.
+<p>
+  In these cases the statements from the <b>else</b> branch can be placed after the <b>if</b> statement and
+  the <b>else</b> keyword can be removed.
+  <!-- tooltip end -->
+</body>
+</html>

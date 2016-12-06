@@ -22,15 +22,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ConfusingElseInspectionTest extends LightInspectionTestCase {
+public class RedundantElseInspectionTest extends LightInspectionTestCase {
 
-  public void testConfusingElse() {
+  public void testRedundantElse() {
     doTest();
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ConfusingElseInspection();
+    return new RedundantElseInspection();
   }
 }

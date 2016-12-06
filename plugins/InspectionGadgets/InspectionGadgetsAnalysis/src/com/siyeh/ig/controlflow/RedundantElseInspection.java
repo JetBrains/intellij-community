@@ -16,26 +16,21 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+public class RedundantElseInspection extends BaseInspection {
 
-public class ConfusingElseInspection extends BaseInspection {
-
-  @SuppressWarnings({"PublicField"})
-  public boolean reportWhenNoStatementFollow = false;
-
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -45,37 +40,32 @@ public class ConfusingElseInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("confusing.else.display.name");
+    return InspectionGadgetsBundle.message("redundant.else.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("confusing.else.problem.descriptor");
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("confusing.else.option"), this, "reportWhenNoStatementFollow");
+    return InspectionGadgetsBundle.message("redundant.else.problem.descriptor");
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new ConfusingElseVisitor();
+    return new RedundantElseVisitor();
   }
 
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new ConfusingElseFix();
+    return new RemoveRedundantElseFix();
   }
 
-  private static class ConfusingElseFix extends InspectionGadgetsFix {
+  private static class RemoveRedundantElseFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("confusing.else.unwrap.quickfix");
+      return InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix");
     }
 
     @Override
@@ -110,7 +100,7 @@ public class ConfusingElseInspection extends BaseInspection {
     }
   }
 
-  private class ConfusingElseVisitor extends BaseInspectionVisitor {
+  private static class RedundantElseVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
@@ -126,17 +116,6 @@ public class ConfusingElseInspection extends BaseInspection {
       if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
         return;
       }
-      if (!reportWhenNoStatementFollow) {
-        final PsiStatement nextStatement = getNextStatement(statement);
-        if (nextStatement == null) {
-          return;
-        }
-        if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
-          return;
-          // protecting against an edge case where both branches return
-          // and are followed by a case label
-        }
-      }
       final PsiElement elseToken = statement.getElseElement();
       if (elseToken == null) {
         return;
@@ -147,7 +126,7 @@ public class ConfusingElseInspection extends BaseInspection {
       registerError(elseToken);
     }
 
-    private boolean parentCompletesNormally(PsiElement element) {
+    private static boolean parentCompletesNormally(PsiElement element) {
       PsiElement parent = element.getParent();
       while (parent instanceof PsiIfStatement) {
         final PsiIfStatement ifStatement = (PsiIfStatement)parent;
@@ -163,22 +142,6 @@ public class ConfusingElseInspection extends BaseInspection {
         parent = element.getParent();
       }
       return !(parent instanceof PsiCodeBlock);
-    }
-
-    @Nullable
-    private PsiStatement getNextStatement(PsiIfStatement statement) {
-      while (true) {
-        final PsiElement parent = statement.getParent();
-        if (parent instanceof PsiIfStatement) {
-          final PsiIfStatement parentIfStatement = (PsiIfStatement)parent;
-          final PsiStatement elseBranch = parentIfStatement.getElseBranch();
-          if (elseBranch == statement) {
-            statement = parentIfStatement;
-            continue;
-          }
-        }
-        return PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
-      }
     }
   }
 }

@@ -15,11 +15,18 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.siyeh.ig.controlflow.RedundantElseInspection;
+
 /**
  * User: anna
  * Date: Aug 30, 2010
  */
-public class RemoveRedundantElseActionTest extends LightQuickFixParameterizedTestCase {
+public class RemoveRedundantElseFixTest extends LightQuickFixParameterizedTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new RedundantElseInspection());
+  }
 
   public void test() throws Exception { doAllTests(); }
 
