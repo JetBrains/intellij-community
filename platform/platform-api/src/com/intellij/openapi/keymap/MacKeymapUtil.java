@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap;
 
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
@@ -59,37 +60,37 @@ public class MacKeymapUtil {
 
   public static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(CONTROL);
-    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(OPTION);
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append(SHIFT);
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(get(CONTROL, "Ctrl+"));
+    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(get(OPTION, "Alt+"));
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append(get(SHIFT, "Shift+"));
     if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
     if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-    if ((modifiers & InputEvent.META_MASK) != 0) buf.append(COMMAND);
+    if ((modifiers & InputEvent.META_MASK) != 0) buf.append(get(COMMAND, "Cmd+"));
     return buf.toString();
 
   }
 
   public static String getKeyText(int code) {
     switch (code) {
-      case KeyEvent.VK_BACK_SPACE:     return BACKSPACE;
-      case KeyEvent.VK_ESCAPE:         return ESCAPE;
-      case KeyEvent.VK_CAPS_LOCK:      return CAPS_LOCK;
-      case KeyEvent.VK_TAB:            return TAB;
+      case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
+      case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
+      case KeyEvent.VK_CAPS_LOCK:      return get(CAPS_LOCK, "Caps Lock");
+      case KeyEvent.VK_TAB:            return get(TAB, "Tab");
       case KeyEvent.VK_SPACE:          return "Space";
-      case KeyEvent.VK_DELETE:         return DELETE;
-      case KeyEvent.VK_HOME:           return HOME;
-      case KeyEvent.VK_END:            return END;
-      case KeyEvent.VK_PAGE_UP:        return PAGE_UP;
-      case KeyEvent.VK_PAGE_DOWN:      return PAGE_DOWN;
-      case KeyEvent.VK_UP:             return UP;
-      case KeyEvent.VK_DOWN:           return DOWN;
-      case KeyEvent.VK_LEFT:           return LEFT;
-      case KeyEvent.VK_RIGHT:          return RIGHT;
-      case KeyEvent.VK_NUM_LOCK:       return NUMBER_LOCK;
-      case KeyEvent.VK_ENTER:          return RETURN;
+      case KeyEvent.VK_DELETE:         return get(DELETE, "Delete");
+      case KeyEvent.VK_HOME:           return get(HOME, "Home");
+      case KeyEvent.VK_END:            return get(END, "End");
+      case KeyEvent.VK_PAGE_UP:        return get(PAGE_UP, "Page Up");
+      case KeyEvent.VK_PAGE_DOWN:      return get(PAGE_DOWN, "Page Down");
+      case KeyEvent.VK_UP:             return get(UP, "Up Arrow");
+      case KeyEvent.VK_DOWN:           return get(DOWN, "Down Arrow");
+      case KeyEvent.VK_LEFT:           return get(LEFT, "Left Arrow");
+      case KeyEvent.VK_RIGHT:          return get(RIGHT, "Right Arrow");
+      case KeyEvent.VK_NUM_LOCK:       return get(NUMBER_LOCK, "Num Lock");
+      case KeyEvent.VK_ENTER:          return get(RETURN, "Return");
       case KeyEvent.VK_BACK_QUOTE:     return "`";
-      case KeyEvent.VK_NUMBER_SIGN:    return NUM_PAD;
-      case KeyEvent.VK_MULTIPLY:       return NUM_PAD + " *";
+      case KeyEvent.VK_NUMBER_SIGN:    return get(NUM_PAD, "NumPad");
+      case KeyEvent.VK_MULTIPLY:       return get(NUM_PAD, "NumPad") + " *";
       case KeyEvent.VK_ADD:            return "+";
       case KeyEvent.VK_SEPARATOR:      return ",";
       case KeyEvent.VK_SUBTRACT:       return "-";
@@ -123,5 +124,10 @@ public class MacKeymapUtil {
     final String modifiers = getModifiersText(keyStroke.getModifiers());
     final String key = getKeyText(keyStroke.getKeyCode());
     return modifiers + key;
+  }
+
+  private static String get(String value, String replacement) {
+    Font font = UIUtil.getLabelFont();
+    return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
   }
 }
