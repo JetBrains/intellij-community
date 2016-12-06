@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -25,11 +26,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  */
 public class GroovyScopeUtil {
   public static SearchScope restrictScopeToGroovyFiles(SearchScope originalScope) {
-    if (originalScope instanceof GlobalSearchScope) {
-      return GlobalSearchScope
-        .getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileType.getGroovyEnabledFileTypes());
-    }
-    return originalScope;
+    FileType[] groovyEnabledFileTypes = GroovyFileType.getGroovyEnabledFileTypes();
+    return PsiSearchScopeUtil.restrictScopeTo(originalScope, groovyEnabledFileTypes);
   }
 
   public static SearchScope restrictScopeToGroovyFiles(SearchScope originalScope, SearchScope effectiveScope) {

@@ -15,10 +15,12 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,5 +70,20 @@ public class PsiSearchScopeUtil {
       if (PsiTreeUtil.isAncestor(scopeElement, element, false)) return true;
     }
     return false;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static SearchScope restrictScopeTo(@NotNull SearchScope originalScope, @NotNull FileType... fileTypes) {
+    if (originalScope instanceof GlobalSearchScope) {
+      return GlobalSearchScope.getScopeRestrictedByFileTypes(
+        (GlobalSearchScope)originalScope,
+        fileTypes
+      );
+    }
+    return LocalSearchScope.getScopeRestrictedByFileTypes(
+      (LocalSearchScope)originalScope,
+      fileTypes
+    );
   }
 }
