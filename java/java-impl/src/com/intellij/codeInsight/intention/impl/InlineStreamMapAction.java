@@ -29,6 +29,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -199,7 +200,8 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     PsiMethodCallExpression nextCall = getNextExpressionToMerge(mapCall);
     if(nextCall == null) return;
 
-    PsiExpression nextQualifier = nextCall.getMethodExpression().getQualifierExpression();
+    PsiReferenceExpression nextRef = nextCall.getMethodExpression();
+    PsiExpression nextQualifier = nextRef.getQualifierExpression();
     if(nextQualifier == null) return;
 
     String newName = translateName(mapCall, nextCall);
@@ -214,11 +216,14 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     PsiLambdaExpression lambda = getLambda(nextCall);
     LOG.assertTrue(lambda != null);
 
+    CommentTracker ct = new CommentTracker();
+
     if(!lambda.isPhysical()) {
       lambda = (PsiLambdaExpression)nextCall.getArgumentList().add(lambda);
     }
     PsiElement body = lambda.getBody();
     LOG.assertTrue(body != null);
+    ct.markUnchanged(body);
 
     PsiParameter[] nextParameters = lambda.getParameterList().getParameters();
     LOG.assertTrue(nextParameters.length == 1);
@@ -227,7 +232,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     for(PsiReference ref : ReferencesSearch.search(nextParameters[0], new LocalSearchScope(body)).findAll()) {
       PsiElement e = ref.getElement();
-      PsiExpression replacement = previousBody;
+      PsiExpression replacement = ct.markUnchanged(previousBody);
       if (e.getParent() instanceof PsiExpression &&
           ParenthesesUtils.areParenthesesNeeded(previousBody, (PsiExpression)e.getParent(), false)) {
         replacement = factory.createExpressionFromText("(a)", e);
@@ -235,18 +240,17 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
         LOG.assertTrue(parenthesized != null);
         parenthesized.replace(previousBody);
       }
-      e.replace(replacement);
+      ct.replace(e, replacement);
     }
-    nextParameters[0].replace(prevParameters[0]);
-    PsiElement nameElement = nextCall.getMethodExpression().getReferenceNameElement();
-    if(nameElement != null && !nameElement.getText().equals(newName)) {
-      nameElement.replace(factory.createIdentifier(newName));
+    ct.replace(nextParameters[0], ct.markUnchanged(prevParameters[0]));
+    if(!newName.equals(nextRef.getReferenceName())) {
+      nextRef.handleElementRename(newName);
     }
     PsiExpression prevQualifier = mapCall.getMethodExpression().getQualifierExpression();
     if(prevQualifier == null) {
-      nextQualifier.delete();
+      ct.deleteAndRestoreComments(nextQualifier);
     } else {
-      nextQualifier.replace(prevQualifier);
+      ct.replaceAndRestoreComments(nextQualifier, ct.markUnchanged(prevQualifier));
     }
     CodeStyleManager.getInstance(project).reformat(lambda);
   }

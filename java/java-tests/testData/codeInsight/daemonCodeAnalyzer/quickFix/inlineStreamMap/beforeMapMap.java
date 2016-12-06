@@ -3,6 +3,7 @@ import java.util.List;
 
 public class Main {
   public static void test(List<CharSequence> list) {
-    list.stream().m<caret>ap(cs -> cs.subSequence(1, 5)).map(cs -> cs.length()).forEach(System.out::println);
+    list.stream()/*before dot*/./*after dot*/m<caret>ap(cs -> cs.subSequence(/*subsequence*/1, 5))
+      /*before dot2*/./*after dot2*/map(cs -> /*length!!!*/ cs.length()).forEach(System.out::println);
   }
 }
