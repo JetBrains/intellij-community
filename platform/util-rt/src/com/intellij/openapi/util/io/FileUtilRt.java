@@ -269,12 +269,14 @@ public class FileUtilRt {
   }
 
   @NotNull
+  public static CharSequence getNameWithoutExtension(@NotNull CharSequence name) {
+    int i = StringUtilRt.lastIndexOf(name, '.', 0, name.length());
+    return i < 0 ? name : name.subSequence(0, i);
+  }
+
+  @NotNull
   public static String getNameWithoutExtension(@NotNull String name) {
-    int i = name.lastIndexOf('.');
-    if (i != -1) {
-      name = name.substring(0, i);
-    }
-    return name;
+    return getNameWithoutExtension((CharSequence)name).toString();
   }
 
   @NotNull

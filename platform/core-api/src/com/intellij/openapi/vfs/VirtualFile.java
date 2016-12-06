@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
@@ -177,10 +178,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @Nullable
   public String getExtension() {
-    String name = getName();
-    int index = name.lastIndexOf('.');
-    if (index < 0) return null;
-    return name.substring(index + 1);
+    return FileUtilRt.getExtension(getNameSequence()).toString();
   }
 
   /**
@@ -192,9 +190,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @NotNull
   public String getNameWithoutExtension() {
-    return StringUtil.trimExtension(getName());
+    return FileUtilRt.getNameWithoutExtension(getNameSequence()).toString();
   }
-
 
   /**
    * Renames this file to the {@code newName}.<p>

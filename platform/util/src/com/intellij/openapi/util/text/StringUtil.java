@@ -1100,13 +1100,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String trimExtension(@NotNull String name) {
-    int index = name.lastIndexOf('.');
-    return index < 0 ? name : name.substring(0, index);
-  }
-
-  @NotNull
-  @Contract(pure = true)
   public static String trimExtensions(@NotNull String name) {
     int index = name.indexOf('.');
     return index < 0 ? name : name.substring(0, index);
