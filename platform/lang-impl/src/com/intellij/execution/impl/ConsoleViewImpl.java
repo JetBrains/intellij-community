@@ -55,7 +55,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -1029,8 +1028,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                   TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
                   if (additionalAttributes != null) {
                     ResultItem item = additionalHighlight.getResultItems().get(0);
-                    myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                                                additionalAttributes, HighlighterLayer.HIGHLIGHT_LAYER);
+                    myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(), additionalAttributes);
                   }
                   else {
                     myHyperlinks.highlightHyperlinks(additionalHighlight, 0);
