@@ -197,17 +197,20 @@ public class PersistentFsTest extends PlatformTestCase {
     ++globalModCount;
     ++inSessionModCount;
 
-    final long timestamp = vFile.getTimeStamp();
+    int finalGlobalModCount = globalModCount;
+    int finalInSessionModCount = inSessionModCount;
     WriteAction.run(() -> {
+      final long timestamp = vFile.getTimeStamp();
       vFile.setWritable(true);  // 1 change
       vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
-    });
 
-    final int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
-    assertEquals(globalModCount + changesCount, managingFS.getModificationCount(vFile));
-    assertEquals(globalModCount + changesCount, managingFS.getFilesystemModificationCount());
-    assertEquals(inSessionModCount + changesCount, managingFS.getModificationCount());
-    assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+      // we check in write action to avoid observing background thread to index stuff
+      final int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
+      assertEquals(finalGlobalModCount + changesCount, managingFS.getModificationCount(vFile));
+      assertEquals(finalGlobalModCount + changesCount, managingFS.getFilesystemModificationCount());
+      assertEquals(finalInSessionModCount + changesCount, managingFS.getModificationCount());
+      assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+    });
   }
 
   @NotNull
