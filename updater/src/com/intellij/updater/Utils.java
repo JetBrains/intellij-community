@@ -117,17 +117,19 @@ public class Utils {
   }
 
   public static void copy(File from, File to) throws IOException {
-    Runner.logger().info("from " + from.getPath() + " to " + to.getPath());
     if (from.isDirectory()) {
-      to.mkdirs();
-      File[] files = from.listFiles();
-      if (files == null) throw new IOException("Cannot get directory's content: " + from);
-      for (File each : files) {
-        copy(each, new File(to, each.getName()));
+      if (! to.exists()) {
+        Runner.logger().info("Dir: " + from.getPath() + " to " + to.getPath());
+        to.mkdirs();
+        File[] files = from.listFiles();
+        if (files == null) throw new IOException("Cannot get directory's content: " + from);
+        for (File each : files) {
+          copy(each, new File(to, each.getName()));
+        }
       }
-    }
-    else {
-      if (! isLink(from)) {
+    } else {
+      if (! isLink(from) && from.exists()) {
+        Runner.logger().info("File: " + from.getPath() + " to " + to.getPath());
         InputStream in = new BufferedInputStream(new FileInputStream(from));
         try {
           copyStreamToFile(in, to);

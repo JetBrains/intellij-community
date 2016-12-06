@@ -73,6 +73,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
+    Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
     ZipEntry entry = Utils.getZipEntry(patchFile, myPath);

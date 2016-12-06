@@ -50,6 +50,7 @@ public class UpdateAction extends BaseUpdateAction {
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     File source = getSource(backupDir);
+    Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
     File updated;
     if (!myIsMove) {
       updated = Utils.createTempFile();
