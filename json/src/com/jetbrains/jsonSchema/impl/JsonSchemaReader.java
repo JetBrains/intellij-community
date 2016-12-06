@@ -64,8 +64,7 @@ public class JsonSchemaReader {
     return object;
   }
 
-  public static boolean isJsonSchema(@NotNull JsonSchemaExportedDefinitions definitions,
-                                     @NotNull VirtualFile key,
+  public static boolean isJsonSchema(@NotNull VirtualFile key,
                                      @NotNull final String string,
                                      Consumer<String> errorConsumer) throws IOException {
     final JsonSchemaReader reader = new JsonSchemaReader(key);
@@ -76,16 +75,6 @@ public class JsonSchemaReader {
       LOG.info(e);
       errorConsumer.consume(e.getMessage());
       return false;
-    }
-    // have two stages so that just syntax errors do not clear cache
-    stringReader = new java.io.StringReader(string);
-    try {
-      reader.read(stringReader, definitions);
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      errorConsumer.consume(e.getMessage());
-      throw e;
     }
     return true;
   }

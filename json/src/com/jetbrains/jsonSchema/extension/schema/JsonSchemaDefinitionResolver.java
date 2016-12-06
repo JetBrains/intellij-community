@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -167,7 +168,7 @@ public class JsonSchemaDefinitionResolver {
   }
 
   @Nullable
-  private static PsiElement resolveInSomeSchema(@NotNull String referenceName,
+  private PsiElement resolveInSomeSchema(@NotNull String referenceName,
                                                 @NotNull final Project project,
                                                 @Nullable final String schemaId,
                                                 final @Nullable VirtualFile filterFile) {
@@ -179,8 +180,12 @@ public class JsonSchemaDefinitionResolver {
                                        JsonSchemaResourcesRootsProvider.enlarge(project, fileScope == null ? GlobalSearchScope.allScope(project) : fileScope);
     index.processValues(JsonSchemaFileIndex.PROPERTIES_INDEX, referenceName, null, new FileBasedIndex.ValueProcessor<Integer>() {
       @Override
-      public boolean process(VirtualFile file, Integer value) {
-        if (schemaId != null) {
+      public boolean process(@NotNull VirtualFile file, Integer value) {
+        final VirtualFile extractedFile = extractFileFromSchemaId();
+        if (extractedFile != null) {
+          if (!file.equals(extractedFile)) return false;
+        }
+        else if (schemaId != null) {
           if (!JsonSchemaService.Impl.getEx(project).checkFileForId(schemaId, file)) {
             return true;
           }
@@ -198,6 +203,16 @@ public class JsonSchemaDefinitionResolver {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private VirtualFile extractFileFromSchemaId() {
+    if (mySchemaId == null) return null;
+    VirtualFile dir = myElement.getContainingFile().getVirtualFile();
+    if (!dir.isDirectory()) dir = dir.getParent();
+    if (dir == null || !dir.isValid()) return null;
+    return VfsUtil.findRelativeFile(dir, JsonSchemaExportedDefinitions.normalizeId(mySchemaId).
+        replace("\\", "/").split("/"));
   }
 
   private void initializeName() {
