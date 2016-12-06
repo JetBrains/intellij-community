@@ -200,7 +200,7 @@ public class EduStepicAuthorizedClient {
       user.setupTokenInfo(tokenInfo);
     }
 
-    final StepicUser currentUser = getCurrentUser(user);
+    final StepicUser currentUser = getCurrentUser(getHttpClient(user));
     if (currentUser != null) {
       user.setId(currentUser.getId());
     }
@@ -220,9 +220,11 @@ public class EduStepicAuthorizedClient {
   }
 
   @Nullable
-  static StepicUser getCurrentUser(StepicUser user) {
+  static StepicUser getCurrentUser(CloseableHttpClient client) {
     try {
-      final StepicWrappers.AuthorWrapper wrapper = getFromStepic(EduStepicNames.CURRENT_USER, StepicWrappers.AuthorWrapper.class, user);
+      final StepicWrappers.AuthorWrapper wrapper = EduStepicClient.getFromStepic(EduStepicNames.CURRENT_USER, 
+                                                                                 StepicWrappers.AuthorWrapper.class, 
+                                                                                 client);
       if (wrapper != null && !wrapper.users.isEmpty()) {
         return wrapper.users.get(0);
       }
