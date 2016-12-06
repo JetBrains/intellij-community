@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,30 +30,27 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A progress indicator for processes running in EDT. Paints itself in checkCanceled calls.
+ * A progress indicator for write actions. Paints itself explicitly, without resorting to normal Swing's delayed repaint API.
+ * Doesn't dispatch Swing events, except for handling manually those that can cancel it or affect the visual presentation.
  *
  * @author peter
  */
 public class PotemkinProgress extends ProgressWindow {
   private long myLastUiUpdate = System.currentTimeMillis();
-  private final Queue<InputEvent> myEventQueue = new ConcurrentLinkedQueue<>();
+  private final LinkedBlockingQueue<InputEvent> myEventQueue = new LinkedBlockingQueue<>();
 
   public PotemkinProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
-    installCheckCanceledPaintingHook();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     startStealingInputEvents();
   }
 
   private void startStealingInputEvents() {
-    checkNativeEventsRegularly();
-
     IdeEventQueue.getInstance().addPostEventListener(event -> {
       if (event instanceof InputEvent) {
         myEventQueue.offer((InputEvent)event);
@@ -60,12 +58,6 @@ public class PotemkinProgress extends ProgressWindow {
       }
       return false;
     }, this);
-  }
-
-  private void checkNativeEventsRegularly() {
-    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
-      () -> SunToolkit.flushPendingEvents(), 3, 3, TimeUnit.MILLISECONDS);
-    Disposer.register(this, () -> future.cancel(false));
   }
 
   @NotNull
@@ -83,7 +75,7 @@ public class PotemkinProgress extends ProgressWindow {
       @Override
       public boolean isCanceled() {
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          dispatchAwtEventsWithoutModelAccess();
+          dispatchAwtEventsWithoutModelAccess(0);
           updateUI();
         }
         return super.isCanceled();
@@ -91,12 +83,18 @@ public class PotemkinProgress extends ProgressWindow {
     });
   }
 
-  private void dispatchAwtEventsWithoutModelAccess() {
-    while (true) {
-      InputEvent event = myEventQueue.poll();
-      if (event == null) return;
+  private void dispatchAwtEventsWithoutModelAccess(int timeoutMs) {
+    SunToolkit.flushPendingEvents();
+    try {
+      while (true) {
+        InputEvent event = myEventQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
+        if (event == null) return;
 
-      dispatchInputEvent(event);
+        dispatchInputEvent(event);
+      }
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -147,7 +145,7 @@ public class PotemkinProgress extends ProgressWindow {
     return true;
   }
 
-  public void progressFinished() {
+  private void progressFinished() {
     getDialog().hideImmediately();
   }
 
@@ -163,4 +161,46 @@ public class PotemkinProgress extends ProgressWindow {
     dialogPanel.paintImmediately(dialogPanel.getBounds());
   }
 
+  /** Executes the action in EDT, paints itself inside checkCanceled calls. */
+  public void runInSwingThread(@NotNull Runnable action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    installCheckCanceledPaintingHook();
+    try {
+      ProgressManager.getInstance().runProcess(action, this);
+    }
+    catch (ProcessCanceledException ignore) { }
+    finally {
+      progressFinished();
+    }
+  }
+
+  /** Executes the action in a background thread, block Swing thread, handles selected input events and paints itself periodically. */
+  public void runInBackground(@NotNull Runnable action) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    enterModality();
+
+    try {
+      ensureBackgroundThreadStarted(action);
+
+      while (isRunning()) {
+        dispatchAwtEventsWithoutModelAccess(10);
+        updateUI();
+      }
+    }
+    finally {
+      exitModality();
+      progressFinished();
+    }
+  }
+
+  private void ensureBackgroundThreadStarted(@NotNull Runnable action) {
+    Semaphore started = new Semaphore();
+    started.down();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+      started.up();
+      action.run();
+    }, this));
+
+    started.waitFor();
+  }
 }

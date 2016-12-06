@@ -72,6 +72,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -109,6 +110,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final Stack<Class> myWriteActionsStack = new Stack<>(); // accessed from EDT only, no need to sync
   private int myWriteStackBase = 0;
+  private volatile Thread myWriteActionThread;
 
   private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
@@ -690,6 +692,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getCurrentModalityState() {
+    if (Thread.currentThread() == myWriteActionThread) {
+      return getDefaultModalityState();
+    }
+
     return LaterInvocator.getCurrentModalityState();
   }
 
@@ -942,22 +948,41 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myLock.readUnlock();
   }
 
-  public boolean runWriteActionWithProgress(@NotNull String title,
-                                         @Nullable Project project,
-                                         @Nullable JComponent parentComponent,
-                                         @Nullable String cancelText,
-                                         @NotNull Consumer<ProgressIndicator> action) {
+  @ApiStatus.Experimental
+  public boolean runWriteActionWithProgressInDispatchThread(
+    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
+    @NotNull Consumer<ProgressIndicator> action
+  ) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-      try {
-        ProgressManager.getInstance().runProcess(() -> action.consume(indicator), indicator);
-      }
-      catch (ProcessCanceledException ignore) { }
-      finally {
-        indicator.progressFinished();
-      }
+      indicator.runInSwingThread(() -> action.consume(indicator));
+      return !indicator.isCanceled();
+    }
+    finally {
+      endWrite(clazz);
+    }
+  }
+
+  @ApiStatus.Experimental
+  public boolean runWriteActionWithProgressInBackgroundThread(
+    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
+    @NotNull Consumer<ProgressIndicator> action
+  ) {
+    Class<?> clazz = action.getClass();
+    startWrite(clazz);
+    try {
+      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+      indicator.runInBackground(() -> {
+        assert myWriteActionThread == null;
+        myWriteActionThread = Thread.currentThread();
+        try {
+          action.consume(indicator);
+        } finally {
+          myWriteActionThread = null;
+        }
+      });
       return !indicator.isCanceled();
     }
     finally {
@@ -1035,7 +1060,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isReadAccessAllowed() {
-    return isDispatchThread() || myLock.isReadLockedByThisThread();
+    if (isDispatchThread()) {
+      return myWriteActionThread == null; // no reading from EDT during background write action
+    }
+    return myLock.isReadLockedByThisThread() || myWriteActionThread == Thread.currentThread();
   }
 
   @Override
@@ -1140,7 +1168,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private void startWrite(@NotNull Class clazz) {
-    assertIsDispatchThread("Write access is allowed from event dispatch thread only");
+    if (!isWriteAccessAllowed()) {
+      assertIsDispatchThread("Write access is allowed from event dispatch thread only");
+    }
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
@@ -1283,7 +1313,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return isDispatchThread() && myLock.isWriteLocked();
+    return isDispatchThread() && myLock.isWriteLocked() || myWriteActionThread == Thread.currentThread();
   }
 
   @Override

@@ -30,16 +30,22 @@ public class TestWriteActionUnderProgress extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    app.runWriteActionWithProgress("Progress", null, null, null, TestWriteActionUnderProgress::runIndeterminateProgress);
-    app.runWriteActionWithProgress("Cancellable Progress", null, null, "Stop", TestWriteActionUnderProgress::runDeterminateProgress);
+
+    boolean success = app.runWriteActionWithProgressInDispatchThread(
+      "Progress", null, null, null,
+      TestWriteActionUnderProgress::runIndeterminateProgress);
+    assert success;
+
+    app.runWriteActionWithProgressInBackgroundThread("Cancellable Progress", null, null, "Stop", TestWriteActionUnderProgress::runDeterminateProgress);
   }
 
   private static void runDeterminateProgress(ProgressIndicator indicator) {
     indicator.setIndeterminate(false);
     int iterations = 3000;
-    indicator.setText("");
+    indicator.setText("In background thread");
     for (int i = 0; i < iterations; i++) {
       TimeoutUtil.sleep(1);
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
       indicator.setFraction(((double)i + 1) / ((double)iterations));
       indicator.setText2(String.valueOf(i));
       ProgressManager.checkCanceled();
@@ -48,9 +54,10 @@ public class TestWriteActionUnderProgress extends DumbAwareAction {
 
   private static void runIndeterminateProgress(ProgressIndicator indicator) {
     indicator.setIndeterminate(true);
-    indicator.setText("Indeterminate");
+    indicator.setText("In Event Dispatch thread");
     for (int i = 0; i < 1000; i++) {
       TimeoutUtil.sleep(5);
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
       indicator.checkCanceled();
     }
   }
