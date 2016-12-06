@@ -117,7 +117,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
     @NotNull private final LabelPainter myReferencePainter;
 
-    @NotNull protected PaintInfo myGraphImage = new PaintInfo(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
+    @NotNull protected GraphImage myGraphImage = new GraphImage(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
     private int myHeight;
 
@@ -211,7 +211,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     @NotNull
-    private PaintInfo getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
+    private GraphImage getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
       double maxIndex = getMaxGraphElementIndex(printElements);
       BufferedImage image = UIUtil.createImage((int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
                                                myGraphTable.getRowHeight(),
@@ -220,7 +220,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myPainter.draw(g2, printElements);
 
       int width = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
-      return new PaintInfo(image, width);
+      return new GraphImage(image, width);
     }
 
     private int getGraphWidth(@NotNull Collection<? extends PrintElement> printElements) {
@@ -249,11 +249,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
   }
 
-  private static class PaintInfo {
+  private static class GraphImage {
     private final int myWidth;
     @NotNull private final Image myImage;
 
-    PaintInfo(@NotNull Image image, int width) {
+    GraphImage(@NotNull Image image, int width) {
       myImage = image;
       myWidth = width;
     }
