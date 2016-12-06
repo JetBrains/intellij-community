@@ -46,7 +46,7 @@ public abstract class RunLineMarkerContributor {
   }
 
   @Nullable
-  public abstract Info getInfo(PsiElement element);
+  public abstract Info getInfo(@NotNull PsiElement element);
 
   @Nullable("null means disabled")
   protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {
