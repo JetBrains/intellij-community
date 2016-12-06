@@ -319,16 +319,20 @@ public class InstalledPackagesPanel extends JPanel {
     final List<InstalledPackage> packages = getSelectedPackages();
     final PackageManagementService selPackageManagementService = myPackageManagementService;
     if (selPackageManagementService != null) {
+      ModalityState modalityState = ModalityState.current();
       PackageManagementService.Listener listener = new PackageManagementService.Listener() {
         @Override
         public void operationStarted(String packageName) {
-          UIUtil.invokeLaterIfNeeded(() -> myPackagesTable.setPaintBusy(true));
+          ApplicationManager.getApplication().invokeLater(
+            () -> myPackagesTable.setPaintBusy(true),
+            modalityState
+          );
         }
 
         @Override
         public void operationFinished(final String packageName,
                                       @Nullable final PackageManagementService.ErrorDescription errorDescription) {
-          UIUtil.invokeLaterIfNeeded(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             myPackagesTable.clearSelection();
             updatePackages(selPackageManagementService);
             myPackagesTable.setPaintBusy(false);
@@ -344,7 +348,7 @@ public class InstalledPackagesPanel extends JPanel {
               myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>", "Uninstall Packages Failed",
                                            errorDescription);
             }
-          });
+          }, modalityState);
         }
       };
       myPackageManagementService.uninstallPackages(packages, listener);
