@@ -183,6 +183,10 @@ public class ParametersListUtil {
 
   @NotNull
   private static String encode(@NotNull final List<String> parameters) {
+    if (parameters.isEmpty()) {
+      return "";
+    }
+
     final StringBuilder buffer = new StringBuilder();
     for (final String parameter : parameters) {
       if (buffer.length() > 0) {
