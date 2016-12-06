@@ -46,6 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
@@ -148,7 +150,9 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
             if (parent is GrMethodCallExpressionImpl && parent.argumentList.namedArguments.isNotEmpty()) {
               addParameter("args", JAVA_UTIL_MAP, true)
             }
-            addParameter("configuration", GROOVY_LANG_CLOSURE, true)
+            val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
+            closureParam.putUserData(DELEGATES_TO_KEY, gradleTask.typeFqn)
+            closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST)
           }
           if (!processor.execute(methodBuilder, state)) return false
           break

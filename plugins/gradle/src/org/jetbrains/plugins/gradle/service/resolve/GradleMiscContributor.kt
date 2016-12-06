@@ -45,8 +45,8 @@ class GradleMiscContributor : GradleMethodContextContributor {
     val useJUnitClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_TASKS_TESTING_TEST, "useJUnit"))
     val testLoggingClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_TASKS_TESTING_TEST, "testLogging"))
     val downloadClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "download"))
-    val domainCollectionWithTypeClosure = groovyClosure().inMethod(psiMethod("org.gradle.api.DomainObjectCollection", "withType"))
-
+    val domainCollectionWithTypeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DOMAIN_OBJECT_COLLECTION, "withType"))
+//    val publicationsClosure = groovyClosure().inMethod(psiMethod("org.gradle.api.publish.PublishingExtension", "publications"))
     val downloadSpecFqn = "de.undercouch.gradle.tasks.download.DownloadSpec"
     val pluginDependenciesSpecFqn = "org.gradle.plugin.use.PluginDependenciesSpec"
   }
@@ -61,6 +61,9 @@ class GradleMiscContributor : GradleMethodContextContributor {
     if (downloadClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(downloadSpecFqn, closure), Closure.DELEGATE_FIRST)
     }
+//    if (publicationsClosure.accepts(closure)) {
+//      return DelegatesToInfo(TypesUtil.createType("org.gradle.api.publish.PublicationContainer", closure), Closure.DELEGATE_FIRST)
+//    }
 
     if (domainCollectionWithTypeClosure.accepts(closure)) {
       val parent = closure.parent

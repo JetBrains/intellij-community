@@ -126,14 +126,15 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), psiClass)) return
 
       val closure = PsiTreeUtil.getParentOfType(place, GrClosableBlock::class.java)
-      if (closure != null) {
-        val info = getDelegatesToInfo(closure)
-        if (info != null) {
-          val fqNameToDelegate = TypesUtil.getQualifiedName(info.typeToDelegate) ?: return
-          val classToDelegate = psiManager.findClassWithCache(fqNameToDelegate, place.resolveScope) ?: return
-          if (GradleResolverUtil.canBeMethodOf(propCandidate, classToDelegate)) return
-          if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), classToDelegate)) return
-          if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), classToDelegate)) return
+      val typeToDelegate = closure?.let { getDelegatesToInfo(it)?.typeToDelegate }
+      if (typeToDelegate != null) {
+        val fqNameToDelegate = TypesUtil.getQualifiedName(typeToDelegate) ?: return
+        val classToDelegate = psiManager.findClassWithCache(fqNameToDelegate, place.resolveScope) ?: return
+        if (classToDelegate !== aClass) {
+          val parent = place.parent
+          if (parent is GrMethodCall) {
+            if (canBeMethodOf(propCandidate, parent, typeToDelegate)) return
+          }
         }
       }
 
@@ -158,10 +159,10 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         val wrappedBase = GrLightMethodBuilder(place.manager, "configure").apply {
           returnType = domainObjectType
           containingClass = aClass
-          addParameter("configureClosure", GROOVY_LANG_CLOSURE, true).apply {
-            putUserData(DELEGATES_TO_KEY, domainObjectFqn)
-            putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
-          }
+          val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
+          closureParam.putUserData(DELEGATES_TO_KEY, domainObjectFqn)
+          closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST)
+
           val method = aClass.findMethodsByName("create", true).firstOrNull { it.parameterList.parametersCount == argsCount }
           if (method != null) navigationElement = method
         }

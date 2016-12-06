@@ -18,11 +18,23 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GrMethodCallInfo
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
-import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.resolve.NON_CODE
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processAllDeclarations
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
+import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor
 import java.util.*
 
 /**
@@ -44,6 +56,23 @@ fun processDeclarations(aClass: PsiClass,
     aClass.processDeclarations(processor, state, null, place)
   }
   else {
+    val propCandidate = place.references.singleOrNull()?.canonicalText
+    if (propCandidate != null) {
+      val closure = PsiTreeUtil.getParentOfType(place, GrClosableBlock::class.java)
+      val typeToDelegate = closure?.let { getDelegatesToInfo(it)?.typeToDelegate }
+      if (typeToDelegate != null) {
+        val fqNameToDelegate = TypesUtil.getQualifiedName(typeToDelegate) ?: return true
+        val classToDelegate = GroovyPsiManager.getInstance(place.project).findClassWithCache(fqNameToDelegate,
+                                                                                             place.resolveScope) ?: return true
+        if (classToDelegate !== aClass) {
+          val parent = place.parent
+          if (parent is GrMethodCall) {
+            if (canBeMethodOf(propCandidate, parent, typeToDelegate)) return true
+          }
+        }
+      }
+    }
+
     val lValue: Boolean = place is GrReferenceExpression && PsiUtil.isLValue(place);
     if (!lValue) {
       val isSetterCandidate = name.startsWith("set")
@@ -57,7 +86,7 @@ fun processDeclarations(aClass: PsiClass,
           if (!processor.execute(method, state)) return false
         }
         for (method in aClass.findMethodsByName("set" + propertyName.capitalize(), true)) {
-          if(PsiType.VOID != method.returnType) continue
+          if (PsiType.VOID != method.returnType) continue
           if (processedSignatures.contains(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))) continue
           processedSignatures.add(method.getSignature(PsiSubstitutor.EMPTY).parameterTypes.map({ it.canonicalText }))
           place.putUserData(RESOLVED_CODE, true)
@@ -88,4 +117,41 @@ fun processDeclarations(aClass: PsiClass,
   return true
 }
 
-fun psiMethodInClass(containingClass: String) = GroovyPatterns.psiMethod().definedInClass(containingClass)
+fun canBeMethodOf(methodName: String,
+                  place: GrMethodCall,
+                  type: PsiType): Boolean {
+  val methodCallInfo = GrMethodCallInfo(place)
+  val invoked = methodCallInfo.invokedExpression ?: return false
+  val argumentTypes = methodCallInfo.argumentTypes
+
+  val thisType = TypesUtil.boxPrimitiveType(type, place.manager, place.resolveScope)
+  val processor = MethodResolverProcessor(methodName, invoked, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY, false)
+  val state = ResolveState.initial().let {
+    it.put(ClassHint.RESOLVE_CONTEXT, invoked)
+    it.put(NON_CODE, false)
+  }
+  processAllDeclarations(thisType, processor, state, invoked)
+  val hasApplicableMethods = processor.hasApplicableCandidates()
+  if (hasApplicableMethods) {
+    return true
+  }
+
+  //search for getters
+  for (getterName in GroovyPropertyUtils.suggestGettersName(methodName)) {
+    val getterResolver = AccessorResolverProcessor(getterName, methodName, invoked, true, thisType, PsiType.EMPTY_ARRAY)
+    processAllDeclarations(thisType, getterResolver, state, invoked)
+    if (getterResolver.hasApplicableCandidates()) {
+      return true
+    }
+  }
+  //search for setters
+  for (setterName in GroovyPropertyUtils.suggestSettersName(methodName)) {
+    val getterResolver = AccessorResolverProcessor(setterName, methodName, invoked, false, thisType, PsiType.EMPTY_ARRAY)
+    processAllDeclarations(thisType, getterResolver, state, invoked)
+    if (getterResolver.hasApplicableCandidates()) {
+      return true
+    }
+  }
+
+  return false
+}
