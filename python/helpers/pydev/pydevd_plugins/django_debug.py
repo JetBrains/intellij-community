@@ -235,7 +235,7 @@ def _get_template_file_name(frame):
                             self = locals['self']
                             if self.__class__.__name__ == 'Template' and hasattr(self, 'origin') and \
                                     hasattr(self.origin, 'name'):
-                                return self.origin.name
+                                return normcase(self.origin.name)
                         back = back.f_back
                 else:
                     if hasattr(context, 'template') and hasattr(context.template, 'origin') and \
