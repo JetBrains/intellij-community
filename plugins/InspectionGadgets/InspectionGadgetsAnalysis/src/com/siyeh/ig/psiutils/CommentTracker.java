@@ -112,6 +112,9 @@ public class CommentTracker {
     if(anchor instanceof PsiLambdaExpression && anchor != result) {
       anchor = ((PsiLambdaExpression)anchor).getBody();
     }
+    if(anchor instanceof PsiVariable && anchor.getParent() instanceof PsiDeclarationStatement) {
+      anchor = anchor.getParent();
+    }
     if(anchor == null) anchor = result;
     insertCommentsBefore(anchor);
     return result;

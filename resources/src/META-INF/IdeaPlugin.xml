@@ -901,6 +901,10 @@
       <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ComposeFunctionChainAction</className>
+      <category>Java/Refactorings</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InvertIfConditionAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
