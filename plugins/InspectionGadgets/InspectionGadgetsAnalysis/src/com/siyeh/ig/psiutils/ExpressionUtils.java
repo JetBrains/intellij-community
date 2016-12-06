@@ -702,7 +702,7 @@ public class ExpressionUtils {
   @Contract("null -> false")
   public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (isEvaluatedAtCompileTime(expression) ||
+    if (expression instanceof PsiLiteralExpression ||
         expression instanceof PsiThisExpression ||
         expression instanceof PsiClassObjectAccessExpression) {
       return true;
