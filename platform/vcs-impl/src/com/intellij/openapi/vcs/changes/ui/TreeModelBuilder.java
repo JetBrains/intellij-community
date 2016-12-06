@@ -398,17 +398,19 @@ public class TreeModelBuilder {
   @NotNull
   private static StaticFilePath getKey(@NotNull Object o) {
     if (o instanceof Change) {
-      return staticFrom(ChangesUtil.getFilePath((Change) o));
+      return staticFrom(ChangesUtil.getFilePath((Change)o));
     }
     else if (o instanceof VirtualFile) {
-      return staticFrom((VirtualFile) o);
+      return staticFrom((VirtualFile)o);
     }
     else if (o instanceof FilePath) {
-      return staticFrom((FilePath) o);
-    } else if (o instanceof ChangesBrowserLogicallyLockedFile) {
-      return staticFrom(((ChangesBrowserLogicallyLockedFile) o).getUserObject());
-    } else if (o instanceof LocallyDeletedChange) {
-      return staticFrom(((LocallyDeletedChange) o).getPath());
+      return staticFrom((FilePath)o);
+    }
+    else if (o instanceof ChangesBrowserLogicallyLockedFile) {
+      return staticFrom(((ChangesBrowserLogicallyLockedFile)o).getUserObject());
+    }
+    else if (o instanceof LocallyDeletedChange) {
+      return staticFrom(((LocallyDeletedChange)o).getPath());
     }
 
     throw new IllegalArgumentException("Unknown type - " + o.getClass());
@@ -434,14 +436,16 @@ public class TreeModelBuilder {
       return ChangesUtil.getFilePath((Change)o);
     }
     else if (o instanceof VirtualFile) {
-      return VcsUtil.getFilePath((VirtualFile) o);
+      return VcsUtil.getFilePath((VirtualFile)o);
     }
     else if (o instanceof FilePath) {
       return (FilePath)o;
-    } else if (o instanceof ChangesBrowserLogicallyLockedFile) {
-      return VcsUtil.getFilePath(((ChangesBrowserLogicallyLockedFile) o).getUserObject());
-    } else if (o instanceof LocallyDeletedChange) {
-      return ((LocallyDeletedChange) o).getPath();
+    }
+    else if (o instanceof ChangesBrowserLogicallyLockedFile) {
+      return VcsUtil.getFilePath(((ChangesBrowserLogicallyLockedFile)o).getUserObject());
+    }
+    else if (o instanceof LocallyDeletedChange) {
+      return ((LocallyDeletedChange)o).getPath();
     }
 
     throw new IllegalArgumentException("Unknown type - " + o.getClass());

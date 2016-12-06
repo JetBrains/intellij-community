@@ -175,17 +175,23 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     }
     else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
       sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().collect(toList()));
-    } else if (key == LOCALLY_DELETED_CHANGES) {
+    }
+    else if (key == LOCALLY_DELETED_CHANGES) {
       sink.put(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().collect(toList()));
-    } else if (key == MISSING_FILES_DATA_KEY) {
+    }
+    else if (key == MISSING_FILES_DATA_KEY) {
       sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles().collect(toList()));
-    } else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
+    }
+    else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
       sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, getSelectedMissingFiles().findAny().isPresent());
-    } else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
+    }
+    else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
       sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, getSelectedModifiedWithoutEditing().findAny().isPresent());
-    } else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
+    }
+    else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
       sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
-    } else if (key == PlatformDataKeys.HELP_ID) {
+    }
+    else if (key == PlatformDataKeys.HELP_ID) {
       sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
     }
     else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
