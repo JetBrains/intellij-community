@@ -35,6 +35,9 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_ARTIFACT_HANDLER = "org.gradle.api.artifacts.dsl.ArtifactHandler";
   @NonNls public static final String GRADLE_API_PUBLISH_ARTIFACT = "org.gradle.api.artifacts.PublishArtifact";
   @NonNls public static final String GRADLE_API_DEPENDENCY_HANDLER = "org.gradle.api.artifacts.dsl.DependencyHandler";
+  @NonNls public static final String GRADLE_API_COMPONENT_METADATA_HANDLER = "org.gradle.api.artifacts.dsl.ComponentMetadataHandler";
+  @NonNls public static final String GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER = "org.gradle.api.artifacts.dsl.ComponentModuleMetadataHandler";
+  @NonNls public static final String GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS = "org.gradle.api.artifacts.ComponentModuleMetadataDetails";
   @NonNls public static final String GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ExternalModuleDependency";
   @NonNls public static final String GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ClientModule";
   @NonNls public static final String GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY = "org.gradle.api.artifacts.ModuleDependency";

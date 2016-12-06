@@ -44,6 +44,9 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
                                                           psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")))
     val dependencyConfigurationClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "add"))
     val moduleDependencyConfigurationClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "module"))
+    val modulesClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "modules"))
+    val componentsClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "components"))
+    val moduleClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, "module"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
@@ -55,6 +58,15 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
     }
     if (dependenciesClosure.accepts(closure)) {
       return DelegatesToInfo(TypesUtil.createType(GRADLE_API_DEPENDENCY_HANDLER, closure), Closure.DELEGATE_FIRST)
+    }
+    if (modulesClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, closure), Closure.DELEGATE_FIRST)
+    }
+    if (moduleClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS, closure), Closure.DELEGATE_FIRST)
+    }
+    if (componentsClosure.accepts(closure)) {
+      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_COMPONENT_METADATA_HANDLER, closure), Closure.DELEGATE_FIRST)
     }
     return null
   }
