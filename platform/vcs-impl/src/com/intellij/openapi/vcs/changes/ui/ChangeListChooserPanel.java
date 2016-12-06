@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -243,14 +242,7 @@ public class ChangeListChooserPanel extends JPanel {
       panel.setOpaque(true);
       panel.setBorder(JBUI.Borders.empty(1, 1, 1, 4));
       panel.add(label, BorderLayout.CENTER);
-      myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "") {
-        @Override
-        protected EditorEx createEditor() {
-          EditorEx editor = super.createEditor();
-          panel.setBackground(editor.getBackgroundColor());
-          return editor;
-        }
-      };
+      myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
       myEditorTextField.addDocumentListener(new DocumentAdapter() {
         @Override
         public void documentChanged(DocumentEvent e) {
@@ -259,7 +251,13 @@ public class ChangeListChooserPanel extends JPanel {
         }
       });
       ObjectUtils.assertNotNull(myEditorTextField.getDocument()).putUserData(ChangeListCompletionContributor.COMBO_BOX_KEY, this);
-      setEditor(new ComboBoxCompositeEditor<>(myEditorTextField, panel));
+      ComboBoxCompositeEditor<Object, LanguageTextField> compositeEditor = new ComboBoxCompositeEditor<>(myEditorTextField, panel);
+      myEditorTextField.addSettingsProvider((editor) -> {
+        Color editorBackgroundColor = editor.getBackgroundColor();
+        panel.setBackground(editorBackgroundColor);
+        compositeEditor.setBackground(editorBackgroundColor);
+      });
+      setEditor(compositeEditor);
     }
 
     @NotNull
