@@ -21,7 +21,7 @@ import java.awt.*;
 
 public class PositionUtil {
   private static float distance(int x1, int y1, int x2, int y2) {
-    return (float)Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    return (float)Math.hypot(x1 - x2, y1 - y2);
   }
 
   public static boolean overUpEdge(int upPosition, int downPosition, int x, int y, int rowHeight, int nodeWidth, float lineThickness) {
