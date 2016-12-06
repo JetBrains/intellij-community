@@ -46,7 +46,7 @@ public class TreeModelBuilder {
 
   @NotNull private final Project myProject;
   private final boolean myShowFlatten;
-  @NotNull private DefaultTreeModel myModel;
+  @NotNull private final DefaultTreeModel myModel;
   @NotNull private final ChangesBrowserNode myRoot;
   private boolean myPolicyInitialized;
   @Nullable private ChangesGroupingPolicy myPolicy;
@@ -499,14 +499,6 @@ public class TreeModelBuilder {
   protected ChangesBrowserNode createPathNode(StaticFilePath parentPath) {
     FilePath filePath = parentPath.getVf() == null ? VcsUtil.getFilePath(parentPath.getPath(), true) : VcsUtil.getFilePath(parentPath.getVf());
     return ChangesBrowserNode.create(myProject, filePath);
-  }
-
-  @NotNull
-  public DefaultTreeModel clearAndGetModel() {
-    myRoot.removeAllChildren();
-    myModel = new DefaultTreeModel(myRoot);
-    resetGrouping();
-    return myModel;
   }
 
   public boolean isEmpty() {
