@@ -156,8 +156,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   public VirtualFile[] getContentRoots() {
     final List<VirtualFile> result = new ArrayList<>();
-    for (Module module : getModuleManager().getModules()) {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    Module[] modules = getModuleManager().getModules();
+    for (Module module : modules) {
+      VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+      if (modules.length == 1) {
+        return contentRoots;
+      }
+
       ContainerUtil.addAll(result, contentRoots);
     }
     return VfsUtilCore.toVirtualFileArray(result);
