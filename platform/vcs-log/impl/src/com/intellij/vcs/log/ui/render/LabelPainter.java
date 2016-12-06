@@ -34,9 +34,11 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -51,13 +53,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
-import static com.intellij.vcs.log.impl.SimpleRefGroup.getColors;
-
-public class LabelPainter implements ReferencePainter {
+public class LabelPainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(1);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(2);
   public static final int RIGHT_PADDING = JBUI.scale(2);
@@ -84,6 +82,17 @@ public class LabelPainter implements ReferencePainter {
     myLogData = data;
   }
 
+  @Nullable
+  public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<VcsRef> references) {
+    if (!references.isEmpty()) {
+      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
+      return logData.getLogProvider(root).getReferenceManager();
+    }
+    else {
+      return null;
+    }
+  }
+
   public void customizePainter(@NotNull JComponent component,
                                @NotNull Collection<VcsRef> references,
                                @NotNull Color background,
@@ -96,7 +105,7 @@ public class LabelPainter implements ReferencePainter {
     FontMetrics metrics = component.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING;
 
-    VcsLogRefManager manager = ReferencePainter.getRefManager(myLogData, references);
+    VcsLogRefManager manager = getRefManager(myLogData, references);
     List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references);
 
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected);
@@ -229,12 +238,10 @@ public class LabelPainter implements ReferencePainter {
     return new Dimension(myWidth, myHeight);
   }
 
-  @Override
   public boolean isLeftAligned() {
     return Registry.is("vcs.log.labels.left.aligned");
   }
 
-  @Override
   public Font getReferenceFont() {
     Font font = RectanglePainter.getFont();
     return font.deriveFont(font.getSize() - 1f);

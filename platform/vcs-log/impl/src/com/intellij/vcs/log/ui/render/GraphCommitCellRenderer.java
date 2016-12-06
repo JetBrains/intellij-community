@@ -33,7 +33,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   @NotNull private final MyComponent myComponent;
   @NotNull private final MyComponent myTemplateComponent;
-  @NotNull private final ReferencePainter myTooltipPainter;
+  @NotNull private final LabelPainter myTooltipPainter;
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
@@ -115,7 +115,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-    @NotNull private final ReferencePainter myReferencePainter;
+    @NotNull private final LabelPainter myReferencePainter;
 
     @NotNull protected PaintInfo myGraphImage = new PaintInfo(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
@@ -244,7 +244,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     @NotNull
-    public ReferencePainter getReferencePainter() {
+    public LabelPainter getReferencePainter() {
       return myReferencePainter;
     }
   }

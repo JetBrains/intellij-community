@@ -37,11 +37,11 @@ import java.util.Map;
 
 class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;
-  @NotNull private final ReferencePainter myReferencePainter;
+  @NotNull private final LabelPainter myReferencePainter;
   private boolean myHasGroupWithMultipleRefs;
 
   public TooltipReferencesPanel(@NotNull VcsLogData logData,
-                                @NotNull ReferencePainter referencePainter,
+                                @NotNull LabelPainter referencePainter,
                                 @NotNull Collection<VcsRef> refs) {
     super(new VerticalFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)), REFS_LIMIT);
     myReferencePainter = referencePainter;
