@@ -95,7 +95,7 @@ public class JsonSchemaReader {
                                                         @NotNull final JsonSchemaObject object) {
     String id = object.getId();
     if (!StringUtil.isEmptyOrSpaces(id)) {
-      id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+      id = JsonSchemaExportedDefinitions.normalizeId(id);
       final BiFunction<String, Map<String, JsonSchemaObject>, Map<String, JsonSchemaObject>> convertor =
         (s, map) -> {
           final Map<String, JsonSchemaObject> converted = new HashMap<>();

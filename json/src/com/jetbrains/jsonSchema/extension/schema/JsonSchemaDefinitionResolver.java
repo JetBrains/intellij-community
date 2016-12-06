@@ -152,11 +152,7 @@ public class JsonSchemaDefinitionResolver {
     if (myRef == null) initializeName();
     if (myRef == null) return null;
 
-    VirtualFile filter = null;
-    if (mySchemaId != null && myRef.startsWith("#/")) {
-      filter = myElement.getContainingFile().getVirtualFile();
-    }
-    else {
+    if (mySchemaId == null) {
       final JsonSchemaServiceEx schemaServiceEx = JsonSchemaService.Impl.getEx(myElement.getProject());
       final Collection<Pair<VirtualFile, String>> pairs = schemaServiceEx.getSchemaFilesByFile(myElement.getContainingFile().getVirtualFile());
       if (pairs != null && ! pairs.isEmpty()) {
@@ -164,11 +160,10 @@ public class JsonSchemaDefinitionResolver {
           final PsiElement element = resolveInSomeSchema(myRef, myElement.getProject(), pair.getSecond(), pair.getFirst());
           if (element != null) return element;
         }
-        // if not in schema file
-        if (mySchemaId == null) return null;
       }
+      return null;
     }
-    return resolveInSomeSchema(myRef, myElement.getProject(), mySchemaId, filter);
+    return resolveInSomeSchema(myRef, myElement.getProject(), mySchemaId, null);
   }
 
   @Nullable
