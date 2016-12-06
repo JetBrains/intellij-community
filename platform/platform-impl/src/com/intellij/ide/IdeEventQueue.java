@@ -122,6 +122,8 @@ public class IdeEventQueue extends EventQueue {
   private boolean myDispatchingFocusEvent;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
+  private final com.intellij.util.EventDispatcher<PostEventHook>
+    myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -1121,6 +1123,10 @@ public class IdeEventQueue extends EventQueue {
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(@NotNull AWTEvent event) {
+    for (PostEventHook listener : myPostEventListeners.getListeners()) {
+      if (listener.consumePostedEvent(event)) return;
+    }
+
     myFrequentEventDetector.eventHappened(event);
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
@@ -1162,5 +1168,19 @@ public class IdeEventQueue extends EventQueue {
    */
   public enum BlockMode {
     COMPLETE, ACTIONS
+  }
+
+  /**
+   * An absolutely guru API, please avoid using it at all cost.
+   */
+  public interface PostEventHook extends EventListener {
+    /**
+     * @return true if event is handled by the listener and should't be added to event queue at all
+     */
+    boolean consumePostedEvent(@NotNull AWTEvent event);
+  }
+
+  public void addPostEventListener(@NotNull PostEventHook listener, @NotNull Disposable parentDisposable) {
+    myPostEventListeners.addListener(listener, parentDisposable);
   }
 }

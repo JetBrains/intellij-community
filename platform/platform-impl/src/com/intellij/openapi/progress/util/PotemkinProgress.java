@@ -15,22 +15,24 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A progress indicator for processes running in EDT. Paints itself in checkCanceled calls.
@@ -38,15 +40,32 @@ import java.util.Objects;
  * @author peter
  */
 public class PotemkinProgress extends ProgressWindow {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.PotemkinProgress");
   private long myLastUiUpdate = System.currentTimeMillis();
-  private final List<AWTEvent> myDelayedEvents = new ArrayList<>();
-  private IdeEventQueue myEventQueue = IdeEventQueue.getInstance();
+  private final Queue<InputEvent> myEventQueue = new ConcurrentLinkedQueue<>();
 
   public PotemkinProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
     installCheckCanceledPaintingHook();
+    startStealingInputEvents();
+  }
+
+  private void startStealingInputEvents() {
+    checkNativeEventsRegularly();
+
+    IdeEventQueue.getInstance().addPostEventListener(event -> {
+      if (event instanceof InputEvent) {
+        myEventQueue.offer((InputEvent)event);
+        return true;
+      }
+      return false;
+    }, this);
+  }
+
+  private void checkNativeEventsRegularly() {
+    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
+      () -> SunToolkit.flushPendingEvents(), 3, 3, TimeUnit.MILLISECONDS);
+    Disposer.register(this, () -> future.cancel(false));
   }
 
   @NotNull
@@ -63,48 +82,42 @@ public class PotemkinProgress extends ProgressWindow {
     addStateDelegate(new AbstractProgressIndicatorExBase() {
       @Override
       public boolean isCanceled() {
-        dispatchAwtEventsWithoutModelAccess();
-        updateUI();
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          dispatchAwtEventsWithoutModelAccess();
+          updateUI();
+        }
         return super.isCanceled();
       }
     });
   }
 
   private void dispatchAwtEventsWithoutModelAccess() {
-    while (myEventQueue.peekEvent() != null) {
-      try {
-        handleEvent(myEventQueue.getNextEvent());
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-        return;
-      }
+    while (true) {
+      InputEvent event = myEventQueue.poll();
+      if (event == null) return;
+
+      dispatchInputEvent(event);
     }
   }
 
-  private void handleEvent(AWTEvent e) {
-    if (e instanceof InputEvent) {
-      dispatchInputEvent(e);
-    } else {
-      myDelayedEvents.add(e);
-    }
-  }
-
-  private void dispatchInputEvent(AWTEvent e) {
+  private void dispatchInputEvent(InputEvent e) {
     if (isCancellationEvent(e)) {
       cancel();
       return;
     }
 
     Object source = e.getSource();
-    if (source instanceof Component && getDialog().getPanel().isAncestorOf((Component)source)) {
+    if (source instanceof Component && isInDialogWindow((Component)source)) {
       ((Component)source).dispatchEvent(e);
     }
   }
 
-  private void updateUI() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return;
+  private boolean isInDialogWindow(Component source) {
+    Window dialogWindow = SwingUtilities.windowForComponent(getDialog().getPanel());
+    return dialogWindow instanceof JDialog && SwingUtilities.isDescendingFrom(source, dialogWindow);
+  }
 
+  private void updateUI() {
     JRootPane rootPane = getDialog().getPanel().getRootPane();
     if (rootPane == null) {
       rootPane = considerShowingDialog();
@@ -136,18 +149,6 @@ public class PotemkinProgress extends ProgressWindow {
 
   public void progressFinished() {
     getDialog().hideImmediately();
-    scheduleDelayedEventDelivery();
-  }
-
-  private void scheduleDelayedEventDelivery() {
-    Disposable disposable = Disposer.newDisposable();
-    myEventQueue.addDispatcher(e -> {
-      Disposer.dispose(disposable);
-      for (AWTEvent event : myDelayedEvents) {
-        myEventQueue.dispatchEvent(event);
-      }
-      return false;
-    }, disposable);
   }
 
   /**

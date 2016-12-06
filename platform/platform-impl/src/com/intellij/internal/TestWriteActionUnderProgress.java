@@ -49,8 +49,8 @@ public class TestWriteActionUnderProgress extends DumbAwareAction {
   private static void runIndeterminateProgress(ProgressIndicator indicator) {
     indicator.setIndeterminate(true);
     indicator.setText("Indeterminate");
-    for (int i = 0; i < 200; i++) {
-      TimeoutUtil.sleep(10);
+    for (int i = 0; i < 1000; i++) {
+      TimeoutUtil.sleep(5);
       indicator.checkCanceled();
     }
   }
