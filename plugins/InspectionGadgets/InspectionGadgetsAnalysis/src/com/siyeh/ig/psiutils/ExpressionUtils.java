@@ -111,6 +111,7 @@ public class ExpressionUtils {
            field.hasModifierProperty(PsiModifier.FINAL);
   }
 
+  @Contract("null -> false")
   public static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression) {
     if (expression instanceof PsiLiteralExpression) {
       return true;
@@ -689,6 +690,7 @@ public class ExpressionUtils {
    * Returns true if the expression can be moved to earlier point in program order without possible semantic change or
    * notable performance handicap. Examples of simple expressions are:
    * - literal (number, char, string, class literal, true, false, null)
+   * - compile-time constant
    * - this
    * - variable/parameter read
    * - static field read
@@ -700,7 +702,7 @@ public class ExpressionUtils {
   @Contract("null -> false")
   public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiLiteralExpression ||
+    if (isEvaluatedAtCompileTime(expression) ||
         expression instanceof PsiThisExpression ||
         expression instanceof PsiClassObjectAccessExpression) {
       return true;
