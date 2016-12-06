@@ -15,22 +15,20 @@
  */
 package com.jetbrains.jsonSchema;
 
-import com.intellij.codeInsight.completion.CompletionTestCase;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -38,127 +36,113 @@ import java.util.Collections;
 /**
  * @author Irina.Chernushina on 3/28/2016.
  */
-public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
+public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
   private final static String BASE_PATH = "/tests/testData/jsonSchema/crossReferences";
   private final static String BASE_SCHEMA_RESOLVE_PATH = "/tests/testData/jsonSchema/schemaFile/resolve";
 
-  private FileTypeManager myFileTypeManager;
-
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFileTypeManager = FileTypeManager.getInstance();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
-    if (strategy.equals(PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
-      return PathManager.getHomePath() + "/json";
-    }
-    return PathManager.getHomePath() + "/community/json";
+  protected String getBasePath() {
+    return BASE_PATH;
   }
 
   public void testJsonSchemaCrossReferenceCompletion() throws Exception {
-    configureByFiles(null, BASE_PATH + "/completion.json", BASE_PATH + "/base.json",
-                          BASE_PATH + "/inherited.json");
+    skeleton(new Callback() {
+      @Override
+      public void doCheck() {
+        assertStringItems("\"one\"", "\"two\"");
 
-    String moduleDir = null;
-    VirtualFile[] children = getProject().getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        break;
+        LookupImpl lookup = getActiveLookup();
+        if (lookup != null) lookup.hide();
+        JsonSchemaService.Impl.get(getProject()).reset();
+        doHighlighting();
+        complete();
+        assertStringItems("\"one\"", "\"two\"");
       }
-    }
-    Assert.assertNotNull(moduleDir);
 
-    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/base.json", false, Collections.emptyList());
-    instance.addSchema(base);
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/completion.json", "/baseSchema.json", "/inheritedSchema.json");
+      }
 
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/inherited.json", false,
-                                                           Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
 
-    instance.addSchema(inherited);
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
+          new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/baseSchema.json", false, Collections.emptyList());
+        addSchema(base);
 
-    doHighlighting();
-    complete();
-    assertStringItems("\"one\"", "\"two\"");
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+          = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/inheritedSchema.json", false,
+                                                               Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
 
-    LookupImpl lookup = getActiveLookup();
-    if (lookup != null) lookup.hide();
-    JsonSchemaService.Impl.get(getProject()).reset();
-    doHighlighting();
-    complete();
-    assertStringItems("\"one\"", "\"two\"");
-
-    instance.removeSchema(inherited);
-    instance.removeSchema(base);
+        addSchema(inherited);
+      }
+    });
   }
 
   public void testRefreshSchemaCompletionSimpleVariant() throws Exception {
-    configureByFiles(null, BASE_PATH + "/baseCompletion.json", BASE_PATH + "/baseProperties.json");
+    skeleton(new Callback() {
+      private String myModuleDir;
 
-    String moduleDir = null;
-    VirtualFile moduleFile = null;
-    VirtualFile[] children = getProject().getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        moduleFile = child;
-        break;
+      @Override
+      public void registerSchemes() {
+        myModuleDir = getModuleDir(getProject());
+
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
+          new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", myModuleDir + "/basePropertiesSchema.json", false,
+                                                             Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+        addSchema(base);
       }
-    }
-    Assert.assertNotNull(moduleDir);
 
-    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/baseProperties.json", false,
-                                                         Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
-    instance.addSchema(base);
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/baseCompletion.json", "/basePropertiesSchema.json");
+      }
 
-    testSchemaCompletion(moduleFile, "baseProperties.json");
-
-    instance.removeSchema(base);
+      @Override
+      public void doCheck() {
+        final VirtualFile moduleFile = getProject().getBaseDir().findChild(myModuleDir);
+        assertNotNull(moduleFile);
+        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json");
+      }
+    });
   }
 
   public void testJsonSchemaCrossReferenceCompletionWithSchemaEditing() throws Exception {
-    configureByFiles(null, BASE_PATH + "/completion.json", BASE_PATH + "/base.json",
-                          BASE_PATH + "/inherited.json");
+    skeleton(new Callback() {
+      private String myModuleDir;
 
-    String moduleDir = null;
-    VirtualFile moduleFile = null;
-    VirtualFile[] children = getProject().getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        moduleFile = child;
-        break;
+      @Override
+      public void registerSchemes() {
+        myModuleDir = getModuleDir(getProject());
+
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
+          new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", myModuleDir + "/baseSchema.json", false, Collections.emptyList());
+        addSchema(base);
+
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+          = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", myModuleDir + "/inheritedSchema.json", false,
+                                                               Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+
+        addSchema(inherited);
       }
-    }
-    Assert.assertNotNull(moduleDir);
 
-    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/base.json", false, Collections.emptyList());
-    instance.addSchema(base);
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/completion.json", "/baseSchema.json", "/inheritedSchema.json");
+      }
 
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/inherited.json", false,
-                                                           Collections.singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
-
-    instance.addSchema(inherited);
-
-    testSchemaCompletion(moduleFile, "base.json");
-
-    instance.removeSchema(inherited);
-    instance.removeSchema(base);
+      @Override
+      public void doCheck() {
+        final VirtualFile moduleFile = getProject().getBaseDir().findChild(myModuleDir);
+        assertNotNull(moduleFile);
+        checkSchemaCompletion(moduleFile, "baseSchema.json");
+      }
+    });
   }
 
-  private void testSchemaCompletion(VirtualFile moduleFile, final String fileName) {
+  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName) {
     doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
@@ -193,156 +177,124 @@ public class JsonSchemaCrossReferencesTest extends CompletionTestCase {
   }
 
   public void testJsonSchemaRefsCrossResolve() throws Exception {
-    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    configureByFiles(null, BASE_SCHEMA_RESOLVE_PATH + "/referencingSchema.json", BASE_SCHEMA_RESOLVE_PATH + "/localRefSchema.json");
-
-    String moduleDir = null;
-    VirtualFile moduleFile = null;
-    VirtualFile[] children = getProject().getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        moduleFile = child;
-        break;
+    skeleton(new Callback() {
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("\"baseEnum\"", resolve.getText());
       }
-    }
-    Assert.assertNotNull(moduleDir);
 
-    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-      new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/localRefSchema.json", false, Collections.emptyList());
-    instance.addSchema(base);
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/referencingSchema.json", "/localRefSchema.json");
+      }
 
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/referencingSchema.json", false, Collections.emptyList());
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
 
-    instance.addSchema(inherited);
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
+          new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/localRefSchema.json", false, Collections.emptyList());
+        addSchema(base);
 
-    try {
-      JsonSchemaService.Impl.get(getProject()).reset();
-      doHighlighting();
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+          = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/referencingSchema.json", false, Collections.emptyList());
 
-      testIsSchemaFile(moduleFile, "localRefSchema.json");
-      testIsSchemaFile(moduleFile, "referencingSchema.json");
-
-      int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-      final PsiReference referenceAt = myFile.findReferenceAt(offset);
-      Assert.assertNotNull(referenceAt);
-      final PsiElement resolve = referenceAt.resolve();
-      Assert.assertNotNull(resolve);
-      Assert.assertEquals("\"baseEnum\"", resolve.getText());
-
-      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    } finally {
-    }
-
-    instance.removeSchema(inherited);
-    instance.removeSchema(base);
-  }
-
-  private void testIsSchemaFile(VirtualFile moduleFile, String name) {
-    final VirtualFile child = moduleFile.findChild(name);
-    Assert.assertNotNull(child);
-    Assert.assertTrue(JsonSchemaFileType.INSTANCE.equals(child.getFileType()));
-    Assert.assertTrue(JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).isRegisteredSchemaFile(child));
+        addSchema(inherited);
+      }
+    });
   }
 
   public void testJsonSchemaGlobalRefsCrossResolve() throws Exception {
-    configureByFiles(null, BASE_SCHEMA_RESOLVE_PATH + "/referencingGlobalSchema.json");
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
 
-    String moduleDir = null;
-    VirtualFile moduleFile = null;
-    VirtualFile[] children = getProject().getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        moduleFile = child;
-        break;
+        AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
+        final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
+        container.unregisterComponent(key);
+        container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
+
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+          = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/referencingGlobalSchema.json", false, Collections.emptyList());
+
+        addSchema(inherited);
       }
-    }
-    Assert.assertNotNull(moduleDir);
 
-    AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
-    final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/referencingGlobalSchema.json");
+      }
 
-    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/referencingGlobalSchema.json", false, Collections.emptyList());
-
-    instance.addSchema(inherited);
-
-    try {
-      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-      JsonSchemaService.Impl.get(getProject()).reset();
-      doHighlighting();
-
-      int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-      final PsiReference referenceAt = myFile.findReferenceAt(offset);
-      Assert.assertNotNull(referenceAt);
-      final PsiElement resolve = referenceAt.resolve();
-      Assert.assertNotNull(resolve);
-      Assert.assertEquals("\"enum\"", resolve.getText());
-
-      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    } finally {
-      container.unregisterComponent(key);
-      container.registerComponentImplementation(key, JsonSchemaMappingsProjectConfiguration.class);
-    }
-
-    instance.removeSchema(inherited);
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("\"enum\"", resolve.getText());
+      }
+    });
   }
 
   public void testJson2SchemaPropertyResolve() throws Exception {
-    configureByFiles(null, BASE_PATH + "/testFileForBaseProperties.json", BASE_PATH + "/baseProperties.json");
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
+          = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/basePropertiesSchema.json", false,
+                                                               Collections.singletonList(
+                                                                 new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
 
+        addSchema(inherited);
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/testFileForBaseProperties.json", "/basePropertiesSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        PsiElement element = myFile.findElementAt(offset);
+        boolean found = false;
+        while (element.getTextRange().contains(offset)) {
+          if (JsonBySchemaObjectReferenceContributor.REF_PATTERN.accepts(element)) {
+            found = true;
+            break;
+          }
+          element = element.getParent();
+        }
+        Assert.assertTrue(found);
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("basePropertiesSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"baseEnum\"", resolve.getText());
+      }
+    });
+  }
+
+  @NotNull
+  private static String getModuleDir(@NotNull final Project project) {
     String moduleDir = null;
-    VirtualFile moduleFile = null;
-    VirtualFile[] children = getProject().getBaseDir().getChildren();
+    VirtualFile[] children = project.getBaseDir().getChildren();
     for (VirtualFile child : children) {
       if (child.isDirectory()) {
         moduleDir = child.getName();
-        moduleFile = child;
         break;
       }
     }
     Assert.assertNotNull(moduleDir);
-
-    final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo inherited
-      = new JsonSchemaMappingsConfigurationBase.SchemaInfo("inherited", moduleDir + "/baseProperties.json", false,
-                                                           Collections.singletonList(
-                                                             new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
-
-    instance.addSchema(inherited);
-    JsonSchemaService.Impl.get(getProject()).reset();
-    doHighlighting();
-
-    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    try {
-
-      int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-      PsiElement element = myFile.findElementAt(offset);
-      boolean found = false;
-      while (element.getTextRange().contains(offset)) {
-        if (JsonBySchemaObjectReferenceContributor.REF_PATTERN.accepts(element)) {
-          found = true;
-          break;
-        }
-        element = element.getParent();
-      }
-      Assert.assertTrue(found);
-      final PsiReference referenceAt = myFile.findReferenceAt(offset);
-      Assert.assertNotNull(referenceAt);
-      final PsiElement resolve = referenceAt.resolve();
-      Assert.assertNotNull(resolve);
-      Assert.assertEquals("\"baseEnum\"", resolve.getText());
-      Assert.assertEquals("baseProperties.json", resolve.getContainingFile().getName());
-
-    } finally {
-      instance.removeSchema(inherited);
-      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    }
+    return moduleDir;
   }
 }
