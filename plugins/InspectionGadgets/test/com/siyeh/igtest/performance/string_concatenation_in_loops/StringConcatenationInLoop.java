@@ -1,4 +1,21 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.igtest.performance.string_concatenation_in_loops;
+
+import java.util.*;
 
 public class StringConcatenationInLoop
 {
@@ -12,12 +29,25 @@ public class StringConcatenationInLoop
         for(int i = 0; i < 5; i++)
         {
             (foo) = ((foo) <warning descr="String concatenation '+' in loop">+</warning> ("  ") + (i));
-            foo <warning descr="String concatenation '+=' in loop">+=</warning> foo <warning descr="String concatenation '+' in loop">+</warning> "  " + i;
+            foo += "abc"; // only first concatenation in the loop is reported for given variable
+        }
+        for(int i = 0; i < 5; i++)
+        {
+            foo <warning descr="String concatenation '+=' in loop">+=</warning> foo + "  " + i;
+        }
+        for(int i = 0; i < 5; i++)
+        {
             baz( foo <warning descr="String concatenation '+' in loop">+</warning> "  " + i);
+        }
+        for(int i = 0; i < 5; i++)
+        {
             if(bar())
             {
                 return baz(("foo" + "bar"));
             }
+        }
+        for(int i = 0; i < 5; i++)
+        {
             if(bar())
             {
                 throw new Error("foo" + i);
@@ -25,6 +55,96 @@ public class StringConcatenationInLoop
         }
         System.out.println(foo);
         return foo;
+    }
+
+    void test(String s) {
+        for(int i=0; i<10; i++) {
+            if(s != null) {
+                if(s.equals("xyz")) {
+                    s += "xyz";
+                }
+                break;
+            }
+        }
+    }
+
+    void test2(String s, int flag) {
+        for(int i=0; i<10; i++) {
+            if(flag == 0) {
+                s<warning descr="String concatenation '+=' in loop">+=</warning>"xyz";
+                continue; // continue doesn't matters: we're still iterating in loop
+            }
+            System.out.println("oops");
+        }
+    }
+
+    void test3(String s, int flag) {
+        for(int i=0; i<10; i++) {
+            for(int j=0; j<10; j++) {
+                if(flag == 0) {
+                    s<warning descr="String concatenation '+=' in loop">+=</warning>"xyz";
+                    break; // breaking inner loop only: still concatenation in loop
+                }
+            }
+        }
+    }
+
+    void test4(String s, int flag) {
+        for(int i=0; i<10; i++) {
+            s = "x";
+            for(int j=0; j<10; j++) {
+                if(flag == 0) {
+                    s+="xyz";
+                    break; // breaking inner loop only, but variable is always reassigned in outer loop, so effectively concatenating once
+                }
+            }
+            System.out.println(s);
+        }
+    }
+
+    void testLabel(String s, int flag) {
+        OUTER:
+        for(int i=0; i<10; i++) {
+            for(int j=0; j<10; j++) {
+                if(flag == 0) {
+                    s+="xyz";
+                    break OUTER; // breaking outer loop: ok
+                }
+            }
+        }
+    }
+
+    void testDefinedInLoop(List<?> list) {
+        for(Object obj : list) {
+            String s = "message";
+            if(obj != null) {
+                s+=obj; // replacing with StringBuilder won't change anything
+            }
+            System.out.println(s);
+        }
+    }
+
+    public void testSwitch(int flag) {
+        String s = "";
+        for(int i=0; i<10; i++) {
+            if(i > 5) {
+                if(s != null) {
+                    switch(flag) {
+                        case 0:
+                            s += "xyz";
+                            break; // break switch, then break loop: effectively single concatenation
+                        case 1:
+                            s <warning descr="String concatenation '+=' in loop">+=</warning> "abc"; // fall-through
+                        case 2:
+                            s <warning descr="String concatenation '+=' in loop">+=</warning> "efg"; // continue loop: possibly multiple concatenations
+                            continue;
+                    }
+                }
+                break;
+            }
+
+        }
+        System.out.println(s);
     }
 
     private boolean bar()
