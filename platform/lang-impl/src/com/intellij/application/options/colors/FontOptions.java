@@ -19,8 +19,6 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -51,8 +49,8 @@ import java.util.Set;
 public class FontOptions extends JPanel implements OptionsPanel{
   private static final FontInfoRenderer RENDERER = new FontInfoRenderer() {
     @Override
-    protected AntialiasingType getAntialiasingType() {
-      return UISettings.getShadowInstance().EDITOR_AA_TYPE;
+    protected boolean isEditorFont() {
+      return true;
     }
   };
 

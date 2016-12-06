@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ui.FontInfo;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +41,10 @@ public final class FontComboBox extends ComboBox {
 
   public FontComboBox(boolean withAllStyles) {
     super(new Model(withAllStyles));
+    Dimension size = getPreferredSize();
+    size.width = size.height * 8;
+    setPreferredSize(size);
+    setSwingPopup(true);
     setRenderer(RENDERER);
   }
 
