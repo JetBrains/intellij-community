@@ -26,7 +26,6 @@ import com.intellij.execution.actions.EOFAction;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.filters.Filter.ResultItem;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.ConsoleHighlighterLayer;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
@@ -56,6 +55,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -1030,7 +1030,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                   if (additionalAttributes != null) {
                     ResultItem item = additionalHighlight.getResultItems().get(0);
                     myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
-                                                additionalAttributes, ConsoleHighlighterLayer.HIGHLIGHT_LAYER);
+                                                additionalAttributes, HighlighterLayer.HIGHLIGHT_LAYER);
                   }
                   else {
                     myHyperlinks.highlightHyperlinks(additionalHighlight, 0);

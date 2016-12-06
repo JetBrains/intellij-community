@@ -15,10 +15,10 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.execution.ui.ConsoleHighlighterLayer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -186,8 +186,6 @@ public interface Filter {
     @Deprecated @Nullable
     public final HyperlinkInfo hyperlinkInfo;
     
-    private final int myHighlighterLayer;
-
     private final TextAttributes myFollowedHyperlinkAttributes;
 
     @SuppressWarnings("deprecation")
@@ -218,21 +216,11 @@ public interface Filter {
                       @Nullable final HyperlinkInfo hyperlinkInfo,
                       @Nullable final TextAttributes highlightAttributes,
                       @Nullable final TextAttributes followedHyperlinkAttributes) {
-      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, followedHyperlinkAttributes, 
-           hyperlinkInfo != null ? ConsoleHighlighterLayer.HYPERLINK_LAYER : ConsoleHighlighterLayer.HIGHLIGHT_LAYER);
-    }
-    public ResultItem(final int highlightStartOffset,
-                      final int highlightEndOffset,
-                      @Nullable final HyperlinkInfo hyperlinkInfo,
-                      @Nullable final TextAttributes highlightAttributes,
-                      @Nullable final TextAttributes followedHyperlinkAttributes,
-                      int highlighterLayer) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
       this.hyperlinkInfo = hyperlinkInfo;
       this.highlightAttributes = highlightAttributes;
       myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
-      myHighlighterLayer = highlighterLayer;
     }
 
     public int getHighlightStartOffset() {
@@ -263,7 +251,7 @@ public interface Filter {
     }
 
     public int getHighlighterLayer() {
-      return myHighlighterLayer; 
+      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.HIGHLIGHT_LAYER; 
     }
 
     @Nullable
