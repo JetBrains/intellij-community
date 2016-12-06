@@ -82,7 +82,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -1650,9 +1649,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   Color getDisposedBackground() {
     return new JBColor(new Color(128, 255, 128), new Color(128, 255, 128));
   }
-
-  private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
-  private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
 
   @NotNull
   @Override
@@ -4511,46 +4507,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                           @NotNull FontInfo fontInfo)
     {
       myView.drawChars(g, data, start, end, x, y, color, fontInfo);
-    }
-  }
-
-  private interface WhitespacePaintingStrategy {
-    boolean showWhitespaceAtOffset(int offset);
-  }
-
-  // Strategy, controlled by current editor settings. Usable only for the current line.
-  public class LineWhitespacePaintingStrategy implements WhitespacePaintingStrategy {
-    private final boolean myWhitespaceShown = mySettings.isWhitespacesShown();
-    private final boolean myLeadingWhitespaceShown = mySettings.isLeadingWhitespaceShown();
-    private final boolean myInnerWhitespaceShown = mySettings.isInnerWhitespaceShown();
-    private final boolean myTrailingWhitespaceShown = mySettings.isTrailingWhitespaceShown();
-
-    // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
-    private int currentLeadingEdge;
-    private int currentTrailingEdge;
-
-    // Updates the state, to be used for the line, iterator is currently at.
-    public void update(CharSequence chars, LineIterator iterator) {
-      int lineStart = iterator.getStart();
-      int lineEnd = iterator.getEnd() - iterator.getSeparatorLength();
-      update(chars, lineStart, lineEnd);
-    }
-    
-    public void update(CharSequence chars, int lineStart, int lineEnd) {
-      if (myWhitespaceShown
-          && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown)
-          && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
-        currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
-        currentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, currentTrailingEdge, WHITESPACE_CHARS);
-      }
-    }
-
-    @Override
-    public boolean showWhitespaceAtOffset(int offset) {
-      return myWhitespaceShown
-             && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
-                 offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
-                 myInnerWhitespaceShown);
     }
   }
 }

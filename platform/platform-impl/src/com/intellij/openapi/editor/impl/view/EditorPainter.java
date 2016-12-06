@@ -34,6 +34,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
@@ -56,6 +57,9 @@ class EditorPainter implements TextDrawingCallback {
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
                                                                                    new float[]{0, 2, 0, 2}, 0);
   private static final int CARET_DIRECTION_MARK_SIZE = 5;
+  private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
+  private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
+
 
   private final EditorView myView;
   private final EditorImpl myEditor;
@@ -326,7 +330,7 @@ class EditorPainter implements TextDrawingCallback {
   private void paintTextWithEffects(Graphics2D g, Rectangle clip, int startVisualLine, int endVisualLine,
                                     IterationState.CaretData caretData) {
     final CharSequence text = myDocument.getImmutableCharSequence();
-    final EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy = myEditor.new LineWhitespacePaintingStrategy();
+    final LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(myEditor.getSettings());
     boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
     int lineCount = myEditor.getVisibleLineCount();
     final int whiteSpaceStrokeWidth = JBUI.scale(1);
@@ -462,7 +466,7 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void paintWhitespace(Graphics2D g, CharSequence text, float x, int y, int start, int end,
-                               EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy,
+                               LineWhitespacePaintingStrategy whitespacePaintingStrategy,
                                VisualLineFragmentsIterator.Fragment fragment, Stroke stroke, int strokeWidth) {
     Stroke oldStroke = g.getStroke();
     try {
@@ -1014,5 +1018,39 @@ class EditorPainter implements TextDrawingCallback {
     void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, TextAttributes attributes,
                float xStart, float xEnd, int y);
     void paintAfterLineEnd(Graphics2D g, Rectangle clip, IterationState iterationState, int columnStart, float x, int y);
+  }
+
+  private static class LineWhitespacePaintingStrategy {
+    private final boolean myWhitespaceShown;
+    private final boolean myLeadingWhitespaceShown;
+    private final boolean myInnerWhitespaceShown;
+    private final boolean myTrailingWhitespaceShown;
+
+    // Offsets on current line where leading whitespace ends and trailing whitespace starts correspondingly.
+    private int currentLeadingEdge;
+    private int currentTrailingEdge;
+
+    public LineWhitespacePaintingStrategy(EditorSettings settings) {
+      myWhitespaceShown = settings.isWhitespacesShown();
+      myLeadingWhitespaceShown = settings.isLeadingWhitespaceShown();
+      myInnerWhitespaceShown = settings.isInnerWhitespaceShown();
+      myTrailingWhitespaceShown = settings.isTrailingWhitespaceShown();
+    }
+
+    private void update(CharSequence chars, int lineStart, int lineEnd) {
+      if (myWhitespaceShown
+          && (myLeadingWhitespaceShown || myInnerWhitespaceShown || myTrailingWhitespaceShown)
+          && !(myLeadingWhitespaceShown && myInnerWhitespaceShown && myTrailingWhitespaceShown)) {
+        currentTrailingEdge = CharArrayUtil.shiftBackward(chars, lineStart, lineEnd - 1, WHITESPACE_CHARS) + 1;
+        currentLeadingEdge = CharArrayUtil.shiftForward(chars, lineStart, currentTrailingEdge, WHITESPACE_CHARS);
+      }
+    }
+
+    private boolean showWhitespaceAtOffset(int offset) {
+      return myWhitespaceShown
+             && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
+                 offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
+                 myInnerWhitespaceShown);
+    }
   }
 }
