@@ -130,4 +130,8 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   public void testPreserveExpressionQualifier() throws Exception {
     doTest();
   }
+
+  public void testNoUnderscoreInLambdaParameterName() throws Exception {
+    doTest();
+  }
 }

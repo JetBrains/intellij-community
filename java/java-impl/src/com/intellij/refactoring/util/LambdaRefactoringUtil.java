@@ -95,7 +95,7 @@ public class LambdaRefactoringUtil {
         baseName = nameInfo.names.length > 0 ? nameInfo.names[0] : parameter.getName();
       }
       else {
-        final String initialName;
+        String initialName;
         if (psiParameters != null) {
           final int idx = parameterIndex - (isReceiver ? 1 : 0);
           initialName = psiParameters.length > 0 ? psiParameters[idx < psiParameters.length ? idx : psiParameters.length - 1].getName()
@@ -105,6 +105,12 @@ public class LambdaRefactoringUtil {
           initialName = parameter.getName();
         }
         LOG.assertTrue(initialName != null);
+        if ("_".equals(initialName)) {
+          SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
+          if (nameInfo.names.length > 0) {
+            initialName = nameInfo.names[0];
+          }
+        }
         baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
       }
 
