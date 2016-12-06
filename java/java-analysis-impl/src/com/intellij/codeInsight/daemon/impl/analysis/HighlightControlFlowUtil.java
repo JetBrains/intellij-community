@@ -723,16 +723,15 @@ public class HighlightControlFlowUtil {
         return true;
       }
 
-      final List<PsiReferenceExpression> readBeforeWriteLocals = ControlFlowUtil.getReadBeforeWriteLocals(controlFlow);
-      for (PsiReferenceExpression expression : readBeforeWriteLocals) {
-        if (expression.resolve() == variable) {
-          return PsiUtil.isAccessedForReading(expression);
-        }
-      }
-
       final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
       effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
       if (effectivelyFinal) {
+        final List<PsiReferenceExpression> readBeforeWriteLocals = ControlFlowUtil.getReadBeforeWriteLocals(controlFlow);
+        for (PsiReferenceExpression expression : readBeforeWriteLocals) {
+          if (expression.resolve() == variable) {
+            return PsiUtil.isAccessedForReading(expression);
+          }
+        }
         effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
       }
     }
