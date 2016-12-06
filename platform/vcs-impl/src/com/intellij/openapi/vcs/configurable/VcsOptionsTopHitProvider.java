@@ -22,6 +22,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
@@ -58,7 +59,7 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     String id = "project.propVCSSupport.Mappings"; // process Version Control settings
     options.add(option(vcs, id, "Limit history by " + vcs.MAXIMUM_HISTORY_ROWS + " rows", "LIMIT_HISTORY"));
     options.add(option(vcs, id, "Show directories with changed descendants", "SHOW_DIRTY_RECURSIVELY"));
-    options.add(option(vcs, id, "Store on shelf base revision texts for files under DVCS", "INCLUDE_TEXT_INTO_SHELF"));
+    options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
     VcsContentAnnotationSettings vcsCA = VcsContentAnnotationSettings.getInstance(project);
     if (vcsCA != null) {
       options.add(option(vcsCA, id, "Show changed in last " + vcsCA.getLimitDays() + " days", "isShow", "setShow"));

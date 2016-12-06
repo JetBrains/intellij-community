@@ -305,7 +305,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
-    myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
+    myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
 
@@ -630,7 +630,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private JComponent createStoreBaseRevisionOption() {
-    final JBLabel noteLabel = new JBLabel("File texts bigger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
+    final JBLabel noteLabel =
+      new JBLabel("The base content of files larger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K will not be stored");
     noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
     noteLabel.setBorder(JBUI.Borders.empty(2, 25, 5, 0));
