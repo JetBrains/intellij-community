@@ -63,7 +63,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
-  private final FontComboBox mySecondaryCombo = new FontComboBox();
+  private final FontComboBox mySecondaryCombo = new FontComboBox(false, false);
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
     new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));

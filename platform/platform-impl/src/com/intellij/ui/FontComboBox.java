@@ -40,7 +40,11 @@ public final class FontComboBox extends ComboBox {
   }
 
   public FontComboBox(boolean withAllStyles) {
-    super(new Model(withAllStyles));
+    this(withAllStyles, true);
+  }
+
+  public FontComboBox(boolean withAllStyles, boolean filterNonLatin) {
+    super(new Model(withAllStyles, filterNonLatin));
     Dimension size = getPreferredSize();
     size.width = size.height * 8;
     setPreferredSize(size);
@@ -85,27 +89,31 @@ public final class FontComboBox extends ComboBox {
     private boolean myMonospacedOnly;
     private Object mySelectedItem;
 
-    private Model(boolean withAllStyles) {
+    private Model(boolean withAllStyles, boolean filterNonLatin) {
       Application application = ApplicationManager.getApplication();
       if (application == null || application.isUnitTestMode()) {
-        setFonts(FontInfo.getAll(withAllStyles));
+        setFonts(FontInfo.getAll(withAllStyles), filterNonLatin);
       }
       else {
         application.executeOnPooledThread(() -> {
-          List<FontInfo> allFonts = FontInfo.getAll(withAllStyles);
+          List<FontInfo> all = FontInfo.getAll(withAllStyles);
           application.invokeLater(() -> {
-            setFonts(allFonts);
+            setFonts(all, filterNonLatin);
             updateSelectedItem();
           }, application.getAnyModalityState());
         });
       }
     }
 
-    private void setFonts(List<FontInfo> allFonts) {
+    private void setFonts(List<FontInfo> all, boolean filterNonLatin) {
+      List<FontInfo> allFonts = new ArrayList<>(all.size());
       List<FontInfo> monoFonts = new ArrayList<>();
-      for (FontInfo info : allFonts) {
-        if (info.isMonospaced()) {
-          monoFonts.add(info);
+      for (FontInfo info : all) {
+        if (!filterNonLatin || info.getFont().canDisplayUpTo(info.toString()) == -1) {
+          allFonts.add(info);
+          if (info.isMonospaced()) {
+            monoFonts.add(info);
+          }
         }
       }
       myAllFonts = allFonts;
