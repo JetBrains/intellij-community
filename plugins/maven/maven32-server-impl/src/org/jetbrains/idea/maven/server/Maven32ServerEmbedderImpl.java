@@ -225,18 +225,18 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     myContainer.getLoggerManager().setThreshold(settings.getLoggingLevel());
 
-    mySystemProperties = FieldAccessor.get(cliRequestClass, cliRequest, "systemProperties");
+    mySystemProperties = ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
 
     if (settings.getProjectJdk() != null) {
       mySystemProperties.setProperty("java.home", settings.getProjectJdk());
     }
 
     if (settingsBuilder == null) {
-      settingsBuilder = FieldAccessor.get(MavenCli.class, cli, "settingsBuilder");
+      settingsBuilder = ReflectionUtil.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder");
     }
 
     myMavenSettings = buildSettings(settingsBuilder, settings, mySystemProperties,
-                                    FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
+                                    ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
   }
