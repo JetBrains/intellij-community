@@ -1733,6 +1733,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlaceholderAttributes = attributes;
   }
 
+  public TextAttributes getPlaceholderAttributes() {
+    return myPlaceholderAttributes;
+  }
+
   public CharSequence getPlaceholder() {
     return myPlaceholderText;
   }

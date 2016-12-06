@@ -121,8 +121,20 @@ class EditorPainter implements TextDrawingCallback {
     hintText = SwingUtilities.layoutCompoundLabel(g.getFontMetrics(), hintText.toString(), null, 0, 0, 0, 0,
                                                   SwingUtilities.calculateInnerArea(editorComponent, null), // account for insets
                                                   new Rectangle(), new Rectangle(), 0);
-    g.setColor(myEditor.getFoldingModel().getPlaceholderAttributes().getForegroundColor());
-    g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+    EditorFontType fontType = EditorFontType.PLAIN;
+    Color color = myEditor.getFoldingModel().getPlaceholderAttributes().getForegroundColor();
+    TextAttributes attributes = myEditor.getPlaceholderAttributes();
+    if (attributes != null) {
+      int type = attributes.getFontType();
+      if (type == Font.ITALIC) fontType = EditorFontType.ITALIC;
+      else if (type == Font.BOLD) fontType = EditorFontType.BOLD;
+      else if (type == (Font.ITALIC | Font.BOLD)) fontType = EditorFontType.BOLD_ITALIC;
+
+      Color attColor = attributes.getForegroundColor();
+      if (attColor != null) color = attColor;
+    }
+    g.setColor(color);
+    g.setFont(myEditor.getColorsScheme().getFont(fontType));
     Insets insets = myView.getInsets();
     g.drawString(hintText.toString(), insets.left, insets.top + myView.getAscent());
     return true;
