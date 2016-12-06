@@ -89,7 +89,7 @@ class EditorPainter implements TextDrawingCallback {
     int startOffset = myView.visualLineToOffset(startLine);
     int endOffset = myView.visualLineToOffset(endLine + 1);
     ClipDetector clipDetector = new ClipDetector(myEditor, clip);
-    IterationState.CaretData caretData = IterationState.createCaretData(myEditor);
+    IterationState.CaretData caretData = myEditor.isPaintSelection() ? IterationState.createCaretData(myEditor) : null;
 
     paintBackground(g, clip, startLine, endLine, caretData);
     paintRightMargin(g, clip);

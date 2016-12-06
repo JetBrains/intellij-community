@@ -1772,6 +1772,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.getMaxWidthInRange(startOffset, endOffset);
   }
 
+  public boolean isPaintSelection() {
+    return myPaintSelection || !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
+  }
+
   public void setPaintSelection(boolean paintSelection) {
     myPaintSelection = paintSelection;
   }
