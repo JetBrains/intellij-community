@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.LineSeparator
+import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
 
 /**
@@ -30,7 +31,8 @@ import java.io.File
 class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
   private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
 
-  val activate = findActivateScript(virtualEnvSdkPath, shell)
+  // in case of Conda we need to pass an argument to an activate script that tells which exactly environment to activate
+  val activate: Pair<String, String?>? = findActivateScript(virtualEnvSdkPath, shell)
 
   override fun getShell(): String? {
     if (File("/bin/bash").exists()) {
@@ -60,13 +62,15 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
   }
 
-  private fun readVirtualEnvOnWindows(activate: String): MutableMap<String, String> {
+  private fun readVirtualEnvOnWindows(activate: Pair<String, String?>): MutableMap<String, String> {
     val activateFile = FileUtil.createTempFile("pycharm-virualenv-activate.", ".bat", false)
     val envFile = FileUtil.createTempFile("pycharm-virualenv-envs.", ".tmp", false)
     try {
-      FileUtil.copy(File(activate), activateFile);
+      FileUtil.copy(File(activate.first), activateFile);
       FileUtil.appendToFile(activateFile, "\n\nset")
-      val command = listOf<String>(activateFile.path, ">", envFile.absolutePath)
+
+      val command = if (activate.second != null) listOf<String>(activateFile.path, activate.second!!, ">", envFile.absolutePath)
+      else listOf<String>(activateFile.path, ">", envFile.absolutePath)
 
       return runProcessAndReadEnvs(command, envFile, LineSeparator.CRLF.separatorString)
     }
@@ -84,18 +88,25 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
       throw Exception("shell:" + shellPath)
     }
 
-    return if (activate != null)
-      mutableListOf(shellPath, "-c", ". '$activate'")
+    return if (activate != null) {
+      val activateArg = if (activate.second != null) "'${activate.first}' '${activate.second}'" else "'${activate.first}'"
+      mutableListOf(shellPath, "-c", ". $activateArg")
+    }
     else super.getShellProcessCommand()
   }
 
 }
 
-fun findActivateScript(path: String?, shellPath: String?): String? {
+fun findActivateScript(path: String?, shellPath: String?): Pair<String, String?>? {
   val shellName = if (shellPath != null) File(shellPath).name else null
   val activate = if (SystemInfo.isWindows) File(File(path).parentFile, "activate.bat")
   else if (shellName == "fish" || shellName == "csh") File(File(path).parentFile, "activate." + shellName)
   else File(File(path).parentFile, "activate")
 
-  return if (activate.exists()) activate.absolutePath else null
+  return if (activate.exists()) {
+    val sdk = PythonSdkType.findSdkByPath(path)
+    if (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk)) Pair(activate.absolutePath, File(path).parentFile.parent)
+    else Pair(activate.absolutePath, null)
+  }
+  else null
 }

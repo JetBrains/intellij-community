@@ -312,7 +312,7 @@ public final class PythonSdkType extends SdkType {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
-  public static boolean isCondaVirtualEnv(Sdk sdk) {
+  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
     final String path = sdk.getHomePath();
     return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
   }
