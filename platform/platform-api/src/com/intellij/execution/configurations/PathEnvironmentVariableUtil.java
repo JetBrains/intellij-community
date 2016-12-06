@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
@@ -34,8 +33,7 @@ import java.util.List;
  */
 public class PathEnvironmentVariableUtil {
 
-  private static final Logger LOG = Logger.getInstance(PathEnvironmentVariableUtil.class);
-  private static final String PATH_ENV_VAR_NAME = "PATH";
+  private static final String PATH = "PATH";
 
   private PathEnvironmentVariableUtil() { }
 
@@ -48,7 +46,7 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName) {
-    return findInPath(fileBaseName, false);
+    return findInPath(fileBaseName, null);
   }
 
   /**
@@ -61,7 +59,8 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
-    return findInPath(fileBaseName, false, filter);
+    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, filter, EnvironmentUtil.getValue(PATH));
+    return ContainerUtil.getFirstItem(exeFiles);
   }
 
   /**
@@ -71,16 +70,12 @@ public class PathEnvironmentVariableUtil {
    * @param fileBaseName file base name
    * @param  logDetails true if extra logging is needed
    * @return {@link File} instance or null if not found
+   *
+   * @deprecated use {@link #findInPath(String)} instead
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, boolean logDetails) {
-    return findInPath(fileBaseName, logDetails, null);
-  }
-
-  @Nullable
-  private static File findInPath(@NotNull String fileBaseName, boolean logDetails, @Nullable FileFilter filter) {
-    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, logDetails, filter);
-    return ContainerUtil.getFirstItem(exeFiles);
+    return findInPath(fileBaseName, null);
   }
 
   /**
@@ -92,8 +87,7 @@ public class PathEnvironmentVariableUtil {
    * @return {@link File} instance or null if not found
    */
   private static File findInOriginalPath(@NotNull String fileBaseName) {
-    String originalPath = System.getenv(PATH_ENV_VAR_NAME);
-    List<File> exeFiles = doFindExeFilesInPath(originalPath, fileBaseName, true, false, null);
+    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, null, System.getenv(PATH));
     return ContainerUtil.getFirstItem(exeFiles);
   }
 
@@ -111,39 +105,21 @@ public class PathEnvironmentVariableUtil {
 
   @NotNull
   public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
-    return findExeFilesInPath(fileBaseName, false, false, filter);
+    return findExeFilesInPath(fileBaseName, false, filter, EnvironmentUtil.getValue(PATH));
   }
 
   @NotNull
   private static List<File> findExeFilesInPath(@NotNull String fileBaseName,
                                                boolean stopAfterFirstMatch,
-                                               boolean logDetails,
-                                               @Nullable FileFilter filter) {
-    String systemPath = EnvironmentUtil.getValue(PATH_ENV_VAR_NAME);
-    return doFindExeFilesInPath(systemPath, fileBaseName, stopAfterFirstMatch, logDetails, filter);
-  }
-
-  @NotNull
-  private static List<File> doFindExeFilesInPath(@Nullable String pathEnvVarValue,
-                                                 @NotNull String fileBaseName,
-                                                 boolean stopAfterFirstMatch,
-                                                 boolean logDetails,
-                                                 @Nullable FileFilter filter) {
-    if (logDetails) {
-      LOG.info("Finding files in PATH (base name=" + fileBaseName + ", PATH=" + StringUtil.notNullize(pathEnvVarValue) + ").");
-    }
+                                               @Nullable FileFilter filter,
+                                               @Nullable String pathEnvVarValue) {
     if (pathEnvVarValue == null) {
       return Collections.emptyList();
     }
     List<File> result = new SmartList<>();
-    List<String> paths = StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
-    for (String path : paths) {
-      File dir = new File(path);
-      if (logDetails) {
-        File file = new File(dir, fileBaseName);
-        LOG.info("path:" + path + ", path.isAbsolute:" + dir.isAbsolute() + ", path.isDirectory:" + dir.isDirectory()
-                 + ", file.isFile:" + file.isFile() + ", file.canExecute:" + file.canExecute());
-      }
+    List<String> dirPaths = StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
+    for (String dirPath : dirPaths) {
+      File dir = new File(dirPath);
       if (dir.isAbsolute() && dir.isDirectory()) {
         File exeFile = new File(dir, fileBaseName);
         if (exeFile.isFile() && exeFile.canExecute()) {
