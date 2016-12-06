@@ -8,7 +8,7 @@ public class Main {
       TreeMap<Integer, String> map = new TreeMap<>();
       for (String s1 : strings) {
           if (!s1.isEmpty()) {
-              map.putIfAbsent(s1.length(), s1);
+              map.put(s1.length(), s1.trim());
           }
       }
       return map;

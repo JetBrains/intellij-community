@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -728,6 +729,27 @@ abstract class TerminalOperation extends Operation {
       if(myMerger == null) {
         return "if("+map+".put("+myKeyExtractor.getText()+","+myValueExtractor.getText()+")!=null) {\n"+
                "throw new java.lang.IllegalStateException(\"Duplicate key\");\n}\n";
+      }
+      if(myMerger instanceof PsiLambdaExpression) {
+        PsiLambdaExpression lambda = (PsiLambdaExpression)myMerger;
+        PsiParameter[] parameters = lambda.getParameterList().getParameters();
+        if(parameters.length == 2) {
+          PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+          if(body instanceof PsiReferenceExpression) {
+            PsiReferenceExpression ref = (PsiReferenceExpression)body;
+            if(ref.getQualifierExpression() == null) {
+              // cannot use isReferenceTo here as lambda could be detached from PsiFile
+              if (Objects.equals(parameters[0].getName(), ref.getReferenceName())) {
+                // like (a, b) -> a
+                return map + ".putIfAbsent(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
+              }
+              else if (Objects.equals(parameters[1].getName(), ref.getReferenceName())) {
+                // like (a, b) -> b
+                return map + ".put(" + myKeyExtractor.getText() + "," + myValueExtractor.getText() + ");\n";
+              }
+            }
+          }
+        }
       }
       return map+".merge("+myKeyExtractor.getText()+","+myValueExtractor.getText()+","+myMerger.getText()+");\n";
     }

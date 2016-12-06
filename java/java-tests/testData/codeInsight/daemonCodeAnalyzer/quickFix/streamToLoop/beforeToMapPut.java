@@ -5,13 +5,8 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static TreeMap<Integer, String> test(List<String> strings) {
-      TreeMap<Integer, String> map = new TreeMap<>();
-      for (String s1 : strings) {
-          if (!s1.isEmpty()) {
-              map.putIfAbsent(s1.length(), s1);
-          }
-      }
-      return map;
+    return strings.stream().filter(s -> !s.isEmpty())
+      .col<caret>lect(Collectors.toMap(String::length, String::trim, (s, string) -> string, TreeMap::new));
   }
 
   public static void main(String[] args) {
