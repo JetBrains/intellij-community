@@ -39,15 +39,6 @@ import java.util.stream.StreamSupport;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
-
-  public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
-    path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
-
-  private SimpleTextAttributes myAttributes;
-
-  private int myFileCount = -1;
-  private int myDirectoryCount = -1;
-
   public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
   public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
   public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
@@ -56,6 +47,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public static final Object SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
   public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
   public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
+
+  public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
+    path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
+
+  private SimpleTextAttributes myAttributes;
+
+  private int myFileCount = -1;
+  private int myDirectoryCount = -1;
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
