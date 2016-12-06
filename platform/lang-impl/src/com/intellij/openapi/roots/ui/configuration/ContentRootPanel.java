@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.ui.roots.ResizingWrapper;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,13 +93,15 @@ public abstract class ContentRootPanel extends JPanel {
   public void initUI() {
     myHeader = createHeader();
     myHeader.setBorder(new EmptyBorder(0, 8, 0, 0));
-    this.add(myHeader, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 8, 0), 0, 0));
+    this.add(myHeader, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                              JBUI.insetsBottom(8), 0, 0));
 
     addFolderGroupComponents();
 
     myBottom = new JPanel(new BorderLayout());
     myBottom.add(Box.createVerticalStrut(3), BorderLayout.NORTH);
-    this.add(myBottom, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    this.add(myBottom, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                              JBUI.emptyInsets(), 0, 0));
 
     setSelected(false);
   }
@@ -112,7 +115,7 @@ public abstract class ContentRootPanel extends JPanel {
       }
     }
 
-    Insets insets = new Insets(0, 0, 10, 0);
+    Insets insets = JBUI.insetsBottom(10);
     GridBagConstraints constraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, insets, 0, 0);
     for (ModuleSourceRootEditHandler<?> editor : myModuleSourceRootEditHandlers) {
       Collection<SourceFolder> folders = folderByType.get(editor.getRootType());
@@ -145,8 +148,10 @@ public abstract class ContentRootPanel extends JPanel {
                                                                             ProjectBundle.message("module.paths.remove.content.tooltip"),
                                                                             () -> myCallback.deleteContentEntry());
     final ResizingWrapper wrapper = new ResizingWrapper(headerLabel);
-    panel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 2, 0, 0), 0, 0));
-    panel.add(deleteIconComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
+    panel.add(wrapper, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                              JBUI.insetsLeft(2), 0, 0));
+    panel.add(deleteIconComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+                                                          JBUI.insetsRight(5), 0, 0));
     FilePathClipper.install(headerLabel, wrapper);
     return panel;
   }
@@ -155,7 +160,7 @@ public abstract class ContentRootPanel extends JPanel {
                                                   ContentFolder[] folders,
                                                   Color foregroundColor,
                                                   @Nullable ModuleSourceRootEditHandler<?> editor) {
-    final JPanel panel = new JPanel(new GridLayoutManager(folders.length, 3, new Insets(1, 17, 0, 2), 0, 1));
+    final JPanel panel = new JPanel(new GridLayoutManager(folders.length, 3, JBUI.insets(1, 17, 0, 5), 0, 1));
     panel.setOpaque(false);
 
     for (int idx = 0; idx < folders.length; idx++) {

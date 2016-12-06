@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
   }
 
   protected PyContentEntriesEditor createEditor(@NotNull Module module, @NotNull ModuleConfigurationStateImpl state) {
-    return new PyContentEntriesEditor(module, state, JavaSourceRootType.SOURCE);
+    return new PyContentEntriesEditor(module, state, true, JavaSourceRootType.SOURCE);
   }
 
   @Override
