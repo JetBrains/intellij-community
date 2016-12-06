@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.roots.ToolbarPanel;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,14 +79,17 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private VirtualFile myLastSelectedDir = null;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
+  private final boolean myWithBorders;
   private final ModuleConfigurationState myState;
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers = new ArrayList<>();
 
-  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, JpsModuleSourceRootType<?>... rootTypes) {
+  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, boolean withBorders,
+                                    JpsModuleSourceRootType<?>... rootTypes) {
     super(state);
     myState = state;
     myModuleName = moduleName;
     myModulesProvider = state.getModulesProvider();
+    myWithBorders = withBorders;
     for (JpsModuleSourceRootType<?> type : rootTypes) {
       ContainerUtil.addIfNotNull(myEditHandlers, ModuleSourceRootEditHandler.getEditHandler(type));
     }
@@ -111,6 +114,10 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
         fileManager.removeVirtualFileManagerListener(fileManagerListener);
       }
     });
+  }
+
+  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, JpsModuleSourceRootType<?>... rootTypes) {
+    this(moduleName, state, false, rootTypes);
   }
 
   @Override
@@ -153,8 +160,6 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     addAdditionalSettingsToPanel(mainPanel);
 
-    final JPanel entriesPanel = new JPanel(new BorderLayout());
-
     final DefaultActionGroup group = new DefaultActionGroup();
     final AddContentEntryAction action = new AddContentEntryAction();
     action.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK, mainPanel);
@@ -164,8 +169,8 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myEditorsPanel.setBackground(BACKGROUND_COLOR);
     JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, true);
     final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group);
-    toolbarPanel.setBorder(new CustomLineBorder(1, 0, 0, 0));
-    entriesPanel.add(toolbarPanel, BorderLayout.CENTER);
+    int border = myWithBorders ? 1 : 0;
+    toolbarPanel.setBorder(new CustomLineBorder(1, 0, border, border));
 
     final JBSplitter splitter = new OnePixelSplitter(false);
     splitter.setProportion(0.6f);
@@ -173,20 +178,20 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     myRootTreeEditor = createContentEntryTreeEditor(project);
     final JComponent component = myRootTreeEditor.createComponent();
-    component.setBorder(new CustomLineBorder(1, 0, 0, 0));
+    component.setBorder(new CustomLineBorder(1, border, border, 0));
 
     splitter.setFirstComponent(component);
-    splitter.setSecondComponent(entriesPanel);
+    splitter.setSecondComponent(toolbarPanel);
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myRootTreeEditor.getEditingActionsGroup(), true);
     contentPanel.add(new JLabel("Mark as:"),
-                     new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, new Insets(0, 10, 0, 10), 0, 0));
+                     new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, JBUI.insets(0, 10), 0, 0));
     contentPanel.add(actionToolbar.getComponent(),
                      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                            new Insets(0, 0, 0, 0), 0, 0));
+                                            JBUI.emptyInsets(), 0, 0));
     contentPanel.add(splitter,
                      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                            new Insets(0, 0, 0, 0), 0, 0));
+                                            JBUI.emptyInsets(), 0, 0));
 
     mainPanel.add(contentPanel, BorderLayout.CENTER);
 
