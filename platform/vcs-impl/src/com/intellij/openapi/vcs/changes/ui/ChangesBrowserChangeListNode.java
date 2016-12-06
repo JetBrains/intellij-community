@@ -113,8 +113,8 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public int getSortWeight() {
-    if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return 1;
-    return 2;
+    if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return DEFAULT_CHANGE_LIST_SORT_WEIGHT;
+    return CHANGE_LIST_SORT_WEIGHT;
   }
 
   @Override

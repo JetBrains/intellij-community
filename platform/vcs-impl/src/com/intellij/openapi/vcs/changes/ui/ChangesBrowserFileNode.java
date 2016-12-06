@@ -84,7 +84,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
   }
 
   public int getSortWeight() {
-    return 7;
+    return VIRTUAL_FILE_SORT_WEIGHT;
   }
 
   @Override

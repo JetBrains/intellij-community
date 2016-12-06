@@ -129,7 +129,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   public int getSortWeight() {
-    return 6;
+    return CHANGE_SORT_WEIGHT;
   }
 
   public int compareUserObjects(final Object o2) {

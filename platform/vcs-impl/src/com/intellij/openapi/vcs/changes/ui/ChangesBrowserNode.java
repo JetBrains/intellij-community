@@ -48,6 +48,17 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
   public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
 
+  protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
+  protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
+  protected static final int MODULE_SORT_WEIGHT = 3;
+  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
+  protected static final int FILE_PATH_SORT_WEIGHT = 5;
+  protected static final int CHANGE_SORT_WEIGHT = 6;
+  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 7;
+  protected static final int UNVERSIONED_SORT_WEIGHT = 8;
+  protected static final int DEFAULT_SORT_WEIGHT = 9;
+  protected static final int IGNORED_SORT_WEIGHT = 10;
+
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
 
@@ -228,8 +239,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
   }
 
+  /**
+   * Nodes with the same sort weight should share {@link #compareUserObjects} implementation
+   */
   public int getSortWeight() {
-    return 9;
+    return DEFAULT_SORT_WEIGHT;
   }
 
   public int compareUserObjects(final Object o2) {

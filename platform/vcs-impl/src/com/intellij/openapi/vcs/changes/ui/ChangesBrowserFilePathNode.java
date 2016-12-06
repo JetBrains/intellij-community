@@ -105,8 +105,8 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   public int getSortWeight() {
-    if (((FilePath)userObject).isDirectory()) return 4;
-    return 5;
+    if (((FilePath)userObject).isDirectory()) return DIRECTORY_PATH_SORT_WEIGHT;
+    return FILE_PATH_SORT_WEIGHT;
   }
 
   public int compareUserObjects(final Object o2) {
