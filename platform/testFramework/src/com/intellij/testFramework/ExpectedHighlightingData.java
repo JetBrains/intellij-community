@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -245,6 +246,7 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+effecttype=\"([A-Z]+)\")?" +
                                 "(?:\\s+fonttype=\"([0-9]+)\")?" +
                                 "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\\\])*)\")?" +
+                                "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
     final Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
@@ -269,6 +271,7 @@ public class ExpectedHighlightingData {
     final String effectType = matcher.group(groupIdx++);
     final String fontType = matcher.group(groupIdx++);
     final String attrKey = matcher.group(groupIdx++);
+    final String bundleMessage = matcher.group(groupIdx++);
     final boolean closed = matcher.group(groupIdx) != null;
 
     if (descr == null) {
@@ -334,6 +337,11 @@ public class ExpectedHighlightingData {
 
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
+      if (bundleMessage != null) {
+        final List<String> split = StringUtil.split(bundleMessage, "|");
+        final ResourceBundle bundle = ResourceBundle.getBundle(split.get(0));
+        descr = CommonBundle.message(bundle, split.get(1), split.stream().skip(2).toArray());
+      }
       if (descr != null) { builder.description(descr); builder.unescapedToolTip(descr); }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();
