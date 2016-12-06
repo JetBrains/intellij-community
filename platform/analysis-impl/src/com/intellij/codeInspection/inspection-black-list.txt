@@ -53,7 +53,7 @@ com.sixrr.inspectjs.functionmetrics.StatementsPerFunctionJSInspection
 com.sixrr.inspectjs.naming.FunctionNamingConventionJSInspection
 com.sixrr.inspectjs.naming.LocalVariableNamingConventionJSInspection
 com.sixrr.inspectjs.naming.ParameterNamingConventionJSInspection
-com.sixrr.inspectjs.style.UnterminatedStatementJSInspection
+com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.siyeh.ig.abstraction.DeclareCollectionAsInterfaceInspection
 com.siyeh.ig.abstraction.FeatureEnvyInspection
 com.siyeh.ig.abstraction.InstanceofChainInspection
