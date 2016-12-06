@@ -69,7 +69,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Remove double negation";
     }
 

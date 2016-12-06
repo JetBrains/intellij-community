@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -76,5 +77,12 @@ public class ParameterCastFix extends GroovyFix {
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Add cast";
   }
 }

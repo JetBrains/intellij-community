@@ -99,6 +99,13 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
         public String getName() {
           return GroovyInspectionBundle.message("fix.class", psiClass.getName());
         }
+
+        @Nls
+        @NotNull
+        @Override
+        public String getFamilyName() {
+          return "Fix range class";
+        }
       };
     }
     return null;

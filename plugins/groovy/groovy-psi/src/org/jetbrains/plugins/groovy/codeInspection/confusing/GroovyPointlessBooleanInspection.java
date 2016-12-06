@@ -172,7 +172,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return GroovyInspectionBundle.message("pointless.boolean.quickfix");
     }
 

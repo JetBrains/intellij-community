@@ -75,7 +75,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
   private static class TrivialIfFix extends GroovyFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Simplify";
     }
 

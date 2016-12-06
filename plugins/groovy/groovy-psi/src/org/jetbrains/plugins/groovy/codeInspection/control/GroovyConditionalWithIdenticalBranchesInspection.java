@@ -58,7 +58,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
   private static class CollapseConditionalFix extends GroovyFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Collapse conditional expression";
     }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -68,6 +69,13 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
   @Override
   public String getName() {
     return GroovyBundle.message("create.field.from.usage", getFieldName());
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Create field";
   }
 
   @Override

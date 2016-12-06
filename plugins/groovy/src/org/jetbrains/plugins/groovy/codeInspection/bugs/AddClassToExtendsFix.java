@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -107,5 +108,12 @@ public class AddClassToExtendsFix extends GroovyFix {
   @Override
   public String getName() {
     return GroovyInspectionBundle.message("implement.class", myInterfaceName);
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Implement";
   }
 }

@@ -57,7 +57,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
     return new GroovyFix() {
       @Override
       @NotNull
-      public String getName() {
+      public String getFamilyName() {
         return "Convert Conditional to Elvis";
       }
 

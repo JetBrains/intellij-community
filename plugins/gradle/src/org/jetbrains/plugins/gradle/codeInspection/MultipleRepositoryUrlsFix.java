@@ -69,7 +69,7 @@ public class MultipleRepositoryUrlsFix extends GroovyFix {
 
   @NotNull
   @Override
-  public String getName() {
+  public String getFamilyName() {
     return GradleInspectionBundle.message("multiple.repository.urls.fix.name");
   }
 }

@@ -136,6 +136,13 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
       m_name = "Replace '=' with '" + signText + "='";
     }
 
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     @NotNull
     public String getName() {

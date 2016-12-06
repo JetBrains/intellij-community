@@ -82,7 +82,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Simplify";
     }
 

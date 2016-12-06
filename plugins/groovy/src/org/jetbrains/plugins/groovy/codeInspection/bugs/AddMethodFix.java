@@ -27,6 +27,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -91,6 +92,13 @@ public class AddMethodFix extends GroovyFix {
   @Override
   public String getName() {
     return GroovyInspectionBundle.message("add.method", myMethodName, myClass.getName());
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Add method";
   }
 
   static String generateTypeText(GrTypeDefinition aClass) {
