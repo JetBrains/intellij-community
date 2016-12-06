@@ -106,6 +106,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       }
       String expectedFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + AFTER_PREFIX + testName;
       quickFix.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
+
+      String familyName = action.getFamilyName();
+      if (StringUtil.isEmptyOrSpaces(familyName)) {
+        fail("Action '" + text + "' provides empty family name which means that user would see action with empty presentable text in Inspection Results");
+      }
     }
   }
 
