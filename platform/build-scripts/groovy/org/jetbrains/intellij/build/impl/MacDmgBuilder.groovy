@@ -65,10 +65,10 @@ class MacDmgBuilder {
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
     defineTasks(buildContext.ant, "${buildContext.paths.communityHome}/lib")
 
-    String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}"
-    if (remoteDir.toLowerCase().endsWith("snapshot")) {
-      remoteDir += "-" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
-    }
+    String currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
+    int randomSeed = new Random().nextInt(Integer.MAX_VALUE)
+    String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}-${currentDateTimeString}-${randomSeed}"
+
     new MacDmgBuilder(buildContext, customizer, remoteDir, macHostProperties)
   }
 
