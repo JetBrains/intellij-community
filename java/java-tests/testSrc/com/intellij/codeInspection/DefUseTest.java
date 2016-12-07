@@ -55,6 +55,7 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testComplexQuintipleTryFinally() { doTest(); }
   public void testAssignmentsInLambdaBody() { doTest(); }
   public void testNestedTryFinallyInEndlessLoop() { doTest(); }
+  public void testNestedTryFinallyInForLoop() { doTest(); }
 
   private void doTest() {
     myFixture.enableInspections(new DefUseInspection());
