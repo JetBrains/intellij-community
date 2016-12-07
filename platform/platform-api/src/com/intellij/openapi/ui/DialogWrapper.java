@@ -467,18 +467,36 @@ public abstract class DialogWrapper {
     }
 
     if (SystemInfo.isMac) {
-      for (Action action : actions) {
-        if (action instanceof MacOtherAction) {
-          leftSideActions.add(action);
-          actions.remove(action);
-          break;
-        }
+      Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
+      if (macOtherAction != null) {
+        leftSideActions.add(macOtherAction);
+        actions.remove(macOtherAction);
+      }
+
+      // move ok action to the right
+      int okNdx = actions.indexOf(getOKAction());
+      if (okNdx >= 0 && okNdx != actions.size() - 1) {
+        actions.remove(getOKAction());
+        actions.add(getOKAction());
+      }
+
+      // move cancel action to the left
+      int cancelNdx = actions.indexOf(getCancelAction());
+      if (cancelNdx > 0) {
+        actions.remove(getCancelAction());
+        actions.add(0, getCancelAction());
       }
     }
     else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
       leftSideActions.add(getHelpAction());
       actions.remove(getHelpAction());
     }
+
+    if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
+      actions = flattenOptionsActions(actions);
+      leftSideActions = flattenOptionsActions(leftSideActions);
+    }
+
 
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
@@ -507,22 +525,6 @@ public abstract class DialogWrapper {
       }
       lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
       if (actions.size() > 0) {
-        if (SystemInfo.isMac) {
-          // move ok action to the right
-          int okNdx = actions.indexOf(getOKAction());
-          if (okNdx >= 0 && okNdx != actions.size() - 1) {
-            actions.remove(getOKAction());
-            actions.add(getOKAction());
-          }
-
-          // move cancel action to the left
-          int cancelNdx = actions.indexOf(getCancelAction());
-          if (cancelNdx > 0) {
-            actions.remove(getCancelAction());
-            actions.add(0, getCancelAction());
-          }
-        }
-
         JPanel buttonsPanel = createButtons(actions, buttonMap);
         if (shouldAddErrorNearButtons()) {
           lrButtonsPanel.add(myErrorText, bag.next());
@@ -655,10 +657,6 @@ public abstract class DialogWrapper {
 
   @NotNull
   private JPanel createButtons(@NotNull List<Action> actions, @NotNull Map<Action, JButton> buttons) {
-    if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
-      actions = flattenOptionsActions(actions);
-    }
-
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
     JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.size(), hgap, 0));
     for (final Action action : actions) {
