@@ -408,7 +408,7 @@ public class StudyProjectGenerator {
       myCourses = execCancelable(() -> EduStepicConnector.getCourses(myUser));
       flushCache(myCourses);
     }
-    if (myCourses.isEmpty()) {
+    if (myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(CourseInfo.INVALID_COURSE))) {
       myCourses = getBundledIntro();
     }
     sortCourses(myCourses);
