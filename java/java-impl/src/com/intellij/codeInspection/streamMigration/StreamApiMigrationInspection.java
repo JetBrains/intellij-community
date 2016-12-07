@@ -547,6 +547,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(startOffset < 0 || endOffset < 0) return;
       PsiElement surrounder = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, PsiClass.class);
       final List<PsiVariable> nonFinalVariables = StreamEx.of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
+        .remove(variable -> variable instanceof PsiField)
         .remove(variable -> PsiTreeUtil.getParentOfType(variable, PsiLambdaExpression.class, PsiClass.class) != surrounder)
         .remove(variable -> isVariableSuitableForStream(variable, statement)).toList();
 
