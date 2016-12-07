@@ -415,6 +415,9 @@
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
 
     <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
+    <extensionPoint name="commentTokenSetProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.CommentTokenSetProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="configurationType"
                     interface="com.intellij.execution.configurations.ConfigurationType"/>

@@ -72,6 +72,7 @@ public interface ParserDefinition {
    * Returns the set of token types which are treated as comments by the PSI builder.
    * Tokens of those types are automatically skipped by PsiBuilder. Also, To Do patterns
    * are searched in the text of tokens of those types.
+   * This token set shouldn't contain types of non-leaf comment inner elements.
    *
    * @return the set of comment token types.
    */
