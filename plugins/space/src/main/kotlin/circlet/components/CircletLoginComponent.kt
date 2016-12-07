@@ -16,6 +16,10 @@ data class IdePLuginClientData (
     var myEnabled : Boolean? = null
 )
 
+val stagingEndpoint = "172.20.165.72:30896"
+val localEndpoint = "127.0.0.1:8084"
+val endpoint = localEndpoint
+
 @State(
     name = "CircletLoginComponent",
     storages = arrayOf(Storage(
@@ -24,7 +28,7 @@ data class IdePLuginClientData (
 class CircletLoginComponent() :
     ILifetimedApplicationComponent by LifetimedApplicationComponent(),
     PersistentStateComponent<IdePLuginClientData>{
-    val authUrl = "http://localhost:8084/api/v1/authenticate"
+    val authEndpoint = "http://$endpoint/api/v1/authenticate"
 
     val LOGIN_ID = "CircletLoginComponent.login"
     val PASS_ID = "CircletLoginComponent.pass"
@@ -35,13 +39,12 @@ class CircletLoginComponent() :
     val login : String get() = passwords.getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, LOGIN_ID).orEmpty()
     val pass : String get() = passwords.getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, PASS_ID).orEmpty()
     val token : String get() = passwords.getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, TOKEN_ID).orEmpty()
-
     val credentialsUpdated = Signal<Boolean>()
     val enabled = Property(false)
 
     fun getAccessToken(login : String, pass : String) : Promise<AuthenticationResponse> {
         log.info( "Checking credentials for ${login}" )
-        return CircletAuthentication(authUrl).authenticate(login, pass)
+        return CircletAuthentication(authEndpoint).authenticate(login, pass)
     }
 
     fun setCredentials(login: String, pass: String, token: String) {
