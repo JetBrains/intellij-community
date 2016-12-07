@@ -216,6 +216,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           isComboboxInitialized = true;
           initCoursesCombobox();
         }
+        CourseInfo selectedCourse = (CourseInfo)myCoursesComboBox.getSelectedItem();
+        if (selectedCourse == null || selectedCourse.equals(CourseInfo.INVALID_COURSE)) {
+          setError(CONNECTION_ERROR);
+        }
       }
     });
   }
