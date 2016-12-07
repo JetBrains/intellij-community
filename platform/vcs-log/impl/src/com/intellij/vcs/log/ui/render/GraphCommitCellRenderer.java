@@ -37,13 +37,15 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
-                                 @NotNull VcsLogGraphTable table) {
+                                 @NotNull VcsLogGraphTable table,
+                                 boolean compact,
+                                 boolean showTagNames) {
     myLogData = logData;
     myGraphTable = table;
 
-    myTooltipPainter = new LabelPainter(myLogData);
-    myComponent = new MyComponent(logData, painter, table);
-    myTemplateComponent = new MyComponent(logData, painter, table);
+    myTooltipPainter = new LabelPainter(myLogData, compact, showTagNames);
+    myComponent = new MyComponent(logData, painter, table, compact, showTagNames);
+    myTemplateComponent = new MyComponent(logData, painter, table, compact, showTagNames);
   }
 
   @Override
@@ -110,7 +112,16 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).getWidth();
   }
 
+  public void setCompactReferencesView(boolean compact) {
+    myComponent.getReferencePainter().setCompact(compact);
+  }
+
+  public void setShowTagsNames(boolean showTagNames) {
+    myComponent.getReferencePainter().setShowTagNames(showTagNames);
+  }
+
   private static class MyComponent extends SimpleColoredRenderer {
+    private static final int FREE_SPACE = 20;
     @NotNull private final VcsLogData myLogData;
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
@@ -121,12 +132,16 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private Font myFont;
     private int myHeight;
 
-    public MyComponent(@NotNull VcsLogData data, @NotNull GraphCellPainter painter, @NotNull VcsLogGraphTable table) {
+    public MyComponent(@NotNull VcsLogData data,
+                       @NotNull GraphCellPainter painter,
+                       @NotNull VcsLogGraphTable table,
+                       boolean compact,
+                       boolean showTags) {
       myLogData = data;
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(myLogData);
+      myReferencePainter = new LabelPainter(myLogData, compact, showTags);
 
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
       myFont = RectanglePainter.getFont();
@@ -194,7 +209,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     private int getAvailableWidth(int column) {
       int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
-      return Math.min(columnWidth - super.getPreferredSize().width, columnWidth / 3);
+      return Math.min(columnWidth - super.getPreferredSize().width,
+                      myReferencePainter.isCompact() ? columnWidth / 3 : Math.max(columnWidth - FREE_SPACE, 0));
     }
 
     private int calculateHeight() {

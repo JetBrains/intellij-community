@@ -37,6 +37,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
+    public boolean COMPACT_REFERENCES_VIEW = true;
+    public boolean SHOW_TAG_NAMES = false;
   }
 
   @NotNull
@@ -151,6 +153,26 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public List<String> getFilterValues(@NotNull String filterName) {
     return getState().FILTERS.get(filterName);
+  }
+
+  @Override
+  public boolean isCompactReferencesView() {
+    return getState().COMPACT_REFERENCES_VIEW;
+  }
+
+  @Override
+  public void setCompactReferencesView(boolean compact) {
+    getState().COMPACT_REFERENCES_VIEW = compact;
+  }
+
+  @Override
+  public boolean isShowTagNames() {
+    return getState().SHOW_TAG_NAMES;
+  }
+
+  @Override
+  public void setShowTagNames(boolean showTags) {
+    getState().SHOW_TAG_NAMES = showTags;
   }
 
   public static class UserGroup {

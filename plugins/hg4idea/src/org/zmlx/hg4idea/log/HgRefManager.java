@@ -17,8 +17,8 @@ package org.zmlx.hg4idea.log;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
@@ -31,6 +31,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class HgRefManager implements VcsLogRefManager {
   private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0x823139), new Color(0xff5f6f));
@@ -112,27 +113,24 @@ public class HgRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references) {
+  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
-    Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType).entrySet();
-    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup =
-      ContainerUtil.find(groupedRefs, entry -> !entry.getKey().equals(TIP) && !entry.getKey().equals(HEAD));
-    if (firstGroup == null) {
-      firstGroup = ContainerUtil.getFirstItem(groupedRefs);
+    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
+
+    List<RefGroup> result = ContainerUtil.newArrayList();
+
+    List<Map.Entry<VcsRefType, Collection<VcsRef>>> headAndTip =
+      ContainerUtil.filter(groupedRefs.entrySet(), entry -> entry.getKey().equals(HEAD) || entry.getKey().equals(TIP));
+    headAndTip.forEach(entry -> groupedRefs.remove(entry.getKey()));
+
+    SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
+
+    RefGroup firstGroup = ContainerUtil.getFirstItem(result);
+    if (firstGroup != null) {
+      firstGroup.getRefs().addAll(0, headAndTip.stream().flatMap(entry -> entry.getValue().stream()).collect(Collectors.toList()));
     }
 
-    List<RefGroup> groups = ContainerUtil.newArrayList();
-
-    if (firstGroup == null) return groups;
-
-    VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
-    VcsRefType firstRefType = firstGroup.getKey();
-
-    groups.add(
-      new SimpleRefGroup(firstRefType.isBranch() && !firstRefType.equals(TIP) && !firstRefType.equals(HEAD) ? firstRef.getName() : "",
-                         sortedReferences));
-
-    return groups;
+    return result;
   }
 
   @Override
