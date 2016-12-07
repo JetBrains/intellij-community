@@ -49,6 +49,23 @@ public class LocalChangeListImpl extends LocalChangeList {
     myId = origin.getId();
     myProject = origin.myProject;
     setName(origin.myName);
+
+    myComment = origin.myComment;
+    myIsDefault = origin.myIsDefault;
+    myIsReadOnly = origin.myIsReadOnly;
+    myData = origin.myData;
+
+    if (myChanges != null) {
+      myChanges = ContainerUtil.newHashSet(origin.myChanges);
+    }
+
+    if (myChangesBeforeUpdate != null) {
+      myChangesBeforeUpdate = new OpenTHashSet((Collection<Change>)origin.myChangesBeforeUpdate);
+    }
+
+    if (myReadChangesCache != null) {
+      myReadChangesCache = ContainerUtil.newHashSet(origin.myReadChangesCache);
+    }
   }
 
   @NotNull
@@ -246,25 +263,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   public LocalChangeList copy() {
-    final LocalChangeListImpl copy = new LocalChangeListImpl(this);
-    copy.myComment = myComment;
-    copy.myIsDefault = myIsDefault;
-    copy.myIsReadOnly = myIsReadOnly;
-    copy.myData = myData;
-
-    if (myChanges != null) {
-      copy.myChanges = ContainerUtil.newHashSet(myChanges);
-    }
-
-    if (myChangesBeforeUpdate != null) {
-      copy.myChangesBeforeUpdate = new OpenTHashSet<>((Collection<Change>)myChangesBeforeUpdate);
-    }
-
-    if (myReadChangesCache != null) {
-      copy.myReadChangesCache = ContainerUtil.newHashSet(myReadChangesCache);
-    }
-
-    return copy;
+    return new LocalChangeListImpl(this);
   }
 
   public void setId(String id) {
