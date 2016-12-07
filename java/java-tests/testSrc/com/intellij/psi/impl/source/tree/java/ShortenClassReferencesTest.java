@@ -81,6 +81,20 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
                           "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Inner;}}");
   }
 
+  public void testWhiteSpaceForMovedTypeAnnotations() throws Exception {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    assertTrue(elementAtCaret instanceof PsiParameter);
+    WriteCommandAction.runWriteCommandAction(getProject(),
+                                             () -> {
+                                               PsiTypeElement typeElement = (PsiTypeElement)JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(((PsiParameter)elementAtCaret).getTypeElement());
+                                               assertTrue(typeElement != null && typeElement.isValid());
+                                               assertEquals("List<String>", typeElement.getText());
+                                             });
+
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     doShortenRefs();
