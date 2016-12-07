@@ -127,8 +127,10 @@ public class InferenceSession {
     LOG.assertTrue(leftTypes.length == rightTypes.length);
     for (int i = 0; i < leftTypes.length; i++) {
       final PsiType rightType = mySiteSubstitutor.substitute(rightTypes[i]);
-      if (rightType != null && leftTypes[i] != null) {
-        addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(leftTypes[i]), substituteWithInferenceVariables(rightType)));
+      PsiType t = substituteWithInferenceVariables(leftTypes[i]);
+      PsiType s = substituteWithInferenceVariables(rightType);
+      if (t != null && s != null) {
+        addConstraint(new TypeCompatibilityConstraint(t, s));
       }
     }
     myPolicy = DefaultParameterTypeInferencePolicy.INSTANCE;
@@ -1973,7 +1975,7 @@ public class InferenceSession {
     myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(restoreNamesSubstitution);
   }
 
-  public PsiType substituteWithInferenceVariables(PsiType type) {
+  public PsiType substituteWithInferenceVariables(@Nullable PsiType type) {
     return myInferenceSubstitution.substitute(type);
   }
 
