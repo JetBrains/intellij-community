@@ -418,4 +418,20 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
       return null;
     });
   }
+
+  public void testNoIncrementOnReadOnlyStatusChange() throws IOException {
+    VirtualFile file = addFileToProject("Foo.java", "class Foo {}").getVirtualFile();
+
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+    long mc = tracker.getModificationCount();
+
+    WriteAction.run(() -> file.setWritable(false));
+    assertEquals(mc, tracker.getModificationCount());
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(PsiManagerEx.getInstanceEx(myProject).getFileManager().getCachedPsiFile(file));
+
+    WriteAction.run(() -> file.setWritable(true));
+    assertEquals(mc, tracker.getModificationCount());
+  }
 }

@@ -57,7 +57,9 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
 
       case CHILD_MOVED:
       case PROPERTY_CHANGED:
-        myModificationTracker.incCounter();
+        if (PsiModificationTrackerImpl.canAffectPsi(event)) {
+          myModificationTracker.incCounter();
+        }
         break;
 
       default:
