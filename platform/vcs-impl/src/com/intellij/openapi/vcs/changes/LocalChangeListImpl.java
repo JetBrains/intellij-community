@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,13 +42,13 @@ public class LocalChangeListImpl extends LocalChangeList {
   private LocalChangeListImpl(Project project, final String name) {
     myProject = project;
     myId = UUID.randomUUID().toString();
-    setNameImpl(name);
+    setName(name);
   }
 
   private LocalChangeListImpl(LocalChangeListImpl origin) {
     myId = origin.getId();
     myProject = origin.myProject;
-    setNameImpl(origin.myName);
+    setName(origin.myName);
   }
 
   @NotNull
@@ -76,31 +75,18 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   public void setName(@NotNull final String name) {
-    if (! myName.equals(name)) {
-      setNameImpl(name);
-    }
-  }
-
-  public String getComment() {
-    return myComment;
-  }
-
-  // same as for setName()
-  public void setComment(final String comment) {
-    if (! Comparing.equal(comment, myComment)) {
-      myComment = comment != null ? comment : "";
-    }
-  }
-
-  void setNameImpl(@NotNull final String name) {
     if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
       LOG.info("Creating a changelist with empty name");
     }
     myName = name;
   }
 
-  void setCommentImpl(final String comment) {
-    myComment = comment;
+  public String getComment() {
+    return myComment;
+  }
+
+  public void setComment(final String comment) {
+    myComment = comment != null ? comment : "";
   }
 
   public boolean isDefault() {

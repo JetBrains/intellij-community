@@ -209,7 +209,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     newList.setData(data);
 
     if (description != null) {
-      newList.setCommentImpl(description);
+      newList.setComment(description);
     }
     if (id != null) {
       newList.setId(id);
@@ -296,7 +296,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     final boolean canEdit = list != null && (!list.isReadOnly());
     if (canEdit) {
       final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
-      listImpl.setNameImpl(toName);
+      listImpl.setName(toName);
       myMap.remove(fromName);
       myMap.put(toName, list);
     }
@@ -310,7 +310,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final String oldComment = list.getComment();
       if (! Comparing.equal(oldComment, newComment)) {
         final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
-        listImpl.setCommentImpl(newComment);
+        listImpl.setComment(newComment);
       }
       return oldComment;
     }
