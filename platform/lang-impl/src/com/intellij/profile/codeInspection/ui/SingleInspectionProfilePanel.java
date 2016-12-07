@@ -80,8 +80,6 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
-import com.intellij.util.containers.Queue;
-
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
@@ -712,10 +710,12 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private boolean includeDoNotShow(List<InspectionConfigTreeNode> nodes) {
     final Project project = myProjectProfileManager.getProject();
-    return !nodes.stream()
-      .filter(node -> myProfile.getToolDefaultState(node.getKey().toString(), project).getTool() instanceof GlobalInspectionToolWrapper)
-      .findFirst()
-      .isPresent();
+    return nodes
+      .stream()
+      .noneMatch(node -> {
+        final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
+        return tool instanceof GlobalInspectionToolWrapper && ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper() == null;
+      });
   }
 
   private void fillTreeData(@Nullable String filter, boolean forceInclude) {
