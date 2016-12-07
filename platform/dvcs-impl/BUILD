@@ -14,7 +14,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/core-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/core-impl[module]",
         "//tools/idea/platform/vcs-log/api:vcs-log-api[module]",

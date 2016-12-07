@@ -50,6 +50,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:picocontainer[test]",
         "//tools/idea/.idea/libraries:jna[test]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
     ],
 )

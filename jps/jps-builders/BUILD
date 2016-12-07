@@ -33,7 +33,7 @@ iml_module(
         "//tools/idea/java/java-runtime[module]",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Eclipse[test]",
         "//tools/idea/jps/model-api:jps-model-api[module]",
         "//tools/idea/jps/model-serialization:jps-model-serialization[module]",

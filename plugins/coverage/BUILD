@@ -19,7 +19,7 @@ iml_module(
         "//tools/idea/plugins/coverage-common[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/java/openapi[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/platform/testRunner[module]",
         "//tools/idea/.idea/libraries:CoverageReport",
         "//tools/idea/plugins/testng_rt[module]",
@@ -29,7 +29,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JaCoCo",
         "//tools/idea/plugins/coverage/coverage_rt[module]",
         "//tools/idea/java/java-psi-impl[module]",
-        "//tools:idea.platform-impl_and_others[module]",
-        "//tools:idea.java-impl[module]",
+        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:java-impl[module]",
     ],
 )

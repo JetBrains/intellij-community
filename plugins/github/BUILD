@@ -18,7 +18,7 @@ iml_module(
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/plugins/git4idea[module]",
         "//tools/idea/.idea/libraries:http-client",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/plugins/tasks/tasks-core[module]",
         "//tools/idea/plugins/tasks/tasks-api[module]",
         "//tools/idea/platform/util[module]",

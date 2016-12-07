@@ -19,7 +19,7 @@ iml_module(
         "//tools/idea/platform/vcs-log/api:vcs-log-api[module]",
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/platform/vcs-log/graph:vcs-log-graph[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/vcs-log/graph-api:vcs-log-graph-api[module]",

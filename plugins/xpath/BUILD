@@ -16,7 +16,7 @@ iml_module(
     deps = [
         "//tools/idea/xml/openapi:xml-openapi[module]",
         "//tools/idea/platform/lang-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/plugins/xpath/xslt-rt[module]",
         "//tools/idea/platform/annotations[module]",
         "//tools/idea/.idea/libraries:Jaxen",

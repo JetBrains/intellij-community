@@ -30,6 +30,6 @@ iml_module(
     deps = [
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-impl[module]",
         "//tools/idea/plugins/gradle[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
     ],
 )

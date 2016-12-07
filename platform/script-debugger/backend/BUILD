@@ -10,7 +10,7 @@ iml_module(
         "//tools/idea/platform/core-api[module]",
         "//tools/idea/platform/script-debugger/protocol/protocol-reader-runtime[module]",
         "//tools/idea/platform/platform-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Netty",
     ],
 )

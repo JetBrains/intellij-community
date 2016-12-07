@@ -9,7 +9,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/lang-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:jediterm-pty",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:pty4j",

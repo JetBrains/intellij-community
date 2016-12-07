@@ -18,7 +18,7 @@ iml_module(
         "//tools/idea/platform/indexing-api[module]",
         "//tools/idea/xml/xml-psi-api[module]",
         "//tools/idea/platform/projectModel-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/platform/boot[module]",
     ],

@@ -10,7 +10,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/xdebugger-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/script-debugger/backend:script-debugger-backend[module]",
         "//tools/idea/.idea/libraries:Netty",
         "//tools/idea/.idea/libraries:Guava",

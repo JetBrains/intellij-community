@@ -11,7 +11,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:jna",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
     ],

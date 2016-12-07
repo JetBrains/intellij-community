@@ -10,6 +10,6 @@ iml_module(
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/.idea/libraries:http-client-3.1",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
     ],
 )

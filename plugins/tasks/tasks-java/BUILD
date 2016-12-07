@@ -10,6 +10,6 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-api[module]",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/java/debugger/openapi:debugger-openapi[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
     ],
 )

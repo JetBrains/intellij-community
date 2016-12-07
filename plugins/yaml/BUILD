@@ -16,7 +16,7 @@ iml_module(
     deps = [
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/platform/lang-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/xml/openapi:xml-openapi[module]",
     ],
 )

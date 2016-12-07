@@ -10,7 +10,7 @@ iml_module(
         "//tools/idea/java/jsp-openapi[module]",
         "//tools/idea/xml/openapi:xml-openapi[module]",
         "//tools/idea/platform/lang-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/java/openapi[module]",
         "//tools/idea/.idea/libraries:Velocity",
     ],

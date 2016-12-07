@@ -12,7 +12,7 @@ iml_module(
     deps = [
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/.idea/libraries:TestNG[test]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/dvcs-impl[module]",

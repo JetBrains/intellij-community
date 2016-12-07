@@ -18,10 +18,10 @@ iml_module(
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
-    exports = ["//tools:idea.platform-impl_and_others"],
+    exports = ["//tools/idea:platform-impl_and_others"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
     ],
 )

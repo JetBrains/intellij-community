@@ -22,7 +22,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Coverage",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/platform/testRunner[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/lvcs-api[module]",
         "//tools/idea/platform/vcs-api[module]",
     ],

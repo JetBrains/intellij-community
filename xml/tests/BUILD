@@ -9,11 +9,11 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools:idea.platform-impl_and_others[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Xerces",
         "//tools/idea/.idea/libraries:Groovy[test]",
-        "//tools:idea.java-impl[module, test]",
+        "//tools/idea:java-impl[module, test]",
         "//tools/idea/plugins/ant[module, test]",
         "//tools/idea/plugins/xpath[module, test]",
         "//tools/idea/.idea/libraries:XmlBeans",

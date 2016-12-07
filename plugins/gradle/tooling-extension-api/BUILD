@@ -14,8 +14,8 @@ iml_module(
     deps = [
         "//tools/idea/platform/external-system-rt[module]",
         "//tools/idea/platform/annotations[module]",
-        "//tools:idea.platform-impl_and_others[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
         "//tools/idea/.idea/libraries:GradleGuava",

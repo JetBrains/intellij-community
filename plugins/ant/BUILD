@@ -12,16 +12,16 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/.idea/libraries:Ant",
-        "//tools:idea.platform-impl_and_others",
+        "//tools/idea:platform-impl_and_others",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/java/java-runtime[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/plugins/properties[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/xml/openapi:xml-openapi[module]",

@@ -11,7 +11,7 @@ iml_module(
         "//tools/idea/plugins/git4idea",
         "//tools/idea/platform/remote-servers/impl:remote-servers-impl",
         "//tools/idea/platform/lang-api",
-        "//tools:idea.platform-impl_and_others",
+        "//tools/idea:platform-impl_and_others",
     ],
     # do not sort: must match IML order
     deps = [
@@ -22,7 +22,7 @@ iml_module(
         "//tools/idea/plugins/git4idea[module]",
         "//tools/idea/platform/remote-servers/impl:remote-servers-impl[module]",
         "//tools/idea/platform/lang-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/dvcs-api[module]",
     ],
 )

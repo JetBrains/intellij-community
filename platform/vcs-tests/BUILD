@@ -10,7 +10,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/platform/vcs-api/vcs-api-core[module]",
         "//tools/idea/platform/core-api[module]",

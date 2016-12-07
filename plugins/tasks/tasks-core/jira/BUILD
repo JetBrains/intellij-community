@@ -13,6 +13,6 @@ iml_module(
     deps = [
         "//tools/idea/plugins/tasks/tasks-core[module]",
         "//tools/idea/platform/lang-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
     ],
 )

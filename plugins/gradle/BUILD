@@ -9,7 +9,7 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/platform/external-system-api",
-        "//tools:idea.compiler-impl_and_others",
+        "//tools/idea:compiler-impl_and_others",
         "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
@@ -19,17 +19,17 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/external-system-api[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api[module]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-impl[module]",
         "//tools/idea/plugins/gradle/jps-plugin:gradle-jps-plugin[module]",
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea/plugins/groovy:jetgroovy[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/java/openapi[module]",
-        "//tools:idea.java-impl[module]",
+        "//tools/idea:java-impl[module]",
         "//tools/idea/plugins/maven:maven_and_others[module]",
         "//tools/idea/plugins/junit[module]",
         "//tools/idea/.idea/libraries:swingx",
@@ -59,8 +59,8 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:Mocks[test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools:idea.platform-impl_and_others[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/plugins/gradle[module, test]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-tests[module, test]",
         "//tools/idea/plugins/maven/maven-server-api[module, test]",

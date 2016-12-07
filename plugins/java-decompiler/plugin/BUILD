@@ -15,8 +15,8 @@ iml_module(
         "//tools/idea/java/java-psi-api[module]",
         "//tools/idea/java/java-psi-impl[module]",
         "//tools/idea/platform/util[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/core-api[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
     ],
 )

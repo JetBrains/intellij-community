@@ -10,7 +10,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/platform/util[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/.idea/libraries:Netty",
     ],
 )

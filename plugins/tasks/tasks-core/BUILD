@@ -9,7 +9,7 @@ iml_module(
     exports = [
         "//tools/idea/plugins/tasks/tasks-api",
         "//tools/idea/platform/platform-api",
-        "//tools:idea.platform-impl_and_others",
+        "//tools/idea:platform-impl_and_others",
         "//tools/idea/.idea/libraries:axis-1.4",
         "//tools/idea/.idea/libraries:http-client-3.1",
         "//tools/idea/.idea/libraries:XmlRPC",
@@ -21,7 +21,7 @@ iml_module(
     deps = [
         "//tools/idea/plugins/tasks/tasks-api[module]",
         "//tools/idea/platform/platform-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/vcs-api[module]",
         "//tools/idea/.idea/libraries:axis-1.4",
         "//tools/idea/.idea/libraries:http-client-3.1",

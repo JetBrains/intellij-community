@@ -8,9 +8,9 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/structuralsearch[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/java/openapi[module]",
-        "//tools:idea.java-impl[module]",
+        "//tools/idea:java-impl[module]",
         "//tools/idea/platform/duplicates-analysis[module]",
     ],
 )

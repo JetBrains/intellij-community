@@ -16,11 +16,11 @@ iml_module(
     deps = [
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/platform/platform-api[module]",
-        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/annotations[module]",
         "//tools/idea/resources[module, test]",
         "//tools/idea/plugins/properties/properties-psi-api[module]",
         "//tools/idea/plugins/properties/properties-psi-impl[module]",
-        "//tools:idea.compiler-impl_and_others[module]",
+        "//tools/idea:compiler-impl_and_others[module]",
     ],
 )
