@@ -208,9 +208,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert dot != null : this;
       deleteChildRange(child.getPsi(), dot.getPsi());
 
-      List<PsiAnnotation> annotations = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiAnnotation.class);
-      setAnnotations(annotations);
-
+      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
+      if (modifierList != null) {
+        ASTNode ref = findChildByRole(ChildRole.REFERENCE_NAME);
+        assert ref != null : this;
+        PsiElement lastChild = ref.getPsi().getPrevSibling();
+        if (lastChild != null) {
+          modifierList.addRange(getFirstChild(), lastChild);
+          deleteChildRange(getFirstChild(), lastChild);
+        }
+      }
       return;
     }
 
@@ -612,31 +619,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
 
     return annotations;
-  }
-
-  private void setAnnotations(List<PsiAnnotation> annotations) {
-    if (annotations.isEmpty()) return;
-
-    PsiElement newParent = this;
-    PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(findChildByType(JavaTokenType.DOT));
-    if (anchor == null) {
-      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
-      if (modifierList != null) {
-        newParent = modifierList;
-      }
-    }
-
-    for (PsiAnnotation annotation : annotations) {
-      if (annotation.getParent() != newParent) {
-        if (anchor != null) {
-          newParent.addAfter(annotation, anchor);
-        }
-        else {
-          newParent.add(annotation);
-        }
-        annotation.delete();
-      }
-    }
   }
 
   private boolean isFullyQualified(@NotNull PsiFile containingFile) {
