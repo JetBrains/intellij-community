@@ -950,7 +950,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (PsiSubstitutor psiSubstitutor : substitutor) {
       type = psiSubstitutor.substitute(type);
     }
-    return factory.createParameter(newParm.getName(), type);
+    return factory.createParameter(newParm.getName(), type, list);
   }
 
   private static void resolveParameterVsFieldsConflicts(final PsiParameter[] newParms,
@@ -1149,7 +1149,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             parameterType =
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
-          PsiParameter param = factory.createParameter(info.getName(), parameterType);
+          PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
           prototype.getParameterList().add(param);
         }
 
