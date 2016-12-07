@@ -1167,7 +1167,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @NotNull
   @Override
-  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
+  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderID) {
     if (settings instanceof WrappingRunConfiguration) {
       return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer(), taskProviderID);
     }
@@ -1259,7 +1259,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         }
       }
     }
-    myConfigurationToBeforeTasksMap.put(runConfiguration, ContainerUtil.notNullize(result));
+    myConfigurationToBeforeTasksMap.put(runConfiguration, result);
     fireBeforeRunTasksUpdated();
   }
 

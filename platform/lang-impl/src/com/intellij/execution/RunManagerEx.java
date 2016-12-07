@@ -70,7 +70,7 @@ public abstract class RunManagerEx extends RunManager {
   public abstract void setBeforeRunTasks(RunConfiguration runConfiguration, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
 
   @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID);
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderID);
 
   @NotNull
   public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID);
