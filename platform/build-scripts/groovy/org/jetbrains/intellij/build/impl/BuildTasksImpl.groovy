@@ -240,6 +240,15 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
+  void compileModules() {
+    checkProductProperties()
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+      buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
+  }
+
+  @Override
   void buildDistributions() {
     checkProductProperties()
 

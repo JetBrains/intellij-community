@@ -44,6 +44,8 @@ abstract class BuildTasks {
    */
   abstract void buildDistributions()
 
+  abstract void compileModules()
+
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
   abstract void compileModules(List<String> moduleNames, List<String> includingTestsInModules = [])
@@ -63,18 +65,36 @@ abstract class BuildTasks {
    * @param groovyRootRelativePaths paths to root folders containing {@code productPropertiesClassName} and required classes, relative to project home
    * @param communityHomeRelativePath path to a directory containing sources from idea/community Git repository relative to project home
    */
-  @CompileDynamic
-  static void buildProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths, String communityHomeRelativePath, Script gantScript,
+  static void buildProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths,
+                           String communityHomeRelativePath, Script gantScript,
                            ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY) {
+    BuildContext context = createBuildContextFromProduct(productPropertiesClassName, groovyRootRelativePaths,
+      communityHomeRelativePath, gantScript, proprietaryBuildTools)
+    create(context).buildDistributions()
+  }
+
+  static void compileModulesFromProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths,
+                             String communityHomeRelativePath, Script gantScript,
+                             ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY) {
+    BuildContext context = createBuildContextFromProduct(productPropertiesClassName, groovyRootRelativePaths,
+      communityHomeRelativePath, gantScript, proprietaryBuildTools)
+
+    create(context).compileModules()
+  }
+
+  @CompileDynamic
+  static BuildContext createBuildContextFromProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths,
+                                                    String communityHomeRelativePath, Script gantScript,
+                                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY) {
     String projectHome = IdeaProjectLoader.guessHome(gantScript)
-    GantBinding binding = (GantBinding)gantScript.binding
+    GantBinding binding = (GantBinding) gantScript.binding
     groovyRootRelativePaths.each {
       BuildUtils.addToClassPath("$projectHome/$it", binding.ant)
     }
     binding.includeTool << JpsGantTool
     ProductProperties productProperties = (ProductProperties) Class.forName(productPropertiesClassName).constructors[0].newInstance(projectHome)
-    def context = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
-                                             "$projectHome/$communityHomeRelativePath", projectHome, productProperties, proprietaryBuildTools)
-    create(context).buildDistributions()
+    BuildContext context = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
+      "$projectHome/$communityHomeRelativePath", projectHome, productProperties, proprietaryBuildTools)
+    return context
   }
 }
