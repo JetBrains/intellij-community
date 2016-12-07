@@ -176,19 +176,20 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     }
 
     ConfigurationFromContext fromContext = createConfigurationFromContext(context);
-    if (fromContext != null) {
-      final PsiElement psiElement = fromContext.getSourceElement();
-      final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location.getModule());
-      if (_location != null) {
-        // replace with existing configuration if any
-        final RunManager runManager = RunManager.getInstance(context.getProject());
-        final ConfigurationType type = fromContext.getConfigurationType();
-        final RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
-        if (settings != null) {
-          fromContext.setConfigurationSettings(settings);
-        } else {
-          runManager.setUniqueNameIfNeed(fromContext.getConfiguration());
-        }
+    if (fromContext == null) {
+      return null;
+    }
+
+    final PsiElement psiElement = fromContext.getSourceElement();
+    final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location.getModule());
+    if (_location != null) {
+      // replace with existing configuration if any
+      RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
+      if (settings == null) {
+        RunManager.getInstance(context.getProject()).setUniqueNameIfNeed(fromContext.getConfiguration());
+      }
+      else {
+        fromContext.setConfigurationSettings(settings);
       }
     }
 
