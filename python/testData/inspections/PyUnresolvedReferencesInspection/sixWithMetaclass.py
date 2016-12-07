@@ -1,4 +1,4 @@
-import <error descr="No module named six">six</error>
+import six
 
 
 class M(type):
@@ -21,7 +21,7 @@ class C(six.with_metaclass(M, B1, B2)):
         C.baz()
 
 
-from <error descr="Unresolved reference 'six'">six</error> import <error descr="Unresolved reference 'with_metaclass'">with_metaclass</error> as w_m
+from six import with_metaclass as w_m
 
 
 class D(w_m(M, B1, B2)):

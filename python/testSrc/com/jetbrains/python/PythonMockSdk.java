@@ -27,6 +27,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +77,14 @@ public class PythonMockSdk {
     }
 
     sdkModificator.addRoot(PyUserSkeletonsUtil.getUserSkeletonsDirectory(), OrderRootType.CLASSES);
-    PyTypeShed.INSTANCE.findRootsForSdk(sdk).forEach(file -> sdkModificator.addRoot(file, OrderRootType.CLASSES));
+    final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
+    final VirtualFile typeShedDir = PyTypeShed.INSTANCE.getDirectory();
+    PyTypeShed.INSTANCE.findRootsForLanguageLevel(level).forEach(path -> {
+      final VirtualFile file = typeShedDir.findFileByRelativePath(path);
+      if (file != null) {
+        sdkModificator.addRoot(file, OrderRootType.CLASSES);
+      }
+    });
 
     String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
     sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), PythonSdkType.BUILTIN_ROOT_TYPE);
