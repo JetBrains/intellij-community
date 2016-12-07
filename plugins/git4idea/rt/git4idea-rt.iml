@@ -9,17 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="util-rt" />
-    <orderEntry type="module-library">
-      <library name="trilead-ssh2">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/trilead-ssh2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/trilead-ssh2-src.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
   </component>
 </module>
