@@ -1076,19 +1076,7 @@ public abstract class DialogWrapper {
    */
   @NotNull
   protected Action[] createActions() {
-    if (getHelpId() == null) {
-      if (SystemInfo.isMac) {
-        return new Action[]{getCancelAction(), getOKAction()};
-      }
-
-      return new Action[]{getOKAction(), getCancelAction()};
-    }
-    else {
-      if (SystemInfo.isMac) {
-        return new Action[]{getHelpAction(), getCancelAction(), getOKAction()};
-      }
-      return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-    }
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   @NotNull
