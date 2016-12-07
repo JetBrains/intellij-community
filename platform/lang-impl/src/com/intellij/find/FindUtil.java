@@ -988,8 +988,10 @@ public class FindUtil {
       return false;
     }
     int caretOffset = getCaretPosition(result, caretShiftFromSelectionStart);
+    LogicalPosition caretPosition = editor.offsetToLogicalPosition(caretOffset);
+    if (caretShiftFromSelectionStart == 0) caretPosition = caretPosition.leanForward(true);
     EditorActionUtil.makePositionVisible(editor, caretOffset);
-    Caret newCaret = editor.getCaretModel().addCaret(editor.offsetToVisualPosition(caretOffset));
+    Caret newCaret = editor.getCaretModel().addCaret(editor.logicalToVisualPosition(caretPosition));
     if (newCaret == null) {
       return false;
     }
