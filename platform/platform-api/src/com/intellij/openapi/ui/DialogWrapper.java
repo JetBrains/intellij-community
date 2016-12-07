@@ -569,7 +569,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  public static JPanel addDoNotShowCheckBox(@NotNull JComponent southPanel, @NotNull JCheckBox checkBox) {
+  private static JPanel addDoNotShowCheckBox(@NotNull JComponent southPanel, @NotNull JComponent checkBox) {
     final JPanel panel = new JPanel(new BorderLayout());
 
     JPanel wrapper = new JPanel(new GridBagLayout());
@@ -656,11 +656,14 @@ public abstract class DialogWrapper {
 
     if (doNotAsk != null) {
       myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
-      if (doNotAsk.canBeHidden()) {
-        panel = addDoNotShowCheckBox(panel, myCheckBoxDoNotShowDialog);
-        myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
-        DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
-      }
+      myCheckBoxDoNotShowDialog.setVisible(doNotAsk.canBeHidden());
+      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
+      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
+    }
+
+    JComponent doNotAskCheckbox = createDoNotAskCheckbox();
+    if (doNotAskCheckbox != null) {
+      panel = addDoNotShowCheckBox(panel, doNotAskCheckbox);
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
@@ -673,6 +676,11 @@ public abstract class DialogWrapper {
     }
 
     return panel;
+  }
+
+  @Nullable
+  protected JComponent createDoNotAskCheckbox() {
+    return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
   @NotNull

@@ -18,12 +18,12 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.MacOtherAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,12 +105,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     }
 
     private void refreshSouthPanel() {
-      JComponent southPanel = super.createSouthPanel();
-      if (myHasDoNotShowCheckbox.isSelected()) {
-        southPanel = addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), new JCheckBox("Do not show again"));
-      }
-
-      mySouthPanel.setContent(southPanel);
+      mySouthPanel.setContent(super.createSouthPanel());
       pack();
     }
 
@@ -141,6 +136,12 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     @Override
     protected DialogStyle getStyle() {
       return myCompact.isSelected() ? DialogStyle.COMPACT : DialogStyle.NO_STYLE;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createDoNotAskCheckbox() {
+      return myHasDoNotShowCheckbox.isSelected() ? new JCheckBox("Do not show again") : null;
     }
 
     @Override
