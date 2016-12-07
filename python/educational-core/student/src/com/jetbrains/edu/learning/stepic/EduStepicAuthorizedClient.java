@@ -104,7 +104,10 @@ public class EduStepicAuthorizedClient {
       return getBuilder().setDefaultHeaders(headers).build();
     }
     else {
-      login(stepicUser);
+      final StepicUser authorizedUser = login(stepicUser);
+      if (authorizedUser != null) {
+        return initializeClient(authorizedUser);
+      }
     }
     return null;
   }
