@@ -92,7 +92,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {
     if (!Comparing.equal(ChangesUtil.getBeforePath(change1), ChangesUtil.getBeforePath(change2)) ||
         !Comparing.equal(ChangesUtil.getAfterPath(change1), ChangesUtil.getAfterPath(change2))) {
-      // we use Change.hashCode(), so removing this check might violate comparison contract
+      // we use file paths for hashCode, so removing this check might violate comparison contract
       return false;
     }
 
@@ -121,6 +121,14 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       return Comparing.equal(vFile1, vFile2);
     }
     return false;
+  }
+
+  public static int hashCode(@NotNull Change change) {
+    return hashCode(change.getBeforeRevision()) + 31 * hashCode(change.getAfterRevision());
+  }
+
+  private static int hashCode(@Nullable ContentRevision revision) {
+    return revision != null ? revision.getFile().hashCode() : 0;
   }
 
   @Nullable
