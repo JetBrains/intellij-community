@@ -3,8 +3,11 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
@@ -315,8 +318,20 @@ public class EduStepicConnector {
 
       final Map<String, TaskFile> taskFiles = task.getTaskFiles();
       final ArrayList<StepicWrappers.SolutionFile> files = new ArrayList<>();
+      final VirtualFile taskDir = task.getTaskDir(project);
+      if (taskDir == null) {
+        LOG.error("Failed to find task directory " + task.getName());
+        return;
+      }
       for (TaskFile fileEntry : taskFiles.values()) {
-        files.add(new StepicWrappers.SolutionFile(fileEntry.name, fileEntry.text));
+        final String fileName = fileEntry.name;
+        final VirtualFile virtualFile = taskDir.findFileByRelativePath(fileName);
+        if (virtualFile != null) {
+          final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          if (document != null) {
+            files.add(new StepicWrappers.SolutionFile(fileName, document.getCharsSequence().toString()));
+          }
+        }
       }
       postSubmission(passed, attempt, project, files);
     }
