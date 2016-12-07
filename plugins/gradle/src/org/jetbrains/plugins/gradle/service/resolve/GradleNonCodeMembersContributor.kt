@@ -90,7 +90,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       }
       else return
 
-      val processVariable: (GradleExtensionsSettings.GradleProp) -> Boolean = {
+      val processVariable: (GradleExtensionsSettings.TypeAware) -> Boolean = {
         val docRef = Ref.create<String>()
         val variable = object : GrLightVariable(place.manager, propCandidate, it.typeFqn, place) {
           override fun getNavigationElement(): PsiElement {

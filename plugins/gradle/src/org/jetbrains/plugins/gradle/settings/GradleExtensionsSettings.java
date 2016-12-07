@@ -232,18 +232,27 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
+  public interface TypeAware {
+    String getTypeFqn();
+  }
+
   @Tag("ext")
-  public static class GradleExtension {
+  public static class GradleExtension implements TypeAware {
     @Attribute("name")
     public String name;
     @Attribute("type")
     public String rootTypeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
     @Attribute("objectType")
     public String namedObjectTypeFqn;
+
+    @Override
+    public String getTypeFqn() {
+      return rootTypeFqn;
+    }
   }
 
   @Tag("prop")
-  public static class GradleProp {
+  public static class GradleProp implements TypeAware {
     @Attribute("name")
     public String name;
     @Attribute("type")
@@ -251,15 +260,26 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Nullable
     @Text
     public String value;
+
+    @Override
+    public String getTypeFqn() {
+      return typeFqn;
+    }
   }
 
   @Tag("task")
-  public static class GradleTask extends GradleProp {
+  public static class GradleTask implements TypeAware {
+    @Attribute("name")
+    public String name;
+    @Attribute("type")
+    public String typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
     @Nullable
     @Text
     public String description;
-    {
-      typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
+
+    @Override
+    public String getTypeFqn() {
+      return typeFqn;
     }
   }
 }

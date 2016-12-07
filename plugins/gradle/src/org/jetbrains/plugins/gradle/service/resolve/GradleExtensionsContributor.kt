@@ -31,6 +31,8 @@ import com.intellij.util.ProcessingContext
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleProp
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleTask
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder.DOCUMENTATION
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_LSHIFT_SIGN
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -239,7 +241,20 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       return GradleExtensionsSettings.getInstance(project).getExtensionsFor(module) ?: return null
     }
 
-    fun getDocumentation(gradleProp: GradleExtensionsSettings.GradleProp,
+    fun getDocumentation(gradleProp: GradleExtensionsSettings.TypeAware,
+                         lightVariable: GrLightVariable): String? {
+      if (gradleProp is GradleProp) {
+        return getDocumentation(gradleProp, lightVariable)
+      }
+      else if (gradleProp is GradleTask) {
+        return getDocumentation(gradleProp, lightVariable)
+      }
+      else {
+        return null
+      }
+    }
+
+    fun getDocumentation(gradleProp: GradleProp,
                          lightVariable: GrLightVariable): String {
       val buffer = StringBuilder()
       buffer.append("<PRE>")
@@ -250,19 +265,24 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
         buffer.append(" = " + gradleProp.value)
       }
       buffer.append("</PRE>")
-
-      if (gradleProp is GradleExtensionsSettings.GradleTask) {
-        if (!gradleProp.description.isNullOrBlank()) {
-          buffer.append(gradleProp.description)
-        }
-      }
-
       if (hasInitializer) {
-        buffer.append("<b>Initial value has been got during last import</b>")
+        buffer.append("<br><b>Initial value has been got during last import</b>")
       }
       return buffer.toString()
     }
 
+    fun getDocumentation(gradleTask: GradleTask,
+                         lightVariable: GrLightVariable): String {
+      val buffer = StringBuilder()
+      buffer.append("<PRE>")
+      JavaDocInfoGenerator.generateType(buffer, lightVariable.type, lightVariable, true)
+      buffer.append(" " + gradleTask.name)
+      buffer.append("</PRE>")
+      if (!gradleTask.description.isNullOrBlank()) {
+        buffer.append(gradleTask.description)
+      }
+      return buffer.toString()
+    }
   }
 }
 
