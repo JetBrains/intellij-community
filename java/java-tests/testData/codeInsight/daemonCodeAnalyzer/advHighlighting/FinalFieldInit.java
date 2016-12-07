@@ -299,3 +299,13 @@ class DefiniteAssignmentInFinally {
     }
   }
 }
+class StaticInitializerUsedInAnotherInstanceField {
+  private final int myEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
+  private static final int ourEnumerationCacheConstant = <error descr="Illegal forward reference">ENUMERATION_CACHE_SIZE</error>;
+
+  private static final int ENUMERATION_CACHE_SIZE;
+
+  static {
+    ENUMERATION_CACHE_SIZE = 0;
+  }
+}

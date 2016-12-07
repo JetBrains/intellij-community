@@ -125,12 +125,7 @@ public class HighlightControlFlowUtil {
     else {
       return false;
     }
-    for (PsiClassInitializer initializer : initializers) {
-      if (initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
-          && variableDefinitelyAssignedIn(field, initializer.getBody())) {
-        return true;
-      }
-    }
+    if (isFieldInitializedInClassInitializer(field, isFieldStatic, initializers)) return true;
     if (isFieldStatic) {
       return false;
     }
@@ -156,6 +151,18 @@ public class HighlightControlFlowUtil {
       }
       return true;
     }
+  }
+
+  private static boolean isFieldInitializedInClassInitializer(@NotNull PsiField field,
+                                                              boolean isFieldStatic,
+                                                              PsiClassInitializer[] initializers) {
+    for (PsiClassInitializer initializer : initializers) {
+      if (initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+          && variableDefinitelyAssignedIn(field, initializer.getBody())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
@@ -317,7 +324,9 @@ public class HighlightControlFlowUtil {
           final PsiField field = (PsiField)variable;
 
           aClass = field.getContainingClass();
-          if (aClass == null || isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC))) {
+          if (aClass == null ||
+              isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC)) ||
+              field.hasModifierProperty(PsiModifier.STATIC) && isFieldInitializedInClassInitializer(field, true, aClass.getInitializers())) {
             return null;
           }
           final PsiField anotherField = PsiTreeUtil.getTopmostParentOfType(expression, PsiField.class);
@@ -607,9 +616,7 @@ public class HighlightControlFlowUtil {
     final boolean canWrite = canWriteToFinal(variable, expression, reference, containingFile) && checkWriteToFinalInsideLambda(variable, reference) == null;
     if (readBeforeWrite || !canWrite) {
       final String name = variable.getName();
-      String description = canWrite ?
-                           JavaErrorMessages.message("variable.not.initialized", name) :
-                           JavaErrorMessages.message("assignment.to.final.variable", name);
+      String description = JavaErrorMessages.message(canWrite ? "variable.not.initialized" : "assignment.to.final.variable", name);
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
       final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
