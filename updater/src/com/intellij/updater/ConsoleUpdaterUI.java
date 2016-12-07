@@ -15,9 +15,9 @@
  */
 package com.intellij.updater;
 
-import java.util.Map;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class ConsoleUpdaterUI implements UpdaterUI {
@@ -57,12 +57,30 @@ public class ConsoleUpdaterUI implements UpdaterUI {
     return false;
   }
 
-  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) {
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+    if (!validationResults.isEmpty()) {
+      System.out.println("Validation info:");
+
+      for (ValidationResult item : validationResults) {
+        System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
+      }
+
+      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.ERROR)) {
+        System.out.println("Invalid files were detected. Failing.");
+        throw new OperationCancelledException();
+      }
+
+      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.CONFLICT)) {
+        System.out.println("Conflicting files were detected. Failing.");
+        throw new OperationCancelledException();
+      }
+    }
+
     return Collections.emptyMap();
   }
 
   @Override
   public String toString() {
-    return "Status: '" + myStatus + '\'';
+    return String.format("Status: '%s'", myStatus);
   }
 }
