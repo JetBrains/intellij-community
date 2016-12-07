@@ -22,12 +22,12 @@ import java.util.*;
 public class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
-  private final Project myProject;
-  private Set<Change> myChanges = ContainerUtil.newHashSet();
+  @NotNull private final Project myProject;
+  @NotNull private final Set<Change> myChanges;
   private Set<Change> myReadChangesCache = null;
-  private String myId;
+  @NotNull private String myId;
   @NotNull private String myName;
-  private String myComment = "";
+  @NotNull private String myComment = "";
   @Nullable private Object myData;
 
   private boolean myIsDefault = false;
@@ -35,17 +35,19 @@ public class LocalChangeListImpl extends LocalChangeList {
   private OpenTHashSet<Change> myChangesBeforeUpdate;
 
   @NotNull
-  public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
+  public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project, @NotNull String name) {
     return new LocalChangeListImpl(project, name);
   }
 
-  private LocalChangeListImpl(Project project, final String name) {
+  private LocalChangeListImpl(@NotNull Project project, @NotNull String name) {
     myProject = project;
     myId = UUID.randomUUID().toString();
     setName(name);
+
+    myChanges = ContainerUtil.newHashSet();
   }
 
-  private LocalChangeListImpl(LocalChangeListImpl origin) {
+  private LocalChangeListImpl(@NotNull LocalChangeListImpl origin) {
     myId = origin.getId();
     myProject = origin.myProject;
     setName(origin.myName);
@@ -55,12 +57,10 @@ public class LocalChangeListImpl extends LocalChangeList {
     myIsReadOnly = origin.myIsReadOnly;
     myData = origin.myData;
 
-    if (myChanges != null) {
-      myChanges = ContainerUtil.newHashSet(origin.myChanges);
-    }
+    myChanges = ContainerUtil.newHashSet(origin.myChanges);
 
     if (myChangesBeforeUpdate != null) {
-      myChangesBeforeUpdate = new OpenTHashSet((Collection<Change>)origin.myChangesBeforeUpdate);
+      myChangesBeforeUpdate = new OpenTHashSet<>((Collection<Change>)origin.myChangesBeforeUpdate);
     }
 
     if (myReadChangesCache != null) {
@@ -91,18 +91,19 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName;
   }
 
-  public void setName(@NotNull final String name) {
+  public void setName(@NotNull String name) {
     if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
       LOG.info("Creating a changelist with empty name");
     }
     myName = name;
   }
 
+  @NotNull
   public String getComment() {
     return myComment;
   }
 
-  public void setComment(final String comment) {
+  public void setComment(@Nullable String comment) {
     myComment = comment != null ? comment : "";
   }
 
@@ -266,7 +267,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return new LocalChangeListImpl(this);
   }
 
-  public void setId(String id) {
+  public void setId(@NotNull String id) {
     myId = id;
   }
 }
