@@ -67,7 +67,7 @@ public class StepicWrappers {
         ApplicationManager.getApplication().runWriteAction(() -> {
           final VirtualFile taskDir = task.getTaskDir(project);
           assert taskDir != null;
-          VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+          VirtualFile ideaDir = project.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
           assert ideaDir != null;
           String stepic = "stepic";
           VirtualFile stepicDir = ideaDir.findChild(stepic);

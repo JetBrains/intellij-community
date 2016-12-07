@@ -97,7 +97,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
     for (VirtualFile child : baseDir.getChildren()) {
       String name = child.getName();
       File fromFile = new File(child.getPath());
-      if (CCUtils.GENERATED_FILES_FOLDER.equals(name) || ".idea".equals(name)
+      if (CCUtils.GENERATED_FILES_FOLDER.equals(name) || Project.DIRECTORY_STORE_FOLDER.equals(name)
           || name.contains("iml") || manager.doNotPackFile(fromFile)) {
         continue;
       }
