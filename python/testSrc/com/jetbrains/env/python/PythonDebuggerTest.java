@@ -26,7 +26,6 @@ import com.jetbrains.python.debugger.PyExceptionBreakpointType;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
-import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
@@ -1104,7 +1103,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptName(), 13);
+        toggleBreakpoint(getScriptName(), 11);
       }
 
       @Override
@@ -1114,6 +1113,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         stepOver();
         waitForPause();
         eval("x").hasValue("1");
+        stepOver();
+        waitForPause();
         stepOver();
         waitForPause();
         eval("x").hasValue("2");
