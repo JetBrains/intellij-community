@@ -18,9 +18,9 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Pavel.Dolgov
  */
 public class ExportsElement extends CompositeElement {
-  public ExportsElement() {
-    super(JavaStubElementTypes.EXPORTS_STATEMENT);
+  public ExportsElement(@NotNull IElementType type) {
+    super(type);
   }
 
   @Override

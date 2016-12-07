@@ -21,8 +21,8 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExportsStatement;
 import com.intellij.psi.impl.java.stubs.impl.PsiExportsStatementStubImpl;
+import com.intellij.psi.impl.source.ExportsElement;
 import com.intellij.psi.impl.source.PsiExportsStatementImpl;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
 import com.intellij.psi.stubs.IndexSink;
@@ -46,7 +46,7 @@ public class JavaExportsStatementElementType extends JavaStubElementType<PsiExpo
   @NotNull
   @Override
   public ASTNode createCompositeNode() {
-    return new CompositeElement(this);
+    return new ExportsElement(this);
   }
 
   @Override
