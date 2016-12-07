@@ -41,13 +41,17 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
   private final VirtualFile myBaseDir;
 
   public AbstractFileHyperlinkFilter(@NotNull Project project, @Nullable String baseDir) {
+    this(project, findDir(baseDir));
+  }
+
+  public AbstractFileHyperlinkFilter(@NotNull Project project, @Nullable VirtualFile baseDir) {
     myProject = project;
     myFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-    myBaseDir = findDir(baseDir);
+    myBaseDir = baseDir;
   }
 
   @Nullable
-  private static VirtualFile findDir(@Nullable String baseDir) {
+  protected static VirtualFile findDir(@Nullable String baseDir) {
     if (baseDir == null) {
       return null;
     }
