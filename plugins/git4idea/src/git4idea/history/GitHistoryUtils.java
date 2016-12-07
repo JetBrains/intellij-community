@@ -609,7 +609,7 @@ public class GitHistoryUtils {
           if (errorMessage.isEmpty()) {
             errorMessage = GitBundle.message("git.error.exit", exitCode);
           }
-          ex.set(new VcsException(errorMessage));
+          ex.set(new VcsException(errorMessage + "\nCommand line: [" + handler.printableCommandLine() + "]"));
         }
         else {
           try {
