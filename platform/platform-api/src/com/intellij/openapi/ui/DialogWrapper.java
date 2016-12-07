@@ -595,6 +595,18 @@ public abstract class DialogWrapper {
     return helpButton;
   }
 
+  @NotNull
+  private static List<Action> flattenOptionsActions(@NotNull List<Action> actions) {
+    List<Action> newActions = new ArrayList<>();
+    for (Action action : actions) {
+      newActions.add(action);
+      if (action instanceof OptionAction) {
+        ContainerUtil.addAll(newActions, ((OptionAction)action).getOptions());
+      }
+    }
+    return newActions;
+  }
+
   protected boolean shouldAddErrorNearButtons() {
     return false;
   }
@@ -652,15 +664,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JPanel createButtons(@NotNull List<Action> actions, @NotNull Map<Action, JButton> buttons) {
     if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
-      final List<Action> actionList = new ArrayList<>();
-      for (Action action : actions) {
-        actionList.add(action);
-        if (action instanceof OptionAction) {
-          final Action[] options = ((OptionAction)action).getOptions();
-          actionList.addAll(Arrays.asList(options));
-        }
-      }
-      actions = actionList;
+      actions = flattenOptionsActions(actions);
     }
 
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
