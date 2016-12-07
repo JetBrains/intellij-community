@@ -81,21 +81,24 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     addErrorLabelMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           mySettingsPanel.showLoginDialog(false, "Signing In");
         }
       }
 
       @Override
       public void mouseEntered(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final CourseInfo selectedItem = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && selectedItem.isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getDefaultCursor());
         }
       }

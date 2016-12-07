@@ -70,7 +70,7 @@ public class EduStepicConnector {
       return result;
     }
     catch (IOException e) {
-      LOG.error("Cannot load course list " + e.getMessage());
+      LOG.warn("Cannot load course list " + e.getMessage());
     }
     return Collections.singletonList(CourseInfo.INVALID_COURSE);
   }
