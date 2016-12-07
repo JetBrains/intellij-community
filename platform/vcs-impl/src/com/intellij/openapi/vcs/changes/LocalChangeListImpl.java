@@ -42,7 +42,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private LocalChangeListImpl(@NotNull Project project, @NotNull String name) {
     myProject = project;
     myId = UUID.randomUUID().toString();
-    setName(name);
+    myName = validateName(name);
 
     myChanges = ContainerUtil.newHashSet();
   }
@@ -50,7 +50,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   private LocalChangeListImpl(@NotNull LocalChangeListImpl origin) {
     myId = origin.getId();
     myProject = origin.myProject;
-    setName(origin.myName);
+    myName = origin.myName;
 
     myComment = origin.myComment;
     myIsDefault = origin.myIsDefault;
@@ -95,10 +95,15 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @Override
   public void setName(@NotNull String name) {
+    myName = validateName(name);
+  }
+
+  @NotNull
+  private static String validateName(@NotNull String name) {
     if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
       LOG.info("Creating a changelist with empty name");
     }
-    myName = name;
+    return name;
   }
 
   @NotNull
