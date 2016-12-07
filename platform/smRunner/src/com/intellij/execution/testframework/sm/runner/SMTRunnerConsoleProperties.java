@@ -77,16 +77,6 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     myCustomFilter = new CompositeFilter(project);
   }
 
-  /** @deprecated {@use #setPrintTestingStartedTime} (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
-  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
-                                    @NotNull String testFrameworkName,
-                                    @NotNull Executor executor,
-                                    boolean printTestingStartedTime) {
-    this(config, testFrameworkName, executor);
-    setPrintTestingStartedTime(printTestingStartedTime);
-  }
-
   @NotNull
   private static Storage.PropertiesComponentStorage getStorage(String testFrameworkName) {
     return new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance());
