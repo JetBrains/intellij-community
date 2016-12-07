@@ -156,8 +156,7 @@ public abstract class OutputLineSplitter {
    * @return if current stdout cache contains part of TC message.
    */
   protected boolean isInTeamcityMessage() {
-    final Optional<String> firstChunk = myStdOutChunks.stream().map(o -> o.getText()).findFirst();
-    return firstChunk.isPresent() && firstChunk.get().startsWith(TEAMCITY_SERVICE_MESSAGE_PREFIX);
+    return myStdOutChunks.stream().anyMatch(chunk -> chunk.getText().startsWith(TEAMCITY_SERVICE_MESSAGE_PREFIX));
   }
 
   protected abstract void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput);
