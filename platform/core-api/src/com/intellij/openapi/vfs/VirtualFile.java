@@ -178,7 +178,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @Nullable
   public String getExtension() {
-    return FileUtilRt.getExtension(getNameSequence()).toString();
+    CharSequence extension = FileUtilRt.getExtension(getNameSequence(), null);
+    return extension == null ? null : extension.toString();
   }
 
   /**

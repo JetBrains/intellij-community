@@ -179,8 +179,14 @@ public class FileUtilRt {
 
   @NotNull
   public static CharSequence getExtension(@NotNull CharSequence fileName) {
+    return getExtension(fileName, "");
+  }
+
+  public static CharSequence getExtension(@NotNull CharSequence fileName, @Nullable String defaultValue) {
     int index = StringUtilRt.lastIndexOf(fileName, '.', 0, fileName.length());
-    if (index < 0) return "";
+    if (index < 0) {
+      return defaultValue;
+    }
     return fileName.subSequence(index + 1, fileName.length());
   }
 
