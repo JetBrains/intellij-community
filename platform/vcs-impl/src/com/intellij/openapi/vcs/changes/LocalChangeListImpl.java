@@ -69,6 +69,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   @NotNull
+  @Override
   public Set<Change> getChanges() {
     createReadChangesCache();
     return myReadChangesCache;
@@ -87,10 +88,12 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   @NotNull
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public void setName(@NotNull String name) {
     if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
       LOG.info("Creating a changelist with empty name");
@@ -99,14 +102,17 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   @NotNull
+  @Override
   public String getComment() {
     return myComment;
   }
 
+  @Override
   public void setComment(@Nullable String comment) {
     myComment = comment != null ? comment : "";
   }
 
+  @Override
   public boolean isDefault() {
     return myIsDefault;
   }
@@ -115,10 +121,12 @@ public class LocalChangeListImpl extends LocalChangeList {
     myIsDefault = isDefault;
   }
 
+  @Override
   public boolean isReadOnly() {
     return myIsReadOnly;
   }
 
+  @Override
   public void setReadOnly(final boolean isReadOnly) {
     myIsReadOnly = isReadOnly;
   }
@@ -263,6 +271,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName.trim();
   }
 
+  @Override
   public LocalChangeList copy() {
     return new LocalChangeListImpl(this);
   }
