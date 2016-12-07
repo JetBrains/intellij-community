@@ -445,6 +445,7 @@ public class JsonSchemaObject {
   }
 
   public Object getDefault() {
+    if (JsonSchemaType._integer.equals(myType)) return myDefault instanceof Number ? ((Number)myDefault).intValue() : myDefault;
     return myDefault;
   }
 
