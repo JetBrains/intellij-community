@@ -569,7 +569,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static JPanel addDoNotShowCheckBox(@NotNull JComponent southPanel, @NotNull JComponent checkBox) {
+  private static JPanel addDoNotShowCheckBox(@NotNull JComponent southPanel, @NotNull JComponent checkBox, @Nullable JComponent helpButton) {
     final JPanel panel = new JPanel(new BorderLayout());
 
     JPanel wrapper = new JPanel(new GridBagLayout());
@@ -577,20 +577,13 @@ public abstract class DialogWrapper {
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
-    if (SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
-      JButton helpButton = null;
-      for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
-        if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
-          helpButton = button;
-          break;
-        }
-      }
-      if (helpButton != null) {
-        return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
-      }
-    }
 
-    return panel;
+    if (helpButton != null) {
+      return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
+    }
+    else {
+      return panel;
+    }
   }
 
   @NotNull
@@ -645,9 +638,10 @@ public abstract class DialogWrapper {
       }
     }
 
+    JComponent helpButton = null;
     if (hasHelpToMoveToLeftSide) {
       if (!(SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration"))) {
-        JButton helpButton = createHelpButton(insets);
+        helpButton = createHelpButton(insets);
         panel.add(helpButton, BorderLayout.WEST);
       }
     }
@@ -663,7 +657,7 @@ public abstract class DialogWrapper {
 
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
     if (doNotAskCheckbox != null) {
-      panel = addDoNotShowCheckBox(panel, doNotAskCheckbox);
+      panel = addDoNotShowCheckBox(panel, doNotAskCheckbox, helpButton);
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
