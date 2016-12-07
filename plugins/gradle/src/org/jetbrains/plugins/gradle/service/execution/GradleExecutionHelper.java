@@ -213,17 +213,8 @@ public class GradleExecutionHelper {
       }
     }
 
-    // Bug: http://b.android.com/162448
-    // System properties are copied into Gradle's JVM, but sometimes they don't make sense in a new context. In particular, the following
-    // AWT properties denote implementation-specific classes which differ between JDKs, and should not be copied.
-    String graphicsEnv = System.getProperty("java.awt.graphicsenv");
-    String awtToolkit = System.getProperty("awt.toolkit");
-
     ProjectConnection connection = getConnection(projectDir, settings);
     try {
-      System.clearProperty("java.awt.graphicsenv");
-      System.clearProperty("awt.toolkit");
-
       return f.fun(connection);
     }
     catch (ExternalSystemException e) {
@@ -242,9 +233,6 @@ public class GradleExecutionHelper {
           // restore original user.dir property
           System.setProperty("user.dir", userDir);
         }
-
-        if (graphicsEnv != null) System.setProperty("java.awt.graphicsenv", graphicsEnv);
-        if (awtToolkit != null) System.setProperty("awt.toolkit", awtToolkit);
       }
       catch (Throwable e) {
         LOG.debug("Gradle connection close error", e);
