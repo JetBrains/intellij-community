@@ -43,7 +43,7 @@ class AsyncFilterRunner {
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
   private final Queue<LineHighlighter> myQueue = new ConcurrentLinkedQueue<>();
-  private final List<FilterResult> myResults = new ArrayList<>();
+  @NotNull private List<FilterResult> myResults = new ArrayList<>();
 
   AsyncFilterRunner(EditorHyperlinkSupport hyperlinks, Editor editor) {
     myHyperlinks = hyperlinks;
@@ -93,16 +93,16 @@ class AsyncFilterRunner {
   }
 
   private boolean hasResults() {
-    synchronized (myResults) {
+    synchronized (myQueue) {
       return !myResults.isEmpty();
     }
   }
 
   @NotNull
   private List<FilterResult> takeAvailableResults() {
-    synchronized (myResults) {
-      List<FilterResult> results = new ArrayList<>(myResults);
-      myResults.clear();
+    synchronized (myQueue) {
+      List<FilterResult> results = myResults;
+      myResults = new ArrayList<>();
       return results;
     }
   }
@@ -110,7 +110,7 @@ class AsyncFilterRunner {
   private void addLineResult(@Nullable FilterResult result) {
     if (result == null) return;
 
-    synchronized (myResults) {
+    synchronized (myQueue) {
       myResults.add(result);
     }
   }
@@ -120,18 +120,23 @@ class AsyncFilterRunner {
     ApplicationManager.getApplication().assertIsDispatchThread();
     
     long started = System.currentTimeMillis();
-    while (!myQueue.isEmpty()) {
-      if (hasResults()) {
+    while (true) {
+      if (myQueue.isEmpty()) {
+        // results are available before queue is emptied, so process the last results, if any, and exit
         highlightAvailableResults();
-      } else {
-        TimeoutUtil.sleep(1);
+        return true;
       }
 
-      timeoutMs -= System.currentTimeMillis() - started;
-      if (timeoutMs < 1) return false;
+      if (hasResults()) {
+        highlightAvailableResults();
+        continue;
+      }
+
+      if (System.currentTimeMillis() - started > timeoutMs) {
+        return false;
+      }
+      TimeoutUtil.sleep(1);
     }
-    
-    return true;
   }
 
   private void queueTasks(Filter filter, int startLine, int endLine) {
