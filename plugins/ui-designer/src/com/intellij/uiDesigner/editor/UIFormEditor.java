@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +43,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class UIFormEditor extends UserDataHolderBase implements /*Navigatable*/FileEditor {
+public final class UIFormEditor extends UserDataHolderBase implements FileEditor, PossiblyDumbAware {
   private final VirtualFile myFile;
   private final GuiEditor myEditor;
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
@@ -154,6 +155,11 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
 
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return false;
   }
 
   /*
