@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author traff
@@ -36,7 +38,10 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
     if (elements.isEmpty()) {
       return;
     }
-    PsiElement file = elements.get(0).getContainingFile();
+    Optional<PsiElement> psiElement = elements.stream().filter((element) -> element instanceof PsiFile).findFirst();
+    if (!psiElement.isPresent()) return;
+    final PsiElement file = psiElement.get();
+
     final RunContextAction runAction = new PyStudyRunContextAction(DefaultRunExecutor.getRunExecutorInstance());
     final PyExecuteFileExtensionPoint[] extensions =
       ApplicationManager.getApplication().getExtensions(PyExecuteFileExtensionPoint.EP_NAME);
