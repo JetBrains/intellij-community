@@ -24,13 +24,15 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +47,13 @@ public class PythonSdkConfigurator implements DirectoryProjectConfigurator {
 
   public void configureProject(final Project project, @NotNull final VirtualFile baseDir, Ref<Module> moduleRef) {
     // it it a virtualenv?
+    final List<VirtualFile> children = VfsUtil.getChildren(baseDir, new VirtualFileFilter() {
+      @Override
+      public boolean accept(VirtualFile file) {
+        return !Project.DIRECTORY_STORE_FOLDER.equals(file.getName());
+      }
+    });
+    if (children.isEmpty()) return;
     final PythonSdkType sdkType = PythonSdkType.getInstance();
     //find virtualEnv in project directory
     final List<String> candidates = new ArrayList<>();
