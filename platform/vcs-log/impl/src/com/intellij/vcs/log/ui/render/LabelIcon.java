@@ -39,7 +39,7 @@ public class LabelIcon implements Icon {
     myColors = colors;
 
     myImage = UIUtil.createImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    paintIcon(myImage.createGraphics(), 0, 0);
+    paintIcon(myImage.createGraphics());
   }
 
   @Override
@@ -47,7 +47,7 @@ public class LabelIcon implements Icon {
     UIUtil.drawImage(g, myImage, x, y, null);
   }
 
-  private void paintIcon(@NotNull Graphics2D g2, int x, int y) {
+  private void paintIcon(@NotNull Graphics2D g2) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
 
     float scale = mySize / 8.0f;
@@ -55,10 +55,10 @@ public class LabelIcon implements Icon {
     for (int i = myColors.length - 1; i >= 0; i--) {
       if (i != myColors.length - 1) {
         g2.setColor(myBgColor);
-        paintTag(g2, scale, x + Math.round(scale * 2) * i + 1, y);
+        paintTag(g2, scale, Math.round(scale * 2) * i + 1, 0);
       }
       g2.setColor(myColors[i]);
-      paintTag(g2, scale, x + Math.round(scale * 2) * i, y);
+      paintTag(g2, scale, Math.round(scale * 2) * i, 0);
     }
 
     config.restore();
