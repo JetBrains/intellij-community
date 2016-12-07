@@ -16,7 +16,6 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,7 @@ public class PathExecLazyValue extends AtomicNotNullLazyValue<Boolean> {
   @NotNull
   @Override
   protected Boolean compute() {
-    String path = EnvironmentUtil.getValue(SystemInfo.isWindows ? "Path" : "PATH");
+    String path = EnvironmentUtil.getValue("PATH");
     if (path != null) {
       for (String dir : StringUtil.tokenize(path, File.pathSeparator)) {
         if (new File(dir, myName).canExecute()) {
