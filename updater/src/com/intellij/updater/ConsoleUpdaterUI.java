@@ -57,7 +57,29 @@ public class ConsoleUpdaterUI implements UpdaterUI {
     return false;
   }
 
-  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) {
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
+    if (validationResults.size() > 0) {
+      System.out.println("Validation info:");
+
+      for (ValidationResult item : validationResults) {
+        System.out.println("  " + item.kind + "  " + item.path + ": " + item.message);
+      }
+
+      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.ERROR)) {
+        System.out.println();
+        System.out.println("Invalid files were detected. Failing.");
+        System.out.println();
+        throw new OperationCancelledException();
+      }
+
+      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.CONFLICT)) {
+        System.out.println();
+        System.out.println("Conflicting files were detected. Failing.");
+        System.out.println();
+        throw new OperationCancelledException();
+      }
+    }
+
     return Collections.emptyMap();
   }
 
