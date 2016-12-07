@@ -99,7 +99,7 @@ public class EduStepicConnector {
       }
     }
     catch (IOException e) {
-      LOG.warn("Could not retrieve course with id=" + lessonId);
+      LOG.warn("Could not retrieve lesson with id=" + lessonId);
     }
 
     return null;
@@ -114,7 +114,7 @@ public class EduStepicConnector {
       }
     }
     catch (IOException e) {
-      LOG.warn("Could not retrieve course with id=" + taskId);
+      LOG.warn("Could not retrieve task with id=" + taskId);
     }
 
     return null;
@@ -168,7 +168,7 @@ public class EduStepicConnector {
     String courseType = courseInfo.getType();
     final List<String> typeLanguage = StringUtil.split(courseType, " ");
     String prefix = typeLanguage.get(0);
-    if (typeLanguage.size() != 2 || !prefix.startsWith(PYCHARM_PREFIX)) {
+    if (typeLanguage.size() < 2 || !prefix.startsWith(PYCHARM_PREFIX)) {
       return false;
     }
     String versionString = prefix.substring(PYCHARM_PREFIX.length());
@@ -196,7 +196,9 @@ public class EduStepicConnector {
     if (!course.isAdaptive()) {
       String courseType = info.getType();
       course.setName(info.getName());
-      String language = courseType.split(" ")[1];
+      final int separator = courseType.indexOf(" ");
+      assert separator != -1;
+      final String language = courseType.substring(separator + 1);
       course.setLanguage(language);
       try {
         for (Integer section : info.sections) {
