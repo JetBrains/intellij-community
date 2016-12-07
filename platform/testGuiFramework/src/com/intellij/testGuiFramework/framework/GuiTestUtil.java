@@ -50,6 +50,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
+import com.intellij.util.Producer;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.*;
 import org.fest.swing.core.Robot;
@@ -60,6 +61,7 @@ import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.*;
 import org.fest.swing.timing.Condition;
+import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -92,7 +94,6 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.finder.WindowFinder.findDialog;
 import static org.fest.swing.finder.WindowFinder.findFrame;
-import static org.fest.swing.timing.Pause.pause;
 import static org.fest.swing.timing.Timeout.timeout;
 import static org.fest.util.Strings.isNullOrEmpty;
 import static org.fest.util.Strings.quote;
@@ -314,7 +315,7 @@ public final class GuiTestUtil {
       //}
 
       if (listener.myActive) {
-        pause(new Condition("Project to be opened") {
+        Pause.pause(new Condition("Project to be opened") {
           @Override
           public boolean test() {
             boolean notified = listener.myNotified;
@@ -612,7 +613,7 @@ public final class GuiTestUtil {
   public static void findAndClickButtonWhenEnabled(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text) {
     Robot robot = container.robot();
     final JButton button = findButton(container, text, robot);
-    pause(new Condition("Wait for button " + text + " to be enabled.") {
+    Pause.pause(new Condition("Wait for button " + text + " to be enabled.") {
       @Override
       public boolean test() {
         return button.isEnabled() && button.isVisible() && button.isShowing();
@@ -650,7 +651,7 @@ public final class GuiTestUtil {
     robot.waitForIdle();
     for (int i = 0; i < text.length(); ++i) {
       robot.type(text.charAt(i));
-      pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
+      Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
     }
   }
 
@@ -683,7 +684,7 @@ public final class GuiTestUtil {
       }
     };
 
-    pause(new Condition("Finding for a button with text \"" + text + "\"") {
+    Pause.pause(new Condition("Finding for a button with text \"" + text + "\"") {
       @Override
       public boolean test() {
         Collection<JButton> buttons = robot.finder().findAll(matcher);
@@ -734,7 +735,7 @@ public final class GuiTestUtil {
                                                        @NotNull final GenericTypeMatcher<T> matcher,
                                                        @NotNull Timeout timeout) {
     final AtomicReference<T> reference = new AtomicReference<T>();
-    pause(new Condition("Find component using " + matcher.toString()) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
         ComponentFinder finder = robot.finder();
@@ -761,7 +762,7 @@ public final class GuiTestUtil {
   public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
                                                          @NotNull final Container root,
                                                          @NotNull final GenericTypeMatcher<T> matcher) {
-    pause(new Condition("Find component using " + matcher.toString()) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
         Collection<T> allFound = robot.finder().findAll(root, matcher);
@@ -895,5 +896,16 @@ public final class GuiTestUtil {
     KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
     LOG.info("Invoking action \"" + actionId + "\" via shortcut " + keyboardShortcut.toString());
     robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
+  }
+
+  public static void pause(String conditionString, Producer<Boolean> producer, Timeout timeout){
+    Pause.pause(new Condition(conditionString) {
+      @Override
+      public boolean test() {
+        Boolean produce = producer.produce();
+        assertNotNull(produce);
+        return produce;
+      }
+    }, timeout);
   }
 }
