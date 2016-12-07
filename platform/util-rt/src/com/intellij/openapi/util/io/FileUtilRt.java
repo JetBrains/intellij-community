@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class FileUtilRt {
   private static final int KILOBYTE = 1024;
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
-  public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, getUserFileSizeLimit());
+  public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, Math.max(getUserFileSizeLimit(), getUserContentLoadLimit()));
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
@@ -856,6 +856,15 @@ public class FileUtilRt {
     }
     catch (NumberFormatException e) {
       return 2500 * KILOBYTE;
+    }
+  }
+
+  public static int getUserContentLoadLimit() {
+    try {
+      return Integer.parseInt(System.getProperty("idea.max.content.load.filesize")) * KILOBYTE;
+    }
+    catch (NumberFormatException e) {
+      return 20 * MEGABYTE;
     }
   }
 
