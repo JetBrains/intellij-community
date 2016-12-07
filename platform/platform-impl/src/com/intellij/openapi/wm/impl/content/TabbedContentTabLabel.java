@@ -150,7 +150,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
 
   private void setTabIcon(String tabName, JLabel jLabel) {
     for (Pair<String, JComponent> nextTabWithName : myContent.getTabs()) {
-      if (nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(myContent, tabName))) {
+      if (tabName != null && nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(myContent, tabName))) {
         JComponent tab = nextTabWithName.getSecond();
         if (tab instanceof Iconable) {
           Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
