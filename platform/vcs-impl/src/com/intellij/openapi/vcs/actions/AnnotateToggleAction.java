@@ -83,7 +83,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                 @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs) {
-    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, null);
+    UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
+    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
 
   public static void doAnnotate(@NotNull final Editor editor,
@@ -91,7 +92,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                 @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
-                                @Nullable final UpToDateLineNumberProvider upToDateLineNumberProvider) {
+                                @NotNull final UpToDateLineNumberProvider upToDateLineNumbers) {
     Disposable disposable = new Disposable() {
       @Override
       public void dispose() {
@@ -123,18 +124,15 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     fileAnnotation.setReloader(newFileAnnotation -> {
       if (editor.getGutter().isAnnotationsShown()) {
         assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumberProvider);
+        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers);
       }
     });
 
     final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    UpToDateLineNumberProvider getUpToDateLineNumber = upToDateLineNumberProvider != null ?
-                                                       upToDateLineNumberProvider :
-                                                       new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
 
-    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher, disposable);
+    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, upToDateLineNumbers, switcher, disposable);
     if (currentFile != null && vcs.getCommittedChangesProvider() != null) {
       presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, currentFile));
     }
@@ -183,7 +181,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     addActionsFromExtensions(presentation, fileAnnotation);
 
     for (AnnotationFieldGutter gutter : gutters) {
-      final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);
+      final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(upToDateLineNumbers, gutter);
       if (gutter.isGutterAction()) {
         editor.getGutter().registerTextAnnotation(proxy, proxy);
       }
