@@ -281,11 +281,6 @@ public class LocalChangeListImpl extends LocalChangeList {
     return copy;
   }
 
-  @Nullable
-  public ChangeListEditHandler getEditHandler() {
-    return null;
-  }
-
   public void setId(String id) {
     myId = id;
   }

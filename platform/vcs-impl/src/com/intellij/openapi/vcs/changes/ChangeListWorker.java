@@ -299,10 +299,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       listImpl.setNameImpl(toName);
       myMap.remove(fromName);
       myMap.put(toName, list);
-      final ChangeListEditHandler editHandler = listImpl.getEditHandler();
-      if (editHandler != null) {
-        listImpl.setCommentImpl(editHandler.changeCommentOnChangeName(toName, listImpl.getComment()));
-      }
     }
     return canEdit;
   }
@@ -315,14 +311,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       if (! Comparing.equal(oldComment, newComment)) {
         final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
         listImpl.setCommentImpl(newComment);
-        final ChangeListEditHandler editHandler = listImpl.getEditHandler();
-        if (editHandler != null) {
-          listImpl.setNameImpl(editHandler.changeNameOnChangeComment(listImpl.getName(), listImpl.getComment()));
-          if (! fromName.equals(listImpl.getName())) {
-            myMap.remove(fromName);
-            myMap.put(listImpl.getName(), list);
-          }
-        }
       }
       return oldComment;
     }
