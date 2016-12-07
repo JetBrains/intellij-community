@@ -157,7 +157,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @param context       the context
    * @param startRunnable the runnable that needs to be called after additional customization is complete.
    */
-  public void onFirstRun(ConfigurationFromContext configuration, ConfigurationContext context, Runnable startRunnable) {
+  public void onFirstRun(@NotNull ConfigurationFromContext configuration, @NotNull ConfigurationContext context, @NotNull Runnable startRunnable) {
     startRunnable.run();
   }
 
