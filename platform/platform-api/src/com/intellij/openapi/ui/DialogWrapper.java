@@ -451,8 +451,12 @@ public abstract class DialogWrapper {
    * @return south panel
    */
   protected JComponent createSouthPanel() {
-    List<Action> actions = filter(ContainerUtil.newArrayList(createActions()));
+    List<Action> actions = ContainerUtil.filter(createActions(), Condition.NOT_NULL);
     List<Action> leftSideActions = ContainerUtil.newArrayList(createLeftSideActions());
+
+    if (!ApplicationInfo.contextHelpAvailable()) {
+      actions.remove(getHelpAction());
+    }
 
     boolean hasHelpToMoveToLeftSide = false;
     if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
@@ -615,18 +619,6 @@ public abstract class DialogWrapper {
   protected DialogStyle getStyle() {
     return DialogStyle.NO_STYLE;
   }
-
-  @NotNull
-  private List<Action> filter(@NotNull List<Action> actions) {
-    ArrayList<Action> answer = new ArrayList<>();
-    for (Action action : actions) {
-      if (action != null && (ApplicationInfo.contextHelpAvailable() || action != getHelpAction())) {
-        answer.add(action);
-      }
-    }
-    return answer;
-  }
-
 
   protected boolean toBeShown() {
     return !myCheckBoxDoNotShowDialog.isSelected();
