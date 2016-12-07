@@ -99,7 +99,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       
       if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
         return processError(vFile,
-                            "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+                            "Outdated stub in index: " + vFile + " " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
                             ", doc=" + document +
                             ", docSaved=" + saved +
                             ", wasIndexedAlready=" + wasIndexedAlready +
