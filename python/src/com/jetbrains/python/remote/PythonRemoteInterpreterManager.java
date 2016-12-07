@@ -156,13 +156,28 @@ public abstract class PythonRemoteInterpreterManager {
    * @return null if remote sdk can't be browsed.
    * First argument is consumer to get path, chosen by user.
    * Second is panel to display to user
-   *
-   * @throws ExecutionException credentials can't be obtained due to remote server error
+   * @throws ExecutionException   credentials can't be obtained due to remote server error
    * @throws InterruptedException credentials can't be obtained due to remote server error
    */
   @Nullable
   public abstract Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull final Sdk remoteSdk)
     throws ExecutionException, InterruptedException;
+
+  /**
+   * Short-cut to get {@link PyProjectSynchronizer} for sdk or null if sdk does not have any
+   */
+  @Nullable
+  public static PyProjectSynchronizer getSynchronizerInstance(@NotNull final Sdk sdk) {
+    final PythonRemoteInterpreterManager remoteManager = getInstance();
+    if (remoteManager == null) {
+      return null;
+    }
+    final PyProjectSynchronizer synchronizer = remoteManager.getSynchronizer(sdk);
+    if (synchronizer == null) {
+      return null;
+    }
+    return synchronizer;
+  }
 
 
   @Nullable

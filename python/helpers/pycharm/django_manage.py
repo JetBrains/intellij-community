@@ -4,6 +4,7 @@ import os
 
 from pycharm_run_utils import adjust_django_sys_path
 from fix_getpass import fixGetpass
+from _jb_utils import ChangesMon, jb_escape_output
 
 try:
     from runpy import run_module
@@ -38,5 +39,10 @@ if __name__ == "__main__":
     command = sys.argv[1]
     if command in ["syncdb", "createsuperuser"]:  # List of commands that need stdin to be cheated
         sys.stdin = _PseudoTTY(sys.stdin)
+    mon = ChangesMon(os.getcwd())
     run_module(manage_file, None, '__main__', True)
+    # Report files affected/created by commands. This info is used on Java side.
+    changed_files = mon.get_changed_files()
+    if changed_files:
+        print(jb_escape_output(",".join(changed_files)))
 

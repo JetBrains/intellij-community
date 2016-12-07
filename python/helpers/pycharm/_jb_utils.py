@@ -1,5 +1,39 @@
+# coding=utf-8
 __author__ = 'Ilya.Kazakevich'
-import sys
+import sys, os
+
+class ChangesMon(object):
+    """
+    Engine to track changes. Create it with directory, then change some files and call #get_changed_files
+    To get list of changed files
+    """
+    def __init__(self, folder):
+        self.old_files = self._get_changes_from(folder)
+        self.folder = folder
+
+    def get_changed_files(self):
+        assert self.folder, "No changes recorded"
+        new_files = self._get_changes_from(self.folder)
+        return filter(lambda f: f not in self.old_files or self.old_files[f] != new_files[f], new_files.keys())
+
+    @staticmethod
+    def _get_changes_from(folder):
+        result = {}
+        for tmp_folder, _, files in os.walk(folder):
+            for file in map(lambda f: os.path.join(tmp_folder, f), files):
+                result.update({file: os.path.getmtime(file)})
+        return result
+
+
+def jb_escape_output(output):
+    """
+    Escapes text in manner that is supported on Java side with CommandLineConsoleApi#jbFilter
+    Check jbFilter doc for more info
+
+    :param output: raw text
+    :return: escaped text
+    """
+    return "##[jetbrains{0}".format(output)
 
 
 class VersionAgnosticUtils(object):

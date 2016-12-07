@@ -22,6 +22,7 @@ import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.EditorSettings;
@@ -30,15 +31,13 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
-import com.jetbrains.commandInterface.command.Command;
-import com.jetbrains.commandInterface.command.CommandExecutor;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * <h1>Command line console</h1>
@@ -79,11 +77,11 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    */
   static final int BORDER_SIZE_PX = 3;
   /**
-   * List of commands (to be injected into {@link CommandLineFile}) if any
-   * and executor to be used when user executes unknown command
+   * List of commands, executor, filter and other stuff to be injected into {@link CommandLineFile}) if any.
+   * See {@link CommandsInfo} doc
    */
   @Nullable
-  private final Pair<List<Command>, CommandExecutor> myCommandsAndDefaultExecutor;
+  private final CommandsInfo myCommandsInfo;
   @NotNull
   private final Module myModule;
   /**
@@ -112,17 +110,13 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   private volatile ProcessHandler myProcessHandler;
 
   /**
-   * @param module                     module console runs on
-   * @param title                      console title
-   * @param commandsAndDefaultExecutor List of commands (to be injected into {@link CommandLineFile}) if any
-   *                                   and executor to be used when user executes unknown command.
-   *                                   Both may be null. Execution is passed to command if command exist, passed to default executor
-   *                                   otherwise. With out of commands default executor will always be used.
-   *                                   With out of executor, no execution would be possible at all.
+   * @param module       module console runs on
+   * @param title        console title
+   * @param commandsInfo See {@link CommandsInfo}
    */
   private CommandConsole(@NotNull final Module module,
                          @NotNull final String title,
-                         @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
+                         @Nullable final CommandsInfo commandsInfo) {
     super(new Helper(module.getProject(), new LightVirtualFile(title, CommandLineLanguage.INSTANCE, "")) {
       @Override
       public void setupEditor(@NotNull EditorEx editor) {
@@ -133,25 +127,33 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         editorSettings.setAdditionalColumnsCount(0);
       }
     });
-    myCommandsAndDefaultExecutor = commandsAndDefaultExecutor;
+    myCommandsInfo = commandsInfo;
     myModule = module;
   }
 
+  @Override
+  public void print(@NotNull String text, @NotNull final ConsoleViewContentType contentType) {
+    if (myCommandsInfo != null) {
+      final Function1<String, String> outputFilter = myCommandsInfo.getOutputFilter();
+      if (outputFilter != null) {
+        // Pass text through filter if is provided
+        //noinspection AssignmentToMethodParameter
+        text = outputFilter.invoke(text);
+      }
+    }
+    super.print(text, contentType);
+  }
+
   /**
-   * @param module      module console runs on
-   * @param title       console title
-   * @param commandsAndDefaultExecutor List of commands (to be injected into {@link CommandLineFile}) if any
-   *                                   and executor to be used when user executes unknown command.
-   *                                   Both may be null. Execution is passed to command if command exist, passed to default executor
-   *                                   otherwise. With out of commands default executor will always be used.
-   *                                   With out of executor, no execution would be possible at all.
-   * @return console
+   * @param module       module console runs on
+   * @param title        console title
+   * @param commandsInfo See {@link CommandsInfo}
    */
   @NotNull
   static CommandConsole createConsole(@NotNull final Module module,
                                       @NotNull final String title,
-                                      @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
-    final CommandConsole console = new CommandConsole(module, title, commandsAndDefaultExecutor);
+                                      @Nullable final CommandsInfo commandsInfo) {
+    final CommandConsole console = new CommandConsole(module, title, commandsInfo);
     console.setEditable(true);
     LanguageConsoleBuilder.registerExecuteAction(console, console, title, title, console);
 
@@ -197,12 +199,12 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
       setLanguage(CommandLineLanguage.INSTANCE);
       final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
       resetConsumer(null);
-      if (file == null || myCommandsAndDefaultExecutor == null) {
+      if (file == null || myCommandsInfo == null) {
         return;
       }
-      file.setCommands(myCommandsAndDefaultExecutor.first);
+      file.setCommands(myCommandsInfo.getCommands());
       final CommandConsole console = this;
-      resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
+      resetConsumer(new CommandModeConsumer(myCommandsInfo.getCommands(), myModule, console, myCommandsInfo.getUnknownCommandsExecutor()));
     }, ModalityState.NON_MODAL);
   }
 

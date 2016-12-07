@@ -100,11 +100,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
     // Check if project synchronizer could be used with this project dir
     // No project can be created remotely if project synchronizer can't work with it
 
-    final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
-    if (remoteManager == null) {
-      return;
-    }
-    final PyProjectSynchronizer synchronizer = remoteManager.getSynchronizer(sdk);
+    final PyProjectSynchronizer synchronizer = PythonRemoteInterpreterManager.getSynchronizerInstance(sdk);
     if (synchronizer == null) {
       return;
     }

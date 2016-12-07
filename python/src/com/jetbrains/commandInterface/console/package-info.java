@@ -18,7 +18,7 @@
  * <h1>Command line console</h1>
  * <p>
  * Package to display command line console on the bottom of the screen. It supports history, execution, syntax highlighting and so on.
- * Entry point is {@link com.jetbrains.commandInterface.console.CommandLineConsoleApi}.
+ * Entry point is {@link com.jetbrains.commandInterface.console.CommandLineConsoleApiKt}.
  * </p>
  * <p/>
  * <h2>Technical details</h2>
@@ -29,6 +29,6 @@
  * </p>
  *
  * @author Ilya.Kazakevich
- * @see com.jetbrains.commandInterface.console.CommandLineConsoleApi
+ * @see com.jetbrains.commandInterface.console.CommandLineConsoleApiKt
  */
 package com.jetbrains.commandInterface.console;
