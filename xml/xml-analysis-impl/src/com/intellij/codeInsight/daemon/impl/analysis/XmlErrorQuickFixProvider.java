@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -62,7 +61,6 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
 
         @Override
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-          if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
           final int textOffset = element.getTextOffset();
           editor.getDocument().replaceString(textOffset,textOffset + 1,AMP_ENTITY);
         }
