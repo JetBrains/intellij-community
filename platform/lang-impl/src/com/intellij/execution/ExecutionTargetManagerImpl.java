@@ -42,7 +42,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   public ExecutionTargetManagerImpl(@NotNull Project project, @NotNull RunManager runManager) {
     myProject = project;
 
-    ((RunManagerEx)runManager).addRunManagerListener(new RunManagerAdapter() {
+    ((RunManagerEx)runManager).addRunManagerListener(new RunManagerListener() {
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         if (settings == RunManager.getInstance(myProject).getSelectedConfiguration()) {

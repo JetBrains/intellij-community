@@ -15,33 +15,9 @@
  */
 package com.intellij.execution;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
- * @author nik
+ * @deprecated Please use RunManagerListener directly
  */
+@Deprecated
 public abstract class RunManagerAdapter implements RunManagerListener {
-  @Override
-  public void runConfigurationSelected() {
-  }
-
-  @Override
-  public void beforeRunTasksChanged() {
-  }
-
-  @Override
-  public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
-  }
-
-  @Override
-  public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
-  }
-
-  public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-  }
-
-  @Override
-  public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId) {
-    runConfigurationChanged(settings);
-  }
 }

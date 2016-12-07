@@ -53,9 +53,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.Consumer;
 import com.intellij.util.DisposeAwareRunnable;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -213,7 +211,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
+    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> {
           assert myStructure != null;

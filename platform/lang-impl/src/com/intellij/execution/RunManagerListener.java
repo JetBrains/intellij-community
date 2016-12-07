@@ -20,15 +20,24 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface RunManagerListener extends EventListener {
-  void runConfigurationSelected();
+  default void runConfigurationSelected() {
+  }
 
-  void beforeRunTasksChanged();
+  default void beforeRunTasksChanged() {
+  }
 
-  void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings);
+  default void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+  }
 
-  void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings);
+  default void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
+  }
 
-  void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId);
+  default void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings, String existingId) {
+    runConfigurationChanged(settings);
+  }
+
+  default void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+  }
 
   default void beginUpdate() {
   }
