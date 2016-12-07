@@ -302,9 +302,9 @@ public class Runner {
         Map<String, ValidationResult.Option> options = ui.askUser(result.validationResults);
         return PatchFileCreator.apply(result, options, ui);
       }
-      catch (IOException e) {
-        ui.showError(e);
+      catch (Throwable e) {
         printStackTrace(e);
+        ui.showError(e);
       }
     }
     finally {
@@ -312,9 +312,9 @@ public class Runner {
         System.gc();
         cleanup(ui);
       }
-      catch (IOException e) {
-        ui.showError(e);
+      catch (Throwable e) {
         printStackTrace(e);
+        ui.showError(e);
       }
     }
 
