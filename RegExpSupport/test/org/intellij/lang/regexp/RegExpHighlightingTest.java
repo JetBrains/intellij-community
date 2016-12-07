@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestCase {
+  private static final Logger LOG = Logger.getInstance(RegExpHighlightingTest.class);
 
   private static final ByteArrayOutputStream myOut;
 
@@ -41,7 +43,7 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
   static class Test {
     final String pattern;
     final Result expectedResult;
-    String regExpHost = null;
+    String regExpHost;
 
     Test(String pattern, Result result, String host) {
       this.pattern = pattern;
@@ -147,7 +149,7 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
       if (prefix != null && !name.startsWith(prefix)) {
         continue;
       }
-      System.out.print("filename = " + name);
+      LOG.debug("filename = " + name);
       n++;
 
       final Test test = myMap.get(name);
@@ -169,12 +171,12 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
           failed++;
         }
         else {
-          System.out.println("  OK");
+          LOG.debug("  OK");
         }
       }
       catch (Throwable e) {
         if (test.expectedResult == Result.ERR) {
-          System.out.println("  OK");
+          LOG.debug("  OK");
         }
         else {
           e.printStackTrace(System.out);
@@ -185,7 +187,7 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
             do {
               line = reader.readLine();
             }
-            while (line != null && (line.trim().length() == 0 || line.trim().equals("ERROR:")));
+            while (line != null && (line.trim().isEmpty() || line.trim().equals("ERROR:")));
             if (line != null) {
               if (line.matches(".*java.lang.Error: junit.framework.AssertionFailedError:.*")) {
                 System.out.println("ERROR: " + line.replace("java.lang.Error: junit.framework.AssertionFailedError:", ""));
@@ -201,8 +203,7 @@ public class RegExpHighlightingTest extends LightPlatformCodeInsightFixtureTestC
       myOut.reset();
     }
 
-    System.out.println("");
-    System.out.println(n + " Tests executed, " + failed + " failed");
+    LOG.debug(n + " Tests executed, " + failed + " failed");
 
     assertFalse(failed > 0);
   }
