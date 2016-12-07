@@ -1,9 +1,8 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -187,15 +186,12 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   private static boolean isIgnoredRevision(final @NotNull ContentRevision revision, final @NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (project.isDisposed()) {
-          return false;
-        }
-        VirtualFile vFile = revision.getFile().getVirtualFile();
-        return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) {
+        return false;
       }
+      VirtualFile vFile = revision.getFile().getVirtualFile();
+      return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
     });
   }
 
