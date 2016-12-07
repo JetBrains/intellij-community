@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,22 +25,29 @@ import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
 
 public class LabelIcon implements Icon {
   private final int mySize;
   @NotNull private final Color[] myColors;
   @NotNull private final Color myBgColor;
+  @NotNull private final BufferedImage myImage;
 
   public LabelIcon(int size, @NotNull Color bgColor, @NotNull Color... colors) {
     mySize = size;
     myBgColor = bgColor;
     myColors = colors;
+
+    myImage = UIUtil.createImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    paintIcon(myImage.createGraphics(), 0, 0);
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    Graphics2D g2 = (Graphics2D)g;
+    UIUtil.drawImage(g, myImage, x, y, null);
+  }
 
+  private void paintIcon(@NotNull Graphics2D g2, int x, int y) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
 
     float scale = mySize / 8.0f;
