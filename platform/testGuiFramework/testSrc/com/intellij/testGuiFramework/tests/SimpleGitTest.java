@@ -18,23 +18,18 @@ package com.intellij.testGuiFramework.tests;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testGuiFramework.fixtures.*;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.impl.GuiTestCase;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
+import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static com.intellij.testGuiFramework.matcher.TitleMatcher.withTitleMatcher;
 
@@ -62,43 +57,29 @@ public class SimpleGitTest extends GuiTestCase {
       myRobot.enterText("MyClass");
       myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
       EditorFixture editorFixture = new EditorFixture(myRobot, ideFrameFixture);
-      VirtualFile currentFile = editorFixture.waitUntilFileIsLoaded().getVirtualFile();
+      FileFixture currentFileFixture = editorFixture.waitUntilFileIsLoaded();
 
-      CountDownLatch cdl = new CountDownLatch(1);
-      FileStatusManager fileStatusManager = FileStatusManager.getInstance(ideFrameFixture.getProject());
-      fileStatusManager.addFileStatusListener(new FileStatusListener() {
-        @Override
-        public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-          if (virtualFile.equals(currentFile) && fileStatusManager.getStatus(currentFile).equals(FileStatus.UNKNOWN)) {
-            fileStatusManager.removeFileStatusListener(this);
-            cdl.countDown();
-          }
-        }
-      });
 
       ideFrameFixture.invokeMenuPath("VCS", ActionsBundle.message("group.Vcs.Import.text"), "Create Git Repository...");
       FileChooserDialogFixture fileChooserDialogFixture =
         FileChooserDialogFixture.findDialog(myRobot, withTitleMatcher(GitBundle.message("init.destination.directory.title")));
       fileChooserDialogFixture.waitFilledTextField().clickOk();
 
-      boolean result = cdl.await(30, TimeUnit.SECONDS);
-      assert result;
-
-      CountDownLatch cdl2 = new CountDownLatch(1);
-      fileStatusManager.addFileStatusListener(new FileStatusListener() {
+      Pause.pause(new Condition("Wait when files will be added to Git Repository and marked as untracked") {
         @Override
-        public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-          if (virtualFile.equals(currentFile) && fileStatusManager.getStatus(currentFile).equals(FileStatus.ADDED)) {
-            fileStatusManager.removeFileStatusListener(this);
-            cdl2.countDown();
-          }
+        public boolean test() {
+          return currentFileFixture.getVcsStatus().equals(FileStatus.UNKNOWN);
         }
-      });
+      }, GuiTestUtil.THIRTY_SEC_TIMEOUT);
 
       GuiTestUtil.invokeAction(myRobot, "ChangesView.AddUnversioned");
 
-      result = cdl2.await(30, TimeUnit.SECONDS);
-      assert result;
+      Pause.pause(new Condition("Wait when file will be marked as added") {
+        @Override
+        public boolean test() {
+          return currentFileFixture.getVcsStatus().equals(FileStatus.ADDED);
+        }
+      }, GuiTestUtil.THIRTY_SEC_TIMEOUT);
 
       GuiTestUtil.invokeAction(myRobot, "CheckinProject");
 
@@ -115,9 +96,6 @@ public class SimpleGitTest extends GuiTestCase {
       Pause.pause(GuiTestUtil.THIRTY_SEC_TIMEOUT.duration());
     }
     catch (IOException e) {
-      e.printStackTrace();
-    }
-    catch (InterruptedException e) {
       e.printStackTrace();
     }
   }
