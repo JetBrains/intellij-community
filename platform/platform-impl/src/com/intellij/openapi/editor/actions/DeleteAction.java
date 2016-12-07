@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.MacUIUtil;
 
 public class DeleteAction extends EditorAction {
@@ -104,7 +105,7 @@ public class DeleteAction extends EditorAction {
         editor.getCaretModel().moveToOffset(region.getStartOffset());
       }
       else {
-        document.deleteString(offset, offset + 1);
+        document.deleteString(offset, DocumentUtil.getNextCodePointOffset(document, offset));
       }
       return;
     }

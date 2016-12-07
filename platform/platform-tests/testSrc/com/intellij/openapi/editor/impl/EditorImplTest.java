@@ -434,4 +434,22 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("a<caret> bc");
     assertTrue(myEditor.getInlayModel().hasInlineElementAt(1));
   }
+
+  public void testCoordinateConversionsAroundSurrogatePair() throws Exception {
+    initText("a" + SURROGATE_PAIR + "b");
+    assertEquals(new LogicalPosition(0, 2), myEditor.offsetToLogicalPosition(3));
+    assertEquals(3, myEditor.logicalPositionToOffset(new LogicalPosition(0, 2)));
+    assertEquals(new VisualPosition(0, 2), myEditor.logicalToVisualPosition(new LogicalPosition(0, 2)));
+    assertEquals(new LogicalPosition(0, 2), myEditor.visualToLogicalPosition(new VisualPosition(0, 2)));
+  }
+
+  public void testCreationOfSurrogatePairByMergingDividedParts() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> {
+      myEditor.getDocument().setText(HIGH_SURROGATE + " " + LOW_SURROGATE);
+      myEditor.getDocument().deleteString(1, 2);
+    });
+    checkResultByText(SURROGATE_PAIR);
+    assertEquals(new LogicalPosition(0, 1), myEditor.offsetToLogicalPosition(2));
+  }
 }

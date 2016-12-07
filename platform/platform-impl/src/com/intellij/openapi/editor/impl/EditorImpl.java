@@ -4363,22 +4363,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @TestOnly
   public void validateState() {
     myView.validateState();
-
-    if (myDocument.isInBulkUpdate()) return;
-    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
-    int lastSoftWrapOffset = -1;
-    for (SoftWrap wrap : softWraps) {
-      int softWrapOffset = wrap.getStart();
-      LOG.assertTrue(softWrapOffset > lastSoftWrapOffset, "Soft wraps are not ordered");
-      LOG.assertTrue(softWrapOffset < myDocument.getTextLength(), "Soft wrap is after document's end");
-      FoldRegion foldRegion = myFoldingModel.getCollapsedRegionAtOffset(softWrapOffset);
-      LOG.assertTrue(foldRegion == null || foldRegion.getStartOffset() == softWrapOffset, "Soft wrap is inside fold region");
-      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineEndOffset(softWrapOffset, myDocument)
-                     || foldRegion != null, "Soft wrap before line break");
-      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineStartOffset(softWrapOffset, myDocument) ||
-                     myFoldingModel.isOffsetCollapsed(softWrapOffset - 1), "Soft wrap after line break");
-      lastSoftWrapOffset = softWrapOffset;
-    }
+    mySoftWrapModel.validateState();
+    myFoldingModel.validateState();
+    myCaretModel.validateState();
+    myInlayModel.validateState();
   }
 
   private class MyScrollPane extends JBScrollPane {

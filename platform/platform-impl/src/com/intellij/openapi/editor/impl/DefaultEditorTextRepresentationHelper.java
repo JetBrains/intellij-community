@@ -52,7 +52,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
-  public int charWidth(char c, int fontType) {
+  public int charWidth(int c, int fontType) {
     // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation
     // helper is editor-bound and cache size is not too big.
     mySharedKey.fontType = fontType;
@@ -61,7 +61,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
     return charWidth(c);
   }
 
-  private int charWidth(char c) {
+  private int charWidth(int c) {
     int result = mySymbolWidthCache.get(mySharedKey);
     if (result > 0) {
       return result;
@@ -82,14 +82,14 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   private static class Key {
-    @JdkConstants.FontStyle private int    fontType;
-    private char   c;
+    @JdkConstants.FontStyle private int fontType;
+    private int c;
 
     private Key() {
       this(Font.PLAIN, ' ');
     }
 
-    Key(@JdkConstants.FontStyle int fontType, char c) {
+    Key(@JdkConstants.FontStyle int fontType, int c) {
       this.fontType = fontType;
       this.c = c;
     }

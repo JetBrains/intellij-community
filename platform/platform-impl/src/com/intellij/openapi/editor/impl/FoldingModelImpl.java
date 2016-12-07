@@ -39,10 +39,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -188,7 +190,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return false;
     }
-
+    if (!region.isValid() ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset())) {
+      return false;
+    }
     myFoldRegionsProcessed = true;
     if (myFoldTree.addRegion(region)) {
       final FoldingGroup group = region.getGroup();
@@ -604,6 +610,15 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public long getModificationCount() {
     return myExpansionCounter.get();
+  }
+
+  @TestOnly
+  public void validateState() {
+    for (FoldRegion region : getAllFoldRegions()) {
+      LOG.assertTrue (!region.isValid() ||
+                      !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) &&
+                      !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset()));
+    }
   }
 
   private static class SavedCaretPosition {

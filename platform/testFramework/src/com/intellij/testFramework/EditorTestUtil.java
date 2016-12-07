@@ -226,7 +226,7 @@ public class EditorTestUtil {
     });
     model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
       @Override
-      public int charWidth(char c, int fontType) {
+      public int charWidth(int c, int fontType) {
         return charWidthInPixels;
       }
     });

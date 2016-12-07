@@ -47,8 +47,42 @@ class SimpleTextFragment extends TextFragment {
   }
 
   @Override
+  int offsetToLogicalColumn(int offset) {
+    return offset;
+  }
+
+  @Override
   public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
     g.setFont(myFont);
     g.drawChars(myText, startColumn, endColumn - startColumn, (int)x, (int)y);
-  }  
+  }
+
+  @Override
+  public int getLogicalColumnCount(int startColumn) {
+    return myCharPositions.length;
+  }
+
+  @Override
+  public int getVisualColumnCount(float startX) {
+    return myCharPositions.length;
+  }
+
+  @Override
+  public int[] xToVisualColumn(float startX, float x) {
+    float relX = x - startX;
+    float prevPos = 0;
+    for (int i = 0; i < myCharPositions.length; i++) {
+      float newPos = myCharPositions[i];
+      if (relX < (newPos + prevPos) / 2) {
+        return new int[] {i, relX <= prevPos ? 0 : 1};
+      }
+      prevPos = newPos;
+    }
+    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
+  }
+
+  @Override
+  public float visualColumnToX(float startX, int column) {
+    return startX + getX(column);
+  }
 }

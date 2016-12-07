@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -186,6 +187,7 @@ class EditorCoordinateMapper {
       return 0;
     }
     offset = Math.min(offset, textLength);
+    offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
 
     FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
     if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
@@ -224,6 +226,7 @@ class EditorCoordinateMapper {
 
   private int visualLineStartOffset(int offset, boolean leanForward) {
     EditorImpl editor = myView.getEditor();
+    offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
     int result = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
 
     SoftWrapModelImpl softWrapModel = editor.getSoftWrapModel();
@@ -331,6 +334,7 @@ class EditorCoordinateMapper {
   @NotNull
   Point offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     offset = Math.max(0, Math.min(myDocument.getTextLength(), offset));
+    offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
     int logicalLine = myDocument.getLineNumber(offset);
     int visualLine = offsetToVisualLine(offset, beforeSoftWrap);
     int visualLineStartOffset = visualLineToOffset(visualLine);

@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
@@ -59,6 +60,9 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
       int newOffset = e.getOffset() + e.getNewLength();
       setIntervalStart(newOffset);
       setIntervalEnd(newOffset);
+    }
+    if (isValid() && DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
+      invalidate(e);
     }
   }
 

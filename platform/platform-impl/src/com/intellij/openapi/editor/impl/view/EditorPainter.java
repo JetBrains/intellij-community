@@ -34,6 +34,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -611,6 +612,8 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void paintBorderEffect(Graphics2D g, ClipDetector clipDetector, int startOffset, int endOffset, TextAttributes attributes) {
+    startOffset = DocumentUtil.alignToCodePointBoundary(myDocument, startOffset);
+    endOffset = DocumentUtil.alignToCodePointBoundary(myDocument, endOffset);
     if (!clipDetector.rangeCanBeVisible(startOffset, endOffset)) return;
     int startLine = myDocument.getLineNumber(startOffset);
     int endLine = myDocument.getLineNumber(endOffset);
@@ -851,6 +854,7 @@ class EditorPainter implements TextDrawingCallback {
         int startX = Math.max(minX, isRtl ? x - width : x);
         g.fillRect(startX, y, width, nominalLineHeight - 1);
         if (myDocument.getTextLength() > 0 && caret != null) {
+          int charCount = DocumentUtil.isSurrogatePair(myDocument, caret.getOffset()) ? 2 : 1;
           int targetVisualColumn = caret.getVisualPosition().column;
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
                                                                                                   caret.getVisualLineStart(), 
@@ -863,8 +867,8 @@ class EditorPainter implements TextDrawingCallback {
                 endVisualColumn == targetVisualColumn && isRtl) {
               g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
               fragment.draw(g, startX, y + topOverhang + myView.getAscent(),
-                            targetVisualColumn - startVisualColumn - (isRtl ? 1 : 0),
-                            targetVisualColumn - startVisualColumn + (isRtl ? 0 : 1));
+                            targetVisualColumn - startVisualColumn - (isRtl ? charCount : 0),
+                            targetVisualColumn - startVisualColumn + (isRtl ? 0 : charCount));
               break;
             }
           }
@@ -907,7 +911,8 @@ class EditorPainter implements TextDrawingCallback {
         SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
         if (softWrap != null) {
           prevEndOffset = offset;
-          it = new IterationState(myEditor, offset == 0 ? 0 : offset - 1, visualLineEndOffset, caretData, false, false, false, false);
+          it = new IterationState(myEditor, offset == 0 ? 0 : DocumentUtil.getPreviousCodePointOffset(myDocument, offset), visualLineEndOffset,
+                                  caretData, false, false, false, false);
           if (it.getEndOffset() <= offset) {
             it.advance();
           }
@@ -970,8 +975,9 @@ class EditorPainter implements TextDrawingCallback {
       maxColumn = fragment.getEndVisualColumn();
     }
     if (it == null || it.getEndOffset() != visualLineEndOffset) {
-      it = new IterationState(myEditor, visualLineEndOffset == offset ? visualLineEndOffset : visualLineEndOffset - 1, visualLineEndOffset, 
-                              caretData, false, false, false, false);
+      it = new IterationState(myEditor, visualLineEndOffset == offset ? visualLineEndOffset
+                                                                      : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
+                              visualLineEndOffset, caretData, false, false, false, false);
     }
     if (!it.atEnd()) {
       it.advance();

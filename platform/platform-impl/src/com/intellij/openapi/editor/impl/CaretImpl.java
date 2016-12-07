@@ -44,6 +44,7 @@ import com.intellij.util.ui.EmptyClipboardOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -1090,8 +1091,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
                               final boolean updateSystemSelection)
   {
     myEditor.getCaretModel().doWithCaretMerging(() -> {
-      int startOffset = _startOffset;
-      int endOffset = _endOffset;
+      int startOffset = DocumentUtil.alignToCodePointBoundary(myEditor.getDocument(), _startOffset);
+      int endOffset = DocumentUtil.alignToCodePointBoundary(myEditor.getDocument(), _endOffset);
       myUnknownDirection = false;
       final Document doc = myEditor.getDocument();
 
@@ -1492,6 +1493,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
+  @TestOnly
+  public void validateState() {
+    LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), getOffset()));
+    LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), getSelectionStart()));
+    LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), getSelectionEnd()));
+  }
+
   class PositionMarker extends RangeMarkerImpl {
     private PositionMarker(int offset) {
       super(myEditor.getDocument(), offset, offset, false);
@@ -1518,6 +1526,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           setIntervalStart(afterInserted);
           setIntervalEnd(afterInserted);
         }
+        int offset = intervalStart();
+        if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
+          setIntervalStart(offset - 1);
+          setIntervalEnd(offset - 1);
+        }
       }
       else {
         setValid(true);
@@ -1531,6 +1544,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
             LOG.info(ex);
           }
         }
+        newOffset = DocumentUtil.alignToCodePointBoundary(getDocument(), newOffset);
         setIntervalStart(newOffset);
         setIntervalEnd(newOffset);
       }
@@ -1579,6 +1593,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     @Override
     protected void changedUpdateImpl(@NotNull DocumentEvent e) {
       super.changedUpdateImpl(e);
+      if (isValid()) {
+        int startOffset = intervalStart();
+        int endOffset = intervalEnd();
+        if (DocumentUtil.isInsideSurrogatePair(getDocument(), startOffset)) setIntervalStart(startOffset - 1);
+        if (DocumentUtil.isInsideSurrogatePair(getDocument(), endOffset)) setIntervalStart(endOffset - 1);
+      }
       if (endVirtualOffset > 0 && isValid()) {
         Document document = e.getDocument();
         int startAfter = intervalStart();

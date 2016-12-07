@@ -37,10 +37,12 @@ public abstract class FontLayoutService {
   
   @NotNull
   public abstract GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, 
-                                                @NotNull char[] chars, int start, int end, boolean isRtl); 
-  
+                                                @NotNull char[] chars, int start, int end, boolean isRtl);
+
   public abstract int charWidth(@NotNull FontMetrics fontMetrics, char c);
-  
+
+  public abstract int charWidth(@NotNull FontMetrics fontMetrics, int codePoint);
+
   public abstract int getHeight(@NotNull FontMetrics fontMetrics);
   
   public abstract int getAscent(@NotNull FontMetrics fontMetrics);
@@ -65,6 +67,11 @@ public abstract class FontLayoutService {
     @Override
     public int charWidth(@NotNull FontMetrics fontMetrics, char c) {
       return fontMetrics.charWidth(c);
+    }
+
+    @Override
+    public int charWidth(@NotNull FontMetrics fontMetrics, int codePoint) {
+      return fontMetrics.charWidth(codePoint);
     }
 
     @Override

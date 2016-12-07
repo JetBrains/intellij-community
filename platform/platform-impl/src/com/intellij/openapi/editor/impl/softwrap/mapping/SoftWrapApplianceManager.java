@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -402,9 +403,9 @@ public class SoftWrapApplianceManager implements Dumpable {
       return true;
     }
 
-    for (int j = softWrap.getStart(); j < myContext.tokenStartOffset; j++) {
-      char c = myContext.text.charAt(j);
-      myContext.onNonLineFeedSymbol(calculateNewX(c));
+    while (myContext.currentPosition.offset < myContext.tokenStartOffset) {
+      int c = Character.codePointAt(myContext.text, myContext.currentPosition.offset);
+      myContext.onNonLineFeedSymbol(c, calculateNewX(c));
     }
     myOffset2fontType.clear();
     myContext.advance(foldRegion, placeholderWidthInPixels);
@@ -430,8 +431,8 @@ public class SoftWrapApplianceManager implements Dumpable {
         LogMessageEx.error(LOG, "Cycled soft wraps recalculation detected", String.format(
           "Start recalculation offset: %d, visible area width: %d, calculation context: %s, editor info: %s",
           startOffset, myVisibleAreaWidth, myContext, myEditor.dumpState()));
-        for (int i = myContext.currentPosition.offset; i < myContext.tokenEndOffset; i++) {
-          char c = myContext.text.charAt(i);
+        while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
+          int c = Character.codePointAt(myContext.text, myContext.currentPosition.offset);
           if (c == '\n') {
             myContext.onNewLine();
             if (checkIsDoneAfterNewLine()) {
@@ -454,7 +455,7 @@ public class SoftWrapApplianceManager implements Dumpable {
         }
       }
 
-      char c = myContext.text.charAt(offset);
+      int c = Character.codePointAt(myContext.text, offset);
       if (c == '\n') {
         myContext.onNewLine();
         if (checkIsDoneAfterNewLine()) {
@@ -478,7 +479,7 @@ public class SoftWrapApplianceManager implements Dumpable {
         }
       }
       else {
-        myContext.onNonLineFeedSymbol(metrics);
+        myContext.onNonLineFeedSymbol(c, metrics);
       }
     }
     return false;
@@ -502,7 +503,7 @@ public class SoftWrapApplianceManager implements Dumpable {
    * @param c         target symbol referenced by the given offset
    * @return          'x' coordinate of the right edge of document symbol referenced by the given offset
    */
-  private int[] offsetToX(int offset, char c) {
+  private int[] offsetToX(int offset, int c) {
     if (myOffset2widthInPixels.end > offset
         && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > offset))
     {
@@ -565,22 +566,22 @@ public class SoftWrapApplianceManager implements Dumpable {
     // We should process that accordingly.
     if (actualSoftWrapOffset > myContext.tokenEndOffset) {
       myContext.delayedSoftWrap = softWrap;
-      myContext.onNonLineFeedSymbol(myContext.text.charAt(offset));
+      myContext.onNonLineFeedSymbol(Character.codePointAt(myContext.text, offset));
       return false;
     }
     else if (actualSoftWrapOffset < offset) {
       if (revertedToFoldRegion == null) {
-        for (int j = offset - 1; j >= actualSoftWrapOffset; j--) {
-          int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
-          myContext.currentPosition.offset--;
+        while (myContext.currentPosition.offset > actualSoftWrapOffset) {
+          int prevOffset = Character.offsetByCodePoints(myContext.text, myContext.currentPosition.offset, -1);
+          int pixelsDiff = myOffset2widthInPixels.data[prevOffset - myOffset2widthInPixels.anchor];
+          myContext.currentPosition.offset = prevOffset;
           myContext.currentPosition.x -= pixelsDiff;
         }
       }
     }
     else if (actualSoftWrapOffset > offset) {
-      myContext.onNonLineFeedSymbol(myContext.text.charAt(offset));
-      for (int j = offset + 1; j < actualSoftWrapOffset; j++) {
-        myContext.onNonLineFeedSymbol(myContext.text.charAt(offset));
+      while (myContext.currentPosition.offset < actualSoftWrapOffset) {
+        myContext.onNonLineFeedSymbol(Character.codePointAt(myContext.text, myContext.currentPosition.offset));
       }
     }
 
@@ -601,7 +602,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   }
 
   // {newX, actualWidth}
-  private int[] calculateNewX(char c) {
+  private int[] calculateNewX(int c) {
     if (c == '\t') {
       int xStart = myContext.currentPosition.x + myContext.getInlaysPrefixWidth();
       int xEnd = EditorUtil.nextTabStop(xStart, myEditor);
@@ -656,9 +657,10 @@ public class SoftWrapApplianceManager implements Dumpable {
       softWrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(
         document, myEditor.getProject(), minOffset, maxOffset, preferredOffset, true, true
       );
+      if (DocumentUtil.isInsideSurrogatePair(document, softWrapOffset)) softWrapOffset--;
     }
     
-    if (softWrapOffset >= lineData.endLineOffset || softWrapOffset < 0
+    if (softWrapOffset >= lineData.endLineOffset || softWrapOffset < 0 || softWrapOffset <= minOffset
         || (myCustomIndentUsedLastTime && softWrapOffset == lineData.nonWhiteSpaceSymbolOffset)
         || (softWrapOffset > preferredOffset && myContext.lastFoldStartPosition != null // Prefer to wrap on fold region backwards
             && myContext.lastFoldStartPosition.offset <= preferredOffset))              // to wrapping forwards.
@@ -671,6 +673,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   
   @NotNull
   private SoftWrapImpl registerSoftWrap(int offset, int spaceSize, LogicalLineData lineData) {
+    assert !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), offset);
     int indentInColumns = 0;
     int indentInPixels = myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
     if (myCustomIndentUsedLastTime) {
@@ -737,7 +740,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
     for (int i = preferredOffset - 1; i >= minOffsetToUse; i--) {
       char c = myContext.text.charAt(i);
-      if (c >= 0x2f00) { // Check this document for eastern languages unicode ranges - http://www.unicode.org/charts
+      // Check this document for eastern languages unicode ranges - http://www.unicode.org/charts
+      if (c >= 0x2f00 && Character.isBmpCodePoint(Character.codePointAt(myContext.text, i))) {
         return i + 1;
       }
     }
@@ -1231,7 +1235,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       lastFold = null;
     }
 
-    public void onNonLineFeedSymbol(char c) {
+    public void onNonLineFeedSymbol(int c) {
       int[] metrics;
       if (myOffset2widthInPixels.end > myContext.currentPosition.offset
           && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > myContext.currentPosition.offset))
@@ -1243,11 +1247,11 @@ public class SoftWrapApplianceManager implements Dumpable {
       else {
         metrics = calculateNewX(c);
       }
-      onNonLineFeedSymbol(metrics);
+      onNonLineFeedSymbol(c, metrics);
     }
     
     @SuppressWarnings("MagicConstant")
-    public void onNonLineFeedSymbol(int[] metrics) { // {newX, actualWidth}
+    public void onNonLineFeedSymbol(int codePoint, int[] metrics) { // {newX, actualWidth}
       if (myOffset2widthInPixels.anchor <= 0) {
         myOffset2widthInPixels.anchor = currentPosition.offset;
       }
@@ -1261,7 +1265,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       myOffset2widthInPixels.end++;
       
       currentPosition.x = metrics[0];
-      currentPosition.offset++;
+      currentPosition.offset += Character.isBmpCodePoint(codePoint) ? 1 : 2;
       fontType = myOffset2fontType.get(currentPosition.offset);
     }
 
@@ -1317,15 +1321,14 @@ public class SoftWrapApplianceManager implements Dumpable {
      * [{@link #tokenStartOffset}; {@link #skipToLineEnd} is set to <code>'true'</code> otherwise
      */
     public boolean tryToShiftToNextLine() {
-      for (int i = currentPosition.offset; i < tokenEndOffset; i++) {
-        char c = text.charAt(i);
-        currentPosition.offset = i;
+      while (currentPosition.offset < tokenEndOffset) {
+        int c = Character.codePointAt(text, currentPosition.offset);
         if (c == '\n') {
           onNewLine(); // Assuming that offset is incremented during this method call
           return checkIsDoneAfterNewLine();
         }
         else {
-          onNonLineFeedSymbol(offsetToX(i, c));
+          onNonLineFeedSymbol(c, offsetToX(currentPosition.offset, c));
         }
       }
       skipToLineEnd = true;

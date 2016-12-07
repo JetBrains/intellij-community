@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,6 +141,10 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
       if (changeStart < oldEnd && changeEnd > oldStart) myDocumentRegionWasChanged = true;
     }
     super.changedUpdateImpl(e);
+    if (isValid() && (DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart()) ||
+                      DocumentUtil.isInsideSurrogatePair(getDocument(), intervalEnd()))) {
+      invalidate(e);
+    }
   }
 
   @Override

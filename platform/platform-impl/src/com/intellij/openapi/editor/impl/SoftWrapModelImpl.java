@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapp
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -569,5 +570,27 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   public boolean isDirty() {
     return myUseSoftWraps && myDirty;
+  }
+
+  @TestOnly
+  public void validateState() {
+    Document document = myEditor.getDocument();
+    if (myEditor.getDocument().isInBulkUpdate()) return;
+    FoldingModel foldingModel = myEditor.getFoldingModel();
+    List<? extends SoftWrap> softWraps = getRegisteredSoftWraps();
+    int lastSoftWrapOffset = -1;
+    for (SoftWrap wrap : softWraps) {
+      int softWrapOffset = wrap.getStart();
+      LOG.assertTrue(softWrapOffset > lastSoftWrapOffset, "Soft wraps are not ordered");
+      LOG.assertTrue(softWrapOffset < document.getTextLength(), "Soft wrap is after document's end");
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(softWrapOffset);
+      LOG.assertTrue(foldRegion == null || foldRegion.getStartOffset() == softWrapOffset, "Soft wrap is inside fold region");
+      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineEndOffset(softWrapOffset, document)
+                     || foldRegion != null, "Soft wrap before line break");
+      LOG.assertTrue(softWrapOffset != DocumentUtil.getLineStartOffset(softWrapOffset, document) ||
+                     foldingModel.isOffsetCollapsed(softWrapOffset - 1), "Soft wrap after line break");
+      LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(document, softWrapOffset), "Soft wrap inside a surrogate pair");
+      lastSoftWrapOffset = softWrapOffset;
+    }
   }
 }

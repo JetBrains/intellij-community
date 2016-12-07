@@ -17,7 +17,10 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -25,17 +28,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation, CaretListener, SelectionListener {
+  private static final int CHAR_COUNT_SYNC_LIMIT = 500_000;
+  private static final String CHAR_COUNT_UNKNOWN = "...";
+
+  private final Alarm myAlarm;
+  private CodePointCountTask myCountTask;
+
   private String myText;
 
   public PositionPanel(@NotNull final Project project) {
     super(project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
   @Override
@@ -136,7 +148,17 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     }
   }
 
+  private void updateTextWithCodePointCount(int codePointCount) {
+    if (myText != null) {
+      myText = myText.replace(CHAR_COUNT_UNKNOWN, Integer.toString(codePointCount));
+      if (myStatusBar != null) {
+        myStatusBar.updateWidget(ID());
+      }
+    }
+  }
+
   private String getPositionText(@NotNull Editor editor) {
+    myCountTask = null;
     if (!editor.isDisposed() && myStatusBar != null) {
       StringBuilder message = new StringBuilder();
 
@@ -150,7 +172,18 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
           int selectionStart = selectionModel.getSelectionStart();
           int selectionEnd = selectionModel.getSelectionEnd();
           if (selectionEnd > selectionStart) {
-            message.append(UIBundle.message("position.panel.selected.chars.count", selectionEnd - selectionStart));
+            CodePointCountTask countTask = new CodePointCountTask(editor.getDocument().getImmutableCharSequence(),
+                                                                  selectionStart, selectionEnd);
+            if (countTask.isQuick()) {
+              int charCount = countTask.calculate();
+              message.append(charCount).append(' ').append(UIBundle.message("position.panel.selected.chars.count", charCount));
+            }
+            else {
+              message.append(CHAR_COUNT_UNKNOWN).append(' ').append(UIBundle.message("position.panel.selected.chars.count", 2));
+              myCountTask = countTask;
+              myAlarm.cancelAllRequests();
+              myAlarm.addRequest(countTask, 0);
+            }
             int selectionStartLine = editor.getDocument().getLineNumber(selectionStart);
             int selectionEndLine = editor.getDocument().getLineNumber(selectionEnd);
             if (selectionEndLine > selectionStartLine) {
@@ -168,6 +201,38 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     }
     else {
       return "";
+    }
+  }
+
+  private class CodePointCountTask implements Runnable {
+    private final CharSequence text;
+    private final int startOffset;
+    private final int endOffset;
+
+    private CodePointCountTask(CharSequence text, int startOffset, int endOffset) {
+      this.text = text;
+      this.startOffset = startOffset;
+      this.endOffset = endOffset;
+    }
+
+    private boolean isQuick() {
+      return endOffset - startOffset < CHAR_COUNT_SYNC_LIMIT;
+    }
+
+    private int calculate() {
+      return Character.codePointCount(text, startOffset, endOffset);
+    }
+
+    @Override
+    public void run() {
+      int count = calculate();
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        if (this == myCountTask) {
+          updateTextWithCodePointCount(count);
+          myCountTask = null;
+        }
+      });
     }
   }
 }

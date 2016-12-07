@@ -18,11 +18,13 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
 /**
  * GlyphVector-based text fragment. Used for non-Latin text or when ligatures are enabled
@@ -33,6 +35,10 @@ class ComplexTextFragment extends TextFragment {
   
   @NotNull
   private final GlyphVector myGlyphVector;
+  @Nullable
+  private final short[] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
+                                            // (null if each code point takes one char).
+                                            // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
   
   ComplexTextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl,
                       @NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
@@ -83,6 +89,22 @@ class ComplexTextFragment extends TextFragment {
         setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (numChars - lastCharIndex), isRtl, numChars);
       }
     }
+    int codePointCount = Character.codePointCount(lineChars, start, end - start);
+    if (codePointCount == numChars) {
+      myCodePoint2Offset = null;
+    }
+    else {
+      myCodePoint2Offset = new short[codePointCount];
+      int offset = 0;
+      for (int i = 0; i < codePointCount; i++) {
+        myCodePoint2Offset[i] = (short)(offset++);
+        if (offset < numChars &&
+            Character.isHighSurrogate(lineChars[start + offset - 1]) &&
+            Character.isLowSurrogate(lineChars[start + offset])) {
+          offset++;
+        }
+      }
+    }
   }
   
   private void setCharPosition(int logicalCharIndex, float x, boolean isRtl, int numChars) {
@@ -94,6 +116,15 @@ class ComplexTextFragment extends TextFragment {
 
   boolean isRtl() {
     return BitUtil.isSet(myGlyphVector.getLayoutFlags(), GlyphVector.FLAG_RUN_RTL);
+  }
+
+  @Override
+  int offsetToLogicalColumn(int offset) {
+    if (myCodePoint2Offset == null) return offset;
+    if (offset == getLength()) return myCodePoint2Offset.length;
+    int i = Arrays.binarySearch(myCodePoint2Offset, (short)offset);
+    assert i >= 0;
+    return i;
   }
 
   // Drawing a portion of glyph vector using clipping might be not very effective
@@ -152,6 +183,48 @@ class ComplexTextFragment extends TextFragment {
       g.drawGlyphVector(myGlyphVector, startX, y);
       g.setClip(savedClip);
     }
+  }
+
+  private int getCodePointCount() {
+    return myCodePoint2Offset == null ? myCharPositions.length : myCodePoint2Offset.length;
+  }
+
+  private int visualColumnToVisualOffset(int column) {
+    if (myCodePoint2Offset == null) return column;
+    if (column <= 0) return 0;
+    if (column >= myCodePoint2Offset.length) return getLength();
+    return isRtl() ? getLength() - myCodePoint2Offset[myCodePoint2Offset.length - column] : myCodePoint2Offset[column];
+  }
+
+  @Override
+  public int getLogicalColumnCount(int startColumn) {
+    return getCodePointCount();
+  }
+
+  @Override
+  public int getVisualColumnCount(float startX) {
+    return getCodePointCount();
+  }
+
+  @Override
+  public int[] xToVisualColumn(float startX, float x) {
+    float relX = x - startX;
+    float prevPos = 0;
+    int columnCount = getCodePointCount();
+    for (int i = 0; i < columnCount; i++) {
+      int visualOffset = visualColumnToVisualOffset(i);
+      float newPos = myCharPositions[visualOffset];
+      if (relX < (newPos + prevPos) / 2) {
+        return new int[] {i, relX <= prevPos ? 0 : 1};
+      }
+      prevPos = newPos;
+    }
+    return new int[] {columnCount, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
+  }
+
+  @Override
+  public float visualColumnToX(float startX, int column) {
+    return startX + getX(visualColumnToVisualOffset(column));
   }
 
   public static void flushDrawingCache(Graphics2D g) {

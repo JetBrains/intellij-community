@@ -327,6 +327,11 @@ public class TypedHandler extends TypedActionHandlerBase {
 
   @NotNull
   public static Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
+    return injectedEditorIfCharTypedIsSignificant((int)charTyped, editor, oldFile);
+  }
+
+  @NotNull
+  public static Editor injectedEditorIfCharTypedIsSignificant(final int charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
     int offset = editor.getCaretModel().getOffset();
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
@@ -339,7 +344,8 @@ public class TypedHandler extends TypedActionHandlerBase {
           // IDEA-52375/WEB-9105 fix: last quote in editable fragment should be handled by outer language quote handler
           TextRange hostRange = documentWindow.getHostRange(offset);
           CharSequence sequence = editor.getDocument().getCharsSequence();
-          if (sequence.length() > offset && charTyped != sequence.charAt(offset) || hostRange != null && hostRange.contains(offset)) {
+          if (sequence.length() > offset && charTyped != Character.codePointAt(sequence, offset) ||
+              hostRange != null && hostRange.contains(offset)) {
             return injectedEditor;
           }
         }

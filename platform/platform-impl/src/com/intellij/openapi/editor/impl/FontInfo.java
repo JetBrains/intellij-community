@@ -226,9 +226,9 @@ public class FontInfo {
     return myFont;
   }
 
-  public int charWidth(char c) {
+  public int charWidth(int codePoint) {
     final FontMetrics metrics = fontMetrics();
-    return FontLayoutService.getInstance().charWidth(metrics, c);
+    return FontLayoutService.getInstance().charWidth(metrics, codePoint);
   }
 
   public FontMetrics fontMetrics() {
