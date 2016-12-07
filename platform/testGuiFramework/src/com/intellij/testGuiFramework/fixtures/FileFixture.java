@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -169,6 +171,16 @@ public class FileFixture {
     }, SHORT_TIMEOUT);
 
     return this;
+  }
+
+  @NotNull
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
+  }
+
+  @Nullable
+  public FileStatus getVcsStatus() {
+    return FileStatusManager.getInstance(myProject).getStatus(getVirtualFile());
   }
 
   @NotNull

@@ -604,12 +604,10 @@ public final class GuiTestUtil {
   }
 
   public static void findAndClickButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text) {
-    final boolean[] checkClick = {false};
     Robot robot = container.robot();
     JButton button = findButton(container, text, robot);
     robot.click(button);
   }
-
 
   public static void findAndClickButtonWhenEnabled(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text) {
     Robot robot = container.robot();
@@ -695,6 +693,7 @@ public final class GuiTestUtil {
 
     return robot.finder().find(container.target(), matcher);
   }
+
 
   /** Returns a full path to the GUI data directory in the user's AOSP source tree, if known, or null */
   //@Nullable
