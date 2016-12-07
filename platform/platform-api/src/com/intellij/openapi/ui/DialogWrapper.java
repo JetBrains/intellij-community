@@ -517,13 +517,6 @@ public abstract class DialogWrapper {
           if (cancelNdx > 0) {
             actions = ArrayUtil.mergeArrays(new Action[]{getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
           }
-
-          /*if (!hasFocusedAction(actions)) {
-            int ndx = ArrayUtil.find(actions, getCancelAction());
-            if (ndx >= 0) {
-              actions[ndx].putValue(FOCUSED_ACTION, Boolean.TRUE);
-            }
-          }*/
         }
 
         JPanel buttonsPanel = createButtons(actions, buttonMap);
@@ -660,16 +653,6 @@ public abstract class DialogWrapper {
     }
 
     return panel;
-  }
-
-  private boolean hasFocusedAction(@NotNull Action[] actions) {
-    for (Action action : actions) {
-      if (action.getValue(FOCUSED_ACTION) != null && (Boolean)action.getValue(FOCUSED_ACTION)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   @NotNull
