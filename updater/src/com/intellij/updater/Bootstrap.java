@@ -58,7 +58,10 @@ public class Bootstrap {
         while ((line = br.readLine()) != null) {
           final File file = new File(path + line);
           final Path tmp = Files.createTempFile(IJ_PLATFORM_UPDATER + file.getName(), "");
-          Files.copy(file.toPath(), Files.newOutputStream(tmp));
+
+          try(final OutputStream targetStream = Files.newOutputStream(tmp)) {
+            Files.copy(file.toPath(), targetStream);
+          }
           urls.add(tmp.toFile().toURI().toURL());
           files.add(tmp.toFile());
         }
