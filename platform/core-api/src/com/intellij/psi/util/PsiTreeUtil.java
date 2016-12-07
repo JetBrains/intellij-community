@@ -131,28 +131,35 @@ public class PsiTreeUtil {
     final PsiFile containingFile = element1.getContainingFile();
     final PsiElement topLevel = containingFile == element2.getContainingFile() ? containingFile : null;
 
-    ArrayList<PsiElement> parents1 = getParents(element1, topLevel);
-    ArrayList<PsiElement> parents2 = getParents(element2, topLevel);
-    int size = Math.min(parents1.size(), parents2.size());
-    PsiElement parent = topLevel;
-    for (int i = 1; i <= size; i++) {
-      PsiElement parent1 = parents1.get(parents1.size() - i);
-      PsiElement parent2 = parents2.get(parents2.size() - i);
-      if (!parent1.equals(parent2)) break;
-      parent = parent1;
+    int depth1 = getDepth(element1, topLevel);
+    int depth2 = getDepth(element2, topLevel);
+
+    PsiElement parent1 = element1;
+    PsiElement parent2 = element2;
+    while(depth1 > depth2) {
+      parent1 = parent1.getParent();
+      depth1--;
     }
-    return parent;
+    while(depth2 > depth1) {
+      parent2 = parent2.getParent();
+      depth2--;
+    }
+    while(parent1 != null && parent2 != null && !parent1.equals(parent2)) {
+      parent1 = parent1.getParent();
+      parent2 = parent2.getParent();
+    }
+    return parent1;
   }
 
-  @NotNull
-  private static ArrayList<PsiElement> getParents(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
-    ArrayList<PsiElement> parents = new ArrayList<PsiElement>();
+  @Contract(pure = true)
+  private static int getDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
+    int depth=0;
     PsiElement parent = element;
     while (parent != topLevel && parent != null) {
-      parents.add(parent);
+      depth++;
       parent = parent.getParent();
     }
-    return parents;
+    return depth;
   }
 
   @Nullable
@@ -174,28 +181,34 @@ public class PsiTreeUtil {
     final PsiFile containingFile = element1.getContainingFile();
     final PsiElement topLevel = containingFile == element2.getContainingFile() ? containingFile : null;
 
-    ArrayList<PsiElement> parents1 = getContexts(element1, topLevel);
-    ArrayList<PsiElement> parents2 = getContexts(element2, topLevel);
-    int size = Math.min(parents1.size(), parents2.size());
-    PsiElement parent = topLevel;
-    for (int i = 1; i <= size; i++) {
-      PsiElement parent1 = parents1.get(parents1.size() - i);
-      PsiElement parent2 = parents2.get(parents2.size() - i);
-      if (!parent1.equals(parent2)) break;
-      parent = parent1;
+    int depth1 = getContextDepth(element1, topLevel);
+    int depth2 = getContextDepth(element2, topLevel);
+
+    PsiElement parent1 = element1;
+    PsiElement parent2 = element2;
+    while(depth1 > depth2 && parent1 != null) {
+      parent1 = parent1.getContext();
+      depth1--;
     }
-    return parent;
+    while(depth2 > depth1 && parent2 != null) {
+      parent2 = parent2.getContext();
+      depth2--;
+    }
+    while(parent1 != null && parent2 != null && !parent1.equals(parent2)) {
+      parent1 = parent1.getContext();
+      parent2 = parent2.getContext();
+    }
+    return parent1;
   }
 
-  @NotNull
-  private static ArrayList<PsiElement> getContexts(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
-    ArrayList<PsiElement> parents = new ArrayList<PsiElement>();
+  private static int getContextDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
+    int depth=0;
     PsiElement parent = element;
     while (parent != topLevel && parent != null) {
-      parents.add(parent);
+      depth++;
       parent = parent.getContext();
     }
-    return parents;
+    return depth;
   }
 
   @Nullable
