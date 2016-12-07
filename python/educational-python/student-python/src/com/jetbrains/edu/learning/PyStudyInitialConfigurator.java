@@ -2,7 +2,6 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -10,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBus;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -32,10 +32,9 @@ public class PyStudyInitialConfigurator {
                                     final ProjectManagerEx projectManager) {
     final File file = new File(getCoursesRoot(), "Introduction to Python.zip");
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
-      final File newCourses = new File(PathManager.getConfigPath(), "courses");
       try {
-        FileUtil.createDirectory(newCourses);
-        copyCourse(file, newCourses);
+        FileUtil.createDirectory(StudyProjectGenerator.OUR_COURSES_DIR);
+        copyCourse(file, StudyProjectGenerator.OUR_COURSES_DIR);
         propertiesComponent.setValue(CONFIGURED_V1, "true");
       }
       catch (IOException e) {
@@ -43,10 +42,9 @@ public class PyStudyInitialConfigurator {
       }
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V11)) {
-      final File newCourses = new File(PathManager.getConfigPath(), "courses");
-      if (newCourses.exists()) {
+      if (StudyProjectGenerator.OUR_COURSES_DIR.exists()) {
         try {
-          copyCourse(file, newCourses);
+          copyCourse(file, StudyProjectGenerator.OUR_COURSES_DIR);
           propertiesComponent.setValue(CONFIGURED_V11, "true");
         }
         catch (IOException e) {
@@ -55,15 +53,14 @@ public class PyStudyInitialConfigurator {
       }
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V2)) {
-      final File newCourses = new File(PathManager.getConfigPath(), "courses");
       try {
-        File[] children = newCourses.listFiles();
+        File[] children = StudyProjectGenerator.OUR_COURSES_DIR.listFiles();
         if (children != null) {
           for (File child : children) {
             FileUtil.delete(child);
           }
         }
-        copyCourse(file, newCourses);
+        copyCourse(file, StudyProjectGenerator.OUR_COURSES_DIR);
         propertiesComponent.setValue(CONFIGURED_V2, "true");
       }
       catch (IOException e) {
