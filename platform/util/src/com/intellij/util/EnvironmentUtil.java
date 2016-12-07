@@ -164,6 +164,7 @@ public class EnvironmentUtil {
       String os = SystemInfo.isLinux ? "linux" : "mac";
       File reader = FileUtil.findFirstThatExist(
         PathManager.getBinPath() + "/printenv.py",
+        PathManager.getHomePath() + "/ultimate/community/bin/" + os + "/printenv.py",
         PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
         PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
       if (reader == null) {
