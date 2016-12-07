@@ -69,6 +69,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   private AnActionButtonUpdater myMoveUpActionUpdater = null;
   private AnActionButtonUpdater myMoveDownActionUpdater = null;
   private Dimension myPreferredSize;
+  private Dimension myMinimumSize;
   private CommonActionsPanel myActionsPanel;
   private Comparator<AnActionButton> myButtonComparator;
   private boolean myAsUsualTopToolbar = false;
@@ -311,6 +312,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
+  public ToolbarDecorator setMinimumSize(Dimension size) {
+    myMinimumSize = size;
+    return this;
+  }
+
   public ToolbarDecorator setVisibleRowCount(int rowCount) {
     return this;//do nothing by default
   }
@@ -335,6 +341,9 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contextComponent, true);
     if (myPreferredSize != null) {
       scrollPane.setPreferredSize(myPreferredSize);
+    }
+    if (myMinimumSize != null) {
+      scrollPane.setMinimumSize(myMinimumSize);
     }
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override

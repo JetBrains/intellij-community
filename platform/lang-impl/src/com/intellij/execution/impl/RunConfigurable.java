@@ -557,6 +557,7 @@ class RunConfigurable extends BaseConfigurable {
       .addExtraAction(AnActionButton.fromAction(new MyEditDefaultsAction()))
       .addExtraAction(AnActionButton.fromAction(new MyCreateFolderAction()))
       .addExtraAction(AnActionButton.fromAction(new MySortFolderAction()))
+      .setMinimumSize(new JBDimension(200, 200))
       .setButtonComparator(ExecutionBundle.message("add.new.run.configuration.acrtion.name"),
                            ExecutionBundle.message("remove.run.configuration.action.name"),
                            ExecutionBundle.message("copy.configuration.action.name"),
@@ -620,6 +621,7 @@ class RunConfigurable extends BaseConfigurable {
     });
 
     mySplitter.setFirstComponent(createLeftPanel());
+    mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setSecondComponent(myRightPanel);
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
 
