@@ -55,7 +55,7 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
                                     loginStatus.value = LoginAuthStatus(LoginStatus.Fail, errorMessage)
                                 }
                             }.failureLater(refreshLt) {
-                                loginStatus.value = LoginAuthStatus(LoginStatus.Fail, it.message!!)
+                                loginStatus.value = LoginAuthStatus(LoginStatus.Fail, it.message ?: "Failed to check credentials")
                             }
                         }
                     }

@@ -32,6 +32,8 @@ class IdePluginClient(val project : Project) :
 
     val loginDataComponent = component<CircletLoginComponent>()
 
+    var attemptToConnectNotificationShown = false
+
     val state = Property(ConnectingState.Disconnected)
     val askPasswordExplicitlyAllowed = Property(false)
     val client = Property<CircletClient?>(null)
@@ -105,6 +107,7 @@ class IdePluginClient(val project : Project) :
                                 askPassword()
                         }
                     }. failureLater(lifetime, modality) {
+                        notifyReconnect(lifetime)
                         JobScheduler.getScheduler().schedule({
                             if (!lifetime.isTerminated)
                                 tryReconnect(lifetime)
@@ -112,8 +115,6 @@ class IdePluginClient(val project : Project) :
                         state.value = ConnectingState.TryConnect
                 }
             }
-        } success {
-
         }
     }
 
@@ -147,11 +148,27 @@ class IdePluginClient(val project : Project) :
         state.value = ConnectingState.Disconnected
     }
 
+    private fun notifyReconnect(lt: Lifetime) {
+        if (attemptToConnectNotificationShown)
+            return
+        val notification = Notification(
+            "IdePLuginClient.notifyReconnect",
+            "Circlet",
+            XmlStringUtil.wrapInHtml("Failed to establish server connection. Will keep trying to reconnect.<br> <a href=\"update\">Switch off</a>"),
+            NotificationType.INFORMATION,
+            { a, b -> disable() })
+        notification.notify(lt, project)
+        attemptToConnectNotificationShown = true
+        lt.add {
+            attemptToConnectNotificationShown = false
+        }
+    }
+
     fun notifyDisconnected(lt: Lifetime) {
         val notification = Notification(
             "IdePLuginClient.notifyDisconnected",
             "Circlet",
-            XmlStringUtil.wrapInHtml("<a href=\"update\">Click enable</a> to continue using Circlet integration"),
+            XmlStringUtil.wrapInHtml("Integration switched off.<br> <a href=\"update\">Switch on</a>"),
             NotificationType.INFORMATION,
             { a, b -> enable() })
         notification.notify(lt, project)
@@ -171,7 +188,7 @@ class IdePluginClient(val project : Project) :
         Notification(
             "IdePLuginClient.authCheckFailedNotification",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Authorization failed. Please <a href=\"update\">re-enter credentials</a>"),
+            XmlStringUtil.wrapInHtml("Authorization failed.<br> <a href=\"update\">Re-enter credentials</a>"),
             NotificationType.INFORMATION,
             { a, b -> project.component<IdePluginClient>().askPassword() })
             .notify(project)
