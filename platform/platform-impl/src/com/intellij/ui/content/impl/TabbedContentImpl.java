@@ -163,7 +163,8 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   @Override
   public void setIcon(Icon icon) {
     for (Pair<String, JComponent> nextTabWithName : getTabs()) {
-      if (nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(this, getTabName()))) {
+      String name = getTabName();
+      if (name != null && nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(this, name))) {
         JComponent tab = nextTabWithName.getSecond();
         if (tab instanceof Iconable) {
           Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
