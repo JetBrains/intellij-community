@@ -1,0 +1,56 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+iml_module(
+    name = "svn4idea",
+    # do not sort: must match IML order
+    srcs = [
+        "resources",
+        "src",
+    ],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/platform/util[module]",
+        "//tools/idea/.idea/libraries:JDOM",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:Log4J",
+        "//tools/idea/platform/vcs-api[module]",
+        "//tools/idea/platform/platform-api[module]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/plugins/svn4idea/lib:svnkit",
+        "//tools/idea/.idea/libraries:trilead-ssh2",
+        "//tools/idea/plugins/svn4idea/lib:sequence-library",
+        "//tools/idea/plugins/svn4idea/lib:sqljet",
+        "//tools/idea/plugins/svn4idea/lib:antlr",
+        "//tools/idea/plugins/svn4idea/lib:svnkit-javahl",
+        "//tools/idea/.idea/libraries:jna",
+        "//tools/idea/.idea/libraries:pty4j",
+        "//tools/idea/.idea/libraries:purejavacomm",
+        "//tools/idea/.idea/libraries:jsch-agent-proxy",
+        "//tools/idea/plugins/svn4idea/lib:jsch.agentproxy.svnkit-trilead-ssh2",
+        "//tools/idea/.idea/libraries:http-client",
+        "//tools/idea/.idea/libraries:sqlite",
+    ],
+)
+
+iml_module(
+    name = "svn4idea-tests",
+    tags = ["managed"],
+    test_srcs = ["testSource"],
+    test_tags = ["manual"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/plugins/svn4idea[module]",
+        "//tools/idea/platform/vcs-api[module]",
+        "//tools:idea.platform-impl_and_others[module]",
+        "//tools/idea/plugins/svn4idea/lib:svnkit",
+        "//tools/idea/platform/lang-api[module]",
+        "//tools/idea/plugins/svn4idea/lib:sqljet",
+        "//tools/idea/.idea/libraries:jsch-agent-proxy",
+        "//tools/idea/.idea/libraries:trilead-ssh2",
+        "//tools/idea/platform/vcs-tests[module, test]",
+    ],
+)
