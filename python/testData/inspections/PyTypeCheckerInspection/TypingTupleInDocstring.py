@@ -6,6 +6,7 @@ def test1(name: Tuple[int, int]):
 
 
 test1((1, 2))
+test1(<warning descr="Expected type 'Tuple[int, int]', got 'Tuple[int, str]' instead">(1, 'foo')</warning>)
 
 
 def test2(name):

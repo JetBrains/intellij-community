@@ -40,8 +40,8 @@ object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..6
   // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  private val BLACK_LIST = setOf("__builtin__", "builtins")
-  private val THIRD_PARTY_WHITE_LIST = setOf("six")
+  private val WHITE_LIST = setOf("typing", "six")
+  private val BLACK_LIST = setOf("__builtin__", "builtins", "exceptions")
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
@@ -51,11 +51,11 @@ object PyTypeShed {
     if (topLevelPackage in BLACK_LIST) {
       return false
     }
+    if (topLevelPackage !in WHITE_LIST) {
+      return false
+    }
     if (isInStandardLibrary(root)) {
       return true
-    }
-    if (topLevelPackage !in THIRD_PARTY_WHITE_LIST) {
-      return false
     }
     if (isInThirdPartyLibraries(root)) {
       val pyPIPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: topLevelPackage

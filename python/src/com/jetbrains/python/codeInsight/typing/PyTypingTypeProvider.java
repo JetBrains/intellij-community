@@ -26,6 +26,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -76,6 +77,35 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.AbstractGeneric")
     .add("typing.Protocol")
     .build();
+
+  private static ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
+    .add("typing.overload")
+    .add("typing.Any")
+    .add("typing.TypeVar")
+    .add("typing.Generic")
+    .add("typing.Tuple")
+    .add("typing.Callable")
+    .add("typing.Type")
+    .add("typing.no_type_check")
+    .add("typing.Union")
+    .add("typing.Optional")
+    .add("typing.List")
+    .add("typing.Dict")
+    .add("typing.DefaultDict")
+    .add("typing.Set")
+    .build();
+
+  @Nullable
+  @Override
+  public PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    // Check for the exact name in advance for performance reasons
+    if ("Generic".equals(referenceExpression.getName())) {
+      if (resolveToQualifiedNames(referenceExpression, context).contains("typing.Generic")) {
+        return new PyCustomType("typing.Generic", null, false);
+      }
+    }
+    return null;
+  }
 
   @Nullable
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
@@ -282,8 +312,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   private static List<PyGenericType> collectGenericTypes(@NotNull PyClass cls, @NotNull Context context) {
     boolean isGeneric = false;
-    for (PyClass ancestor : cls.getAncestorClasses(context.getTypeContext())) {
-      if (GENERIC_CLASSES.contains(ancestor.getQualifiedName())) {
+    for (PyClassLikeType ancestor : cls.getAncestorTypes(context.getTypeContext())) {
+      if (ancestor != null && GENERIC_CLASSES.contains(ancestor.getClassQName())) {
         isGeneric = true;
         break;
       }
@@ -657,7 +687,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             }
           }
         }
-        else if (element instanceof PyTargetExpression) {
+        final String name = element != null ? getQualifiedName(element) : null;
+        if (name != null && OPAQUE_NAMES.contains(name)) {
+          elements.add(element);
+          continue;
+        }
+        if (element instanceof PyTargetExpression) {
           final PyTargetExpression targetExpr = (PyTargetExpression)element;
           // XXX: Requires switching from stub to AST
           final PyExpression assignedValue = targetExpr.findAssignedValue();
