@@ -34,17 +34,23 @@ import java.util.List;
 public class CompositeFilter implements Filter, FilterMixin {
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
 
-  private final List<Filter> myFilters = new ArrayList<>();
+  private final List<Filter> myFilters;
   private boolean myIsAnyHeavy;
   private boolean forceUseAllFilters;
   private final DumbService myDumbService;
 
   public CompositeFilter(@NotNull Project project) {
+    this(project, new ArrayList<>());
+  }
+
+  public CompositeFilter(@NotNull Project project, @NotNull List<Filter> filters) {
     myDumbService = DumbService.getInstance(project);
+    myFilters = filters;
   }
 
   protected CompositeFilter(DumbService dumbService) {
     myDumbService = dumbService;
+    myFilters = new ArrayList<>();
   }
 
   @Override

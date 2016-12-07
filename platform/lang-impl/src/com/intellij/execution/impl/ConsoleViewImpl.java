@@ -285,28 +285,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
 
-    myFilters = new CompositeFilter(project);
-    if (usePredefinedMessageFilter) {
-      for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-        Filter[] filters;
-        if (eachProvider instanceof ConsoleDependentFilterProvider) {
-          filters = ((ConsoleDependentFilterProvider)eachProvider).getDefaultFilters(this, project, searchScope);
-        }
-        else if (eachProvider instanceof ConsoleFilterProviderEx) {
-          filters = ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope);
-        }
-        else {
-          filters = eachProvider.getDefaultFilters(project);
-        }
-        for (Filter filter : filters) {
-          myFilters.addFilter(filter);
-        }
-      }
-    }
+    myFilters = new CompositeFilter(project, usePredefinedMessageFilter ? computeConsoleFilters(project, searchScope) : new SmartList<>());
     myFilters.setForceUseAllFilters(true);
     myHeavyUpdateTicket = 0;
     myHeavyAlarm = myFilters.isAnyHeavy() ? new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this) : null;
-
 
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
     if (inputFilters.length > 0) {
@@ -347,6 +329,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     });
 
+  }
+
+  @NotNull
+  private List<Filter> computeConsoleFilters(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    List<Filter> result = new ArrayList<>();
+    for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
+      Filter[] filters;
+      if (eachProvider instanceof ConsoleDependentFilterProvider) {
+        filters = ((ConsoleDependentFilterProvider)eachProvider).getDefaultFilters(this, project, searchScope);
+      }
+      else if (eachProvider instanceof ConsoleFilterProviderEx) {
+        filters = ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope);
+      }
+      else {
+        filters = eachProvider.getDefaultFilters(project);
+      }
+      ContainerUtil.addAll(result, filters);
+    }
+    return result;
   }
 
   @Override
