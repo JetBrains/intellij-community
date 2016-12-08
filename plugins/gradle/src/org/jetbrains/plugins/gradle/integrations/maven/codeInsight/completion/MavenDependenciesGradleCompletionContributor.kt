@@ -16,28 +16,21 @@
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
-import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
-import com.intellij.psi.PsiElement
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult
 import org.jetbrains.idea.maven.indices.MavenArtifactSearcher
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
-import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.plugins.gradle.codeInsight.AbstractGradleCompletionContributor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
-
-import com.intellij.patterns.PlatformPatterns.psiElement
 
 /**
  * @author Vladislav.Soroka
@@ -140,13 +133,13 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
         }))
 
     private val IN_MAP_DEPENDENCY_NOTATION = psiElement()
-      .and(AbstractGradleCompletionContributor.GRADLE_FILE_PATTERN)
+      .and(GRADLE_FILE_PATTERN)
       .withParent(GrLiteral::class.java)
       .withSuperParent(2, psiElement(GrNamedArgument::class.java))
       .and(DEPENDENCIES_CALL_PATTERN)
 
     private val IN_METHOD_DEPENDENCY_NOTATION = psiElement()
-      .and(AbstractGradleCompletionContributor.GRADLE_FILE_PATTERN)
+      .and(GRADLE_FILE_PATTERN)
       .and(DEPENDENCIES_CALL_PATTERN)
   }
 }

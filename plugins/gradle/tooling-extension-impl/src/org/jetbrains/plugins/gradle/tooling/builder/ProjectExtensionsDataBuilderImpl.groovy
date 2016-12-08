@@ -20,10 +20,7 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Project
 import org.gradle.api.internal.plugins.DefaultConvention
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.gradle.model.DefaultGradleExtension
-import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
-import org.jetbrains.plugins.gradle.model.DefaultGradleProperty
-import org.jetbrains.plugins.gradle.model.GradleExtensions
+import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
@@ -42,6 +39,10 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   Object buildAll(String modelName, Project project) {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
     result.parentProjectDir = project.parent?.projectDir
+
+    for (it in project.configurations) {
+      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible))
+    }
 
     def conventions = project.extensions as DefaultConvention
     conventions.extraProperties.properties.each { name, value ->

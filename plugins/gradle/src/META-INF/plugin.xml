@@ -155,6 +155,8 @@
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleDslAnnotator"/>
     <weigher key="completion" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleCompletionWeigher"
              id="myWeigher" order="first"/>
+    <completion.contributor language="Groovy" order="first"
+                            implementationClass="org.jetbrains.plugins.gradle.codeInsight.ConfigurationsCompletionContributor"/>
 
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
                      bundle="org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle"

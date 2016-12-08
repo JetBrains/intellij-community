@@ -16,29 +16,19 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
+ * @since 12/7/2016
  */
-public interface GradleExtensions extends Serializable {
-  @Nullable
-  File getParentProjectDir();
+public interface GradleConfiguration extends Serializable {
+  @NotNull
+  String getName();
 
   @NotNull
-  List<GradleExtension> getExtensions();
+  String getDescription();
 
-  @NotNull
-  List<GradleProperty> getGradleProperties();
-
-  @NotNull
-  List<ExternalTask> getTasks();
-
-  @NotNull
-  List<GradleConfiguration> getConfigurations();
+  boolean isVisible();
 }

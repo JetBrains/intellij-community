@@ -116,7 +116,7 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           gradleProp.name = property.getName();
           gradleProp.typeFqn = property.getTypeFqn();
           Serializable value = property.getValue();
-          if(value != null) {
+          if (value != null) {
             gradleProp.value = value.toString();
           }
           extensionsData.properties.add(gradleProp);
@@ -130,18 +130,25 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           }
 
           StringBuilder description = new StringBuilder();
-          if(task.getDescription() != null) {
+          if (task.getDescription() != null) {
             description.append(task.getDescription());
-            if(task.getGroup() != null) {
+            if (task.getGroup() != null) {
               description.append("<p>");
             }
           }
-          if(task.getGroup() != null) {
+          if (task.getGroup() != null) {
             description.append("<i>Task group: ").append(task.getGroup()).append("<i>");
           }
 
           gradleTask.description = description.toString();
           extensionsData.tasks.add(gradleTask);
+        }
+        for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
+          GradleConfiguration gradleConfiguration = new GradleConfiguration();
+          gradleConfiguration.name = configuration.getName();
+          gradleConfiguration.description = configuration.getDescription();
+          gradleConfiguration.visible = configuration.isVisible();
+          extensionsData.configurations.add(gradleConfiguration);
         }
         gradleProject.extensions.put(entry.getKey(), extensionsData);
         extensionsData.myGradleProject = gradleProject;
@@ -204,6 +211,9 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false)
     public List<GradleTask> tasks = new SmartList<>();
+    @Property(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false)
+    public List<GradleConfiguration> configurations = new SmartList<>();
 
     @Transient
     @Nullable
@@ -220,11 +230,11 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Nullable
     private static GradleProp findProperty(@NotNull GradleExtensionsData extensionsData, String propName) {
       for (GradleProp property : extensionsData.properties) {
-        if(property.name.equals(propName)) return property;
+        if (property.name.equals(propName)) return property;
       }
-      if(extensionsData.parent != null && extensionsData.myGradleProject != null) {
+      if (extensionsData.parent != null && extensionsData.myGradleProject != null) {
         GradleExtensionsData parentData = extensionsData.myGradleProject.extensions.get(extensionsData.parent);
-        if(parentData != null) {
+        if (parentData != null) {
           return findProperty(parentData, propName);
         }
       }
@@ -281,5 +291,15 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     public String getTypeFqn() {
       return typeFqn;
     }
+  }
+
+  @Tag("conf")
+  public static class GradleConfiguration {
+    @Attribute("name")
+    public String name;
+    @Attribute("visible")
+    public boolean visible = true;
+    @Text
+    public String description;
   }
 }
