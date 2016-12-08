@@ -28,7 +28,7 @@ import java.awt.*;
  */
 public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implements ComponentWithEmptyText {
 
-  private final StatusText myEmptyText = new StatusText() {
+  private final StatusText myEmptyText = new StatusText(this) {
     @Override
     protected boolean isStatusVisible() {
       return UIUtil.uiChildren(JBPanelWithEmptyText.this).filter(Component::isVisible).isEmpty();
