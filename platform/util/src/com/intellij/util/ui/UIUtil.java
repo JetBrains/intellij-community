@@ -356,6 +356,7 @@ public class UIUtil {
   }
 
   private static Boolean jdkManagedHiDPI;
+  private static boolean jdkManagedHiDPI_earlierVersion;
 
   /**
    * Returns whether the JDK-managed HiDPI mode is enabled.
@@ -365,19 +366,31 @@ public class UIUtil {
     if (jdkManagedHiDPI != null) {
       return jdkManagedHiDPI;
     }
-    if (SystemInfo.isMac) {
-      return jdkManagedHiDPI = (SystemInfo.isAppleJvm ? false : true);
-    }
     jdkManagedHiDPI = false;
+    jdkManagedHiDPI_earlierVersion = true;
     try {
       GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
       if (ge instanceof SunGraphicsEnvironment) {
         Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
         jdkManagedHiDPI = (Boolean)m.invoke(ge);
+        jdkManagedHiDPI_earlierVersion = false;
       }
     } catch (Throwable ignore) {
     }
+    if (SystemInfo.isMac) {
+      return jdkManagedHiDPI = (SystemInfo.isAppleJvm ? false : true);
+    }
     return jdkManagedHiDPI;
+  }
+
+  /**
+   * Indicates earlier JBSDK version, not containing HiDPI changes.
+   * On macOS that JBSDK supports jdkManagedHiDPI, but it's not capable to provide device scale
+   * via GraphicsDevice transform matrix (the scale should be retrieved via DetectRetinaKit).
+   */
+  static boolean isJDKManagedHiDPI_earlierVersion() {
+    isJDKManagedHiDPI();
+    return jdkManagedHiDPI_earlierVersion;
   }
 
   /**
@@ -1799,8 +1812,8 @@ public class UIUtil {
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
       if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, (int)(height - (isJDKManagedHiDPIScreen() ? 1 : JBUI.sysScale())),
-                                     width, height - (isJDKManagedHiDPIScreen() ? 1 : 2));
+      if (drawBottomLine) g.drawLine(x, height - (isJDKManagedHiDPIScreen((Graphics2D)g) ? 1 : 2),
+                                     width, height - (isJDKManagedHiDPIScreen((Graphics2D)g) ? 1 : 2));
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);

@@ -224,6 +224,9 @@ public class JBUI {
    */
   public static float sysScale(GraphicsDevice gd) {
     if (UIUtil.isJDKManagedHiDPI() && gd != null) {
+      if (SystemInfo.isMac && UIUtil.isJDKManagedHiDPI_earlierVersion()) {
+        return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gd) ? 2f : 1f;
+      }
       return (float)gd.getDefaultConfiguration().getDefaultTransform().getScaleX();
     }
     return sysScale();
