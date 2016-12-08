@@ -435,7 +435,11 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     if (actionId == null) {
       return emptyList()
     }
-    return actionIdToShortcuts.get(actionId) ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) } ?: parent?.getMutableShortcutList(actionId) ?: emptyList()
+
+
+    // it is critical to use getParentShortcuts - otherwise MacOSDefaultKeymap doesn't convert shortcuts
+    // todo why not convert on add? why we don't need to convert our own shortcuts?
+    return actionIdToShortcuts.get(actionId) ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) } ?: parent?.let { getParentShortcuts(actionId) } ?: emptyList()
   }
 
   fun getOwnShortcuts(actionId: String): Array<Shortcut> {
@@ -549,8 +553,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1))
     keymapElement.setAttribute(NAME_ATTRIBUTE, name)
 
-    if (parent != null) {
-      keymapElement.setAttribute(PARENT_ATTRIBUTE, parent!!.name)
+    parent?.let {
+      keymapElement.setAttribute(PARENT_ATTRIBUTE, it.name)
     }
     writeOwnActionIds(keymapElement)
     return keymapElement

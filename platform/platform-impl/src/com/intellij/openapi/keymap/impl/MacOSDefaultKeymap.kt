@@ -25,7 +25,7 @@ import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 
 class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>) : DefaultKeymapImpl(dataHolder) {
-  override fun getParentActionIds(firstKeyStroke: KeyStroke) = super.getParentActionIds(convertKeyStroke(firstKeyStroke)!!)
+  override fun getParentActionIds(firstKeyStroke: KeyStroke) = super.getParentActionIds(convertKeyStroke(firstKeyStroke))
 
   override fun getParentActionIds(shortcut: MouseShortcut) = super.getParentActionIds(convertMouseShortcut(shortcut))
 
@@ -39,18 +39,12 @@ class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>) : DefaultKeym
       }
 
       val key = parentShortcut as KeyboardShortcut
-      return KeyboardShortcut(convertKeyStroke(key.firstKeyStroke)!!, convertKeyStroke(key.secondKeyStroke))
+      return KeyboardShortcut(convertKeyStroke(key.firstKeyStroke), key.secondKeyStroke?.let(::convertKeyStroke))
     }
   }
 }
 
-private fun convertKeyStroke(parentKeyStroke: KeyStroke?): KeyStroke? {
-  if (parentKeyStroke == null) {
-    return null
-  }
-
-  return KeyStroke.getKeyStroke(parentKeyStroke.keyCode, mapModifiers(parentKeyStroke.modifiers), parentKeyStroke.isOnKeyRelease)
-}
+private fun convertKeyStroke(parentKeyStroke: KeyStroke): KeyStroke = KeyStroke.getKeyStroke(parentKeyStroke.keyCode, mapModifiers(parentKeyStroke.modifiers), parentKeyStroke.isOnKeyRelease)
 
 private fun convertMouseShortcut(macShortcut: MouseShortcut) = MouseShortcut(macShortcut.button, mapModifiers(macShortcut.modifiers), macShortcut.clickCount)
 
