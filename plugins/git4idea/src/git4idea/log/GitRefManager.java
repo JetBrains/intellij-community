@@ -115,11 +115,9 @@ public class GitRefManager implements VcsLogRefManager {
           localBranches.add(ref);
         }
         else if (allRemote.containsKey(refName)) {
+          remoteRefGroups.putValue(allRemote.get(refName), ref);
           if (tracked.contains(refName)) {
             trackedBranches.add(ref);
-          }
-          else {
-            remoteRefGroups.putValue(allRemote.get(refName), ref);
           }
         }
         else {
