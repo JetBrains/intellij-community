@@ -13,36 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap.impl;
+package com.intellij.openapi.keymap.impl
 
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.util.SystemInfo
+import org.jdom.Element
 
-import java.awt.event.MouseEvent;
+import java.awt.event.MouseEvent
 
-class DefaultKeymapImpl extends KeymapImpl {
-  @Override
-  public boolean canModify() {
-    return false;
-  }
+open class DefaultKeymapImpl : KeymapImpl() {
+  override fun canModify() = false
 
-  @Override
-  public String getPresentableName() {
-    return DefaultKeymap.getInstance().getKeymapPresentableName(this);
-  }
+  override fun getPresentableName() = DefaultKeymap.getInstance().getKeymapPresentableName(this)
 
-  @Override
-  public void readExternal(@NotNull Element keymapElement, @NotNull Keymap[] existingKeymaps) throws InvalidDataException {
-    super.readExternal(keymapElement, existingKeymaps);
+  override fun readExternal(keymapElement: Element, existingKeymaps: Array<Keymap>) {
+    super.readExternal(keymapElement, existingKeymaps)
 
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(getName()) && !SystemInfo.isXWindow) {
-      addShortcut(IdeActions.ACTION_GOTO_DECLARATION, new MouseShortcut(MouseEvent.BUTTON2, 0, 1));
+    if (KeymapManager.DEFAULT_IDEA_KEYMAP == name && !SystemInfo.isXWindow) {
+      addShortcut(IdeActions.ACTION_GOTO_DECLARATION, MouseShortcut(MouseEvent.BUTTON2, 0, 1))
     }
   }
 }

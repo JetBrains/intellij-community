@@ -13,110 +13,89 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap.impl;
+package com.intellij.openapi.keymap.impl
 
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
-import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.util.containers.mapSmart
+import org.intellij.lang.annotations.JdkConstants
+import java.awt.event.InputEvent
+import javax.swing.KeyStroke
 
-import javax.swing.*;
-import java.awt.event.InputEvent;
+class MacOSDefaultKeymap : DefaultKeymapImpl() {
+  override fun getParentActionIds(firstKeyStroke: KeyStroke) = super.getParentActionIds(convertKeyStroke(firstKeyStroke)!!)
 
-/**
- * @author max
- */
-public class MacOSDefaultKeymap extends DefaultKeymapImpl {
-  @NotNull
-  @Override
-  protected String[] getParentActionIds(@NotNull KeyStroke firstKeyStroke) {
-    return super.getParentActionIds(convertKeyStroke(firstKeyStroke));
+  override fun getParentActionIds(shortcut: MouseShortcut) = super.getParentActionIds(convertMouseShortcut(shortcut))
+
+  override fun getParentShortcuts(actionId: String) = super.getParentShortcuts(actionId).mapSmart { convertShortcutFromParent(it) }
+
+  companion object {
+    @JvmStatic
+    fun convertShortcutFromParent(parentShortcut: Shortcut): Shortcut {
+      if (parentShortcut is MouseShortcut) {
+        return convertMouseShortcut(parentShortcut)
+      }
+
+      val key = parentShortcut as KeyboardShortcut
+      return KeyboardShortcut(convertKeyStroke(key.firstKeyStroke)!!, convertKeyStroke(key.secondKeyStroke))
+    }
+  }
+}
+
+private fun convertKeyStroke(parentKeyStroke: KeyStroke?): KeyStroke? {
+  if (parentKeyStroke == null) {
+    return null
   }
 
-  @NotNull
-  @Override
-  protected String[] getParentActionIds(@NotNull MouseShortcut shortcut) {
-    return super.getParentActionIds(convertMouseShortcut(shortcut));
+  return KeyStroke.getKeyStroke(parentKeyStroke.keyCode, mapModifiers(parentKeyStroke.modifiers), parentKeyStroke.isOnKeyRelease)
+}
+
+private fun convertMouseShortcut(macShortcut: MouseShortcut) = MouseShortcut(macShortcut.button, mapModifiers(macShortcut.modifiers), macShortcut.clickCount)
+
+@JdkConstants.InputEventMask
+private fun mapModifiers(@JdkConstants.InputEventMask modifiers: Int): Int {
+  var modifiers = modifiers
+  var meta = false
+
+  if (modifiers and InputEvent.META_MASK != 0) {
+    modifiers = modifiers and InputEvent.META_MASK.inv()
+    meta = true
   }
 
-  @NotNull
-  @Override
-  protected Shortcut[] getParentShortcuts(@NotNull String actionId) {
-    Shortcut[] parentShortcuts = super.getParentShortcuts(actionId);
-    Shortcut[] macShortcuts = new Shortcut[parentShortcuts.length];
-    for (int i = 0; i < parentShortcuts.length; i++) {
-      macShortcuts[i] = convertShortcutFromParent(parentShortcuts[i]);
-    }
-    return macShortcuts;
+  var metaDown = false
+  if (modifiers and InputEvent.META_DOWN_MASK != 0) {
+    modifiers = modifiers and InputEvent.META_DOWN_MASK.inv()
+    metaDown = true
   }
 
-  public static Shortcut convertShortcutFromParent(Shortcut parentShortcut) {
-    if (parentShortcut instanceof MouseShortcut) {
-      return convertMouseShortcut((MouseShortcut)parentShortcut);
-    }
-
-    KeyboardShortcut key = (KeyboardShortcut)parentShortcut;
-    return new KeyboardShortcut(convertKeyStroke(key.getFirstKeyStroke()),
-                                convertKeyStroke(key.getSecondKeyStroke()));
+  var control = false
+  if (modifiers and InputEvent.CTRL_MASK != 0) {
+    modifiers = modifiers and InputEvent.CTRL_MASK.inv()
+    control = true
   }
 
-  private static KeyStroke convertKeyStroke(KeyStroke parentKeyStroke) {
-    if (parentKeyStroke == null) return null;
-    return KeyStroke.getKeyStroke(parentKeyStroke.getKeyCode(),
-                                  mapModifiers(parentKeyStroke.getModifiers()),
-                                  parentKeyStroke.isOnKeyRelease());
+  var controlDown = false
+  if (modifiers and InputEvent.CTRL_DOWN_MASK != 0) {
+    modifiers = modifiers and InputEvent.CTRL_DOWN_MASK.inv()
+    controlDown = true
   }
 
-  private static MouseShortcut convertMouseShortcut(MouseShortcut macShortcut) {
-    return new MouseShortcut(macShortcut.getButton(),
-                             mapModifiers(macShortcut.getModifiers()),
-                             macShortcut.getClickCount());
+  if (meta) {
+    modifiers = modifiers or InputEvent.CTRL_MASK
   }
 
-  @JdkConstants.InputEventMask
-  private static int mapModifiers(@JdkConstants.InputEventMask int modifiers) {
-    boolean meta = false;
-
-    if ((modifiers & InputEvent.META_MASK) != 0) {
-      modifiers &= ~InputEvent.META_MASK;
-      meta = true;
-    }
-
-    boolean metaDown = false;
-    if ((modifiers & InputEvent.META_DOWN_MASK) != 0) {
-      modifiers &= ~InputEvent.META_DOWN_MASK;
-      metaDown = true;
-    }
-
-    boolean control = false;
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
-      modifiers &= ~InputEvent.CTRL_MASK;
-      control = true;
-    }
-
-    boolean controlDown = false;
-    if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0) {
-      modifiers &= ~InputEvent.CTRL_DOWN_MASK;
-      controlDown = true;
-    }
-
-    if (meta) {
-      modifiers |= InputEvent.CTRL_MASK;
-    }
-
-    if (metaDown) {
-      modifiers |= InputEvent.CTRL_DOWN_MASK;
-    }
-
-    if (control) {
-      modifiers |= InputEvent.META_MASK;
-    }
-
-    if (controlDown) {
-      modifiers |= InputEvent.META_DOWN_MASK;
-    }
-
-    return modifiers;
+  if (metaDown) {
+    modifiers = modifiers or InputEvent.CTRL_DOWN_MASK
   }
+
+  if (control) {
+    modifiers = modifiers or InputEvent.META_MASK
+  }
+
+  if (controlDown) {
+    modifiers = modifiers or InputEvent.META_DOWN_MASK
+  }
+
+  return modifiers
 }
