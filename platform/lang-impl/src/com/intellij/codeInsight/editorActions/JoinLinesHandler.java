@@ -26,15 +26,13 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -50,7 +48,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,55 +102,38 @@ public class JoinLinesHandler extends EditorActionHandler {
     // joining lines, several times if selection is multiline
     int lineCount = endLine - startLine;
     int line = startLine;
-    String action = ActionsBundle.actionText(IdeActions.ACTION_EDITOR_JOIN_LINES);
 
-    ProgressManager.getInstance().run(new SequentialModalProgressTask.Adapter(project, action) {
-      final Ref<Integer> caretRestoreOffset = new Ref<>(-1);
-      int count = 0;
-
-      @Override
-      public boolean isDone() {
-        return count >= lineCount;
-      }
-
-      @Override
-      public boolean iteration() {
-        if (line >= doc.getLineCount() - 1) {
-          count = lineCount; // finishing iteration
-        }
-        else {
-          new WriteCommandAction<Void>(project, action, "Join lines") {
-            @Override
-            protected void run(@NotNull Result<Void> result) throws Throwable {
-              CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
-              try {
-                doJoinTwoLines(doc, project, docManager, psiFile, line, caretRestoreOffset);
-              }
-              finally {
-                CodeEditUtil.setNodeReformatStrategy(null);
-              }
-            }
-          }.execute();
-        }
-        count++;
-        getIndicator().setFraction(((double)count)/lineCount);
-        return isDone();
-      }
-
-      @Override
-      public void onSuccess() {
-        if (caret.hasSelection()) {
-          caret.moveToOffset(caret.getSelectionEnd());
-        }
-        else if (caretRestoreOffset.get() != CANNOT_JOIN) {
-          caret.moveToOffset(caretRestoreOffset.get());
-          if (caret == editor.getCaretModel().getPrimaryCaret()) { // performance
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+      "Join Lines", project, null, IdeBundle.message("action.stop"), indicator -> {
+        Ref<Integer> caretRestoreOffset = new Ref<>(-1);
+        CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
+        try {
+          for (int count = 0; count < lineCount; count++) {
+            indicator.checkCanceled();
+            indicator.setFraction(((double)count) / lineCount);
+            ProgressManager.getInstance().executeNonCancelableSection(
+              () -> doJoinTwoLines(doc, project, docManager, psiFile, line, caretRestoreOffset));
           }
-          caret.removeSelection();
         }
+        finally {
+          CodeEditUtil.setNodeReformatStrategy(null);
+        }
+
+        positionCaret(editor, caret, caretRestoreOffset.get());
+      });
+  }
+
+  private static void positionCaret(Editor editor, Caret caret, int caretRestoreOffset) {
+    if (caret.hasSelection()) {
+      caret.moveToOffset(caret.getSelectionEnd());
+    }
+    else if (caretRestoreOffset != CANNOT_JOIN) {
+      caret.moveToOffset(caretRestoreOffset);
+      if (caret == editor.getCaretModel().getPrimaryCaret()) { // performance
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
-    }.setCancelText(IdeBundle.message("action.stop")));
+      caret.removeSelection();
+    }
   }
 
   private static void doJoinTwoLines(@NotNull DocumentEx doc,
