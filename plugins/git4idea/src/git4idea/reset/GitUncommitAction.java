@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.config.GitSharedSettings;
@@ -52,7 +53,6 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.GitUtil.getRepositoryManager;
 import static git4idea.reset.GitResetMode.SOFT;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 public class GitUncommitAction extends DumbAwareAction {
@@ -172,11 +172,11 @@ public class GitUncommitAction extends DumbAwareAction {
     GitSharedSettings settings = GitSharedSettings.getInstance(repository.getProject());
     // protected branches hold patterns for branch names without remote names
     return repository.getBranches().getRemoteBranches().stream().
-             filter(it -> settings.isBranchProtected(it.getNameForRemoteOperations())).
-             map(GitRemoteBranch::getNameForLocalOperations).
-             filter(branches::contains).
-             findAny().
-             orElse(null);
+      filter(it -> settings.isBranchProtected(it.getNameForRemoteOperations())).
+      map(GitRemoteBranch::getNameForLocalOperations).
+      filter(branches::contains).
+      findAny().
+      orElse(null);
   }
 
   private static void resetInBackground(@NotNull VcsLogData data,
@@ -218,9 +218,7 @@ public class GitUncommitAction extends DumbAwareAction {
     VirtualFile root = commit.getRoot();
     VcsFullCommitDetails details = getChangesFromCache(data, hash, root);
     if (details == null) {
-      Ref<VcsFullCommitDetails> ref = new Ref<>();
-      data.getLogProvider(root).readFullDetails(root, singletonList(hash.asString()), ref::set);
-      details = ref.get();
+      details = VcsLogUtil.getDetails(data, root, hash);
     }
     return details.getChanges();
   }
