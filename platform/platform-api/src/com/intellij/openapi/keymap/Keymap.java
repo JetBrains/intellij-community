@@ -41,22 +41,23 @@ public interface Keymap extends Scheme {
   boolean canModify();
 
   /**
-   * @return Action ids including ids of parent keymap
+   * @return Action ids including parent keymap ids
    */
   String[] getActionIds();
 
-  // 60 external usages — actionId cannot be marked as NotNull
   /**
    * @return all keyboard shortcuts for the action with the specified <code>actionId</code>
    * or an empty array if the action doesn't have any keyboard shortcut.
    */
+  // 60 external usages — actionId cannot be marked as NotNull
   @NotNull
   Shortcut[] getShortcuts(@Nullable String actionId);
 
   /**
-   * @return all actions that have the specified first keystroke. If there are no
+   * @return all actions including parent keymap that have the specified first keystroke. If there are no
    * such actions then the method returns an empty array.
    */
+  @NotNull
   String[] getActionIds(@NotNull KeyStroke firstKeyStroke);
 
   /**
@@ -71,19 +72,21 @@ public interface Keymap extends Scheme {
    * @return all actions with specified mouse shortcut.  If there are no
    * such action then the method returns an empty array.
    */
+  @NotNull
   String[] getActionIds(MouseShortcut shortcut);
 
-  void addShortcut(String actionId, Shortcut shortcut);
+  void addShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 
-  void removeShortcut(String actionId, Shortcut shortcut);
+  void removeShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 
-  Map<String, List<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut);
+  @NotNull
+  Map<String, List<KeyboardShortcut>> getConflicts(@NotNull String actionId, @NotNull KeyboardShortcut keyboardShortcut);
 
-  void addShortcutChangeListener(Listener listener);
+  void addShortcutChangeListener(@NotNull Listener listener);
 
   void removeShortcutChangeListener(@NotNull Listener listener);
 
-  void removeAllActionShortcuts(String actionId);
+  void removeAllActionShortcuts(@NotNull String actionId);
 
   @NotNull
   Keymap deriveKeymap(@NotNull String newName);

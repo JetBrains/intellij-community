@@ -33,9 +33,9 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashSet
+import com.intellij.util.containers.SmartHashSet
+import gnu.trove.THashMap
 import org.jdom.Element
-import java.util.*
 import java.util.function.Function
 
 internal const val KEYMAPS_DIR_PATH = "keymaps"
@@ -45,12 +45,12 @@ private const val NAME_ATTRIBUTE = "name"
 
 @State(name = "KeymapManager", storages = arrayOf(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS)), additionalExportFile = KEYMAPS_DIR_PATH)
 class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFactory) : KeymapManagerEx(), PersistentStateComponent<Element> {
-  private val myListeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
-  private val myBoundShortcuts = HashMap<String, String>()
-  private val mySchemeManager: SchemeManager<Keymap>
+  private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
+  private val boundShortcuts = THashMap<String, String>()
+  private val schemeManager: SchemeManager<Keymap>
 
   init {
-    mySchemeManager = factory.create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
+    schemeManager = factory.create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
                                 attributeProvider: Function<String, String?>,
@@ -63,7 +63,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
       override fun getState(scheme: Keymap) = if (scheme.canModify()) SchemeState.POSSIBLY_CHANGED else SchemeState.NON_PERSISTENT
 
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
-        for (listener in myListeners) {
+        for (listener in listeners) {
           listener.activeKeymapChanged(newScheme)
         }
       }
@@ -74,12 +74,12 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     else
       defaultKeymap.defaultKeymapName
     for (keymap in defaultKeymap.keymaps) {
-      mySchemeManager.addScheme(keymap)
+      schemeManager.addScheme(keymap)
       if (keymap.name == systemDefaultKeymap) {
         activeKeymap = keymap
       }
     }
-    mySchemeManager.loadSchemes()
+    schemeManager.loadSchemes()
 
     ourKeymapManagerInitialized = true
   }
@@ -91,34 +91,34 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   override fun getAllKeymaps() = getKeymaps(Conditions.alwaysTrue<Keymap>()).toTypedArray()
 
-  fun getKeymaps(additionalFilter: Condition<Keymap>) = mySchemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && additionalFilter.value(it)  }
+  fun getKeymaps(additionalFilter: Condition<Keymap>) = schemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && additionalFilter.value(it)  }
 
   val allIncludingDefaultsKeymaps: Array<Keymap>
-    get() = mySchemeManager.allSchemes.toTypedArray()
+    get() = schemeManager.allSchemes.toTypedArray()
 
-  override fun getKeymap(name: String) = mySchemeManager.findSchemeByName(name)
+  override fun getKeymap(name: String) = schemeManager.findSchemeByName(name)
 
-  override fun getActiveKeymap() = mySchemeManager.currentScheme
+  override fun getActiveKeymap() = schemeManager.currentScheme
 
-  override fun setActiveKeymap(keymap: Keymap?) = mySchemeManager.setCurrent(keymap)
+  override fun setActiveKeymap(keymap: Keymap?) = schemeManager.setCurrent(keymap)
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
-    myBoundShortcuts.put(targetActionId, sourceActionId)
+    boundShortcuts.put(targetActionId, sourceActionId)
   }
 
   override fun unbindShortcuts(targetActionId: String) {
-    myBoundShortcuts.remove(targetActionId)
+    boundShortcuts.remove(targetActionId)
   }
 
-  override fun getBoundActions() = myBoundShortcuts.keys
+  override fun getBoundActions() = boundShortcuts.keys
 
   override fun getActionBinding(actionId: String): String? {
     var visited: MutableSet<String>? = null
     var id = actionId
     while (true) {
-      val next = myBoundShortcuts.get(id) ?: break
+      val next = boundShortcuts.get(id) ?: break
       if (visited == null) {
-        visited = THashSet()
+        visited = SmartHashSet()
       }
 
       id = next
@@ -129,16 +129,16 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     return if (id == actionId) null else id
   }
 
-  override fun getSchemeManager() = mySchemeManager
+  override fun getSchemeManager() = schemeManager
 
   fun setKeymaps(keymaps: List<Keymap>, active: Keymap?, removeCondition: Condition<Keymap>?) {
-    mySchemeManager.setSchemes(keymaps, active, removeCondition)
+    schemeManager.setSchemes(keymaps, active, removeCondition)
   }
 
   override fun getState(): Element {
     val result = Element("state")
-    if (mySchemeManager.currentScheme != null) {
-      mySchemeManager.currentScheme?.let {
+    if (schemeManager.currentScheme != null) {
+      schemeManager.currentScheme?.let {
         val e = Element(ACTIVE_KEYMAP)
         e.setAttribute(NAME_ATTRIBUTE, it.name)
         result.addContent(e)
@@ -151,31 +151,31 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     val child = state.getChild(ACTIVE_KEYMAP)
     val activeKeymapName = child?.getAttributeValue(NAME_ATTRIBUTE)
     if (!activeKeymapName.isNullOrBlank()) {
-      mySchemeManager.currentSchemeName = activeKeymapName
+      schemeManager.currentSchemeName = activeKeymapName
     }
   }
 
   @Suppress("OverridingDeprecatedMember")
   override fun addKeymapManagerListener(listener: KeymapManagerListener) {
     pollQueue()
-    myListeners.add(listener)
+    listeners.add(listener)
   }
 
   @Suppress("DEPRECATION")
   override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
     pollQueue()
-    myListeners.add(listener)
+    listeners.add(listener)
     Disposer.register(parentDisposable, Disposable { removeKeymapManagerListener(listener) })
   }
 
   private fun pollQueue() {
-    myListeners.removeAll { it is WeakKeymapManagerListener && it.isDead }
+    listeners.removeAll { it is WeakKeymapManagerListener && it.isDead }
   }
 
   @Suppress("OverridingDeprecatedMember")
   override fun removeKeymapManagerListener(listener: KeymapManagerListener) {
     pollQueue()
-    myListeners.remove(listener)
+    listeners.remove(listener)
   }
 
   @Suppress("DEPRECATION")
@@ -184,6 +184,6 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
   }
 
   override fun removeWeakListener(listenerToRemove: KeymapManagerListener) {
-    myListeners.removeAll { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
+    listeners.removeAll { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
   }
 }

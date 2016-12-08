@@ -131,3 +131,21 @@ inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
     add(e)
   }
 }
+
+inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
+  return if (size == 1) {
+    SmartList<R>(transform(this[0]))
+  }
+  else {
+    mapTo(ArrayList<R>(size), transform)
+  }
+}
+
+inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
+  return if (size == 1) {
+    SmartList<R>(transform(first()))
+  }
+  else {
+    mapTo(ArrayList<R>(size), transform)
+  }
+}

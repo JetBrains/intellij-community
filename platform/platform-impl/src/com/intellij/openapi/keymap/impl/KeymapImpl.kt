@@ -31,6 +31,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.OrderedSet
+import com.intellij.util.containers.nullize
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.awt.event.InputEvent
@@ -57,7 +58,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
   private var parent: KeymapImpl? = null
   private var canModify = true
 
-  private val actionIdToListOfShortcuts = THashMap<String, OrderedSet<Shortcut>>()
+  private val actionIdToShortcuts = THashMap<String, MutableList<Shortcut>>()
 
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<Keymap.Listener>()
 
@@ -68,7 +69,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
    * *         return IDs of action from parent keymap.
    */
   val ownActionIds: Array<String>
-    get() = actionIdToListOfShortcuts.keys.toTypedArray()
+    get() = actionIdToShortcuts.keys.toTypedArray()
 
   private var _mouseShortcutToListOfIds: Map<MouseShortcut, MutableList<String>>? = null
   private val mouseShortcutToListOfIds: Map<MouseShortcut, MutableList<String>>
@@ -84,15 +85,32 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
   private var _keystrokeToListOfIds: MutableMap<KeyStroke, MutableList<String>>? = null
   private val keystrokeToListOfIds: Map<KeyStroke, MutableList<String>>
     get() {
-      var result = _keystrokeToListOfIds
-      if (result != null) {
-        return result
+      _keystrokeToListOfIds?.let {
+        return it
       }
 
-      result = THashMap<KeyStroke, MutableList<String>>()
+      val result = THashMap<KeyStroke, MutableList<String>>()
+
+      fun addKeystrokesMap(actionId: String) {
+        for (shortcut in getOwnOrBoundShortcuts(actionId)) {
+          if (shortcut !is KeyboardShortcut) {
+            continue
+          }
+
+          val idList = result.getOrPut(shortcut.firstKeyStroke) { SmartList() }
+          // action may have more that 1 shortcut with same first keystroke
+          if (!idList.contains(actionId)) {
+            idList.add(actionId)
+          }
+        }
+      }
+
       _keystrokeToListOfIds = result
-      for (id in ContainerUtil.concat(actionIdToListOfShortcuts.keys, keymapManager.boundActions)) {
-        addKeystrokesMap(id, result)
+      for (id in actionIdToShortcuts.keys) {
+        addKeystrokesMap(id)
+      }
+      for (id in keymapManager.boundActions) {
+        addKeystrokesMap(id)
       }
       return result
     }
@@ -141,10 +159,10 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
 
     otherKeymap.cleanShortcutsCache()
 
-    otherKeymap.actionIdToListOfShortcuts.clear()
-    otherKeymap.actionIdToListOfShortcuts.ensureCapacity(actionIdToListOfShortcuts.size)
-    actionIdToListOfShortcuts.forEachEntry { actionId, shortcuts ->
-      otherKeymap.actionIdToListOfShortcuts.put(actionId, OrderedSet(shortcuts))
+    otherKeymap.actionIdToShortcuts.clear()
+    otherKeymap.actionIdToShortcuts.ensureCapacity(actionIdToShortcuts.size)
+    actionIdToShortcuts.forEachEntry { actionId, shortcuts ->
+      otherKeymap.actionIdToShortcuts.put(actionId, SmartList(shortcuts))
       true
     }
     return otherKeymap
@@ -154,32 +172,31 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
 
   override fun canModify() = canModify
 
-  protected open fun getParentShortcuts(actionId: String) = parent!!.getShortcuts(actionId)
+  protected open fun getParentShortcuts(actionId: String) = parent!!.getMutableShortcutList(actionId)
 
   override fun addShortcut(actionId: String, shortcut: Shortcut) {
-    addShortcutSilently(actionId, shortcut, true)
-    fireShortcutChanged(actionId)
-  }
-
-  private fun addShortcutSilently(actionId: String, shortcut: Shortcut, checkParentShortcut: Boolean) {
-    var list: OrderedSet<Shortcut>? = actionIdToListOfShortcuts.get(actionId)
-    if (list == null) {
-      list = OrderedSet<Shortcut>()
-      actionIdToListOfShortcuts.put(actionId, list)
-      val boundShortcuts = getBoundShortcuts(actionId)
+    val list = actionIdToShortcuts.getOrPut(actionId) {
+      val result = SmartList<Shortcut>()
+      val boundShortcuts = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
       if (boundShortcuts != null) {
-        list.addAll(boundShortcuts)
+        result.addAll(boundShortcuts)
       }
       else if (parent != null) {
-        list.addAll(getParentShortcuts(actionId))
+        result.addAll(getParentShortcuts(actionId))
       }
+      result
     }
-    list.add(shortcut)
 
-    if (checkParentShortcut && parent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId))) {
-      actionIdToListOfShortcuts.remove(actionId)
+    if (!list.contains(shortcut)) {
+      list.add(shortcut)
     }
+
+    if (parent != null && areShortcutsEqual(getParentShortcuts(actionId), list)) {
+      actionIdToShortcuts.remove(actionId)
+    }
+
     cleanShortcutsCache()
+    fireShortcutChanged(actionId)
   }
 
   private fun cleanShortcutsCache() {
@@ -194,27 +211,25 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
   }
 
   override fun removeShortcut(actionId: String, toDelete: Shortcut) {
-    val list = actionIdToListOfShortcuts.get(actionId)
+    val list = actionIdToShortcuts.get(actionId)
     if (list == null) {
-      var inherited = getBoundShortcuts(actionId)
+      var inherited: List<Shortcut>? = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
       if (inherited == null && parent != null) {
-        inherited = getParentShortcuts(actionId)
+        inherited = getParentShortcuts(actionId).nullize()
       }
 
       if (inherited != null) {
-        var affected = false
-        val newShortcuts = OrderedSet<Shortcut>(inherited.size)
+        var newShortcuts: MutableList<Shortcut>? = null
         for (eachInherited in inherited) {
-          if (toDelete == eachInherited) {
-            // skip this one
-            affected = true
-          }
-          else {
+          if (toDelete != eachInherited) {
+            if (newShortcuts == null) {
+              newShortcuts = SmartList()
+            }
             newShortcuts.add(eachInherited)
           }
         }
-        if (affected) {
-          actionIdToListOfShortcuts.put(actionId, newShortcuts)
+        newShortcuts?.let {
+          actionIdToShortcuts.put(actionId, it)
         }
       }
     }
@@ -224,8 +239,9 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
         val each = it.next()
         if (toDelete == each) {
           it.remove()
-          if (parent != null && areShortcutsEqual(getParentShortcuts(actionId), getShortcuts(actionId)) || parent == null && list.isEmpty()) {
-            actionIdToListOfShortcuts.remove(actionId)
+
+          if (if (parent == null) list.isEmpty() else areShortcutsEqual(getParentShortcuts(actionId), getMutableShortcutList(actionId))) {
+            actionIdToShortcuts.remove(actionId)
           }
           break
         }
@@ -240,53 +256,41 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
 
   private fun <T : Shortcut> fillShortcutToListOfIds(shortcutClass: Class<T>): Map<T, MutableList<String>> {
     val map = THashMap<T, MutableList<String>>()
-    for (id in ContainerUtil.concat(actionIdToListOfShortcuts.keys, keymapManager.boundActions)) {
-      addActionToShortcutsMap(id, map, shortcutClass)
+
+    fun addActionToShortcutsMap(actionId: String) {
+      for (shortcut in getOwnOrBoundShortcuts(actionId)) {
+        if (!shortcutClass.isAssignableFrom(shortcut.javaClass)) {
+          continue
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        val ids = map.getOrPut(shortcut as T) { SmartList() }
+        // action may have more that 1 shortcut with same first keystroke
+        if (!ids.contains(actionId)) {
+          ids.add(actionId)
+        }
+      }
+    }
+
+    for (id in actionIdToShortcuts.keys) {
+      addActionToShortcutsMap(id)
+    }
+    for (id in keymapManager.boundActions) {
+      addActionToShortcutsMap(id)
     }
     return map
   }
 
-  private fun <T : Shortcut> addActionToShortcutsMap(actionId: String, strokesMap: MutableMap<T, MutableList<String>>, shortcutClass: Class<T>) {
-    for (shortcut in _getShortcuts(actionId)) {
-      if (!shortcutClass.isAssignableFrom(shortcut.javaClass)) {
-        continue
-      }
-
-      @Suppress("UNCHECKED_CAST")
-      val listOfIds = strokesMap.getOrPut(shortcut as T) { SmartList() }
-      // action may have more that 1 shortcut with same first keystroke
-      if (!listOfIds.contains(actionId)) {
-        listOfIds.add(actionId)
-      }
-    }
-  }
-
-  private fun addKeystrokesMap(actionId: String, strokesMap: MutableMap<KeyStroke, MutableList<String>>) {
-    for (shortcut in _getShortcuts(actionId)) {
-      if (shortcut !is KeyboardShortcut) {
-        continue
-      }
-
-      val listOfIds = strokesMap.getOrPut(shortcut.firstKeyStroke) { SmartList() }
-      // action may have more that 1 shortcut with same first keystroke
-      if (!listOfIds.contains(actionId)) {
-        listOfIds.add(actionId)
-      }
-    }
-  }
-
-  private fun _getShortcuts(actionId: String): OrderedSet<Shortcut> {
-    val keymapManager = keymapManager
-    var listOfShortcuts = actionIdToListOfShortcuts.get(actionId)
-    if (listOfShortcuts != null) {
-      return listOfShortcuts
+  private fun getOwnOrBoundShortcuts(actionId: String): List<Shortcut> {
+    actionIdToShortcuts.get(actionId)?.let {
+      return it
     }
 
-    listOfShortcuts = OrderedSet<Shortcut>()
+    val result = SmartList<Shortcut>()
     keymapManager.getActionBinding(actionId)?.let {
-      listOfShortcuts!!.addAll(_getShortcuts(it))
+      result.addAll(getOwnOrBoundShortcuts(it))
     }
-    return listOfShortcuts
+    return result
   }
 
   protected open fun getParentActionIds(firstKeyStroke: KeyStroke) = parent!!.getActionIds(firstKeyStroke)
@@ -305,7 +309,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
       if (ids.isNotEmpty()) {
         for (id in ids) {
           // add actions from parent keymap only if they are absent in this keymap
-          if (!actionIdToListOfShortcuts.containsKey(id)) {
+          if (!actionIdToShortcuts.containsKey(id)) {
             list.add(id)
           }
         }
@@ -324,7 +328,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
         for (id in ids) {
           // add actions from parent keymap only if they are absent in this keymap
           // do not add parent bind actions, if bind-on action is overwritten in the child
-          if (!actionIdToListOfShortcuts.containsKey(id) && !actionIdToListOfShortcuts.containsKey(getActionBinding(id))) {
+          if (!actionIdToShortcuts.containsKey(id) && !actionIdToShortcuts.containsKey(keymapManager.getActionBinding(id))) {
             if (list == null) {
               list = SmartList<String>()
               originalListInstance = false
@@ -388,7 +392,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
         var originalListInstance = true
         for (id in ids) {
           // add actions from parent keymap only if they are absent in this keymap
-          if (!actionIdToListOfShortcuts.containsKey(id)) {
+          if (!actionIdToShortcuts.containsKey(id)) {
             if (list == null) {
               list = SmartList<String>()
               originalListInstance = false
@@ -406,33 +410,19 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
 
   fun isActionBound(actionId: String) = keymapManager.boundActions.contains(actionId)
 
-  fun getActionBinding(actionId: String): String? = keymapManager.getActionBinding(actionId)
+  override fun getShortcuts(actionId: String?): Array<Shortcut> = getMutableShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
 
-  override fun getShortcuts(actionId: String?): Array<Shortcut> {
+  private fun getMutableShortcutList(actionId: String?): List<Shortcut> {
     if (actionId == null) {
-      return Shortcut.EMPTY_ARRAY
+      return emptyList()
     }
-
-    val shortcuts = actionIdToListOfShortcuts.get(actionId)
-
-    if (shortcuts == null) {
-      getBoundShortcuts(actionId)?.let {
-        return it
-      }
-    }
-
-    if (shortcuts == null) {
-      return parent?.getShortcuts(actionId) ?: Shortcut.EMPTY_ARRAY
-    }
-    return if (shortcuts.isEmpty()) Shortcut.EMPTY_ARRAY else shortcuts.toTypedArray()
+    return actionIdToShortcuts.get(actionId) ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) } ?: parent?.getMutableShortcutList(actionId) ?: emptyList()
   }
 
-  fun getOwnShortcuts(actionId: String): Array<Shortcut>? {
-    val own = actionIdToListOfShortcuts.get(actionId) ?: return null
+  fun getOwnShortcuts(actionId: String): Array<Shortcut> {
+    val own = actionIdToShortcuts.get(actionId) ?: return Shortcut.EMPTY_ARRAY
     return if (own.isEmpty()) Shortcut.EMPTY_ARRAY else own.toTypedArray()
   }
-
-  private fun getBoundShortcuts(actionId: String) = keymapManager.getActionBinding(actionId)?.let { getOwnShortcuts(it) }
 
   open fun readExternal(keymapElement: Element, existingKeymaps: Array<Keymap>) {
     if (KEY_MAP != keymapElement.name) {
@@ -456,7 +446,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
 
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
-    val idToShortcuts = THashMap<String, MutableList<Shortcut>>()
+    actionIdToShortcuts.clear()
     val skipInserts = SystemInfo.isMac && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
     for (actionElement in keymapElement.children) {
       if (actionElement.name != ACTION) {
@@ -465,7 +455,8 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
 
       val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException("Attribute 'id' cannot be null; Keymap's name=$name")
 
-      idToShortcuts.put(id, SmartList<Shortcut>())
+      val shortcuts = OrderedSet<Shortcut>(2)
+      actionIdToShortcuts.put(id, shortcuts)
       for (shortcutElement in actionElement.children) {
         if (KEYBOARD_SHORTCUT == shortcutElement.name) {
           // Parse first keystroke
@@ -482,13 +473,9 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
           var secondKeyStroke: KeyStroke? = null
           val secondKeyStrokeStr = shortcutElement.getAttributeValue(SECOND_KEYSTROKE_ATTRIBUTE)
           if (secondKeyStrokeStr != null) {
-            secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr)
-            if (secondKeyStroke == null) {
-              // logged when parsed
-              continue
-            }
+            secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr) ?: continue
           }
-          idToShortcuts.get(id)!!.add(KeyboardShortcut(firstKeyStroke, secondKeyStroke))
+          shortcuts.add(KeyboardShortcut(firstKeyStroke, secondKeyStroke))
         }
         else if (KEYBOARD_GESTURE_SHORTCUT == shortcutElement.name) {
           val strokeText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_KEY) ?: throw InvalidDataException(
@@ -508,14 +495,14 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
             throw InvalidDataException("Wrong modifier=$modifierText action id=$id keymap=$name")
           }
 
-          idToShortcuts.get(id)!!.add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke))
+          shortcuts.add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke))
         }
         else if (MOUSE_SHORTCUT == shortcutElement.name) {
           val keystrokeString = shortcutElement.getAttributeValue(KEYSTROKE_ATTRIBUTE) ?: throw InvalidDataException(
             "Attribute 'keystroke' cannot be null; Action's id=$id; Keymap's name=$name")
 
           try {
-            idToShortcuts.get(id)!!.add(KeymapUtil.parseMouseShortcut(keystrokeString))
+            shortcuts.add(KeymapUtil.parseMouseShortcut(keystrokeString))
           }
           catch (exc: InvalidDataException) {
             throw InvalidDataException("Wrong mouse-shortcut: '$keystrokeString'; Action's id=$id; Keymap's name=$name")
@@ -528,14 +515,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
       }
     }
 
-    // Add read shortcuts
-    for (id in idToShortcuts.keys) {
-      // It's a trick! After that parent's shortcuts are not added to the keymap
-      actionIdToListOfShortcuts.put(id, OrderedSet<Shortcut>(2))
-      for (shortcut in idToShortcuts.get(id)!!) {
-        addShortcutSilently(id, shortcut, false)
-      }
-    }
+    cleanShortcutsCache()
   }
 
   override fun writeScheme(): Element {
@@ -586,14 +566,14 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
   }
 
   fun clearOwnActionsIds() {
-    actionIdToListOfShortcuts.clear()
+    actionIdToShortcuts.clear()
     cleanShortcutsCache()
   }
 
-  fun hasOwnActionId(actionId: String) = actionIdToListOfShortcuts.containsKey(actionId)
+  fun hasOwnActionId(actionId: String) = actionIdToShortcuts.containsKey(actionId)
 
   fun clearOwnActionsId(actionId: String) {
-    actionIdToListOfShortcuts.remove(actionId)
+    actionIdToShortcuts.remove(actionId)
     cleanShortcutsCache()
   }
 
@@ -602,7 +582,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
     parent?.let {
       ids.addAll(it.actionIds)
     }
-    ids.addAll(ownActionIds)
+    ids.addAll(actionIdToShortcuts.keys)
     return ArrayUtilRt.toStringArray(ids)
   }
 
@@ -619,7 +599,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
         continue
       }
 
-      for (shortcut1 in getShortcuts(id)) {
+      for (shortcut1 in getMutableShortcutList(id)) {
         if (shortcut1 !is KeyboardShortcut || shortcut1.firstKeyStroke != keyboardShortcut.firstKeyStroke) {
           continue
         }
@@ -656,7 +636,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
     if (name != other.name) return false
     if (canModify != other.canModify) return false
     if (parent != other.parent) return false
-    if (actionIdToListOfShortcuts != other.actionIdToListOfShortcuts) return false
+    if (actionIdToShortcuts != other.actionIdToShortcuts) return false
     return true
   }
 
@@ -671,7 +651,7 @@ private fun sortInOrderOfRegistration(ids: List<String>?): Array<String> {
   return array
 }
 
-private fun areShortcutsEqual(shortcuts1: Array<Shortcut>, shortcuts2: Array<Shortcut>): Boolean {
+private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Shortcut>): Boolean {
   if (shortcuts1.size != shortcuts2.size) {
     return false
   }

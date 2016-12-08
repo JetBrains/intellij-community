@@ -106,10 +106,10 @@ public class ActionsTreeUtil {
         pluginGroup = new Group(plugin.getName(), null, null);
       }
       final String[] pluginActions = managerEx.getPluginActions(plugin.getPluginId());
-      if (pluginActions == null || pluginActions.length == 0) {
+      if (pluginActions.length == 0) {
         continue;
       }
-      Arrays.sort(pluginActions, (o1, o2) -> getTextToCompare(o1).compareTo(getTextToCompare(o2)));
+      Arrays.sort(pluginActions, Comparator.comparing(ActionsTreeUtil::getTextToCompare));
       for (String pluginAction : pluginActions) {
         if (keymapManager.getBoundActions().contains(pluginAction)) continue;
         final AnAction anAction = managerEx.getActionOrStub(pluginAction);
@@ -126,7 +126,7 @@ public class ActionsTreeUtil {
       if (collected.contains(pluginId)) continue;
       Group pluginGroup = new Group(pluginId.getIdString(), null, null);
       final String[] pluginActions = managerEx.getPluginActions(pluginId);
-      if (pluginActions == null || pluginActions.length == 0) {
+      if (pluginActions.length == 0) {
         continue;
       }
       for (String pluginAction : pluginActions) {
@@ -297,9 +297,9 @@ public class ActionsTreeUtil {
     if (keymap == null) return null;
     
     Keymap parent = keymap.getParent();
-    String result = ((KeymapImpl)keymap).getActionBinding(id);
+    String result = KeymapManagerEx.getInstanceEx().getActionBinding(id);
     if (result == null && parent != null) {
-      result = ((KeymapImpl)parent).getActionBinding(id);
+      result = KeymapManagerEx.getInstanceEx().getActionBinding(id);
     }
     return result;
   }
@@ -341,15 +341,13 @@ public class ActionsTreeUtil {
   }
 
   private static Group createQuickListsGroup(final Condition<AnAction> filtered, final String filter, final boolean forceFiltering, final QuickList[] quickLists) {
-    Arrays.sort(quickLists, (l1, l2) -> l1.getActionId().compareTo(l2.getActionId()));
+    Arrays.sort(quickLists, Comparator.comparing(QuickList::getActionId));
 
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"), null, null);
     for (QuickList quickList : quickLists) {
-      if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId()))) {
-        group.addQuickList(quickList);
-      } else if (SearchUtil.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null)) {
-        group.addQuickList(quickList);
-      } else if (filtered == null && StringUtil.isEmpty(filter)) {
+      if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId())) ||
+          SearchUtil.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null) ||
+          filtered == null && StringUtil.isEmpty(filter)) {
         group.addQuickList(quickList);
       }
     }
@@ -524,10 +522,7 @@ public class ActionsTreeUtil {
         if (text != null) {
           final String lowerText = text.toLowerCase();
 
-          if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
-            return true;
-          }
-          else if (lowerText.contains(insensitiveFilter)) {
+          if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null) || lowerText.contains(insensitiveFilter)) {
             return true;
           }
         }

@@ -676,7 +676,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
 
   private static void convertMac(Shortcut[] there) {
     for (int i = 0; i < there.length; i++) {
-      there[i] = MacOSDefaultKeymap.convertShortcutFromParent(there[i]);
+      there[i] = MacOSDefaultKeymap.Companion.convertShortcutFromParent(there[i]);
     }
   }
 
