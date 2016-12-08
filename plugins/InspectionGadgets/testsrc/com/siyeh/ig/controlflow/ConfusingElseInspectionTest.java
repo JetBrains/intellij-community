@@ -22,15 +22,28 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class RedundantElseInspectionTest extends LightInspectionTestCase {
+public class ConfusingElseInspectionTest extends LightInspectionTestCase {
 
-  public void testRedundantElse() {
+  private ConfusingElseInspection myInspection = new ConfusingElseInspection();
+
+  public void testConfusingElse() {
     doTest();
+  }
+
+  public void testConfusingLastElse() {
+    boolean oldValue = myInspection.reportWhenNoStatementFollow;
+    myInspection.reportWhenNoStatementFollow = false;
+    try {
+      doTest();
+    }
+    finally {
+      myInspection.reportWhenNoStatementFollow = oldValue;
+    }
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new RedundantElseInspection();
+    return myInspection;
   }
 }

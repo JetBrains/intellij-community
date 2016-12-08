@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.siyeh.ig.controlflow.RedundantElseInspection;
+import com.siyeh.ig.controlflow.ConfusingElseInspection;
 
 /**
  * User: anna
@@ -25,7 +25,7 @@ public class RemoveRedundantElseFixTest extends LightQuickFixParameterizedTestCa
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new RedundantElseInspection());
+    enableInspectionTool(new ConfusingElseInspection());
   }
 
   public void test() throws Exception { doAllTests(); }

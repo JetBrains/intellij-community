@@ -1,12 +1,12 @@
 package com.siyeh.igtest.controlflow.confusing_else;
 
-public class RedundantElse {
+public class ConfusingLastElse {
 
     public static void main(String[] args) {
         if (foo()) {
             return;
         } <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes normally">else</warning> {
-            System.out.println("RedundantElseInspection.main");
+            System.out.println("ConfusingElseInspection.main");
         }
         bar();
     }
@@ -34,7 +34,7 @@ public class RedundantElse {
             case 2:
                 if (foo()) {
                     return;
-                } <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes normally">else</warning> {
+                } else {
                     return;
                 }
             case 3:
@@ -52,6 +52,14 @@ public class RedundantElse {
         return o;
     }
 
+    void lastElse(int i) {
+        if (i == 1) {
+            return;
+        } else {
+          System.out.println("i = " + i);
+        }
+    }
+
     void elseIf(int i) {
         if (i == 1) {
             return;
@@ -66,18 +74,18 @@ public class RedundantElse {
             if (i == 0) {
                 System.exit(i);
             }
-            <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes normally">else</warning> if (i == 1) {
+            else if (i == 1) {
                 throw new RuntimeException();
             }
-            <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes normally">else</warning> if (i == 2) {
+            else if (i == 2) {
                 return;
             }
-            <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes normally">else</warning> if (i == 3) {
+            else if (i == 3) {
                 break;
             }
-            <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes normally">else</warning> if (i == 4) {
+            else if (i == 4) {
                 continue;
-            } <warning descr="'else' branch may be unwrapped, as the 'if' branch never completes normally">else</warning> {
+            } else {
               System.out.println(i);
             }
         }

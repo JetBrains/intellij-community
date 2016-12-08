@@ -16,8 +16,10 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,7 +30,12 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RedundantElseInspection extends BaseInspection {
+import javax.swing.*;
+
+public class ConfusingElseInspection extends BaseInspection {
+
+  @SuppressWarnings({"PublicField"})
+  public boolean reportWhenNoStatementFollow = true;
 
   @Pattern(VALID_ID_PATTERN)
   @Override
@@ -50,8 +57,13 @@ public class RedundantElseInspection extends BaseInspection {
   }
 
   @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("confusing.else.option"), this, "reportWhenNoStatementFollow");
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new RedundantElseVisitor();
+    return new ConfusingElseVisitor();
   }
 
   @Override
@@ -100,7 +112,7 @@ public class RedundantElseInspection extends BaseInspection {
     }
   }
 
-  private static class RedundantElseVisitor extends BaseInspectionVisitor {
+  private class ConfusingElseVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
@@ -116,6 +128,17 @@ public class RedundantElseInspection extends BaseInspection {
       if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
         return;
       }
+      if (!reportWhenNoStatementFollow) {
+        final PsiStatement nextStatement = getNextStatement(statement);
+        if (nextStatement == null) {
+          return;
+        }
+        if (!ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
+          return;
+          // protecting against an edge case where both branches return
+          // and are followed by a case label
+        }
+      }
       final PsiElement elseToken = statement.getElseElement();
       if (elseToken == null) {
         return;
@@ -126,7 +149,7 @@ public class RedundantElseInspection extends BaseInspection {
       registerError(elseToken);
     }
 
-    private static boolean parentCompletesNormally(PsiElement element) {
+    private boolean parentCompletesNormally(PsiElement element) {
       PsiElement parent = element.getParent();
       while (parent instanceof PsiIfStatement) {
         final PsiIfStatement ifStatement = (PsiIfStatement)parent;
@@ -142,6 +165,22 @@ public class RedundantElseInspection extends BaseInspection {
         parent = element.getParent();
       }
       return !(parent instanceof PsiCodeBlock);
+    }
+
+    @Nullable
+    private PsiStatement getNextStatement(PsiIfStatement statement) {
+      while (true) {
+        final PsiElement parent = statement.getParent();
+        if (parent instanceof PsiIfStatement) {
+          final PsiIfStatement parentIfStatement = (PsiIfStatement)parent;
+          final PsiStatement elseBranch = parentIfStatement.getElseBranch();
+          if (elseBranch == statement) {
+            statement = parentIfStatement;
+            continue;
+          }
+        }
+        return PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+      }
     }
   }
 }
