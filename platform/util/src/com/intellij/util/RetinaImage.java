@@ -43,6 +43,14 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   }
 
   /**
+   * @deprecated use {@link #createFrom(Image, float, ImageObserver)} instead
+   */
+  @NotNull
+  public static Image createFrom(Image image, final int scale, ImageObserver observer) {
+    return createFrom(image, (float)scale, observer);
+  }
+
+  /**
    * Creates a Retina-aware wrapper over a raw image.
    * The raw image should be provided in the specified scale.
    * The wrapper will represent the raw image in the user coordinate space.
