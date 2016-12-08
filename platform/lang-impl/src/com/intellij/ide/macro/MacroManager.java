@@ -138,7 +138,7 @@ public final class MacroManager {
   }
 
   /**
-   * Expands all macros that are found in the <code>str</code>.
+   * Expands all macros that are found in the {@code str}.
    */
   @Nullable
   public String expandMacrosInString(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {

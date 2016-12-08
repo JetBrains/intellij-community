@@ -64,13 +64,13 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * Checks whether there is a component with the specified interface class.
    *
    * @param interfaceClass interface class of component to be checked
-   * @return <code>true</code> if there is a component with the specified interface class;
-   * <code>false</code> otherwise
+   * @return {@code true} if there is a component with the specified interface class;
+   * {@code false} otherwise
    */
   boolean hasComponent(@NotNull Class interfaceClass);
 
   /**
-   * Gets all components whose implementation class is derived from <code>baseClass</code>.
+   * Gets all components whose implementation class is derived from {@code baseClass}.
    *
    * @return array of components
    * @deprecated use extension points instead

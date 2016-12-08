@@ -711,8 +711,8 @@ public class TypeConversionUtil {
    *
    * @param left  type to assign to
    * @param right type of value
-   * @return true if value of type <code>right</code> can be assigned to an l-value of
-   *         type <code>left</code>
+   * @return true if value of type {@code right} can be assigned to an l-value of
+   *         type {@code left}
    */
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right) {
     return isAssignable(left, right, true);
@@ -1084,13 +1084,13 @@ public class TypeConversionUtil {
   private static final Set<String> ourReportedSuperClassSubstitutorExceptions = ContainerUtil.newConcurrentSet();
 
   /**
-   * Calculates substitutor that binds type parameters in <code>superClass</code> with
-   * values that they have in <code>derivedClass</code>, given that type parameters in
-   * <code>derivedClass</code> are bound by <code>derivedSubstitutor</code>.
-   * <code>superClass</code> must be a super class/interface of <code>derivedClass</code> (as in
-   * <code>InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true)</code>
+   * Calculates substitutor that binds type parameters in {@code superClass} with
+   * values that they have in {@code derivedClass}, given that type parameters in
+   * {@code derivedClass} are bound by {@code derivedSubstitutor}.
+   * {@code superClass} must be a super class/interface of {@code derivedClass} (as in
+   * {@code InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true)}
    *
-   * @return substitutor (never returns <code>null</code>)
+   * @return substitutor (never returns {@code null})
    * @see PsiClass#isInheritor(PsiClass, boolean)
    * @see InheritanceUtil#isInheritorOrSelf(PsiClass, PsiClass, boolean)
    */

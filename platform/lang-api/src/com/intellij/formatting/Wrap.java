@@ -50,7 +50,7 @@ public abstract class Wrap {
   /**
    * Creates a block wrap setting of the specified type.
    * <p/>
-   * The wrap created may be customized by the <code>'wrap first element'</code> flag. It affects a situation
+   * The wrap created may be customized by the {@code 'wrap first element'} flag. It affects a situation
    * when there are multiple blocks that share the same wrap object. It determines if the first block
    * should be wrapped when subsequent blocks exceeds right margin.
    * <p/>
@@ -61,10 +61,10 @@ public abstract class Wrap {
    *             |
    *             | &lt;- right margin
    * </pre>
-   * Consider that blocks <code>'123'</code> and <code>'456'</code> share the same wrap object. The wrap is made on the block
-   * <code>'123'</code> if <code>'wrap first element'</code> flag is <code>true</code>; on the block <code>'456'</code> otherwise
+   * Consider that blocks {@code '123'} and {@code '456'} share the same wrap object. The wrap is made on the block
+   * {@code '123'} if {@code 'wrap first element'} flag is {@code true}; on the block {@code '456'} otherwise
    * <p/>
-   * <b>Note:</b> giving <code>'false'</code> argument doesn't mean that a single block that uses that wrap can't be wrapped.
+   * <b>Note:</b> giving {@code 'false'} argument doesn't mean that a single block that uses that wrap can't be wrapped.
    * <p/>
    * Example:
    * <pre>
@@ -73,7 +73,7 @@ public abstract class Wrap {
    *         |
    *         | &lt;- right margin
    * </pre>
-   * Let block <code>'123'</code> use a wrap that was created with <code>false</code> as a <code>'wrap first element'</code> argument.
+   * Let block {@code '123'} use a wrap that was created with {@code false} as a {@code 'wrap first element'} argument.
    * The block is wrapped by the formatter then because there is no other block that uses the same wrap object and right margin is
    * exceeded.
    *

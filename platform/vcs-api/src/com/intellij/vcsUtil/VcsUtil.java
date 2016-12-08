@@ -381,8 +381,8 @@ public class VcsUtil {
 
   /**
    * @param e ActionEvent object
-   * @return <code>VirtualFile</code> available in the current context.
-   *         Returns not <code>null</code> if and only if exectly one file is available.
+   * @return {@code VirtualFile} available in the current context.
+   *         Returns not {@code null} if and only if exectly one file is available.
    */
   @Nullable
   public static VirtualFile getOneVirtualFile(AnActionEvent e) {
@@ -392,7 +392,7 @@ public class VcsUtil {
 
   /**
    * @param e ActionEvent object
-   * @return <code>VirtualFile</code>s available in the current context.
+   * @return {@code VirtualFile}s available in the current context.
    *         Returns empty array if there are no available files.
    */
   public static VirtualFile[] getVirtualFiles(AnActionEvent e) {
@@ -403,7 +403,7 @@ public class VcsUtil {
   /**
    * Collects all files which are located in the passed directory.
    *
-   * @throws IllegalArgumentException if <code>dir</code> isn't a directory.
+   * @throws IllegalArgumentException if {@code dir} isn't a directory.
    */
   public static void collectFiles(final VirtualFile dir,
                                   final List<VirtualFile> files,
@@ -489,8 +489,8 @@ public class VcsUtil {
    * @param source Source string
    * @param chars  Symbols to be trimmed
    * @return string without all specified chars at the end. For example,
-   *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\'}) is <code>"c:\\my_directory\\//"</code>,
-   *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\','/'}) is <code>"c:\my_directory"</code>.
+   *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\'}) is {@code "c:\\my_directory\\//"},
+   *         <code>chopTrailingChars("c:\\my_directory\\//\\",new char[]{'\\','/'}) is {@code "c:\my_directory"}.
    *         Actually this method can be used to normalize file names to chop trailing separator chars.
    */
   public static String chopTrailingChars(String source, char[] chars) {

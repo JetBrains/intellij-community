@@ -47,7 +47,7 @@ import static com.jetbrains.python.psi.PyUtil.guessLanguageLevel;
 import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
- * Replaces expressions like <code>"%s" % values</code> with likes of <code>"{0:s}".format(values)</code>.
+ * Replaces expressions like {@code "%s" % values} with likes of {@code "{0:s}".format(values)}.
  * <br/>
  * Author: Alexey.Ivanov, dcheryasov
  */

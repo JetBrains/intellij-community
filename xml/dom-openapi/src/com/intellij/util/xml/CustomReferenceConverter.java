@@ -29,7 +29,7 @@ public interface CustomReferenceConverter<T> {
 
   /**
    * Will be called on creating {@link com.intellij.psi.PsiReference}s for {@link com.intellij.util.xml.GenericDomValue}
-   * Returned {@link com.intellij.psi.PsiReference}s should be soft ({@link com.intellij.psi.PsiReference#isSoft()} should return <code>true</code>).
+   * Returned {@link com.intellij.psi.PsiReference}s should be soft ({@link com.intellij.psi.PsiReference#isSoft()} should return {@code true}).
    * To highlight unresolved references, create a {@link com.intellij.util.xml.highlighting.DomElementsInspection} and register it.
    *
    * @param value GenericDomValue in question

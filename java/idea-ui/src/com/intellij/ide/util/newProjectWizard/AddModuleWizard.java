@@ -139,8 +139,8 @@ public class AddModuleWizard extends AbstractProjectWizard {
    * Allows to ask current wizard to move to the desired step.
    *
    * @param filter  closure that allows to indicate target step - is called with each of registered steps and is expected
-   *                to return <code>true</code> for the step to go to
-   * @return        <code>true</code> if current wizard is navigated to the target step; <code>false</code> otherwise
+   *                to return {@code true} for the step to go to
+   * @return        {@code true} if current wizard is navigated to the target step; {@code false} otherwise
    */
   public boolean navigateToStep(@NotNull Function<Step, Boolean> filter) {
     for (int i = 0, myStepsSize = mySteps.size(); i < myStepsSize; i++) {

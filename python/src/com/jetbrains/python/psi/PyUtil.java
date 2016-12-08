@@ -149,7 +149,7 @@ public class PyUtil {
   /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
-   * Typical usage: <code>flattenedParensAndTuples(some_tuple.getExpressions())</code>.
+   * Typical usage: {@code flattenedParensAndTuples(some_tuple.getExpressions())}.
    *
    * @param targets target elements.
    * @return the list of flattened expressions.
@@ -1748,8 +1748,8 @@ public class PyUtil {
 
   /**
    * Sometimes you do not know real FQN of some class, but you know class name and its package.
-   * I.e. <code>django.apps.conf.AppConfig</code> is not documented, but you know
-   * <code>AppConfig</code> and <code>django</code> package.
+   * I.e. {@code django.apps.conf.AppConfig} is not documented, but you know
+   * {@code AppConfig} and {@code django} package.
    *
    * @param symbol element to check (class or function)
    * @param expectedPackage package like "django"

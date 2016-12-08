@@ -174,7 +174,7 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
-   * @return    wrap object configured for the current block wrapper if any; <code>null</code> otherwise
+   * @return    wrap object configured for the current block wrapper if any; {@code null} otherwise
    */
   public WrapImpl getOwnWrap() {
     return myWrap;
@@ -331,8 +331,8 @@ public abstract class AbstractBlockWrapper {
    * Allows to answer if current wrapped block has a child block that is located before given block and has line feed.
    *
    * @param child   target child block to process
-   * @return        <code>true</code> if current block has a child that is located before the given block and contains line feed;
-   *                <code>false</code> otherwise
+   * @return        {@code true} if current block has a child that is located before the given block and contains line feed;
+   *                {@code false} otherwise
    */
   protected abstract boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child);
 
@@ -346,7 +346,7 @@ public abstract class AbstractBlockWrapper {
   public abstract IndentData getNumberOfSymbolsBeforeBlock();
 
   /**
-   * @return    previous block for the current block if any; <code>null</code> otherwise
+   * @return    previous block for the current block if any; {@code null} otherwise
    */
   @Nullable
   protected abstract LeafBlockWrapper getPreviousBlock();
@@ -394,7 +394,7 @@ public abstract class AbstractBlockWrapper {
    * </ul>
    *
    * @return    alignment of the current block or it's ancestor that starts at the same offset as the current if any;
-   *            <code>null</code> otherwise
+   *            {@code null} otherwise
    */
   @Nullable
   public AlignmentImpl getAlignmentAtStartOffset() {
@@ -426,13 +426,13 @@ public abstract class AbstractBlockWrapper {
    * sub-blocks that are located on new lines should also be indented to the point of composite block start.
    * <p/>
    * This method takes care about constructing target absolute indent of the given child block assuming that it's parent
-   * (referenced by <code>'this'</code>) or it's ancestor that starts at the same offset is aligned.
+   * (referenced by {@code 'this'}) or it's ancestor that starts at the same offset is aligned.
    *
    * @param indentFromParent    basic indent of given child from the current parent block
    * @param child               child block of the current aligned composite block
    * @return                    absolute indent to use for the given child block of the current composite block if alignment-affected
    *                            indent should be used for it;
-   *                            <code>null</code> otherwise
+   *                            {@code null} otherwise
    */
   @Nullable
   private IndentData createAlignmentIndent(IndentData indentFromParent, AbstractBlockWrapper child) {
@@ -501,10 +501,10 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
-   * Applies given indent value to '<code>indentFromParent'</code> property of the current wrapped block.
+   * Applies given indent value to '{@code indentFromParent'} property of the current wrapped block.
    * <p/>
-   * Given value is also applied to '<code>indentFromParent'</code> properties of all parents of the current wrapped block if the
-   * value is defined (not <code>null</code>).
+   * Given value is also applied to '{@code indentFromParent'} properties of all parents of the current wrapped block if the
+   * value is defined (not {@code null}).
    * <p/>
    * This property is used later during
    * {@link LeafBlockWrapper#calculateOffset(CommonCodeStyleSettings.IndentOptions)} leaf block offset calculation}.
@@ -526,7 +526,7 @@ public abstract class AbstractBlockWrapper {
    * {@link WhiteSpace white space} contains line feeds.
    *
    * @return    first parent block that starts before the current block and which white space contains line feeds if any;
-   *            <code>null</code> otherwise
+   *            {@code null} otherwise
    */
   @Nullable
   protected AbstractBlockWrapper findFirstIndentedParent() {

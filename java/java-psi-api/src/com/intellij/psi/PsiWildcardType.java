@@ -172,7 +172,7 @@ public class PsiWildcardType extends PsiType.Stub {
   /**
    * Use this method to obtain a bound of wildcard type.
    *
-   * @return <code>null</code> if unbounded, a bound otherwise.
+   * @return {@code null} if unbounded, a bound otherwise.
    */
   @Nullable
   public PsiType getBound() {
@@ -190,9 +190,9 @@ public class PsiWildcardType extends PsiType.Stub {
   }
 
   /**
-   * Returns whether this is a lower bound (<code>? extends XXX</code>).
+   * Returns whether this is a lower bound ({@code ? extends XXX}).
    *
-   * @return <code>true</code> for <code>extends</code> wildcards, <code>false</code> for <code>super</code>
+   * @return {@code true} for {@code extends} wildcards, {@code false} for {@code super}
    *         and unbounded wildcards.
    */
   public boolean isExtends() {
@@ -200,9 +200,9 @@ public class PsiWildcardType extends PsiType.Stub {
   }
 
   /**
-   * Returns whether this is an upper bound (<code>? super XXX</code>).
+   * Returns whether this is an upper bound ({@code ? super XXX}).
    *
-   * @return <code>true</code> for <code>super</code> wildcards, <code>false</code> for <code>extends</code>
+   * @return {@code true} for {@code super} wildcards, {@code false} for {@code extends}
    *         and unbounded wildcards.
    */
   public boolean isSuper() {
@@ -220,12 +220,12 @@ public class PsiWildcardType extends PsiType.Stub {
    * A lower bound that this wildcard imposes on type parameter value.<br>
    * That is:<br>
    * <ul>
-   * <li> for <code>? extends XXX</code>: <code>XXX</code>
-   * <li> for <code>? super XXX</code>: <code>java.lang.Object</code>
-   * <li> for <code>?</code>: <code>java.lang.Object</code>
+   * <li> for {@code ? extends XXX}: {@code XXX}
+   * <li> for {@code ? super XXX}: {@code java.lang.Object}
+   * <li> for {@code ?}: {@code java.lang.Object}
    * </ul>
    *
-   * @return <code>PsiType</code> representing a lower bound. Never returns <code>null</code>.
+   * @return {@code PsiType} representing a lower bound. Never returns {@code null}.
    */
   @NotNull
   public PsiType getExtendsBound() {
@@ -239,12 +239,12 @@ public class PsiWildcardType extends PsiType.Stub {
    * An upper bound that this wildcard imposes on type parameter value.<br>
    * That is:<br>
    * <ul>
-   * <li> for <code>? extends XXX</code>: null type
-   * <li> for <code>? super XXX</code>: <code>XXX</code>
-   * <li> for <code>?</code>: null type
+   * <li> for {@code ? extends XXX}: null type
+   * <li> for {@code ? super XXX}: {@code XXX}
+   * <li> for {@code ?}: null type
    * </ul>
    *
-   * @return <code>PsiType</code> representing an upper bound. Never returns <code>null</code>.
+   * @return {@code PsiType} representing an upper bound. Never returns {@code null}.
    */
   @NotNull
   public PsiType getSuperBound() {

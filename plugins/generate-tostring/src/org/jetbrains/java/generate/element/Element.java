@@ -30,8 +30,8 @@ public interface Element {
      * Get's the elements accessor.
      * <p/>
      * <br/>If the element is a field the accessor is just the of the field or name of it's accessor with () when useAccessor property is on
-     * {@link ElementFactory#newFieldElement(PsiField, boolean)} - example: <code>myField</code> or <code>getMyField()</code>
-     * <br/>If the element is a method the accessor is the methodname with () - example: <code>getMyField()</code>
+     * {@link ElementFactory#newFieldElement(PsiField, boolean)} - example: {@code myField} or {@code getMyField()}
+     * <br/>If the element is a method the accessor is the methodname with () - example: {@code getMyField()}
      *
      * @return the accessor, null if none exists (only for a method with parameters).
      */

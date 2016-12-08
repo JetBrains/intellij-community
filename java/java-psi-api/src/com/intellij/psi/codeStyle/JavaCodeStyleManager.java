@@ -92,7 +92,7 @@ public abstract class JavaCodeStyleManager {
   public abstract PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file);
 
   /**
-   * Single-static-import <code>import static classFQN.referenceName;</code> shadows on-demand static imports, like described
+   * Single-static-import {@code import static classFQN.referenceName;} shadows on-demand static imports, like described
    * JLS 6.4.1
    * A single-static-import declaration d in a compilation unit c of package p that imports a {member} named n
    * shadows the declaration of any static {member} named n imported by a static-import-on-demand declaration in c, throughout c.

@@ -275,7 +275,7 @@ public class EnterHandler extends BaseEnterHandler {
    *       }
    *     </pre>
    *   </li>
-   *   <li>The user presses <code>'enter'</code>;</li>
+   *   <li>The user presses {@code 'enter'};</li>
    * </ul>
    * </pre>
    * We want to understand that doc comment is incomplete now, i.e. don't want to consider '*&#47;' before

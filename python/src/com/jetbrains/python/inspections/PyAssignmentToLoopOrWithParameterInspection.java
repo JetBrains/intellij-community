@@ -36,8 +36,8 @@ import java.util.List;
 
 /**
  * Checks for cases when you rewrite loop variable with inner loop.
- * It finds all <code>with</code> and <code>for</code> statements, takes variables declared by them and ensures none of parent
- * <code>with</code> or <code>for</code> declares variable with the same name
+ * It finds all {@code with} and {@code for} statements, takes variables declared by them and ensures none of parent
+ * {@code with} or {@code for} declares variable with the same name
  *
  * @author link
  */
@@ -145,7 +145,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
   }
 
   /**
-   * Opens subscription list (<code>i[n][q][f] --&gt; i</code>) and resolves ref recursively to the topmost element,
+   * Opens subscription list ({@code i[n][q][f] --> i}) and resolves ref recursively to the topmost element,
    * but not further than file borders (to prevent Stub to AST conversion)
    *
    * @param element element to open and resolve

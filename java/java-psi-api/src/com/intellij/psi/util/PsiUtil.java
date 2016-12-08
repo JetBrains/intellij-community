@@ -624,7 +624,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   /**
    * Compares types with respect to type parameter bounds: e.g. for
-   * <code>class Foo&lt;T extends Number&gt;{}</code> types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
+   * {@code class Foo<T extends Number>{}} types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
    * would be equivalent
    */
   public static boolean equalOnEquivalentClasses(PsiClassType thisClassType,

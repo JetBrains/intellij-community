@@ -40,7 +40,7 @@ public interface PsiNamedElement extends PsiElement{
    * Renames the element.
    *
    * @param name the new element name.
-   * @return the element corresponding to this element after the rename (either <code>this</code>
+   * @return the element corresponding to this element after the rename (either {@code this}
    * or a different element if the rename caused the element to be replaced).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */

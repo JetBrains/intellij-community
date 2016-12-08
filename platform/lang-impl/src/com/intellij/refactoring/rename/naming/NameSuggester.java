@@ -163,8 +163,8 @@ public class NameSuggester {
    * {&lt;first,last&gt; -&gt; replacement} <br>
    * where start and end are indices of property words range (inclusive), and replacement is a
    * string that this range must be replaced with.<br>
-   * It is valid situation that <code>last == first - 1</code>: in this case replace means insertion
-   * before first word. Furthermore, first may be equal to <code>propertyWords.length</code>  - in
+   * It is valid situation that {@code last == first - 1}: in this case replace means insertion
+   * before first word. Furthermore, first may be equal to {@code propertyWords.length}  - in
    * that case replacements transormates to appending.
    * @param propertyWords
    * @param matches

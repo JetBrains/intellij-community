@@ -36,14 +36,14 @@ public interface RefJavaElement extends RefElement {
 
 
   /**
-   * Checks if the element is <code>final</code>.
+   * Checks if the element is {@code final}.
    *
    * @return true if the element is final, false otherwise.
    */
   boolean isFinal();
 
   /**
-   * Checks if the element is <code>static</code>.
+   * Checks if the element is {@code static}.
    *
    * @return true if the element is static, false otherwise.
    */

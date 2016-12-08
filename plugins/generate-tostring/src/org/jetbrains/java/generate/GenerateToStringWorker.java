@@ -58,7 +58,7 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * Creates the <code>toString</code> method.
+   * Creates the {@code toString} method.
    *
    * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
    * @param policy          conflict resolution policy
@@ -155,7 +155,7 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * This method gets the choice if there is an existing <code>toString</code> method.
+   * This method gets the choice if there is an existing {@code toString} method.
    * <br/> 1) If there is a settings to always override use this.
    * <br/> 2) Prompt a dialog and let the user decide.
    *
@@ -179,7 +179,7 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * This method is executed just before the <code>toString</code> method is created or updated.
+   * This method is executed just before the {@code toString} method is created or updated.
    *
    * @param params   additional parameters stored with key/value in the map.
    * @param template the template to use
@@ -196,9 +196,9 @@ public class GenerateToStringWorker {
 
 
   /**
-   * This method is executed just after the <code>toString</code> method is created or updated.
+   * This method is executed just after the {@code toString} method is created or updated.
    *
-   * @param method   the newly created/updated <code>toString</code> method.
+   * @param method   the newly created/updated {@code toString} method.
    * @param params   additional parameters stored with key/value in the map.
    * @param template the template to use
    * @throws IncorrectOperationException is thrown by IDEA

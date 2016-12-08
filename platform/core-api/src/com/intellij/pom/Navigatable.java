@@ -26,17 +26,17 @@ public interface Navigatable {
    * Open editor and select/navigate to the object there if possible.
    * Just do nothing if navigation is not possible like in case of a package
    *
-   * @param requestFocus <code>true</code> if focus requesting is necessary
+   * @param requestFocus {@code true} if focus requesting is necessary
    */
   void navigate(boolean requestFocus);
 
   /**
-   * @return <code>false</code> if navigation is not possible for any reason.
+   * @return {@code false} if navigation is not possible for any reason.
    */
   boolean canNavigate();
 
   /**
-   * @return <code>false</code> if navigation to source is not possible for any reason.
+   * @return {@code false} if navigation to source is not possible for any reason.
    * Source means some kind of editor
    */
   boolean canNavigateToSource();

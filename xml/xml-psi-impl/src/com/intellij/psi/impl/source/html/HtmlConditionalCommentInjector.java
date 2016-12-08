@@ -44,7 +44,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
    * <a href="http://msdn.microsoft.com/en-us/library/ms537512(v=vs.85).aspx">conditional comment</a>.
    * 
    * @param host  target element to check
-   * @return      <code>true</code> if given element is conditional comment; <code>false</code> otherwise
+   * @return      {@code true} if given element is conditional comment; {@code false} otherwise
    */
   public static boolean isConditionalComment(@NotNull PsiElement host) {
     return parseConditionalCommentBoundaries(host) != null;
@@ -54,8 +54,8 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
    * Tries to parse given element as <a href="http://msdn.microsoft.com/en-us/library/ms537512(v=vs.85).aspx">conditional comment</a>.
    * 
    * @param host  target element to parse
-   * @return      <code>null</code> if given element is not a conditional comment;
-   *              pair like <code>(conditional comment start element; conditional comment end element)</code> otherwise
+   * @return      {@code null} if given element is not a conditional comment;
+   *              pair like {@code (conditional comment start element; conditional comment end element)} otherwise
    */
   @Nullable
   private static Pair<ASTNode, ASTNode> parseConditionalCommentBoundaries(@NotNull PsiElement host) {

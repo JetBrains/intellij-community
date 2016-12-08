@@ -38,10 +38,10 @@ public interface DocumentEx extends Document {
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
   /**
-   * Moves text from the <code>[srcStart; srcEnd)</code> range to the <code>dstOffset</code> offset.
+   * Moves text from the {@code [srcStart; srcEnd)} range to the {@code dstOffset} offset.
    * <p/>
    * The benefit to use this method over usual {@link #deleteString(int, int)} and {@link #replaceString(int, int, CharSequence)}
-   * is that {@link #createRangeMarker(int, int, boolean) range markers} from the <code>[srcStart; srcEnd)</code> range have
+   * is that {@link #createRangeMarker(int, int, boolean) range markers} from the {@code [srcStart; srcEnd)} range have
    * a chance to be preserved.
    *
    * @param srcStart  start offset of the text to move (inclusive)

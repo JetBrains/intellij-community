@@ -381,7 +381,7 @@ public class CodeEditUtil {
    * Allows to answer if given node is configured to be reformatted.
    *
    * @param node node to check
-   * @return <code>true</code> if given node is configured to be reformatted; <code>false</code> otherwise
+   * @return {@code true} if given node is configured to be reformatted; {@code false} otherwise
    */
   public static boolean isMarkedToReformat(final ASTNode node) {
     if (node.getCopyableUserData(REFORMAT_KEY) == null || !isSuspendedNodesReformattingAllowed()) {
@@ -394,8 +394,8 @@ public class CodeEditUtil {
   /**
    * Allows to define if given element should be reformatted later.
    *
-   * @param node  target element which <code>'reformat'</code> status should be changed
-   * @param value <code>true</code> if the element should be reformatted; <code>false</code> otherwise
+   * @param node  target element which {@code 'reformat'} status should be changed
+   * @param value {@code true} if the element should be reformatted; {@code false} otherwise
    */
   public static void markToReformat(final ASTNode node, boolean value) {
     if (ALLOW_TO_MARK_NODES_TO_REFORMAT.get()) {
@@ -405,7 +405,7 @@ public class CodeEditUtil {
 
   /**
    * We allow to mark particular {@link ASTNode AST nodes} to be reformatted later (e.g. we may want method definition and calls
-   * to be reformatted when we perform <code>'change method signature'</code> refactoring. Hence, we mark corresponding expressions
+   * to be reformatted when we perform {@code 'change method signature'} refactoring. Hence, we mark corresponding expressions
    * to be reformatted).
    * <p/>
    * For convenience that is made automatically on AST/PSI level, i.e. every time target element change it automatically marks itself
@@ -413,13 +413,13 @@ public class CodeEditUtil {
    * <p/>
    * However, there is a possible case that particular element is changed because of formatting, hence, there is no need to mark
    * itself for postponed formatting one more time. This method allows to configure allowance of reformat markers processing
-   * for the calling thread. I.e. this method may be called with <code>'false'</code> as an argument, hence, all further attempts
+   * for the calling thread. I.e. this method may be called with {@code 'false'} as an argument, hence, all further attempts
    * to {@link #markToReformat(ASTNode, boolean) mark node for postponed formatting} will have no effect until current method is
-   * called with <code>'true'</code> as an argument. Hence, following usage scenario is expected:
+   * called with {@code 'true'} as an argument. Hence, following usage scenario is expected:
    * <ol>
-   * <li>This method is called with <code>'false'</code> argument;</li>
-   * <li>Formatting is performed at dedicated <code>'try'</code> block;</li>
-   * <li>This method is called with <code>'false'</code> argument from <code>'finally'</code> section;</li>
+   * <li>This method is called with {@code 'false'} argument;</li>
+   * <li>Formatting is performed at dedicated {@code 'try'} block;</li>
+   * <li>This method is called with {@code 'false'} argument from {@code 'finally'} section;</li>
    * </ol>
    *
    * @param allow flag that defines if new reformat markers can be added from the current thread
@@ -430,7 +430,7 @@ public class CodeEditUtil {
   }
 
   /**
-   * @return <code>'allow suspended formatting'</code> flag value
+   * @return {@code 'allow suspended formatting'} flag value
    * @see #setAllowSuspendNodesReformatting(boolean)
    */
   public static boolean isSuspendedNodesReformattingAllowed() {
@@ -447,9 +447,9 @@ public class CodeEditUtil {
    * for a while. This method allows to do that at thread-local manner. I.e. it's expected to be called as follows:
    * <pre>
    * <ol>
-   *   <li>This method is called with <code>'false'</code> argument;</li>
-   *   <li>Document is processed at dedicated <code>'try'</code> block;</li>
-   *   <li>This method is called with <code>'true'</code> argument from <code>'finally'</code> section;</li>
+   *   <li>This method is called with {@code 'false'} argument;</li>
+   *   <li>Document is processed at dedicated {@code 'try'} block;</li>
+   *   <li>This method is called with {@code 'true'} argument from {@code 'finally'} section;</li>
    * </ol>
    * </pre>
    */
@@ -461,7 +461,7 @@ public class CodeEditUtil {
    * Allows to control the same process as {@link #setAllowSuspendNodesReformatting(boolean)} but on a node level. I.e. it allows
    * to answer if particular node can be reformatted if {@link #isSuspendedNodesReformattingAllowed() global reformatting is allowed}.
    *
-   * @param strategy strategy to use; <code>null</code> as an indication that no fine-grained checking should be performed
+   * @param strategy strategy to use; {@code null} as an indication that no fine-grained checking should be performed
    */
   public static void setNodeReformatStrategy(@Nullable NotNullFunction<ASTNode, Boolean> strategy) {
     NODE_REFORMAT_STRATEGY.set(strategy);

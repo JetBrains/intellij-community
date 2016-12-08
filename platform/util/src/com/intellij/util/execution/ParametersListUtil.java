@@ -66,16 +66,16 @@ public class ParametersListUtil {
    * <p>
    * <strong>Conversion rules:</strong>
    * <ul>
-   * <li>double quotes are escaped by backslash (<code>&#92;</code>);</li>
-   * <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes (<code>"</code>);</li>
+   * <li>double quotes are escaped by backslash ({@code &#92;});</li>
+   * <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes ({@code "});</li>
    * <li>parameters are separated by single whitespace.</li>
    * </ul>
    * </p>
    * <p/>
    * <p><strong>Examples:</strong></p>
    * <p>
-   * <code>['a', 'b'] => 'a  b'</code><br/>
-   * <code>['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'</code>
+   * {@code ['a', 'b'] => 'a  b'}<br/>
+   * {@code ['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'}
    * </p>
    *
    * @param parameters a list of parameters to join.
@@ -108,17 +108,17 @@ public class ParametersListUtil {
    * <ul>
    * <li>starting/whitespaces are trimmed;</li>
    * <li>parameters are split by whitespaces, whitespaces itself are dropped</li>
-   * <li>parameters inside double quotes (<code>"a b"</code>) are kept as single one;</li>
-   * <li>double quotes are dropped, escaped double quotes (<code>&#92;"</code>) are un-escaped.</li>
+   * <li>parameters inside double quotes ({@code "a b"}) are kept as single one;</li>
+   * <li>double quotes are dropped, escaped double quotes ({@code &#92;"}) are un-escaped.</li>
    * </ul>
    * </p>
    * <p/>
    * <p><strong>Examples:</strong></p>
    * <p>
-   * <code>' a  b ' => ['a', 'b']</code><br/>
-   * <code>'a="1 2" b' => ['a=1 2', 'b']</code><br/>
-   * <code>'a " " b' => ['a', ' ', 'b']</code><br/>
-   * <code>'"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']</code>
+   * {@code ' a  b ' => ['a', 'b']}<br/>
+   * {@code 'a="1 2" b' => ['a=1 2', 'b']}<br/>
+   * {@code 'a " " b' => ['a', ' ', 'b']}<br/>
+   * {@code '"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']}
    * </p>
    *
    * @param parameterString parameter string to split.

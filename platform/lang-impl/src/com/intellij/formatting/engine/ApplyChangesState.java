@@ -34,7 +34,7 @@ public class ApplyChangesState extends State {
    * There is a possible case that formatting introduced big number of changes to the underlying document. That number may be
    * big enough for that their subsequent appliance is much slower than direct replacing of the whole document text.
    * <p/>
-   * Current constant holds minimum number of changes that should trigger such <code>'replace whole text'</code> optimization.
+   * Current constant holds minimum number of changes that should trigger such {@code 'replace whole text'} optimization.
    */
   private static final int BULK_REPLACE_OPTIMIZATION_CRITERIA = 3000;
 

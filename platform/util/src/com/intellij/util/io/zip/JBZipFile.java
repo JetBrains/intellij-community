@@ -32,28 +32,28 @@ import java.util.Map;
 import java.util.zip.ZipException;
 
 /**
- * Replacement for <code>java.util.ZipFile</code>.
+ * Replacement for {@code java.util.ZipFile}.
  * <p/>
  * <p>This class adds support for file name encodings other than UTF-8
  * (which is required to work on ZIP files created by native zip tools
  * and is able to skip a preamble like the one found in self
  * extracting archives.  Furthermore it returns instances of
- * <code>org.apache.tools.zip.ZipEntry</code> instead of
- * <code>java.util.zip.ZipEntry</code>.</p>
+ * {@code org.apache.tools.zip.ZipEntry} instead of
+ * {@code java.util.zip.ZipEntry}.</p>
  * <p/>
- * <p>It doesn't extend <code>java.util.zip.ZipFile</code> as it would
+ * <p>It doesn't extend {@code java.util.zip.ZipFile} as it would
  * have to reimplement all methods anyway.  Like
- * <code>java.util.ZipFile</code>, it uses RandomAccessFile under the
+ * {@code java.util.ZipFile}, it uses RandomAccessFile under the
  * covers and supports compressed and uncompressed entries.</p>
  * <p/>
  * <p>The method signatures mimic the ones of
- * <code>java.util.zip.ZipFile</code>, with a couple of exceptions:
+ * {@code java.util.zip.ZipFile}, with a couple of exceptions:
  * <p/>
  * <ul>
  * <li>There is no getName method.</li>
  * <li>entries has been renamed to getEntries.</li>
  * <li>getEntries and getEntry return
- * <code>org.apache.tools.zip.ZipEntry</code> instances.</li>
+ * {@code org.apache.tools.zip.ZipEntry} instances.</li>
  * <li>close is allowed to throw IOException.</li>
  * </ul>
  */
@@ -197,12 +197,12 @@ public class JBZipFile {
   }
 
   /**
-   * Returns a named entry - or <code>null</code> if no entry by
+   * Returns a named entry - or {@code null} if no entry by
    * that name exists.
    *
    * @param name name of the entry.
    * @return the ZipEntry corresponding to the given name - or
-   *         <code>null</code> if not present.
+   *         {@code null} if not present.
    */
   public JBZipEntry getEntry(String name) {
     return nameMap.get(name);

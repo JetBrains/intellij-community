@@ -165,9 +165,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   /**
-   * @return    <code>true</code> if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
+   * @return    {@code true} if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
    *            the user presses a key);
-   *            <code>false</code> otherwise
+   *            {@code false} otherwise
    */
   public boolean isCloseOnSneeze() {
     return myCloseOnSneeze;
@@ -258,7 +258,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    * @param element        target element which documentation should be shown
    * @param original       element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
    *                       A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                       declaration but <code>'element'</code> argument is a {@code Runnable} descriptor
+   *                       declaration but {@code 'element'} argument is a {@code Runnable} descriptor
    * @param closeCallback  callback to be notified on target hint close (if any)
    * @param closeOnSneeze  flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
    *                       two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown

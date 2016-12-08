@@ -36,7 +36,7 @@ class RangeMarkerWindow implements RangeMarkerEx {
   private final int myEndShift;
 
   /**
-   * Creates new <code>RangeMarkerWindow</code> object with the given data.
+   * Creates new {@code RangeMarkerWindow} object with the given data.
    * 
    * @param documentWindow  target document window
    * @param hostMarker      backing host range marker

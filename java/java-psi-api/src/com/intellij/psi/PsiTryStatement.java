@@ -19,11 +19,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a Java <code>try ... catch ... finally</code> statement.
+ * Represents a Java {@code try ... catch ... finally} statement.
  */
 public interface PsiTryStatement extends PsiStatement {
   /**
-   * Returns the code block executed by the <code>try</code> statement.
+   * Returns the code block executed by the {@code try} statement.
    *
    * @return the code block instance, or null if the statement is incomplete.
    */
@@ -31,7 +31,7 @@ public interface PsiTryStatement extends PsiStatement {
   PsiCodeBlock getTryBlock();
 
   /**
-   * Returns the array of code blocks executed in the <code>catch</code> sections
+   * Returns the array of code blocks executed in the {@code catch} sections
    * of the statement.
    *
    * @return the array of code blocks, or an empty array if the statement has no catch sections.
@@ -40,7 +40,7 @@ public interface PsiTryStatement extends PsiStatement {
   PsiCodeBlock[] getCatchBlocks();
 
   /**
-   * Returns the array of parameters for <code>catch</code> sections.
+   * Returns the array of parameters for {@code catch} sections.
    *
    * @return the array of parameters, or an empty array if the statement has no catch sections.
    */
@@ -48,18 +48,18 @@ public interface PsiTryStatement extends PsiStatement {
   PsiParameter[] getCatchBlockParameters();
 
   /**
-   * Returns the array of <code>catch</code> sections in the statement.
+   * Returns the array of {@code catch} sections in the statement.
    *
-   * @return the array of <code>catch</code> sections, or an empty array if the statement
+   * @return the array of {@code catch} sections, or an empty array if the statement
    * has no catch sections.
    */
   @NotNull
   PsiCatchSection[] getCatchSections();
 
   /**
-   * Returns the code block executed in the <code>finally</code> section.
+   * Returns the code block executed in the {@code finally} section.
    *
-   * @return the code block for the <code>finally</code> section, or null if the statement
+   * @return the code block for the {@code finally} section, or null if the statement
    * does not have one.
    */
   @Nullable

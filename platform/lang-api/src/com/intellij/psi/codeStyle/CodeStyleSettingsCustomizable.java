@@ -329,7 +329,7 @@ public interface CodeStyleSettingsCustomizable {
 
   /**
    * Moves a standard option to another group.
-   * @param fieldName The field name of the option to move (as defined in <code>CommonCodeStyleSettings</code> class).
+   * @param fieldName The field name of the option to move (as defined in {@code CommonCodeStyleSettings} class).
    * @param newGroup  The new group name (the group may be one of existing ones). A custom group name can be used if supported by consumer.
    */
   default void moveStandardOption(String fieldName, String newGroup) {

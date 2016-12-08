@@ -304,7 +304,7 @@ public class TabPostFormatProcessor implements PostFormatProcessor {
   interface Helper {
 
     /**
-     * @return    previous line indent space if current line is not the first one; <code>null</code> otherwise
+     * @return    previous line indent space if current line is not the first one; {@code null} otherwise
      */
     @Nullable CharSequence getPrevLineIndent();
     

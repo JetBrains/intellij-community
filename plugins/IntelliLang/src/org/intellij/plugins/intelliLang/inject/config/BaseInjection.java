@@ -30,7 +30,6 @@ import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.RegExp;
@@ -43,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -317,7 +315,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   /**
-   * Determines if further injections should be examined if <code>isApplicable</code> has returned true.
+   * Determines if further injections should be examined if {@code isApplicable} has returned true.
    * <p/>
    * This is determined by the presence of a value-pattern: If none is present, the entry is considered
    * to be a terminal one.

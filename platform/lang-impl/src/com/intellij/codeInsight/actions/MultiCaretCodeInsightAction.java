@@ -139,7 +139,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
 
   /**
    * During action status update this method is invoked for each caret in editor. If at least for a single caret it returns
-   * <code>true</code>, action is considered enabled.
+   * {@code true}, action is considered enabled.
    */
   protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     return true;

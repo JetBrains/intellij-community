@@ -45,7 +45,7 @@ public abstract class SmartPointerManager {
    * Creates a smart pointer to the specified PSI element.
    *
    * @param element the element to create a pointer to.
-   * @param containingFile the result of <code>element.getContainingFile()</code>.
+   * @param containingFile the result of {@code element.getContainingFile()}.
    * @return the smart pointer instance.
    */
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);

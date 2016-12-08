@@ -37,7 +37,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    * an array creation expression.
    *
    * @return the array of expressions for the dimensions, or an empty array if the
-   *         <code>new</code> expression is not an array creation expression.
+   *         {@code new} expression is not an array creation expression.
    */
   @NotNull
   PsiExpression[] getArrayDimensions();
@@ -46,7 +46,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    * Returns the expression specifying the initializer for the created array in
    * an array creation expression.
    *
-   * @return the array initializer expression, or null if the <code>new</code>
+   * @return the array initializer expression, or null if the {@code new}
    *         expression is not an array creation expression or has no initializer.
    */
   @Nullable
@@ -61,7 +61,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
   PsiJavaCodeReferenceElement getClassReference();
 
   /**
-   * Returns the anonymous class created by the <code>new</code> expression.
+   * Returns the anonymous class created by the {@code new} expression.
    *
    * @return the anonymous class, or null if the expression does not create an anonymous class.
    */

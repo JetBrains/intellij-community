@@ -50,7 +50,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
    * Allows to check if static import may be performed for the given element.
    *
    * @param element     element to check
-   * @return            target class that may be statically imported if any; <code>null</code> otherwise
+   * @return            target class that may be statically imported if any; {@code null} otherwise
    */
   @Nullable
   public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {

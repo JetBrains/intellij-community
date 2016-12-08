@@ -465,7 +465,7 @@ public class FormatterUtil {
   }
 
   /**
-   * @return    <code>true</code> explicitly called 'reformat' is in  progress at the moment; <code>false</code> otherwise
+   * @return    {@code true} explicitly called 'reformat' is in  progress at the moment; {@code false} otherwise
    */
   public static boolean isFormatterCalledExplicitly() {
     return FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName());

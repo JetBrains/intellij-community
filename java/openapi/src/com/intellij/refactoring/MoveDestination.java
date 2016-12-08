@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * Represents a destination of Move Classes/Packages refactoring.
  * Destination of Move refactoring is generally a single package,
- * and various <code>MoveDestination</code>s control how moved items
+ * and various {@code MoveDestination}s control how moved items
  * will be layouted in directories corresponding to target packages.
  *
  * Instances of this interface can be obtained via methods of {@link RefactoringFactory}.

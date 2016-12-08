@@ -86,7 +86,7 @@ public interface PsiFile extends PsiFileSystemItem {
    * PSI trees for each of these languages. (For example, a JSPX file contains JSP,
    * XML and Java trees.)
    *
-   * @return the array of PSI roots, or a single-element array containing <code>this</code>
+   * @return the array of PSI roots, or a single-element array containing {@code this}
    * if the file has only a single language.
    * @deprecated Use {@link FileViewProvider#getAllFiles()} instead.
    */

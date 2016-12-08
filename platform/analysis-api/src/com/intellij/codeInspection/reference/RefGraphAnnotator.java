@@ -47,7 +47,7 @@ public abstract class RefGraphAnnotator {
    *
    * @param refWhat                        the referenced element.
    * @param refFrom                        the referencing element.
-   * @param referencedFromClassInitializer if true, <code>refFrom</code> is a class and the reference
+   * @param referencedFromClassInitializer if true, {@code refFrom} is a class and the reference
    *                                       has been found in its initializer block.
    */
   public void onMarkReferenced(RefElement refWhat,
@@ -60,7 +60,7 @@ public abstract class RefGraphAnnotator {
    *
    * @param refWhat                        the referenced element.
    * @param refFrom                        the referencing element.
-   * @param referencedFromClassInitializer if true, <code>refFrom</code> is a class and the reference
+   * @param referencedFromClassInitializer if true, {@code refFrom} is a class and the reference
    *                                       has been found in its initializer block.
    * @param forReading                     used for reading
    * @param forWriting                     used for writing
@@ -78,7 +78,7 @@ public abstract class RefGraphAnnotator {
    * Called when 'what' element doesn't belong to the selected scope. 
    * @param what                            the referenced element
    * @param from                            the referencing element
-   * @param referencedFromClassInitializer if true, <code>refFrom</code> is a class and the reference
+   * @param referencedFromClassInitializer if true, {@code refFrom} is a class and the reference
    *                                       has been found in its initializer block.
    */
   public void onMarkReferenced(PsiElement what,

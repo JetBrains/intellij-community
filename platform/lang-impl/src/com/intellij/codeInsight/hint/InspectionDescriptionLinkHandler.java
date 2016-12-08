@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Handles tooltip links in format <code>#inspection/inspection_short_name</code>.
+ * Handles tooltip links in format {@code #inspection/inspection_short_name}.
  * On a click or expend acton returns more detailed description for given inspection.
  *
  * @author peter

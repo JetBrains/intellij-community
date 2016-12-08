@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>import static</code> statement.
+ * Represents a Java {@code import static} statement.
  *
  * @author dsl
  */

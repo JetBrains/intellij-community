@@ -36,9 +36,9 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
    * <p>
    * For example, for the next "glued" string literal:
    * <p>
-   * <pre><code>
+   * <pre>{@code
    * u"\u0066\x6F\157" '\bar' r'\baz'
-   * </code></pre>
+   * }</pre>
    * <p>
    * this method returns:
    * <p>
@@ -63,9 +63,9 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
    * Such range doesn't include neither node's prefix like "ur", nor its quotes.
    * <p>
    * For example, for the next "glued" string literal:
-   * <pre><code>
+   * <pre>{@code
    * u"\u0066\x6F\157" ur'' '''\t'''
-   * </code></pre>
+   * }</pre>
    * <p>
    * this method returns:
    * <p>

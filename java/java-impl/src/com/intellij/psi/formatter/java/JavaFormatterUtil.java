@@ -48,19 +48,19 @@ public class JavaFormatterUtil {
    * Allows to answer if given node wraps assignment operation.
    *
    * @param node node to check
-   * @return <code>true</code> if given node wraps assignment operation; <code>false</code> otherwise
+   * @return {@code true} if given node wraps assignment operation; {@code false} otherwise
    */
   public static boolean isAssignment(ASTNode node) {
     return ASSIGNMENT_ELEMENT_TYPES.contains(node.getElementType());
   }
 
   /**
-   * Allows to check if given <code>AST</code> nodes refer to binary expressions which have the same priority.
+   * Allows to check if given {@code AST} nodes refer to binary expressions which have the same priority.
    *
    * @param node1 node to check
    * @param node2 node to check
-   * @return <code>true</code> if given nodes are binary expressions and have the same priority;
-   *         <code>false</code> otherwise
+   * @return {@code true} if given nodes are binary expressions and have the same priority;
+   *         {@code false} otherwise
    */
   public static boolean areSamePriorityBinaryExpressions(ASTNode node1, ASTNode node2) {
     if (node1 == null || node2 == null) {

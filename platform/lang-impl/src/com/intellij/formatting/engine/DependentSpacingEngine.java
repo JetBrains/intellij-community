@@ -37,9 +37,9 @@ import java.util.*;
  *      }                 |
  * </pre>
  * There is a possible case that particular block has dependent spacing property that targets region that lays beyond the
- * current block. E.g. consider example above - <code>'1'</code> block has dependent spacing that targets the whole
- * <code>'{1, 2, 3}'</code> block. So, it's not possible to answer whether line feed should be used during processing block
- * <code>'1'</code>.
+ * current block. E.g. consider example above - {@code '1'} block has dependent spacing that targets the whole
+ * {@code '{1, 2, 3}'} block. So, it's not possible to answer whether line feed should be used during processing block
+ * {@code '1'}.
  * <p/>
  * We store such 'forward dependencies' at the current collection where the key is the range of the target 'dependent forward
  * region' and value is dependent spacing object.

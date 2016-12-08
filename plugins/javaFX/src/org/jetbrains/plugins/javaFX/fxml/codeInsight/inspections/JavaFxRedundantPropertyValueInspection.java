@@ -171,7 +171,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
   }
 
   /**
-   * The file format is <code>ClassName#propertyName:type=value</code> per line, line with leading double dash (--) is commented out
+   * The file format is {@code ClassName#propertyName:type=value} per line, line with leading double dash (--) is commented out
    */
   @NotNull
   private static Map<String, Map<String, String>> loadDefaultPropertyValues(@NotNull String resourceName) {

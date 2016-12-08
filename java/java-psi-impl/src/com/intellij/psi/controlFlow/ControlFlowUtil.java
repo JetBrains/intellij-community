@@ -457,9 +457,9 @@ public class ControlFlowUtil {
    *   if (status == FINISHED) LOG.info("Finished"); // can get PREPARING or WORKING here in the case of exception
    * } // --- end of theOuterBlock ---
    * </pre>
-   * In the example above <code>hasObservableThrowExitPoints(theTryBlock) == true</code>,
+   * In the example above {@code hasObservableThrowExitPoints(theTryBlock) == true},
    * because the resulting value of the "status" variable depends on the exceptions being thrown.
-   * In the same example <code>hasObservableThrowExitPoints(theOuterBlock) == false</code>,
+   * In the same example {@code hasObservableThrowExitPoints(theOuterBlock) == false},
    * because no outgoing variables here depend on the exceptions being thrown.
    */
   public static boolean hasObservableThrowExitPoints(final @NotNull ControlFlow flow,

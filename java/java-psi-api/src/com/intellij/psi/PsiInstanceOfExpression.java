@@ -19,11 +19,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a Java <code>instanceof</code> expression.
+ * Represents a Java {@code instanceof} expression.
  */
 public interface PsiInstanceOfExpression extends PsiExpression {
   /**
-   * Returns the expression on the left side of the <code>instanceof</code>.
+   * Returns the expression on the left side of the {@code instanceof}.
    *
    * @return the checked expression.
    */
@@ -31,7 +31,7 @@ public interface PsiInstanceOfExpression extends PsiExpression {
   PsiExpression getOperand();
 
   /**
-   * Returns the type element on the right side of the <code>instanceof</code>.
+   * Returns the type element on the right side of the {@code instanceof}.
    *
    * @return the type element, or null if the expression is incomplete.
    */

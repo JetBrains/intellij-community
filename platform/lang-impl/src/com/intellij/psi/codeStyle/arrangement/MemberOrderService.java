@@ -56,7 +56,7 @@ public class MemberOrderService {
    * @param context   given member's context
    * @return          given member's anchor if the one can be computed;
    *                  given 'context' element if given member should be the first child
-   *                  <code>null</code> otherwise
+   *                  {@code null} otherwise
    */
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable

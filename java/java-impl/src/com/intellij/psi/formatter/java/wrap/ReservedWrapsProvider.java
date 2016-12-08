@@ -35,7 +35,7 @@ public interface ReservedWrapsProvider {
    * Allows to retrieve predefined {@link Wrap} object for the given element type if any.
    *
    * @param elementType   target element type
-   * @return              predefined wrap for the given element type if any; <code>null</code> otherwise
+   * @return              predefined wrap for the given element type if any; {@code null} otherwise
    */
   @Nullable
   Wrap getReservedWrap(IElementType elementType);

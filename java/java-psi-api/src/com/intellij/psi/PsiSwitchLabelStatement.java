@@ -18,28 +18,28 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a single <code>case</code> or <code>default</code> section in a
- * Java <code>switch</code> statement.
+ * Represents a single {@code case} or {@code default} section in a
+ * Java {@code switch} statement.
  */
 public interface PsiSwitchLabelStatement extends PsiStatement {
   /**
-   * Checks if the element represents a <code>default</code> section.
+   * Checks if the element represents a {@code default} section.
    *
-   * @return true if the element represents a <code>default</code> section, false otherwise.
+   * @return true if the element represents a {@code default} section, false otherwise.
    */
   boolean isDefaultCase();
 
   /**
-   * Returns the constant associated with the <code>case</code> block.
+   * Returns the constant associated with the {@code case} block.
    *
    * @return the associated constant, or null if the statement is incomplete or the element
-   * represents a <code>default</code> section.
+   * represents a {@code default} section.
    */
   @Nullable
   PsiExpression getCaseValue();
 
   /**
-   * Returns the <code>switch</code> statement with which the section is associated.
+   * Returns the {@code switch} statement with which the section is associated.
    *
    * @return the associated statement, or null if the element is not valid in its current context.
    */

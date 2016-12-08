@@ -21,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Implement this abstract class in order to provide new inspection tool functionality. The major API limitation here is
- * subclasses should be stateless. Thus <code>check&lt;XXX&gt;</code> methods will be called in no particular order and
+ * subclasses should be stateless. Thus {@code check<XXX>} methods will be called in no particular order and
  * instances of this class provided by {@link InspectionToolProvider#getInspectionClasses()} will be created on demand.
- * The other important thing is problem anchors (PsiElements) reported by <code>check&lt;XXX&gt;</code> methods should
+ * The other important thing is problem anchors (PsiElements) reported by {@code check<XXX>} methods should
  * lie under corresponding first parameter of one method.
  *
  * @see GlobalInspectionTool

@@ -335,7 +335,7 @@ public class JavaDocInfoGenerator {
 
   /**
    * Takes a pair of strings representing a relative path and a package name, and returns corresponding pair, where path is stripped of
-   * leading ../ elements, and package name adjusted correspondingly. Returns <code>null</code> if there are more ../ elements than package
+   * leading ../ elements, and package name adjusted correspondingly. Returns {@code null} if there are more ../ elements than package
    * components.
    */
   @Nullable

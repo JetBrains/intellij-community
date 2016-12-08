@@ -192,8 +192,8 @@ public class JavaArrangementParseInfo {
   }
 
   /**
-   * Is expected to be called when new method dependency is detected. Here given <code>'base method'</code> calls
-   * <code>'dependent method'</code>.
+   * Is expected to be called when new method dependency is detected. Here given {@code 'base method'} calls
+   * {@code 'dependent method'}.
    */
   public void registerMethodCallDependency(@NotNull PsiMethod caller, @NotNull PsiMethod callee) {
     myTmpMethodDependencyRoots.remove(callee);

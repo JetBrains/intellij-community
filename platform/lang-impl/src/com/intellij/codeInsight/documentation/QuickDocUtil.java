@@ -86,7 +86,7 @@ public class QuickDocUtil {
    * @param timeout timeout in milliseconds 
    * @param pauseBetweenRetries pause between retries in milliseconds 
    * @param progressIndicator optional progress indicator, which can be used to cancel the action externally
-   * @return <code>true</code> if the action succeeded to run without interruptions, <code>false</code> otherwise 
+   * @return {@code true} if the action succeeded to run without interruptions, {@code false} otherwise
    */
   static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action,
                                                                    long timeout, long pauseBetweenRetries,

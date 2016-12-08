@@ -258,7 +258,7 @@ public abstract class CodeStyleManager  {
    * It's possible to configure that (implementation details are insignificant here) and current method serves as a read-only
    * facade for obtaining information if 'sequential' processing is allowed at the moment.
    *
-   * @return      <code>true</code> if 'sequential' formatting is allowed now; <code>false</code> otherwise
+   * @return      {@code true} if 'sequential' formatting is allowed now; {@code false} otherwise
    */
   public abstract boolean isSequentialProcessingAllowed();
 

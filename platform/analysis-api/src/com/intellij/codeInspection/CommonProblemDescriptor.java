@@ -32,8 +32,8 @@ public interface CommonProblemDescriptor {
 
   /**
    * Returns the template from which the problem description is built. The template may
-   * contain special markers: <code>#ref</code> is replaced with the text of the element
-   * in which the problem has been found, and <code>#loc</code> is replaced with the filename
+   * contain special markers: {@code #ref} is replaced with the text of the element
+   * in which the problem has been found, and {@code #loc} is replaced with the filename
    * and line number in exported inspection results and ignored when viewing within IDEA.
    *
    * @return the template for the problem description.

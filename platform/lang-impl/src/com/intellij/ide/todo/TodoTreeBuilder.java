@@ -72,7 +72,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * This set contains "dirty" files. File is "dirty" if it's currently not unknown
    * whether the file contains T.O.D.O item or not. To determine this it's necessary
    * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
-   * validated in <code>validateCache()</code> method.
+   * validated in {@code validateCache()} method.
    */
   protected final HashSet<VirtualFile> myDirtyFileSet;
 
@@ -202,9 +202,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return read-only iterator of all current PSI files that can contain TODOs.
-   *         Don't invoke its <code>remove</code> method. For "removing" use <code>markFileAsDirty</code> method.
-   *         <b>Note, that <code>next()</code> method of iterator can return <code>null</code> elements.</b>
-   *         These <code>null</code> elements correspond to the invalid PSI files (PSI file cannot be found by
+   *         Don't invoke its {@code remove} method. For "removing" use {@code markFileAsDirty} method.
+   *         <b>Note, that {@code next()} method of iterator can return {@code null} elements.</b>
+   *         These {@code null} elements correspond to the invalid PSI files (PSI file cannot be found by
    *         virtual file, or virtual file is invalid).
    *         The reason why we return such "dirty" iterator is the performance.
    */
@@ -238,7 +238,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirectory</code>.
+   *         and which are located under specified {@code psiDirectory}.
    * @see com.intellij.ide.todo.FileTree#getFiles(com.intellij.openapi.vfs.VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory) {
@@ -247,7 +247,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirectory</code>.
+   *         and which are located under specified {@code psiDirectory}.
    * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory, final boolean skip) {
@@ -275,7 +275,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirectory</code>.
+   *         and which are located under specified {@code psiDirectory}.
    * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFilesUnderDirectory(PsiDirectory psiDirectory) {
@@ -302,7 +302,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
     * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-    *         and which in specified <code>module</code>.
+    *         and which in specified {@code module}.
     * @see FileTree#getFiles(VirtualFile)
     */
    public Iterator<PsiFile> getFiles(Module module) {
@@ -328,7 +328,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
 
   /**
-   * @return <code>true</code> if specified <code>psiFile</code> can contains too items.
+   * @return {@code true} if specified {@code psiFile} can contains too items.
    *         It means that file is in "dirty" file set or in "current" file set.
    */
   private boolean canContainTodoItems(PsiFile psiFile) {
@@ -434,8 +434,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return first <code>SmartTodoItemPointer</code> that is the children (in depth) of the specified <code>element</code>.
-   *         If <code>element</code> itself is a <code>TodoItem</code> then the method returns the <code>element</code>.
+   * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
+   *         If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
   public TodoItemNode getFirstPointerForElement(Object element) {
     if (element instanceof TodoItemNode) {
@@ -457,8 +457,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return last <code>SmartTodoItemPointer</code> that is the children (in depth) of the specified <code>element</code>.
-   *         If <code>element</code> itself is a <code>TodoItem</code> then the method returns the <code>element</code>.
+   * @return last {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
+   *         If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
   public TodoItemNode getLastPointerForElement(Object element) {
     if (element instanceof TodoItemNode) {
@@ -523,7 +523,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @param state if <code>true</code> then view is in "flatten packages" mode.
+   * @param state if {@code true} then view is in "flatten packages" mode.
    */
   void setFlattenPackages(boolean state) {
     ArrayList<Object> pathsToExpand = new ArrayList<>();
@@ -538,7 +538,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * Sets new <code>TodoFilter</code>, rebuild whole the caches and immediately update the tree.
+   * Sets new {@code TodoFilter}, rebuild whole the caches and immediately update the tree.
    *
    * @see TodoTreeStructure#setTodoFilter
    */
@@ -552,8 +552,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return next <code>TodoItem</code> for the passed <code>pointer</code>. Returns <code>null</code>
-   *         if the <code>pointer</code> is the last t.o.d.o item in the tree.
+   * @return next {@code TodoItem} for the passed {@code pointer}. Returns {@code null}
+   *         if the {@code pointer} is the last t.o.d.o item in the tree.
    */
   public TodoItemNode getNextPointer(TodoItemNode pointer) {
     Object sibling = getNextSibling(pointer);
@@ -570,7 +570,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return next sibling of the passed element. If there is no sibling then
-   *         returns <code>null</code>.
+   *         returns {@code null}.
    */
   Object getNextSibling(Object obj) {
     Object parent = getTreeStructure().getParentElement(obj);
@@ -598,8 +598,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return next <code>SmartTodoItemPointer</code> for the passed <code>pointer</code>. Returns <code>null</code>
-   *         if the <code>pointer</code> is the last t.o.d.o item in the tree.
+   * @return next {@code SmartTodoItemPointer} for the passed {@code pointer}. Returns {@code null}
+   *         if the {@code pointer} is the last t.o.d.o item in the tree.
    */
   public TodoItemNode getPreviousPointer(TodoItemNode pointer) {
     Object sibling = getPreviousSibling(pointer);
@@ -616,7 +616,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return previous sibling of the element of passed type. If there is no sibling then
-   *         returns <code>null</code>.
+   *         returns {@code null}.
    */
   Object getPreviousSibling(Object obj) {
     Object parent = getTreeStructure().getParentElement(obj);
@@ -645,7 +645,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return <code>SelectInEditorManager</code> for the specified <code>psiFile</code>. Highlighters are
+   * @return {@code SelectInEditorManager} for the specified {@code psiFile}. Highlighters are
    *         lazy created and initialized.
    */
   public EditorHighlighter getHighlighter(PsiFile psiFile, Document document) {

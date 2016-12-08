@@ -53,7 +53,7 @@ public interface Rearranger<E extends ArrangementEntry> {
    *                  in order to build method dependency graph if no such grouping rule is defined
    * @return          arrangement entry for the given element if it's possible to perform the mapping and list of arrangement entries
    *                  available at the given context plus newly created entry for the given element;
-   *                  <code>null</code> otherwise
+   *                  {@code null} otherwise
    */
   @Nullable
   Pair<E, List<E>> parseWithNew(@NotNull PsiElement root,

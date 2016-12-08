@@ -39,9 +39,9 @@ import java.lang.annotation.*;
  * <li> fail - the method throws an exception, if the arguments satisfy argument constraints
  * </ul>
  * Examples:<p>
- * <code>@Contract("_, null -&gt; null")</code> - method returns null if its second argument is null<br>
- * <code>@Contract("_, null -&gt; null; _, !null -&gt; !null")</code> - method returns null if its second argument is null and not-null otherwise<br>
- * <code>@Contract("true -&gt; fail")</code> - a typical assertFalse method which throws an exception if <code>true</code> is passed to it<br>
+ * {@code @Contract("_, null -> null")} - method returns null if its second argument is null<br>
+ * {@code @Contract("_, null -> null; _, !null -> !null")} - method returns null if its second argument is null and not-null otherwise<br>
+ * {@code @Contract("true -> fail")} - a typical assertFalse method which throws an exception if {@code true} is passed to it<br>
  *
  */
 @Documented

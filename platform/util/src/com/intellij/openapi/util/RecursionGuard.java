@@ -52,7 +52,7 @@ public abstract class RecursionGuard {
    * Used in pair with {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
    * not depending on anything incomplete due to recursive prevention policies.
    * A typical usage is this:
-   * <code>
+   * {@code
    *  RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
    *
    *   Result result = doComputation();
@@ -61,7 +61,7 @@ public abstract class RecursionGuard {
    *     cache(result);
    *   }
    *   return result;
-   * </code>
+   * }
 
    * @return an object representing the current stack state, managed by {@link RecursionManager}
    */
@@ -76,7 +76,7 @@ public abstract class RecursionGuard {
 
   /**
    * Makes {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()} return false for all stamps created since a computation with
-   * key <code>since</code> began.
+   * key {@code since} began.
    *
    * Used to prevent caching of results that are non-reliable NOT due to recursion prevention: for example, too deep recursion
    * ({@link #currentStack()} may help in determining the recursion depth)

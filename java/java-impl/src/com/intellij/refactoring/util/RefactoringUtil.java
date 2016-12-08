@@ -1013,10 +1013,10 @@ public class RefactoringUtil {
   }
 
   /**
-   * Returns subset of <code>graph.getVertices()</code> that is a tranistive closure (by <code>graph.getTargets()<code>)
-   * of the following property: initialRelation.value() of vertex or <code>graph.getTargets(vertex)</code> is true.
+   * Returns subset of {@code graph.getVertices()} that is a tranistive closure (by <code>graph.getTargets()<code>)
+   * of the following property: initialRelation.value() of vertex or {@code graph.getTargets(vertex)} is true.
    * <p/>
-   * Note that <code>graph.getTargets()</code> is not neccesrily a subset of <code>graph.getVertex()</code>
+   * Note that {@code graph.getTargets()} is not neccesrily a subset of {@code graph.getVertex()}
    *
    * @param graph
    * @param initialRelation

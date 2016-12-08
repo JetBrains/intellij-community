@@ -20,8 +20,8 @@ import com.intellij.formatting.engine.BlockRangesMap;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Extends {@link Spacing} in order to keep number of additional settings like <code>'minSpaces'</code>, <code>'minLineFeeds'</code>,
- * <code>'prefLineFeeds'</code> etc.
+ * Extends {@link Spacing} in order to keep number of additional settings like {@code 'minSpaces'}, {@code 'minLineFeeds'},
+ * {@code 'prefLineFeeds'} etc.
  */
 public class SpacingImpl extends Spacing {
   private int myMinSpaces;
@@ -110,7 +110,7 @@ public class SpacingImpl extends Spacing {
   /**
    * <b>Note:</b> current implementation uses soft type check, i.e. it checks that instance of the given object
    * IS-A {@link SpacingImpl} and compares state defined at this class only. That means that sub-classes are assumed
-   * not to override this method in order to preserve <code>'symmetric'</code> property.
+   * not to override this method in order to preserve {@code 'symmetric'} property.
    *
    * @param o   {@inheritDoc}
    * @return    {@inheritDoc}

@@ -90,7 +90,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private UsagePreviewPanel myUsagePreviewPanel;
 
   /**
-   * @param currentFileMode if <code>true</code> then view doesn't have "Group By Packages" and "Flatten Packages"
+   * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
   TodoPanel(Project project, TodoPanelSettings settings, boolean currentFileMode, Content content) {
@@ -286,7 +286,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   /**
-   * Sets specified <code>TodoFilter</code>. The method also updates window's title.
+   * Sets specified {@code TodoFilter}. The method also updates window's title.
    *
    * @see TodoTreeBuilder#setTodoFilter
    */

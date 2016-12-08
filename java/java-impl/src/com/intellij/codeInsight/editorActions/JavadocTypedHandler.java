@@ -62,7 +62,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
    * @param project   current project
    * @param editor    current editor
    * @param file      current file
-   * @return          <code>true</code> if closing tag is inserted; <code>false</code> otherwise
+   * @return          {@code true} if closing tag is inserted; {@code false} otherwise
    */
   private static boolean insertClosingTagIfNecessary(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (c != CLOSE_TAG_SYMBOL || !CodeInsightSettings.getInstance().JAVADOC_GENERATE_CLOSING_TAG || !(file instanceof PsiJavaFile)) {
@@ -89,9 +89,9 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
   }
 
   /**
-   * Tries to derive start tag name assuming that given offset points to position just after <code>'>'</code> symbol.
+   * Tries to derive start tag name assuming that given offset points to position just after {@code '>'} symbol.
    * <p/>
-   * Is expected to return <code>null</code> when offset is not located just after start tag, e.g. the following situations:
+   * Is expected to return {@code null} when offset is not located just after start tag, e.g. the following situations:
    * <pre>
    * <ul>
    *   <li>standalone {@code '>'} symbol (surrounded by white spaces);</li>
@@ -102,7 +102,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
    * 
    * @param text            target text
    * @param afterTagOffset  offset that points after 
-   * @return                tag name if the one is parsed; <code>null</code> otherwise
+   * @return                tag name if the one is parsed; {@code null} otherwise
    */
   @Nullable
   static String getTagName(@NotNull CharSequence text, int afterTagOffset) {

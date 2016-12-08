@@ -36,7 +36,7 @@ public abstract class FileIndentOptionsProvider {
    * Retrieves indent options for PSI file.
    * @param settings Code style settings for which indent options are calculated.
    * @param file The file to retrieve options for.
-   * @return Indent options or <code>null</code> if the provider can't retrieve them.
+   * @return Indent options or {@code null} if the provider can't retrieve them.
    */
   @Nullable
   public abstract CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
@@ -50,7 +50,7 @@ public abstract class FileIndentOptionsProvider {
   }
 
   /**
-   * @return information used to create user notification in editor. If the option is <code>null</code>, no notification
+   * @return information used to create user notification in editor. If the option is {@code null}, no notification
    * will be shown.
    */
   @Nullable
@@ -65,7 +65,7 @@ public abstract class FileIndentOptionsProvider {
   /**
    * Tells if there should not be any notification for this specific file.
    * @param file  The file to check.
-   * @return <code>true</code> if the file can be silently accepted without a warning.
+   * @return {@code true} if the file can be silently accepted without a warning.
    */
   @SuppressWarnings("UnusedParameters")
   public boolean isAcceptedWithoutWarning(@Nullable Project project, @NotNull VirtualFile file) {
@@ -74,7 +74,7 @@ public abstract class FileIndentOptionsProvider {
 
   /**
    * Sets the file as accepted by end user.
-   * @param file The file to be accepted. A particular implementation of <code>FileIndentOptionsProvider</code> may ignore this parameter
+   * @param file The file to be accepted. A particular implementation of {@code FileIndentOptionsProvider} may ignore this parameter
    *             and set a global acceptance flag so that no notification will be shown anymore.
    */
   public void setAccepted(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {}

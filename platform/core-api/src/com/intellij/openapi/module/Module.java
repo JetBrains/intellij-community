@@ -40,7 +40,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NonNls String ELEMENT_TYPE = "type";
 
   /**
-   * Returns the <code>VirtualFile</code> for the module .iml file.
+   * Returns the {@code VirtualFile} for the module .iml file.
    *
    * @return the virtual file instance.
    */

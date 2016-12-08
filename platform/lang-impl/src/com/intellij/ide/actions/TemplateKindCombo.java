@@ -112,7 +112,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   }
 
   /**
-   * @param listener pass <code>null</code> to hide browse button
+   * @param listener pass {@code null} to hide browse button
    */
   public void setButtonListener(@Nullable ActionListener listener) {
     getButton().setVisible(listener != null);

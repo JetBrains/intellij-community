@@ -35,7 +35,7 @@ public class StaticSymbolWhiteSpaceDefinitionStrategy extends AbstractWhiteSpace
   private final TIntHashSet myWhiteSpaceSymbols = new TIntHashSet();
 
   /**
-   * Creates new <code>StaticWhiteSpaceDefinitionStrategy</code> object with the symbols that should be treated as white spaces.
+   * Creates new {@code StaticWhiteSpaceDefinitionStrategy} object with the symbols that should be treated as white spaces.
    *
    * @param whiteSpaceSymbols   symbols that should be treated as white spaces by the current strategy
    */

@@ -122,7 +122,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
    * case of success.
    * 
    * @param context       current processing context
-   * @return              <code>true</code> if target line has the sole indent and it is applied; <code>false</code> otherwise
+   * @return              {@code true} if target line has the sole indent and it is applied; {@code false} otherwise
    */
   private static boolean defineSoleIndentIfPossible(@NotNull ChangeIndentContext context) {
     int prevLine = context.targetLine - 1;

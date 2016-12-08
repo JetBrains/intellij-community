@@ -100,7 +100,7 @@ public class CommentTracker {
    *
    * @param element element to replace
    * @param replacement replacement element
-   * @return the element which was actually inserted in the tree (either <code>replacement</code> or its copy)
+   * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     grabComments(element);
@@ -134,7 +134,7 @@ public class CommentTracker {
    *
    * @param element element to replace
    * @param replacement replacement element
-   * @return the element which was actually inserted in the tree (either <code>replacement</code> or its copy)
+   * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     PsiElement result = replace(element, replacement);

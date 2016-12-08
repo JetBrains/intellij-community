@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java enhanced <code>for</code>   statement.
+ * Represents a Java enhanced {@code for}   statement.
  *
  * @author dsl
  */

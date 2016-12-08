@@ -451,7 +451,7 @@ public abstract class AbstractExternalFilter {
     @NotNull
     private final Pattern endPattern;
     /**
-     * If <code>false</code>, and line matching start pattern is not found, whole document will be processed
+     * If {@code false}, and line matching start pattern is not found, whole document will be processed
      */
     private final boolean forcePatternSearch;
     /**

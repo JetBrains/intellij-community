@@ -202,19 +202,19 @@ class MoverWrapper {
    *
    * @param rangeMarker   range marker to check
    * @param foldRegion    fold region to check
-   * @return              <code>true</code> if text range defined by the given range marker completely contains text range
-   *                      of the given fold region; <code>false</code> otherwise
+   * @return              {@code true} if text range defined by the given range marker completely contains text range
+   *                      of the given fold region; {@code false} otherwise
    */
   private static boolean contains(@NotNull RangeMarker rangeMarker, @NotNull FoldRegion foldRegion) {
     return rangeMarker.getStartOffset() <= foldRegion.getStartOffset() && rangeMarker.getEndOffset() >= foldRegion.getEndOffset();
   }
 
   /**
-   * Allows to check if given <code>'region2'</code> is nested to <code>'region1'</code>
+   * Allows to check if given {@code 'region2'} is nested to {@code 'region1'}
    *
    * @param region1   'outer' region candidate
    * @param region2   'inner' region candidate
-   * @return          <code>true</code> if 'region2' is nested to 'region1'; <code>false</code> otherwise
+   * @return          {@code true} if 'region2' is nested to 'region1'; {@code false} otherwise
    */
   private static boolean contains(@Nullable FoldRegion region1, @NotNull FoldRegion region2) {
     if (region1 == null) {

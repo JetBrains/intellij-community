@@ -980,7 +980,7 @@ public class FindUtil {
    *
    * @param caretShiftFromSelectionStart if non-negative, defines caret position relative to selection start, for each created selection.
    *                                     if negative, caret will be positioned at selection end
-   * @return <code>true</code> if caret was added successfully, <code>false</code> if it cannot be done, e.g. because a caret already
+   * @return {@code true} if caret was added successfully, {@code false} if it cannot be done, e.g. because a caret already
    * exists at target position
    */
   public static boolean selectSearchResultInEditor(@NotNull Editor editor, @NotNull FindResult result, int caretShiftFromSelectionStart) {

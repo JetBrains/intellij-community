@@ -21,7 +21,7 @@ import com.intellij.openapi.util.TextRange;
 
 /**
  * Defines the psi-based formatting model that is responsible for multiline AST nodes indentation
- * at the stage of document-based formatting. The <code>shiftIndentInsideDocumentRange</code> method
+ * at the stage of document-based formatting. The {@code shiftIndentInsideDocumentRange} method
  * is called in the model, instead of standard
  * {@link FormattingModel#shiftIndentInsideRange(ASTNode, TextRange, int)} procedure.
  */
@@ -43,7 +43,7 @@ public interface FormattingModelWithShiftIndentInsideDocumentRange extends Forma
    *
    * @param node        the multiline node.
    * @param whiteSpace  the leading space for the node after formatting procedure.
-   * @return the adjusted indent (or <code>whiteSpace</code> if no correction needs).
+   * @return the adjusted indent (or {@code whiteSpace} if no correction needs).
    */
   String adjustWhiteSpaceInsideDocument(ASTNode node, String whiteSpace);
 }

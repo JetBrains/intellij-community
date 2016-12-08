@@ -245,7 +245,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
    * Asks current editor to refresh its state in accordance with the arrangement rule shown at the given row.
    *
    * @param row  row index of the rule which match condition should be edited (if defined);
-   *              <code>'-1'</code> as an indication that no settings should be active
+   *              {@code '-1'} as an indication that no settings should be active
    */
   public void reset(int row) {
     // Reset state.

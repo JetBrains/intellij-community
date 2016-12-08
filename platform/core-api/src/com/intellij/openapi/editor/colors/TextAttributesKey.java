@@ -172,7 +172,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * A can depend on key B which in turn can depend on key C. So if text attributes neither for A nor for B are found, they will be
    * acquired by the key C.
    * <p>Fallback keys can be used from any place including language's own definitions. Note that there is a common set of keys called
-   * <code>DefaultLanguageHighlighterColors</code> which can be used as a base. Scheme designers are supposed to set colors for these
+   * {@code DefaultLanguageHighlighterColors} which can be used as a base. Scheme designers are supposed to set colors for these
    * keys primarily and using them guarantees that most (if not all) text attributes will be shown correctly for the language
    * regardless of a color scheme.
    *

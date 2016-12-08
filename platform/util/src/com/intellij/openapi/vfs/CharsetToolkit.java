@@ -62,10 +62,10 @@ import java.util.Map;
  *     System.out.println(line);
  * }
  * </pre>
- * <p>An interesting improvement would be to create a custom <code>InputStream</code> that has a
- * method discovering the <code>Charset</code> of the underlying file. Thus, we would not have to
+ * <p>An interesting improvement would be to create a custom {@code InputStream} that has a
+ * method discovering the {@code Charset} of the underlying file. Thus, we would not have to
  * read the beginning of the file twice: once for guessing the encoding, the second time for reading
- * its content. Therefore, we could englobe this stream within an <code>InputStreamReader</code>.</p>
+ * its content. Therefore, we could englobe this stream within an {@code InputStreamReader}.</p>
  *
  * <p>Date: 18 juil. 2002</p>
  * @author Guillaume LAFORGE
@@ -106,7 +106,7 @@ public class CharsetToolkit {
   }
 
   /**
-   * Constructor of the <code>CharsetToolkit</code> utility class.
+   * Constructor of the {@code CharsetToolkit} utility class.
    *
    * @param buffer the byte buffer of which we want to know the encoding.
    */
@@ -116,7 +116,7 @@ public class CharsetToolkit {
   }
 
   /**
-   * Constructor of the <code>CharsetToolkit</code> utility class.
+   * Constructor of the {@code CharsetToolkit} utility class.
    *
    * @param buffer the byte buffer of which we want to know the encoding.
    * @param defaultCharset the default Charset to use in case an 8-bit charset is recognized.
@@ -219,7 +219,7 @@ public class CharsetToolkit {
   /**
    * If US-ASCII is recognized, enforce to return the default encoding, rather than US-ASCII.
    * It might be a file without any special character in the range 128-255, but that may be or become
-   * a file encoded with the default <code>charset</code> rather than US-ASCII.
+   * a file encoded with the default {@code charset} rather than US-ASCII.
    *
    * @param enforce a boolean specifying the use or not of US-ASCII.
    */
@@ -528,7 +528,7 @@ public class CharsetToolkit {
   /**
    * Retrieve the default charset of the system.
    *
-   * @return the default <code>Charset</code>.
+   * @return the default {@code Charset}.
    */
   @NotNull
   public static Charset getDefaultSystemCharset() {
@@ -574,10 +574,10 @@ public class CharsetToolkit {
   }
 
   /**
-   * Retrieves all the available <code>Charset</code>s on the platform,
-   * among which the default <code>charset</code>.
+   * Retrieves all the available {@code Charset}s on the platform,
+   * among which the default {@code charset}.
    *
-   * @return an array of <code>Charset</code>s.
+   * @return an array of {@code Charset}s.
    */
   @NotNull
   public static Charset[] getAvailableCharsets() {

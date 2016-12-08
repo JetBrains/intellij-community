@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Examples:
  * <ol>
- * <li>{@code [42]} converts to <code>[{"property": 42}]</code></li>
+ * <li>{@code [42]} converts to {@code [{"property": 42}]}</li>
  * <li><pre>
  * {
  *    "foo": 42,

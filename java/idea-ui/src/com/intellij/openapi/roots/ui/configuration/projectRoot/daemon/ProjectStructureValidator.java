@@ -79,7 +79,7 @@ public abstract class ProjectStructureValidator {
   }
 
   /**
-   * @return <code>true</code> if handled
+   * @return {@code true} if handled
    */
   protected boolean addLibraryToDependencies(final Library library, final Project project, final boolean allowEmptySelection) {
     return false;
@@ -87,14 +87,14 @@ public abstract class ProjectStructureValidator {
 
 
   /**
-   * @return <code>true</code> if it handled this element
+   * @return {@code true} if it handled this element
    */
   protected boolean checkElement(ProjectStructureElement element, ProjectStructureProblemsHolder problemsHolder) {
     return false;
   }
 
   /**
-   * @return list of usages or <code>null</code> when it does not handle such element
+   * @return list of usages or {@code null} when it does not handle such element
    */
   @Nullable
   protected List<ProjectStructureElementUsage> getUsagesIn(final ProjectStructureElement element) {

@@ -33,7 +33,7 @@ public abstract class ConsoleActionsPostProcessor {
   /**
    * Allows to adjust actions to use within the given console instance.
    * <p/>
-   * <code>'Adjust'</code> here stands for 'add', 'remove', 'change order' etc.
+   * {@code 'Adjust'} here stands for 'add', 'remove', 'change order' etc.
    *
    * @param console     console instance which actions are being post-processed
    * @param actions     console actions that will be used by default

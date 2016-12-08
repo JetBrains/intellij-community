@@ -60,7 +60,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
    * Allows to check if it's possible to perform static import for the target element.
    *
    * @param element     target element that is static import candidate
-   * @return            not-null qualified name of the class which method may be statically imported if any; <code>null</code> otherwise
+   * @return            not-null qualified name of the class which method may be statically imported if any; {@code null} otherwise
    */
   @Nullable
   public static ImportAvailability getStaticImportClass(@NotNull PsiElement element) {

@@ -155,7 +155,7 @@ public class FList<E> extends AbstractList<E> {
   }
 
   /**
-   * Creates an FList object with the elements of the given sequence in the reversed order, i.e. the last element of <code>from</code> will be the result's {@link #getHead()}
+   * Creates an FList object with the elements of the given sequence in the reversed order, i.e. the last element of {@code from} will be the result's {@link #getHead()}
    */
   public static <E> FList<E> createFromReversed(Iterable<E> from) {
     FList<E> result = emptyList();

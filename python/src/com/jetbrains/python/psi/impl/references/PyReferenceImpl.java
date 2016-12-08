@@ -99,7 +99,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * First element is always what resolve() would return.
    * Imported module names: to module file, or {directory, '__init__.py}' for a qualifier.
    * todo Local identifiers: a list of definitions in the most recent compound statement
-   * (e.g. <code>if X: a = 1; else: a = 2</code> has two definitions of <code>a</code>.).
+   * (e.g. {@code if X: a = 1; else: a = 2} has two definitions of {@code a}.).
    * todo Identifiers not found locally: similar definitions in imported files and builtins.
    *
    * @see PsiPolyVariantReference#multiResolve(boolean)

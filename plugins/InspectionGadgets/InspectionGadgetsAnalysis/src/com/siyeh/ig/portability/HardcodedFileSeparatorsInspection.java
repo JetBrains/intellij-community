@@ -192,8 +192,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * that the string is a filename.
      *
      * @param string The string to examine.
-     * @return <code>true</code> if the string is likely to be a filename
-     *         with hardcoded file separators, <code>false</code>
+     * @return {@code true} if the string is likely to be a filename
+     *         with hardcoded file separators, {@code false}
      *         otherwise.
      */
     private boolean isHardcodedFilenameString(String string) {
@@ -228,8 +228,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * likely to be a fragment of XML.
      *
      * @param string The string to examine.
-     * @return <code>true</code> if the string is likely to be an XML
-     *         fragment, or <code>false</code> if not.
+     * @return {@code true} if the string is likely to be an XML
+     *         fragment, or {@code false} if not.
      */
     private boolean isXMLString(String string) {
       return string.contains("</") || string.contains("/>");
@@ -240,8 +240,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * likely to be a date format string.
      *
      * @param string The string to check.
-     * @return <code>true</code> if the string is likely to be a date
-     *         string, <code>false</code> if not.
+     * @return {@code true} if the string is likely to be a date
+     *         string, {@code false} if not.
      */
     private boolean isDateFormatString(String string) {
       if (string.length() < 3) {
@@ -269,8 +269,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * likely to be a URL.
      *
      * @param string The string to check.
-     * @return <code>true</code> if the string is likely to be a URL,
-     *         <code>false</code> if not.
+     * @return {@code true} if the string is likely to be a URL,
+     *         {@code false} if not.
      */
     private boolean isURLString(String string) {
       final Matcher urlMatcher = URL_PATTERN.matcher(string);
@@ -284,8 +284,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * documents for registered MIME media types.
      *
      * @param string The string to check.
-     * @return <code>true</code> if the string is likely to be a MIME
-     *         media type, <code>false</code> if not.
+     * @return {@code true} if the string is likely to be a MIME
+     *         media type, {@code false} if not.
      */
     private boolean isMediaTypeString(String string) {
       // IANA doesn't specify a pattern for the subtype of example content
@@ -317,8 +317,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      * likely to be a {@link TimeZone} ID.
      *
      * @param string The string to check.
-     * @return <code>true</code> if the string is likely to be a
-     *         TimeZone ID, <code>false</code> if not.
+     * @return {@code true} if the string is likely to be a
+     *         TimeZone ID, {@code false} if not.
      */
     private boolean isTimeZoneIdString(String string) {
       return timeZoneIds.contains(string);

@@ -142,7 +142,7 @@ public class ArrangementUtil {
    * 
    * @param initialRange  anchor range
    * @param document      target document against which the ranges are built
-   * @return              expanded range if possible; <code>null</code> otherwise
+   * @return              expanded range if possible; {@code null} otherwise
    */
   @NotNull
   public static TextRange expandToLineIfPossible(@NotNull TextRange initialRange, @NotNull Document document) {

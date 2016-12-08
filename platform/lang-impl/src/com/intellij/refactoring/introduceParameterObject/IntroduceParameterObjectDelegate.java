@@ -128,11 +128,11 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
                                                        String mergedParamName);
 
   /**
-   * Collect in <code>usages</code> fixes to generate field's accessors.
+   * Collect in {@code usages} fixes to generate field's accessors.
    * If {@link #collectInternalUsages(Collection, PsiNamedElement, IntroduceParameterObjectClassDescriptor, ParameterInfo, String)}
    * returns @NotNull value, corresponding to the parameter field requires an accessor.
    *
-   * To detect what accessor is required, use <code>accessors[descriptor.getParamsToMerge()[paramIdx].getOldIdx()]</code>
+   * To detect what accessor is required, use {@code accessors[descriptor.getParamsToMerge()[paramIdx].getOldIdx()]}
    */
   public abstract void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
                                                                    M method,
@@ -140,14 +140,14 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
                                                                    ReadWriteAccessDetector.Access[] accessors);
 
   /**
-   * Collect in <code>usages</code> necessary fixes to change visibility, javadocs, etc
+   * Collect in {@code usages} necessary fixes to change visibility, javadocs, etc
    */
   public abstract void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
                                               M method,
                                               C descriptor);
 
   /**
-   * Collect conflicts in <code>conflicts</code>
+   * Collect conflicts in {@code conflicts}
    */
   public abstract void collectConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] infos, M method, C classDescriptor);
 }

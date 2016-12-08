@@ -87,7 +87,7 @@ public abstract class XmlFormattingPolicy {
 
   /**
    * Tells how many additional blank lines must be added if there is an automatic line break before 
-   * tag ({@link #insertLineBreakBeforeTag(XmlTag)} returns <code>true</code>). Returns 0 by default (i.e. only a line break
+   * tag ({@link #insertLineBreakBeforeTag(XmlTag)} returns {@code true}). Returns 0 by default (i.e. only a line break
    * will be added).
    * @param xmlTag The tag to check.
    * @return The number of blank lines to insert.
@@ -175,7 +175,7 @@ public abstract class XmlFormattingPolicy {
    *   &lt;/para&gt;
    * </pre>
    * If true, spaces around such tags will be preserved, no line breaks inserted. 
-   * @return <code>false</code> by default.
+   * @return {@code false} by default.
    */
   public boolean isKeepSpacesAroundInlineTags() {
     return false;

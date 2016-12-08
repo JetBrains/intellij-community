@@ -58,7 +58,7 @@ public class FoldingPolicy {
    * @param signature              target element's signature
    * @param processingInfoStorage  buffer used for tracing 'restore element' processing (if necessary)
    * @return                       PSI element from the given PSI file that corresponds to the given signature (if found)
-   *                               <code>null</code> otherwise
+   *                               {@code null} otherwise
    */
   @Nullable
   public static PsiElement restoreBySignature(@NotNull PsiFile file,

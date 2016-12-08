@@ -403,7 +403,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * This method is used for VCS autodetection during initial project creation and VCS configuration.
    *
    * @param dir the directory to check.
-   * @return <code>true</code> if directory is managed by this VCS
+   * @return {@code true} if directory is managed by this VCS
    */
   public boolean isVersionedDirectory(VirtualFile dir) {
     return false;
@@ -411,7 +411,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   /**
    * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(VirtualFile)}),
-   * it should return <code>false</code>. Otherwise return <code>true</code>
+   * it should return {@code false}. Otherwise return {@code true}
    */
   public boolean supportsVersionedStateDetection() {
     return true;

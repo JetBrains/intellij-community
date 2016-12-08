@@ -73,7 +73,7 @@ public abstract class ModuleStructureExtension {
   }
 
   /**
-   * @return callback or <code>null</code> if not handled
+   * @return callback or {@code null} if not handled
    */
   @Nullable
   public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry entry) {

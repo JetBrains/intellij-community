@@ -97,7 +97,7 @@ public class AlignmentImpl extends Alignment {
    *
    * @param block     target block to use during blocks filtering
    * @return          block {@link #setOffsetRespBlock(LeafBlockWrapper) registered} for the current alignment object or
-   *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; <code>null</code> otherwise
+   *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; {@code null} otherwise
    */
   @Nullable
   public LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {

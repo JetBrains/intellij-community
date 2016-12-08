@@ -162,7 +162,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
@@ -172,7 +172,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable Caret caret, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow || caret == null) return editor;
@@ -182,7 +182,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Caret getCaretForInjectedLanguageNoCommit(@Nullable Caret caret, @Nullable PsiFile file) {
     if (caret == null || file == null || caret instanceof InjectedCaret) return caret;
@@ -227,7 +227,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
@@ -265,7 +265,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>host</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code host} can lead to unexpected results, including throwing an exception!
    */
   @Nullable
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
@@ -274,7 +274,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   // consider injected elements
   public static PsiElement findElementAtNoCommit(@NotNull PsiFile file, int offset) {
@@ -359,7 +359,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>hostFile</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code hostFile} can lead to unexpected results, including throwing an exception!
    */
   public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
     if (hostFile instanceof PsiCompiledElement) return null;

@@ -143,7 +143,7 @@ final class FileTree {
   }
 
   /**
-   * The method removes specified <code>psiDirectory</code> from the tree. The directory should be empty,
+   * The method removes specified {@code psiDirectory} from the tree. The directory should be empty,
    * otherwise the method shows java.lang.IllegalArgumentException
    */
   private void removeDir(VirtualFile psiDirectory) {
@@ -199,7 +199,7 @@ final class FileTree {
   }
 
   /**
-   * @return all files (in depth) located under specified <code>psiDirectory</code>.
+   * @return all files (in depth) located under specified {@code psiDirectory}.
    *         Please note that returned files can be invalid.
    */
   List<VirtualFile> getFiles(VirtualFile dir) {

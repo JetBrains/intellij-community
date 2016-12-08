@@ -25,7 +25,7 @@ import java.beans.PropertyChangeListener;
 /**
  * Provider of regular expression patterns the occurrences of which in the comments of
  * source code files are indexed by IDEA. Implementations of this interface need to be registered
- * as extensions for the <code>indexPatternProvider</code> extension point.
+ * as extensions for the {@code indexPatternProvider} extension point.
  *
  * @author yole
  * @since 5.1

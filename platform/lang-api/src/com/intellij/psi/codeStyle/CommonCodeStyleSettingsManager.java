@@ -52,11 +52,11 @@ public class CommonCodeStyleSettingsManager {
   }
 
   /**
-   * Attempts to get language-specific common settings from <code>LanguageCodeStyleSettingsProvider</code>.
+   * Attempts to get language-specific common settings from {@code LanguageCodeStyleSettingsProvider}.
    *
    * @param lang The language to get settings for.
    * @return If the provider for the language exists and is able to create language-specific default settings
-   *         (<code>LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()</code> doesn't return null)
+   *         ({@code LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()} doesn't return null)
    *         returns the instance of settings for this language. Otherwise returns the instance of parent settings
    *         shared between several languages.
    */
@@ -89,7 +89,7 @@ public class CommonCodeStyleSettingsManager {
   }
 
   /**
-   * Get common code style settings by language name. <code>getCommonSettings(Language)</code> is a preferred method but
+   * Get common code style settings by language name. {@code getCommonSettings(Language)} is a preferred method but
    * sometimes (for example, in plug-ins which do not depend on a specific language support) language settings can be
    * obtained by name.
    * 

@@ -384,7 +384,7 @@ public class AnnotationUtil {
    *
    * @param owner modifier list
    * @param annotations annotations qualified names or patterns. Patterns can have '*' at the end
-   * @return <code>true</code> if annotated of at least one annotation from the annotations list
+   * @return {@code true} if annotated of at least one annotation from the annotations list
    */
   @Contract("null,_ -> false")
   public static boolean checkAnnotatedUsingPatterns(@Nullable PsiModifierListOwner owner, @NotNull Collection<String> annotations) {

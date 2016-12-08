@@ -80,8 +80,8 @@ public final class SimpleTextAttributes {
 
   /**
    * @param style   style of the text fragment.                                       5
-   * @param fgColor color of the text fragment. <code>color</code> can be
-   *                <code>null</code>. In that case <code>SimpleColoredComponent</code> will
+   * @param fgColor color of the text fragment. {@code color} can be
+   *                {@code null}. In that case {@code SimpleColoredComponent} will
    *                use its foreground to paint the text fragment.
    */
   public SimpleTextAttributes(@StyleAttributeConstant int style, Color fgColor) {
@@ -129,7 +129,7 @@ public final class SimpleTextAttributes {
   }
 
   /**
-   * @return wave color. The method can return <code>null</code>. <code>null</code>
+   * @return wave color. The method can return {@code null}. {@code null}
    *         means that color of wave is the same as foreground color.
    */
   @Nullable

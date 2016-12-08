@@ -27,7 +27,7 @@ public interface ExternallyDefinedPsiElement extends PsiElement {
    * If inspection started for files with injections founds any problem in them (or their child)
    * it should be able to display them locally. This method allows to define such substitution element.
    * E.g. it may be a class name identifier element for fields/methods injected in that class.<br/>
-   * See <code>ProblemsHolder.redirectProblem()</code> for details.
+   * See {@code ProblemsHolder.redirectProblem()} for details.
    *
    * @return PSI element to which problem descriptions should be redirected
    */

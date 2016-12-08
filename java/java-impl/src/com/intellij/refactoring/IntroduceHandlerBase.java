@@ -83,7 +83,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   /**
    * @param project
    * @param tempExpr
-   * @param editor editor to highlight stuff in. Should accept <code>null</code>
+   * @param editor editor to highlight stuff in. Should accept {@code null}
    * @return
    */
   protected abstract boolean invokeImpl(Project project, PsiExpression tempExpr,
@@ -92,7 +92,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   /**
    * @param project
    * @param localVariable
-   * @param editor editor to highlight stuff in. Should accept <code>null</code>
+   * @param editor editor to highlight stuff in. Should accept {@code null}
    * @return
    */
   protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable,

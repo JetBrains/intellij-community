@@ -23,12 +23,12 @@ import com.intellij.openapi.util.JDOMExternalizable;
  */
 public interface ConfigurationTemplate extends JDOMExternalizable {
   /**
-   * @return nver <code>null</code>
+   * @return nver {@code null}
    */
   Configurable createTemplateConfigurable();
 
   /**
-   * @return never <code></code>
+   * @return never {@code}
    */
   RunConfiguration createConfiguration(String name);
 }

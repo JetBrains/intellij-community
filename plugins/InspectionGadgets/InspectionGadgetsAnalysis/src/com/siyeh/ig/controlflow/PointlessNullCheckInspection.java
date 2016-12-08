@@ -34,9 +34,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * This inspection finds instances of null checks followed by an instanceof check
  * on the same variable. For instance:
- * <code>
+ * {@code
  * if (x != null && x instanceof String) { ... }
- * </code>
+ * }
  * The instanceof operator returns false when passed a null, so the null check is pointless.
  *
  * @author Lars Fischer

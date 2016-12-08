@@ -196,7 +196,7 @@ public class SpacingBuilder {
 
   /**
    * Creates SpacingBuilder with given language code style settings.
-   * @param languageCodeStyleSettings The language code style settings. Note that <code>getLanguage()</code> method must not 
+   * @param languageCodeStyleSettings The language code style settings. Note that {@code getLanguage()} method must not
    *                                  return null!
    */
   public SpacingBuilder(@NotNull CommonCodeStyleSettings languageCodeStyleSettings) {

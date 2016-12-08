@@ -181,9 +181,9 @@ public abstract class PsiNameHelper {
 
   /**
    * Obtains text of all type parameter values in a reference.
-   * They go in left-to-right order: <code>A&lt;List&lt;String&gt, B&lt;Integer&gt;&gt;</code> yields
-   * <code>["List&lt;String&gt", "B&lt;Integer&gt;"]</code>. Parameters of the outer reference are ignored:
-   * <code>A&lt;List&lt;String&gt&gt;.B&lt;Integer&gt;</code> yields <code>["Integer"]</code>
+   * They go in left-to-right order: {@code A<List<String&gt, B<Integer>>} yields
+   * {@code ["List<String&gt", "B<Integer>"]}. Parameters of the outer reference are ignored:
+   * {@code A<List<String&gt>.B<Integer>} yields {@code ["Integer"]}
    *
    * @param referenceText the text of the reference to calculate type parameters for.
    * @return the calculated array of type parameters.

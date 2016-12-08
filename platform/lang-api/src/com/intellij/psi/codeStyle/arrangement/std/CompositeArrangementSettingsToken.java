@@ -40,7 +40,7 @@ public class CompositeArrangementSettingsToken {
   @NotNull private final StdArrangementTokenUiRole myRole;
 
   /**
-   * Creates new <code>CompositeArrangementSettingsToken</code> object with no nested tokens.
+   * Creates new {@code CompositeArrangementSettingsToken} object with no nested tokens.
    * <p/>
    * <b>Note:</b> given token is expected to be one of {@link StdArrangementTokens standard tokens} because
    * {@link StdArrangementTokenUiRole its role} is deduced.
@@ -52,7 +52,7 @@ public class CompositeArrangementSettingsToken {
   }
 
   /**
-   * Creates new <code>CompositeArrangementSettingsToken</code> object with the given token and all given children
+   * Creates new {@code CompositeArrangementSettingsToken} object with the given token and all given children
    * assuming that every child {@link CompositeArrangementSettingsToken} will have no children.
    * <p/>
    * <b>Note:</b> given tokens are expected to be from {@link StdArrangementTokens standard tokens} because

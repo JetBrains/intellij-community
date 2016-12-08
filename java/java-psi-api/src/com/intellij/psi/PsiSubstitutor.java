@@ -32,10 +32,10 @@ public interface PsiSubstitutor {
   Key<PsiSubstitutor> KEY = KeyWithDefaultValue.<PsiSubstitutor>create("SUBSTITUTOR", EmptySubstitutor.getInstance());
 
   /**
-   * Empty, or natural, substitutor. For any type parameter <code>T</code>,
-   * substitutes type <code>T</code>.
-   * <b>Example:</b> consider class <code>List&lt;E&gt;</code>. <code>this</code>
-   * inside class <code>List</code> has type List with EMPTY substitutor.
+   * Empty, or natural, substitutor. For any type parameter {@code T},
+   * substitutes type {@code T}.
+   * <b>Example:</b> consider class {@code List<E>}. {@code this}
+   * inside class {@code List} has type List with EMPTY substitutor.
    */
   @NotNull
   PsiSubstitutor EMPTY = EmptySubstitutor.getInstance();
@@ -47,13 +47,13 @@ public interface PsiSubstitutor {
    * Does not perform bounds promotion
    *
    * @param typeParameter the parameter to return the mapping for.
-   * @return the mapping for the type parameter, or <code>null</code> for a raw type.
+   * @return the mapping for the type parameter, or {@code null} for a raw type.
    */
   @Nullable
   PsiType substitute(@NotNull PsiTypeParameter typeParameter);
 
   /**
-   * Substitutes type parameters occurring in <code>type</code> with their values.
+   * Substitutes type parameters occurring in {@code type} with their values.
    * If value for type parameter is <code>null<code>, appropriate erasure is returned.
    *
    * @param type the type to substitute the type parameters for.

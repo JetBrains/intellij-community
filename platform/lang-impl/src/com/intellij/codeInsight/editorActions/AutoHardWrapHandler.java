@@ -46,7 +46,7 @@ import java.util.Map;
 public class AutoHardWrapHandler {
 
   /**
-   * This key is used as a flag that indicates if <code>'auto wrap line on typing'</code> activity is performed now.
+   * This key is used as a flag that indicates if {@code 'auto wrap line on typing'} activity is performed now.
    *
    * @see CodeStyleSettings#isWrapOnTyping(Language)
    */
@@ -62,7 +62,7 @@ public class AutoHardWrapHandler {
    * such line endings to be located on distinct lines.
    * <p/>
    * Hence, we remember last auto-wrap change per-document and merge it with the new auto-wrap if necessary. Current collection
-   * holds that <code>'document -> last auto-wrap change'</code> mappings.
+   * holds that {@code 'document -> last auto-wrap change'} mappings.
    */
   private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<>();
 

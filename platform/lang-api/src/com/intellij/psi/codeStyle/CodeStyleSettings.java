@@ -617,9 +617,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   /**
    * If the file type has an associated language and language indent options are defined, returns these options. Otherwise attempts to find
-   * indent options from <code>FileTypeIndentOptionsProvider</code>. If none are found, other indent options are returned.
+   * indent options from {@code FileTypeIndentOptionsProvider}. If none are found, other indent options are returned.
    * @param fileType The file type to search indent options for.
-   * @return File type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   * @return File type indent options or {@code OTHER_INDENT_OPTIONS}.
    *
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
@@ -645,7 +645,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    *
    * @param project  The project in which PsiFile should be searched.
    * @param document The document to search indent options for.
-   * @return Indent options from the indent options providers or file type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   * @return Indent options from the indent options providers or file type indent options or {@code OTHER_INDENT_OPTIONS}.
    * @see FileIndentOptionsProvider
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider

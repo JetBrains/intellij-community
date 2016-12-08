@@ -517,7 +517,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   /**
-   * Inserts specified string at the beginning of lines from <code>startLine</code> to <code>endLine</code> inclusive.
+   * Inserts specified string at the beginning of lines from {@code startLine} to {@code endLine} inclusive.
    */
   private static void indentLines(final @NotNull Document document, 
                                   final int startLine, final int endLine, final @NotNull CharSequence indentString) {

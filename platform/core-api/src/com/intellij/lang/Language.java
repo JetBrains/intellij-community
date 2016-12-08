@@ -113,8 +113,8 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   /**
-   * @param klass <code>java.lang.Class</code> of the particular language. Serves key purpose.
-   * @return instance of the <code>klass</code> language registered if any.
+   * @param klass {@code java.lang.Class} of the particular language. Serves key purpose.
+   * @return instance of the {@code klass} language registered if any.
    */
   public static <T extends Language> T findInstance(@NotNull Class<T> klass) {
     @SuppressWarnings("unchecked") T t = (T)ourRegisteredLanguages.get(klass);
@@ -123,7 +123,7 @@ public abstract class Language extends UserDataHolderBase {
 
   /**
    * @param mimeType of the particular language.
-   * @return collection of all languages for the given <code>mimeType</code>.
+   * @return collection of all languages for the given {@code mimeType}.
    */
   @NotNull
   public static Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {

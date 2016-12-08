@@ -57,7 +57,7 @@ public interface InlineHandler {
    * @param element element to be inlined
    * @param invokedOnReference true if the user invoked the refactoring on an element reference
    * @param editor in case refactoring has been called in the editor
-   * @return <code>Settings</code> object in case refactoring should be performed or null otherwise
+   * @return {@code Settings} object in case refactoring should be performed or null otherwise
 
    */
   @Nullable Settings prepareInlineElement(@NotNull PsiElement element, @Nullable Editor editor, boolean invokedOnReference);

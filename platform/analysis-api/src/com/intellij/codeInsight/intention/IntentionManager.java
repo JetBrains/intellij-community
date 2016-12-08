@@ -46,10 +46,10 @@ public abstract class IntentionManager  {
 
   /**
    * @deprecated Use {@link #getInstance()} unstead.
-   * Returns instance of <code>IntentionManager</code> for given project.
+   * Returns instance of {@code IntentionManager} for given project.
    *
    * @param project the project for which the instance is returned.
-   * @return instance of the <code>IntentionManager</code> assigned for given project.
+   * @return instance of the {@code IntentionManager} assigned for given project.
    */
   @Deprecated
   public static IntentionManager getInstance(Project project) {
@@ -88,12 +88,12 @@ public abstract class IntentionManager  {
    * Registers an intention action which can be enabled or disabled through the "Intention
    * Settings" dialog. To provide the description and the example code for the intention,
    * the directory with the name equal to {@link IntentionAction#getFamilyName()} needs to
-   * be created under the <code>intentionDescriptions</code> directory of the resource root.
-   * The directory needs to contain three files. <code>description.html</code> provides the
-   * description of the intention, <code>before.java.template</code> provides the sample code
-   * before the intention is invoked, and <code>after.java.template</code> provides the sample
+   * be created under the {@code intentionDescriptions} directory of the resource root.
+   * The directory needs to contain three files. {@code description.html} provides the
+   * description of the intention, {@code before.java.template} provides the sample code
+   * before the intention is invoked, and {@code after.java.template} provides the sample
    * code after invoking the intention. The templates can contain a fragment of code surrounded
-   * with <code>&lt;spot&gt;</code> and <code>&lt;/spot&gt;</code> markers. If present, that fragment
+   * with {@code <spot>} and {@code </spot>} markers. If present, that fragment
    * will be surrounded by a blinking rectangle in the inspection preview pane.
    *
    * @param action   the intention action to register.

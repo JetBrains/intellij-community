@@ -44,7 +44,7 @@ public abstract class InspectionManager {
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
    * @param psiElement problem is reported against
-   * @param descriptionTemplate problem message. Use <code>#ref</code> for a link to problem piece of code and <code>#loc</code> for location in source code.
+   * @param descriptionTemplate problem message. Use {@code #ref} for a link to problem piece of code and {@code #loc} for location in source code.
    * @param fix should be null if no fix is provided.
    * @param onTheFly for local tools on batch run
    */

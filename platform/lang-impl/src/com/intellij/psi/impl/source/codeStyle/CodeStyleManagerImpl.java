@@ -480,7 +480,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * </ol>
    * </pre>
    * <p/>
-   * This method inserts that dummy comment (fallback to identifier <code>xxx</code>, see {@link CodeStyleManagerImpl#createDummy(PsiFile)})
+   * This method inserts that dummy comment (fallback to identifier {@code xxx}, see {@link CodeStyleManagerImpl#createDummy(PsiFile)})
    * if necessary.
    * <p/>
 
@@ -492,7 +492,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * @param file        target PSI file
    * @param document    target document
    * @param offset      offset that defines end boundary of the target line text fragment (start boundary is the first line's symbol)
-   * @return            text range that points to the newly inserted dummy text if any; <code>null</code> otherwise
+   * @return            text range that points to the newly inserted dummy text if any; {@code null} otherwise
    * @throws IncorrectOperationException  if given file is read-only
    */
   @Nullable
@@ -541,7 +541,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    *
    * @param file    target file
    * @param offset  offset that might point to white space element within the given PSI file
-   * @return        target white space element for the given offset within the given file (if any); <code>null</code> otherwise
+   * @return        target white space element for the given offset within the given file (if any); {@code null} otherwise
    */
   @Nullable
   public static PsiElement findWhiteSpaceNode(@NotNull PsiFile file, int offset) {
@@ -623,8 +623,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * Allows to define if {@link #isSequentialProcessingAllowed() sequential processing} should be allowed.
    * <p/>
    * Current approach is not allow to stop sequential processing for more than predefine amount of time (couple of seconds).
-   * That means that call to this method with <code>'true'</code> argument is not mandatory for successful processing even
-   * if this method is called with <code>'false'</code> argument before.
+   * That means that call to this method with {@code 'true'} argument is not mandatory for successful processing even
+   * if this method is called with {@code 'false'} argument before.
    *
    * @param allowed     flag that defines if {@link #isSequentialProcessingAllowed() sequential processing} should be allowed
    */

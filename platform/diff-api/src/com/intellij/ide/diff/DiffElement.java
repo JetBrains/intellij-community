@@ -122,8 +122,8 @@ public abstract class DiffElement<T> {
   /**
    * Defines is it possible to perform such operations as copy or delete through Diff Panel
    *
-   * @return <code>true</code> if copy, delete, etc operations are allowed,
-   *        <code>false</code> otherwise
+   * @return {@code true} if copy, delete, etc operations are allowed,
+   *        {@code false} otherwise
    */
   public boolean isOperationsEnabled() {
     return false;
@@ -134,8 +134,8 @@ public abstract class DiffElement<T> {
    *
    * @param container file directory or other container
    * @param relativePath relative path from root
-   * @return <code>true</code> if coping was completed successfully,
-   *        <code>false</code> otherwise
+   * @return {@code true} if coping was completed successfully,
+   *        {@code false} otherwise
    */
   @Nullable
   public DiffElement<?> copyTo(DiffElement<T> container, String relativePath) {
@@ -144,8 +144,8 @@ public abstract class DiffElement<T> {
 
   /**
    * Deletes element
-   * @return <code>true</code> if deletion was completed successfully,
-   *        <code>false</code> otherwise
+   * @return {@code true} if deletion was completed successfully,
+   *        {@code false} otherwise
    */
   public boolean delete() {
     return false;

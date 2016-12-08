@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This class is a data structure specialized for working with the indexed segments, i.e. it holds numerous mappings like
  * {@code 'index <-> (start; end)'} and provides convenient way for working with them, e.g. find index by particular offset that
- * belongs to target <code>(start; end)</code> segment etc.
+ * belongs to target {@code (start; end)} segment etc.
  * <p/>
  * Not thread-safe.
  */

@@ -129,8 +129,8 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   }
 
   /**
-   * @return <code>TodoFilter</code> with specified <code>name</code>. Method returns
-   *         <code>null</code> if there is no filter with <code>name</code>.
+   * @return {@code TodoFilter} with specified {@code name}. Method returns
+   *         {@code null} if there is no filter with {@code name}.
    */
   public TodoFilter getTodoFilter(String name) {
     for (TodoFilter filter : myTodoFilters) {
@@ -142,7 +142,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   }
 
   /**
-   * @return all <code>TodoFilter</code>s.
+   * @return all {@code TodoFilter}s.
    */
   @NotNull
   public TodoFilter[] getTodoFilters() {

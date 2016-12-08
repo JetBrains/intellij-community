@@ -42,7 +42,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
   private final boolean  myNonVirtualOnly;
 
   /**
-   * Creates new <code>PsiAwareLineWrapPositionStrategy</code> object.
+   * Creates new {@code PsiAwareLineWrapPositionStrategy} object.
    * 
    * @param nonVirtualOnly  defines if current PSI-aware logic should be exploited only for 'real wrap' position requests
    * @param enabledTypes    target element/token types where line wrapping is allowed
@@ -123,15 +123,15 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
    * @param startOffset                       start offset to use with the given text holder (inclusive)
    * @param endOffset                         end offset to use with the given text holder (exclusive)
    * @param maxPreferredOffset                this method is expected to do its best to return offset that belongs to
-   *                                          <code>(startOffset; maxPreferredOffset]</code> interval. However, it's allowed
-   *                                          to return value from <code>(maxPreferredOffset; endOffset]</code> interval
-   *                                          unless <code>'allowToBeyondMaxPreferredOffset'</code> if <code>'false'</code>
+   *                                          {@code (startOffset; maxPreferredOffset]} interval. However, it's allowed
+   *                                          to return value from {@code (maxPreferredOffset; endOffset]} interval
+   *                                          unless {@code 'allowToBeyondMaxPreferredOffset'} if {@code 'false'}
    * @param allowToBeyondMaxPreferredOffset   indicates if it's allowed to return value from
-   *                                          <code>(maxPreferredOffset; endOffset]</code> interval in case of inability to
-   *                                          find appropriate offset from <code>(startOffset; maxPreferredOffset]</code> interval
+   *                                          {@code (maxPreferredOffset; endOffset]} interval in case of inability to
+   *                                          find appropriate offset from {@code (startOffset; maxPreferredOffset]} interval
    * @param virtual                           identifies if current request is for virtual wrap (soft wrap) position
-   * @return                                  offset from <code>(startOffset; endOffset]</code> interval where
-   *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
+   * @return                                  offset from {@code (startOffset; endOffset]} interval where
+   *                                          target line should be wrapped OR {@code -1} if no wrapping should be performed
    */
   protected abstract int doCalculateWrapPosition(
     @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,
@@ -142,8 +142,8 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
    * Allows to check if line wrap at the text range defined by the given element is allowed.
    * 
    * @param element     element that defines target text range
-   * @return            <code>true</code> if wrapping at the text range defined by the given element is allowed;
-   *                    <code>false</code> otherwise
+   * @return            {@code true} if wrapping at the text range defined by the given element is allowed;
+   *                    {@code false} otherwise
    */
   private boolean allowToWrapInside(@NotNull PsiElement element) {
     TextRange textRange = element.getTextRange();
