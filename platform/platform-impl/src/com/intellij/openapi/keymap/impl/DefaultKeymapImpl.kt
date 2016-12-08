@@ -15,22 +15,21 @@
  */
 package com.intellij.openapi.keymap.impl
 
+import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.MouseShortcut
-import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.SystemInfo
 import org.jdom.Element
-
 import java.awt.event.MouseEvent
 
-open class DefaultKeymapImpl : KeymapImpl() {
+open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>) : KeymapImpl(dataHolder) {
   override fun canModify() = false
 
-  override fun getPresentableName() = DefaultKeymap.getInstance().getKeymapPresentableName(this)
+  override fun getPresentableName(): String = DefaultKeymap.instance.getKeymapPresentableName(this)
 
-  override fun readExternal(keymapElement: Element, existingKeymaps: Array<Keymap>) {
-    super.readExternal(keymapElement, existingKeymaps)
+  override fun readExternal(keymapElement: Element) {
+    super.readExternal(keymapElement)
 
     if (KeymapManager.DEFAULT_IDEA_KEYMAP == name && !SystemInfo.isXWindow) {
       addShortcut(IdeActions.ACTION_GOTO_DECLARATION, MouseShortcut(MouseEvent.BUTTON2, 0, 1))

@@ -1,4 +1,3 @@
-<component>
 <keymap name="$default" version="1" disable-mnemonics="false">
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
@@ -1043,4 +1042,3 @@
     <keyboard-shortcut first-keystroke="control shift M" />
   </action>
 </keymap>
-</component>

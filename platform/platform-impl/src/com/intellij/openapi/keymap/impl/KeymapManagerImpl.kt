@@ -54,11 +54,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
                                 attributeProvider: Function<String, String?>,
-                                isBundled: Boolean): KeymapImpl {
-        val keymap = KeymapImpl()
-        keymap.readExternal(dataHolder.read(), allIncludingDefaultsKeymaps)
-        return keymap
-      }
+                                isBundled: Boolean) = KeymapImpl(dataHolder)
 
       override fun getState(scheme: Keymap) = if (scheme.canModify()) SchemeState.POSSIBLY_CHANGED else SchemeState.NON_PERSISTENT
 
@@ -92,9 +88,6 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
   override fun getAllKeymaps() = getKeymaps(Conditions.alwaysTrue<Keymap>()).toTypedArray()
 
   fun getKeymaps(additionalFilter: Condition<Keymap>) = schemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && additionalFilter.value(it)  }
-
-  val allIncludingDefaultsKeymaps: Array<Keymap>
-    get() = schemeManager.allSchemes.toTypedArray()
 
   override fun getKeymap(name: String) = schemeManager.findSchemeByName(name)
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl
 
+import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.Shortcut
@@ -23,7 +24,7 @@ import org.intellij.lang.annotations.JdkConstants
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 
-class MacOSDefaultKeymap : DefaultKeymapImpl() {
+class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>) : DefaultKeymapImpl(dataHolder) {
   override fun getParentActionIds(firstKeyStroke: KeyStroke) = super.getParentActionIds(convertKeyStroke(firstKeyStroke)!!)
 
   override fun getParentActionIds(shortcut: MouseShortcut) = super.getParentActionIds(convertMouseShortcut(shortcut))

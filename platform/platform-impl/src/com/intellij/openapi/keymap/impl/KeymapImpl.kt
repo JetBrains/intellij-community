@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl
 
+import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
@@ -54,19 +55,26 @@ private val NAME_ATTRIBUTE = "name"
 private val ID_ATTRIBUTE = "id"
 private val MOUSE_SHORTCUT = "mouse-shortcut"
 
-open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
+open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
   private var canModify = true
 
   private val actionIdToShortcuts = THashMap<String, MutableList<Shortcut>>()
+    get() {
+      val dataHolder = dataHolder
+      if (dataHolder != null) {
+        this.dataHolder = null
+        readExternal(dataHolder.read())
+      }
+      return field
+    }
 
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<Keymap.Listener>()
 
   private val keymapManager by lazy { KeymapManagerEx.getInstanceEx()!! }
 
   /**
-   * @return IDs of the action which are specified in the keymap. It doesn't
-   * *         return IDs of action from parent keymap.
+   * @return IDs of the action which are specified in the keymap. It doesn't return IDs of action from parent keymap.
    */
   val ownActionIds: Array<String>
     get() = actionIdToShortcuts.keys.toTypedArray()
@@ -424,7 +432,7 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
     return if (own.isEmpty()) Shortcut.EMPTY_ARRAY else own.toTypedArray()
   }
 
-  open fun readExternal(keymapElement: Element, existingKeymaps: Array<Keymap>) {
+  protected open fun readExternal(keymapElement: Element) {
     if (KEY_MAP != keymapElement.name) {
       throw InvalidDataException("unknown element: $keymapElement")
     }
@@ -435,12 +443,9 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
 
     val parentName = keymapElement.getAttributeValue(PARENT_ATTRIBUTE)
     if (parentName != null) {
-      for (existingKeymap in existingKeymaps) {
-        if (parentName == existingKeymap.name) {
-          parent = existingKeymap as KeymapImpl
-          canModify = true
-          break
-        }
+      keymapManager.schemeManager.findSchemeByName(parentName)?.let {
+        parent = it as KeymapImpl
+        canModify = true
       }
     }
 
@@ -519,6 +524,10 @@ open class KeymapImpl : ExternalizableSchemeAdapter(), Keymap, SerializableSchem
   }
 
   override fun writeScheme(): Element {
+    dataHolder?.let {
+      return it.read()
+    }
+
     val keymapElement = Element(KEY_MAP)
     keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1))
     keymapElement.setAttribute(NAME_ATTRIBUTE, name)

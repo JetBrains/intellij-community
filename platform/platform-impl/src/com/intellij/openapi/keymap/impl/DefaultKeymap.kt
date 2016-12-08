@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.net.URL
 import java.util.*
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap")
-private val NAME_ATTRIBUTE = "name"
 
 open class DefaultKeymap {
   private val myKeymaps = ArrayList<Keymap>()
