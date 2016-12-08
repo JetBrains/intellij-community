@@ -30,7 +30,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android-tests.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" filepath="$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" group="platform" />
@@ -255,7 +255,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" filepath="$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/../base/sdk-common/sdk-common.iml" filepath="$PROJECT_DIR$/../base/sdk-common/sdk-common.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/sdk-updates.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/sdk-updates.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates-tests/sdk-updates-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates-tests/sdk-updates-tests.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/sdk-updates/sdk-updates-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sdk-updates/sdk-updates-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/sdklib/sdklib.iml" filepath="$PROJECT_DIR$/../base/sdklib/sdklib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/settings-repository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/settings-repository.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/../sherpa/sherpa-solver.iml" filepath="$PROJECT_DIR$/../sherpa/sherpa-solver.iml" group="android" />
