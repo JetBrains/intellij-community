@@ -57,6 +57,9 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
           usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", ui.isShowRootNames()));
         }
 
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", ui.isCompactReferencesView()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", ui.isShowTagNames()));
+
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {
             usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil
