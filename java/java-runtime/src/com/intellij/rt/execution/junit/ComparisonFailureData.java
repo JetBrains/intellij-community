@@ -87,6 +87,19 @@ public class ComparisonFailureData {
     attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessageLength) : trace);
  
     if (notification != null) {
+      final int expectedIdx = trace.indexOf("expected:<");
+      final String comparisonFailureMessage;
+      if (expectedIdx > 0) {
+        comparisonFailureMessage = trace.substring(0, expectedIdx);
+      }
+      else if (failureIdx > -1) {
+        comparisonFailureMessage = trace.substring(0, failureIdx + failureMessageLength);
+      }
+      else {
+        comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + comparisonFailurePrefix;
+      }
+      attrs.put("message", comparisonFailureMessage);
+
       final String filePath = notification.getFilePath();
       if (filePath != null) {
         attrs.put("expectedFile", filePath);
@@ -101,18 +114,6 @@ public class ComparisonFailureData {
       else {
         attrs.put("actual", notification.getActual());
       }
-      final int expectedIdx = trace.indexOf("expected:<");
-      final String comparisonFailureMessage;
-      if (expectedIdx > 0) {
-        comparisonFailureMessage = trace.substring(0, expectedIdx);
-      }
-      else if (failureIdx > -1) {
-        comparisonFailureMessage = trace.substring(0, failureIdx + failureMessageLength);
-      }
-      else {
-        comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + comparisonFailurePrefix;
-      }
-      attrs.put("message", comparisonFailureMessage);
     }
     else {
       Throwable throwableCause = null;

@@ -1,7 +1,6 @@
 package org.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
-import org.testng.internal.IResultListener;
 import org.testng.xml.XmlTest;
 
 import java.io.PrintStream;
@@ -208,7 +207,7 @@ public class IDEATestNGRemoteListener {
     }
     Throwable ex = result.getThrowable();
     String methodName = getTestMethodNameWithParams(result);
-    final Map<String, String> attrs = new HashMap<String, String>();
+    final Map<String, String> attrs = new LinkedHashMap<String, String>();
     attrs.put("name", methodName);
     final String failureMessage = ex.getMessage();
     ComparisonFailureData notification;
