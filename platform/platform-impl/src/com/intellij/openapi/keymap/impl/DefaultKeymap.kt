@@ -41,7 +41,7 @@ open class DefaultKeymap {
       for (fileName in fileNames) {
         try {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///idea/" + fileName)).rootElement
+            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///idea/$fileName")).rootElement
 
             override fun updateDigest(scheme: KeymapImpl) {
             }
@@ -82,28 +82,17 @@ open class DefaultKeymap {
     get() = myKeymaps.toTypedArray()
 
   open val defaultKeymapName: String
-    get() {
-      if (SystemInfo.isMac) {
-        return KeymapManager.MAC_OS_X_KEYMAP
-      }
-      else if (SystemInfo.isXWindow) {
-        if (SystemInfo.isKDE) {
-          return KeymapManager.KDE_KEYMAP
-        }
-        else {
-          return KeymapManager.X_WINDOW_KEYMAP
-        }
-      }
-      else {
-        return KeymapManager.DEFAULT_IDEA_KEYMAP
-      }
+    get() = when {
+      SystemInfo.isMac -> KeymapManager.MAC_OS_X_KEYMAP
+      SystemInfo.isXWindow -> if (SystemInfo.isKDE) KeymapManager.KDE_KEYMAP else KeymapManager.X_WINDOW_KEYMAP
+      else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 
   open fun getKeymapPresentableName(keymap: KeymapImpl): String {
     val name = keymap.name
 
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
-    if ("NetBeans 6.5" == name) {
+    if (name == "NetBeans 6.5") {
       return "NetBeans"
     }
 
