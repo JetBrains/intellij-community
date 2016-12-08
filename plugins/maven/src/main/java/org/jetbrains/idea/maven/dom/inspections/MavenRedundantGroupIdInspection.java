@@ -1,11 +1,9 @@
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -63,11 +61,7 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
             LocalQuickFix fix = new LocalQuickFixBase("Remove unnecessary <groupId>") {
               @Override
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                PsiElement xmlTag = descriptor.getPsiElement();
-
-                if (xmlTag.isValid() && FileModificationService.getInstance().preparePsiElementForWrite(xmlTag)) {
-                  xmlTag.delete();
-                }
+                descriptor.getPsiElement().delete();
               }
             };
 
