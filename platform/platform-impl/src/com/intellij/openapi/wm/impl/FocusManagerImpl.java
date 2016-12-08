@@ -434,6 +434,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public void dispose() {
     myForcedFocusRequestsAlarm.cancelAllRequests();
     myFocusedComponentAlarm.cancelAllRequests();
+    for (FurtherRequestor requestor : myValidFurtherRequestors) {
+      Disposer.dispose(requestor);
+    }
+    myValidFurtherRequestors.clear();
   }
 
   private class KeyProcessorContext implements KeyEventProcessor.Context {
