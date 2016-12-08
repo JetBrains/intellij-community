@@ -35,7 +35,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Specify bitness of bundled JRE. If {@code null} no JRE will be bundled
    */
-  JvmArchitecture bundledJreArchitecture = JvmArchitecture.x32
+  JvmArchitecture bundledJreArchitecture = JvmArchitecture.x64
 
   /**
    * If {@code false} only 64-bit *64.exe launcher and *64.exe.vmoptions files will be created.
