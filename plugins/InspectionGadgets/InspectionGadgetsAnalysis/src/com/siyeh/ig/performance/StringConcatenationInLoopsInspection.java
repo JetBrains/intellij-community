@@ -43,6 +43,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class StringConcatenationInLoopsInspection extends BaseInspection {
@@ -354,7 +355,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       if(parent instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
         if(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()) == ref) {
-          if (replaceInAssignment(variable, results, assignment, ct)) return;
+          replaceInAssignment(variable, results, assignment, ct);
+          return;
         } else {
           // ref is r-value
           if(assignment.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) return;
@@ -364,7 +366,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
          ((PsiReferenceExpression)parent).getQualifierExpression() == ref &&
          parent.getParent() instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression)parent.getParent();
-        if (replaceInCallQualifier(variable, results, call, ct)) return;
+        replaceInCallQualifier(variable, results, call, ct);
+        return;
       }
       if(parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
         PsiExpression[] expressions = ((PsiExpressionList)parent).getExpressions();
@@ -403,10 +406,10 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                                         (PsiType[])null);
     }
 
-    private static boolean replaceInCallQualifier(PsiVariable variable,
-                                                  List<PsiElement> results,
-                                                  PsiMethodCallExpression call,
-                                                  CommentTracker ct) {
+    private static void replaceInCallQualifier(PsiVariable variable,
+                                               List<PsiElement> results,
+                                               PsiMethodCallExpression call,
+                                               CommentTracker ct) {
       PsiMethod method = call.resolveMethod();
       if(method != null) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -423,13 +426,13 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           case "offsetByCodePoints":
           case "substring":
           case "subSequence":
-            return true;
+            return;
           case "getChars":
-            if(args.length == 4) return true;
+            if(args.length == 4) return;
             break;
           case "indexOf":
           case "lastIndexOf":
-            if(args.length >= 1 && args.length <= 2 && TypeUtils.isJavaLangString(args[0].getType())) return true;
+            if(args.length >= 1 && args.length <= 2 && TypeUtils.isJavaLangString(args[0].getType())) return;
             break;
           case "isEmpty": {
             String sign = "==";
@@ -447,15 +450,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
               emptyCheck = factory.createExpressionFromText("(" + emptyCheck.getText() + ")", call);
             }
             results.add(ct.replace(toReplace, emptyCheck));
-            return true;
+            return;
           }
           default:
         }
       }
-      return false;
+      PsiExpression qualifier = Objects.requireNonNull(call.getMethodExpression().getQualifierExpression());
+      results.add(ct.replace(qualifier, variable.getName() + ".toString()"));
     }
 
-    private boolean replaceInAssignment(PsiVariable variable,
+    private void replaceInAssignment(PsiVariable variable,
                                         List<PsiElement> results,
                                         PsiAssignmentExpression assignment,
                                         CommentTracker ct) {
@@ -471,7 +475,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
               ct.delete(concat.getTokenBeforeOperand(operands[1]), operands[0]);
               replaceAll(variable, rValue, results, ct);
               results.add(ct.replace(assignment, variable.getName() + ".append(" + ct.text(rValue) + ")"));
-              return true;
+              return;
             }
             // s = ... + s;
             PsiExpression lastOp = operands[operands.length - 1];
@@ -479,7 +483,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
               ct.delete(concat.getTokenBeforeOperand(lastOp), lastOp);
               replaceAll(variable, rValue, results, ct);
               results.add(ct.replace(assignment, variable.getName() + ".insert(0," + ct.text(rValue) + ")"));
-              return true;
+              return;
             }
           }
         }
@@ -491,13 +495,9 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       if(assignment.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) {
         // s += ...;
         results.add(ct.replace(assignment, variable.getName() + ".append(" + ((rValue == null) ? "" : ct.text(rValue)) + ")"));
-        return true;
-      }
-      if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+      } else if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         results.add(ct.replace(assignment, variable.getName() + "=" + generateNewStringBuilder(rValue, ct)));
-        return true;
       }
-      return false;
     }
 
     @Nls
