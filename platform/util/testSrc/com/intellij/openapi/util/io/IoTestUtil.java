@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -115,11 +113,9 @@ public class IoTestUtil {
     final File targetFile = new File(FileUtil.toSystemDependentName(target));
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
 
-    final String exePath = getJunctionExePath();
-
     final File junctionFile = getFullLinkPath(junction);
 
-    final ProcessBuilder command = new ProcessBuilder(exePath, junctionFile.getPath(), targetFile.getPath());
+    final ProcessBuilder command = new ProcessBuilder("cmd", "/C", "mklink", "/J", junctionFile.getPath(), targetFile.getPath());
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
@@ -131,12 +127,7 @@ public class IoTestUtil {
     assertTrue(SystemInfo.isWindows);
 
     final File junctionFile = new File(FileUtil.toSystemDependentName(junction));
-
-    final String exePath = getJunctionExePath();
-
-    final ProcessBuilder command = new ProcessBuilder(exePath, "-d",  junctionFile.getPath());
-    final int res = runCommand(command);
-    assertEquals(command.command().toString(), 0, res);
+    assertTrue(junctionFile.delete());
   }
 
   @NotNull
@@ -185,26 +176,6 @@ public class IoTestUtil {
     final File parentDir = linkFile.getParentFile();
     assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
     return linkFile;
-  }
-
-  private static String getJunctionExePath() throws IOException, InterruptedException {
-    try {
-      URL url = IoTestUtil.class.getClassLoader().getResource("junction.exe");
-      assertNotNull(url);
-
-      File util = new File(url.toURI());
-      String path = util.getPath();
-      assertTrue(path, util.exists());
-
-      ProcessBuilder command = new ProcessBuilder(path, "/acceptEULA");
-      int res = runCommand(command);
-      assertEquals(command.command().toString(), -1, res);
-
-      return path;
-    }
-    catch (URISyntaxException e) {
-      throw new IOException(e);
-    }
   }
 
   private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
