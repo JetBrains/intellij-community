@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SoftWrap;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -40,8 +39,6 @@ public class IncrementalCacheUpdateEvent {
   
   @NotNull
   private final LogicalPosition myStartLogicalPosition;
-  @NotNull 
-  private final VisualPosition myStartVisualPosition;
   private final int myOldEndLogicalLine;
   private int myNewEndLogicalLine = -1;
 
@@ -78,7 +75,6 @@ public class IncrementalCacheUpdateEvent {
     myMandatoryEndOffset = document.getTextLength();
     myLengthDiff = 0;
     myStartLogicalPosition = new LogicalPosition(0, 0, 0, 0, 0, 0, 0);
-    myStartVisualPosition = new VisualPosition(0, 0);
     myOldEndLogicalLine = myNewEndLogicalLine = Math.max(0, document.getLineCount() - 1);
   }
   
@@ -89,7 +85,6 @@ public class IncrementalCacheUpdateEvent {
     }
     myStartOffset = info.startOffset;
     myStartLogicalPosition = editor.offsetToLogicalPosition(myStartOffset);
-    myStartVisualPosition = new VisualPosition(info.visualLine, 0);
     myMandatoryEndOffset = newEndOffset;
     myLengthDiff = newEndOffset - oldEndOffset;
     myOldEndLogicalLine = editor.getDocument().getLineNumber(oldEndOffset);
@@ -99,7 +94,7 @@ public class IncrementalCacheUpdateEvent {
   private static VisualLineInfo getVisualLineInfo(@NotNull EditorImpl editor, int offset, boolean beforeSoftWrap) {
     Document document = editor.getDocument();
     int textLength = document.getTextLength();
-    if (offset <= 0 || textLength == 0) return new VisualLineInfo(0, 0, false);
+    if (offset <= 0 || textLength == 0) return new VisualLineInfo(0, false);
     offset = Math.min(offset, textLength);
 
     int startOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
@@ -109,20 +104,15 @@ public class IncrementalCacheUpdateEvent {
     int prevSoftWrapIndex = wrapIndex < 0 ? (- wrapIndex - 2) : wrapIndex - (beforeSoftWrap ? 1 : 0);
     SoftWrap prevSoftWrap = prevSoftWrapIndex < 0 ? null : softWrapModel.getRegisteredSoftWraps().get(prevSoftWrapIndex);
     
-    int visualLine = document.getLineNumber(offset) - editor.getFoldingModel().getFoldedLinesCountBefore(offset) + (prevSoftWrapIndex + 1);
     int visualLineStartOffset = prevSoftWrap == null ? startOffset : Math.max(startOffset, prevSoftWrap.getStart());
-    return new VisualLineInfo(visualLine, 
-                              visualLineStartOffset, 
-                              prevSoftWrap != null && prevSoftWrap.getStart() == visualLineStartOffset);
+    return new VisualLineInfo(visualLineStartOffset, prevSoftWrap != null && prevSoftWrap.getStart() == visualLineStartOffset);
   }
   
   private static class VisualLineInfo {
-    private final int visualLine;
     private final int startOffset;
     private final boolean startsWithSoftWrap;
 
-    private VisualLineInfo(int visualLine, int startOffset, boolean wrap) {
-      this.visualLine = visualLine;
+    private VisualLineInfo(int startOffset, boolean wrap) {
       this.startOffset = startOffset;
       startsWithSoftWrap = wrap;
     }
@@ -145,14 +135,6 @@ public class IncrementalCacheUpdateEvent {
   @NotNull
   public LogicalPosition getStartLogicalPosition() {
     return myStartLogicalPosition;
-  }
-
-  /**
-   * Returns visual position, from which soft wrap recalculation should start
-   */
-  @NotNull
-  public VisualPosition getStartVisualPosition() {
-    return myStartVisualPosition;
   }
 
   /**

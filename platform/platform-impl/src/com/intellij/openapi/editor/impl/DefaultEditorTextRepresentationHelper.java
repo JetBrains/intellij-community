@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
 
@@ -53,11 +52,6 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
-  public int toVisualColumnSymbolsNumber(int start, int end, int x) {
-    return EditorUtil.textWidthInColumns(myEditor, myEditor.getDocument().getImmutableCharSequence(), start, end, x);
-  }
-
-  @Override
   public int charWidth(char c, int fontType) {
     // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation
     // helper is editor-bound and cache size is not too big.
@@ -65,42 +59,6 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
     
     mySharedKey.c = c;
     return charWidth(c);
-  }
-
-  @Override
-  public int calcSoftWrapUnawareOffset(int startOffset, int endOffset, int startColumn, int column, int startX) {
-    return EditorUtil.calcSoftWrapUnawareOffset(myEditor, myEditor.getDocument().getImmutableCharSequence(), startOffset, endOffset,
-                                                column, EditorUtil.getTabSize(myEditor), startX, new int[]{startColumn}, null);
-  }
-
-  @Override
-  public int textWidth(int start, int end, int fontType, int x) {
-    CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-    int startToUse = start;
-    for (int i = end - 1; i >= start; i--) {
-      if (text.charAt(i) == '\n') {
-        startToUse = i + 1;
-        break;
-      }
-    }
-
-    int result = 0;
-
-    // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation
-    // helper is editor-bound and cache size is not too big.
-    mySharedKey.fontType = fontType;
-    
-    for (int i = startToUse; i < end; i++) {
-      char c = text.charAt(i);
-      if (c != '\t') {
-        mySharedKey.c = c;
-        result += charWidth(c);
-        continue;
-      }
-
-      result += EditorUtil.nextTabStop(x + result, myEditor) - result - x;
-    }
-    return result;
   }
 
   private int charWidth(char c) {
