@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public abstract class KeymapManagerEx extends KeymapManager {
-  public static KeymapManagerEx getInstanceEx(){
+  public static KeymapManagerEx getInstanceEx() {
     return (KeymapManagerEx)getInstance();
   }
 
@@ -42,13 +42,16 @@ public abstract class KeymapManagerEx extends KeymapManager {
    * Instructs the manager that one action should use shortcut of another one (<code>'use-shortcut-of'</code> attribute at
    * action's config located at plugin.xml).
    *
-   * @param sourceActionId  if of the action which shortcut should be used for the 'target action'
-   * @param targetActionId  id of the action which should use shortcut of the 'source action'
+   * @param sourceActionId if of the action which shortcut should be used for the 'target action'
+   * @param targetActionId id of the action which should use shortcut of the 'source action'
    */
   public abstract void bindShortcuts(String sourceActionId, String targetActionId);
+
   public abstract void unbindShortcuts(String targetActionId);
 
   public abstract Set<String> getBoundActions();
+
+  @Nullable
   public abstract String getActionBinding(String actionId);
 
   public abstract SchemeManager<Keymap> getSchemeManager();

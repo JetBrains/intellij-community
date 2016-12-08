@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -27,15 +28,21 @@ import java.awt.event.InputEvent;
  * @author max
  */
 public class MacOSDefaultKeymap extends DefaultKeymapImpl {
-  protected String[] getParentActionIds(KeyStroke firstKeyStroke) {
+  @NotNull
+  @Override
+  protected String[] getParentActionIds(@NotNull KeyStroke firstKeyStroke) {
     return super.getParentActionIds(convertKeyStroke(firstKeyStroke));
   }
 
-  protected String[] getParentActionIds(MouseShortcut shortcut) {
+  @NotNull
+  @Override
+  protected String[] getParentActionIds(@NotNull MouseShortcut shortcut) {
     return super.getParentActionIds(convertMouseShortcut(shortcut));
   }
 
-  protected Shortcut[] getParentShortcuts(String actionId) {
+  @NotNull
+  @Override
+  protected Shortcut[] getParentShortcuts(@NotNull String actionId) {
     Shortcut[] parentShortcuts = super.getParentShortcuts(actionId);
     Shortcut[] macShortcuts = new Shortcut[parentShortcuts.length];
     for (int i = 0; i < parentShortcuts.length; i++) {

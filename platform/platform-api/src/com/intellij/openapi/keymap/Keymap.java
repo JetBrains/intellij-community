@@ -21,9 +21,10 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public interface Keymap extends Scheme {
@@ -35,6 +36,7 @@ public interface Keymap extends Scheme {
   //think about name
   String getPresentableName();
 
+  @Nullable
   Keymap getParent();
 
   boolean canModify();
@@ -75,7 +77,7 @@ public interface Keymap extends Scheme {
 
   void removeShortcut(String actionId, Shortcut shortcut);
 
-  Map<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut);
+  Map<String, List<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut);
 
   void addShortcutChangeListener(Listener listener);
 
