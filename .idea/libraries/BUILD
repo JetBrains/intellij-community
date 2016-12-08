@@ -86,13 +86,11 @@ java_library(
     exports = [
         "//tools/idea/lib:jsr305",
         "//tools/idea/plugins/gradle/lib:jsr305-1.3.9",
-        "//tools/adt/idea/android/lib:jsr305-1.3.9",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/lib:jsr305",
         "//tools/idea/plugins/gradle/lib:jsr305-1.3.9",
-        "//tools/adt/idea/android/lib:jsr305-1.3.9",
     ],
 )
 
