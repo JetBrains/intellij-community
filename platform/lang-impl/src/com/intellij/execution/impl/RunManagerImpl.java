@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @State(
   name = "RunManager",
@@ -68,7 +69,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new TreeMap<>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<>(); // template configurations are not included here
-  private final Map<String, Boolean> mySharedConfigurations = new THashMap<>();
+  private final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
   private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<>();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
