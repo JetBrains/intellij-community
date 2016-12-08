@@ -68,4 +68,44 @@ class EqualsReplaceableByObjectsCall {
   static boolean abc(String s) {
     return <warning descr="'A.B.c == s || A.B.c != null && A.B.c.equals(s)' replaceable by 'Objects.equals()' expression">A.B.c == s || A.B.c != null && A.B.c.equals(s)</warning>;
   }
+
+  static class Ternary {
+    String s;
+    boolean eq1(Ternary t) {
+      return <warning descr="'s == null ? t.s == null : s.equals(t.s)' replaceable by 'Objects.equals()' expression">s == null ? t.s == null : s.equals(t.s)</warning>;
+    }
+    boolean eq2(Ternary t) {
+      return (<warning descr="'(s != null) ? (s.equals(t.s)) : (t.s == null)' replaceable by 'Objects.equals()' expression">(s != null) ? (s.equals(t.s)) : (t.s == null)</warning>);
+    }
+    boolean ne1(Ternary t) {
+      return <warning descr="'s == null ? t.s != null : !s.equals(t.s)' replaceable by 'Objects.equals()' expression">s == null ? t.s != null : !s.equals(t.s)</warning>;
+    }
+    boolean ne2(Ternary t) {
+      return <warning descr="'(s != null) ? (!s.equals(t.s)) : !(t.s == null)' replaceable by 'Objects.equals()' expression">(s != null) ? (!s.equals(t.s)) : !(t.s == null)</warning>;
+    }
+    boolean notMatches1(Ternary t) {
+      return s == null ? t.s != null : s.equals(t.s);
+    }
+    boolean notMatches2(Ternary t) {
+      return s != null ? t.s != null : s.equals(t.s);
+    }
+    boolean notMatches3(Ternary t) {
+      return ((s != null) ? !(s.equals(t.s)) : (t.s == null));
+    }
+    boolean notMatches4(Ternary t) {
+      return s == null ? t.s == null : !s.equals(t.s);
+    }
+    boolean notMatches5(Ternary t) {
+      return s != null ? s.equals(t.s) : t.s != null;
+    }
+    boolean notMatches6(Ternary t) {
+      return s == null ? !s.equals(t.s) : t.s != null;
+    }
+    boolean notMatches7(Ternary t) {
+      return s == null ? t.s == null : t.s.equals(s);
+    }
+    boolean notMatches8(Ternary t) {
+      return (s != null) ? (t.s.equals(s)) : (t.s == null);
+    }
+  }
 }

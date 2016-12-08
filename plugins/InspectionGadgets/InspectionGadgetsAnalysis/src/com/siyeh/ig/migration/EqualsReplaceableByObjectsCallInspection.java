@@ -90,7 +90,9 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression || element instanceof PsiMethodCallExpression)) {
+      if (!(element instanceof PsiBinaryExpression ||
+            element instanceof PsiMethodCallExpression ||
+            element instanceof PsiConditionalExpression)) {
         return;
       }
       final PsiExpression expression = (PsiExpression)element;
@@ -121,9 +123,15 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
         return;
       }
-      final PsiElement maybeBinary = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
-      if (maybeBinary instanceof PsiBinaryExpression) {
-        if (processNotNullCheck((PsiBinaryExpression)maybeBinary)) {
+      final PsiElement parentExpression =
+        PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
+      if (parentExpression instanceof PsiBinaryExpression) {
+        if (processNotNullCheck((PsiBinaryExpression)parentExpression)) {
+          return;
+        }
+      }
+      else if (parentExpression instanceof PsiConditionalExpression) {
+        if (processNotNullCondition((PsiConditionalExpression)parentExpression)) {
           return;
         }
       }
@@ -137,10 +145,6 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
         }
         registerError(expression, qualifierExpression.getText(), argumentExpression.getText(), true);
       }
-    }
-
-    private PsiExpression getQualifierExpression(PsiMethodCallExpression expression) {
-      return ParenthesesUtils.stripParentheses(expression.getMethodExpression().getQualifierExpression());
     }
 
     private boolean processNotNullCheck(PsiBinaryExpression expression) {
@@ -157,6 +161,58 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
         }
       }
       return true;
+    }
+
+    /**
+     * Report null-safe 'equals' checks in the form of ternary operator:
+     * <ul>
+     * <li>A == null ? B == null : A.equals(B) ~ equals(A, B)</li>
+     * <li>A == null ? B != null : !A.equals(B) ~ !equals(A, B)</li>
+     * <li>A != null ? A.equals(B) : B == null ~ equals(A, B)</li>
+     * <li>A != null ? !A.equals(B) : B != null ~ !equals(A, B)</li>
+     * </ul>
+     *
+     * @return true if such 'equals' check is found
+     */
+    private boolean processNotNullCondition(@NotNull PsiConditionalExpression expression) {
+      final NullCheck conditionNullCheck = NullCheck.create(expression.getCondition());
+      if (conditionNullCheck == null) return false;
+
+      final PsiExpression nullBranch = ParenthesesUtils.stripParentheses(
+        conditionNullCheck.equal ? expression.getThenExpression() : expression.getElseExpression());
+      if (nullBranch == null) return false;
+
+      final PsiExpression nonNullBranch = ParenthesesUtils.stripParentheses(
+        conditionNullCheck.equal ? expression.getElseExpression() : expression.getThenExpression());
+      if (nonNullBranch == null) return false;
+
+      NullCheck otherNullCheck = NullCheck.create(nullBranch);
+      if (otherNullCheck == null) return false;
+
+      EqualsCheck equalsCheck = EqualsCheck.create(nonNullBranch);
+      if (equalsCheck == null) return false;
+
+      if (otherNullCheck.equal != equalsCheck.equal) return false;
+      final boolean equal = equalsCheck.equal;
+
+      String conditionNullCheckName = getQualifiedVariableName(conditionNullCheck.compared);
+      if (conditionNullCheckName == null) return false;
+
+      String otherNullCheckName = getQualifiedVariableName(otherNullCheck.compared);
+      if (otherNullCheckName == null) return false;
+
+      String equalsArgumentName = getQualifiedVariableName(equalsCheck.argument);
+      if (equalsArgumentName == null) return false;
+
+      String equalsQualifierName = getQualifiedVariableName(equalsCheck.qualifier);
+      if (equalsQualifierName == null) return false;
+
+      if (conditionNullCheckName.equals(equalsQualifierName) && otherNullCheckName.equals(equalsArgumentName)) {
+        registerError(expression, equalsCheck.qualifier.getText(), equalsCheck.argument.getText(), Boolean.valueOf(equal));
+        return true;
+      }
+
+      return false;
     }
 
     /**
@@ -248,6 +304,10 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     return expressions.length == 1 ? ParenthesesUtils.stripParentheses(expressions[0]) : null;
   }
 
+  private static PsiExpression getQualifierExpression(PsiMethodCallExpression expression) {
+    return ParenthesesUtils.stripParentheses(expression.getMethodExpression().getQualifierExpression());
+  }
+
   /**
    * Check if the expression is a variable name chain like "a.b.c" ("this" and "super" are allowed), and convert it into a qualified name
    *
@@ -287,4 +347,84 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
     return null;
   }
+
+  //<editor-fold desc="Helpers">
+  private static class Negated {
+    @NotNull final PsiExpression expression;
+    final boolean equal;
+
+    public Negated(@NotNull PsiExpression expression, boolean equal) {
+      this.expression = expression;
+      this.equal = equal;
+    }
+
+    @Nullable
+    static Negated create(@Nullable PsiExpression maybeNegatedExpression) {
+      boolean equal = true;
+      PsiExpression expression = ParenthesesUtils.stripParentheses(maybeNegatedExpression);
+      if (expression instanceof PsiPrefixExpression) {
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+        if (JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
+          equal = false;
+          expression = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
+        }
+      }
+      return expression != null ? new Negated(expression, equal) : null;
+    }
+  }
+
+  private static class NullCheck {
+    @NotNull final PsiExpression compared;
+    final boolean equal;
+
+    public NullCheck(@NotNull PsiExpression compared, boolean equal) {
+      this.compared = compared;
+      this.equal = equal;
+    }
+
+    @Nullable
+    private static NullCheck create(@Nullable PsiExpression maybeNullCheckExpression) {
+      final Negated n = Negated.create(maybeNullCheckExpression);
+      if (n != null) {
+        PsiExpression fromNullComparison = ExpressionUtils.getReferenceExpressionFromNullComparison(n.expression, true);
+        if (fromNullComparison != null) {
+          return new NullCheck(fromNullComparison, n.equal);
+        }
+        fromNullComparison = ExpressionUtils.getReferenceExpressionFromNullComparison(n.expression, false);
+        if (fromNullComparison != null) {
+          return new NullCheck(fromNullComparison, !n.equal);
+        }
+      }
+      return null;
+    }
+  }
+
+  private static class EqualsCheck {
+    @NotNull final PsiExpression argument;
+    @NotNull final PsiExpression qualifier;
+    final boolean equal;
+
+    public EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean equal) {
+      this.argument = argument;
+      this.qualifier = qualifier;
+      this.equal = equal;
+    }
+
+    @Nullable
+    private static EqualsCheck create(@Nullable PsiExpression maybeEqualsCheckExpression) {
+      final Negated n = Negated.create(maybeEqualsCheckExpression);
+      if (n != null && n.expression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression callExpression = ((PsiMethodCallExpression)n.expression);
+        if (HardcodedMethodConstants.EQUALS.equals(callExpression.getMethodExpression().getReferenceName())) {
+          final PsiExpression argument = getArgumentExpression(callExpression);
+          final PsiExpression qualifier = getQualifierExpression(callExpression);
+          if (argument != null && qualifier != null) {
+            return new EqualsCheck(argument, qualifier, n.equal);
+          }
+        }
+      }
+      return null;
+    }
+  }
+  //</editor-fold>
 }
