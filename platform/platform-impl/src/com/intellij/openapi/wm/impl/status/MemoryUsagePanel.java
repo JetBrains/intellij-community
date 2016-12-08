@@ -118,8 +118,10 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
   @Override
   public void updateUI() {
+    myBufferedImage = null;
     super.updateUI();
     setFont(getWidgetFont());
+    setBorder(BorderFactory.createEmptyBorder());
   }
 
   private static Font getWidgetFont() {
