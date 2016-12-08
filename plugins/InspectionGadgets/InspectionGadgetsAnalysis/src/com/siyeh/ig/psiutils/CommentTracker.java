@@ -97,6 +97,25 @@ public class CommentTracker {
   }
 
   /**
+   * Creates a replacement element from the text and replaces given element,
+   * collecting all the comments inside it.
+   *
+   * <p>
+   *   The type of the created replacement will mimic the type of supplied element.
+   *   Supported element types are: {@link PsiExpression}, {@link PsiStatement},
+   *   {@link PsiTypeElement}, {@link PsiIdentifier}, {@link PsiComment}.
+   * </p>
+   *
+   * @param element element to replace
+   * @param text replacement text
+   * @return the element which was actually inserted in the tree
+   */
+  public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull String text) {
+    PsiElement replacement = createElement(element, text);
+    return replace(element, replacement);
+  }
+
+  /**
    * Replaces given PsiElement collecting all the comments inside it and restores comments putting them
    * to the appropriate place before replaced element.
    *
@@ -118,6 +137,48 @@ public class CommentTracker {
     if(anchor == null) anchor = result;
     insertCommentsBefore(anchor);
     return result;
+  }
+
+  /**
+   * Creates a replacement element from the text and replaces given element,
+   * collecting all the comments inside it and restores comments putting them
+   * to the appropriate place before replaced element.
+   *
+   * <p>After calling this method the tracker cannot be used anymore.</p>
+   *
+   * <p>
+   *   The type of the created replacement will mimic the type of supplied element.
+   *   Supported element types are: {@link PsiExpression}, {@link PsiStatement},
+   *   {@link PsiTypeElement}, {@link PsiIdentifier}, {@link PsiComment}.
+   * </p>
+   *
+   * @param element element to replace
+   * @param text replacement text
+   * @return the element which was actually inserted in the tree
+   */
+  public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull String text) {
+    PsiElement replacement = createElement(element, text);
+    return replaceAndRestoreComments(element, replacement);
+  }
+
+  @NotNull
+  private static PsiElement createElement(@NotNull PsiElement element, @NotNull String text) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    PsiElement replacement;
+    if(element instanceof PsiExpression) {
+      replacement = factory.createExpressionFromText(text, element);
+    } else if(element instanceof PsiStatement) {
+      replacement = factory.createStatementFromText(text, element);
+    } else if(element instanceof PsiTypeElement) {
+      replacement = factory.createTypeElementFromText(text, element);
+    } else if(element instanceof PsiIdentifier) {
+      replacement = factory.createIdentifier(text);
+    } else if(element instanceof PsiComment) {
+      replacement = factory.createCommentFromText(text, element);
+    } else {
+      throw new IllegalArgumentException("Unsupported element type: "+element);
+    }
+    return replacement;
   }
 
   /**

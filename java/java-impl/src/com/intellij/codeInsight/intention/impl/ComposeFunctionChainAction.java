@@ -105,8 +105,7 @@ public class ComposeFunctionChainAction extends PsiElementBaseIntentionAction {
 
     String replacement = resultQualifier + "andThen(" + reference + ").apply" + ct.text(call.getArgumentList());
 
-    PsiElement result =
-      ct.replaceAndRestoreComments(outer, JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, outer));
+    PsiElement result = ct.replaceAndRestoreComments(outer, replacement);
     result = CodeStyleManager.getInstance(project).reformat(result);
     PsiElement applyElement = ((PsiMethodCallExpression)result).getMethodExpression().getReferenceNameElement();
     if(applyElement != null) {

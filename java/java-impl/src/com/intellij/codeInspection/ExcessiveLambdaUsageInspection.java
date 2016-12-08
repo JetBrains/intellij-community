@@ -112,8 +112,7 @@ public class ExcessiveLambdaUsageInspection extends BaseJavaBatchLocalInspection
 
       call.getMethodExpression().handleElementRename(myInfo.getTargetName(call));
       CommentTracker ct = new CommentTracker();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      ct.replaceAndRestoreComments(lambda, factory.createExpressionFromText(ct.text(body), lambda));
+      ct.replaceAndRestoreComments(lambda, ct.text(body));
     }
   }
 

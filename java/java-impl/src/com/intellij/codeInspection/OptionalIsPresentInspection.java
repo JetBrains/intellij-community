@@ -283,10 +283,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       String replacementText = myScenario.generateReplacement(factory, ct, optionalVariable, thenElement, elseElement);
       if (thenElement != null && !PsiTreeUtil.isAncestor(cond, thenElement, true)) ct.delete(thenElement);
       if (elseElement != null && !PsiTreeUtil.isAncestor(cond, elseElement, true)) ct.delete(elseElement);
-      PsiElement replacement = cond instanceof PsiExpression ?
-                               factory.createExpressionFromText(replacementText, cond) :
-                               factory.createStatementFromText(replacementText, cond);
-      PsiElement result = ct.replaceAndRestoreComments(cond, replacement);
+      PsiElement result = ct.replaceAndRestoreComments(cond, replacementText);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
       CodeStyleManager.getInstance(project).reformat(result);

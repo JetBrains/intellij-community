@@ -158,14 +158,13 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
         replaceFlatMap(countName, qualifierCall, qualifier, factory);
       }
       else {
-        replaceSimpleCount(countCall, qualifierCall, qualifier, factory);
+        replaceSimpleCount(countCall, qualifierCall, qualifier);
       }
     }
 
     private static void replaceSimpleCount(PsiMethodCallExpression countCall,
                                            PsiMethodCallExpression qualifierCall,
-                                           PsiMethod qualifier,
-                                           PsiElementFactory factory) {
+                                           PsiMethod qualifier) {
       if (!isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) return;
       PsiReferenceExpression methodExpression = qualifierCall.getMethodExpression();
       PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
@@ -191,7 +190,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
         ct.delete(parameterList);
       }
       String replacementText = (addCast ? "(long) " : "") + ct.text(methodExpression)+"()";
-      PsiElement replacement = ct.replaceAndRestoreComments(toReplace, factory.createExpressionFromText(replacementText, countCall));
+      PsiElement replacement = ct.replaceAndRestoreComments(toReplace, replacementText);
       if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
         RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
       }

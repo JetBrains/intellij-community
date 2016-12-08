@@ -193,7 +193,7 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       }
       if (replacement == null) return;
       if (previous != null) ct.delete(previous);
-      PsiElement result = ct.replaceAndRestoreComments(loop, factory.createStatementFromText(replacement, loop));
+      PsiElement result = ct.replaceAndRestoreComments(loop, replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
