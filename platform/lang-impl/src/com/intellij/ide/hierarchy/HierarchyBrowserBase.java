@@ -59,6 +59,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   protected Content myContent;
 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
+  private volatile boolean myDisposed;
 
   protected HierarchyBrowserBase(@NotNull Project project) {
     super(true, true);
@@ -87,7 +88,13 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @Override
-  public void dispose() { }
+  public void dispose() {
+    myDisposed = true;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
+  }
 
   protected ActionToolbar createToolbar(final String place, final String helpID) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
