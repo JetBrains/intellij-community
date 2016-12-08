@@ -24,13 +24,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class IoTestUtil {
   private IoTestUtil() { }
@@ -53,203 +56,168 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createSymLink(@NotNull String target, @NotNull String link) throws InterruptedException, IOException {
+  public static File createSymLink(@NotNull String target, @NotNull String link) {
     return createSymLink(target, link, true);
   }
 
   @NotNull
-  public static File createSymLink(@NotNull String target, @NotNull String link, boolean shouldExist) throws InterruptedException, IOException {
-    assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
-
-    final File targetFile = new File(FileUtil.toSystemDependentName(target));
-    final File linkFile = getFullLinkPath(link);
-
-    final ProcessBuilder command;
-    if (SystemInfo.isWindows) {
-      command = targetFile.isDirectory()
-                ? new ProcessBuilder("cmd", "/C", "mklink", "/D", linkFile.getPath(), targetFile.getPath())
-                : new ProcessBuilder("cmd", "/C", "mklink", linkFile.getPath(), targetFile.getPath());
+  public static File createSymLink(@NotNull String target, @NotNull String link, boolean shouldExist) {
+    File linkFile = getFullLinkPath(link);
+    try {
+      Files.createSymbolicLink(linkFile.toPath(), FileSystems.getDefault().getPath(target));
     }
-    else {
-      command = new ProcessBuilder("ln", "-s", targetFile.getPath(), linkFile.getPath());
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    final int res = runCommand(command);
-    String message = command.command().toString();
-    if (SystemInfo.isWindows)  {
-      message = "Cannot create a symlink; configure permissions as described: http://superuser.com/a/105381\n" + message;
-    }
-    assertEquals(message, 0, res);
-
-    shouldExist |= SystemInfo.isWindows && SystemInfo.JAVA_VERSION.startsWith("1.6");
     assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
     return linkFile;
   }
 
   @NotNull
-  public static File createHardLink(@NotNull String target, @NotNull String link) throws InterruptedException, IOException {
-    assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
-
-    final File targetFile = new File(FileUtil.toSystemDependentName(target));
-    final File linkFile = getFullLinkPath(link);
-
-    final ProcessBuilder command;
-    if (SystemInfo.isWindows) {
-      command = new ProcessBuilder("fsutil", "hardlink", "create", linkFile.getPath(), targetFile.getPath());
+  public static File createHardLink(@NotNull String target, @NotNull String link) {
+    File linkFile = getFullLinkPath(link);
+    try {
+      Files.createLink(linkFile.toPath(), FileSystems.getDefault().getPath(target));
     }
-    else {
-      command = new ProcessBuilder("ln", targetFile.getPath(), linkFile.getPath());
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    final int res = runCommand(command);
-    assertEquals(command.command().toString(), 0, res);
-
     assertTrue("target=" + target + ", link=" + linkFile, linkFile.exists());
     return linkFile;
   }
 
   @NotNull
-  public static File createJunction(@NotNull String target, @NotNull String junction) throws InterruptedException, IOException {
+  public static File createJunction(@NotNull String target, @NotNull String junction) {
     assertTrue(SystemInfo.isWindows);
-
-    final File targetFile = new File(FileUtil.toSystemDependentName(target));
+    File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
-
-    final File junctionFile = getFullLinkPath(junction);
-
-    final ProcessBuilder command = new ProcessBuilder("cmd", "/C", "mklink", "/J", junctionFile.getPath(), targetFile.getPath());
-    final int res = runCommand(command);
-    assertEquals(command.command().toString(), 0, res);
-
-    assertTrue("target=" + target + ", link=" + junctionFile, junctionFile.isDirectory());
+    File junctionFile = getFullLinkPath(junction);
+    runCommand("cmd", "/C", "mklink", "/J", junctionFile.getPath(), targetFile.getPath());
+    assertTrue("target=" + targetFile + ", link=" + junctionFile, junctionFile.isDirectory());
     return junctionFile;
   }
 
-  public static void deleteJunction(@NotNull String junction) throws InterruptedException, IOException {
+  public static void deleteJunction(@NotNull String junction) {
     assertTrue(SystemInfo.isWindows);
-
-    final File junctionFile = new File(FileUtil.toSystemDependentName(junction));
-    assertTrue(junctionFile.delete());
+    assertTrue(new File(junction).delete());
   }
 
   @NotNull
-  public static File createSubst(@NotNull String target) throws InterruptedException, IOException {
+  public static File createSubst(@NotNull String target) {
     assertTrue(SystemInfo.isWindows);
-
-    final File targetFile = new File(FileUtil.toSystemDependentName(target));
+    File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
-
-    final String substRoot = getFirstFreeDriveLetter() + ":";
-
-    final ProcessBuilder command = new ProcessBuilder("subst", substRoot, targetFile.getPath());
-    final int res = runCommand(command);
-    assertEquals(command.command().toString(), 0, res);
-
-    final File rootFile = new File(substRoot + "\\");
-    assertTrue("target=" + target + ", subst=" + rootFile, rootFile.isDirectory());
+    String substRoot = getFirstFreeDriveLetter() + ":";
+    runCommand("subst", substRoot, targetFile.getPath());
+    File rootFile = new File(substRoot + "\\");
+    assertTrue("target=" + targetFile + ", subst=" + rootFile, rootFile.isDirectory());
     return rootFile;
   }
 
-  public static void deleteSubst(@NotNull String substRoot) throws InterruptedException, IOException {
-    runCommand(new ProcessBuilder("subst", StringUtil.trimEnd(substRoot, "\\"), "/d"));
+  public static void deleteSubst(@NotNull String substRoot) {
+    runCommand("subst", StringUtil.trimEnd(substRoot, "\\"), "/d");
   }
 
   private static char getFirstFreeDriveLetter() {
-    final Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> root.getPath().toUpperCase(Locale.US).charAt(0));
-
-    char drive = 0;
+    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> root.getPath().toUpperCase(Locale.US).charAt(0));
     for (char c = 'E'; c <= 'Z'; c++) {
       if (!roots.contains(c)) {
-        drive = c;
-        break;
+        return c;
       }
     }
-
-    assertFalse("Occupied: " + roots.toString(), drive == 0);
-    return drive;
+    throw new RuntimeException("No free roots");
   }
 
   private static File getFullLinkPath(String link) {
-    File linkFile = new File(FileUtil.toSystemDependentName(link));
+    File linkFile = new File(link);
     if (!linkFile.isAbsolute()) {
       linkFile = new File(getTempDirectory(), link);
     }
     assertTrue(link, !linkFile.exists() || linkFile.delete());
-    final File parentDir = linkFile.getParentFile();
+    File parentDir = linkFile.getParentFile();
     assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
     return linkFile;
   }
 
-  private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
-    command.redirectErrorStream(true);
-    final Process process = command.start();
-    Thread thread = new Thread(() -> {
-      try {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        try {
-          //noinspection StatementWithEmptyBody
+  private static void runCommand(String... command) {
+    try {
+      ProcessBuilder builder = new ProcessBuilder(command);
+      builder.redirectErrorStream(true);
+
+      Process process = builder.start();
+      StringBuilder output = new StringBuilder();
+      Thread thread = new Thread(() -> {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
           String line;
           while ((line = reader.readLine()) != null) {
-            System.out.println(line);
+            output.append(line).append('\n');
           }
         }
-        finally {
-          reader.close();
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
+      }, "io test");
+      thread.start();
+      int ret = process.waitFor();
+      thread.join();
+
+      if (ret != 0) {
+        throw new RuntimeException(builder.command() + "\nresult: " + ret + "\noutput:\n" + output);
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }, "io test");
-    thread.start();
-    int ret = process.waitFor();
-    thread.join();
-    return ret;
+    }
+    catch (IOException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public static void assertTimestampsEqual(final long expected, final long actual) {
-    final long roundedExpected = (expected / 1000) * 1000;
-    final long roundedActual = (actual / 1000) * 1000;
+  public static void assertTimestampsEqual(long expected, long actual) {
+    long roundedExpected = (expected / 1000) * 1000;
+    long roundedActual = (actual / 1000) * 1000;
     assertEquals("expected: " + expected + ", actual: " + actual,
                  roundedExpected, roundedActual);
   }
 
-  public static void assertTimestampsNotEqual(final long expected, final long actual) {
-    final long roundedExpected = (expected / 1000) * 1000;
-    final long roundedActual = (actual / 1000) * 1000;
+  public static void assertTimestampsNotEqual(long expected, long actual) {
+    long roundedExpected = (expected / 1000) * 1000;
+    long roundedActual = (actual / 1000) * 1000;
     assertTrue("(un)expected: " + expected + ", actual: " + actual,
                roundedExpected != roundedActual);
   }
 
   @NotNull
-  public static File createTestJar() throws IOException {
-    File jarFile = expandWindowsPath(FileUtil.createTempFile("test.", ".jar"));
-    return createTestJar(jarFile);
+  public static File createTestJar() {
+    try {
+      File jarFile = expandWindowsPath(FileUtil.createTempFile("test.", ".jar"));
+      return createTestJar(jarFile);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
-  public static File createTestJar(File jarFile) throws IOException {
+  public static File createTestJar(File jarFile) {
     return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull String... data) throws IOException {
-    ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile));
-    try {
+  public static File createTestJar(@NotNull File jarFile, @NotNull String... data) {
+    try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (int i = 0; i < data.length; i += 2) {
         stream.putNextEntry(new ZipEntry(data[i]));
         stream.write(data[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
         stream.closeEntry();
       }
+      return jarFile;
     }
-    finally {
-      stream.close();
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    return jarFile;
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull final File root) throws IOException {
-    final ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile));
-    try {
+  public static File createTestJar(@NotNull File jarFile, @NotNull File root) {
+    try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       FileUtil.visitFiles(root, file -> {
         if (file.isFile()) {
           String path = FileUtil.toSystemIndependentName(ObjectUtils.assertNotNull(FileUtil.getRelativePath(root, file)));
@@ -264,11 +232,11 @@ public class IoTestUtil {
         }
         return true;
       });
+      return jarFile;
     }
-    finally {
-      stream.close();
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    return jarFile;
   }
 
   @NotNull
@@ -284,29 +252,34 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestFile(@NotNull String name) throws IOException {
+  public static File createTestFile(@NotNull String name) {
     return createTestFile(name, null);
   }
 
   @NotNull
-  public static File createTestFile(@NotNull String name, @Nullable String content) throws IOException {
+  public static File createTestFile(@NotNull String name, @Nullable String content) {
     return createTestFile(getTempDirectory(), name, content);
   }
 
   @NotNull
-  public static File createTestFile(@NotNull File parent, @NotNull String name) throws IOException {
+  public static File createTestFile(@NotNull File parent, @NotNull String name) {
     return createTestFile(parent, name, null);
   }
 
   @NotNull
-  public static File createTestFile(@NotNull File parent, @NotNull String name, @Nullable String content) throws IOException {
-    assertTrue(parent.getPath(), parent.isDirectory() || parent.mkdirs());
-    File file = new File(parent, name);
-    assertTrue(file.getPath(), file.createNewFile());
-    if (content != null) {
-      FileUtil.writeToFile(file, content);
+  public static File createTestFile(@NotNull File parent, @NotNull String name, @Nullable String content) {
+    try {
+      assertTrue(parent.getPath(), parent.isDirectory() || parent.mkdirs());
+      File file = new File(parent, name);
+      assertTrue(file.getPath(), file.createNewFile());
+      if (content != null) {
+        FileUtil.writeToFile(file, content);
+      }
+      return file;
     }
-    return file;
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void delete(File... files) {
@@ -317,12 +290,9 @@ public class IoTestUtil {
     }
   }
 
-  public static void setHidden(@NotNull String path, boolean hidden) throws IOException, InterruptedException {
+  public static void setHidden(@NotNull String path, boolean hidden) {
     assertTrue(SystemInfo.isWindows);
-
-    ProcessBuilder command = new ProcessBuilder("attrib", hidden ? "+H" : "-H", path);
-    int res = runCommand(command);
-    assertEquals(command.command().toString(), 0, res);
+    runCommand("attrib", hidden ? "+H" : "-H", path);
   }
 
   public static void updateFile(@NotNull File file, String content) {

@@ -619,7 +619,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     });
 
     try {
-      files.forEach(f -> IoTestUtil.updateFile(new File(f.getPath()), "++"));
+      files.forEach(f -> IoTestUtil.updateFile(new File(f.getPath()), "+++"));
       ((NewVirtualFile)topDir).markDirtyRecursively();
 
       RefreshWorker.setCancellingCondition(file -> file.getPath().endsWith(top.getName() + "/sub_2/file_2"));

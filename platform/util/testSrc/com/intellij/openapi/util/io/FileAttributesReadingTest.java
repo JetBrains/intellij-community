@@ -82,7 +82,7 @@ public abstract class FileAttributesReadingTest {
     @Override public void junction() { }
   }
 
-  private final byte[] myTestData = new byte[]{'t', 'e', 's', 't'};
+  private final byte[] myTestData = {'t', 'e', 's', 't'};
   private File myTempDirectory;
 
   @Before
