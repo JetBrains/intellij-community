@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -62,10 +63,12 @@ public class Group implements KeymapGroup {
     return myIcon;
   }
 
+  @Nullable
   public String getId() {
     return myId;
   }
 
+  @Override
   public void addActionId(String id) {
     myChildren.add(id);
   }
@@ -78,6 +81,7 @@ public class Group implements KeymapGroup {
     myChildren.add(link);
   }
 
+  @Override
   public void addGroup(KeymapGroup keymapGroup) {
     Group group = (Group) keymapGroup;
     myChildren.add(group);

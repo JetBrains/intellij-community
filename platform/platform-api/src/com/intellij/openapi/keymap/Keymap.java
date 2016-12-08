@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +45,13 @@ public interface Keymap extends Scheme {
    */
   String[] getActionIds();
 
+  // 60 external usages — actionId cannot be marked as NotNull
   /**
    * @return all keyboard shortcuts for the action with the specified <code>actionId</code>
    * or an empty array if the action doesn't have any keyboard shortcut.
    */
   @NotNull
-  Shortcut[] getShortcuts(@NonNls String actionId);
+  Shortcut[] getShortcuts(@Nullable String actionId);
 
   /**
    * @return all actions that have the specified first keystroke. If there are no
