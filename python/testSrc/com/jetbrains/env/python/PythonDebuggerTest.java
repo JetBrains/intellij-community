@@ -1119,6 +1119,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("x").hasValue("2");
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
     });
   }
 
