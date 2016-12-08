@@ -104,13 +104,6 @@ java_import(
 )
 
 java_import(
-    name = "jsr305-1.3.9",
-    jars = ["jsr305-1.3.9.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "commons-io-2.2",
     jars = ["commons-io-2.2.jar"],
     tags = ["managed"],
