@@ -14,7 +14,7 @@ REGEXP_FILE
             RegExpCharImpl: <s>
               PsiElement(CHARACTER)('s')
             RegExpCharImpl: <->
-              PsiElement(MINUS)('-')
+              PsiElement(CHARACTER)('-')
             RegExpCharImpl: <p>
               PsiElement(CHARACTER)('p')
             RegExpCharImpl: <a>

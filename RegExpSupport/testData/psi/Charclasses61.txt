@@ -7,7 +7,7 @@ REGEXP_FILE
           RegExpSimpleClassImpl: <\w>
             PsiElement(CHAR_CLASS)('\w')
           RegExpCharImpl: <->
-            PsiElement(MINUS)('-')
+            PsiElement(CHARACTER)('-')
           RegExpSimpleClassImpl: <\w>
             PsiElement(CHAR_CLASS)('\w')
         PsiElement(CLASS_END)(']')

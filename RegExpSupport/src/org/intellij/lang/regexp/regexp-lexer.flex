@@ -235,8 +235,6 @@ HEX_CHAR=[0-9a-fA-F]
   {ANY}               { yypopstate(); yypushback(1); }
 }
 
-"-"                   { return RegExpTT.MINUS; }
-
 <CLASS2> {
   {LBRACKET}          { if (allowNestedCharacterClasses) {
                            yypushstate(CLASS2);
@@ -298,6 +296,7 @@ HEX_CHAR=[0-9a-fA-F]
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
 
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
+  "-"                   { return RegExpTT.MINUS; }
   [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.ESC_CHARACTER; }
   {ANY}                 { return RegExpTT.CHARACTER; }
 }
@@ -372,6 +371,7 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 "^"                   { return RegExpTT.CARET; }
+"-"                   { return RegExpTT.CHARACTER; }
 
 /* "dangling ]" */
 <YYINITIAL> {RBRACKET}    { return RegExpTT.CHARACTER; }

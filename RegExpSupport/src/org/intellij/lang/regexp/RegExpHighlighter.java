@@ -63,7 +63,6 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
   static {
     ourMap.put(RegExpTT.CHARACTER, CHARACTER);
     ourMap.put(RegExpTT.COLON, CHARACTER);
-    ourMap.put(RegExpTT.MINUS, CHARACTER);
     ourMap.put(RegExpTT.DOT, DOT);
 
     ourMap.put(RegExpTT.NAME, NAME);
@@ -73,6 +72,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     ourMap.put(RegExpTT.CARET, META);
     ourMap.put(RegExpTT.DOLLAR, META);
     ourMap.put(RegExpTT.ANDAND, META);
+    ourMap.put(RegExpTT.MINUS, META);
 
     ourMap.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
     ourMap.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, INVALID_CHARACTER_ESCAPE);
