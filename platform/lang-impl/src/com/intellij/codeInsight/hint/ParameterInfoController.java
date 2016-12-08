@@ -19,7 +19,6 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
-import com.intellij.lang.Language;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
@@ -38,6 +37,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -276,23 +276,13 @@ public class ParameterInfoController implements Disposable {
       return;
     }
 
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    final PsiFile file =  PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
     CharSequence chars = myEditor.getDocument().getCharsSequence();
     boolean noDelimiter = myHandler instanceof ParameterInfoHandlerWithTabActionSupport &&
                           ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
     int caretOffset = myEditor.getCaretModel().getOffset();
     final int offset = noDelimiter ? caretOffset :
                        CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
-
-    if (file != null) {
-      Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
-      if (file.getLanguage() != language) {
-        PsiFile langFile = file.getViewProvider().getPsi(language);
-        if (langFile != null) {
-          file = langFile;
-        }
-      }
-    }
 
     final UpdateParameterInfoContext context = new MyUpdateParameterInfoContext(offset, file);
     final Object elementForUpdating = myHandler.findElementForUpdatingParameterInfo(context);
