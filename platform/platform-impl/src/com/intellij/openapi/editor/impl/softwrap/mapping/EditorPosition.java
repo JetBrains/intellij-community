@@ -23,7 +23,6 @@ class EditorPosition implements Cloneable {
   public int logicalLine;
   public int offset;
   public int x;
-  public char symbol;
 
   private final Editor myEditor;
 
@@ -63,7 +62,6 @@ class EditorPosition implements Cloneable {
     logicalLine = position.logicalLine;
     offset = position.offset;
     x = position.x;
-    symbol = position.symbol;
   }
 
   @Override
@@ -72,7 +70,6 @@ class EditorPosition implements Cloneable {
     result.logicalLine = logicalLine;
     result.offset = offset;
     result.x = x;
-    result.symbol = symbol;
     return result;
   }
 

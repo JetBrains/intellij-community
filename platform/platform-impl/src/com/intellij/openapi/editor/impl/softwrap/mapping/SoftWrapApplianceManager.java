@@ -504,8 +504,7 @@ public class SoftWrapApplianceManager implements Dumpable {
    */
   private int[] offsetToX(int offset, char c) {
     if (myOffset2widthInPixels.end > offset
-        && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > offset)
-        && myContext.currentPosition.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
+        && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > offset))
     {
       int width = myOffset2widthInPixels.data[offset - myOffset2widthInPixels.anchor];
       return new int[] {myContext.currentPosition.x + width + myContext.getInlaysWidth(), width};
@@ -1235,8 +1234,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     public void onNonLineFeedSymbol(char c) {
       int[] metrics;
       if (myOffset2widthInPixels.end > myContext.currentPosition.offset
-          && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > myContext.currentPosition.offset)
-          && myContext.currentPosition.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
+          && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > myContext.currentPosition.offset))
       {
 
         int width = myOffset2widthInPixels.data[myContext.currentPosition.offset - myOffset2widthInPixels.anchor];
