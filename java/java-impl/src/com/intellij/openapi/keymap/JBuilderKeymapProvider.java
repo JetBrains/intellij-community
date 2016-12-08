@@ -26,6 +26,6 @@ import java.util.List;
 public class JBuilderKeymapProvider implements BundledKeymapProvider {
   @Override
   public List<String> getKeymapFileNames() {
-    return Collections.singletonList("JBuilderKeymap.xml");
+    return Collections.singletonList("JBuilder.xml");
   }
 }

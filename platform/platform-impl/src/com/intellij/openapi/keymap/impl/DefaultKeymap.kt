@@ -18,11 +18,13 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtilRt
 import org.jdom.Element
 import java.net.URL
 import java.util.*
@@ -37,21 +39,37 @@ open class DefaultKeymap {
 
   init {
     for (provider in providers) {
-      val fileNames = provider.keymapFileNames
-      for (fileName in fileNames) {
-        try {
+      for (fileName in provider.keymapFileNames) {
+        // backward compatibility (no external usages of BundledKeymapProvider, but maybe it is not published to plugin manager)
+        val key = when (fileName) {
+          "Keymap_Default.xml" -> "\$default.xml"
+          "Keymap_Mac.xml" -> "Mac OS X 10.5+.xml"
+          "Keymap_MacClassic.xml" -> "Mac OS X.xml"
+          "Keymap_GNOME.xml" -> "Default for GNOME.xml"
+          "Keymap_KDE.xml" -> "Default for KDE.xml"
+          "Keymap_XWin.xml" -> "Default for XWin.xml"
+          "Keymap_EclipseMac.xml" -> "Eclipse (Mac OS X).xml"
+          "Keymap_Eclipse.xml" -> "Eclipse.xml"
+          "Keymap_Emacs.xml" -> "Emacs.xml"
+          "JBuilderKeymap.xml" -> "JBuilder.xml"
+          "Keymap_Netbeans.xml" -> "NetBeans 6.5.xml"
+          "Keymap_ReSharper_OSX.xml" -> "ReSharper OSX.xml"
+          "Keymap_ReSharper.xml" -> "ReSharper.xml"
+          "RM_TextMateKeymap.xml" -> "TextMate.xml"
+          "Keymap_Xcode.xml" -> "Xcode.xml"
+          else -> fileName
+        }
+
+        LOG.catchAndLog {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///idea/$fileName")).rootElement
+            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///keymaps/$key")).rootElement
 
             override fun updateDigest(scheme: KeymapImpl) {
             }
 
             override fun updateDigest(data: Element) {
             }
-          }, fileName)
-        }
-        catch (e: Exception) {
-          LOG.error(e)
+          }, FileUtilRt.getNameWithoutExtension(key))
         }
       }
     }
@@ -75,7 +93,9 @@ open class DefaultKeymap {
   }
 
   private fun loadKeymapsFromElement(dataHolder: SchemeDataHolder<KeymapImpl>, keymapName: String) {
-    myKeymaps.add(if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder) else DefaultKeymapImpl(dataHolder))
+    val keymap = if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder) else DefaultKeymapImpl(dataHolder)
+    keymap.name = keymapName
+    myKeymaps.add(keymap)
   }
 
   val keymaps: Array<Keymap>

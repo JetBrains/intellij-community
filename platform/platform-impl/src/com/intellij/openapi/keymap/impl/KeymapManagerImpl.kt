@@ -54,7 +54,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
                                 attributeProvider: Function<String, String?>,
-                                isBundled: Boolean) = KeymapImpl(dataHolder)
+                                isBundled: Boolean) = KeymapImpl(name, dataHolder)
 
       override fun getState(scheme: Keymap) = if (scheme.canModify()) SchemeState.POSSIBLY_CHANGED else SchemeState.NON_PERSISTENT
 
@@ -65,10 +65,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
       }
     })
 
-    val systemDefaultKeymap = if (WelcomeWizardUtil.getWizardMacKeymap() != null)
-      WelcomeWizardUtil.getWizardMacKeymap()
-    else
-      defaultKeymap.defaultKeymapName
+    val systemDefaultKeymap = if (WelcomeWizardUtil.getWizardMacKeymap() == null) defaultKeymap.defaultKeymapName else WelcomeWizardUtil.getWizardMacKeymap()
     for (keymap in defaultKeymap.keymaps) {
       schemeManager.addScheme(keymap)
       if (keymap.name == systemDefaultKeymap) {

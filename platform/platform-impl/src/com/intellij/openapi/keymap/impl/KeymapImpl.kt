@@ -55,6 +55,12 @@ private val NAME_ATTRIBUTE = "name"
 private val ID_ATTRIBUTE = "id"
 private val MOUSE_SHORTCUT = "mouse-shortcut"
 
+fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapImpl {
+  val result = KeymapImpl(dataHolder)
+  result.name = name
+  return result
+}
+
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
   private var canModify = true
@@ -122,7 +128,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
       return result
     }
-
   companion object {
     fun setCanModify(keymapImpl: KeymapImpl, `val`: Boolean) {
       keymapImpl.canModify = `val`
@@ -158,13 +163,15 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return deriveKeymap("$name (copy)")
   }
 
-  fun copy() = copyTo(KeymapImpl())
+  fun copy(): KeymapImpl {
+    dataHolder?.let {
+      return KeymapImpl(name, it)
+    }
+
+    return copyTo(KeymapImpl())
+  }
 
   fun copyTo(otherKeymap: KeymapImpl): KeymapImpl {
-    otherKeymap.parent = parent
-    otherKeymap.name = name
-    otherKeymap.canModify = canModify()
-
     otherKeymap.cleanShortcutsCache()
 
     otherKeymap.actionIdToShortcuts.clear()
@@ -173,6 +180,11 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       otherKeymap.actionIdToShortcuts.put(actionId, SmartList(shortcuts))
       true
     }
+
+    // after actionIdToShortcuts (on first access we lazily read itself)
+    otherKeymap.parent = parent
+    otherKeymap.name = name
+    otherKeymap.canModify = canModify()
     return otherKeymap
   }
 
