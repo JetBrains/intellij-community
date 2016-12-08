@@ -87,13 +87,14 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     panel.add(mySchemeComboBox,
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new JBInsets(0, 0, 5, 10),
                                      0, 0));
-    ManageSchemesComboAction schemesComboAction = new ManageSchemesComboAction(new ColorSchemeActions(this, myOptions) {
-      @Nullable
-      @Override
-      protected EditorColorsScheme getCurrentScheme() {
-        return myOptions.getScheme(getSelectedSchemeName());
-      }
-    });
+    ManageSchemesComboAction<EditorColorsScheme> schemesComboAction =
+      new ManageSchemesComboAction<>(new ColorSchemeActions(this, myOptions) {
+        @Nullable
+        @Override
+        protected EditorColorsScheme getCurrentScheme() {
+          return myOptions.getScheme(getSelectedSchemeName());
+        }
+      });
     JButton manageButton = schemesComboAction.createCombo();
     panel.add(manageButton,
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new JBInsets(0, 0, 5, 5),

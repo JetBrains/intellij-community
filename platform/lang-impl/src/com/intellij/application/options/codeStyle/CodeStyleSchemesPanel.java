@@ -145,19 +145,20 @@ public class CodeStyleSchemesPanel {
   }
 
   private void createUIComponents() {
-    ManageSchemesComboAction manageSchemesComboAction = new ManageSchemesComboAction(new CodeStyleSchemesActions(myModel) {
-      @NotNull
-      @Override
-      protected JComponent getParentComponent() {
-        return myPanel;
-      }
+    ManageSchemesComboAction<CodeStyleScheme> manageSchemesComboAction =
+      new ManageSchemesComboAction<>(new CodeStyleSchemesActions(myModel) {
+        @NotNull
+        @Override
+        protected JComponent getParentComponent() {
+          return myPanel;
+        }
 
-      @Nullable
-      @Override
-      protected CodeStyleScheme getCurrentScheme() {
-        return getSelectedScheme();
-      }
-    });
+        @Nullable
+        @Override
+        protected CodeStyleScheme getCurrentScheme() {
+          return getSelectedScheme();
+        }
+      });
     myManageButton = manageSchemesComboAction.createCombo();
   }
 

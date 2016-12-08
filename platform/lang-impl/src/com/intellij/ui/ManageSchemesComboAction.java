@@ -22,16 +22,17 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.application.options.DefaultSchemeActions;
+import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
 
-public class ManageSchemesComboAction extends ComboBoxAction {
+public class ManageSchemesComboAction<T extends Scheme> extends ComboBoxAction {
   
   private Collection<AnAction> myActions;
 
-  public ManageSchemesComboAction(@NotNull DefaultSchemeActions schemeActions) {
+  public ManageSchemesComboAction(@NotNull DefaultSchemeActions<T> schemeActions) {
     myActions = schemeActions.getActions();
   }
 
