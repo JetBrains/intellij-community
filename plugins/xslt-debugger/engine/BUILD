@@ -13,7 +13,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/xpath/xslt-rt[module]",
-        "//tools/idea/.idea/libraries:RMI_Stubs",
+        "//tools/idea/plugins/xslt-debugger/engine/lib:rmi-stubs",
         "//tools/idea/.idea/libraries:Trove4j",
     ],
 )

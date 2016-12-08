@@ -23,7 +23,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/vcs-api[module]",
-        "//tools/idea/.idea/libraries:trilead-ssh2",
+        "//tools/idea/plugins/git4idea/lib:trilead-ssh2",
         "//tools/idea/.idea/libraries:XmlRPC",
         "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/platform/lang-api[module]",
@@ -33,7 +33,7 @@ iml_module(
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/plugins/git4idea/rt:git4idea-rt[module]",
-        "//tools/idea/.idea/libraries:ini4j-0.5.2-patched",
+        "//tools/idea/plugins/git4idea/lib/ini4j:ini4j-0.5.2-patched",
         "//tools/idea/.idea/libraries:Groovy[test]",
         "//tools/idea/platform/dvcs-impl[module]",
         "//tools/idea/.idea/libraries:cucumber-core[test]",

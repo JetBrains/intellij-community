@@ -12,7 +12,9 @@ iml_module(
         "//tools/idea/plugins/coverage-common",
         "//tools/idea/java/execution/openapi:execution-openapi",
         "//tools/idea/java/openapi",
-        "//tools/idea/.idea/libraries:CoverageReport",
+        "//tools/idea/plugins/coverage/lib:coverage-report",
+        "//tools/idea/plugins/coverage/lib:coverage-report-idea",
+        "//tools/idea/plugins/coverage/lib:freemarker",
     ],
     # do not sort: must match IML order
     deps = [
@@ -21,7 +23,9 @@ iml_module(
         "//tools/idea/java/openapi[module]",
         "//tools/idea:compiler-impl_and_others[module]",
         "//tools/idea/platform/testRunner[module]",
-        "//tools/idea/.idea/libraries:CoverageReport",
+        "//tools/idea/plugins/coverage/lib:coverage-report",
+        "//tools/idea/plugins/coverage/lib:coverage-report-idea",
+        "//tools/idea/plugins/coverage/lib:freemarker",
         "//tools/idea/plugins/testng_rt[module]",
         "//tools/idea/plugins/junit_rt[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",

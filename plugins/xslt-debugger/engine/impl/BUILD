@@ -14,8 +14,9 @@ iml_module(
         "//tools/idea/plugins/xpath/xslt-rt[module]",
         "//tools/idea/plugins/xslt-debugger/engine:xslt-debugger-engine[module]",
         "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/.idea/libraries:Saxon-6.5.5",
-        "//tools/idea/.idea/libraries:Saxon-9HE",
-        "//tools/idea/.idea/libraries:Xalan-2.7.1",
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon",
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:saxon9he",
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:xalan",
+        "//tools/idea/plugins/xslt-debugger/engine/impl/lib:serializer",
     ],
 )

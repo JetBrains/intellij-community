@@ -19,7 +19,7 @@ iml_module(
         "//tools/idea/platform/platform-api[module]",
         "//tools/idea:platform-impl_and_others[module]",
         "//tools/idea/plugins/svn4idea/lib:svnkit",
-        "//tools/idea/.idea/libraries:trilead-ssh2",
+        "//tools/idea/plugins/svn4idea/lib:trilead",
         "//tools/idea/plugins/svn4idea/lib:sequence-library",
         "//tools/idea/plugins/svn4idea/lib:sqljet",
         "//tools/idea/plugins/svn4idea/lib:antlr",
@@ -50,7 +50,7 @@ iml_module(
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/plugins/svn4idea/lib:sqljet",
         "//tools/idea/.idea/libraries:jsch-agent-proxy",
-        "//tools/idea/.idea/libraries:trilead-ssh2",
+        "//tools/idea/plugins/svn4idea/lib:trilead",
         "//tools/idea/platform/vcs-tests[module, test]",
     ],
 )
