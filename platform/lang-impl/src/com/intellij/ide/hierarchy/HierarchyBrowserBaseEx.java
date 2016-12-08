@@ -458,6 +458,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   final boolean isValidBase() {
+    if (myProject.isDisposed()) return false;
     if (PsiDocumentManager.getInstance(myProject).getUncommittedDocuments().length > 0) {
       return myCachedIsValidBase;
     }
