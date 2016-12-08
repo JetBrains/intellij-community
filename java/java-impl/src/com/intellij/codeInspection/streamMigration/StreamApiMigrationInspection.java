@@ -1108,12 +1108,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(!(condition instanceof PsiBinaryExpression)) return null;
       PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
       if(!JavaTokenType.NE.equals(binOp.getOperationTokenType())) return null;
-      PsiExpression operand = null;
-      if(ExpressionUtils.isNullLiteral(binOp.getROperand())) {
-        operand = binOp.getLOperand();
-      } else if(ExpressionUtils.isNullLiteral(binOp.getLOperand())) {
-        operand = binOp.getROperand();
-      }
+      PsiExpression operand = ExpressionUtils.getValueComparedWithNull(binOp);
       if(operand == null) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(PsiUtil.skipParenthesizedExprDown(operand));
       if(assignment == null) return null;

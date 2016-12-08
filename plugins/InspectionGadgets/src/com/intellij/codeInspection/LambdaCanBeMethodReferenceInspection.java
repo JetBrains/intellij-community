@@ -273,13 +273,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (expression instanceof PsiInstanceOfExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_INSTANCEOF) {
       return expression;
     }
-    else if (expression instanceof PsiBinaryExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK) {
-      IElementType tokenType = ((PsiBinaryExpression)expression).getOperationTokenType();
-      if (JavaTokenType.EQEQ.equals(tokenType) || JavaTokenType.NE.equals(tokenType)) {
-        if (ExpressionUtils.isNullLiteral(((PsiBinaryExpression)expression).getLOperand()) ||
-            ExpressionUtils.isNullLiteral(((PsiBinaryExpression)expression).getROperand())) {
-          return expression;
-        }
+    else if (expression instanceof PsiBinaryExpression &&
+             CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK) {
+      if (ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null) {
+        return expression;
       }
     }
     else if (expression instanceof PsiTypeCastExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_CAST) {
@@ -408,13 +405,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     }
     else if (element instanceof PsiBinaryExpression) {
       PsiBinaryExpression nullCheck = (PsiBinaryExpression)element;
-      PsiExpression operand;
-      if (ExpressionUtils.isNullLiteral(nullCheck.getROperand())) {
-        operand = nullCheck.getLOperand();
-      } else if(ExpressionUtils.isNullLiteral(nullCheck.getLOperand())) {
-        operand = nullCheck.getROperand();
-      } else return null;
-      if(isSoleParameter(parameters, operand)) {
+      PsiExpression operand = ExpressionUtils.getValueComparedWithNull(nullCheck);
+      if(operand != null && isSoleParameter(parameters, operand)) {
         IElementType tokenType = nullCheck.getOperationTokenType();
         if(JavaTokenType.EQEQ.equals(tokenType)) {
           return "java.util.Objects::isNull";

@@ -653,6 +653,24 @@ public class ExpressionUtils {
     return comparedToNull instanceof PsiReferenceExpression ? (PsiReferenceExpression)comparedToNull : null;
   }
 
+  /**
+   * Returns the expression compared with null if the supplied {@link PsiBinaryExpression} is null check (either with {@code ==}
+   * or with {@code !=}). Returns null otherwise.
+   *
+   * @param binOp binary expression to extract the value compared with null from
+   * @return value compared with null
+   */
+  @Nullable
+  public static PsiExpression getValueComparedWithNull(@NotNull PsiBinaryExpression binOp) {
+    if(!binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
+       !binOp.getOperationTokenType().equals(JavaTokenType.NE)) return null;
+    PsiExpression left = binOp.getLOperand();
+    PsiExpression right = binOp.getROperand();
+    if(isNullLiteral(right)) return left;
+    if(isNullLiteral(left)) return right;
+    return null;
+  }
+
   public static boolean isConcatenation(PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
       return false;

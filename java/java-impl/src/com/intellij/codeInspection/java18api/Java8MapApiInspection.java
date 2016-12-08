@@ -202,17 +202,6 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Nullable
-  static PsiExpression getValueComparedWithNull(PsiBinaryExpression binOp) {
-    if(!binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
-       !binOp.getOperationTokenType().equals(JavaTokenType.NE)) return null;
-    PsiExpression left = binOp.getLOperand();
-    PsiExpression right = binOp.getROperand();
-    if(ExpressionUtils.isNullLiteral(right)) return left;
-    if(ExpressionUtils.isNullLiteral(left)) return right;
-    return null;
-  }
-
-  @Nullable
   static PsiExpression extractLambdaCandidate(MapCheckCondition condition, PsiStatement statement) {
     PsiAssignmentExpression assignment;
     PsiExpression putValue = extractPutValue(condition, statement);
@@ -318,7 +307,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
     PsiMethodCallExpression call;
     if(condition instanceof PsiBinaryExpression) {
       negated ^= ((PsiBinaryExpression)condition).getOperationTokenType().equals(JavaTokenType.EQEQ);
-      PsiExpression value = getValueComparedWithNull((PsiBinaryExpression)condition);
+      PsiExpression value = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
       if(value instanceof PsiReferenceExpression && statement != null) {
         valueReference = (PsiReferenceExpression)value;
         PsiElement previous = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class, PsiComment.class);
