@@ -13,114 +13,101 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap.impl;
+package com.intellij.openapi.keymap.impl
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfo
+import org.jdom.Element
+import java.net.URL
+import java.util.*
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+private val LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap")
+private val NAME_ATTRIBUTE = "name"
 
-/**
- * @author Eugene Belyaev
- */
-public class DefaultKeymap {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap");
+open class DefaultKeymap {
+  private val myKeymaps = ArrayList<Keymap>()
 
-  @NonNls
-  private static final String KEY_MAP = "keymap";
-  @NonNls
-  private static final String NAME_ATTRIBUTE = "name";
+  protected open val providers: Array<BundledKeymapProvider>
+    get() = Extensions.getExtensions(BundledKeymapProvider.EP_NAME)
 
-  private final List<Keymap> myKeymaps = new ArrayList<>();
-
-  public static DefaultKeymap getInstance() {
-    return ServiceManager.getService(DefaultKeymap.class);
-  }
-
-  public DefaultKeymap() {
-    for (BundledKeymapProvider provider : getProviders()) {
-      final List<String> fileNames = provider.getKeymapFileNames();
-      for (String fileName : fileNames) {
+  init {
+    for (provider in providers) {
+      val fileNames = provider.keymapFileNames
+      for (fileName in fileNames) {
         try {
-          loadKeymapsFromElement(JDOMUtil.loadResourceDocument(new URL("file:///idea/" + fileName)).getRootElement());
+          loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
+            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///idea/" + fileName)).rootElement
+
+            override fun updateDigest(scheme: KeymapImpl) {
+            }
+
+            override fun updateDigest(data: Element) {
+            }
+          }, fileName)
         }
-        catch (Exception e) {
-          LOG.error(e);
+        catch (e: Exception) {
+          LOG.error(e)
         }
       }
     }
   }
 
-  @NotNull
-  protected BundledKeymapProvider[] getProviders() {
-    return Extensions.getExtensions(BundledKeymapProvider.EP_NAME);
-  }
+  companion object {
+    @JvmStatic
+    val instance: DefaultKeymap
+      get() = ServiceManager.getService(DefaultKeymap::class.java)
 
-  private void loadKeymapsFromElement(@NotNull Element element) throws InvalidDataException {
-    for (Element child : element.getChildren(KEY_MAP)) {
-      String keymapName = child.getAttributeValue(NAME_ATTRIBUTE);
-      DefaultKeymapImpl keymap = keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP) ? new MacOSDefaultKeymap() : new DefaultKeymapImpl();
-      keymap.readExternal(child, myKeymaps.toArray(new Keymap[myKeymaps.size()]));
-      keymap.setName(keymapName);
-      myKeymaps.add(keymap);
+    @JvmStatic
+    fun matchesPlatform(keymap: Keymap): Boolean {
+      val name = keymap.name
+      return when (name) {
+        KeymapManager.DEFAULT_IDEA_KEYMAP -> SystemInfo.isWindows
+        KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> SystemInfo.isMac
+        KeymapManager.X_WINDOW_KEYMAP, "Default for GNOME", KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
+        else -> true
+      }
     }
   }
 
-  @NotNull
-  public Keymap[] getKeymaps() {
-    return myKeymaps.toArray(new Keymap[myKeymaps.size()]);
+  private fun loadKeymapsFromElement(dataHolder: SchemeDataHolder<KeymapImpl>, keymapName: String) {
+    myKeymaps.add(if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder) else DefaultKeymapImpl(dataHolder))
   }
 
-  public String getDefaultKeymapName() {
-    if (SystemInfo.isMac) {
-      return KeymapManager.MAC_OS_X_KEYMAP;
-    }
-    else if (SystemInfo.isXWindow) {
-      if (SystemInfo.isKDE) {
-        return KeymapManager.KDE_KEYMAP;
+  val keymaps: Array<Keymap>
+    get() = myKeymaps.toTypedArray()
+
+  open val defaultKeymapName: String
+    get() {
+      if (SystemInfo.isMac) {
+        return KeymapManager.MAC_OS_X_KEYMAP
+      }
+      else if (SystemInfo.isXWindow) {
+        if (SystemInfo.isKDE) {
+          return KeymapManager.KDE_KEYMAP
+        }
+        else {
+          return KeymapManager.X_WINDOW_KEYMAP
+        }
       }
       else {
-        return KeymapManager.X_WINDOW_KEYMAP;
+        return KeymapManager.DEFAULT_IDEA_KEYMAP
       }
     }
-    else {
-      return KeymapManager.DEFAULT_IDEA_KEYMAP;
-    }
-  }
 
-  public String getKeymapPresentableName(@NotNull KeymapImpl keymap) {
-    String name = keymap.getName();
+  open fun getKeymapPresentableName(keymap: KeymapImpl): String {
+    val name = keymap.name
 
     // Netbeans keymap is no longer for version 6.5, but we need to keep the id
-    if ("NetBeans 6.5".equals(name)) {
-      return "NetBeans";
+    if ("NetBeans 6.5" == name) {
+      return "NetBeans"
     }
 
-    return KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name) ? "Default" : name;
-  }
-
-  public static boolean matchesPlatform(Keymap keymap) {
-    final String name = keymap.getName();
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
-      return SystemInfo.isWindows;
-    }
-    else if (KeymapManager.MAC_OS_X_KEYMAP.equals(name) || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(name)) {
-      return SystemInfo.isMac;
-    }
-    else if (KeymapManager.X_WINDOW_KEYMAP.equals(name) || "Default for GNOME".equals(name) || KeymapManager.KDE_KEYMAP.equals(name)) {
-      return SystemInfo.isXWindow;
-    }
-    return true;
+    return if (KeymapManager.DEFAULT_IDEA_KEYMAP == name) "Default" else name
   }
 }
