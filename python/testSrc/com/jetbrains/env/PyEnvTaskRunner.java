@@ -23,6 +23,7 @@ import java.util.Set;
  * @author traff
  */
 public class PyEnvTaskRunner {
+  private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
   private final List<String> myRoots;
 
   public PyEnvTaskRunner(List<String> roots) {
@@ -36,9 +37,13 @@ public class PyEnvTaskRunner {
     List<String> passedRoots = Lists.newArrayList();
 
     for (String root : myRoots) {
+      LOG.warn(String.format("Running on root %s", root));
 
       final Set<String> requredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
-      if (!isSuitableForTask(PyEnvTestCase.loadEnvTags(root), requredTags) || !shouldRun(root, testTask)) {
+      final boolean suitableForTask = isSuitableForTask(PyEnvTestCase.loadEnvTags(root), requredTags);
+      final boolean shouldRun = shouldRun(root, testTask);
+      if (!suitableForTask || !shouldRun) {
+        LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
         continue;
       }
 
@@ -66,19 +71,18 @@ public class PyEnvTaskRunner {
           passedRoots.add(root);
         }
         else {
-          System.err.println(String.format("Skipping root %s", root));
+          LOG.warn(String.format("Skipping root %s", root));
         }
       }
       catch (final Throwable e) {
-        final Logger logger = Logger.getInstance(PyEnvTaskRunner.class);
         // Direct output of enteredTheMatrix may break idea or TC since can't distinguish test output from real test result
         // Exception is thrown anyway, so we escape message before logging
         if (e.getMessage().contains("enteredTheMatrix")) {
           // .error( may lead to new exception with out of stacktrace.
-          logger.warn(PyEnvTestCase.escapeTestMessage(e.getMessage()));
+          LOG.warn(PyEnvTestCase.escapeTestMessage(e.getMessage()));
         }
         else {
-          logger.error(e);
+          LOG.error(e);
         }
         throw new RuntimeException(
           PyEnvTestCase.joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on " + getEnvType() + " environment " + root,

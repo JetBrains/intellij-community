@@ -333,7 +333,7 @@ public final class PyToxTest extends PyEnvTestCase {
       }
 
       Assert
-        .assertThat("No all interpreters from tox.ini used", expectedInterpreters, Matchers.everyItem(Matchers.isIn(checkedInterpreters)));
+        .assertThat("No all interpreters from tox.ini used", checkedInterpreters, Matchers.everyItem(Matchers.isIn(expectedInterpreters)));
       assert !skippedInterpreters.equals(expectedInterpreters) : "All interpreters skipped (they do not exist on platform), " +
                                                                  "we test nothing";
     }
