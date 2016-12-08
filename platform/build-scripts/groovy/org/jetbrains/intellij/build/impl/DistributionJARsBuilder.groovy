@@ -401,9 +401,14 @@ class DistributionJARsBuilder {
     def sinceBuild
     def untilBuild
     if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+/)) {
+      if (buildNumber.matches(/\d+\.\d+/)) {
+        sinceBuild = buildNumber
+      }
+      else {
+        sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+      }
       int end = useRestrictedCompatibleBuildRange ? buildNumber.lastIndexOf('.') : buildNumber.indexOf('.')
-      sinceBuild = buildNumber.substring(0, end)
-      untilBuild = sinceBuild + ".*"
+      untilBuild = buildNumber.substring(0, end) + ".*"
     }
     else {
       sinceBuild = buildNumber
