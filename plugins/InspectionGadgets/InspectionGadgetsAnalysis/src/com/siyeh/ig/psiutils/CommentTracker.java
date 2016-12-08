@@ -71,6 +71,17 @@ public class CommentTracker {
   }
 
   /**
+   * Deletes all given PsiElement's collecting all the comments inside them.
+   *
+   * @param elements elements to delete (all not null)
+   */
+  public void delete(@NotNull PsiElement... elements) {
+    for(PsiElement element : elements) {
+      delete(element);
+    }
+  }
+
+  /**
    * Deletes given PsiElement replacing it with the comments including comments inside the deleted element
    * and previously gathered comments.
    *
