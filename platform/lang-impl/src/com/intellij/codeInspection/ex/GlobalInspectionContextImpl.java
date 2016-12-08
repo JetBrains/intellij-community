@@ -783,8 +783,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
 
   @Override
-  public void close(boolean noSuspisiousCodeFound) {
-    if (!noSuspisiousCodeFound) {
+  public void close(boolean noSuspiciousCodeFound) {
+    if (!noSuspiciousCodeFound) {
       if (myView.isRerun()) {
         myViewClosed = true;
         myView = null;
@@ -807,7 +807,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         getPresentation(toolWrapper).finalCleanup();
       }
     }
-    super.close(noSuspisiousCodeFound);
+    super.close(noSuspiciousCodeFound);
   }
 
   @Override

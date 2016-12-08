@@ -78,7 +78,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   protected final Map<Key, GlobalInspectionContextExtension> myExtensions = new HashMap<>();
 
-  protected final Map<String, Tools> myTools = new THashMap<>();
+  final Map<String, Tools> myTools = new THashMap<>();
 
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
@@ -429,7 +429,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
   }
 
-  public void close(boolean noSuspisiousCodeFound) {
+  public void close(boolean noSuspiciousCodeFound) {
     cleanup();
   }
 
