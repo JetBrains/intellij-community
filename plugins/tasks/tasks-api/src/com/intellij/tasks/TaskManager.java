@@ -53,19 +53,6 @@ public abstract class TaskManager {
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
   /**
-   * @deprecated Use {@link #getIssues(String, int, int, boolean, com.intellij.openapi.progress.ProgressIndicator, boolean)}
-   */
-  @Deprecated
-  public List<Task> getIssues(@Nullable String query,
-                                       int max,
-                                       long since,
-                                       boolean forceRequest,
-                                       boolean withClosed,
-                                       @NotNull final ProgressIndicator cancelled) {
-    throw new UnsupportedOperationException("Deprecated: should not be called");
-  }
-
-  /**
    * Most arguments have the same meaning as the ones in {@link TaskRepository#getIssues(String, int, int, boolean, ProgressIndicator)}.
    *
    * @param query        optional pattern to filter tasks. One use case is the text entered in "Open Task" dialog.
@@ -78,14 +65,12 @@ public abstract class TaskManager {
    * @param forceRequest whether to download issues anew or use already cached ones.
    * @return tasks collected from all active repositories
    */
-  public List<Task> getIssues(@Nullable String query,
+  public abstract List<Task> getIssues(@Nullable String query,
                               int offset,
                               int limit,
                               boolean withClosed,
                               @NotNull ProgressIndicator indicator,
-                              boolean forceRequest) {
-    return getIssues(query, offset + limit, 0, forceRequest, withClosed, indicator);
-  }
+                              boolean forceRequest);
 
   /**
    * Returns already cached issues.
