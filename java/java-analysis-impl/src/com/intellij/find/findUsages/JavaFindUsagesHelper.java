@@ -16,6 +16,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,7 +76,8 @@ public class JavaFindUsagesHelper {
           PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
           if (topLevelClass != null) {
             String topName = topLevelClass.getQualifiedName();
-            assert topName != null;
+            assert topName != null : "topLevelClass : " + topLevelClass + "; element: " + element + " (" + qname + ") top level file: " + InjectedLanguageManager.getInstance(
+              element.getProject()).getTopLevelFile(element);
             if (qname.length() > topName.length()) {
               result.add(topName + qname.substring(topName.length()).replace('.', '$'));
             }
