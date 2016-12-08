@@ -31,7 +31,6 @@ import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.OrderedSet
 import com.intellij.util.containers.nullize
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -444,6 +443,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return if (own.isEmpty()) Shortcut.EMPTY_ARRAY else own.toTypedArray()
   }
 
+  // you must clear actionIdToShortcuts before call
   protected open fun readExternal(keymapElement: Element) {
     if (KEY_MAP != keymapElement.name) {
       throw InvalidDataException("unknown element: $keymapElement")
@@ -463,7 +463,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
-    actionIdToShortcuts.clear()
     val skipInserts = SystemInfo.isMac && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
     for (actionElement in keymapElement.children) {
       if (actionElement.name != ACTION) {
@@ -471,28 +470,34 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
 
       val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException("Attribute 'id' cannot be null; Keymap's name=$name")
+      var shortcuts: MutableList<Shortcut>? = null
 
-      val shortcuts = OrderedSet<Shortcut>(2)
-      actionIdToShortcuts.put(id, shortcuts)
+      fun getOrCreateList(): MutableList<Shortcut> {
+        if (shortcuts == null) {
+          shortcuts = SmartList<Shortcut>()
+          actionIdToShortcuts.put(id, shortcuts!!)
+        }
+        return shortcuts!!
+      }
+
       for (shortcutElement in actionElement.children) {
         if (KEYBOARD_SHORTCUT == shortcutElement.name) {
           // Parse first keystroke
-
-          val firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE) ?: throw InvalidDataException(
-            "Attribute '$FIRST_KEYSTROKE_ATTRIBUTE' cannot be null; Action's id=$id; Keymap's name=$name")
+          val firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE)
+                                  ?: throw InvalidDataException("Attribute '$FIRST_KEYSTROKE_ATTRIBUTE' cannot be null; Action's id=$id; Keymap's name=$name")
           if (skipInserts && firstKeyStrokeStr.contains("INSERT")) {
             continue
           }
 
           val firstKeyStroke = KeyStrokeAdapter.getKeyStroke(firstKeyStrokeStr) ?: continue
-          // Parse second keystroke
 
+          // Parse second keystroke
           var secondKeyStroke: KeyStroke? = null
           val secondKeyStrokeStr = shortcutElement.getAttributeValue(SECOND_KEYSTROKE_ATTRIBUTE)
           if (secondKeyStrokeStr != null) {
             secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr) ?: continue
           }
-          shortcuts.add(KeyboardShortcut(firstKeyStroke, secondKeyStroke))
+          getOrCreateList().add(KeyboardShortcut(firstKeyStroke, secondKeyStroke))
         }
         else if (KEYBOARD_GESTURE_SHORTCUT == shortcutElement.name) {
           val strokeText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_KEY) ?: throw InvalidDataException(
@@ -512,16 +517,16 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
             throw InvalidDataException("Wrong modifier=$modifierText action id=$id keymap=$name")
           }
 
-          shortcuts.add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke))
+          getOrCreateList().add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke))
         }
         else if (MOUSE_SHORTCUT == shortcutElement.name) {
           val keystrokeString = shortcutElement.getAttributeValue(KEYSTROKE_ATTRIBUTE) ?: throw InvalidDataException(
             "Attribute 'keystroke' cannot be null; Action's id=$id; Keymap's name=$name")
 
           try {
-            shortcuts.add(KeymapUtil.parseMouseShortcut(keystrokeString))
+            getOrCreateList().add(KeymapUtil.parseMouseShortcut(keystrokeString))
           }
-          catch (exc: InvalidDataException) {
+          catch (e: InvalidDataException) {
             throw InvalidDataException("Wrong mouse-shortcut: '$keystrokeString'; Action's id=$id; Keymap's name=$name")
           }
 

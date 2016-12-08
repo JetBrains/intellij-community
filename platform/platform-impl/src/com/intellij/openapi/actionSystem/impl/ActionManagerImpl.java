@@ -905,7 +905,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     processRemoveAndReplace(element, actionId, keymap, shortcut);
   }
 
-  private static void processRemoveAndReplace(Element element, String actionId, Keymap keymap, Shortcut shortcut) {
+  private static void processRemoveAndReplace(@NotNull Element element, String actionId, @NotNull Keymap keymap, @NotNull Shortcut shortcut) {
     boolean remove = Boolean.parseBoolean(element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME));
     boolean replace = Boolean.parseBoolean(element.getAttributeValue(REPLACE_SHORTCUT_ATTR_NAME));
     if (remove) {
