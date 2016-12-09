@@ -22,6 +22,9 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,17 +57,25 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseJavaBatchLoc
     final IntArrayList indices = new IntArrayList();
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
-        visitExpression(expression);
+      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+        final String message = getSuspiciousMethodCallMessage(methodCall, REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, indices);
+        if (message != null) {
+          holder.registerProblem(methodCall.getArgumentList().getExpressions()[0], message);
+        }
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
-        super.visitMethodCallExpression(methodCall);
-        final String message = getSuspiciousMethodCallMessage(methodCall, REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, indices
-        );
-        if (message != null) {
-          holder.registerProblem(methodCall.getArgumentList().getExpressions()[0], message);
+      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+        final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+        if (interfaceMethod != null && interfaceMethod.getParameterList().getParametersCount() == 1) {
+          final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
+          final MethodSignature signature = interfaceMethod.getSignature(psiSubstitutor);
+          String message = SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(expression, signature.getParameterTypes()[0], REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, indices);
+          if (message != null) {
+            holder.registerProblem(ObjectUtils.notNull(expression.getReferenceNameElement(), expression), message);
+          }
         }
       }
     };

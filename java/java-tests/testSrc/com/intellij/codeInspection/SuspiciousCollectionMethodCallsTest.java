@@ -46,6 +46,10 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
     doTest();
   }
 
+  public void testMethodReferenceWithCollectionCalls() throws Exception {
+    doTest();
+  }
+
   public void testNonClassArgTypes() throws Exception {
     doTest();
   }
