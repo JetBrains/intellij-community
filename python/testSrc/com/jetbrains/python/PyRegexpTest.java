@@ -87,7 +87,7 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
-  public void _testDoubleOpenCurly() {  // PY-8252
+  public void testDoubleOpenCurly() {  // PY-8252
     doTestHighlighting();
   }
 
