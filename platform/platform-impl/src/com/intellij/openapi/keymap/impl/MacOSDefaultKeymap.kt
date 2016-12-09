@@ -19,7 +19,6 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.Shortcut
-import com.intellij.util.containers.mapSmart
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
@@ -27,13 +26,11 @@ import javax.swing.KeyStroke
 class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>) : DefaultKeymapImpl(dataHolder) {
   companion object {
     @JvmStatic
-    fun convertShortcutFromParent(parentShortcut: Shortcut): Shortcut {
-      if (parentShortcut is MouseShortcut) {
-        return _convertMouseShortcut(parentShortcut)
+    fun convertShortcutFromParent(shortcut: Shortcut): Shortcut {
+      if (shortcut is MouseShortcut) {
+        return _convertMouseShortcut(shortcut)
       }
-
-      val key = parentShortcut as KeyboardShortcut
-      return KeyboardShortcut(_convertKeyStroke(key.firstKeyStroke), key.secondKeyStroke?.let(::_convertKeyStroke))
+      return KeyboardShortcut(_convertKeyStroke((shortcut as KeyboardShortcut).firstKeyStroke), shortcut.secondKeyStroke?.let(::_convertKeyStroke))
     }
   }
 
@@ -42,8 +39,6 @@ class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>) : DefaultKeym
   override fun convertMouseShortcut(shortcut: MouseShortcut) = _convertMouseShortcut(shortcut)
 
   override fun convertShortcut(shortcut: Shortcut) = convertShortcutFromParent(shortcut)
-
-  override fun getParentShortcuts(actionId: String) = super.getParentShortcuts(actionId).mapSmart { convertShortcutFromParent(it) }
 }
 
 private fun _convertKeyStroke(parentKeyStroke: KeyStroke): KeyStroke = KeyStroke.getKeyStroke(parentKeyStroke.keyCode, mapModifiers(parentKeyStroke.modifiers), parentKeyStroke.isOnKeyRelease)

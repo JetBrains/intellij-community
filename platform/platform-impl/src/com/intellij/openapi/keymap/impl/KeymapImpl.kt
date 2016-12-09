@@ -187,8 +187,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override final fun canModify() = canModify
 
-  protected open fun getParentShortcuts(actionId: String) = parent!!.getMutableShortcutList(actionId)
-
   override fun addShortcut(actionId: String, shortcut: Shortcut) {
     val list = actionIdToShortcuts.getOrPut(actionId) {
       val result = SmartList<Shortcut>()
@@ -206,7 +204,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       list.add(shortcut)
     }
 
-    if (parent != null && areShortcutsEqual(getParentShortcuts(actionId), list)) {
+    if (list.areShortcutsEqualToParent(actionId)) {
       actionIdToShortcuts.remove(actionId)
     }
 
@@ -228,11 +226,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   override fun removeShortcut(actionId: String, toDelete: Shortcut) {
     val list = actionIdToShortcuts.get(actionId)
     if (list == null) {
-      var inherited: List<Shortcut>? = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
-      if (inherited == null && parent != null) {
-        inherited = getParentShortcuts(actionId).nullize()
-      }
-
+      val inherited = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
+                      ?: parent?.getMutableShortcutList(actionId)?.mapSmart { convertShortcut(it) }.nullize()
       if (inherited != null) {
         var newShortcuts: MutableList<Shortcut>? = null
         for (itemIndex in 0..inherited.lastIndex) {
@@ -255,26 +250,21 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
     }
     else {
-      val it = list.iterator()
-      while (it.hasNext()) {
-        val each = it.next()
-        if (toDelete == each) {
-          it.remove()
-
-          val parent = parent
-          val isRemove = if (parent == null) {
-            list.isEmpty()
-          }
-          else {
-            actionIdToShortcuts.get(actionId)?.let {
-              areShortcutsEqual(it, parent.getMutableShortcutList(actionId).mapSmart { convertShortcut(it) })
-            } ?: false
-          }
-
-          if (isRemove) {
+      val index = list.indexOf(toDelete)
+      if (index >= 0) {
+        if (parent == null) {
+          if (list.size == 1) {
             actionIdToShortcuts.remove(actionId)
           }
-          break
+          else {
+            list.removeAt(index)
+          }
+        }
+        else {
+          list.removeAt(index)
+          if (list.areShortcutsEqualToParent(actionId)) {
+            actionIdToShortcuts.remove(actionId)
+          }
         }
       }
     }
@@ -282,6 +272,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     cleanShortcutsCache()
     fireShortcutChanged(actionId)
   }
+
+  private fun MutableList<Shortcut>.areShortcutsEqualToParent(actionId: String) = parent.let { parent -> parent != null && areShortcutsEqual(this, parent.getMutableShortcutList(actionId).mapSmart { convertShortcut(it) }) }
 
   private val gestureToListOfIds: Map<KeyboardModifierGestureShortcut, List<String>> by lazy { fillShortcutToListOfIds(KeyboardModifierGestureShortcut::class.java) }
 
@@ -444,9 +436,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       return emptyList()
     }
 
-    // it is critical to use getParentShortcuts - otherwise MacOSDefaultKeymap doesn't convert shortcuts
+    // it is critical to use convertShortcut - otherwise MacOSDefaultKeymap doesn't convert shortcuts
     // todo why not convert on add? why we don't need to convert our own shortcuts?
-    return actionIdToShortcuts.get(actionId) ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) } ?: parent?.let { getParentShortcuts(actionId) } ?: emptyList()
+    return actionIdToShortcuts.get(actionId) ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) } ?: parent?.getMutableShortcutList(actionId)?.mapSmart { convertShortcut(it) } ?: emptyList()
   }
 
   fun getOwnShortcuts(actionId: String): Array<Shortcut> {
