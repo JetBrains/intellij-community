@@ -414,7 +414,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     if (runInDispatchThread()) {
       TestRunnerUtil.replaceIdeEventQueueSafely();
-      EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
+      EdtTestUtil.runInEdtAndWaitRethrowing(this::defaultRunBare);
     }
     else {
       defaultRunBare();

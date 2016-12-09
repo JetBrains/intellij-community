@@ -17,6 +17,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.InvocationTargetException
@@ -24,8 +25,24 @@ import javax.swing.SwingUtilities
 
 class EdtTestUtil {
   companion object {
-    @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
+    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
       runInEdtAndWait { runnable.run() }
+    }
+
+    /**
+     * Same as {@link #runInEdtAndWait}, but when an unchecked exception happens inside runnable, its just rethrown without being wrapped.
+     * Can be useful to decrease "Caused by" chain for cases when the stack trace of the calling thread is not important or obvious.
+     */
+    @TestOnly @JvmStatic fun runInEdtAndWaitRethrowing(runnable: ThrowableRunnable<Throwable>) {
+      var exception: Throwable? = null
+      runInEdtAndWait {
+        try {
+          runnable.run()
+        } catch (e: Throwable) {
+          exception = e
+        }
+      }
+      ExceptionUtil.rethrowAllAsUnchecked(exception)
     }
   }
 }
