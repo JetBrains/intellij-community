@@ -249,6 +249,27 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals("A", aClass.getName());
   }
 
+  public void testMethodImplementationsOnTypeVariable() throws Exception {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "interface I {}\n" +
+                                                          "interface Im {\n" +
+                                                          "    void m();\n" +
+                                                          "}\n" +
+                                                          "class Im1 implements Im {\n" +
+                                                          "    public void m() {}\n" +
+                                                          "}\n" +
+                                                          "class Im2 implements Im {\n" +
+                                                          "    public void m() {}\n" +
+                                                          "}\n" +
+                                                          "class JavaClass<T extends I & Im> {\n" +
+                                                          "    void  a(T t){\n" +
+                                                          "        t.<caret>m();\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    PsiElement[] targets = getTargets(file);
+    assertSize(2, targets);
+  }
+
   public void testStaticMethodReference() {
     PsiFile file = myFixture.addFileToProject("Foo.java",
                                                           "class C {\n" +

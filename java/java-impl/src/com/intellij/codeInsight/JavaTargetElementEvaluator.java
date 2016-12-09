@@ -292,7 +292,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         }
         else if (expression != null) {
           psiClass = PsiUtil.resolveClassInType(expression.getType());
-        } else {
+        }
+        else {
           if (element instanceof PsiClass) {
             psiClass = (PsiClass)element;
             final PsiElement resolve = ((PsiReferenceExpression)reference).advancedResolve(true).getElement();
@@ -306,15 +307,31 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
 
         if (containingClass == null && psiClass == null) return PsiClass.EMPTY_ARRAY;
         if (containingClass != null) {
-          PsiElementFindProcessor<PsiClass> processor1 = new PsiElementFindProcessor<>(containingClass);
-          while (psiClass != null) {
-            if (!processor1.process(psiClass) ||
-                !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<>(psiClass)) ||
-                !ClassInheritorsSearch.search(psiClass).forEach(processor1)) {
-              return new PsiClass[] {psiClass};
+          if (psiClass instanceof PsiTypeParameter) {
+            List<PsiClass> result = new ArrayList<>();
+            for (PsiClassType classType : psiClass.getExtendsListTypes()) {
+              ContainerUtil.addIfNotNull(result, getInheritor(containingClass, classType.resolve()));
             }
-            psiClass = psiClass.getContainingClass();
+            return result.isEmpty() ? null : result.toArray(PsiClass.EMPTY_ARRAY);
           }
+          else {
+            PsiClass aClass = getInheritor(containingClass, psiClass);
+            if (aClass != null) return new PsiClass[] {aClass};
+          }
+
+        }
+        return null;
+      }
+
+      private PsiClass getInheritor(PsiClass containingClass, PsiClass psiClass) {
+        PsiElementFindProcessor<PsiClass> processor1 = new PsiElementFindProcessor<>(containingClass);
+        while (psiClass != null) {
+          if (!processor1.process(psiClass) ||
+              !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<>(psiClass)) ||
+              !ClassInheritorsSearch.search(psiClass).forEach(processor1)) {
+            return psiClass;
+          }
+          psiClass = psiClass.getContainingClass();
         }
         return null;
       }
