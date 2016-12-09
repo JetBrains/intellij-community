@@ -43,6 +43,7 @@ public interface Keymap extends Scheme {
   /**
    * @return Action ids including parent keymap ids
    */
+  @NotNull
   String[] getActionIds();
 
   /**
@@ -64,16 +65,16 @@ public interface Keymap extends Scheme {
    * @return all actions that have the specified first and second keystrokes. If there are no
    * such actions then the method returns an empty array.
    */
-  String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke);
+  String[] getActionIds(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke);
 
-  String[] getActionIds(Shortcut shortcut);
+  String[] getActionIds(@NotNull Shortcut shortcut);
 
   /**
    * @return all actions with specified mouse shortcut.  If there are no
    * such action then the method returns an empty array.
    */
   @NotNull
-  String[] getActionIds(MouseShortcut shortcut);
+  String[] getActionIds(@NotNull MouseShortcut shortcut);
 
   void addShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 

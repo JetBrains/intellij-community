@@ -368,7 +368,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return sortInOrderOfRegistration(list)
   }
 
-  override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke): Array<String> {
+  override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
     val ids = getActionIds(firstKeyStroke)
     var actualBindings: MutableList<String>? = null
     for (id in ids) {
