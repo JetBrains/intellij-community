@@ -49,6 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -1063,6 +1064,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return "ActionManager";
   }
 
+  @NotNull
   @Override
   public Comparator<String> getRegistrationOrderComparator() {
     return Comparator.comparingInt(myId2Index::get);
@@ -1070,12 +1072,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public String[] getPluginActions(PluginId pluginName) {
-    if (myPlugin2Id.containsKey(pluginName)){
-      final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
-      return ArrayUtil.toStringArray(pluginActions);
-    }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  public String[] getPluginActions(@NotNull PluginId pluginName) {
+    return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 
   public void addActionPopup(final ActionPopupMenuImpl menu) {

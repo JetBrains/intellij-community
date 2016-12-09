@@ -42,7 +42,7 @@ public class KeymapTest extends PlatformTestCase {
 
     myParent = new KeymapImpl();
     myParent.setName("Parent");
-    KeymapImpl.Companion.setCanModify(myParent, false);
+    myParent.setCanModify(false);
 
     myParent.addShortcut(ACTION_1, shortcut1);
     myParent.addShortcut(ACTION_2, shortcut2);

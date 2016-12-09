@@ -24,7 +24,11 @@ import org.jdom.Element
 import java.awt.event.MouseEvent
 
 open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>) : KeymapImpl(dataHolder) {
-  override fun canModify() = false
+  override final var canModify: Boolean
+    get() = false
+    set(value) {
+      // ignore
+    }
 
   override fun getPresentableName(): String = DefaultKeymap.instance.getKeymapPresentableName(this)
 

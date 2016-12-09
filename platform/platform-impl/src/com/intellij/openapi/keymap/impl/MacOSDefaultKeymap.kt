@@ -25,32 +25,34 @@ import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 
 class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>) : DefaultKeymapImpl(dataHolder) {
-  override fun getParentActionIds(firstKeyStroke: KeyStroke) = super.getParentActionIds(convertKeyStroke(firstKeyStroke))
-
-  override fun getParentActionIds(shortcut: MouseShortcut) = super.getParentActionIds(convertMouseShortcut(shortcut))
-
-  override fun getParentShortcuts(actionId: String) = super.getParentShortcuts(actionId).mapSmart { convertShortcutFromParent(it) }
-
   companion object {
     @JvmStatic
     fun convertShortcutFromParent(parentShortcut: Shortcut): Shortcut {
       if (parentShortcut is MouseShortcut) {
-        return convertMouseShortcut(parentShortcut)
+        return _convertMouseShortcut(parentShortcut)
       }
 
       val key = parentShortcut as KeyboardShortcut
-      return KeyboardShortcut(convertKeyStroke(key.firstKeyStroke), key.secondKeyStroke?.let(::convertKeyStroke))
+      return KeyboardShortcut(_convertKeyStroke(key.firstKeyStroke), key.secondKeyStroke?.let(::_convertKeyStroke))
     }
   }
+
+  override fun convertKeyStroke(keyStroke: KeyStroke) = _convertKeyStroke(keyStroke)
+
+  override fun convertMouseShortcut(shortcut: MouseShortcut) = _convertMouseShortcut(shortcut)
+
+  override fun convertShortcut(shortcut: Shortcut) = convertShortcutFromParent(shortcut)
+
+  override fun getParentShortcuts(actionId: String) = super.getParentShortcuts(actionId).mapSmart { convertShortcutFromParent(it) }
 }
 
-private fun convertKeyStroke(parentKeyStroke: KeyStroke): KeyStroke = KeyStroke.getKeyStroke(parentKeyStroke.keyCode, mapModifiers(parentKeyStroke.modifiers), parentKeyStroke.isOnKeyRelease)
+private fun _convertKeyStroke(parentKeyStroke: KeyStroke): KeyStroke = KeyStroke.getKeyStroke(parentKeyStroke.keyCode, mapModifiers(parentKeyStroke.modifiers), parentKeyStroke.isOnKeyRelease)
 
-private fun convertMouseShortcut(macShortcut: MouseShortcut) = MouseShortcut(macShortcut.button, mapModifiers(macShortcut.modifiers), macShortcut.clickCount)
+private fun _convertMouseShortcut(shortcut: MouseShortcut) = MouseShortcut(shortcut.button, mapModifiers(shortcut.modifiers), shortcut.clickCount)
 
 @JdkConstants.InputEventMask
-private fun mapModifiers(@JdkConstants.InputEventMask modifiers: Int): Int {
-  var modifiers = modifiers
+private fun mapModifiers(@JdkConstants.InputEventMask inModifiers: Int): Int {
+  var modifiers = inModifiers
   var meta = false
 
   if (modifiers and InputEvent.META_MASK != 0) {
