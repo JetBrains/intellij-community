@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.configurationStore.StateStorageBase;
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -27,7 +28,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageManagerListener;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -75,7 +75,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     ClasspathStorageProvider provider = getProvider(storageType);
     if (provider == null) {
       if (module.getUserData(ERROR_NOTIFIED_KEY) == null) {
-        Notification n = new Notification(StorageUtil.NOTIFICATION_GROUP_ID, "Cannot load module '" + module.getName() + "'",
+        Notification n = new Notification(StorageUtilKt.getNOTIFICATION_GROUP_ID(), "Cannot load module '" + module.getName() + "'",
                                           "Support for " + storageType + " format is not installed.", NotificationType.ERROR);
         n.notify(module.getProject());
         module.putUserData(ERROR_NOTIFIED_KEY, Boolean.TRUE);

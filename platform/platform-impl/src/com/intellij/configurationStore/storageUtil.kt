@@ -42,7 +42,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-private val NOTIFICATION_GROUP_ID = "Load Error"
+val NOTIFICATION_GROUP_ID = "Load Error"
 
 @TestOnly
 var DEBUG_LOG: String? = null
