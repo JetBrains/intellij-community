@@ -239,12 +239,18 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
       if (inherited != null) {
         var newShortcuts: MutableList<Shortcut>? = null
-        for (eachInherited in inherited) {
-          if (toDelete != eachInherited) {
+        for (itemIndex in 0..inherited.lastIndex) {
+          val item = inherited.get(itemIndex)
+          if (toDelete == item) {
             if (newShortcuts == null) {
               newShortcuts = SmartList()
+              for (notAddedItemIndex in 0..itemIndex - 1) {
+                newShortcuts.add(inherited.get(notAddedItemIndex))
+              }
             }
-            newShortcuts.add(eachInherited)
+          }
+          else if (newShortcuts != null) {
+            newShortcuts.add(item)
           }
         }
         newShortcuts?.let {

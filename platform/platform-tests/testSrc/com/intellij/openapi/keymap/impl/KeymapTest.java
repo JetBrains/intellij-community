@@ -21,10 +21,13 @@ import com.intellij.testFramework.PlatformTestCase;
 
 import javax.swing.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class KeymapTest extends PlatformTestCase {
   private static final String ACTION_1 = "ACTION_1";
   private static final String ACTION_2 = "ACTION_2";
   private static final String ACTION_NON_EXISTENT = "NON_EXISTENT";
+
   KeyboardShortcut shortcut1 = new KeyboardShortcut(KeyStroke.getKeyStroke('1'), null);
   KeyboardShortcut shortcut2 = new KeyboardShortcut(KeyStroke.getKeyStroke('2'), null);
   KeyboardShortcut shortcutA = new KeyboardShortcut(KeyStroke.getKeyStroke('a'), null);
@@ -45,7 +48,7 @@ public class KeymapTest extends PlatformTestCase {
     myParent.addShortcut(ACTION_2, shortcut2);
 
     myChild = myParent.deriveKeymap("Child");
-    assertSame(myParent, myChild.getParent());
+    assertThat(myParent).isSameAs(myChild.getParent());
 
     myChild.addShortcut(ACTION_1, shortcutA);
   }
@@ -117,15 +120,47 @@ public class KeymapTest extends PlatformTestCase {
 
     myParent.addShortcut(ACTION_1, shortcut1);
 
-    assertTrue(myParent.hasOwnActionId(ACTION_1));
-    assertFalse(myChild.hasOwnActionId(ACTION_1));
-    assertSameElements(myChild.getShortcuts(ACTION_1), shortcut1);
+    assertThat(myParent.hasOwnActionId(ACTION_1)).isTrue();
+    assertThat(myChild.hasOwnActionId(ACTION_1)).isFalse();
+    assertThat(myChild.getShortcuts(ACTION_1)).containsExactly(shortcut1);
 
-    myChild.removeShortcut(ACTION_1, shortcutA); // should not have any effect
+    // should not have any effect
+    myChild.removeShortcut(ACTION_1, shortcutA);
 
-    assertTrue(myParent.hasOwnActionId(ACTION_1));
-    assertFalse(myChild.hasOwnActionId(ACTION_1));
-    assertSameElements(myChild.getShortcuts(ACTION_1), shortcut1);
+    assertThat(myParent.hasOwnActionId(ACTION_1)).isTrue();
+    assertThat(myChild.hasOwnActionId(ACTION_1)).isFalse();
+    assertThat(myChild.getShortcuts(ACTION_1)).containsExactly(shortcut1);
+
+    myParent.addShortcut(ACTION_2, shortcut2);
+    myParent.addShortcut(ACTION_2, shortcutA);
+    myParent.addShortcut(ACTION_2, shortcutB);
+
+    myChild.removeShortcut(ACTION_2, shortcutA);
+    assertThat(myChild.getShortcuts(ACTION_2)).containsExactly(shortcut2, shortcutB);
+  }
+
+  public void testRemovingShortcutFirst() throws Exception {
+    myParent.clearOwnActionsIds();
+    myChild.clearOwnActionsIds();
+
+    myParent.addShortcut(ACTION_2, shortcut2);
+    myParent.addShortcut(ACTION_2, shortcutA);
+    myParent.addShortcut(ACTION_2, shortcutB);
+
+    myChild.removeShortcut(ACTION_2, shortcut2);
+    assertThat(myChild.getShortcuts(ACTION_2)).containsExactly(shortcutA, shortcutB);
+  }
+
+  public void testRemovingShortcutLast() throws Exception {
+    myParent.clearOwnActionsIds();
+    myChild.clearOwnActionsIds();
+
+    myParent.addShortcut(ACTION_2, shortcut2);
+    myParent.addShortcut(ACTION_2, shortcutA);
+    myParent.addShortcut(ACTION_2, shortcutB);
+
+    myChild.removeShortcut(ACTION_2, shortcutB);
+    assertThat(myChild.getShortcuts(ACTION_2)).containsExactly(shortcut2, shortcutA);
   }
 
   public void testRemovingShortcutFromChildWhenInherited() throws Exception {
