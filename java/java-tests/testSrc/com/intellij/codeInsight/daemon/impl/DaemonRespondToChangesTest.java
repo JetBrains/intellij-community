@@ -43,7 +43,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -71,7 +70,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -231,12 +229,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = highlightErrors();
     assertEquals(0, infos.size());
     final PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
-
-      TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
-      assertEquals(getFile().getTextRange(), dirty);
-    });
+    new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
+    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    assertEquals(getFile().getTextRange(), dirty);
 
     highlightErrors();
     assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
@@ -347,10 +342,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Private field 'text' is assigned but never accessed", infos.get(0).getDescription());
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      EditorModificationUtil.deleteSelectedText(getEditor());
-      type("  text");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    type("  text");
 
     List<HighlightInfo> errors = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(getFile().getText(), errors);
@@ -479,19 +472,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      EditorModificationUtil.deleteSelectedText(getEditor());
-      type("xxxx");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    type("xxxx");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      EditorModificationUtil.deleteSelectedText(getEditor());
-      type("0");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    type("0");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(1, infos.size());
@@ -1336,7 +1325,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertOneElement(warns);
     List<HighlightInfo.IntentionActionDescriptor> actions = ShowIntentionsPass.getAvailableFixes(getEditor(), getFile(), -1);
     final HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> descriptor.getAction().invoke(getProject(), getEditor(), getFile()));
+    CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor(), "");
 
     highlightErrors();
     actions = ShowIntentionsPass.getAvailableFixes(getEditor(), getFile(), -1);
@@ -1572,24 +1561,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                                        "    <selection>int y = x;</selection>\n " +
                                        "\n} }");
     assertEmpty(highlightErrors());
-    copy();
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_EDITOR_COPY);
     assertEquals("int y = x;", getEditor().getSelectionModel().getSelectedText());
     getEditor().getSelectionModel().removeSelection();
-    paste();
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_EDITOR_PASTE);
     List<HighlightInfo> errors = highlightErrors();
     assertEquals(1, errors.size());
-  }
-
-  private void paste() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-    WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
-  }
-
-  private void copy() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COPY);
-    WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
   }
 
   public void testReactivityPerformance() throws Throwable {

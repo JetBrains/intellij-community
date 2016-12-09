@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field
 
-import com.intellij.openapi.application.WriteAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -30,7 +29,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static com.intellij.refactoring.introduce.inplace.OccurrencesChooser.ReplaceChoice.ALL
 import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldSettings.Init.*
-
 /**
  * @author Maxim.Medvedev
  */
@@ -688,11 +686,9 @@ class A {
 
   private void performRefactoring(String selectedType, boolean isStatic, boolean removeLocal, boolean declareFinal, GrIntroduceFieldSettings.Init initIn, boolean replaceAll) {
     final PsiType type = selectedType == null ? null : JavaPsiFacade.getElementFactory(project).createTypeFromText(selectedType, myFixture.file)
-    WriteAction.run {
-      final IntroduceFieldTestHandler handler = new IntroduceFieldTestHandler(isStatic, removeLocal, declareFinal, initIn, replaceAll, type)
-      handler.invoke(project, myFixture.editor, myFixture.file, null)
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
-    }
+    final IntroduceFieldTestHandler handler = new IntroduceFieldTestHandler(isStatic, removeLocal, declareFinal, initIn, replaceAll, type)
+    handler.invoke(project, myFixture.editor, myFixture.file, null)
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
   }
 
   private void doTestInitInTarget(String text, EnumSet<Init> expected = EnumSet.noneOf(Init), ReplaceChoice replaceChoice = ALL) {

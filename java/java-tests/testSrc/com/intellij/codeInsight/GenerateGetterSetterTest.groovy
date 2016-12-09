@@ -18,7 +18,6 @@ package com.intellij.codeInsight
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.GenerateGetterHandler
 import com.intellij.codeInsight.generation.GenerateSetterHandler
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -26,7 +25,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import org.jetbrains.annotations.Nullable
-
 /**
  * @author peter
  */
@@ -181,7 +179,6 @@ class Foo {
   }
 
   private void generateGetter() {
-    WriteCommandAction.runWriteCommandAction(getProject(), {
     new GenerateGetterHandler() {
       @Override
       protected ClassMember[] chooseMembers(
@@ -193,7 +190,6 @@ class Foo {
         return members
       }
     }.invoke(project, myFixture.editor, myFixture.file)
-    })
     UIUtil.dispatchAllInvocationEvents()
   }
 
@@ -225,7 +221,6 @@ class Foo {
   }
   
   private void generateSetter() {
-    WriteCommandAction.runWriteCommandAction(getProject(), {
     new GenerateSetterHandler() {
       @Override
       protected ClassMember[] chooseMembers(
@@ -237,7 +232,6 @@ class Foo {
         return members
       }
     }.invoke(project, myFixture.editor, myFixture.file)
-    })
     UIUtil.dispatchAllInvocationEvents()
   }
 }

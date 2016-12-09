@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.daemon
 
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.rename.RenameProcessor
@@ -33,10 +31,7 @@ class ModuleRenameTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   @Test fun testRename() {
     myFixture.configureByText("module-info.java", "module M { requires M2; }")
     val module = JavaFileManager.SERVICE.getInstance(project).findModules("M2", GlobalSearchScope.allScope(project)).first()
-    runWriteAction {
-      RenameProcessor(project, module, "M2.bis", false, false).run()
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
+    RenameProcessor(project, module, "M2.bis", false, false).run()
     myFixture.checkResult("module M { requires M2.bis; }")
   }
 }
