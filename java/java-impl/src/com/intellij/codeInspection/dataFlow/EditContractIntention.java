@@ -23,7 +23,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -121,15 +120,13 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   private static void updateContract(PsiMethod method, String contract, boolean pure) {
     Project project = method.getProject();
-    WriteAction.run(() -> {
-      ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
-      manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-      PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract);
-      if (mockAnno != null) {
-        manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
-                                   mockAnno.getParameterList().getAttributes());
-      }
-    });
+    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
+    manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract);
+    if (mockAnno != null) {
+      manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
+                                 mockAnno.getParameterList().getAttributes());
+    }
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 

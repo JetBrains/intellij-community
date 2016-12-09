@@ -127,7 +127,10 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
                                  @NotNull final String annotationFQName,
                                  @NotNull final PsiFile fromFile,
                                  @Nullable final PsiNameValuePair[] value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    Application application = ApplicationManager.getApplication();
+    application.assertIsDispatchThread();
+    LOG.assertTrue(!application.isWriteAccessAllowed());
+
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
@@ -151,13 +154,11 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, roots, value);
       }
       else {
-        Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }
-        application.invokeLater(() -> DumbService.getInstance(project).withAlternativeResolveEnabled(
-          () -> setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)), project.getDisposed());
+        DumbService.getInstance(project).withAlternativeResolveEnabled(() -> setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value));
       }
       break;
     }

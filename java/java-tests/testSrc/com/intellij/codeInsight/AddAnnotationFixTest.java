@@ -341,12 +341,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
 
     startListening(method, AnnotationUtil.NOT_NULL, false);
-    new WriteCommandAction(myProject){
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        ExternalAnnotationsManager.getInstance(myProject).annotateExternally(method, AnnotationUtil.NOT_NULL, myFixture.getFile(), null);
-      }
-    }.execute();
+    ExternalAnnotationsManager.getInstance(myProject).annotateExternally(method, AnnotationUtil.NOT_NULL, myFixture.getFile(), null);
     stopListeningAndCheckEvents();
 
     startListening(method, AnnotationUtil.NOT_NULL, false);
