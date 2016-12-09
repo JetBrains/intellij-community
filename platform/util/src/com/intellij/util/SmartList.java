@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,5 +287,42 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
       modCount++;
       myElem = Arrays.copyOf(array, mySize);
     }
+  }
+
+  @Override
+  public int indexOf(Object o) {
+    if (mySize == 0) {
+      return -1;
+    }
+    else if (mySize == 1) {
+      if (o == null) {
+        return myElem == null ? 0 : -1;
+      }
+      else {
+        return o.equals(myElem) ? 0 : -1;
+      }
+    }
+
+    Object[] array = (Object[])myElem;
+    if (o == null) {
+      for (int i = 0; i < mySize; i++) {
+        if (array[i] == null) {
+          return i;
+        }
+      }
+    }
+    else {
+      for (int i = 0; i < mySize; i++) {
+        if (o.equals(array[i])) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
+  @Override
+  public boolean contains(Object o) {
+    return indexOf(o) >= 0;
   }
 }

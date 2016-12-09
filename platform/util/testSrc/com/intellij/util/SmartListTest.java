@@ -39,7 +39,12 @@ public class SmartListTest {
     List<Integer> l = new SmartList<>();
     l.add(1);
     assertThat(l).hasSize(1);
-    assertThat(l.get(0).intValue()).isEqualTo(1);
+    assertThat(l.get(0)).isEqualTo(1);
+
+    assertThat(l.indexOf(1)).isEqualTo(0);
+    assertThat(l.indexOf(2)).isEqualTo(-1);
+    assertThat(l.contains(1)).isTrue();
+    assertThat(l.contains(2)).isFalse();
   }
 
   @Test
@@ -50,6 +55,13 @@ public class SmartListTest {
     assertThat(l).hasSize(2);
     assertThat(l.get(0)).isEqualTo(1);
     assertThat(l.get(1)).isEqualTo(2);
+
+    assertThat(l.indexOf(1)).isEqualTo(0);
+    assertThat(l.indexOf(2)).isEqualTo(1);
+    assertThat(l.contains(1)).isTrue();
+    assertThat(l.contains(2)).isTrue();
+    assertThat(l.indexOf(42)).isEqualTo(-1);
+    assertThat(l.contains(42)).isFalse();
   }
 
   @Test
@@ -256,5 +268,17 @@ public class SmartListTest {
     l.remove(1);
     assertThat(l.toArray(new Integer[4])).containsExactly(0, null, null, null);
     assertThat(l.toArray()).containsExactly(0);
+  }
+
+  @Test
+  public void testNullIndexOf() {
+    List<Integer> l = new SmartList<>();
+    l.add(null);
+    l.add(null);
+
+    assertThat(l.indexOf(null)).isEqualTo(0);
+    assertThat(l.contains(null)).isTrue();
+    assertThat(l.indexOf(42)).isEqualTo(-1);
+    assertThat(l.contains(42)).isFalse();
   }
 }
