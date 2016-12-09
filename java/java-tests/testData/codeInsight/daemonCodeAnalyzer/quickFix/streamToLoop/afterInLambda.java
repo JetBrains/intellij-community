@@ -16,7 +16,7 @@ public class Main {
                 count++;
             }
         }
-        return (count == 0 ? 0.0 : (double) sum / count);
+        return count == 0 ? 0.0 : (double) sum / count;
     };
     System.out.println(s.getAsDouble());
   }

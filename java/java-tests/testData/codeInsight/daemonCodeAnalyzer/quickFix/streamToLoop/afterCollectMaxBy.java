@@ -16,7 +16,7 @@ public class Main {
               }
           }
       }
-      return (seen ? Optional.of(best) : Optional.empty());
+      return seen ? Optional.of(best) : Optional.empty();
   }
 
   public static void main(String[] args) {

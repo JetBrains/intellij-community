@@ -14,7 +14,7 @@ public class Main {
               count++;
           }
       }
-      System.out.println((count == 0 ? 0.0 : sum / count));
+      System.out.println(count == 0 ? 0.0 : sum / count);
   }
 
   public static void main(String[] args) {

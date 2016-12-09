@@ -33,6 +33,7 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -252,7 +253,12 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           temporaryStreamPlaceholder.delete();
         }
         else {
-          normalize(project, temporaryStreamPlaceholder.replace(factory.createExpressionFromText(finisher, temporaryStreamPlaceholder)));
+          PsiExpression expression = factory.createExpressionFromText(finisher, temporaryStreamPlaceholder);
+          PsiElement parent = temporaryStreamPlaceholder.getParent();
+          if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(expression, (PsiExpression)parent, false)) {
+            expression = factory.createExpressionFromText("("+expression.getText()+")", temporaryStreamPlaceholder);
+          }
+          normalize(project, temporaryStreamPlaceholder.replace(expression));
         }
       }
       catch (Exception ex) {
@@ -430,8 +436,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     public void setOptionalUnwrapperFinisher(String seenVariable, String accVariable, String type) {
       String optionalClass = OptionalUtil.getOptionalClass(type);
-      setFinisher("(" + seenVariable + "?" + optionalClass + ".of(" + accVariable + "):" + optionalClass +
-                  "." + (TypeConversionUtil.isPrimitive(type) ? "" : "<" + type + ">") + "empty())");
+      setFinisher(seenVariable + "?" + optionalClass + ".of(" + accVariable + "):" + optionalClass +
+                  "." + (TypeConversionUtil.isPrimitive(type) ? "" : "<" + type + ">") + "empty()");
     }
 
     public Project getProject() {

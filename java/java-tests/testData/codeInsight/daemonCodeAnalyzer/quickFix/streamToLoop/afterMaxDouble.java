@@ -1,11 +1,9 @@
 // "Replace Stream API chain with loop" "true"
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.OptionalDouble;
+import java.util.*;
 
 public class Main {
-  public static double test(List<String> strings) {
+  public static OptionalDouble test(List<String> strings) {
       boolean seen = false;
       double best = 0;
       for (String string : strings) {
@@ -15,7 +13,7 @@ public class Main {
               best = length;
           }
       }
-      return (seen ? OptionalDouble.of(best) : OptionalDouble.empty()).orElse(-1);
+      return seen ? OptionalDouble.of(best) : OptionalDouble.empty();
   }
 
   public static void main(String[] args) {

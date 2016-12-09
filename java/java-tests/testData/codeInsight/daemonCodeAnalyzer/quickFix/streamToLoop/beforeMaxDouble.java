@@ -1,11 +1,10 @@
 // "Replace Stream API chain with loop" "true"
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Main {
-  public static double test(List<String> strings) {
-    return strings.stream().mapToDouble(String::length).m<caret>ax().orElse(-1);
+  public static OptionalDouble test(List<String> strings) {
+    return strings.stream().mapToDouble(String::length).m<caret>ax();
   }
 
   public static void main(String[] args) {

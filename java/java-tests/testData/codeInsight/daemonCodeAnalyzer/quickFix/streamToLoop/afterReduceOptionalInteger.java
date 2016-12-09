@@ -15,7 +15,7 @@ public class Main {
               acc = acc * number;
           }
       }
-      return (seen ? Optional.of(acc) : Optional.empty());
+      return seen ? Optional.of(acc) : Optional.empty();
   }
 
   public static void main(String[] args) {

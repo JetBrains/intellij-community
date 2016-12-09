@@ -398,9 +398,9 @@ abstract class TerminalOperation extends Operation {
       String emptyCheck = count + "==0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
       context.setFinisher(myUseOptional
-                        ? "(" + emptyCheck + "?java.util.OptionalDouble.empty():"
-                          + "java.util.OptionalDouble.of(" + result + "))"
-                        : "(" + emptyCheck + "?0.0:" + result + ")");
+                        ? emptyCheck + "?java.util.OptionalDouble.empty():"
+                          + "java.util.OptionalDouble.of(" + result + ")"
+                        : emptyCheck + "?0.0:" + result);
       return sum + "+=" + inVar + ";\n" + count + "++;\n";
     }
   }
