@@ -69,7 +69,7 @@ public class FileUtilRt {
   private static String ourCanonicalTempPathCache = null;
 
   protected static final class NIOReflect {
-    // NIO-reflection initialization placed in a separate class for lazy loading 
+    // NIO-reflection initialization placed in a separate class for lazy loading
     static final boolean IS_AVAILABLE;
 
     // todo: replace reflection with normal code after migration to JDK 1.8
@@ -94,7 +94,10 @@ public class FileUtilRt {
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
+
         final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
+        final Object Result_Skip = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("SKIP_SUBTREE").get(null);
+
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (args.length == 2) {
@@ -104,21 +107,26 @@ public class FileUtilRt {
               }
               final String methodName = method.getName();
               if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
-                if (!performDelete(args[0])) {
-                  throw new IOException("Failed to delete " + args[0]) {
-                    // optimization: the stacktrace is not needed: the exception is used to terminate tree walkup and to pass the result
-                    @Override
-                    public synchronized Throwable fillInStackTrace() {
-                      return this;
-                    }
-                  };
+                performDelete(args[0]);
+              }
+              else if (SystemInfoRt.isWindows && "preVisitDirectory".equals(methodName)) {
+                boolean reparsePoint = false;
+                try {
+                  Method isReparsePoint = second.getClass().getDeclaredMethod("isReparsePoint");
+                  isReparsePoint.setAccessible(true);
+                  reparsePoint = Boolean.TRUE.equals(isReparsePoint.invoke(second));
+                }
+                catch (Throwable ignored) { }
+                if (reparsePoint) {
+                  performDelete(args[0]);
+                  return Result_Skip;
                 }
               }
             }
             return Result_Continue;
           }
 
-          private boolean performDelete(@NotNull final Object fileObject) {
+          private void performDelete(final Object fileObject) throws IOException {
             Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
               public Boolean execute(boolean lastAttempt) {
                 try {
@@ -153,7 +161,14 @@ public class FileUtilRt {
                 return lastAttempt ? Boolean.FALSE : null;
               }
             });
-            return Boolean.TRUE.equals(result);
+            if (!Boolean.TRUE.equals(result)) {
+              throw new IOException("Failed to delete " + fileObject) {
+                @Override
+                public synchronized Throwable fillInStackTrace() {
+                  return this; // optimization: the stacktrace is not needed: the exception is used to terminate tree walking and to pass the result
+                }
+              };
+            }
           }
         });
         initSuccess = true;

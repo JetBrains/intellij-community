@@ -225,14 +225,31 @@ public class FileUtilHeavyTest {
   public void testSymlinkDeletion() {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
-    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_1");
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "lnk_del_test_1");
     IoTestUtil.createTestFile(targetDir, "file");
-    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_2");
+    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "lnk_del_test_2");
     IoTestUtil.createTestFile(linkDir, "file");
     IoTestUtil.createSymLink(targetDir.getPath(), linkDir.getPath() + "/link");
 
     assertEquals(1, targetDir.list().length);
     FileUtil.delete(linkDir);
+    assertFalse(linkDir.exists());
+    assertEquals(1, targetDir.list().length);
+  }
+
+  @Test
+  public void testJunctionDeletion() {
+    assumeTrue(SystemInfo.isWindows);
+
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_1");
+    IoTestUtil.createTestFile(targetDir, "file");
+    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_2");
+    IoTestUtil.createTestFile(linkDir, "file");
+    IoTestUtil.createJunction(targetDir.getPath(), linkDir.getPath() + "/link");
+
+    assertEquals(1, targetDir.list().length);
+    FileUtil.delete(linkDir);
+    assertFalse(linkDir.exists());
     assertEquals(1, targetDir.list().length);
   }
 
