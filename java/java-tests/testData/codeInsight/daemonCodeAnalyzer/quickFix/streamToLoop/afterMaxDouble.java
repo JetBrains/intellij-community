@@ -9,10 +9,10 @@ public class Main {
       boolean seen = false;
       double best = 0;
       for (String string : strings) {
-          double v = string.length();
-          if (!seen || Double.compare(v, best) > 0) {
+          double length = string.length();
+          if (!seen || Double.compare(length, best) > 0) {
               seen = true;
-              best = v;
+              best = length;
           }
       }
       return (seen ? OptionalDouble.of(best) : OptionalDouble.empty()).orElse(-1);

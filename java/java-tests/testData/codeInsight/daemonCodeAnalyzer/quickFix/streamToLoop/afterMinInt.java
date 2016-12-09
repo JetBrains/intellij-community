@@ -9,10 +9,10 @@ public class Main {
       boolean seen = false;
       int best = 0;
       for (String string : strings) {
-          int i = string.length();
-          if (!seen || i < best) {
+          int length = string.length();
+          if (!seen || length < best) {
               seen = true;
-              best = i;
+              best = length;
           }
       }
       return (seen ? OptionalInt.of(best) : OptionalInt.empty()).orElse(-1);

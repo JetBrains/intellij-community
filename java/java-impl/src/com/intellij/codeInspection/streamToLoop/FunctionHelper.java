@@ -115,6 +115,14 @@ abstract class FunctionHelper {
     return candidates;
   }
 
+  private static void suggestFromExpression(StreamVariable var, Project project, PsiExpression expression) {
+    SuggestedNameInfo info = JavaCodeStyleManager.getInstance(project)
+      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, null, true);
+    for (String name : info.names) {
+      var.addOtherNameCandidate(name);
+    }
+  }
+
   @Contract("null, _ -> null")
   @Nullable
   static FunctionHelper create(PsiExpression expression, int paramCount) {
@@ -294,6 +302,22 @@ abstract class FunctionHelper {
       myExpression = (PsiExpression)body;
       EntryStream.zip(lambda.getParameterList().getParameters(), newNames)
         .forKeyValue((param, newName) -> myExpression = renameVarReference(myExpression, param.getName(), newName, context));
+    }
+
+    @Override
+    void suggestOutputNames(StreamVariable var) {
+      // myMethodRef is physical at this point
+      Project project = myMethodRef.getProject();
+      PsiTypeCastExpression castExpr = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(project)
+          .createExpressionFromText("(" + myType + ")" + myMethodRef.getText(), myMethodRef);
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
+      PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, true, true);
+      if(lambda != null) {
+        PsiElement body = lambda.getBody();
+        if(body instanceof PsiExpression) {
+          suggestFromExpression(var, project, (PsiExpression)body);
+        }
+      }
     }
 
     @NotNull
@@ -483,14 +507,9 @@ abstract class FunctionHelper {
 
     @Override
     void suggestOutputNames(StreamVariable var) {
-      String text = "("+var.getType()+")"+getText();
       Project project = myBody.getProject();
-      PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, myBody);
-      SuggestedNameInfo info =
-        JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expr, null, true);
-      for (String name : info.names) {
-        var.addOtherNameCandidate(name);
-      }
+      PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText("(" + var.getType() + ")" + getText(), myBody);
+      suggestFromExpression(var, project, expr);
     }
   }
 }
