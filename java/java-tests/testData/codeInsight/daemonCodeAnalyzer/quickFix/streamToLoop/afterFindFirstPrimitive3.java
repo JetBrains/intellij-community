@@ -11,7 +11,7 @@ public class Main {
               return x;
           }
       }
-      return 0;
+      return Math.abs(-1);
   }
 
   public static void main(String[] args) {

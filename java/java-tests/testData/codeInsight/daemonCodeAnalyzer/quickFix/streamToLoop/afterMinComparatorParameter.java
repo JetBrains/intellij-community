@@ -3,7 +3,6 @@
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 public class Main {
   public static String test(List<String> strings, Comparator<String> cmp) {
@@ -15,7 +14,7 @@ public class Main {
               best = string;
           }
       }
-      return (seen ? Optional.of(best) : Optional.<String>empty()).orElse(null);
+      return seen ? best : null;
   }
 
   public static void main(String[] args) {

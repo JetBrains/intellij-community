@@ -86,7 +86,8 @@ abstract class TerminalOperation extends Operation {
       return AccumulatedTerminalOperation.summarizing(resultType);
     }
     if((name.equals("findFirst") || name.equals("findAny")) && args.length == 0) {
-      return new FindTerminalOperation(resultType.getCanonicalText());
+      PsiType optionalElementType = OptionalUtil.getOptionalElementType(resultType);
+      return optionalElementType == null ? null : new FindTerminalOperation(optionalElementType.getCanonicalText());
     }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
@@ -333,12 +334,14 @@ abstract class TerminalOperation extends Operation {
       String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null");
       myUpdater.transform(context, accumulator, inVar.getName());
       context.setOptionalUnwrapperFinisher(seen, accumulator, myType);
-      return "if(!" + seen + ") {\n" +
-             seen + "=true;\n" +
-             accumulator + "=" + inVar + ";\n" +
-             "} else {\n" +
-             accumulator + "=" + myUpdater.getText() + ";\n" +
-             "}\n";
+      String ifClause = "if(!" + seen + ") {\n" +
+                        seen + "=true;\n" +
+                        accumulator + "=" + inVar + ";\n" +
+                        "}";
+      if(myUpdater.getText().equals(accumulator)) {
+        return ifClause + "\n";
+      }
+      return ifClause + " else {\n" + accumulator + "=" + myUpdater.getText() + ";\n}\n";
     }
 
     @Nullable
@@ -395,12 +398,14 @@ abstract class TerminalOperation extends Operation {
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String sum = context.declareResult("sum", myDoubleAccumulator ? "double" : "long", "0");
       String count = context.declare("count", "long", "0");
-      String emptyCheck = count + "==0";
+      String seenCheck = count + ">0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
-      context.setFinisher(myUseOptional
-                        ? emptyCheck + "?java.util.OptionalDouble.empty():"
-                          + "java.util.OptionalDouble.of(" + result + ")"
-                        : emptyCheck + "?0.0:" + result);
+      if (myUseOptional) {
+        context.setOptionalUnwrapperFinisher(seenCheck, result, "double");
+      }
+      else {
+        context.setFinisher(seenCheck + "?" + result + ":0.0");
+      }
       return sum + "+=" + inVar + ";\n" + count + "++;\n";
     }
   }
@@ -431,9 +436,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      int pos = myType.indexOf('<');
-      String optType = pos == -1 ? myType : myType.substring(0, pos);
-      return context.assignAndBreak("found", myType, optType + ".of(" + inVar + ")", optType + ".empty()");
+      return context.assignAndBreak(new Condition.Optional(myType, "found", inVar.getName()));
     }
   }
 
@@ -487,7 +490,7 @@ abstract class TerminalOperation extends Operation {
         expression = myFn.getText();
       }
       return "if(" + expression + ") {\n" +
-             context.assignAndBreak(myName, PsiType.BOOLEAN.getCanonicalText(), String.valueOf(!myDefaultValue), String.valueOf(myDefaultValue)) +
+             context.assignAndBreak(new Condition.Boolean(myName, myDefaultValue)) +
              "}\n";
     }
   }

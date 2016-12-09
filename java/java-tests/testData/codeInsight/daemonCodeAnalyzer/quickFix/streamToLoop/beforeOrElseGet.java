@@ -6,14 +6,7 @@ import java.util.List;
 public class Main {
   private static String test(List<String> list) {
     if (list == null) return null;
-    else {
-        for (String str : list) {
-            if (str.contains("x")) {
-                return str;
-            }
-        }
-        return null;
-    }
+    else return list.stream().filter(str -> str.contains("x")).fin<caret>dFirst().orElseGet(() -> null);
   }
 
   public static void main(String[] args) {

@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Main {
   public static String test(List<String> strings, Comparator<CharSequence> comparator) {
-    return strings.stream().m<caret>in(comparator.reversed()).orElse(null);
+    return strings.stream().m<caret>in(comparator.reversed()).orElseGet(strings::toString);
   }
 
   public static void main(String[] args) {

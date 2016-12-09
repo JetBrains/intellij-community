@@ -7,21 +7,22 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static Optional<String> test(List<List<String>> list) {
+    String res = null;
     OUTER:
     for(int i=0; i<10; i++) {
-        Optional<String> found = Optional.empty();
+        String found = "";
         OUTER1:
         for (List<String> x : list) {
             if (x != null) {
                 for (String s : x) {
-                    found = Optional.of(s);
+                    found = s;
                     break OUTER1;
                 }
             }
         }
-        return found.orElse("");
+        res = found;
     }
-    return null;
+    return res;
   }
 
   public static void main(String[] args) {

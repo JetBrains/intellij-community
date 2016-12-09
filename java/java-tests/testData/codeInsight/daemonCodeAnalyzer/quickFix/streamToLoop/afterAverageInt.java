@@ -13,7 +13,7 @@ public class Main {
               count++;
           }
       }
-      return count == 0 ? OptionalDouble.empty() : OptionalDouble.of((double) sum / count);
+      return count > 0 ? OptionalDouble.of((double) sum / count) : OptionalDouble.empty();
   }
 
   public static void main(String[] args) {

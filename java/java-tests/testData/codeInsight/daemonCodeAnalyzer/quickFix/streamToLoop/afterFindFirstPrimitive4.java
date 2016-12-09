@@ -6,12 +6,15 @@ import java.util.stream.*;
 public class Main {
 
   private static int test() {
+      OptionalInt found = OptionalInt.empty();
       for (int x = 0; x < 100; x++) {
           if (x > 50) {
-              return x;
+              found = OptionalInt.of(x);
+              break;
           }
       }
-      return 0;
+      int res = found.orElseGet(() -> Math.abs(-1));
+    return res;
   }
 
   public static void main(String[] args) {

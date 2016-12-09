@@ -7,11 +7,12 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static Optional<String> test(List<List<String>> list) {
+    String res = null;
     OUTER:
     for(int i=0; i<10; i++) {
-      return list.stream().filter(x -> x != null).flatMap(x -> x.stream()).fi<caret>ndAny().orElse("");
+      res = list.stream().filter(x -> x != null).flatMap(x -> x.stream()).fi<caret>ndAny().orElse("");
     }
-    return null;
+    return res;
   }
 
   public static void main(String[] args) {

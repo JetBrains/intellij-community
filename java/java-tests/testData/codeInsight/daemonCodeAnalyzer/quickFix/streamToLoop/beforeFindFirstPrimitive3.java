@@ -6,12 +6,7 @@ import java.util.stream.*;
 public class Main {
 
   private static int test() {
-      for (int x = 0; x < 100; x++) {
-          if (x > 50) {
-              return x;
-          }
-      }
-      return 0;
+    return IntStream.range(0, 100).filter(x -> x > 50).findFir<caret>st().orElseGet(() -> Math.abs(-1));
   }
 
   public static void main(String[] args) {

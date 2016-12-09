@@ -2,10 +2,10 @@
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.OptionalInt;
+import java.util.function.IntSupplier;
 
 public class Main {
-  public static int test(List<String> strings) {
+  public static int test(List<String> strings, IntSupplier supplier) {
       boolean seen = false;
       int best = 0;
       for (String string : strings) {
@@ -15,11 +15,11 @@ public class Main {
               best = length;
           }
       }
-      return (seen ? OptionalInt.of(best) : OptionalInt.empty()).orElse(-1);
+      return seen ? best : supplier.getAsInt();
   }
 
   public static void main(String[] args) {
-    System.out.println(test(Arrays.asList()));
-    System.out.println(test(Arrays.asList("a", "bbb", "cc", "d")));
+    System.out.println(test(Arrays.asList(), () -> -1));
+    System.out.println(test(Arrays.asList("a", "bbb", "cc", "d"), () -> 2));
   }
 }
