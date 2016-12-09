@@ -841,4 +841,26 @@ public class ExpressionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(variable);
   }
+
+  /**
+   * Returns a method call expression for the supplied qualifier
+   *
+   * @param qualifier for method call
+   * @return a method call expression or null if the supplied expression is not a method call qualifier
+   */
+  @Contract(value = "null -> null", pure = true)
+  public static PsiMethodCallExpression getCallForQualifier(PsiExpression qualifier) {
+    if(qualifier == null) return null;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
+    if(parent instanceof PsiReferenceExpression) {
+      PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
+      if(PsiTreeUtil.isAncestor(methodExpression.getQualifierExpression(), qualifier, false)) {
+        PsiElement gParent = methodExpression.getParent();
+        if (gParent instanceof PsiMethodCallExpression) {
+          return (PsiMethodCallExpression)gParent;
+        }
+      }
+    }
+    return null;
+  }
 }

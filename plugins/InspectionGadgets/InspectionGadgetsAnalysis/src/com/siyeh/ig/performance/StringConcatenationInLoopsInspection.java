@@ -362,11 +362,9 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           if(assignment.getOperationTokenType().equals(JavaTokenType.PLUSEQ)) return;
         }
       }
-      if(parent instanceof PsiReferenceExpression &&
-         ((PsiReferenceExpression)parent).getQualifierExpression() == ref &&
-         parent.getParent() instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)parent.getParent();
-        replaceInCallQualifier(variable, results, call, ct);
+      PsiMethodCallExpression methodCallExpression = ExpressionUtils.getCallForQualifier(ref);
+      if(methodCallExpression != null) {
+        replaceInCallQualifier(variable, results, methodCallExpression, ct);
         return;
       }
       if(parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
