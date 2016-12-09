@@ -28,22 +28,6 @@ class EdtTestUtil {
     @TestOnly @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
       runInEdtAndWait { runnable.run() }
     }
-
-    /**
-     * Same as {@link #runInEdtAndWait}, but when an unchecked exception happens inside runnable, its just rethrown without being wrapped.
-     * Can be useful to decrease "Caused by" chain for cases when the stack trace of the calling thread is not important or obvious.
-     */
-    @TestOnly @JvmStatic fun runInEdtAndWaitRethrowing(runnable: ThrowableRunnable<Throwable>) {
-      var exception: Throwable? = null
-      runInEdtAndWait {
-        try {
-          runnable.run()
-        } catch (e: Throwable) {
-          exception = e
-        }
-      }
-      ExceptionUtil.rethrowAllAsUnchecked(exception)
-    }
   }
 }
 
@@ -51,7 +35,15 @@ class EdtTestUtil {
 fun runInEdtAndWait(runnable: () -> Unit) {
   val application = ApplicationManager.getApplication()
   if (application is ApplicationImpl) {
-    application.invokeAndWait(runnable)
+    var exception: Throwable? = null
+    application.invokeAndWait {
+      try {
+        runnable()
+      } catch (e: Throwable) {
+        exception = e
+      }
+    }
+    ExceptionUtil.rethrowAllAsUnchecked(exception)
     return
   }
 

@@ -496,7 +496,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWaitRethrowing(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       try {
         ourTestThread = Thread.currentThread();
         startRunAndTear();
