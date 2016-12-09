@@ -23,11 +23,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
@@ -362,7 +363,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return getHelpTopic();
   }
 
-  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
+  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection, DumbAware {
 
     private AnAction[] myChildren;
     private final boolean myFromPopup;
@@ -389,15 +390,15 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       if (myChildren == null) {
         myChildren = new AnAction[2];
-        myChildren[0] = new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
-                                     myLocalScopesManager.getIcon()) {
+        myChildren[0] = new DumbAwareAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
+                                            myLocalScopesManager.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
           }
         };
-        myChildren[1] = new AnAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
-                                     mySharedScopesManager.getIcon()) {
+        myChildren[1] = new DumbAwareAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
+                                            mySharedScopesManager.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(false, IdeBundle.message("add.scope.dialog.title"), null);
