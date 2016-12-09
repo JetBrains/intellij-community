@@ -91,6 +91,8 @@ public interface Keymap extends Scheme {
   @NotNull
   Keymap deriveKeymap(@NotNull String newName);
 
+  boolean hasActionId(@NotNull String actionId, @NotNull MouseShortcut shortcut);
+
   interface Listener {
     void onShortcutChanged(String actionId);
   }

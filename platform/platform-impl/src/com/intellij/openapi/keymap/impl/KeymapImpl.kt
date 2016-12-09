@@ -402,6 +402,20 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     }
   }
 
+  override fun hasActionId(actionId: String, shortcut: MouseShortcut): Boolean {
+    val s = convertShortcut(shortcut)
+    var keymap = this
+    do {
+      val list = keymap.mouseShortcutIds.get(s)
+      if (list != null && list.contains(actionId)) {
+        return true
+      }
+
+      keymap = keymap.parent ?: return false
+    }
+    while (true)
+  }
+
   override fun getActionIds(shortcut: MouseShortcut): Array<String> {
     // first, get shortcuts from own map
     var list = mouseShortcutIds.get(shortcut)
@@ -565,8 +579,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     for (actionId in ownActionIds) {
       val actionElement = Element(ACTION)
       actionElement.setAttribute(ID_ATTRIBUTE, actionId)
-      // Save keyboard shortcuts
-      for (shortcut in getShortcuts(actionId)) {
+      // save keyboard shortcuts
+      for (shortcut in getMutableShortcutList(actionId)) {
         when (shortcut) {
           is KeyboardShortcut -> {
             val element = Element(KEYBOARD_SHORTCUT)
@@ -587,7 +601,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
             element.setAttribute(KEYBOARD_GESTURE_MODIFIER, shortcut.type.name)
             actionElement.addContent(element)
           }
-          else -> throw IllegalStateException("unknown shortcut class: " + shortcut)
+          else -> throw IllegalStateException("unknown shortcut class: $shortcut")
         }
       }
       keymapElement.addContent(actionElement)
