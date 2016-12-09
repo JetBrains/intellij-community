@@ -42,7 +42,7 @@ public class FileUtilHeavyTest {
   private static File myFindTestSecondFile;
 
   @BeforeClass
-  public static void setUp() throws Exception {
+  public static void setUp() throws IOException {
     myTempDirectory = FileUtil.createTempDirectory("FileUtilHeavyTest.", ".tmp");
 
     myVisitorTestDirectory = IoTestUtil.createTestDir(myTempDirectory, "visitor_test_dir");
@@ -168,32 +168,22 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testDeleteFail() throws Exception {
+  public void testDeleteFail() throws IOException {
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "failed_delete");
     File file = IoTestUtil.createTestFile(targetDir, "file");
 
     if (SystemInfo.isWindows) {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      RandomAccessFile rw = new RandomAccessFile(file, "rw");
-      FileLock lock = null;
-      try {
-        lock = rw.getChannel().tryLock();
+      try (RandomAccessFile rw = new RandomAccessFile(file, "rw"); FileLock ignored = rw.getChannel().tryLock()) {
         assertFalse(FileUtil.delete(file));
-      }
-      finally {
-        if (lock != null) {
-          lock.release();
-        }
-        rw.close();
       }
     }
-    else { // on unix use chmod
-      assertEquals(0, new ProcessBuilder("chmod", "a-w", file.getParentFile().getPath()).start().waitFor());
+    else {
+      assertTrue(targetDir.setWritable(false, false));
       try {
         assertFalse(FileUtil.delete(file));
       }
       finally {
-        assertEquals(0, new ProcessBuilder("chmod", "a+w", file.getParentFile().getPath()).start().waitFor());
+        assertTrue(targetDir.setWritable(true, true));
       }
     }
   }
@@ -232,7 +222,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testSymlinkDeletion() throws Exception {
+  public void testSymlinkDeletion() {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_1");
@@ -247,7 +237,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testToCanonicalPathSymLinksAware() throws Exception {
+  public void testToCanonicalPathSymLinksAware() throws IOException {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
     File rootDir = IoTestUtil.createTestDir(myTempDirectory, "root");
