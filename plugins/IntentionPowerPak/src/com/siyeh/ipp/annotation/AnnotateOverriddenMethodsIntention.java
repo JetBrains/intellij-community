@@ -21,6 +21,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -118,16 +119,21 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
       return;
     }
     final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    for (PsiMethod overridingMethod : overridingMethods) {
-      if (parameterIndex == -1) {
-        annotate(overridingMethod, annotationName, attributes, annotationsToRemove, annotationsManager);
+    try {
+      for (PsiMethod overridingMethod : overridingMethods) {
+        if (parameterIndex == -1) {
+          annotate(overridingMethod, annotationName, attributes, annotationsToRemove, annotationsManager);
+        }
+        else {
+          final PsiParameterList parameterList = overridingMethod.getParameterList();
+          final PsiParameter[] parameters = parameterList.getParameters();
+          final PsiParameter parameter = parameters[parameterIndex];
+          annotate(parameter, annotationName, attributes, annotationsToRemove, annotationsManager);
+        }
       }
-      else {
-        final PsiParameterList parameterList = overridingMethod.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        final PsiParameter parameter = parameters[parameterIndex];
-        annotate(parameter, annotationName, attributes, annotationsToRemove, annotationsManager);
-      }
+    }
+    catch (ProcessCanceledException ignored) {
+      //escape on configuring root cancel further annotations
     }
     if (!prepare.isEmpty()) {
       UndoUtil.markPsiFileForUndo(annotation.getContainingFile());
@@ -138,7 +144,7 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
                                String annotationName,
                                PsiNameValuePair[] attributes,
                                List<String> annotationsToRemove,
-                               ExternalAnnotationsManager annotationsManager) {
+                               ExternalAnnotationsManager annotationsManager) throws ProcessCanceledException {
     final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (modifierList == null) {
       return;

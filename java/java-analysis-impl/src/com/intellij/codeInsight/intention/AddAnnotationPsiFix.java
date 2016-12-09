@@ -24,6 +24,7 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -137,7 +138,10 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
       for (String fqn : myAnnotationsToRemove) {
         annotationsManager.deannotate(myModifierListOwner, fqn);
       }
-      annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, myPairs);
+      try {
+        annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, myPairs);
+      }
+      catch (ProcessCanceledException ignored) {}
     }
     else {
       final PsiFile containingFile = myModifierListOwner.getContainingFile();

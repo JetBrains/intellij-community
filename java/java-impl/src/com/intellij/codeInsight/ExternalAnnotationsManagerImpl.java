@@ -43,6 +43,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -126,7 +127,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public void annotateExternally(@NotNull final PsiModifierListOwner listOwner,
                                  @NotNull final String annotationFQName,
                                  @NotNull final PsiFile fromFile,
-                                 @Nullable final PsiNameValuePair[] value) {
+                                 @Nullable final PsiNameValuePair[] value) throws ProcessCanceledException {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     LOG.assertTrue(!application.isWriteAccessAllowed());
@@ -158,7 +159,15 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }
-        DumbService.getInstance(project).withAlternativeResolveEnabled(() -> setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value));
+        DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+        try {
+          if (!setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)) {
+            throw new ProcessCanceledException();
+          }
+        }
+        finally {
+          DumbService.getInstance(project).setAlternativeResolveEnabled(false);
+        }
       }
       break;
     }
@@ -179,20 +188,20 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     return xmlFiles;
   }
 
-  private void setupRootAndAnnotateExternally(@NotNull final OrderEntry entry,
-                                              @NotNull final Project project,
-                                              @NotNull final PsiModifierListOwner listOwner,
-                                              @NotNull final String annotationFQName,
-                                              @NotNull final PsiFile fromFile,
-                                              @NotNull final String packageName,
-                                              @Nullable final PsiNameValuePair[] value) {
+  private boolean setupRootAndAnnotateExternally(@NotNull final OrderEntry entry,
+                                                 @NotNull final Project project,
+                                                 @NotNull final PsiModifierListOwner listOwner,
+                                                 @NotNull final String annotationFQName,
+                                                 @NotNull final PsiFile fromFile,
+                                                 @NotNull final String packageName,
+                                                 @Nullable final PsiNameValuePair[] value) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
     descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
     final VirtualFile newRoot = FileChooser.chooseFile(descriptor, project, null);
     if (newRoot == null) {
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-      return;
+      return false;
     }
     new WriteCommandAction(project) {
       @Override
@@ -216,6 +225,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         }
       }
     }.execute();
+    return true;
   }
 
   @Nullable
