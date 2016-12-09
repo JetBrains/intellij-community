@@ -175,6 +175,9 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxConcreteEnv/", 0,
                                                      () -> new MyTestProcessRunner(1),
                                                      Arrays.asList(
+                                                       //26 and 27 only used for first time, they aren't used after rerun
+                                                       Pair.create("py26", new InterpreterExpectations("", true, 1)),
+                                                       Pair.create("py27", new InterpreterExpectations("", true, 1)),
                                                        Pair.create("py32", new InterpreterExpectations("", false)),
                                                        Pair.create("py34", new InterpreterExpectations("", false))
                                                      ),
@@ -259,8 +262,11 @@ public final class PyToxTest extends PyEnvTestCase {
                                     @NotNull final String all) {
 
       final Set<String> expectedInterpreters =
-        myInterpreters.entrySet().stream().filter(intAndExp -> intAndExp.getValue() != null).map(intAndExp -> intAndExp.getKey()).collect(
-          Collectors.toSet());
+        myInterpreters.entrySet().stream()
+          .filter(intAndExp -> intAndExp.getValue() != null)
+          .filter(o -> o.getValue().myUntilStep > runner.getCurrentRerunStep()) // Remove interp. which shouldn't be launched on this step
+          .map(intAndExp -> intAndExp.getKey())
+          .collect(Collectors.toSet());
 
       // Interpreters are used in tox.ini, so there should be such text
       for (final String interpreterName : expectedInterpreters) {
@@ -274,7 +280,7 @@ public final class PyToxTest extends PyEnvTestCase {
 
 
       final Set<String> checkedInterpreters = new HashSet<>();
-      final Set<String> skippedInterpreters = new HashSet<>();
+      final Collection<String> skippedMissingInterpreters = new HashSet<>();
       // Interpreter should either run tests or mentioned as NotFound
       for (final SMTestProxy interpreterSuite : runner.getTestProxy().getChildren()) {
         final String interpreterName = interpreterSuite.getName();
@@ -293,7 +299,7 @@ public final class PyToxTest extends PyEnvTestCase {
           if (testOutput.contains("InterpreterNotFound")) {
             // Skipped with out of "skip_missing_interpreters = True"
             Logger.getInstance(PyToxTest.class).warn(String.format("Interpreter %s does not exit", interpreterName));
-            skippedInterpreters.add(interpreterName); // Interpreter does not exit
+            skippedMissingInterpreters.add(interpreterName); // Interpreter does not exit
             continue;
           }
           // Some other error?
@@ -332,10 +338,16 @@ public final class PyToxTest extends PyEnvTestCase {
                       getTestOutput(interpreterSuite), Matchers.containsString(expectations.myExpectedOutput));
       }
 
+      // Skipped interpreters should not be checked since we do not know which interpreters used on environemnt
+      // But if all interpreters are skipped, we can't say we tested something.
+      assert !skippedMissingInterpreters.equals(checkedInterpreters) : "All interpreters skipped (they do not exist on platform), " +
+                                                                       "we test nothing";
+      expectedInterpreters.removeAll(skippedMissingInterpreters);
+      checkedInterpreters.removeAll(skippedMissingInterpreters);
+
+
       Assert
         .assertThat("No all interpreters from tox.ini used", checkedInterpreters, Matchers.everyItem(Matchers.isIn(expectedInterpreters)));
-      assert !skippedInterpreters.equals(expectedInterpreters) : "All interpreters skipped (they do not exist on platform), " +
-                                                                 "we test nothing";
     }
 
     @NotNull
@@ -396,14 +408,24 @@ public final class PyToxTest extends PyEnvTestCase {
     @NotNull
     private final String myExpectedOutput;
     private final boolean myExpectedSuccess;
+    private final int myUntilStep;
 
     /**
      * @param expectedOutput  expected test output
      * @param expectedSuccess if test should be success
+     * @param untilStep       in case of rerun, expectation works only until this step and not checked after it
      */
-    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess) {
+    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess, final int untilStep) {
       myExpectedOutput = expectedOutput;
       myExpectedSuccess = expectedSuccess;
+      myUntilStep = untilStep;
+    }
+
+    /**
+     * @see #InterpreterExpectations(String, boolean, int)
+     */
+    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess) {
+      this(expectedOutput, expectedSuccess, Integer.MAX_VALUE);
     }
   }
 }
