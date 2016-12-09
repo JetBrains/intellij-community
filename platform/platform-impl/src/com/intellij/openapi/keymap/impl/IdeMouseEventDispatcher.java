@@ -115,7 +115,7 @@ public final class IdeMouseEventDispatcher {
     }
 
     // search in main keymap
-    KeymapManager keymapManager = KeymapManagerImpl.ourKeymapManagerInitialized ? null : KeymapManager.getInstance();
+    KeymapManager keymapManager = KeymapManagerImpl.ourKeymapManagerInitialized ? KeymapManager.getInstance() : null;
     if (keymapManager != null) {
       Keymap keymap = keymapManager.getActiveKeymap();
       ActionManager actionManager = ActionManager.getInstance();
