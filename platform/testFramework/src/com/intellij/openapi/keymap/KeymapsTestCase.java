@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
@@ -49,9 +50,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     StringBuilder failMessage = new StringBuilder();
     Map<String, Map<String, List<String>>> knownDuplicates = getKnownDuplicates();
 
-    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
-      String failure = checkDuplicatesInKeymap(keymap, knownDuplicates);
-      if (failMessage.length() > 0) failMessage.append("\n");
+    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getSchemeManager().getAllSchemes()) {
+      String failure = checkDuplicatesInKeymap((KeymapImpl)keymap, knownDuplicates);
+      if (failMessage.length() > 0) {
+        failMessage.append("\n");
+      }
       failMessage.append(failure);
     }
     if (failMessage.length() > 0) {
@@ -406,28 +409,27 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
 
   @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String checkDuplicatesInKeymap(Keymap keymap, Map<String, Map<String, List<String>>> allKnownDuplicates) {
-    Set<Shortcut> shortcuts = new LinkedHashSet<>();
-    Set<String> aids = new THashSet<>(Arrays.asList(keymap.getActionIds()));
+  private static String checkDuplicatesInKeymap(@NotNull KeymapImpl keymap, @NotNull Map<String, Map<String, List<String>>> allKnownDuplicates) {
+    Set<String> aids = keymap.getActionIdSet();
     removeBoundActionIds(aids);
+
+    Set<Shortcut> shortcuts = new THashSet<>();
 
     nextId:
     for (String id : aids) {
-
       Map<String, List<String>> knownDuplicates = allKnownDuplicates.get(keymap.getName());
       if (knownDuplicates != null) {
         for (List<String> actionsMapping : knownDuplicates.values()) {
-          for (String eachAction : actionsMapping) {
-            if (eachAction.equals(id)) continue nextId;
+          if (actionsMapping.contains(id)) {
+            continue nextId;
           }
         }
       }
 
       for (Shortcut shortcut : keymap.getShortcuts(id)) {
-        if (!(shortcut instanceof KeyboardShortcut)) {
-          continue;
+        if (shortcut instanceof KeyboardShortcut) {
+          shortcuts.add(shortcut);
         }
-        shortcuts.add(shortcut);
       }
     }
     List<Shortcut> sorted = new ArrayList<>(shortcuts);
@@ -444,9 +446,13 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       if (!(shortcut instanceof KeyboardShortcut)) {
         continue;
       }
+
       Set<String> ids = new THashSet<>(Arrays.asList(keymap.getActionIds(shortcut)));
       removeBoundActionIds(ids);
-      if (ids.size() == 1) continue;
+      if (ids.size() == 1) {
+        continue;
+      }
+
       Keymap parent = keymap.getParent();
       if (parent != null) {
         // ignore duplicates from default keymap
@@ -454,8 +460,11 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
         for (String id : ids) {
           Shortcut[] here = keymap.getShortcuts(id);
           Shortcut[] there = parent.getShortcuts(id);
-          if (keymap.getName().startsWith("Mac")) convertMac(there);
-          if (!new HashSet<>(Arrays.asList(here)).equals(new HashSet<>(Arrays.asList(there)))) {
+          if (keymap.getName().startsWith("Mac")) {
+            convertMac(there);
+          }
+
+          if (!new THashSet<>(Arrays.asList(here)).equals(new THashSet<>(Arrays.asList(there)))) {
             differFromParent = true;
             break;
           }
@@ -485,11 +494,12 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     return failMessage.toString();
   }
 
-  private static void removeBoundActionIds(Set<String> aids) {
+  private static void removeBoundActionIds(@NotNull Set<String> aids) {
+    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     // explicitly bound to another action
     for (Iterator<String> it = aids.iterator(); it.hasNext();) {
       String id = it.next();
-      String sourceId = KeymapManagerEx.getInstanceEx().getActionBinding(id);
+      String sourceId = keymapManager.getActionBinding(id);
       if (sourceId != null) {
         it.remove();
       }
@@ -674,9 +684,9 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     return KeymapUtil.getShortcutText(shortcut);
   }
 
-  private static void convertMac(Shortcut[] there) {
+  private static void convertMac(@NotNull Shortcut[] there) {
     for (int i = 0; i < there.length; i++) {
-      there[i] = MacOSDefaultKeymap.Companion.convertShortcutFromParent(there[i]);
+      there[i] = MacOSDefaultKeymap.convertShortcutFromParent(there[i]);
     }
   }
 

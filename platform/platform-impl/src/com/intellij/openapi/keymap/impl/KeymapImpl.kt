@@ -470,9 +470,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       Converter01.convert(keymapElement)
     }
 
-    val parentName = keymapElement.getAttributeValue(PARENT_ATTRIBUTE)
-    if (parentName != null) {
-      keymapManager.schemeManager.findSchemeByName(parentName)?.let {
+    keymapElement.getAttributeValue(PARENT_ATTRIBUTE)?.let {
+      keymapManager.schemeManager.findSchemeByName(it)?.let {
         parent = it as KeymapImpl
         canModify = true
       }
@@ -487,15 +486,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
 
       val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException("Attribute 'id' cannot be null; Keymap's name=$name")
-      var shortcuts: MutableList<Shortcut>? = null
-
-      fun getOrCreateList(): MutableList<Shortcut> {
-        if (shortcuts == null) {
-          shortcuts = SmartList<Shortcut>()
-          actionIdToShortcuts.put(id, shortcuts!!)
-        }
-        return shortcuts!!
-      }
+      val shortcuts = SmartList<Shortcut>()
+      // always creates list even if no shortcuts - empty action element means that action overrides parent to denote that no shortcuts
+      actionIdToShortcuts.put(id, shortcuts)
 
       for (shortcutElement in actionElement.children) {
         if (KEYBOARD_SHORTCUT == shortcutElement.name) {
@@ -514,7 +507,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           if (secondKeyStrokeStr != null) {
             secondKeyStroke = KeyStrokeAdapter.getKeyStroke(secondKeyStrokeStr) ?: continue
           }
-          getOrCreateList().add(KeyboardShortcut(firstKeyStroke, secondKeyStroke))
+          shortcuts.add(KeyboardShortcut(firstKeyStroke, secondKeyStroke))
         }
         else if (KEYBOARD_GESTURE_SHORTCUT == shortcutElement.name) {
           val strokeText = shortcutElement.getAttributeValue(KEYBOARD_GESTURE_KEY) ?: throw InvalidDataException(
@@ -534,14 +527,14 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
             throw InvalidDataException("Wrong modifier=$modifierText action id=$id keymap=$name")
           }
 
-          getOrCreateList().add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke))
+          shortcuts.add(KeyboardModifierGestureShortcut.newInstance(modifier, stroke))
         }
         else if (MOUSE_SHORTCUT == shortcutElement.name) {
           val keystrokeString = shortcutElement.getAttributeValue(KEYSTROKE_ATTRIBUTE) ?: throw InvalidDataException(
             "Attribute 'keystroke' cannot be null; Action's id=$id; Keymap's name=$name")
 
           try {
-            getOrCreateList().add(KeymapUtil.parseMouseShortcut(keystrokeString))
+            shortcuts.add(KeymapUtil.parseMouseShortcut(keystrokeString))
           }
           catch (e: InvalidDataException) {
             throw InvalidDataException("Wrong mouse-shortcut: '$keystrokeString'; Action's id=$id; Keymap's name=$name")
@@ -577,10 +570,10 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     val ownActionIds = ownActionIds
     Arrays.sort(ownActionIds)
     for (actionId in ownActionIds) {
+      val shortcuts = actionIdToShortcuts.get(actionId) ?: continue
       val actionElement = Element(ACTION)
       actionElement.setAttribute(ID_ATTRIBUTE, actionId)
-      // save keyboard shortcuts
-      for (shortcut in getMutableShortcutList(actionId)) {
+      for (shortcut in shortcuts) {
         when (shortcut) {
           is KeyboardShortcut -> {
             val element = Element(KEYBOARD_SHORTCUT)
@@ -620,13 +613,15 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     cleanShortcutsCache()
   }
 
-  override fun getActionIds(): Array<String> {
+  override fun getActionIds(): Array<String> = ArrayUtilRt.toStringArray(getActionIdSet())
+
+  fun getActionIdSet(): Set<String> {
     val ids = LinkedHashSet<String>()
     parent?.let {
       ids.addAll(it.actionIds)
     }
     ids.addAll(actionIdToShortcuts.keys)
-    return ArrayUtilRt.toStringArray(ids)
+    return ids
   }
 
   override fun getConflicts(actionId: String, keyboardShortcut: KeyboardShortcut): Map<String, MutableList<KeyboardShortcut>> {
