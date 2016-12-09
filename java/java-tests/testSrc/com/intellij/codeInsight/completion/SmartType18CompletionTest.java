@@ -91,6 +91,10 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testDiamondCollapsedInsideAnonymous() throws Exception {
+    doTest();
+  }
+
   public void testInheritorConstructorRef() {
     myFixture.addClass("package intf; public interface Intf<T> {}");
     myFixture.addClass("package foo; public class ImplBar implements intf.Intf<String> {}");
