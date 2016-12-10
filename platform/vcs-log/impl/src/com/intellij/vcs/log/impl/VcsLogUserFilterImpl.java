@@ -66,7 +66,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     for (String user : myUsers) {
       Set<VcsUser> users = getUsers(root, user);
       if (!users.isEmpty()) {
-        result.addAll(ContainerUtil.map(users, user1 -> VcsUserUtil.toExactString(user1)));
+        result.addAll(ContainerUtil.map(users, VcsUserUtil::toExactString));
       }
       else if (!user.equals(ME)) {
         result.add(user);
