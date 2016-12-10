@@ -237,7 +237,7 @@ public class ProjectUtil {
   }
 
   @Nullable
-  private static Project findAndFocusExistingProjectForPath(String path) {
+  public static Project findAndFocusExistingProjectForPath(String path) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       if (!project.isDefault() && isSameProject(path, project)) {
