@@ -361,6 +361,7 @@ monad
 monoidal
 mongodb
 monospaced
+msvc
 multi
 multilinestring
 multipart
@@ -380,6 +381,7 @@ nchar
 nclob
 ndbcluster
 netflix
+nmake
 nmtoken
 noarchivelog
 noaudit
