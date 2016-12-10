@@ -13,210 +13,176 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger.sourcemap;
+package org.jetbrains.debugger.sourcemap
 
-import com.intellij.openapi.editor.Document;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.Document
+import java.util.*
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+abstract class MappingList(private val mappings: List<MappingEntry>) {
+  val size: Int
+    get() = mappings.size
 
-public abstract class MappingList {
-  private final List<MappingEntry> mappings;
+  protected abstract val comparator: Comparator<MappingEntry>
 
-  public MappingList(@NotNull List<MappingEntry> mappings) {
-    this.mappings = mappings;
-  }
+  abstract fun getLine(mapping: MappingEntry): Int
 
-  public int getSize() {
-    return mappings.size();
-  }
+  abstract fun getColumn(mapping: MappingEntry): Int
 
-  protected abstract Comparator<MappingEntry> getComparator();
-
-  public abstract int getLine(@NotNull MappingEntry mapping);
-
-  public abstract int getColumn(@NotNull MappingEntry mapping);
-
-  public int indexOf(int line, int column) {
-    int low = 0;
-    int high = mappings.size() - 1;
-    if (getLine(mappings.get(low)) > line || getLine(mappings.get(high)) < line) {
-      return -1;
+  fun indexOf(line: Int, column: Int): Int {
+    var low = 0
+    var high = mappings.size - 1
+    if (getLine(mappings[low]) > line || getLine(mappings[high]) < line) {
+      return -1
     }
 
     while (low <= high) {
-      int middle = (low + high) >>> 1;
-      MappingEntry mapping = mappings.get(middle);
-      int mappingLine = getLine(mapping);
+      val middle = (low + high).ushr(1)
+      val mapping = mappings[middle]
+      val mappingLine = getLine(mapping)
       if (line == mappingLine) {
         if (column == getColumn(mapping)) {
           // find first
-          int firstIndex = middle;
+          var firstIndex = middle
           while (firstIndex > 0) {
-            MappingEntry prevMapping = mappings.get(firstIndex - 1);
+            val prevMapping = mappings[firstIndex - 1]
             if (getLine(prevMapping) == line && getColumn(prevMapping) == column) {
-              firstIndex--;
+              firstIndex--
             }
             else {
-              break;
+              break
             }
           }
-          return firstIndex;
+          return firstIndex
         }
         else if (column < getColumn(mapping)) {
           if (column == 0 || column == -1) {
             // find first
-            int firstIndex = middle;
-            while (firstIndex > 0 && getLine(mappings.get(firstIndex - 1)) == line) {
-              firstIndex--;
+            var firstIndex = middle
+            while (firstIndex > 0 && getLine(mappings[firstIndex - 1]) == line) {
+              firstIndex--
             }
-            return firstIndex;
+            return firstIndex
           }
 
           if (middle == 0) {
-            return -1;
+            return -1
           }
 
-          MappingEntry prevMapping = mappings.get(middle - 1);
+          val prevMapping = mappings[middle - 1]
           if (line != getLine(prevMapping)) {
-            return -1;
+            return -1
           }
           else if (column >= getColumn(prevMapping)) {
-            return middle - 1;
+            return middle - 1
           }
           else {
-            high = middle - 1;
+            high = middle - 1
           }
         }
         else {
           // https://code.google.com/p/google-web-toolkit/issues/detail?id=9103
           // We skipIfColumnEquals because GWT has two entries — source position equals, but generated no. We must use first entry (at least, in case of GWT it is correct)
-          MappingEntry nextMapping = getNextOnTheSameLine(middle);
+          val nextMapping = getNextOnTheSameLine(middle)
           if (nextMapping == null) {
-            return middle;
+            return middle
           }
           else {
-            low = middle + 1;
+            low = middle + 1
           }
         }
       }
       else if (line > mappingLine) {
-        low = middle + 1;
+        low = middle + 1
       }
       else {
-        high = middle - 1;
+        high = middle - 1
       }
     }
 
-    return -1;
+    return -1
   }
 
-  @Nullable
-  public MappingEntry get(int line, int column) {
-    // todo honor Google Chrome bug related to paused location
-    int index = indexOf(line, column);
-    return index == -1 ? null : mappings.get(index);
-  }
+  // todo honor Google Chrome bug related to paused location
+  fun get(line: Int, column: Int) = mappings.getOrNull(indexOf(line, column))
 
-  @Nullable
-  public MappingEntry getNext(int index) {
-    return index >= 0 && (index + 1) < mappings.size() ? mappings.get(index + 1) : null;
-  }
+  fun getNext(index: Int) = mappings.getOrNull(index + 1)
 
-  @Nullable
-  public MappingEntry getNext(@NotNull MappingEntry mapping) {
-    return getNext(Collections.binarySearch(mappings, mapping, getComparator()));
-  }
+  fun getNext(mapping: MappingEntry) = getNext(mappings.binarySearch(mapping, comparator))
 
-  @Nullable
-  public MappingEntry getNextOnTheSameLine(int index) {
-    return getNextOnTheSameLine(index, true);
-  }
+  @JvmOverloads
+  fun getNextOnTheSameLine(_index: Int, skipIfColumnEquals: Boolean = true): MappingEntry? {
+    var index = _index
+    var nextMapping = getNext(index) ?: return null
 
-  @Nullable
-  public MappingEntry getNextOnTheSameLine(int index, boolean skipIfColumnEquals) {
-    MappingEntry nextMapping = getNext(index);
-    if (nextMapping == null) {
-      return null;
-    }
-
-    MappingEntry mapping = get(index);
+    val mapping = get(index)
     if (getLine(nextMapping) != getLine(mapping)) {
-      return null;
+      return null
     }
 
     if (skipIfColumnEquals) {
       // several generated segments can point to one source segment, so, in mapping list ordered by source, could be several mappings equal in terms of source position
-      while (nextMapping != null && getColumn(nextMapping) == getColumn(mapping)) {
-        nextMapping = getNextOnTheSameLine(++index, false);
+      while (getColumn(nextMapping) == getColumn(mapping)) {
+        nextMapping = getNextOnTheSameLine(++index, false) ?: return null
       }
     }
 
-    return nextMapping;
+    return nextMapping
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public MappingEntry getNextOnTheSameLine(@NotNull MappingEntry mapping) {
-    MappingEntry nextMapping = getNext(mapping);
-    return nextMapping != null && getLine(nextMapping) == getLine(mapping) ? nextMapping : null;
+  fun getNextOnTheSameLine(mapping: MappingEntry): MappingEntry? {
+    val nextMapping = getNext(mapping)
+    return if (nextMapping != null && getLine(nextMapping) == getLine(mapping)) nextMapping else null
   }
 
-  public int getEndOffset(@NotNull MappingEntry mapping, int lineStartOffset, @NotNull Document document) {
-    MappingEntry nextMapping = getNextOnTheSameLine(Collections.binarySearch(mappings, mapping, getComparator()));
-    return nextMapping == null ? document.getLineEndOffset(getLine(mapping)) : lineStartOffset + getColumn(nextMapping);
+  fun getEndOffset(mapping: MappingEntry, lineStartOffset: Int, document: Document): Int {
+    val nextMapping = getNextOnTheSameLine(Collections.binarySearch(mappings, mapping, comparator))
+    return if (nextMapping == null) document.getLineEndOffset(getLine(mapping)) else lineStartOffset + getColumn(nextMapping)
   }
 
-  @NotNull
-  public MappingEntry get(int index) {
-    return mappings.get(index);
-  }
-
-  public interface MappingsProcessorInLine {
-    boolean process(@NotNull MappingEntry entry, @Nullable MappingEntry nextEntry);
-  }
+  fun get(index: Int) = mappings.get(index)
 
   // entries will be processed in this list order
-  public boolean processMappingsInLine(int line, @NotNull MappingsProcessorInLine entryProcessor) {
-    int low = 0;
-    int high = mappings.size() - 1;
+  fun processMappingsInLine(line: Int, entryProcessor: MappingsProcessorInLine): Boolean {
+    var low = 0
+    var high = mappings.size - 1
     while (low <= high) {
-      int middle = (low + high) >>> 1;
-      MappingEntry mapping = mappings.get(middle);
-      int mappingLine = getLine(mapping);
+      val middle = (low + high).ushr(1)
+      val mapping = mappings.get(middle)
+      val mappingLine = getLine(mapping)
       if (line == mappingLine) {
         // find first
-        int firstIndex = middle;
+        var firstIndex = middle
         while (firstIndex > 0 && getLine(mappings.get(firstIndex - 1)) == line) {
-          firstIndex--;
+          firstIndex--
         }
 
-        MappingEntry entry = mappings.get(firstIndex);
+        var entry: MappingEntry? = mappings.get(firstIndex)
         do {
-          MappingEntry nextEntry = ++firstIndex < mappings.size() ? mappings.get(firstIndex) : null;
+          var nextEntry: MappingEntry? = if (++firstIndex < mappings.size) mappings.get(firstIndex) else null
           if (nextEntry != null && getLine(nextEntry) != line) {
-            nextEntry = null;
+            nextEntry = null
           }
 
-          if (!entryProcessor.process(entry, nextEntry)) {
-            return true;
+          if (!entryProcessor.process(entry!!, nextEntry)) {
+            return true
           }
 
-          entry = nextEntry;
+          entry = nextEntry
         }
-        while (entry != null);
-        return true;
+        while (entry != null)
+        return true
       }
       else if (line > mappingLine) {
-        low = middle + 1;
+        low = middle + 1
       }
       else {
-        high = middle - 1;
+        high = middle - 1
       }
     }
-    return false;
+    return false
   }
+}
+
+interface MappingsProcessorInLine {
+  fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean
 }
