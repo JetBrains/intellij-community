@@ -36,12 +36,12 @@ class SourceMap(val outFile: String?, val mappings: MappingList, internal val so
 
   fun processMappingsInLine(sourceUrls: List<Url>,
                             sourceLine: Int,
-                            mappingProcessor: MappingList.MappingsProcessorInLine,
+                            mappingProcessor: MappingsProcessorInLine,
                             sourceFile: VirtualFile?,
                             resolver: NullableLazyValue<SourceResolver.Resolver>?): Boolean {
     val mappings = findMappingList(sourceUrls, sourceFile, resolver)
     return mappings != null && mappings.processMappingsInLine(sourceLine, mappingProcessor)
   }
 
-  fun getMappingsOrderedBySource(source: Int) = sourceIndexToMappings[source]!!
+  fun getMappingsOrderedBySource(source: Int) = sourceIndexToMappings.get(source)!!
 }

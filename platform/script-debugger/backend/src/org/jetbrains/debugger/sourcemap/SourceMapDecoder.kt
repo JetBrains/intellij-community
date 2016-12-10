@@ -328,7 +328,7 @@ private class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mapp
 
   override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
 
-  override fun getComparator() = MAPPING_COMPARATOR_BY_SOURCE_POSITION
+  override val comparator = MAPPING_COMPARATOR_BY_SOURCE_POSITION
 }
 
 private class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
@@ -336,6 +336,6 @@ private class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(m
 
   override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
 
-  override fun getComparator() = MAPPING_COMPARATOR_BY_GENERATED_POSITION
+  override val comparator = MAPPING_COMPARATOR_BY_GENERATED_POSITION
 }
 
