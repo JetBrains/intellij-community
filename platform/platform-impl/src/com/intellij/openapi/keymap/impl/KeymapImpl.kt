@@ -336,7 +336,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         }
       }
     }
-    return sortInOrderOfRegistration(list)
+    return sortInRegistrationOrder(list)
   }
 
   override fun getActionIds(firstKeyStroke: KeyStroke): Array<String> {
@@ -365,7 +365,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         }
       }
     }
-    return sortInOrderOfRegistration(list)
+    return sortInRegistrationOrder(list)
   }
 
   override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
@@ -403,28 +403,29 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun hasActionId(actionId: String, shortcut: MouseShortcut): Boolean {
-    val s = convertShortcut(shortcut)
+    var convertedShortcut = shortcut
     var keymap = this
     do {
-      val list = keymap.mouseShortcutIds.get(s)
+      val list = keymap.mouseShortcutIds.get(convertedShortcut)
       if (list != null && list.contains(actionId)) {
         return true
       }
 
-      keymap = keymap.parent ?: return false
+      val parent = keymap.parent ?: return false
+      convertedShortcut = keymap.convertMouseShortcut(shortcut)
+      keymap = parent
     }
     while (true)
   }
 
   override fun getActionIds(shortcut: MouseShortcut): Array<String> {
-    // first, get shortcuts from own map
     var list = mouseShortcutIds.get(shortcut)
-    val ids = parent?.getActionIds(convertMouseShortcut(shortcut))
-    if (ids != null && ids.isNotEmpty()) {
-      var originalListInstance = list != null
-      for (id in ids) {
-        // add actions from parent keymap only if they are absent in this keymap
-        if (actionIdToShortcuts.containsKey(id)) {
+    var originalListInstance = list != null
+    var keymap = parent ?: return sortInRegistrationOrder(list)
+    var convertedShortcut = convertMouseShortcut(shortcut)
+    do {
+      for (id in (keymap.mouseShortcutIds.get(convertedShortcut) ?: emptyList<String>())) {
+        if (list != null && list.contains(id)) {
           continue
         }
 
@@ -437,8 +438,12 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         }
         list.add(id)
       }
+
+      val parent = keymap.parent ?: return sortInRegistrationOrder(list)
+      convertedShortcut = keymap.convertMouseShortcut(shortcut)
+      keymap = parent
     }
-    return sortInOrderOfRegistration(list)
+    while (true)
   }
 
   fun isActionBound(actionId: String) = keymapManager.boundActions.contains(actionId)
@@ -687,7 +692,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   override fun hashCode() = name.hashCode()
 }
 
-private fun sortInOrderOfRegistration(ids: List<String>?): Array<String> {
+private fun sortInRegistrationOrder(ids: List<String>?): Array<String> {
   val array = ArrayUtilRt.toStringArray(ids)
   if (array.size > 1) {
     Arrays.sort(array, ActionManagerEx.getInstanceEx().registrationOrderComparator)
