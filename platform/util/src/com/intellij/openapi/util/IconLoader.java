@@ -480,7 +480,7 @@ public final class IconLoader {
 
       getRealIcon(); // force state update & cache reset
 
-      Icon icon = myScaledIconsCache.getOrScaleIcon(getJBUIScale(ScaleType.PIX), scale);
+      Icon icon = myScaledIconsCache.getOrScaleIcon(getJBUIScale(ScaleType.PIX), scale, UIUtil.isUnderDarcula());
       if (icon != null) {
         return icon;
       }
@@ -507,17 +507,22 @@ public final class IconLoader {
         }
       });
 
+      @NotNull
+      private Image getOrLoadOrigImage(float pixScale) {
+        return getOrLoadOrigImage(pixScale, true);
+      }
+
       /**
        * Retrieves the orig image based on the pixScale.
        */
       @NotNull
-      private Image getOrLoadOrigImage(float pixScale) {
+      private Image getOrLoadOrigImage(float pixScale, boolean allowFloatScaling) {
         boolean needRetinaImage = (pixScale > 1.0f);
         Image image = SoftReference.dereference(origImagesCache.get(needRetinaImage));
         if (image != null) {
           return image;
         }
-        image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), myFilters, pixScale);
+        image = ImageLoader.loadFromUrl(myUrl, allowFloatScaling, myFilters, pixScale);
         origImagesCache.put(needRetinaImage, new SoftReference<Image>(image));
         return image;
       }
@@ -525,14 +530,14 @@ public final class IconLoader {
       /**
        * Retrieves the orig icon based on the pixScale, then scale it by the instanceScale.
        */
-      public ImageIcon getOrScaleIcon(float pixScale, float instanceScale) {
+      public ImageIcon getOrScaleIcon(float pixScale, float instanceScale, boolean allowFloatScaling) {
         float effectiveScale = pixScale * instanceScale;
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(effectiveScale));
         if (icon != null) {
           return icon;
         }
 
-        Image image = getOrLoadOrigImage(pixScale);
+        Image image = getOrLoadOrigImage(pixScale, allowFloatScaling);
         image = ImageUtil.scaleImage(image, instanceScale);
         icon = checkIcon(image, myUrl);
         scaledIconsCache.put(effectiveScale, new SoftReference<ImageIcon>(icon));
@@ -543,7 +548,7 @@ public final class IconLoader {
        * Retrieves the orig icon based on the pixScale.
        */
       public ImageIcon getOrLoadIcon(float pixScale) {
-        return getOrScaleIcon(pixScale, 1f);
+        return getOrScaleIcon(pixScale, 1f, true);
       }
 
       public void clear() {
