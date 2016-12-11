@@ -18,17 +18,34 @@ package org.jetbrains.debugger.sourcemap
 import com.intellij.openapi.editor.Document
 import java.util.*
 
-abstract class MappingList(private val mappings: List<MappingEntry>) {
+interface Mappings {
+  fun get(line: Int, column: Int): MappingEntry?
+
+  fun getNextOnTheSameLine(index: Int, skipIfColumnEquals: Boolean = true): MappingEntry?
+
+  fun getNext(mapping: MappingEntry): MappingEntry?
+
+  fun getNextOnTheSameLine(mapping: MappingEntry): MappingEntry? {
+    val nextMapping = getNext(mapping)
+    return if (nextMapping != null && getLine(nextMapping) == getLine(mapping)) nextMapping else null
+  }
+
+  fun indexOf(line: Int, column: Int): Int
+
+  fun getByIndex(index: Int): MappingEntry
+
+  fun getLine(mapping: MappingEntry): Int
+
+  fun getColumn(mapping: MappingEntry): Int
+}
+
+abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings {
   val size: Int
     get() = mappings.size
 
   protected abstract val comparator: Comparator<MappingEntry>
 
-  abstract fun getLine(mapping: MappingEntry): Int
-
-  abstract fun getColumn(mapping: MappingEntry): Int
-
-  fun indexOf(line: Int, column: Int): Int {
+  override fun indexOf(line: Int, column: Int): Int {
     var low = 0
     var high = mappings.size - 1
     if (getLine(mappings[low]) > line || getLine(mappings[high]) < line) {
@@ -103,35 +120,29 @@ abstract class MappingList(private val mappings: List<MappingEntry>) {
   }
 
   // todo honor Google Chrome bug related to paused location
-  fun get(line: Int, column: Int) = mappings.getOrNull(indexOf(line, column))
+  override fun get(line: Int, column: Int) = mappings.getOrNull(indexOf(line, column))
 
   fun getNext(index: Int) = mappings.getOrNull(index + 1)
 
-  fun getNext(mapping: MappingEntry) = getNext(mappings.binarySearch(mapping, comparator))
+  override fun getNext(mapping: MappingEntry) = getNext(mappings.binarySearch(mapping, comparator))
 
-  @JvmOverloads
-  fun getNextOnTheSameLine(_index: Int, skipIfColumnEquals: Boolean = true): MappingEntry? {
-    var index = _index
+  override fun getNextOnTheSameLine(index: Int, skipIfColumnEquals: Boolean): MappingEntry? {
     var nextMapping = getNext(index) ?: return null
 
-    val mapping = get(index)
+    val mapping = getByIndex(index)
     if (getLine(nextMapping) != getLine(mapping)) {
       return null
     }
 
     if (skipIfColumnEquals) {
+      var i = index
       // several generated segments can point to one source segment, so, in mapping list ordered by source, could be several mappings equal in terms of source position
       while (getColumn(nextMapping) == getColumn(mapping)) {
-        nextMapping = getNextOnTheSameLine(++index, false) ?: return null
+        nextMapping = getNextOnTheSameLine(++i, false) ?: return null
       }
     }
 
     return nextMapping
-  }
-
-  fun getNextOnTheSameLine(mapping: MappingEntry): MappingEntry? {
-    val nextMapping = getNext(mapping)
-    return if (nextMapping != null && getLine(nextMapping) == getLine(mapping)) nextMapping else null
   }
 
   fun getEndOffset(mapping: MappingEntry, lineStartOffset: Int, document: Document): Int {
@@ -139,7 +150,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) {
     return if (nextMapping == null) document.getLineEndOffset(getLine(mapping)) else lineStartOffset + getColumn(nextMapping)
   }
 
-  fun get(index: Int) = mappings.get(index)
+  override fun getByIndex(index: Int) = mappings.get(index)
 
   // entries will be processed in this list order
   fun processMappingsInLine(line: Int, entryProcessor: MappingsProcessorInLine): Boolean {

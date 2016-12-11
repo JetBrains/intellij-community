@@ -11,6 +11,7 @@ import com.intellij.util.containers.ObjectIntHashMap
 
 abstract class FileUrlMapper {
   companion object {
+    @JvmField
     val EP_NAME = ExtensionPointName.create<FileUrlMapper>("com.jetbrains.fileUrlMapper")
   }
 
