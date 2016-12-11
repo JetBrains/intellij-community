@@ -18,9 +18,9 @@ package com.intellij.openapi.application
 import com.intellij.openapi.util.Computable
 import javax.swing.SwingUtilities
 
-inline fun <T> runWriteAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction(Computable { runnable.invoke() })
+inline fun <T> runWriteAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
 
-inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable.invoke() })
+inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable() })
 
 /**
  * @exclude Internal use only
