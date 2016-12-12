@@ -116,10 +116,16 @@ public class PyTypeCheckerInspection extends PyInspection {
         if (PyNames.FAKE_COROUTINE.equals(genericType.getName())) {
           return genericType.getIteratedItemType();
         }
-        else if (PyNames.FAKE_GENERATOR.equals(genericType.getName()) ||
-                 genericType instanceof PyClassType && "typing.Generator".equals(((PyClassType)genericType).getClassQName())) {
-          // Generator's type is parametrized as [YieldType, SendType, ReturnType]
-          return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
+        else if (function.isGenerator()) {
+          if (PyNames.FAKE_GENERATOR.equals(genericType.getName()) ||
+              genericType instanceof PyClassType && "typing.Generator".equals(((PyClassType)genericType).getClassQName())) {
+            // Generator's type is parametrized as [YieldType, SendType, ReturnType]
+            return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
+          }
+          else {
+            // Assume that any other return type annotation for a generator cannot contain its return type
+            return null;
+          }
         }
       }
 
