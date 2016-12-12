@@ -86,7 +86,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     get() = actionIdToShortcuts.keys.toTypedArray()
 
   private var _mouseShortcutToListOfIds: Map<MouseShortcut, MutableList<String>>? = null
-  private val mouseShortcutIds: Map<MouseShortcut, MutableList<String>>
+  private val mouseShortcutToActionIds: Map<MouseShortcut, MutableList<String>>
     get() {
       var result = _mouseShortcutToListOfIds
       if (result == null) {
@@ -406,7 +406,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     var convertedShortcut = shortcut
     var keymap = this
     do {
-      val list = keymap.mouseShortcutIds.get(convertedShortcut)
+      val list = keymap.mouseShortcutToActionIds.get(convertedShortcut)
       if (list != null && list.contains(actionId)) {
         return true
       }
@@ -419,12 +419,18 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun getActionIds(shortcut: MouseShortcut): Array<String> {
-    var list = mouseShortcutIds.get(shortcut)
+    var list = mouseShortcutToActionIds.get(shortcut)
     var originalListInstance = list != null
     var keymap = parent ?: return sortInRegistrationOrder(list)
     var convertedShortcut = convertMouseShortcut(shortcut)
     do {
-      for (id in (keymap.mouseShortcutIds.get(convertedShortcut) ?: emptyList<String>())) {
+      for (id in (keymap.mouseShortcutToActionIds.get(convertedShortcut) ?: emptyList<String>())) {
+        if (actionIdToShortcuts.containsKey(id)) {
+          // on remove shortcut we put empty list to actionIdToShortcuts, our mouseShortcutToActionIds doesn't contain mapping
+          // so, we add actions from parent keymap only if they are absent in this keymap
+          continue
+        }
+
         if (list != null && list.contains(id)) {
           continue
         }

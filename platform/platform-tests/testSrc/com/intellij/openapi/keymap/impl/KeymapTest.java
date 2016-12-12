@@ -16,10 +16,12 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -149,6 +151,17 @@ public class KeymapTest extends PlatformTestCase {
 
     myChild.removeShortcut(ACTION_2, shortcut2);
     assertThat(myChild.getShortcuts(ACTION_2)).containsExactly(shortcutA, shortcutB);
+  }
+
+  public void testRemoveMouseShortcut() throws Exception {
+    myParent.clearOwnActionsIds();
+    myChild.clearOwnActionsIds();
+
+    MouseShortcut mouseShortcut = new MouseShortcut(1, InputEvent.BUTTON2_MASK, 1);
+    myParent.addShortcut(ACTION_2, mouseShortcut);
+    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_2);
+    myChild.removeShortcut(ACTION_2, mouseShortcut);
+    assertThat(myChild.getActionIds(mouseShortcut)).isEmpty();
   }
 
   public void testRemovingShortcutLast() throws Exception {
