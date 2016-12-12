@@ -68,9 +68,9 @@ interface PyProjectSynchronizer {
 
   /**
    * Maps file name from one side to another.
-   * @param fileName local file name (in case of java-to-python), remote otherwise
+   * @param filePath local file name (in case of java-to-python), remote otherwise
    */
-  fun mapName(project: Project, direction: PySyncDirection, fileName: String): String?
+  fun mapFilePath(project: Project, direction: PySyncDirection, filePath: String): String?
 }
 
 /**
@@ -105,12 +105,6 @@ class PySyncCheckCreateIfPossible(val module: Module, val remotePath: String?) :
  * Local-remote sync direction
  */
 enum class PySyncDirection {
-  /**
-   * aka local-to-remote
-   */
-  JAVA_TO_PYTHON,
-  /**
-   * aka remote-to-local
-   */
-  PYTHON_TO_JAVA,
+  LOCAL_TO_REMOTE,
+  REMOTE_TO_LOCAL,
 }

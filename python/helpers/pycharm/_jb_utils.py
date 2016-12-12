@@ -2,10 +2,11 @@
 __author__ = 'Ilya.Kazakevich'
 import sys, os
 
-class ChangesMon(object):
+class FileChangesTracker(object):
     """
-    Engine to track changes. Create it with directory, then change some files and call #get_changed_files
-    To get list of changed files
+     On the instantiation the class records the timestampts of files stored in the folder.
+     #get_changed_files() return the list of files that have a timestamp different from the one they had during the class instantiation
+
     """
     def __init__(self, folder):
         self.old_files = self._get_changes_from(folder)
@@ -27,7 +28,7 @@ class ChangesMon(object):
 
 def jb_escape_output(output):
     """
-    Escapes text in manner that is supported on Java side with CommandLineConsoleApi#jbFilter
+    Escapes text in manner that is supported on Java side with CommandLineConsoleApi.kt#jbFilter
     Check jbFilter doc for more info
 
     :param output: raw text
