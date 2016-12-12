@@ -9,6 +9,7 @@ interface Foo {
 class Bar implements Foo, I {
   int bar;
 
+  @Override
   public void setBar(int bar) {
     this.bar = bar;
   }
