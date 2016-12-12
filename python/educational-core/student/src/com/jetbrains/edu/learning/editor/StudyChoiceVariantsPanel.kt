@@ -18,6 +18,11 @@ import javax.swing.ScrollPaneConstants
 
 class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
 
+  private val LEFT_INSET = 15.0
+  private val RIGHT_INSET = 10.0
+  private val TOP_INSET = 15.0
+  private val BOTTOM_INSET = 10.0
+
   init {
     val jfxPanel = JFXPanel()
     Platform.runLater {
@@ -26,12 +31,14 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
       jfxPanel.scene = scene
       val vBox = VBox()
       vBox.spacing = 10.0
-      vBox.padding = Insets(15.0, 10.0, 10.0, 15.0)
+      vBox.padding = Insets(TOP_INSET, RIGHT_INSET, BOTTOM_INSET, LEFT_INSET)
       if (task.isMultipleChoice) {
         for ((index, variant) in task.choiceVariants.withIndex()) {
           val isSelected = task.selectedVariants.contains(index)
           val checkBox = CheckBox(variant)
           checkBox.isSelected = isSelected
+          checkBox.isWrapText = true
+          checkBox.maxWidthProperty().bind(scene.widthProperty().subtract(LEFT_INSET).subtract(RIGHT_INSET))
           checkBox.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
           checkBox.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
           checkBox.selectedProperty().addListener { observableValue, wasSelected, isSelected ->
@@ -51,6 +58,8 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
           val isSelected = task.selectedVariants.contains(index)
           val radioButton = RadioButton(variant)
           radioButton.isSelected = isSelected
+          radioButton.isWrapText = true
+          radioButton.maxWidthProperty().bind(scene.widthProperty().subtract(LEFT_INSET).subtract(RIGHT_INSET))
           radioButton.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
           radioButton.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
           radioButton.toggleGroup = toggleGroup
