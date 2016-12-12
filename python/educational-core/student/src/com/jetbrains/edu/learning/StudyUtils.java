@@ -823,6 +823,10 @@ public class StudyUtils {
   public static String pathRelativeToTask(VirtualFile file) {
     VirtualFile taskDir = getTaskDir(file);
     if (taskDir == null) return file.getName();
+    VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
+    if (srcDir != null) {
+      taskDir = srcDir;
+    }
     return FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), '/');
   }
 }
