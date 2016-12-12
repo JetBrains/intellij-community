@@ -12,7 +12,7 @@
       fixed memory leak
     ]]>
   </change-notes>
-
+  
   <idea-version since-build="144.0"/>
 
   <extensions defaultExtensionNs="com.intellij">
