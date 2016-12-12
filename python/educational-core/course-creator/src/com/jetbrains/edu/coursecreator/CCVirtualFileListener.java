@@ -52,7 +52,7 @@ public class CCVirtualFileListener extends VirtualFileAdapter {
     }
 
     if (CCUtils.isTestsFile(project, createdFile)
-        || StudyUtils.isTaskDescriptionFile(taskRelativePath)
+        || StudyUtils.isTaskDescriptionFile(createdFile.getName())
         || taskRelativePath.contains(EduNames.WINDOW_POSTFIX)
         || taskRelativePath.contains(EduNames.WINDOWS_POSTFIX)
         || taskRelativePath.contains(EduNames.ANSWERS_POSTFIX)) {
