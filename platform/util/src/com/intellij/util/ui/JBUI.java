@@ -26,6 +26,7 @@ import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.image.BufferedImageGraphicsConfig;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -213,6 +214,10 @@ public class JBUI {
    */
   public static float sysScale(Graphics2D g) {
     if (UIUtil.isJDKManagedHiDPI() && g != null) {
+      if (g.getDeviceConfiguration() instanceof BufferedImageGraphicsConfig) {
+        // take BI's scale directly, not inspecting the device
+        return (float)g.getTransform().getScaleX();
+      }
       return sysScale(g.getDeviceConfiguration().getDevice());
     }
     return sysScale();
