@@ -53,7 +53,6 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
  */
 public class VcsRootProblemNotifier {
   private static final Logger LOG = Logger.getInstance(VcsRootProblemNotifier.class);
-  public static final Function<VcsRootError, String> PATH_FROM_ROOT_ERROR = VcsRootError::getMapping;
 
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration mySettings;
@@ -104,7 +103,7 @@ public class VcsRootProblemNotifier {
       }
     }
 
-    List<String> unregRootPaths = ContainerUtil.map(importantUnregisteredRoots, PATH_FROM_ROOT_ERROR);
+    List<String> unregRootPaths = ContainerUtil.map(importantUnregisteredRoots, VcsRootError::getMapping);
     if (invalidRoots.isEmpty() && (importantUnregisteredRoots.isEmpty() || myReportedUnregisteredRoots.containsAll(unregRootPaths))) {
       return;
     }
@@ -251,7 +250,7 @@ public class VcsRootProblemNotifier {
         }
       }
       else if (event.getDescription().equals("ignore")) {
-        mySettings.addIgnoredUnregisteredRoots(ContainerUtil.map(myImportantUnregisteredRoots, PATH_FROM_ROOT_ERROR));
+        mySettings.addIgnoredUnregisteredRoots(ContainerUtil.map(myImportantUnregisteredRoots, VcsRootError::getMapping));
         notification.expire();
       }
       else if (event.getDescription().equals("add")) {
