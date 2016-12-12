@@ -48,7 +48,11 @@ public class StudyCheckUtils {
   private StudyCheckUtils() {
   }
 
-  public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
+  public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task) {
+    VirtualFile taskDir = task.getTaskDir(project);
+    if (taskDir == null) {
+      return;
+    }
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
