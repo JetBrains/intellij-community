@@ -133,7 +133,7 @@ class IdePluginClient(val project : Project) :
                     clientLocal.services.profile.getMyUid().map {
                         log.debug { "My Profile: $it" }
                     }
-                    clientLocal.services.profile.editName("Hey! ${Random.nextUID()}")
+                    clientLocal.services.profile.editNick("Hey! ${Random.nextUID()}")
                 }
             }
             .then {
