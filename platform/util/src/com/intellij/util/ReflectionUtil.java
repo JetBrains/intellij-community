@@ -419,8 +419,20 @@ public class ReflectionUtil {
     }
   }
 
-  private static final Method acquireConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "acquireConstructorAccessor");
-  private static final Method getConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "getConstructorAccessor");
+  private static final Method acquireConstructorAccessorMethod;
+  private static final Method getConstructorAccessorMethod;
+  static {
+    Method acquireMethod, getMethod;
+    try {
+      acquireMethod = getDeclaredMethod(Constructor.class, "acquireConstructorAccessor");
+      getMethod = getDeclaredMethod(Constructor.class, "getConstructorAccessor");
+    }
+    catch (Throwable ignore) {
+      acquireMethod = getMethod = null;
+    }
+    acquireConstructorAccessorMethod = acquireMethod;
+    getConstructorAccessorMethod = getMethod;
+  }
 
   /** @deprecated private API (to be removed in IDEA 17) */
   public static ConstructorAccessor getConstructorAccessor(@NotNull Constructor constructor) {
