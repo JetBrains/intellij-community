@@ -209,7 +209,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       markContentRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
-      if (!app.isHeadlessEnvironment() && !app.isOnAir()) {
+      if (!app.isHeadlessEnvironment() || app.isOnAir()) {
         final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
         final MessageBusConnection connection = app.getMessageBus().connect();
         connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
