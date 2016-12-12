@@ -520,9 +520,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     @Override
     public void projectClosing(Project project) {
-      synchronized (myStateLock) {
-        myState.names.put(getProjectPath(project), getProjectDisplayName(project));
-      }
+      updateProjectName(project);
     }
 
     @Override
@@ -536,6 +534,13 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       }
       SystemDock.updateMenu();
     }
+  }
+
+  public void updateProjectName(Project project) {
+    synchronized (myStateLock) {
+      myState.names.put(getProjectPath(project), getProjectDisplayName(project));
+    }
+    clearNameCache();
   }
 
   @NotNull
