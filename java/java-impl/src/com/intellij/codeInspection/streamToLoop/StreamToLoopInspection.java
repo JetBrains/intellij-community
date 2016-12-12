@@ -119,6 +119,12 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if(parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
         return false;
       }
+      if(parent instanceof PsiMethodCallExpression) {
+        PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
+        if(methodExpression.textMatches("this") || methodExpression.textMatches("super")) {
+          return false;
+        }
+      }
       cur = parent;
       parent = cur.getParent();
     }
