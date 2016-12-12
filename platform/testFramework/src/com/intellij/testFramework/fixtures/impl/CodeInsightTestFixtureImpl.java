@@ -50,11 +50,15 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -150,6 +154,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private String myTestDataPath;
   private boolean myEmptyLookup;
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
+  private ChooseByNameBase myChooseByNamePopup;
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
 
@@ -1180,6 +1185,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           myEditor = null;
           myFile = null;
           myPsiManager = null;
+          myChooseByNamePopup = null;
 
           try {
             myProjectFixture.tearDown();
@@ -1726,6 +1732,31 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public LookupImpl getLookup() {
     return (LookupImpl)LookupManager.getActiveLookup(myEditor);
+  }
+
+  @NotNull
+  @Override
+  public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
+    final ChooseByNameBase chooseByNamePopup = getMockChooseByNamePopup(contextForSorting);
+    final ArrayList<Object> results = new ArrayList<>();
+    chooseByNamePopup.getProvider().filterElements(chooseByNamePopup,
+                                                   chooseByNamePopup.transformPattern(pattern),
+                                                   searchEverywhere,
+                                                   new MockProgressIndicator(),
+                                                   new CommonProcessors.CollectProcessor<>(results));
+    return results;
+  }
+
+  @NotNull
+  private ChooseByNameBase getMockChooseByNamePopup(@Nullable PsiElement contextForSorting) {
+    final Project project = getProject();
+    if (contextForSorting != null) {
+      return ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), contextForSorting);
+    }
+    if (myChooseByNamePopup == null) {
+      myChooseByNamePopup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), (PsiElement)null);
+    }
+    return myChooseByNamePopup;
   }
 
   protected void bringRealEditorBack() {

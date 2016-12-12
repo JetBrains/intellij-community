@@ -577,5 +577,15 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
 
+  /**
+   * Get elements found by the Goto Class action called with the given pattern
+   * @param pattern a pattern to search for elements
+   * @param searchEverywhere indicates whether "include non-project classes" checkbox is selected
+   * @param contextForSorting a PsiElement used for "proximity sorting" of the results. The sorting will be disabled if null given.
+   * @return a list of the results (likely PsiElements) found for the given pattern
+   */
+  @NotNull
+  List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+
   void saveText(@NotNull VirtualFile file, @NotNull String text);
 }
