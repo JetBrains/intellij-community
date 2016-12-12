@@ -62,7 +62,8 @@ public class LabelPainter {
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(2);
   public static final int RIGHT_PADDING = JBUI.scale(2);
   public static final int LEFT_PADDING = JBUI.scale(2);
-  public static final int MIDDLE_PADDING = JBUI.scale(2);
+  public static final int COMPACT_MIDDLE_PADDING = JBUI.scale(2);
+  public static final int MIDDLE_PADDING = JBUI.scale(6);
   private static final int MAX_LENGTH = 22;
   private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
@@ -154,7 +155,7 @@ public class LabelPainter {
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
       LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
-      int newWidth = width + labelIcon.getIconWidth() + MIDDLE_PADDING;
+      int newWidth = width + labelIcon.getIconWidth() + COMPACT_MIDDLE_PADDING;
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
       newWidth += fontMetrics.stringWidth(text);
@@ -335,7 +336,7 @@ public class LabelPainter {
 
       g2.setColor(myForeground);
       g2.drawString(text, x, y + baseLine);
-      x += fontMetrics.stringWidth(text) + MIDDLE_PADDING;
+      x += fontMetrics.stringWidth(text) + (myCompact ? COMPACT_MIDDLE_PADDING : MIDDLE_PADDING);
     }
 
     config.restore();

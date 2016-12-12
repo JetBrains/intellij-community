@@ -52,13 +52,13 @@ class TooltipReferencesPanel extends ReferencesPanel {
 
   @Override
   public void update() {
-    super.update();
     myHasGroupWithMultipleRefs = false;
     for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
       if (typeAndRefs.getValue().size() > 1) {
         myHasGroupWithMultipleRefs = true;
       }
     }
+    super.update();
   }
 
   @NotNull
