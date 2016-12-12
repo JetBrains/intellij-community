@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -27,8 +28,10 @@ public interface GradleConfiguration extends Serializable {
   @NotNull
   String getName();
 
-  @NotNull
+  @Nullable
   String getDescription();
 
   boolean isVisible();
+
+  boolean isScriptClasspathConfiguration();
 }

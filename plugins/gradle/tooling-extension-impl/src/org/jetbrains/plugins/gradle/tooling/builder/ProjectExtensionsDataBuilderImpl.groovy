@@ -43,6 +43,9 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     for (it in project.configurations) {
       result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible))
     }
+    for (it in project.buildscript.configurations) {
+      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true))
+    }
 
     def conventions = project.extensions as DefaultConvention
     conventions.extraProperties.properties.each { name, value ->

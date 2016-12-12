@@ -148,6 +148,7 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           gradleConfiguration.name = configuration.getName();
           gradleConfiguration.description = configuration.getDescription();
           gradleConfiguration.visible = configuration.isVisible();
+          gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
           extensionsData.configurations.add(gradleConfiguration);
         }
         gradleProject.extensions.put(entry.getKey(), extensionsData);
@@ -299,6 +300,8 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     public String name;
     @Attribute("visible")
     public boolean visible = true;
+    @Attribute("scriptClasspath")
+    public boolean scriptClasspath;
     @Text
     public String description;
   }
