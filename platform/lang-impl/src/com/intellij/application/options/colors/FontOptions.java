@@ -71,19 +71,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private boolean myIsInSchemeChange;
 
 
-  public FontOptions(ColorAndFontOptions options) {
-    this(options, ApplicationBundle.message("group.editor.font"));
-  }
-
-  protected FontOptions(@NotNull ColorAndFontOptions options, final String title) {
+  public FontOptions(@NotNull ColorAndFontOptions options) {
     setLayout(new MigLayout("ins 0, gap 5, flowx"));
-    Insets borderInsets = new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
-                                     IdeBorderFactory.TITLED_BORDER_LEFT_INSET,
-                                     0,
-                                     IdeBorderFactory.TITLED_BORDER_RIGHT_INSET);
-    setBorder(IdeBorderFactory.createTitledBorder(title, false, borderInsets));
     myOptions = options;
-    add(myOnlyMonospacedCheckBox, "sgx b, sx 2");
+    add(myOnlyMonospacedCheckBox, "newline 10, sgx b, sx 2");
 
     add(new JLabel(ApplicationBundle.message("primary.font")), "newline, ax right");
     add(myPrimaryCombo, "sgx b");
