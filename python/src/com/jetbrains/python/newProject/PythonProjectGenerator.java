@@ -179,7 +179,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
                                   @Nullable final PyProjectSynchronizer synchronizer) {
     // Automatic deployment works only after first sync
     if (synchronizer != null) {
-      synchronizer.syncProject(module, PySyncDirection.JAVA_TO_PYTHON, null);
+      synchronizer.syncProject(module, PySyncDirection.LOCAL_TO_REMOTE, null);
     }
   }
 
