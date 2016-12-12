@@ -297,17 +297,20 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       int taskNum = 0;
       int taskSolved = 0;
       List<Lesson> lessons = course.getLessons();
+      for (Lesson lesson : lessons) {
+        if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
+        taskNum += lesson.getTaskList().size();
+        taskSolved += getSolvedTasks(lesson);
+      }
       if (lessons.size() == 1 && lessons.get(0).getTaskList().size() == 1) {
         final Lesson lesson = lessons.get(0);
         final Task task = lesson.getTaskList().get(0);
-        taskNum += task.getLastSubtaskIndex() + 1;
-        taskSolved += task.getActiveSubtaskIndex();
-      }
-      else {
-        for (Lesson lesson : lessons) {
-          if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
-          taskNum += lesson.getTaskList().size();
-          taskSolved += getSolvedTasks(lesson);
+        if (task.hasSubtasks()) {
+          taskNum = task.getLastSubtaskIndex() + 1;
+          taskSolved = task.getActiveSubtaskIndex();
+          if (task.getActiveSubtaskIndex() == task.getLastSubtaskIndex() && task.getStatus() == StudyStatus.Solved) {
+            taskSolved = taskNum;
+          }
         }
       }
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
