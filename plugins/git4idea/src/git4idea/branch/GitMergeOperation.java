@@ -19,7 +19,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -163,7 +162,7 @@ class GitMergeOperation extends GitBranchOperation {
         UIUtil.invokeLaterIfNeeded(new Runnable() { // bg process needs to be started from the EDT
           @Override
           public void run() {
-            GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+            GitBrancher brancher = GitBrancher.getInstance(myProject);
             brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
           }
         });
@@ -386,7 +385,7 @@ class GitMergeOperation extends GitBranchOperation {
     public void hyperlinkUpdate(@NotNull Notification notification,
                                 @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
       }
     }
