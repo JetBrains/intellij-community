@@ -184,7 +184,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   protected URL getDescriptionUrl() {
     Application app = ApplicationManager.getApplication();
-    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+    if (myEP == null || app.isUnitTestMode() || (app.isHeadlessEnvironment() && !app.isOnAir())) {
       return superGetDescriptionUrl();
     }
     String fileName = getDescriptionFileName();

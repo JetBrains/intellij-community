@@ -257,7 +257,7 @@ class FileInEditorProcessor {
 
   private boolean shouldNotify() {
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (application.isUnitTestMode() || (application.isHeadlessEnvironment() && !application.isOnAir())) {
       return false;
     }
     EditorSettingsExternalizable.OptionSet editorOptions = EditorSettingsExternalizable.getInstance().getOptions();

@@ -164,15 +164,12 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   private void loadBundledSchemes() {
-    if (!isUnitTestOrHeadlessMode()) {
+    if (!(ApplicationManager.getApplication().isUnitTestMode() ||
+          (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir()))) {
       for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
         mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
       }
     }
-  }
-
-  private static boolean isUnitTestOrHeadlessMode() {
-    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   public InspectionProfileImpl loadProfile(@NotNull String path) throws IOException, JDOMException {

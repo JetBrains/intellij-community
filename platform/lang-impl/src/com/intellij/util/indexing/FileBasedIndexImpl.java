@@ -2428,7 +2428,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
         }
         if (rebuildNotification != null
-            && !ApplicationManager.getApplication().isHeadlessEnvironment()
+            && (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isOnAir())
             && Registry.is("ide.showIndexRebuildMessage")) {
           NOTIFICATIONS.createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
         }

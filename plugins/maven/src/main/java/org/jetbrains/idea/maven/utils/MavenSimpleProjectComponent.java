@@ -37,7 +37,7 @@ public abstract class MavenSimpleProjectComponent extends AbstractProjectCompone
   }
 
   protected boolean isHeadless() {
-    return ApplicationManager.getApplication().isHeadlessEnvironment();
+    return ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir();
   }
 
   protected boolean isDefault() {

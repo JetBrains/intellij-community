@@ -31,7 +31,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -107,7 +106,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return;
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
+    if ((!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isOnAir())
         || ApplicationManager.getApplication().isUnitTestMode() && myShowNotificationInTest)
     {
       Project project = file.getProject();

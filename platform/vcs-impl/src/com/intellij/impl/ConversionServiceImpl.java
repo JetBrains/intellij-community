@@ -122,7 +122,8 @@ public class ConversionServiceImpl extends ConversionService {
   @Override
   public ConversionResult convert(@NotNull String projectPath) {
     try {
-      if (!new File(projectPath).exists() || ApplicationManager.getApplication().isHeadlessEnvironment() || !isConversionNeeded(projectPath)) {
+      if (!new File(projectPath).exists() ||
+          (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir()) || !isConversionNeeded(projectPath)) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 

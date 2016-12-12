@@ -46,8 +46,7 @@ public class VcsProjectLog {
   @NotNull private final MessageBus myMessageBus;
   @NotNull private final VcsLogTabsProperties myUiProperties;
 
-  @NotNull
-  private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
+  @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   private volatile VcsLogUiImpl myUi;
 
   public VcsProjectLog(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
@@ -164,7 +163,10 @@ public class VcsProjectLog {
   public static class InitLogStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+      if (ApplicationManager.getApplication().isUnitTestMode() ||
+          (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir())) {
+        return;
+      }
 
       VcsProjectLog projectLog = getInstance(project);
 

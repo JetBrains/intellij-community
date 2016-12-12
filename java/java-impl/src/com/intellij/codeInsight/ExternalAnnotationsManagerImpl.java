@@ -153,7 +153,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       }
       else {
         Application application = ApplicationManager.getApplication();
-        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+        if (application.isUnitTestMode() || (application.isHeadlessEnvironment() && !application.isOnAir())) {
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }

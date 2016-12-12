@@ -68,7 +68,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   private void loadCompressedDictionary(@NotNull Loader loader) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() ||
+        (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir())) {
       final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
       addCompressedFixedDictionary(dictionary);
     }

@@ -38,6 +38,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -53,9 +54,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.Consumer;
 import com.intellij.util.DisposeAwareRunnable;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -366,17 +365,12 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
-    if (isNoBackgroundMode()) {
+    if (ExternalSystemUtil.isNoBackgroundMode()) {
       r.run();
     }
     else {
       ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
     }
-  }
-
-  public static boolean isNoBackgroundMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
   }
 
   public void updateUpTo(ExternalSystemNode node) {

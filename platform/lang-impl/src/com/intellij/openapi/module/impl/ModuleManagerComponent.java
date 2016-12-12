@@ -75,7 +75,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   @Override
   protected void showUnknownModuleTypeNotification(@NotNull List<Module> modulesWithUnknownTypes) {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
+    if ((!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isOnAir()) && !modulesWithUnknownTypes.isEmpty()) {
       String message;
       if (modulesWithUnknownTypes.size() == 1) {
         message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName(),

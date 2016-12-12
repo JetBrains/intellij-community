@@ -110,7 +110,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   }
 
   public static void showReadOnlyViewWarning(Editor editor) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return;
+    if ((ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir()) || editor instanceof TextComponentEditor) return;
     
     JComponent component = HintUtil.createInformationLabel("This view is read-only");
     final LightweightHint hint = new LightweightHint(component);

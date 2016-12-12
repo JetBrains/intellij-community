@@ -41,7 +41,7 @@ public class VcsLogProgress implements Disposable {
   }
 
   public ProgressIndicator createProgressIndicator(boolean visible) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir()) {
       return new EmptyProgressIndicator();
     }
     return new VcsLogProgressIndicator(visible);

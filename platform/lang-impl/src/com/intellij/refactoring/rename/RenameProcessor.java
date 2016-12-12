@@ -403,7 +403,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
     myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
     if (!mySkippedUsages.isEmpty()) {
-      if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && (!ApplicationManager.getApplication().isHeadlessEnvironment() ||
+                                                                    ApplicationManager.getApplication().isOnAir())) {
         ApplicationManager.getApplication().invokeLater(() -> {
           StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
           if (statusBar != null) {

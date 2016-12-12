@@ -101,7 +101,7 @@ public class LibraryJarStatisticsService extends SettingsConnectionService imple
   @Override
   public void runActivity(@NotNull Project project) {
     final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
+    if (application.isUnitTestMode() || (application.isHeadlessEnvironment() && !application.isOnAir())) return;
     ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> getInstance().getTechnologyDescriptors());
     ;
   }

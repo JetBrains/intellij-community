@@ -87,7 +87,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
         final PsiFile file = myID.getContainingFile();
         //no need to check resolve in offline mode
-        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir()) {
           return file != null && file.isPhysical();
         }
 

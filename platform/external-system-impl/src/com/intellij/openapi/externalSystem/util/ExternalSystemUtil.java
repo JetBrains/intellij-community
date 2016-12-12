@@ -832,7 +832,7 @@ public class ExternalSystemUtil {
 
   public static boolean isNoBackgroundMode() {
     return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
+            || (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir()));
   }
 
   private interface TaskUnderProgress {
