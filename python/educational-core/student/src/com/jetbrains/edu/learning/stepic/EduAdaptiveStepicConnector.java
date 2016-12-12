@@ -62,6 +62,7 @@ public class EduAdaptiveStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final int CONNECTION_TIMEOUT = 60 * 1000;
   private static final String CODE_TASK_TYPE = "code";
+  private static final String CHOICE_TYPE_TEXT = "choice";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull Project project, @NotNull Course course) {
@@ -138,7 +139,7 @@ public class EduAdaptiveStepicConnector {
     if (stepType.equals(CODE_TASK_TYPE)) {
       return getCodeTaskFromStep(project, step.block, name, stepId);
     }
-    else if (stepType.equals("choice")) {
+    else if (stepType.equals(CHOICE_TYPE_TEXT)) {
       return getChoiceTaskFromStep(project, name, step.block, stepId);
     }
     else if (stepType.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
