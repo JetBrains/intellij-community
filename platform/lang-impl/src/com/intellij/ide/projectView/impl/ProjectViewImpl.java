@@ -323,12 +323,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           StringUtil.equals(subId, mySavedPaneSubId)) {
         selectID = id;
         selectSubID = subId;
+        mySavedPaneId = null;
+        mySavedPaneSubId = null;
         break;
       }
     }
 
     // saved view not found (plugin disabled, ID changed etc.) - select first available view...
-    if (selectID == null && contents.length > 0) {
+    if (selectID == null && contents.length > 0 && myCurrentViewId == null) {
       Content content = contents[0];
       selectID = content.getUserData(ID_KEY);
       selectSubID = content.getUserData(SUB_ID_KEY);
@@ -336,8 +338,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     if (selectID != null) {
       changeView(selectID, selectSubID);
-      mySavedPaneId = null;
-      mySavedPaneSubId = null;
     }
 
     myUninitializedPanes.clear();
