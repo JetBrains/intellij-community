@@ -5,8 +5,9 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static Map<Integer, String> test(List<String> strings) {
-    return strings.stream()
+    Map<Integer, String> mapping = strings.stream()
       .co<caret>llect(Collectors.toMap(String::length, str -> str));
+    return mapping;
   }
 
   public static void main(String[] args) {

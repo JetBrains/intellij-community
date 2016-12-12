@@ -6,7 +6,9 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static void test(List<String> strings) {
-    System.out.println(strings.stream().c<caret>ollect(Collectors.partitioningBy((String s) -> s.length() > 2, Collectors.groupingBy(s -> s.charAt(0), Collectors.toSet()))));
+    final Map<Boolean, Map<Character, Set<String>>> nestedMap =
+      strings.stream().c<caret>ollect(Collectors.partitioningBy((String s) -> s.length() > 2, Collectors.groupingBy(s -> s.charAt(0), Collectors.toSet())));
+    System.out.println(nestedMap);
   }
 
   public static void main(String[] args) {

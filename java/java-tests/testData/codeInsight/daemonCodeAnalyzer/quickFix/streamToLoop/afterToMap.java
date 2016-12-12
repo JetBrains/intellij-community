@@ -5,13 +5,13 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static Map<Integer, String> test(List<String> strings) {
-      Map<Integer, String> map = new HashMap<>();
+      Map<Integer, String> mapping = new HashMap<>();
       for (String str : strings) {
-          if (map.put(str.length(), str) != null) {
+          if (mapping.put(str.length(), str) != null) {
               throw new IllegalStateException("Duplicate key");
           }
       }
-      return map;
+      return mapping;
   }
 
   public static void main(String[] args) {

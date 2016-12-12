@@ -6,13 +6,14 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static void test(List<String> strings) {
-      Map<Boolean, Map<Character, Set<String>>> map = new HashMap<>();
-      map.put(false, new HashMap<>());
-      map.put(true, new HashMap<>());
+      final Map<Boolean, Map<Character, Set<String>>> nestedMap =
+              new HashMap<>();
+      nestedMap.put(false, new HashMap<>());
+      nestedMap.put(true, new HashMap<>());
       for (String s : strings) {
-          map.get(s.length() > 2).computeIfAbsent(s.charAt(0), k -> new HashSet<>()).add(s);
+          nestedMap.get(s.length() > 2).computeIfAbsent(s.charAt(0), k -> new HashSet<>()).add(s);
       }
-      System.out.println(map);
+      System.out.println(nestedMap);
   }
 
   public static void main(String[] args) {

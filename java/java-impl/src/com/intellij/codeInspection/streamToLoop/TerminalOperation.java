@@ -308,7 +308,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String accumulator = context.declareResult("acc", myType, myIdentity.getText());
+      String accumulator = context.declareResult("acc", myType, myIdentity.getText(), false);
       myUpdater.transform(context, accumulator, inVar.getName());
       return accumulator + "=" + myUpdater.getText() + ";";
     }
@@ -331,7 +331,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String seen = context.declare("seen", "boolean", "false");
-      String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null");
+      String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
       myUpdater.transform(context, accumulator, inVar.getName());
       context.setFinisher(new Condition.Optional(myType, seen, accumulator));
       String ifClause = "if(!" + seen + ") {\n" +
@@ -379,7 +379,7 @@ abstract class TerminalOperation extends Operation {
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       mySupplier.transform(context);
       String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").get(0);
-      String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText());
+      String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText(), true);
       myAccumulator.transform(context, acc, inVar.getName());
       return myAccumulator.getText()+";\n";
     }
@@ -396,7 +396,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String sum = context.declareResult("sum", myDoubleAccumulator ? "double" : "long", "0");
+      String sum = context.declareResult("sum", myDoubleAccumulator ? "double" : "long", "0", false);
       String count = context.declare("count", "long", "0");
       String seenCheck = count + ">0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
@@ -417,7 +417,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String arr = context.declareResult("arr", myType + "[]", "new " + myType + "[10]");
+      String arr = context.declareResult("arr", myType + "[]", "new " + myType + "[10]", false);
       String count = context.declare("count", "int", "0");
       context.setFinisher("java.util.Arrays.copyOfRange("+arr+",0,"+count+")");
       return "if(" + arr + ".length==" + count + ") " + arr + "=java.util.Arrays.copyOf(" + arr + "," + count + "*2);\n" +
@@ -517,7 +517,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       transform(context, inVar.getName());
-      String acc = context.declareResult(myAccNameSupplier.apply(context), myType, getSupplier());
+      String acc = context.declareResult(myAccNameSupplier.apply(context), myType, getSupplier(), true);
       return getAccumulator(acc, inVar.getName());
     }
 
@@ -572,7 +572,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     public String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String varName = context.declareResult(myAccName, myAccType, myAccInitializer);
+      String varName = context.declareResult(myAccName, myAccType, myAccInitializer, asCollector() != null);
       context.setFinisher(myFinisherTemplate.replace("{acc}", varName));
       return myUpdateTemplate.replace("{item}", inVar.getName()).replace("{acc}", varName);
     }
@@ -664,7 +664,7 @@ abstract class TerminalOperation extends Operation {
         }
       }
       String seen = context.declare("seen", "boolean", "false");
-      String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null");
+      String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
       String type = myType;
       context.setFinisher(new Condition.Optional(type, seen, best));
       return "if(!"+seen+" || "+myTemplate.replace("{best}", best).replace("{item}", inVar.getName()).replace("{comparator}", comparator)+") {\n" +
@@ -820,7 +820,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String map = context.declareResult("map", myResultType, "new java.util.HashMap<>()");
+      String map = context.declareResult("map", myResultType, "new java.util.HashMap<>()", true);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
       context.addInitStep(map+".put(false, "+myCollector.getSupplier()+");");
