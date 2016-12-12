@@ -56,7 +56,7 @@ public class CourseDirectoryNode extends StudyDirectoryNode {
   public PsiDirectoryNode createChildDirectoryNode(StudyItem item, PsiDirectory directory) {
     final List<Lesson> lessons = myCourse.getLessons();
     final Lesson lesson = (Lesson)item;
-    if (lessons.size() == 1) {
+    if (directory.getChildren().length > 0 && lessons.size() == 1) {
       final List<Task> tasks = lesson.getTaskList();
       if (tasks.size() == 1) {
         PsiDirectory taskDirectory = (PsiDirectory)directory.getChildren()[0];
