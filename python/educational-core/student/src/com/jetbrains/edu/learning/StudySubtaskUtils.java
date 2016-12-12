@@ -113,7 +113,7 @@ public class StudySubtaskUtils {
   }
 
   public static void updateUI(@NotNull Project project, @NotNull Task task, VirtualFile taskDir) {
-    StudyCheckUtils.drawAllPlaceholders(project, task, taskDir);
+    StudyCheckUtils.drawAllPlaceholders(project, task);
     ProjectView.getInstance(project).refresh();
     StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
     if (toolWindow != null) {
