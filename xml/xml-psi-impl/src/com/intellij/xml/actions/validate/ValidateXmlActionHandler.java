@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlResourceResolver;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.XMLEntityManager;
+import org.apache.xerces.impl.XercesAccessor;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.apache.xerces.util.SecurityManager;
@@ -47,6 +48,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * @author Mike
@@ -63,7 +65,7 @@ public class ValidateXmlActionHandler {
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
   private static final Key<VirtualFile[]> DEPENDENT_FILES_KEY = Key.create("GrammarPoolFilesKey");
   private static final Key<String[]> KNOWN_NAMESPACES_KEY = Key.create("KnownNamespacesKey");
-  private static final Key<XMLEntityManager> ENTITY_MANAGER_KEY = Key.create("EntityManagerKey");
+  private static final Key<Map<String, String>> ENTITIES_KEY = Key.create("EntityManagerKey");
 
   private Project myProject;
   private XmlFile myFile;
@@ -180,6 +182,7 @@ public class ValidateXmlActionHandler {
             ENTITY_RESOLVER_PROPERTY_NAME,
             myXmlResourceResolver
           );
+          configureEntityManager(myFile, myParser);
         }
       });
 
@@ -239,7 +242,6 @@ public class ValidateXmlActionHandler {
       if (schemaChecking) { // when dtd checking schema refs could not be validated @see http://marc.theaimsgroup.com/?l=xerces-j-user&m=112504202423704&w=2
         XMLGrammarPool grammarPool = getGrammarPool(myFile, myForceChecking);
         configureEntityManager(myFile, parser);
-
         parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
       }
       try {
@@ -277,7 +279,7 @@ public class ValidateXmlActionHandler {
     if (grammarPool == null) {
       invalidateEntityManager(file);
       grammarPool = new XMLGrammarPoolImpl();
-      file.putUserData(GRAMMAR_POOL_KEY,grammarPool);
+      file.putUserData(GRAMMAR_POOL_KEY, grammarPool);
     }
     return grammarPool;
   }
@@ -308,18 +310,18 @@ public class ValidateXmlActionHandler {
   }
 
   private static void invalidateEntityManager(XmlFile file) {
-    file.putUserData(ENTITY_MANAGER_KEY, null);
+    file.putUserData(ENTITIES_KEY, null);
   }
 
   private static void configureEntityManager(XmlFile file, SAXParser parser) throws SAXException {
-    XMLEntityManager entityManager = file.getUserData(ENTITY_MANAGER_KEY);
-    if (entityManager != null) {
+    XMLEntityManager entityManager = (XMLEntityManager)parser.getXMLReader().getProperty(ENTITY_MANAGER_PROPERTY_ID);
+    Map<String, String> entities = file.getUserData(ENTITIES_KEY);
+    if (entities != null) {
       // passing of entityManager object would break validation, so we copy its entities
-      parser.getXMLReader().setProperty(ENTITY_MANAGER_PROPERTY_ID, new XMLEntityManager(entityManager));
+      XercesAccessor.getEntities(entityManager).putAll(entities);
     }
     else {
-      entityManager = (XMLEntityManager)parser.getXMLReader().getProperty(ENTITY_MANAGER_PROPERTY_ID);
-      file.putUserData(ENTITY_MANAGER_KEY, entityManager);
+      file.putUserData(ENTITIES_KEY, XercesAccessor.getEntities(entityManager));
     }
   }
 
