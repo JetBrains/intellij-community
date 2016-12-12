@@ -309,6 +309,7 @@
     <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
     <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
+    <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
 
     <completionData fileType="XML" className="com.intellij.codeInsight.completion.XmlCompletionData"/>
     <completionData fileType="HTML" className="com.intellij.codeInsight.completion.HtmlCompletionData"/>
