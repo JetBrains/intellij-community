@@ -445,13 +445,13 @@ class DistributionJARsBuilder {
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
-    def sourceFile = new File("${buildContext.projectBuilder.moduleOutput(buildContext.findModule("platform-resources"))}/idea/Keymap_Default.xml")
+    def sourceFile = new File("${buildContext.projectBuilder.moduleOutput(buildContext.findModule("platform-resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt button1\"/>")
     def patchedKeyMapDir = new File(buildContext.paths.temp, "patched-keymap")
-    def targetFile = new File(patchedKeyMapDir, "idea/Keymap_Default.xml")
+    def targetFile = new File(patchedKeyMapDir, "keymaps/\$default.xml")
     FileUtil.createParentDirs(targetFile)
     targetFile.text = defaultKeymapContent
     return patchedKeyMapDir
