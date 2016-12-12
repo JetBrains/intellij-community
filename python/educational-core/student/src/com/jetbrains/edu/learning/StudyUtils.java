@@ -173,10 +173,10 @@ public class StudyUtils {
     }
   }
 
-  public static void updateToolWindows(@NotNull final Project project, @Nullable final Task task) {
-    final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
+  public static void updateToolWindows(@NotNull final Project project) {
+     final StudyToolWindow studyToolWindow = getStudyToolWindow(project);
     if (studyToolWindow != null) {
-      String taskText = getTaskTextFromTask(task.getTaskDir(project), task);
+      String taskText = getTaskText(project);
       if (taskText != null) {
         studyToolWindow.setTaskText(taskText, null, project);
       }
@@ -561,16 +561,22 @@ public class StudyUtils {
 
   @Nullable
   public static String getTaskText(@NotNull final Project project) {
-    TaskFile taskFile = getSelectedTaskFile(project);
-    if (taskFile == null) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor == null) {
       return StudyToolWindow.EMPTY_TASK_TEXT;
     }
-    final Task task = taskFile.getTask();
+    Document document = editor.getDocument();
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null) {
+      return StudyToolWindow.EMPTY_TASK_TEXT;
+    }
+    final Task task = getTaskForFile(project, virtualFile);
     if (task != null) {
       return getTaskTextFromTask(task.getTaskDir(project), task);
     }
     return null;
   }
+
   @Nullable
   public static TaskFile getSelectedTaskFile(@NotNull Project project) {
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();

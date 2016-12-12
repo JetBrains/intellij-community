@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,17 +75,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
 
       @Nullable
       private Task getTask(@NotNull VirtualFile file) {
-        VirtualFile taskDir = StudyUtils.getTaskDir(file);
-        if (taskDir != null) {
-          return StudyUtils.getTask(project, taskDir);
-        }
-        TaskFile taskFile = StudyUtils.getTaskFile(project, file);
-        if (taskFile != null) {
-          return taskFile.getTask();
-        }
-        else {
-          return null;
-        }
+        return StudyUtils.getTaskForFile(project, file);
       }
 
       private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {

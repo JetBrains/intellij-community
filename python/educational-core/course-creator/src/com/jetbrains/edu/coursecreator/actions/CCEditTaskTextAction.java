@@ -11,18 +11,18 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CCEditTaskTextAction.class);
+  private static final String EDITING_MODE = "Editing Mode";
 
   public CCEditTaskTextAction() {
-    super("Editing Mode", "Editing Mode", AllIcons.Modules.Edit);
+    super(EDITING_MODE, EDITING_MODE, AllIcons.Modules.Edit);
   }
 
   @Override
@@ -45,26 +45,27 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       return;
     }
 
-    VirtualFile taskDir = null;
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (virtualFile != null) {
-      taskDir = StudyUtils.getTaskDir(virtualFile);
+
+    if (virtualFile == null) {
+      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
+      return;
     }
 
+    Task task = StudyUtils.getTaskForFile(project, virtualFile);
+    if (task == null) {
+      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
+      return;
+    }
+    VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
-      final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
-      if (selectedEditor == null) {
-        StudyTaskManager.getInstance(project).setTurnEditingMode(true);
-        return;
-      }
-      final StudyState studyState = new StudyState(selectedEditor);
-      taskDir = studyState.getTaskDir();
+      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
+      return;
     }
-
     VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
-
     if (taskTextFile == null) {
       LOG.info("Failed to find task.html");
+      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
       return;
     }
     Document document = FileDocumentManager.getInstance().getDocument(taskTextFile);
@@ -72,7 +73,7 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
       if (document != null) {
         FileDocumentManager.getInstance().saveDocument(document);
       }
-      window.leaveEditingMode(project, taskDir);
+      window.leaveEditingMode(project);
       return;
     }
     window.enterEditingMode(taskTextFile, project);
