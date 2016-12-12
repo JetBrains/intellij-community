@@ -280,7 +280,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/zlib-license.html"),
     new LibraryLicense(name: "nekohtml", libraryName: "nekohtml", version: "1.9.14", license: "Apache 2.0",
                        url: "http://nekohtml.sourceforge.net/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0.txt"),
-    new LibraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.Beta3", license: "Apache 2.0", url: "http://netty.io",
+    new LibraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.6", license: "Apache 2.0", url: "http://netty.io",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Objenesis", libraryName: "objenesis-1.2.jar", version: "1.2", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
