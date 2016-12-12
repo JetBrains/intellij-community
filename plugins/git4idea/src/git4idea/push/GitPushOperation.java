@@ -98,7 +98,7 @@ public class GitPushOperation {
     myGit = ServiceManager.getService(Git.class);
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
-    myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
+    myRepositoryManager = GitRepositoryManager.getInstance(myProject);
 
     Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
     for (GitRepository repository : pushSpecs.keySet()) {

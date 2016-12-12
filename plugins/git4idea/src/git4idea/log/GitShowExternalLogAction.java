@@ -114,7 +114,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                             @NotNull final GitVcs vcs,
                                                             @NotNull final List<VirtualFile> roots,
                                                             @Nullable String tabName) {
-    final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (VirtualFile root : roots) {
       repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
     }
