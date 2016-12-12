@@ -106,6 +106,13 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
         doSaveAs(currentScheme);
       }
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      T currentScheme = getCurrentScheme();
+      p.setEnabled(currentScheme != null && isCopyToAvailable(currentScheme));
+    }
   }
   
   private class DeleteAction extends DumbAwareAction {
@@ -205,6 +212,10 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   protected abstract boolean isDeleteAvailable(@NotNull T scheme);
   
   protected boolean isResetAvailable(@NotNull T scheme) {
+    return true;
+  }
+  
+  protected boolean isCopyToAvailable(@NotNull T scheme) {
     return true;
   }
   

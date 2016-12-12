@@ -56,7 +56,8 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   @Override
   protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {
     defaultActions.add(0, new CopyToProjectAction());
-    defaultActions.add(1, new Separator());
+    defaultActions.add(1, new CopyToIDEAction());
+    defaultActions.add(2, new Separator());
   }
 
   private class CopyToProjectAction extends DumbAwareAction {
@@ -80,6 +81,29 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
       p.setEnabled(currentScheme != null && !mySchemesModel.isProjectScheme(currentScheme));
     }
   }
+  
+  
+  private class CopyToIDEAction extends DumbAwareAction {
+
+    public CopyToIDEAction() {
+      super("Copy to IDE");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+       CodeStyleScheme currentScheme = getCurrentScheme();
+      if (currentScheme != null && mySchemesModel.isProjectScheme(currentScheme)) {
+        exportProjectScheme();
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      CodeStyleScheme currentScheme = getCurrentScheme();
+      p.setEnabled(currentScheme != null && mySchemesModel.isProjectScheme(currentScheme));
+    }
+  }
 
   @Override
   protected void doReset(@NotNull CodeStyleScheme scheme) {
@@ -94,10 +118,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
 
   @Override
   protected void doSaveAs(@NotNull CodeStyleScheme scheme) {
-    if (mySchemesModel.isProjectScheme(scheme)) {
-      exportProjectScheme();
-    }
-    else {
+    if (!mySchemesModel.isProjectScheme(scheme)) {
       String selectedName = scheme.getName();
       Collection<String> names = CodeStyleSchemesImpl.getSchemeManager().getAllSchemeNames();
       SaveSchemeDialog saveDialog =
@@ -117,6 +138,11 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   @Override
   protected boolean isDeleteAvailable(@NotNull CodeStyleScheme scheme) {
     return !mySchemesModel.isProjectScheme(scheme) && !scheme.isDefault();
+  }
+
+  @Override
+  protected boolean isCopyToAvailable(@NotNull CodeStyleScheme scheme) {
+    return !mySchemesModel.isProjectScheme(scheme);
   }
 
   @Override
