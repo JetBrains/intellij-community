@@ -20,6 +20,7 @@ import com.intellij.configurationStore.SerializableScheme
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
@@ -54,6 +55,8 @@ private val PARENT_ATTRIBUTE = "parent"
 private val NAME_ATTRIBUTE = "name"
 private val ID_ATTRIBUTE = "id"
 private val MOUSE_SHORTCUT = "mouse-shortcut"
+
+private val LOG = logger<KeymapImpl>()
 
 fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapImpl {
   val result = KeymapImpl(dataHolder)
@@ -481,14 +484,23 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       Converter01.convert(keymapElement)
     }
 
-    keymapElement.getAttributeValue(PARENT_ATTRIBUTE)?.let {
-      keymapManager.schemeManager.findSchemeByName(it)?.let {
-        parent = it as KeymapImpl
+    name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
+
+    keymapElement.getAttributeValue(PARENT_ATTRIBUTE)?.let { parentSchemeName ->
+      var parentScheme = keymapManager.schemeManager.findSchemeByName(parentSchemeName)
+      if (parentScheme == null && parentSchemeName == "Default for Mac OS X") {
+        // https://youtrack.jetbrains.com/issue/RUBY-17767#comment=27-1374197
+        parentScheme = keymapManager.schemeManager.findSchemeByName("Mac OS X")
+      }
+
+      if (parentScheme == null) {
+        LOG.error("Cannot find parent scheme $parentSchemeName for scheme $name")
+      }
+      else {
+        parent = parentScheme as KeymapImpl
         canModify = true
       }
     }
-
-    name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
     val skipInserts = SystemInfo.isMac && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
     for (actionElement in keymapElement.children) {
