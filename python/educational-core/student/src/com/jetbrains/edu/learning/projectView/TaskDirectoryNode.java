@@ -81,7 +81,7 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
   @Override
   public AbstractTreeNode modifyChildNode(AbstractTreeNode childNode) {
     Object value = childNode.getValue();
-    if (value instanceof PsiDirectory) {
+    if (value instanceof PsiDirectory && !((PsiDirectory)value).getName().equals(EduNames.SRC)) {
       return createChildDirectoryNode(null, (PsiDirectory)value);
     }
     if (value instanceof PsiElement) {

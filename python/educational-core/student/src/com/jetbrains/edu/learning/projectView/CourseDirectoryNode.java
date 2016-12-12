@@ -59,7 +59,12 @@ public class CourseDirectoryNode extends StudyDirectoryNode {
     if (lessons.size() == 1) {
       final List<Task> tasks = lesson.getTaskList();
       if (tasks.size() == 1) {
-        return new TaskDirectoryNode(myProject, (PsiDirectory)directory.getChildren()[0], myViewSettings, tasks.get(0));
+        PsiDirectory taskDirectory = (PsiDirectory)directory.getChildren()[0];
+        PsiDirectory srcDir = taskDirectory.findSubdirectory(EduNames.SRC);
+        if (srcDir != null) {
+          taskDirectory = srcDir;
+        }
+        return new TaskDirectoryNode(myProject, taskDirectory, myViewSettings, tasks.get(0));
       }
     }
     return new LessonDirectoryNode(myProject, directory, myViewSettings, lesson);
