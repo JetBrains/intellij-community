@@ -333,7 +333,7 @@ abstract class TerminalOperation extends Operation {
       String seen = context.declare("seen", "boolean", "false");
       String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null");
       myUpdater.transform(context, accumulator, inVar.getName());
-      context.setOptionalUnwrapperFinisher(seen, accumulator, myType);
+      context.setFinisher(new Condition.Optional(myType, seen, accumulator));
       String ifClause = "if(!" + seen + ") {\n" +
                         seen + "=true;\n" +
                         accumulator + "=" + inVar + ";\n" +
@@ -400,12 +400,10 @@ abstract class TerminalOperation extends Operation {
       String count = context.declare("count", "long", "0");
       String seenCheck = count + ">0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
-      if (myUseOptional) {
-        context.setOptionalUnwrapperFinisher(seenCheck, result, "double");
-      }
-      else {
-        context.setFinisher(seenCheck + "?" + result + ":0.0");
-      }
+      Condition condition = myUseOptional ?
+                            new Condition.Optional("double", seenCheck, result) :
+                            new Condition.Plain("double", seenCheck, result, "0.0");
+      context.setFinisher(condition);
       return sum + "+=" + inVar + ";\n" + count + "++;\n";
     }
   }
@@ -668,7 +666,7 @@ abstract class TerminalOperation extends Operation {
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null");
       String type = myType;
-      context.setOptionalUnwrapperFinisher(seen, best, type);
+      context.setFinisher(new Condition.Optional(type, seen, best));
       return "if(!"+seen+" || "+myTemplate.replace("{best}", best).replace("{item}", inVar.getName()).replace("{comparator}", comparator)+") {\n" +
              seen+"=true;\n"+
              best+"="+inVar+";\n}\n";

@@ -95,6 +95,15 @@ interface Condition {
       return String.valueOf(myInvert);
     }
 
+    public Boolean negate() {
+      return new Boolean(myCondition, !myInvert);
+    }
+
+    public Plain toPlain(String type, String trueBranch, String falseBranch) {
+      return myInvert ? new Plain(type, myCondition, falseBranch, trueBranch) :
+             new Plain(type, myCondition, trueBranch, falseBranch);
+    }
+
     @Override
     public String asExpression() {
       return myInvert ? myCondition : "!("+myCondition+")";

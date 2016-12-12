@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
@@ -441,10 +442,20 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       myFinisher = finisher;
     }
 
+    public void setFinisher(Condition condition) {
+      if(condition instanceof Condition.Optional) {
+        condition = tryUnwrapOptional((Condition.Optional)condition, expr -> true);
+      }
+      setFinisher(condition.asExpression());
+    }
+
     public String assignAndBreak(Condition condition) {
       Predicate<PsiExpression> predicate = expr -> PsiUtil.skipParenthesizedExprUp(expr.getParent()) instanceof PsiReturnStatement;
       if(condition instanceof Condition.Optional) {
         condition = tryUnwrapOptional((Condition.Optional)condition, predicate);
+      }
+      if(condition instanceof Condition.Boolean) {
+        condition = tryUnwrapBoolean((Condition.Boolean)condition);
       }
       if(predicate.test(myPlaceholder)) {
         setFinisher(condition.getFalseBranch());
@@ -452,6 +463,28 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
       String found = declareResult(condition.getCondition(), condition.getType(), condition.getFalseBranch());
       return found + " = " +condition.getTrueBranch()+";\n" + getBreakStatement();
+    }
+
+    private Condition tryUnwrapBoolean(Condition.Boolean condition) {
+      PsiExpression negation = BoolUtils.findNegation(myPlaceholder);
+      if(negation != null) {
+        myPlaceholder = negation;
+        condition = condition.negate();
+      }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(myPlaceholder.getParent());
+      if(parent instanceof PsiConditionalExpression) {
+        PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
+        if(PsiTreeUtil.isAncestor(ternary.getCondition(), myPlaceholder, false)) {
+          myPlaceholder = ternary;
+          PsiType type = ternary.getType();
+          PsiExpression thenExpression = ternary.getThenExpression();
+          PsiExpression elseExpression = ternary.getElseExpression();
+          if (type != null && thenExpression != null && elseExpression != null) {
+            return condition.toPlain(type.getCanonicalText(), thenExpression.getText(), elseExpression.getText());
+          }
+        }
+      }
+      return condition;
     }
 
     @NotNull
@@ -482,10 +515,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         }
       }
       return condition;
-    }
-
-    public void setOptionalUnwrapperFinisher(String seenCheck, String presentExpression, String type) {
-      setFinisher(tryUnwrapOptional(new Condition.Optional(type, seenCheck, presentExpression), expr -> true).asExpression());
     }
 
     public Project getProject() {
