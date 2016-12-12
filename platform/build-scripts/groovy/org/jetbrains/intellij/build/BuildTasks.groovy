@@ -44,7 +44,7 @@ abstract class BuildTasks {
    */
   abstract void buildDistributions()
 
-  abstract void compileModules()
+  abstract void compileModulesFromProduct()
 
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
@@ -79,7 +79,7 @@ abstract class BuildTasks {
     BuildContext context = createBuildContextFromProduct(productPropertiesClassName, groovyRootRelativePaths,
       communityHomeRelativePath, gantScript, proprietaryBuildTools)
 
-    create(context).compileModules()
+    create(context).compileModulesFromProduct()
   }
 
   @CompileDynamic
