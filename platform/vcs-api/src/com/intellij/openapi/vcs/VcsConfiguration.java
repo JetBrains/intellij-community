@@ -299,4 +299,9 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     IGNORED_UNREGISTERED_ROOTS = unregisteredRoots;
   }
 
+  public void removeFromIgnoredUnregisteredRoots(@NotNull Collection<String> roots) {
+    List<String> unregisteredRoots = new ArrayList<>(IGNORED_UNREGISTERED_ROOTS);
+    unregisteredRoots.removeAll(roots);
+    IGNORED_UNREGISTERED_ROOTS = unregisteredRoots;
+  }
 }
