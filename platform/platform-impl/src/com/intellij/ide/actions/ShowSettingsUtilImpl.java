@@ -17,18 +17,17 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.TabbedConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -98,13 +97,28 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
+    //noinspection unchecked
+    showSettingsDialog(project, configurableClass, null);
+  }
+
+  public <T extends Configurable> void showSettingsDialog(@Nullable Project project,
+                                                          @NotNull Class<T> configurableClass,
+                                                          @Nullable Consumer<T> additionalConfiguration) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
 
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
 
     Configurable config = new ConfigurableVisitor.ByType(configurableClass).find(groups);
-
+    
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
+
+    if (additionalConfiguration != null) {
+      UnnamedConfigurable toConfigure = config instanceof ConfigurableWrapper ? ((ConfigurableWrapper)config).getConfigurable()
+                                                  : config;
+      assert configurableClass.isInstance(toConfigure) : "Wrong configurable found: " + toConfigure.getClass().getName();
+      //noinspection unchecked
+      additionalConfiguration.consume((T)toConfigure);
+    }
 
     getDialog(project, groups, config).show();
   }

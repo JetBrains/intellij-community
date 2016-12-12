@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,10 @@ public abstract class ShowSettingsUtil {
 
   public abstract void showSettingsDialog(@NotNull final Project project, final Configurable toSelect);
 
+  public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
+                                                                   @NotNull Class<T> configurableClass,
+                                                                   @Nullable Consumer<T> additionalConfiguration);
+  
   public abstract boolean editConfigurable(Project project, Configurable configurable);
 
   public abstract boolean editConfigurable(@Nullable Project project, Configurable configurable, @Nullable Runnable advancedInitialization);
