@@ -124,7 +124,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     if (isSuitable(fileEditorManager.getProject(), file)) {
       FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
       for (final FileEditor fileEditor : fileEditors) {
-        if (fileEditor instanceof TextEditor) {
+        if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
           Editor editor = ((TextEditor)fileEditor).getEditor();
           final BreadcrumbsXmlWrapper existingWrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
           if (existingWrapper != null) {
