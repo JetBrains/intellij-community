@@ -56,7 +56,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactoryEx {
-  public static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
+  private static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
 
   @NotNull
   @Override

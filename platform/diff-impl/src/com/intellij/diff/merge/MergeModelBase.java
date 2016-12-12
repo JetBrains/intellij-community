@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
-  public static final Logger LOG = Logger.getInstance(MergeModelBase.class);
+  private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
 
   @Nullable private final Project myProject;
   @NotNull private final Document myDocument;

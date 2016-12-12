@@ -62,7 +62,7 @@ import java.util.Iterator;
 import java.util.List;
 
 class ApplyPatchViewer implements DataProvider, Disposable {
-  public static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
+  private static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
 
   @Nullable private final Project myProject;
   @NotNull private final DiffContext myContext;

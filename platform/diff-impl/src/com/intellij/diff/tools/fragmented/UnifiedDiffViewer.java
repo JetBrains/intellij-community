@@ -66,8 +66,6 @@ import java.util.*;
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
-  public static final Logger LOG = Logger.getInstance(UnifiedDiffViewer.class);
-
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull private final UnifiedDiffPanel myPanel;

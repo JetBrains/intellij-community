@@ -52,7 +52,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TextDiffViewerUtil {
-  public static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
+  private static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
 
   @NotNull
   public static List<AnAction> createEditorPopupActions() {

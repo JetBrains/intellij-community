@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ComparisonManagerImpl extends ComparisonManager {
-  public static final Logger LOG = Logger.getInstance(ComparisonManagerImpl.class);
+  private static final Logger LOG = Logger.getInstance(ComparisonManagerImpl.class);
 
   @NotNull
   @Override

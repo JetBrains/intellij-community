@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -48,7 +47,6 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 public class LineStatusTracker extends LineStatusTrackerBase {
   public enum Mode {DEFAULT, SMART, SILENT}
 
-  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private static final Key<JPanel> PANEL_KEY = new Key<>("LineStatusTracker.CanNotCalculateDiffPanel");
 
   @NotNull private final VirtualFile myVirtualFile;

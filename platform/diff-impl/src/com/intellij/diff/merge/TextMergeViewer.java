@@ -44,6 +44,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -80,6 +81,8 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class TextMergeViewer implements MergeTool.MergeViewer {
+  private static final Logger LOG = Logger.getInstance(TextMergeViewer.class);
+
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final TextMergeRequest myMergeRequest;
 
