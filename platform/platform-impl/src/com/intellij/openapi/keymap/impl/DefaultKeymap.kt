@@ -62,7 +62,7 @@ open class DefaultKeymap {
 
         LOG.catchAndLog {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///keymaps/$key")).rootElement
+            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///keymaps/$key"), provider.javaClass).rootElement
 
             override fun updateDigest(scheme: KeymapImpl) {
             }
