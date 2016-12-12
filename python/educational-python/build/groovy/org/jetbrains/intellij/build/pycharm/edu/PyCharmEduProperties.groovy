@@ -75,7 +75,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$pythonCommunityPath/resources/PyCharmCore128.png"
+        iconPngPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu128.png"
       }
 
       @Override
