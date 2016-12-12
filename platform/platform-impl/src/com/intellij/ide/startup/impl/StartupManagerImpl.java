@@ -43,12 +43,12 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.project.ProjectKt;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -202,14 +202,14 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void scheduleInitialVfsRefresh() {
-    UIUtil.invokeLaterIfNeeded(() -> {
+    GuiUtils.invokeLaterIfNeeded(() -> {
       if (myProject.isDisposed() || myInitialRefreshScheduled) return;
 
       myInitialRefreshScheduled = true;
       markContentRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
-      if (!app.isHeadlessEnvironment()) {
+      if (!app.isCommandLine()) {
         final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
         final MessageBusConnection connection = app.getMessageBus().connect();
         connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
@@ -225,7 +225,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       else {
         VirtualFileManager.getInstance().syncRefresh();
       }
-    });
+    }, ModalityState.defaultModalityState());
   }
 
   private void markContentRootsForRefresh() {
