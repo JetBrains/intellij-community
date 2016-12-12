@@ -251,7 +251,7 @@ public interface Filter {
     }
 
     public int getHighlighterLayer() {
-      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.HIGHLIGHT_LAYER; 
+      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.CONSOLE_FILTER; 
     }
 
     @Nullable

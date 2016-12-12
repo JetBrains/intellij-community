@@ -292,7 +292,7 @@ public class EditorHyperlinkSupport {
   }
 
   public void addHighlighter(int highlightStartOffset, int highlightEndOffset, TextAttributes highlightAttributes) {
-    addHighlighter(highlightStartOffset, highlightEndOffset, highlightAttributes, HighlighterLayer.HIGHLIGHT_LAYER);
+    addHighlighter(highlightStartOffset, highlightEndOffset, highlightAttributes, HighlighterLayer.CONSOLE_FILTER);
     
   }
   

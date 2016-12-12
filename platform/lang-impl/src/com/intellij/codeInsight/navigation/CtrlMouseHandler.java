@@ -959,7 +959,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     for (TextRange range : info.getRanges()) {
       TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                                                       HighlighterLayer.SELECTION + 1,
+                                                                                       HighlighterLayer.HYPERLINK, 
                                                                                        attr,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(highlighter);

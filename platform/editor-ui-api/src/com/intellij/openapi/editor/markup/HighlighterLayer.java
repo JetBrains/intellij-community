@@ -24,8 +24,11 @@ public interface HighlighterLayer {
   int ERROR = 5000;
   int ELEMENT_UNDER_CARET = 5500;
   
-  /** the default layer for console filters highlighters */
-  int HIGHLIGHT_LAYER = 5800;
+  /** 
+   * The default layer for console filters highlighters
+   * Ref: com.intellij.execution.filters.Filter
+   * */
+  int CONSOLE_FILTER = 5800;
   
   int HYPERLINK = 5900;
   int SELECTION = 6000;
