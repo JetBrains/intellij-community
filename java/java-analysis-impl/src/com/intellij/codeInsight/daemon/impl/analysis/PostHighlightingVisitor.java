@@ -44,7 +44,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.PomNamedTarget;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -67,7 +66,6 @@ import java.util.Set;
 
 class PostHighlightingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
-  private final LanguageLevel myLanguageLevel;
   private final RefCountHolder myRefCountHolder;
   @NotNull private final Project myProject;
   private final PsiFile myFile;
@@ -116,7 +114,6 @@ class PostHighlightingVisitor {
     myDocument = document;
 
     myCurrentEntryIndex = -1;
-    myLanguageLevel = PsiUtil.getLanguageLevel(file);
 
     myRefCountHolder = refCountHolder;
 
@@ -428,8 +425,6 @@ class PostHighlightingVisitor {
                                       @NotNull ProgressIndicator progress,
                                       @NotNull GlobalUsageHelper helper) {
     if (UnusedSymbolUtil.isMethodReferenced(myProject, myFile, method, progress, helper)) return null;
-    final HighlightInfoType highlightInfoType = myDeadCodeInfoType;
-    final HighlightDisplayKey highlightDisplayKey = myDeadCodeKey;
     String key;
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       key = method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used";
@@ -439,8 +434,8 @@ class PostHighlightingVisitor {
     }
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
     String message = JavaErrorMessages.message(key, symbolName);
-    final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, highlightInfoType);
-    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), highlightDisplayKey);
+    final HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+    QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
       IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
       QuickFixAction.registerQuickFixAction(highlightInfo, fix);
@@ -458,8 +453,6 @@ class PostHighlightingVisitor {
     if (UnusedSymbolUtil.isClassUsed(project, myFile, aClass, progress, helper)) return null;
 
     String pattern;
-    HighlightDisplayKey highlightDisplayKey = myDeadCodeKey;
-    HighlightInfoType highlightInfoType = myDeadCodeInfoType;
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       pattern = aClass.isInterface()
                        ? "private.inner.interface.is.not.used"
@@ -474,7 +467,7 @@ class PostHighlightingVisitor {
     else {
       pattern = "class.is.not.used";
     }
-    return formatUnusedSymbolHighlightInfo(myProject, pattern, aClass, "classes", highlightDisplayKey, highlightInfoType, identifier);
+    return formatUnusedSymbolHighlightInfo(myProject, pattern, aClass, "classes", myDeadCodeKey, myDeadCodeInfoType, identifier);
   }
 
 

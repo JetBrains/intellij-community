@@ -56,7 +56,6 @@ public class JavaAnalysisScope extends AnalysisScope {
   @NotNull
   public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
-    final HashSet<Module> modules = new HashSet<>();
     if (myType == FILE) {
       if (myElement instanceof PsiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
@@ -77,6 +76,7 @@ public class JavaAnalysisScope extends AnalysisScope {
     }
     else if (myType == PACKAGE) {
       final PsiDirectory[] directories = ((PsiPackage)myElement).getDirectories();
+      final HashSet<Module> modules = new HashSet<>();
       for (PsiDirectory directory : directories) {
         modules.addAll(getAllInterestingModules(fileIndex, directory.getVirtualFile()));
       }

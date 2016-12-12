@@ -389,7 +389,7 @@ class PassExecutorService implements Disposable {
     private final AtomicInteger myRunningPredecessorsCount = new AtomicInteger(0);
     private final Collection<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
-    private final DaemonProgressIndicator myUpdateProgress;
+    @NotNull private final DaemonProgressIndicator myUpdateProgress;
 
     private ScheduledPass(@NotNull FileEditor fileEditor,
                           @NotNull TextEditorHighlightingPass pass,

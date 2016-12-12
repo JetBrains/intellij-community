@@ -1350,9 +1350,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (prevCatchParameter == null) continue;
         for (PsiTypeElement prevCatchTypeElement : PsiUtil.getParameterTypeElements(prevCatchParameter)) {
           final PsiType prevCatchType = prevCatchTypeElement.getType();
-          for (Iterator<PsiClassType> iterator = caught.iterator(); iterator.hasNext(); ) {
-            if (prevCatchType.isAssignableFrom(iterator.next())) iterator.remove();
-          }
+          caught.removeIf(prevCatchType::isAssignableFrom);
           if (caught.isEmpty()) break;
         }
       }
@@ -1570,7 +1568,7 @@ public class HighlightUtil extends HighlightUtilBase {
           }
         }
 
-        if (expr instanceof PsiSuperExpression && !classT.isInheritor(aClass, false)) {
+        if (!classT.isInheritor(aClass, false)) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(qualifier)
             .descriptionAndTooltip(JavaErrorMessages.message("no.enclosing.instance.in.scope", format(aClass))).create();
@@ -2607,7 +2605,7 @@ public class HighlightUtil extends HighlightUtilBase {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
       }
-      importedClasses.put(name, Pair.create((PsiImportStaticReferenceElement)null, (PsiClass)element));
+      importedClasses.put(name, Pair.create(null, (PsiClass)element));
     }
     return null;
   }

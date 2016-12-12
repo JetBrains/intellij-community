@@ -208,7 +208,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private void exportResults(@NotNull List<File> inspectionsResults, @Nullable String outputPath) {
     @NonNls final String ext = ".xml";
     final Map<Element, Tools> globalTools = new HashMap<>();
-    for (Map.Entry<String,Tools> entry : myTools.entrySet()) {
+    for (Map.Entry<String,Tools> entry : getTools().entrySet()) {
       final Tools sameTools = entry.getValue();
       boolean hasProblems = false;
       String toolName = entry.getKey();
@@ -287,7 +287,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   public void ignoreElement(@NotNull InspectionProfileEntry tool, @NotNull PsiElement element) {
     final RefElement refElement = getRefManager().getReference(element);
-    final Tools tools = myTools.get(tool.getShortName());
+    final Tools tools = getTools().get(tool.getShortName());
     if (tools != null){
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper toolWrapper = state.getTool();
@@ -700,7 +700,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           final InspectionToolWrapper pairedWrapper = currentProfile.getInspectionTool(batchShortName, getProject());
           batchInspection = pairedWrapper != null ? pairedWrapper.createCopy() : null;
         }
-        if (batchInspection != null && !myTools.containsKey(batchShortName)) {
+        if (batchInspection != null && !getTools().containsKey(batchShortName)) {
           // add to existing inspections to run
           InspectionProfileEntry batchTool = batchInspection.getTool();
           final ScopeToolState defaultState = tool.getDefaultState();
@@ -801,7 +801,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     myViewClosed = true;
     myView = null;
     ((InspectionManagerEx)InspectionManager.getInstance(getProject())).closeRunningContext(this);
-    for (Tools tools : myTools.values()) {
+    for (Tools tools : getTools().values()) {
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper toolWrapper = state.getTool();
         getPresentation(toolWrapper).finalCleanup();
