@@ -72,6 +72,11 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
   @Nullable
   Modifier getModifier();
 
+  /**
+   * Checks whether the function contains a yield expression in its body.
+   */
+  boolean isGenerator();
+
   boolean isAsync();
 
   boolean isAsyncAllowed();
