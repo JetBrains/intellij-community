@@ -55,7 +55,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
 
   private val db: KeePassDatabase
 
-  private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
+  private val masterKeyStorage by lazy { MasterKeyFileStorage(baseDirectory) }
 
   private val needToSave: AtomicBoolean
 
@@ -63,21 +63,26 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     if (keyToValue == null) {
       needToSave = AtomicBoolean(false)
 
-      val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
-      if (masterPassword == null) {
-        LOG.catchAndLog {
-          if (this.dbFile.exists()) {
-            val renameTo = baseDirectory.resolve("old.c.kdbx")
-            LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")
-            this.dbFile.move(renameTo)
-          }
-        }
+      if (memoryOnly) {
         db = KeePassDatabase()
       }
       else {
-        db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
-        if (existingMasterPassword != null) {
-          masterKeyStorage.set(existingMasterPassword)
+        val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
+        if (masterPassword == null) {
+          LOG.catchAndLog {
+            if (this.dbFile.exists()) {
+              val renameTo = baseDirectory.resolve("old.c.kdbx")
+              LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")
+              this.dbFile.move(renameTo)
+            }
+          }
+          db = KeePassDatabase()
+        }
+        else {
+          db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
+          if (existingMasterPassword != null) {
+            masterKeyStorage.set(existingMasterPassword)
+          }
         }
       }
     }
