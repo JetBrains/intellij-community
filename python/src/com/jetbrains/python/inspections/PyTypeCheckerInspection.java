@@ -126,7 +126,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           ReturnVisitor visitor = new ReturnVisitor(node);
           statements.accept(visitor);
           if (!visitor.myHasReturns) {
-            final PyType expected = myTypeEvalContext.getReturnType(node);
+            final PyType expected = getExpectedReturnType(node);
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             if (expected != null && !(expected instanceof PyNoneType)) {
               registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
