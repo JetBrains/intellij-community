@@ -347,7 +347,17 @@ public final class PyToxTest extends PyEnvTestCase {
 
 
       Assert
-        .assertThat("No all interpreters from tox.ini used", checkedInterpreters, Matchers.everyItem(Matchers.isIn(expectedInterpreters)));
+        .assertThat(String.format("No all interpreters from tox.ini used (test tree \n%s\n )", getTestTree(runner.getTestProxy(), 0)),
+                    checkedInterpreters, Matchers.everyItem(Matchers.isIn(expectedInterpreters)));
+    }
+
+    @NotNull
+    private static String getTestTree(@NotNull final SMTestProxy root, final int level) {
+      final StringBuilder result = new StringBuilder();
+      result.append(StringUtil.repeat(".", level)).append(root.getPresentableName()).append('\n');
+      final Optional<String> children = root.getChildren().stream().map(o -> getTestTree(o, level + 1)).reduce((s, s2) -> s + s2);
+      children.ifPresent(result::append);
+      return result.toString();
     }
 
     @NotNull
