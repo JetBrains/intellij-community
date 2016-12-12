@@ -40,8 +40,8 @@ class PrintElementManagerImpl implements PrintElementManager {
   @Nullable private PrintElementWithGraphElement mySelectedPrintElement = null;
 
   @SuppressWarnings("unchecked")
-  PrintElementManagerImpl(@NotNull final LinearGraph linearGraph,
-                          @NotNull final PermanentGraphInfo myPermanentGraph,
+  PrintElementManagerImpl(@NotNull LinearGraph linearGraph,
+                          @NotNull PermanentGraphInfo myPermanentGraph,
                           @NotNull GraphColorManager colorManager) {
     myLinearGraph = linearGraph;
     myColorGetter = new ColorGetterByLayoutIndex(linearGraph, myPermanentGraph, colorManager);
