@@ -20,7 +20,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 
 import java.util.concurrent.atomic.AtomicReference
 
-class SingletonNotificationManager(private val group: NotificationGroup, private val type: NotificationType, private val listener: NotificationListener?) {
+class SingletonNotificationManager(private val group: NotificationGroup, private val type: NotificationType, private val defaultListener: NotificationListener?) {
   private val notification = AtomicReference<Notification>()
 
   private val expiredListener by lazy {
@@ -33,11 +33,11 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
   }
 
   fun notify(content: String, project: Project?): Boolean {
-    return notify("", content, project, listener)
+    return notify("", content, project, defaultListener)
   }
 
   @JvmOverloads
-  fun notify(title: String, content: String, project: Project? = null, listener: NotificationListener? = null): Boolean {
+  fun notify(title: String, content: String, project: Project? = null, listener: NotificationListener? = defaultListener): Boolean {
     val oldNotification = notification.get()
     // !oldNotification.isExpired() is not enough - notification could be closed, but not expired
     if (oldNotification != null) {
