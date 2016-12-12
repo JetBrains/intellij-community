@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
 import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
@@ -192,6 +193,7 @@ private class CallArgumentInfo(val parameter: PsiParameter, val argument: PsiExp
 
 private fun CallArgumentInfo.isAssignable(substitutor: PsiSubstitutor): Boolean {
   val substitutedType = substitutor.substitute(parameter.type)
+  if (PsiPolyExpressionUtil.isPolyExpression(argument)) return true
   return argument.type?.isAssignableTo(substitutedType) ?: false
 }
 
