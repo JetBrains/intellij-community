@@ -2369,8 +2369,10 @@ public class JBTabsImpl extends JComponent
     JComponent component = tabInfo == null ? null : tabInfo.getComponent();
     if (component != null) {
       Dimension tabSize = minimum ? component.getMinimumSize() : component.getPreferredSize();
-      size.width = tabSize.width;
-      size.height = tabSize.height;
+      if (tabSize != null) {
+        size.width = tabSize.width;
+        size.height = tabSize.height;
+      }
     }
 
     addHeaderSize(size, 3);
