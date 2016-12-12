@@ -63,7 +63,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   private class CopyToProjectAction extends DumbAwareAction {
 
     public CopyToProjectAction() {
-      super("Copy To Project");
+      super(ApplicationBundle.message("settings.editor.scheme.copy.to.project"));
     }
 
     @Override
@@ -86,7 +86,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   private class CopyToIDEAction extends DumbAwareAction {
 
     public CopyToIDEAction() {
-      super("Copy to IDE");
+      super(ApplicationBundle.message("settings.editor.scheme.copy.to.ide"));
     }
 
     @Override
@@ -154,7 +154,9 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   }
 
   private void exportProjectScheme() {
-    String name = Messages.showInputDialog("Enter new scheme name:", "Copy Project Scheme to Global List", Messages.getQuestionIcon());
+    String name = Messages.showInputDialog(ApplicationBundle.message("settings.editor.scheme.copy.to.ide.label"), 
+                                           ApplicationBundle.message("settings.editor.scheme.copy.to.ide.title"),
+                                           Messages.getQuestionIcon());
     if (name != null && !CodeStyleSchemesModel.PROJECT_SCHEME_NAME.equals(name)) {
       CodeStyleScheme newScheme = mySchemesModel.exportProjectScheme(name);
       int switchToGlobal = Messages
@@ -253,12 +255,12 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   }
 
   public void copyToProject(CodeStyleScheme scheme) {
-    mySchemesModel.copyToProject(scheme);
-    int switchToProject = Messages
-      .showYesNoDialog("Scheme '" + scheme.getName() + "' was copied to be used as the project scheme.\n" +
-                       "Switch to this created scheme?",
-                       "Copy Scheme to Project", Messages.getQuestionIcon());
-    if (switchToProject == Messages.YES) {
+    int copyToProjectConfirmation = Messages
+      .showYesNoDialog(ApplicationBundle.message("settings.editor.scheme.copy.to.project.message", scheme.getName()),
+                       ApplicationBundle.message("settings.editor.scheme.copy.to.project.title"), 
+                       Messages.getQuestionIcon());
+    if (copyToProjectConfirmation == Messages.YES) {
+      mySchemesModel.copyToProject(scheme);
       mySchemesModel.setUsePerProjectSettings(true, true);
     }
   }

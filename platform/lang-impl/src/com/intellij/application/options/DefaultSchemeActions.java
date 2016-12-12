@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeExporterEP;
 import com.intellij.openapi.options.SchemeImporterEP;
@@ -58,10 +59,10 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     actions.add(new CopyAction());
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
-    actions.add(new Separator());
     if (!mySchemeExporterNames.isEmpty()) {
       actions.add(new ExportGroup());
     }
+    actions.add(new Separator());
     if (!mySchemeImportersNames.isEmpty()) {
       actions.add(new ImportGroup());
     }
@@ -74,7 +75,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   private class ResetAction extends DumbAwareAction {
     
     public ResetAction() {
-      super("Reset");
+      super(ApplicationBundle.message("settings.editor.scheme.reset"));
     }
 
     @Override
@@ -96,7 +97,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   
   private class CopyAction extends DumbAwareAction {
     public CopyAction() {
-      super("Copy...");
+      super(ApplicationBundle.message("settings.editor.scheme.copy"));
     }
 
     @Override
@@ -117,7 +118,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   
   private class DeleteAction extends DumbAwareAction {
     public DeleteAction() {
-      super("Delete");
+      super(ApplicationBundle.message("settings.editor.scheme.delete"));
     }
 
     @Override
@@ -139,7 +140,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   private class ImportGroup extends ActionGroup {
 
     public ImportGroup() {
-      super("Import", true);
+      super(ApplicationBundle.message("settings.editor.scheme.import"), true);
     }
 
     @NotNull
@@ -170,7 +171,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
 
   private class ExportGroup extends ActionGroup {
     public ExportGroup() {
-      super("Export As", true);
+      super(ApplicationBundle.message("settings.editor.scheme.export"), true);
     }
 
     @NotNull
