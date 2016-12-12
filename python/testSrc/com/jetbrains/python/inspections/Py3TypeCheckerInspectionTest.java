@@ -168,4 +168,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testAsyncFunctionReturnType() {
     doTest();
   }
+
+  // PY-20967
+  public void testAsyncFunctionAnnotatedToReturnNone() {
+    doTest();
+  }
 }
