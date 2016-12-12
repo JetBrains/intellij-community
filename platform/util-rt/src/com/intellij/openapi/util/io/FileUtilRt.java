@@ -77,6 +77,7 @@ public class FileUtilRt {
     private static Method ourFilesWalkMethod;
     private static Method ourFileToPathMethod;
     private static Method ourPathToFileMethod;
+    private static Method ourAttributesIsOtherMethod;
     private static Object ourDeletionVisitor;
     private static Class ourNoSuchFileExceptionClass;
     private static Class ourAccessDeniedExceptionClass;
@@ -93,6 +94,7 @@ public class FileUtilRt {
         ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
+        ourAttributesIsOtherMethod = Class.forName("java.nio.file.attribute.BasicFileAttributes").getDeclaredMethod("isOther");
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
 
         final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
@@ -110,14 +112,12 @@ public class FileUtilRt {
                 performDelete(args[0]);
               }
               else if (SystemInfoRt.isWindows && "preVisitDirectory".equals(methodName)) {
-                boolean reparsePoint = false;
+                boolean notDirectory = false;
                 try {
-                  Method isReparsePoint = second.getClass().getDeclaredMethod("isReparsePoint");
-                  isReparsePoint.setAccessible(true);
-                  reparsePoint = Boolean.TRUE.equals(isReparsePoint.invoke(second));
+                  notDirectory = Boolean.TRUE.equals(ourAttributesIsOtherMethod.invoke(second));
                 }
                 catch (Throwable ignored) { }
-                if (reparsePoint) {
+                if (notDirectory) {
                   performDelete(args[0]);
                   return Result_Skip;
                 }
