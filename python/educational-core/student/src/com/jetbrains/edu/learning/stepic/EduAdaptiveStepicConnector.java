@@ -133,7 +133,7 @@ public class EduAdaptiveStepicConnector {
 
   @Nullable
   private static Task getTask(@NotNull Project project, @NotNull String name, int stepId) throws IOException {
-    final StepicWrappers.StepSource step = getStep(stepId);
+    final StepicWrappers.StepSource step = getStep(project, stepId);
     final String stepType = step.block.name;
     if (stepType.equals(CODE_TASK_TYPE)) {
       return getCodeTaskFromStep(project, step.block, name, stepId);
