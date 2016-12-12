@@ -520,7 +520,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     @Override
     public void projectClosing(Project project) {
-      updateProjectName(project);
+      String path = getProjectPath(project);
+      synchronized (myStateLock) {
+        myState.names.put(path, getProjectDisplayName(project));
+      }
+      myNameCache.put(path, project.getName());
     }
 
     @Override
@@ -534,13 +538,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       }
       SystemDock.updateMenu();
     }
-  }
-
-  public void updateProjectName(Project project) {
-    synchronized (myStateLock) {
-      myState.names.put(getProjectPath(project), getProjectDisplayName(project));
-    }
-    clearNameCache();
   }
 
   @NotNull
@@ -569,8 +566,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public void clearNameCache() {
-    myNameCache.clear();
-    myDuplicatesCache = null;
   }
 
   private static String readProjectName(@NotNull String path) {
