@@ -957,7 +957,7 @@ public class BuildManager implements Disposable {
     JavaSdkVersion version = javaSdkType.getVersion(vs);
     if (version == null) {
       // Unexpected version string: e.g. early access or experimental JDK build
-      // trying to find the 'known' sdk version that would best describe the passed version string  
+      // trying to find the 'known' sdk version that would best describe the passed version string
       final int parsed = JpsJavaSdkType.parseVersion(vs);
       if (parsed > 0) {
         version = javaSdkType.getVersion(parsed + ".0");
@@ -1154,6 +1154,8 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
     cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
 
+    cmdLine.addParameter("-Dio.netty.noUnsafe=true");
+
     final File workDirectory = getBuildSystemDirectory();
     //noinspection ResultOfMethodCallIgnored
     workDirectory.mkdirs();
@@ -1185,7 +1187,7 @@ public class BuildManager implements Disposable {
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, shouldIncludeEclipseCompiler(projectConfig));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
-                                   
+
     cmdLine.addParameter(launcherClass.getName());
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
