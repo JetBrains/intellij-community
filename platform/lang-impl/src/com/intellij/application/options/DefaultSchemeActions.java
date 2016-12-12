@@ -79,7 +79,10 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      doReset();
+      T currentScheme = getCurrentScheme();
+      if (currentScheme != null) {
+        doReset(currentScheme);
+      }
     }
 
     @Override
@@ -98,7 +101,10 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      doSaveAs();
+      T currentScheme = getCurrentScheme();
+      if (currentScheme != null) {
+        doSaveAs(currentScheme);
+      }
     }
   }
   
@@ -109,7 +115,10 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      doDelete();
+      T currentScheme = getCurrentScheme();
+      if (currentScheme != null) {
+        doDelete(currentScheme);
+      }
     }
 
     @Override
@@ -187,11 +196,11 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
 
   protected abstract void doImport(@NotNull String importerName);
 
-  protected abstract void doReset();
+  protected abstract void doReset(@NotNull T scheme);
   
-  protected abstract void doSaveAs();
+  protected abstract void doSaveAs(@NotNull T scheme);
   
-  protected abstract void doDelete();
+  protected abstract void doDelete(@NotNull T scheme);
   
   protected abstract boolean isDeleteAvailable(@NotNull T scheme);
   

@@ -71,21 +71,18 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
   }
 
   @Override
-  protected void doReset() {
-    EditorColorsScheme currentScheme = getCurrentScheme();
-    if (currentScheme != null) {
+  protected void doReset(@NotNull EditorColorsScheme scheme) {
       if (Messages
             .showOkCancelDialog(ApplicationBundle.message("color.scheme.reset.message"),
                                 ApplicationBundle.message("color.scheme.reset.title"), Messages.getQuestionIcon()) == Messages.OK) {
-        myOptions.resetSchemeToOriginal(currentScheme.getName());
+        myOptions.resetSchemeToOriginal(scheme.getName());
       }
-    }
   }
 
   @Override
-  protected void doSaveAs() {
+  protected void doSaveAs(@NotNull  EditorColorsScheme scheme) {
     List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
-    String selectedName = AbstractColorsScheme.getDisplayName(myOptions.getSelectedScheme());
+    String selectedName = AbstractColorsScheme.getDisplayName(scheme);
     SaveSchemeDialog dialog =
       new SaveSchemeDialog(myParentComponent, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
     if (dialog.showAndGet()) {
@@ -94,11 +91,8 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
   }
 
   @Override
-  protected void doDelete() {
-    EditorColorsScheme currentScheme = getCurrentScheme();
-    if (currentScheme != null) {
-      myOptions.removeScheme(currentScheme.getName());
-    }
+  protected void doDelete(@NotNull EditorColorsScheme scheme) {
+    myOptions.removeScheme(scheme.getName());
   }
 
   @Override

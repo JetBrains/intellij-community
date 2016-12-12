@@ -82,43 +82,36 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   }
 
   @Override
-  protected void doReset() {
-    CodeStyleScheme selectedScheme = getCurrentScheme();
-    if (selectedScheme != null) {
-      if (Messages
-            .showOkCancelDialog(ApplicationBundle.message("settings.code.style.reset.to.defaults.message"),
-                                ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) ==
-          Messages.OK) {
-        selectedScheme.resetToDefaults();
-        mySchemesModel.fireSchemeChanged(selectedScheme);
-      }
+  protected void doReset(@NotNull CodeStyleScheme scheme) {
+    if (Messages
+          .showOkCancelDialog(ApplicationBundle.message("settings.code.style.reset.to.defaults.message"),
+                              ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) ==
+        Messages.OK) {
+      scheme.resetToDefaults();
+      mySchemesModel.fireSchemeChanged(scheme);
     }
   }
 
   @Override
-  protected void doSaveAs() {
-    CodeStyleScheme scheme = getCurrentScheme();
+  protected void doSaveAs(@NotNull CodeStyleScheme scheme) {
     if (mySchemesModel.isProjectScheme(scheme)) {
       exportProjectScheme();
     }
     else {
-      CodeStyleScheme currentScheme = getCurrentScheme();
-      if (currentScheme != null) {
-        String selectedName = currentScheme.getName();
-        Collection<String> names = CodeStyleSchemesImpl.getSchemeManager().getAllSchemeNames();
-        SaveSchemeDialog saveDialog =
-          new SaveSchemeDialog(getParentComponent(), ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
-        if (saveDialog.showAndGet()) {
-          CodeStyleScheme newScheme = mySchemesModel.createNewScheme(saveDialog.getSchemeName(), getCurrentScheme());
-          mySchemesModel.addScheme(newScheme, true);
-        }
+      String selectedName = scheme.getName();
+      Collection<String> names = CodeStyleSchemesImpl.getSchemeManager().getAllSchemeNames();
+      SaveSchemeDialog saveDialog =
+        new SaveSchemeDialog(getParentComponent(), ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
+      if (saveDialog.showAndGet()) {
+        CodeStyleScheme newScheme = mySchemesModel.createNewScheme(saveDialog.getSchemeName(), getCurrentScheme());
+        mySchemesModel.addScheme(newScheme, true);
       }
     }
   }
 
   @Override
-  protected void doDelete() {
-    mySchemesModel.removeScheme(getCurrentScheme());
+  protected void doDelete(@NotNull CodeStyleScheme scheme) {
+    mySchemesModel.removeScheme(scheme);
   }
 
   @Override
