@@ -694,6 +694,30 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Override
+  public boolean isGenerator() {
+    final Ref<Boolean> result = new Ref<>(false);
+    getStatementList().accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyYieldExpression(PyYieldExpression node) {
+        result.set(true);
+      }
+
+      @Override
+      public void visitPyFunction(PyFunction node) {
+        // Ignore nested functions
+      }
+
+      @Override
+      public void visitElement(PsiElement element) {
+        if (!result.get()) {
+          super.visitElement(element);
+        }
+      }
+    });
+    return result.get();
+  }
+
+  @Override
   public boolean isAsync() {
     final PyFunctionStub stub = getStub();
     if (stub != null) {
