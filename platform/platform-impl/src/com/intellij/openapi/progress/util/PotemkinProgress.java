@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.SunToolkit;
@@ -66,21 +65,11 @@ public class PotemkinProgress extends ProgressWindow {
     return Objects.requireNonNull(super.getDialog());
   }
 
-  private void installCheckCanceledPaintingHook() {
-    // make ProgressManager#checkCanceled actually delegate to the current indicator
-    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-
-    // isCanceled is final, so using a nonstandard way of plugging into it
-    addStateDelegate(new AbstractProgressIndicatorExBase() {
-      @Override
-      public boolean isCanceled() {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          dispatchAwtEventsWithoutModelAccess(0);
-          updateUI();
-        }
-        return super.isCanceled();
-      }
-    });
+  public void interact() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      dispatchAwtEventsWithoutModelAccess(0);
+      updateUI();
+    }
   }
 
   private void dispatchAwtEventsWithoutModelAccess(int timeoutMs) {
@@ -164,7 +153,6 @@ public class PotemkinProgress extends ProgressWindow {
   /** Executes the action in EDT, paints itself inside checkCanceled calls. */
   public void runInSwingThread(@NotNull Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    installCheckCanceledPaintingHook();
     try {
       ProgressManager.getInstance().runProcess(action, this);
     }

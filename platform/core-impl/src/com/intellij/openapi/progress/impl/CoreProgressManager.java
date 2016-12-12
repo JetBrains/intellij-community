@@ -24,13 +24,8 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -58,7 +53,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   private static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
-  private static boolean ourMaySleepInCheckCanceled;
+  private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
   // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
@@ -133,12 +128,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  public static boolean sleepIfNeeded() {
-    if (ourMaySleepInCheckCanceled && HeavyProcessLatch.INSTANCE.isInsideLowPriorityThread()) {
-      TimeoutUtil.sleep(1);
-      return true;
-    }
-    return false;
+  public static boolean runCheckCanceledHooks() {
+    CheckCanceledHook hook = ourCheckCanceledHook;
+    return hook != null && hook.runHook();
   }
 
   @Override
@@ -150,7 +142,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       progress.checkCanceled();
     }
     else {
-      sleepIfNeeded();
+      runCheckCanceledHooks();
     }
   }
 
@@ -625,9 +617,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  private static void updateShouldCheckCanceled() {
-    ourMaySleepInCheckCanceled = Registry.is("ide.prioritize.ui.thread", false);
-    if (ourMaySleepInCheckCanceled && HeavyProcessLatch.INSTANCE.hasPrioritizedThread()) {
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  private void updateShouldCheckCanceled() {
+    ourCheckCanceledHook = createCheckCanceledHook();
+    if (ourCheckCanceledHook != null) {
       shouldCheckCanceled = true;
       return;
     }
@@ -635,6 +628,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     synchronized (threadsUnderIndicator) {
       shouldCheckCanceled = !threadsUnderCanceledIndicator.isEmpty();
     }
+  }
+
+  @Nullable
+  protected CheckCanceledHook createCheckCanceledHook() {
+    return null;
   }
 
   @Override
@@ -772,4 +770,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }
   }
+
+  protected interface CheckCanceledHook {
+    /**
+     * @return true if the hook has done anything that might take some time.
+     */
+    boolean runHook();
+  }
+
 }
