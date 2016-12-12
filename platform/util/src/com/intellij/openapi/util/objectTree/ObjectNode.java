@@ -102,7 +102,7 @@ final class ObjectNode<T> {
     }
   }
 
-  void execute(final boolean disposeTree, @NotNull final ObjectTreeAction<T> action) {
+  void execute(@NotNull final ObjectTreeAction<T> action) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
       @Override
       public void execute(@NotNull ObjectNode<T> each) {
@@ -119,13 +119,11 @@ final class ObjectNode<T> {
         }
         //todo: [kirillk] optimize
         for (int i = childrenArray.length - 1; i >= 0; i--) {
-          childrenArray[i].execute(disposeTree, action);
+          childrenArray[i].execute(action);
         }
 
-        if (disposeTree) {
-          synchronized (myTree.treeLock) {
-            myChildren = null;
-          }
+        synchronized (myTree.treeLock) {
+          myChildren = null;
         }
 
         try {
@@ -139,9 +137,7 @@ final class ObjectNode<T> {
           LOG.error(e);
         }
 
-        if (disposeTree) {
-          remove();
-        }
+        remove();
       }
 
       @Override
