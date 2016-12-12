@@ -795,7 +795,7 @@ public class MavenUtil {
       final CRC32 crc = new CRC32();
 
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-
+      parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       parser.parse(in, new DefaultHandler(){
 
         boolean textContentOccur = false;
