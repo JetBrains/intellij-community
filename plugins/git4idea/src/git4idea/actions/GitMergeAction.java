@@ -19,7 +19,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -77,7 +76,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-        final Git git = ServiceManager.getService(Git.class);
+        final Git git = Git.getInstance();
         final GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(selectedRoot, MERGE);
         final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector =

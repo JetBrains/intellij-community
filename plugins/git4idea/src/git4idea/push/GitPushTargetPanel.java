@@ -18,7 +18,6 @@ package git4idea.push;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.openapi.command.undo.UndoConstants;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -88,7 +87,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   public GitPushTargetPanel(@NotNull GitPushSupport support, @NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     myPushSupport = support;
     myRepository = repository;
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myProject = myRepository.getProject();
 
     myTargetRenderer = new VcsEditableTextComponent("", null);

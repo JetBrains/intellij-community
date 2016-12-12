@@ -15,6 +15,7 @@
  */
 package git4idea.commands;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
@@ -32,6 +33,10 @@ import java.util.List;
 import java.util.Set;
 
 public interface Git {
+  @NotNull
+  static Git getInstance() {
+    return ServiceManager.getService(Git.class);
+  }
 
   /**
    * A generic method to run a Git command, when existing methods like {@link #fetch(GitRepository, String, String, List, String...)}

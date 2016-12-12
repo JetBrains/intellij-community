@@ -19,7 +19,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -95,7 +94,7 @@ public class GitPushOperation {
     myPushSpecs = pushSpecs;
     myTagMode = tagMode;
     myForce = force;
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
     myRepositoryManager = GitRepositoryManager.getInstance(myProject);
