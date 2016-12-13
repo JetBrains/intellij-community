@@ -426,6 +426,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testDontSkipVariablesUsedInLeftSideOfAssignments() throws Exception {
+    doTest();
+  }
+
   public void testIDEADEV11748() throws Exception {
     doTest();
   }
