@@ -27,6 +27,7 @@ import java.util.List;
 public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
   List<PyStatement> getStatements();
 
+  @NotNull
   List<PyClass> getTopLevelClasses();
 
   @NotNull
