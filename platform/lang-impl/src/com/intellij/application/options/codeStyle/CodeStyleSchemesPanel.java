@@ -20,7 +20,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.ManageSchemesComboAction;
+import com.intellij.application.options.schemes.ManageSchemesComboAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

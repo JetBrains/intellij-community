@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options;
+package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;

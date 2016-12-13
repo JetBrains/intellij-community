@@ -90,7 +90,7 @@ public class LabelIcon implements Icon {
 
   public static int getWidth(int height, int labelsCount) {
     float scale = height / 8.0f;
-    return (int)Math.ceil((7 + 2 * (labelsCount - 1)) * scale);
+    return Math.round((7 + 2 * (labelsCount - 1)) * scale);
   }
 
   @Override
