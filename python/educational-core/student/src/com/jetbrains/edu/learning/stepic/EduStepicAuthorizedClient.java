@@ -198,12 +198,12 @@ public class EduStepicAuthorizedClient {
     final StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);
     if (tokenInfo != null) {
       user.setupTokenInfo(tokenInfo);
+      final StepicUser currentUser = getCurrentUser(getHttpClient(user));
+      if (currentUser != null) {
+        user.setId(currentUser.getId());
+      }
     }
-
-    final StepicUser currentUser = getCurrentUser(getHttpClient(user));
-    if (currentUser != null) {
-      user.setId(currentUser.getId());
-    }
+    
     return user;
   }
 
