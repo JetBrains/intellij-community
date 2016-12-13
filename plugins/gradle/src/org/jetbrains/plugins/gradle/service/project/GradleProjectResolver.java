@@ -749,17 +749,23 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       return;
     }
 
-    final DataNode<ModuleData> buildSrcModuleDataNode =
-      GradleProjectResolverUtil.findModule(resultProjectDataNode, projectPath);
-
-    // check if buildSrc project was already exposed in settings.gradle file
-    if (buildSrcModuleDataNode != null) return;
+    Set<String> paths = ContainerUtil.newHashSet();
+    for (DataNode<ModuleData> moduleDataNode : ExternalSystemApiUtil.findAll(resultProjectDataNode, ProjectKeys.MODULE)) {
+      String path = moduleDataNode.getData().getLinkedExternalProjectPath();
+      if (path.equals(projectPath)) {
+        // check if buildSrc project was already exposed in settings.gradle file
+        return;
+      }
+      paths.add(path);
+    }
 
     final DataNode<ProjectData> buildSrcProjectDataDataNode = myHelper.execute(
       projectPath, projectConnectionDataNodeFunction.myResolverContext.getSettings(), projectConnectionDataNodeFunction);
 
     if (buildSrcProjectDataDataNode != null) {
       for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.getChildren(buildSrcProjectDataDataNode, ProjectKeys.MODULE)) {
+        if (paths.contains(moduleNode.getData().getLinkedExternalProjectPath())) continue;
+
         resultProjectDataNode.addChild(moduleNode);
 
         // adjust ide module group
