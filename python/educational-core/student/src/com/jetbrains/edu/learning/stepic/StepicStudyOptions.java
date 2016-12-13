@@ -132,11 +132,18 @@ public class StepicStudyOptions implements StudyOptionsProvider {
             throw new ConfigurationException("Unable to login");
           }
         }
+        else {
+          removeCredentials(taskManager);
+        }
       }
     }
     else {
       LOG.warn("No study object is opened");
     }
+  }
+
+  private static void removeCredentials(StudyTaskManager taskManager) {
+    taskManager.setUser(new StepicUser());
   }
 
   @Nullable
