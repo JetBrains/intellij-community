@@ -114,10 +114,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   public void setCompactReferencesView(boolean compact) {
     myComponent.getReferencePainter().setCompact(compact);
+    myTemplateComponent.getReferencePainter().setCompact(compact);
   }
 
   public void setShowTagsNames(boolean showTagNames) {
     myComponent.getReferencePainter().setShowTagNames(showTagNames);
+    myTemplateComponent.getReferencePainter().setShowTagNames(showTagNames);
   }
 
   private static class MyComponent extends SimpleColoredRenderer {

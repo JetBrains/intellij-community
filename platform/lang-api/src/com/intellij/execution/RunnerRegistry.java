@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,6 @@ public abstract class RunnerRegistry {
   public static RunnerRegistry getInstance() {
     return ServiceManager.getService(RunnerRegistry.class);
   }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public abstract boolean hasRunner(@NotNull String executorId, @NotNull RunProfile settings);
 
   @Nullable
   public abstract ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings);

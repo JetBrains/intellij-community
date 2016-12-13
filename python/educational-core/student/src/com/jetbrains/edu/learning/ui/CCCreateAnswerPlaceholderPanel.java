@@ -35,7 +35,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private List<String> myHints = new ArrayList<>();
   private int myShownHintNumber = 0;
 
-  public CCCreateAnswerPlaceholderPanel(String placeholderText, List<String> hints) {
+  public CCCreateAnswerPlaceholderPanel(@NotNull String placeholderText, @NotNull List<String> hints) {
     if (hints.isEmpty()) {
       myHints.add(HINT_PLACEHOLDER);
     }
@@ -44,6 +44,14 @@ public class CCCreateAnswerPlaceholderPanel {
     }
 
     myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+    myPlaceholderTextArea.setText(placeholderText);
+    myPlaceholderTextArea.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myPlaceholderTextArea.selectAll();
+      }
+    });
+    
     myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
 
@@ -51,8 +59,7 @@ public class CCCreateAnswerPlaceholderPanel {
     myHintTextArea.addFocusListener(createFocusListenerToSetDefaultHintText());
 
     actionsPanel.add(createHintToolbarComponent(), BorderLayout.WEST);
-    showHint(myHints.get(myShownHintNumber));
-    myPlaceholderTextArea.setText(placeholderText);
+    showHint();
   }
 
   @NotNull
@@ -92,8 +99,9 @@ public class CCCreateAnswerPlaceholderPanel {
     }
   }
 
-  public void showHint(String hintText) {
-    if (myHints.get(myShownHintNumber).equals(HINT_PLACEHOLDER)) {
+  public void showHint() {
+    String hintText = myHints.get(myShownHintNumber);
+    if (hintText.equals(HINT_PLACEHOLDER)) {
       myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
     }
     else {
@@ -111,7 +119,7 @@ public class CCCreateAnswerPlaceholderPanel {
   public List<String> getHints() {
     final String hintText = myHintTextArea.getText();
     if (myShownHintNumber == 0 && hintText.equals(HINT_PLACEHOLDER)) {
-      myHints.set(myShownHintNumber, "");
+      myHints.remove(0);
     }
     else {
       myHints.set(myShownHintNumber, hintText);
@@ -137,7 +145,8 @@ public class CCCreateAnswerPlaceholderPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.set(myShownHintNumber, myHintTextArea.getText());
-      showHint(myHints.get(++myShownHintNumber));
+      myShownHintNumber++;
+      showHint();
     }
 
     @Override
@@ -155,7 +164,8 @@ public class CCCreateAnswerPlaceholderPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.set(myShownHintNumber, myHintTextArea.getText());
-      showHint(myHints.get(--myShownHintNumber));
+      myShownHintNumber--;
+      showHint();
     }
 
     @Override
@@ -172,9 +182,9 @@ public class CCCreateAnswerPlaceholderPanel {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myHints.add("");
-      myShownHintNumber++;
-      showHint("");
+      myHints.set(myShownHintNumber, myHintTextArea.getText());
+      myHints.add(++myShownHintNumber, "");
+      showHint();
     }
   }
 
@@ -187,13 +197,22 @@ public class CCCreateAnswerPlaceholderPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myHints.remove(myShownHintNumber);
-      myShownHintNumber += myShownHintNumber < myHints.size() ? 0 : -1;
-      showHint(myHints.get(myShownHintNumber));
+      if (myHints.isEmpty()) {
+        myHints.add(HINT_PLACEHOLDER);
+        myHintTextArea.transferFocus();
+        showHint();
+      }
+      else {
+        myShownHintNumber += myShownHintNumber < myHints.size() ? 0 : -1;
+        showHint();
+      }
     }
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myHints.size() > 1);
+      final boolean hasOnlyMockHint = myShownHintNumber == 0 && myHints.get(myShownHintNumber).equals(HINT_PLACEHOLDER);
+      final boolean hasMoreHints = myHints.size() > 0 && !hasOnlyMockHint;
+      e.getPresentation().setEnabled(hasMoreHints);
     }
   }
 }

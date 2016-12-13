@@ -17,6 +17,7 @@ package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.RunnerRegistry
 import com.intellij.execution.actions.*
 import com.intellij.execution.configurations.LocatableConfiguration
 import com.intellij.execution.impl.RunManagerImpl
@@ -29,46 +30,52 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
+import com.intellij.util.containers.mapSmart
+import com.intellij.util.containers.mapSmartNotNull
+
+private val LOG = logger<ExecutorAction>()
+private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
 
 /**
  * @author Dmitry Avdeev
  */
-class ExecutorAction private constructor(private val myOrigin: AnAction,
-                                         private val myExecutor: Executor,
-                                         private val myOrder: Int) : AnAction() {
-
+class ExecutorAction private constructor(private val origin: AnAction, private val executor: Executor, private val order: Int) : AnAction() {
   init {
-    copyFrom(myOrigin)
+    copyFrom(origin)
   }
 
   companion object {
-    private val LOG = logger<ExecutorAction>()
-    private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
+    @JvmStatic
+    @JvmOverloads
+    fun getActions(order: Int = 0) = getActionList(order).toTypedArray()
 
     @JvmStatic
-    fun getActions(order: Int): Array<AnAction> {
-      return ExecutorRegistry.getInstance().registeredExecutors.map {
-        ExecutorAction(ActionManager.getInstance().getAction(it.contextActionId), it, order)
-      }.toTypedArray()
+    @JvmOverloads
+    fun getActionList(order: Int = 0): List<AnAction> {
+      val actionManager = ActionManager.getInstance()
+      return ExecutorRegistry.getInstance().registeredExecutors.mapSmart {
+        ExecutorAction(actionManager.getAction(it.contextActionId), it, order)
+      }
     }
 
     private fun getConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
       var result = DataManager.getInstance().loadFromDataContext(dataContext, CONFIGURATION_CACHE)
       if (result == null) {
-        result = calcConfigurations(dataContext)
+        result = computeConfigurations(dataContext)
         DataManager.getInstance().saveInDataContext(dataContext, CONFIGURATION_CACHE, result)
       }
       return result
     }
 
-    private fun calcConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
+    private fun computeConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
       val context = ConfigurationContext.getFromContext(dataContext)
       if (context.location == null) {
         return emptyList()
       }
-      return RunConfigurationProducer.getProducers(context.project).mapNotNull {
+
+      return RunConfigurationProducer.getProducers(context.project).mapSmartNotNull {
         LOG.catchAndLog {
-          val configuration = it.createLightConfiguration(context) ?: return@mapNotNull null
+          val configuration = it.createLightConfiguration(context) ?: return@mapSmartNotNull null
           val settings = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.project), configuration, false)
           ConfigurationFromContextImpl(it, settings, context.psiLocation)
         }
@@ -77,13 +84,13 @@ class ExecutorAction private constructor(private val myOrigin: AnAction,
   }
 
   override fun update(e: AnActionEvent) {
-    val name = getActionName(e.dataContext, myExecutor)
-    e.presentation.isVisible = name != null
+    val name = getActionName(e.dataContext, executor)
+    e.presentation.isEnabledAndVisible = name != null
     e.presentation.text = name
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    myOrigin.actionPerformed(e)
+    origin.actionPerformed(e)
   }
 
   private fun getActionName(dataContext: DataContext, executor: Executor): String? {
@@ -91,8 +98,12 @@ class ExecutorAction private constructor(private val myOrigin: AnAction,
     if (list.isEmpty()) {
       return null
     }
-    val configuration = list[if (myOrder < list.size) myOrder else 0]
-    val actionName = BaseRunConfigurationAction.suggestRunActionName(configuration.configuration as LocatableConfiguration)
-    return executor.getStartActionText(actionName)
+
+    val configuration = list.getOrNull(if (order < list.size) order else 0)?.configuration as LocatableConfiguration
+    if (RunnerRegistry.getInstance().getRunner(executor.id, configuration) == null) {
+      return null
+    }
+
+    return executor.getStartActionText(BaseRunConfigurationAction.suggestRunActionName(configuration))
   }
 }

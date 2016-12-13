@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -36,7 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -102,25 +100,6 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setConfig(boolean config) {
     myConfig = config;
-  }
-
-  /** @deprecated use {@link #setLocator(SMTestLocator)} (to be removed in IDEA 16) */
-  @SuppressWarnings("deprecation")
-  public void setLocator(@NotNull final TestLocationProvider locator) {
-    class Adapter implements SMTestLocator, PossiblyDumbAware {
-      @NotNull
-      @Override
-      public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-        return locator.getLocation(protocol, path, project);
-      }
-
-      @Override
-      public boolean isDumbAware() {
-        return DumbService.isDumbAware(locator);
-      }
-    }
-
-    myLocator = new Adapter();
   }
 
   public void setPreferredPrinter(@NotNull Printer preferredPrinter) {
@@ -261,8 +240,7 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     //determines location of test proxy
-    final String locationUrl = myLocationUrl;
-    return getLocation(project, searchScope, locationUrl);
+    return getLocation(project, searchScope, myLocationUrl);
   }
 
   protected Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, String locationUrl) {
@@ -316,7 +294,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public List<? extends SMTestProxy> getChildren() {
-    return myChildren != null ? myChildren : Collections.<SMTestProxy>emptyList();
+    return myChildren != null ? myChildren : Collections.emptyList();
   }
 
   public List<SMTestProxy> getAllTests() {
@@ -478,7 +456,7 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @Nullable final String filePath) {
     setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, filePath, null);
   }
-  
+
   public void setTestComparisonFailed(@NotNull final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
@@ -570,7 +548,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
 
     if ((selectedChildren.isEmpty())) {
-      return Collections.<SMTestProxy>emptyList();
+      return Collections.emptyList();
     }
 
     return selectedChildren;
@@ -618,18 +596,6 @@ public class SMTestProxy extends AbstractTestProxy {
         printer.print(output, ConsoleViewContentType.ERROR_OUTPUT);
       }
     });
-  }
-
-  /**
-   * This method was left for backward compatibility.
-   *
-   * @param output
-   * @param stackTrace
-   * @deprecated use SMTestProxy.addError(String output, String stackTrace, boolean isCritical)
-   */
-  @Deprecated
-  public void addError(String output, @Nullable String stackTrace) {
-    addError(output, stackTrace, true);
   }
 
   public void addError(final String output, @Nullable final String stackTrace, boolean isCritical) {
@@ -878,7 +844,7 @@ public class SMTestProxy extends AbstractTestProxy {
       containerSuite.invalidateCachedDurationForContainerSuites(duration);
     }
   }
-  
+
   public SMRootTestProxy getRoot() {
     SMTestProxy parent = getParent();
     while (parent != null && !(parent instanceof SMRootTestProxy)) {
@@ -950,7 +916,7 @@ public class SMTestProxy extends AbstractTestProxy {
     @Nullable
     @Override
     public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-      return myRootLocationUrl != null ? super.getLocation(project, searchScope, myRootLocationUrl) 
+      return myRootLocationUrl != null ? super.getLocation(project, searchScope, myRootLocationUrl)
                                        : super.getLocation(project, searchScope);
     }
 

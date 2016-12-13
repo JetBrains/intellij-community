@@ -201,7 +201,7 @@ open class OutMessage() {
 
   fun writeNullableString(name: String, value: CharSequence?) {
     beginArguments()
-    writer.name(name).value(value?.toString() ?: null)
+    writer.name(name).value(value?.toString())
   }
 }
 

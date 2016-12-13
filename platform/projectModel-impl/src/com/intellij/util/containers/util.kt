@@ -149,3 +149,12 @@ inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
     mapTo(ArrayList<R>(size), transform)
   }
 }
+
+inline fun <T, R : Any> Collection<T>.mapSmartNotNull(transform: (T) -> R?): List<R> {
+  return if (size == 1) {
+    transform(first())?.let { SmartList<R>(it) } ?: SmartList<R>()
+  }
+  else {
+    mapNotNullTo(ArrayList<R>(size), transform)
+  }
+}
