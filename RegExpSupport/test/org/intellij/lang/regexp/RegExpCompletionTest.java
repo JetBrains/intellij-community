@@ -43,22 +43,6 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         return Character.toUpperCase(testName.charAt(0)) + testName.substring(1) + "Expected" + ".regexp";
     }
 
-    public void testPosixBracketExpression() {
-      RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
-
-      myFixture.configureByText(RegExpFileType.INSTANCE, "[[:alp<caret>");
-      myFixture.completeBasic();
-      myFixture.checkResult("[[:alpha:]<caret>");
-    }
-
-    public void testNegatePosixBracketExpression() {
-      RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
-
-      myFixture.configureByText(RegExpFileType.INSTANCE, "[[:^alp<caret>");
-      myFixture.completeBasic();
-      myFixture.checkResult("[[:^alpha:]<caret>");
-    }
-
     public void testNamedCharacter() {
       myFixture.configureByText(RegExpFileType.INSTANCE, "\\N{SMILE<caret>}");
       final LookupElement[] elements = myFixture.completeBasic();
