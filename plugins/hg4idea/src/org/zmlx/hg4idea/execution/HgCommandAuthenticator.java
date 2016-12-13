@@ -45,7 +45,7 @@ class HgCommandAuthenticator {
   public void forgetPassword() {
     if (myGetPassword == null) return;    // prompt was not suggested;
     String url = VirtualFileManager.extractPath(myGetPassword.getURL());
-    PasswordSafe.getInstance().set(createCredentialAttributes(url, null), null);
+    PasswordSafe.getInstance().set(createCredentialAttributes(url), null);
   }
 
   public boolean promptForAuthentication(Project project, @NotNull String proposedLogin, @NotNull String uri, @NotNull String path, @Nullable ModalityState state) {
@@ -106,7 +106,7 @@ class HgCommandAuthenticator {
         login = rememberedLoginsForUrl;
       }
 
-      Credentials savedCredentials = PasswordSafe.getInstance().get(createCredentialAttributes(url, null));
+      Credentials savedCredentials = PasswordSafe.getInstance().get(createCredentialAttributes(url));
       String password = savedCredentials == null ? null : savedCredentials.getPasswordAsString();
       if (savedCredentials != null && StringUtil.isEmptyOrSpaces(login)) {
         login = savedCredentials.getUserName();
@@ -131,7 +131,7 @@ class HgCommandAuthenticator {
         ok = true;
         Credentials credentials = new Credentials(dialog.getUsername(), dialog.getPassword());
         myCredentials = credentials;
-        PasswordSafe.getInstance().set(createCredentialAttributes(url, login), credentials, !dialog.isRememberPassword());
+        PasswordSafe.getInstance().set(createCredentialAttributes(url), credentials, !dialog.isRememberPassword());
         hgGlobalSettings.addRememberedUrl(url, credentials.getUserName());
       }
     }
@@ -155,7 +155,7 @@ class HgCommandAuthenticator {
   }
 
   @NotNull
-  private static CredentialAttributes createCredentialAttributes(@NotNull String url, @Nullable String login) {
-    return new CredentialAttributes(CredentialAttributesKt.SERVICE_NAME_PREFIX + " HG — " + url, login);
+  private static CredentialAttributes createCredentialAttributes(@NotNull String url) {
+    return new CredentialAttributes(CredentialAttributesKt.SERVICE_NAME_PREFIX + " HG — " + url, null);
   }
 }

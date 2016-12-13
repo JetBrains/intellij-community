@@ -17,7 +17,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
@@ -27,7 +30,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author max
@@ -113,11 +116,9 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
 
     if (additionalConfiguration != null) {
-      UnnamedConfigurable toConfigure = config instanceof ConfigurableWrapper ? ((ConfigurableWrapper)config).getConfigurable()
-                                                  : config;
-      assert configurableClass.isInstance(toConfigure) : "Wrong configurable found: " + toConfigure.getClass().getName();
-      //noinspection unchecked
-      additionalConfiguration.consume((T)toConfigure);
+      T toConfigure = ConfigurableWrapper.cast(configurableClass, config);
+      assert toConfigure != null : "Wrong configurable found: " + config.getClass();
+      additionalConfiguration.accept(toConfigure);
     }
 
     getDialog(project, groups, config).show();

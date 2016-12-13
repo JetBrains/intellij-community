@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@ package com.jetbrains.python.testing.nosetest;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +70,12 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
     }
     return specs;
+  }
+
+  @Nullable
+  @Override
+  protected SMTestLocator getTestLocator() {
+    return PythonNoseTestUrlProvider.INSTANCE;
   }
 
   @Override

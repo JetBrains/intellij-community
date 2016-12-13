@@ -132,7 +132,7 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
         }
       }
     }
-    catch (ProcessCanceledException ignored) {
+    catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {
       //escape on configuring root cancel further annotations
     }
     if (!prepare.isEmpty()) {

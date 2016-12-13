@@ -260,7 +260,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "class Im2 implements Im {\n" +
                                                           "    public void m() {}\n" +
                                                           "}\n" +
-                                                          "class JavaClass<T extends I & Im> {\n" +
+                                                          "class JavaClass<T extends K, K extends I & Im> {\n" +
                                                           "    void  a(T t){\n" +
                                                           "        t.<caret>m();\n" +
                                                           "    }\n" +

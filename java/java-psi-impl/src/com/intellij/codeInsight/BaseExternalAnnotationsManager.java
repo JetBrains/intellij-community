@@ -19,7 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -316,7 +315,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   public void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                  @NotNull String annotationFQName,
                                  @NotNull PsiFile fromFile,
-                                 @Nullable PsiNameValuePair[] value) throws ProcessCanceledException {
+                                 @Nullable PsiNameValuePair[] value) throws CanceledConfigurationException {
     throw new UnsupportedOperationException();
   }
 
