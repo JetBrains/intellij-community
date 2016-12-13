@@ -16,7 +16,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
@@ -57,7 +56,7 @@ public abstract class ExternalAnnotationsManager {
   public abstract void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                           @NotNull String annotationFQName,
                                           @NotNull PsiFile fromFile,
-                                          @Nullable PsiNameValuePair[] value) throws ProcessCanceledException;
+                                          @Nullable PsiNameValuePair[] value) throws CanceledConfigurationException;
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
@@ -70,4 +69,10 @@ public abstract class ExternalAnnotationsManager {
 
   @Nullable
   public abstract List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
+
+  public static class CanceledConfigurationException extends RuntimeException {
+    public static final CanceledConfigurationException INSTANCE = new CanceledConfigurationException();
+
+    private CanceledConfigurationException() {}
+  }
 }

@@ -43,7 +43,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -127,7 +126,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public void annotateExternally(@NotNull final PsiModifierListOwner listOwner,
                                  @NotNull final String annotationFQName,
                                  @NotNull final PsiFile fromFile,
-                                 @Nullable final PsiNameValuePair[] value) throws ProcessCanceledException {
+                                 @Nullable final PsiNameValuePair[] value) throws CanceledConfigurationException {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     LOG.assertTrue(!application.isWriteAccessAllowed());
@@ -162,7 +161,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         DumbService.getInstance(project).setAlternativeResolveEnabled(true);
         try {
           if (!setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)) {
-            throw new ProcessCanceledException();
+            throw CanceledConfigurationException.INSTANCE;
           }
         }
         finally {
