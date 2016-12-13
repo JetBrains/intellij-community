@@ -15,9 +15,12 @@
  */
 package com.intellij.testFramework.assertions
 
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.util.io.readText
 import com.intellij.util.io.size
+import org.assertj.core.api.AbstractCharSequenceAssert
 import org.assertj.core.api.PathAssert
+import org.assertj.core.api.StringAssert
 import org.assertj.core.internal.ComparatorBasedComparisonStrategy
 import org.assertj.core.internal.Iterables
 import java.nio.file.Files
@@ -56,5 +59,16 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
         }
       }
     )).assertContainsOnly(info, Files.newDirectoryStream(actual).use { it.toList() }, names)
+  }
+}
+
+class StringAssertEx(actual: String?) : AbstractCharSequenceAssert<StringAssert, String>(actual, StringAssertEx::class.java) {
+  fun isEqualTo(expected: Path) {
+    isNotNull
+
+    val expectedContent = expected.readText()
+    if (actual != expectedContent) {
+      throw FileComparisonFailure(null, expectedContent, actual, expected.toString())
+    }
   }
 }
