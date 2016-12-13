@@ -57,8 +57,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   public String toString() {
     String result = getGroup() == null ? "" : getGroup().getText(null);
-    List<Node> children = myChildren;
-    return result + children.subList(0, Math.min(10, children.size()));
+    synchronized (this) {
+      List<Node> children = myChildren;
+      return result + children.subList(0, Math.min(10, children.size()));
+    }
   }
 
   @NotNull
@@ -347,7 +349,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  public Collection<GroupNode> getSubGroups() {
+  public synchronized Collection<GroupNode> getSubGroups() {
     List<GroupNode> list = new ArrayList<>();
     for (Node n : myChildren) {
       if (n instanceof GroupNode) {
@@ -358,7 +360,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  public Collection<UsageNode> getUsageNodes() {
+  public synchronized Collection<UsageNode> getUsageNodes() {
     List<UsageNode> list = new ArrayList<>();
     for (Node n : myChildren) {
       if (n instanceof UsageNode) {
