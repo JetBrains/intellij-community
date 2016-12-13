@@ -127,7 +127,6 @@ public class HighlightingSessionImpl implements HighlightingSession {
   }
 
   void queueHighlightInfo(@NotNull HighlightInfo info,
-                          @NotNull TextRange priorityRange,
                           @NotNull TextRange restrictedRange,
                           int groupId) {
     myEDTQueue.offer(() -> {
@@ -138,9 +137,14 @@ public class HighlightingSessionImpl implements HighlightingSession {
     });
   }
 
-  void queueDisposeHighlighter(@Nullable RangeHighlighterEx highlighter) {
+  void queueDisposeHighlighterFor(@NotNull HighlightInfo info) {
+    RangeHighlighterEx highlighter = info.highlighter;
     if (highlighter == null) return;
-    myEDTQueue.offer(highlighter::dispose);
+    // that highlighter may have been reused for another info
+    myEDTQueue.offer(() -> {
+      Object actualInfo = highlighter.getErrorStripeTooltip();
+      if (actualInfo == info && info.highlighter == highlighter) highlighter.dispose();
+    });
   }
 
   void waitForHighlightInfosApplied() {
