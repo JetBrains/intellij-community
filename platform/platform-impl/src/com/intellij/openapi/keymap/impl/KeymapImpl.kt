@@ -636,14 +636,16 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     cleanShortcutsCache()
   }
 
-  override fun getActionIds(): Array<String> = ArrayUtilRt.toStringArray(getActionIdSet())
+  override fun getActionIds(): Array<String> = ArrayUtilRt.toStringArray(actionIdList)
 
-  fun getActionIdSet(): Set<String> {
+  override fun getActionIdList(): Set<String> {
     val ids = LinkedHashSet<String>()
-    parent?.let {
-      ids.addAll(it.actionIds)
-    }
     ids.addAll(actionIdToShortcuts.keys)
+    var parent = parent
+    while (parent != null) {
+      ids.addAll(parent.actionIdToShortcuts.keys)
+      parent = parent.parent
+    }
     return ids
   }
 

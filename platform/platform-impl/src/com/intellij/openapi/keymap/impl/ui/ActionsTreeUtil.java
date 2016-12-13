@@ -39,8 +39,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -354,17 +355,16 @@ public class ActionsTreeUtil {
     return group;
   }
 
-
-  private static Group createOtherGroup(Condition<AnAction> filtered, Group addedActions, final Keymap keymap) {
+  @NotNull
+  private static Group createOtherGroup(@Nullable Condition<AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
     addedActions.initIds();
-    Set<String> result = new HashSet<>();
+    Set<String> result = new THashSet<>();
 
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (keymap != null) {
-      String[] actionIds = keymap.getActionIds();
-      for (String id : actionIds) {
-        if (id.startsWith(EDITOR_PREFIX)) {
-          AnAction action = ActionManager.getInstance().getActionOrStub("$" + id.substring(6));
-          if (action != null) continue;
+      for (String id : keymap.getActionIdList()) {
+        if (id.startsWith(EDITOR_PREFIX) && actionManager.getActionOrStub("$" + id.substring(6)) != null) {
+          continue;
         }
 
         if (!id.startsWith(QuickList.QUICK_LIST_PREFIX) && !addedActions.containsId(id)) {
@@ -374,7 +374,6 @@ public class ActionsTreeUtil {
     }
 
     // add all registered actions
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     String[] registeredActionIds = actionManager.getActionIds("");
     for (String id : registeredActionIds) {
@@ -382,17 +381,17 @@ public class ActionsTreeUtil {
       if (actionOrStub instanceof ActionGroup && !((ActionGroup)actionOrStub).canBePerformed(DataManager.getInstance().getDataContext())) {
         continue;
       }
-      if (id.startsWith(QuickList.QUICK_LIST_PREFIX) || addedActions.containsId(id) || result.contains(id)) {
+      if (id.startsWith(QuickList.QUICK_LIST_PREFIX) ||
+          addedActions.containsId(id) ||
+          result.contains(id) ||
+          keymapManager.getBoundActions().contains(id)) {
         continue;
       }
-
-      if (keymapManager.getBoundActions().contains(id)) continue;
 
       result.add(id);
     }
 
     filterOtherActionsGroup(result);
-
 
     Group group = new Group(KeyMapBundle.message("other.group.title"), AllIcons.Nodes.KeymapOther);
 

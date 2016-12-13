@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.keymap;
+package com.intellij.keymap;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
@@ -39,6 +41,8 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author cdr
@@ -410,7 +414,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String checkDuplicatesInKeymap(@NotNull KeymapImpl keymap, @NotNull Map<String, Map<String, List<String>>> allKnownDuplicates) {
-    Set<String> aids = keymap.getActionIdSet();
+    Set<String> aids = keymap.getActionIdList();
     removeBoundActionIds(aids);
 
     Set<Shortcut> shortcuts = new THashSet<>();
@@ -538,10 +542,9 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       }
     };
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
-      String[] ids = keymap.getActionIds();
-      Arrays.sort(ids);
-      Set<String> noDuplicates = new LinkedHashSet<>(Arrays.asList(ids));
-      TestCase.assertEquals(new ArrayList<>(Arrays.asList(ids)), new ArrayList<>(noDuplicates));
+      List<String> ids = new ArrayList<>(keymap.getActionIdList());
+      ids.sort(null);
+      assertThat(ids).isEqualTo(new ArrayList<>(new LinkedHashSet<>(ids)));
       for (String cid : ids) {
         if (unknownActions.contains(cid)) continue;
         AnAction action = ActionManager.getInstance().getAction(cid);
@@ -588,16 +591,16 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   public void testIdsListIsConsistent() {
     Map<String, Map<String, List<String>>> duplicates = getKnownDuplicates();
 
-    THashSet<String> allMaps =
-      new THashSet<>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), keymap -> keymap.getName()));
-    TestCase.assertTrue("Modify 'known duplicates list' test data. Keymaps were added: " +
-                        ContainerUtil.subtract(allMaps, duplicates.keySet()),
-                        ContainerUtil.subtract(allMaps, duplicates.keySet()).isEmpty()
-    );
-    TestCase.assertTrue("Modify 'known duplicates list' test data. Keymaps were removed: " +
-                        ContainerUtil.subtract(duplicates.keySet(), allMaps),
-                        ContainerUtil.subtract(duplicates.keySet(), allMaps).isEmpty()
-    );
+    Set<String> allMaps = new THashSet<>(ContainerUtil.map(KeymapManagerEx.getInstanceEx().getAllKeymaps(), keymap -> keymap.getName()));
+    assertThat(ContainerUtil.subtract(allMaps, duplicates.keySet()))
+      .overridingErrorMessage("Modify 'known duplicates list' test data. Keymaps were added: %s",
+                              ContainerUtil.subtract(allMaps, duplicates.keySet()))
+      .isEmpty();
+
+    assertThat(ContainerUtil.subtract(duplicates.keySet(), allMaps))
+      .overridingErrorMessage("Modify 'known duplicates list' test data. Keymaps were removed: %s",
+                              ContainerUtil.subtract(duplicates.keySet(), allMaps))
+      .isEmpty();
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     Map<Keymap, List<Shortcut>> reassignedShortcuts = new FactoryMap<Keymap, List<Shortcut>>() {
@@ -614,7 +617,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     };
     for (String name : duplicates.keySet()) {
       Keymap keymap = KeymapManagerEx.getInstanceEx().getKeymap(name);
-      TestCase.assertNotNull("KeyMap " + name + " not found", keymap);
+      assertThat(keymap).overridingErrorMessage("KeyMap %s not found", name).isNotNull();
       Map<String, List<String>> duplicateIdsList = duplicates.get(name);
       Set<String> mentionedShortcuts = new THashSet<>();
       for (Map.Entry<String, List<String>> shortcutMappings : duplicateIdsList.entrySet()) {
@@ -701,7 +704,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   }
 
   private static void checkLinuxKeymap(final Keymap keymap) {
-    for (String actionId : keymap.getActionIds()) {
+    for (String actionId : keymap.getActionIdList()) {
       for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
         if (shortcut instanceof KeyboardShortcut) {
           checkCtrlAltFn(keymap, shortcut, ((KeyboardShortcut)shortcut).getFirstKeyStroke());
