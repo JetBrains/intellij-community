@@ -113,8 +113,9 @@ public class SuspiciousMethodCallUtil {
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
 
     if (arg instanceof PsiConditionalExpression &&
-        PsiPolyExpressionUtil.isPolyExpression(arg) &&
-        argType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        argType != null &&
+        argType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+        PsiPolyExpressionUtil.isPolyExpression(arg)) {
       return null;
     }
     return getSuspiciousMethodCallMessage(methodExpression, argType, reportConvertibleMethodCalls, patternMethods, indices);
