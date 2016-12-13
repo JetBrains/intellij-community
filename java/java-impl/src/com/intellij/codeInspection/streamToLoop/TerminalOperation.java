@@ -653,19 +653,19 @@ abstract class TerminalOperation extends Operation {
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String comparator = "";
       if(myComparator != null) {
-        if(ExpressionUtils.isSimpleExpression(myComparator)) {
-          comparator = myComparator.getText();
-        } else {
-          comparator = context.declare("comparator", myComparatorType, myComparator.getText());
+        comparator = myComparator.getText();
+        if(!ExpressionUtils.isSimpleExpression(context.createExpression(comparator))) {
+          comparator = context.declare("comparator", myComparatorType, comparator);
         }
       }
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
       String type = myType;
       context.setFinisher(new Condition.Optional(type, seen, best));
-      return "if(!"+seen+" || "+myTemplate.replace("{best}", best).replace("{item}", inVar.getName()).replace("{comparator}", comparator)+") {\n" +
-             seen+"=true;\n"+
-             best+"="+inVar+";\n}\n";
+      String comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName()).replace("{comparator}", comparator);
+      return "if(!" + seen + " || " + comparePredicate + ") {\n" +
+             seen + "=true;\n" +
+             best + "=" + inVar + ";\n}\n";
     }
 
     @Nullable

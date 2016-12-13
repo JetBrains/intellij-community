@@ -276,23 +276,26 @@ abstract class FunctionHelper {
     void transform(StreamToLoopReplacementContext context, String... newNames) {
       PsiMethodReferenceExpression methodRef = fromText(context, myMethodRef.getText());
       PsiExpression qualifier = methodRef.getQualifierExpression();
-      if(qualifier != null && !ExpressionUtils.isSimpleExpression(qualifier)) {
-        String type = myQualifierType;
-        if(type != null) {
-          String nameCandidate = "expr";
-          PsiType psiType = context.createType(myQualifierType);
-          SuggestedNameInfo info =
-            JavaCodeStyleManager
-              .getInstance(context.getProject()).suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, psiType, true);
-          if(info.names.length > 0) {
-            nameCandidate = info.names[0];
+      if(qualifier != null) {
+        String qualifierText = qualifier.getText();
+        if(!ExpressionUtils.isSimpleExpression(context.createExpression(qualifierText))) {
+          String type = myQualifierType;
+          if (type != null) {
+            String nameCandidate = "expr";
+            PsiType psiType = context.createType(myQualifierType);
+            SuggestedNameInfo info =
+              JavaCodeStyleManager
+                .getInstance(context.getProject()).suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, psiType, true);
+            if (info.names.length > 0) {
+              nameCandidate = info.names[0];
+            }
+            String expr = context.declare(nameCandidate, type, qualifierText);
+            PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)context
+              .createExpression("(" + type + " " + expr + ")->(" + myType + ")" + expr + "::" + myMethodRef.getReferenceName());
+            PsiTypeCastExpression castExpr = (PsiTypeCastExpression)lambdaExpression.getBody();
+            LOG.assertTrue(castExpr != null);
+            methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
           }
-          String expr = context.declare(nameCandidate, type, qualifier.getText());
-          PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)context
-            .createExpression("(" + type + " " + expr + ")->(" + myType + ")" + expr + "::" + myMethodRef.getReferenceName());
-          PsiTypeCastExpression castExpr = (PsiTypeCastExpression)lambdaExpression.getBody();
-          LOG.assertTrue(castExpr != null);
-          methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
         }
       }
       PsiLambdaExpression lambda = LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, true, true);

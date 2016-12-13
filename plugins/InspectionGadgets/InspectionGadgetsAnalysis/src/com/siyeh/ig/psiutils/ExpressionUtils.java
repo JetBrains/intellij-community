@@ -714,7 +714,7 @@ public class ExpressionUtils {
    * - static field read
    * - instance field read having 'this' as qualifier
    *
-   * @param expression an expression to test
+   * @param expression an expression to test (must be valid expression)
    * @return true if the supplied expression is simple
    */
   @Contract("null -> false")
@@ -722,7 +722,8 @@ public class ExpressionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression ||
         expression instanceof PsiThisExpression ||
-        expression instanceof PsiClassObjectAccessExpression) {
+        expression instanceof PsiClassObjectAccessExpression ||
+        isEvaluatedAtCompileTime(expression)) {
       return true;
     }
     if(expression instanceof PsiReferenceExpression) {

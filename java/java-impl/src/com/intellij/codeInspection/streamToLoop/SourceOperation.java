@@ -276,11 +276,9 @@ abstract class SourceOperation extends Operation {
 
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      String bound;
-      if(!ExpressionUtils.isSimpleExpression(myBound)) {
-        bound = context.declare("bound", outVar.getType(), myBound.getText());
-      } else {
-        bound = myBound.getText();
+      String bound = myBound.getText();
+      if(!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
+        bound = context.declare("bound", outVar.getType(), bound);
       }
       return context.getLoopLabel() +
              "for(" + outVar.getDeclaration() + " = " + myOrigin.getText() + ";" +
