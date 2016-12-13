@@ -297,8 +297,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       int delta = nameElement.getTextOffset() - parent.getTextOffset();
       PsiElement newParent;
       if (parent instanceof PsiExpression) {
-        newParent = LambdaUtil
-          .extractSingleExpressionFromBody(((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(parent)).getBody());
+        newParent = LambdaUtil.extractSingleExpressionFromBody(
+          ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(parent, false)).getBody());
       } else {
         PsiElement blockStatement = parent.replace(factory.createStatementFromText("{" + parent.getText() + "}", parent));
         newParent = ((PsiBlockStatement)blockStatement).getCodeBlock().getStatements()[0];
