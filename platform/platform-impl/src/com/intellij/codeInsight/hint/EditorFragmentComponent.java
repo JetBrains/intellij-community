@@ -85,7 +85,7 @@ public class EditorFragmentComponent extends JPanel {
       editor.getScrollingModel().scrollHorizontally(0);
     }
 
-    final BufferedImage textImage = UIUtil.createImage(this, textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+    final BufferedImage textImage = UIUtil.createImage(editor.getComponent(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
     Graphics textGraphics = textImage.getGraphics();
     EditorUIUtil.setupAntialiasing(textGraphics);
 
