@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.DefaultSchemeActions;
+import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.openapi.actionSystem.AnAction;
