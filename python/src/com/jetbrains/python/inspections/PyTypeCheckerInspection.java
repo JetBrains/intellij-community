@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author vlan
  */
@@ -110,22 +112,24 @@ public class PyTypeCheckerInspection extends PyInspection {
     private PyType getExpectedReturnType(@NotNull PyFunction function) {
       final PyType returnType = myTypeEvalContext.getReturnType(function);
 
-      if (returnType instanceof PyCollectionType) {
-        final PyCollectionType genericType = (PyCollectionType)returnType;
-        if (PyNames.FAKE_COROUTINE.equals(genericType.getName())) {
+      final PyCollectionType genericType = as(returnType, PyCollectionType.class);
+      final PyClassType classType = as(returnType, PyClassType.class);
+
+      if (function.isAsync()) {
+        if (genericType != null && PyNames.FAKE_COROUTINE.equals(genericType.getName())) {
           return genericType.getIteratedItemType();
         }
-        else if (function.isGenerator()) {
-          if (PyNames.FAKE_GENERATOR.equals(genericType.getName()) ||
-              genericType instanceof PyClassType && "typing.Generator".equals(((PyClassType)genericType).getClassQName())) {
-            // Generator's type is parametrized as [YieldType, SendType, ReturnType]
-            return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
-          }
-          else {
-            // Assume that any other return type annotation for a generator cannot contain its return type
-            return null;
-          }
+        // Async generators are not allowed to return anything anyway
+        return null;
+      }
+      else if (function.isGenerator()) {
+        if (genericType != null && classType != null &&
+            (PyNames.FAKE_GENERATOR.equals(genericType.getName()) || "typing.Generator".equals(classType.getClassQName()))) {
+          // Generator's type is parametrized as [YieldType, SendType, ReturnType]
+          return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
         }
+        // Assume that any other return type annotation for a generator cannot contain its return type
+        return null;
       }
 
       return returnType;

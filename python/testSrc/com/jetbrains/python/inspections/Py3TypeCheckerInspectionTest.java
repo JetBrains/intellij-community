@@ -179,8 +179,13 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
-  // PY-20657
+  // PY-20657, PY-21916
   public void testGeneratorAnnotatedToReturnIterable() {
+    doTest();
+  }
+
+  // PY-20657, PY-21916
+  public void testAsyncGeneratorAnnotatedToReturnAsyncIterable() {
     doTest();
   }
 

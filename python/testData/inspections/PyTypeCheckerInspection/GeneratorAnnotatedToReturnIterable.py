@@ -9,3 +9,12 @@ def g1() -> Iterable[int]:
 def g2() -> Iterable[int]:
     yield 42
     return None
+
+
+def g3() -> Iterable:
+    yield 42
+
+
+def g4() -> Iterable:
+    yield 42
+    return None
