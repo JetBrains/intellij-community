@@ -6,19 +6,19 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static void test(List<List<String>> list) {
-      boolean allMatch = true;
+      boolean b = true;
       OUTER:
       for (List<String> x : list) {
           if (x != null) {
               for (String s : x) {
                   if (!s.startsWith("a")) {
-                      allMatch = false;
+                      b = false;
                       break OUTER;
                   }
               }
           }
       }
-      if(allMatch) {
+      if(b) {
       System.out.println("ok");
     }
   }

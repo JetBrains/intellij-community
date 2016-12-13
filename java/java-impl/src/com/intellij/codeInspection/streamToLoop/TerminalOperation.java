@@ -440,24 +440,20 @@ abstract class TerminalOperation extends Operation {
 
   static class MatchTerminalOperation extends TerminalOperation {
     private final FunctionHelper myFn;
-    private final String myName;
     private final boolean myDefaultValue, myNegatePredicate;
 
     public MatchTerminalOperation(FunctionHelper fn, String name) {
       myFn = fn;
       switch(name) {
         case "anyMatch":
-          myName = "found";
           myDefaultValue = false;
           myNegatePredicate = false;
           break;
         case "allMatch":
-          myName = "allMatch";
           myDefaultValue = true;
           myNegatePredicate = true;
           break;
         case "noneMatch":
-          myName = "noneMatch";
           myDefaultValue = true;
           myNegatePredicate = false;
           break;
@@ -488,7 +484,7 @@ abstract class TerminalOperation extends Operation {
         expression = myFn.getText();
       }
       return "if(" + expression + ") {\n" +
-             context.assignAndBreak(new Condition.Boolean(myName, myDefaultValue)) +
+             context.assignAndBreak(new Condition.Boolean("b", myDefaultValue)) +
              "}\n";
     }
   }

@@ -35,10 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -481,6 +478,35 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if(predicate.test(myPlaceholder)) {
         setFinisher(condition.getFalseBranch());
         return "return "+condition.getTrueBranch()+";";
+      }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(myPlaceholder.getParent());
+      if(parent instanceof PsiIfStatement && condition.getTrueBranch().equals(String.valueOf(true))) {
+        PsiIfStatement ifStatement = (PsiIfStatement)parent;
+        if(ifStatement.getElseBranch() == null) {
+          PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+          if(thenStatement instanceof PsiReturnStatement || thenStatement instanceof PsiThrowStatement) {
+            myPlaceholder = parent;
+            return thenStatement.getText();
+          }
+          if(thenStatement instanceof PsiExpressionStatement) {
+            myPlaceholder = parent;
+            return thenStatement.getText() + "\n" + getBreakStatement();
+          }
+        }
+      }
+      if(condition instanceof Condition.Optional && myPlaceholder instanceof PsiExpression) {
+        PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myPlaceholder);
+        if(call != null && call.getParent() instanceof PsiExpressionStatement) {
+          PsiExpression[] args = call.getArgumentList().getExpressions();
+          if(args.length == 1 && "ifPresent".equals(call.getMethodExpression().getReferenceName())) {
+            FunctionHelper fn = FunctionHelper.create(args[0], 1);
+            if(fn != null) {
+              fn.transform(this, ((Condition.Optional)condition).unwrap("").getTrueBranch());
+              myPlaceholder = call.getParent();
+              return fn.getText() + ";\n" + getBreakStatement();
+            }
+          }
+        }
       }
       String found = declareResult(condition.getCondition(), condition.getType(), condition.getFalseBranch(), false);
       return found + " = " +condition.getTrueBranch()+";\n" + getBreakStatement();

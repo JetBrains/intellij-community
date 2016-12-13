@@ -13,14 +13,14 @@ public class Main {
     // cannot replace as replacement would generate a statement before "super" call
     Child() {
       super(false);
-        boolean found = false;
+        boolean b = false;
         for (String s : Arrays.asList("a", "b", "c")) {
             if (Objects.nonNull(s)) {
-                found = true;
+                b = true;
                 break;
             }
         }
-        super.test(found);
+        super.test(b);
     }
   }
 }

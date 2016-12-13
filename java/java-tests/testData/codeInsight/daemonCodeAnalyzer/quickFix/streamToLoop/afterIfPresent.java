@@ -5,17 +5,15 @@ import java.util.List;
 
 public class Main {
   private static void test(List<String> list) {
-      for (String x : list) {
-          if (x != null) {
-              if (x.startsWith("x")) {
-                  System.out.println("Ok!");
-                  break;
-              }
+      for (String str : list) {
+          if (str.contains("x")) {
+              System.out.println(str);
+              break;
           }
       }
   }
 
   public static void main(String[] args) {
-    test(Arrays.asList("a", "b", "xyz"));
+    test(Arrays.asList("a", "b", "syz"));
   }
 }
