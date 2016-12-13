@@ -275,7 +275,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           // Just in case if something went wrong: at least try to restore the original stream code
           temporaryStreamPlaceholder.replace(factory.createExpressionFromText(text, temporaryStreamPlaceholder));
         }
-        throw new RuntimeException("Error converting Stream to loop: "+text, ex);
+        LOG.error("Error converting Stream to loop: "+text, ex);
       }
     }
 
