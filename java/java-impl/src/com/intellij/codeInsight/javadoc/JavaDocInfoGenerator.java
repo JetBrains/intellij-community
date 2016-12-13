@@ -1143,9 +1143,7 @@ public class JavaDocInfoGenerator {
       }
       if (i < parms.length - 1) {
         buffer.append(",\n ");
-        for (int j = 0; j < indent; j++) {
-          buffer.append(" ");
-        }
+        buffer.append(StringUtil.repeat(" ", indent));
       }
     }
     buffer.append(")");

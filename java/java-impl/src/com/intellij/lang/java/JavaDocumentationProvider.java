@@ -303,7 +303,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     buffer.append(method.getName());
 
-    buffer.append(" (");
+    buffer.append("(");
     PsiParameter[] params = method.getParameterList().getParameters();
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
