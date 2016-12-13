@@ -33,7 +33,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-private const val GROUP_NAME = "IntelliJ Platform"
+private const val GROUP_NAME = SERVICE_NAME_PREFIX
 
 internal val DB_FILE_NAME = "c.kdbx"
 

@@ -26,11 +26,12 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicReference
 
+const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
+
 /**
  * requestor is deprecated. Never use it in new code.
  */
-data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false) {
-}
+data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false)
 
 fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
 
