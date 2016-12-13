@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,8 @@ public interface VcsLogIndex {
 
   @Nullable
   String getFullMessage(int index);
+
+  Set<FilePath> getAllRenames(@NotNull FilePath path);
 
   void markCorrupted();
 

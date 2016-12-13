@@ -41,16 +41,14 @@ import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -371,6 +369,22 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Set<FilePath> getAllRenames(@NotNull FilePath path) {
+    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
+    if (myIndexStorage != null && myRoots.contains(root)) {
+      try {
+        return myIndexStorage.paths.getAllRenames(path);
+      }
+      catch (IOException | StorageException e) {
+        myFatalErrorsConsumer.consume(this, e);
+      }
+    }
+
+    return Collections.emptySet();
   }
 
   @Override

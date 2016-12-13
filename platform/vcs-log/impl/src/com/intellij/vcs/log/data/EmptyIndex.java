@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
@@ -51,6 +52,12 @@ public class EmptyIndex implements VcsLogIndex {
   @NotNull
   @Override
   public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public Set<FilePath> getAllRenames(@NotNull FilePath path) {
     throw new UnsupportedOperationException();
   }
 

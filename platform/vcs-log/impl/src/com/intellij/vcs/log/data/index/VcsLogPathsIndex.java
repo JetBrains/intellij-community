@@ -18,6 +18,7 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -34,6 +35,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -94,6 +96,31 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
       allPathIds.addAll(renames);
     }
 
+    return result;
+  }
+
+  @NotNull
+  public Set<FilePath> getAllRenames(@NotNull FilePath path) throws IOException, StorageException {
+    Ref<Integer> pathId = new Ref<>(myPathsIndexer.myPathsEnumerator.enumerate(path.getPath()));
+
+    Set<Integer> allPathIds = ContainerUtil.newHashSet();
+    allPathIds.add(pathId.get());
+
+    while (!pathId.isNull()) {
+      Integer key = pathId.get();
+      pathId.set(null);
+      iterateCommitIdsAndValues(key, (value, commit) -> {
+        if (value != null && !allPathIds.contains(value)) {
+          pathId.set(value);
+          allPathIds.add(value);
+        }
+      });
+    }
+
+    Set<FilePath> result = ContainerUtil.newHashSet();
+    for (Integer id : allPathIds) {
+      result.add(VcsUtil.getFilePath(myPathsIndexer.myPathsEnumerator.valueOf(id)));
+    }
     return result;
   }
 
