@@ -67,8 +67,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     group.add(myEditorSettingsAction);
 
     group.add(Separator.getInstance());
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT));
     group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
 
     group.add(Separator.getInstance());

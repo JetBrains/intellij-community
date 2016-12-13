@@ -108,6 +108,9 @@ public class EduAdaptiveStepicConnector {
             LOG.warn("Got unexpected number of lessons: " + lessonContainer.lessons.size());
           }
         }
+        else {
+          LOG.warn("Got empty recommendation for the task: " + responseString);
+        }
       }
       else {
         throw new IOException("Stepic returned non 200 status code: " + responseString);
@@ -145,7 +148,7 @@ public class EduAdaptiveStepicConnector {
     else if (stepType.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
       return EduStepicConnector.createTask(project, stepId);
     }
-    
+
     return null;
   }
 
@@ -341,6 +344,13 @@ public class EduAdaptiveStepicConnector {
               }));
             }
           }
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            final Balloon balloon =
+              JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't load a new recommendation", MessageType.ERROR, null)
+                .createBalloon();
+            StudyUtils.showCheckPopUp(project, balloon);});
         }
         ApplicationManager.getApplication().invokeLater(() -> {
           VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);

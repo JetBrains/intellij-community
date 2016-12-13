@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -109,8 +110,22 @@ public class PyTypeCheckerInspection extends PyInspection {
     private PyType getExpectedReturnType(@NotNull PyFunction function) {
       final PyType returnType = myTypeEvalContext.getReturnType(function);
 
-      if (returnType instanceof PyCollectionType && PyNames.FAKE_COROUTINE.equals(returnType.getName())) {
-        return ((PyCollectionType)returnType).getIteratedItemType();
+      if (returnType instanceof PyCollectionType) {
+        final PyCollectionType genericType = (PyCollectionType)returnType;
+        if (PyNames.FAKE_COROUTINE.equals(genericType.getName())) {
+          return genericType.getIteratedItemType();
+        }
+        else if (function.isGenerator()) {
+          if (PyNames.FAKE_GENERATOR.equals(genericType.getName()) ||
+              genericType instanceof PyClassType && "typing.Generator".equals(((PyClassType)genericType).getClassQName())) {
+            // Generator's type is parametrized as [YieldType, SendType, ReturnType]
+            return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
+          }
+          else {
+            // Assume that any other return type annotation for a generator cannot contain its return type
+            return null;
+          }
+        }
       }
 
       return returnType;
@@ -126,7 +141,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           ReturnVisitor visitor = new ReturnVisitor(node);
           statements.accept(visitor);
           if (!visitor.myHasReturns) {
-            final PyType expected = myTypeEvalContext.getReturnType(node);
+            final PyType expected = getExpectedReturnType(node);
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             if (expected != null && !(expected instanceof PyNoneType)) {
               registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),

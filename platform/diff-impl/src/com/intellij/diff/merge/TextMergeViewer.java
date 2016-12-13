@@ -231,8 +231,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       DefaultActionGroup diffGroup = new DefaultActionGroup("Compare With", true);
       diffGroup.getTemplatePresentation().setIcon(AllIcons.Diff.Diff);
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.LEFT));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.BASE));
