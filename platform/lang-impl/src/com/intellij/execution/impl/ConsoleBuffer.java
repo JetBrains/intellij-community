@@ -147,21 +147,16 @@ public class ConsoleBuffer {
     myKeepSlashR = keep;
   }
 
-  public boolean isEmpty() {
+  boolean isEmpty() {
     return myDeferredOutput.isEmpty() || myDeferredOutput.size() == 1 && myDeferredOutput.getFirst().length() <= 0;
   }
 
-  public int getLength() {
+  int getLength() {
     return myDeferredOutputLength;
   }
 
   int getUserInputLength() {
     return myDeferredUserInput.length();
-  }
-
-  @NotNull
-  public String getUserInput() {
-    return myDeferredUserInput.toString();
   }
 
   @NotNull
@@ -180,7 +175,7 @@ public class ConsoleBuffer {
   }
 
   @NotNull
-  public String getText() {
+  String getText() {
     if (myDeferredOutput.size() > 1) {
       final StringBuilder buffer = new StringBuilder();
       for (StringBuilder builder : myDeferredOutput) {
@@ -208,11 +203,11 @@ public class ConsoleBuffer {
     myContentTypesToNotStripOnCycling.addAll(types);
   }
 
-  public void clear() {
+  void clear() {
     clear(true);
   }
   
-  public void clear(boolean clearUserInputAsWell) {
+  void clear(boolean clearUserInputAsWell) {
     if (myUseCyclicBuffer) {
       myDeferredOutput.clear();
       myDeferredOutput.add(new StringBuilder(myCyclicBufferUnitSize));
@@ -270,7 +265,7 @@ public class ConsoleBuffer {
    *         or partially) and number of existed symbols removed during storing the given data
    */
   @NotNull
-  public Pair<String, Integer> print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+  Pair<String, Integer> print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
     int numberOfSymbolsToProceed = text.length();
     int trimmedSymbolsNumber = myDeferredOutputLength;
     if (contentType != ConsoleViewContentType.USER_INPUT) {
@@ -542,7 +537,7 @@ public class ConsoleBuffer {
   private final class Context {
     private final int numberOfSymbolsToRemove;
     StringBuilder currentBuffer;
-    public Iterator<StringBuilder> iterator;
+    public final Iterator<StringBuilder> iterator;
     int bufferOffset;
     int removedSymbolsNumber;
 

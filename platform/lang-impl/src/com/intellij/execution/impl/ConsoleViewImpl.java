@@ -1154,7 +1154,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       this(null);
     }
 
-    public ClearAllAction(ConsoleView consoleView) {
+    ClearAllAction(ConsoleView consoleView) {
       super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
       myConsoleView = consoleView;
     }
