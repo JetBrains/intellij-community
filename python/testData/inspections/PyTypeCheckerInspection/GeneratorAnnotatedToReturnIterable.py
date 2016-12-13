@@ -1,6 +1,11 @@
 from typing import Iterable
 
 
-def f() -> Iterable[int]:
+def g1() -> Iterable[int]:
     for i in range(10):
         yield i
+
+
+def g2() -> Iterable[int]:
+    yield 42
+    return None
