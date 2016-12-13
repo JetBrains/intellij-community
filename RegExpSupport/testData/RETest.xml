@@ -64,7 +64,7 @@
       <expected>OK</expected>
     </test>
     <test verify="false">
-      <pattern><![CDATA[<warning descr="Empty group">(|)</warning>\n]]></pattern>
+      <pattern><![CDATA[<warning descr="Empty group">(|)</warning>]]></pattern>
       <expected>OK</expected>
     </test>
     <test verify="false">
