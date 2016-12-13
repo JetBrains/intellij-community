@@ -338,42 +338,5 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testParse2() throws IOException { doCodeTest("1**"); }
   public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
 
-  public void testPosixBracketExpression1() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
-    doCodeTest("[[:alpha:]]");
-  }
-
-  public void testPosixBracketExpression2() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
-    doCodeTest("[[:^alpha:]]");
-  }
-
-  public void testCategoryShorthand1() throws IOException {
-    doCodeTest("\\pL");
-  }
-
-  public void testCategoryShorthand2() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.UNICODE_CATEGORY_SHORTHAND, getTestRootDisposable());
-    doCodeTest("\\pL");
-  }
-
-  public void testOmitNumberInQuantifier() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS, getTestRootDisposable());
-    doCodeTest("a{,3}");
-  }
-
-  public void testDanglingMetaCharacter1() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
-    doCodeTest("{");
-  }
-
-  public void testDanglingMetaCharacter2() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
-    doCodeTest("a{a");
-  }
-
-  public void testDanglingMetaCharacters3() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
-    doCodeTest("{{E1:\\s*(?P<ref>([^\\n]+\\+)?[0-9]+)( *\\|[^\\n]*)?}}");
-  }
+  public void testCategoryShorthand1() throws IOException { doCodeTest("\\pL"); }
 }
