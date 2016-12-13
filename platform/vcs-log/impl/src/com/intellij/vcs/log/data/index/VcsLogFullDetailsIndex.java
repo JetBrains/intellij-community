@@ -137,34 +137,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
               protected void checkCanceled() {
                 ProgressManager.checkCanceled();
               }
-            },
-            new ForwardIndex<Integer, T>() {
-              @NotNull
-              @Override
-              public InputKeyIterator<Integer, T> getInputKeys(int inputId) {
-                return EmptyInputKeyIterator.getInstance();
-              }
-
-              @Override
-              public void putInputData(int inputId, @NotNull Map<Integer, T> data) throws IOException {
-
-              }
-
-              @Override
-              public void flush() {
-
-              }
-
-              @Override
-              public void clear() throws IOException {
-
-              }
-
-              @Override
-              public void close() throws IOException {
-
-              }
-            });
+            }, new EmptyForwardIndex<>());
     }
 
     @Override
@@ -218,6 +191,30 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     @Override
     public int getVersion() {
       return myVersion;
+    }
+  }
+
+  private static class EmptyForwardIndex<T> implements ForwardIndex<Integer, T> {
+    @NotNull
+    @Override
+    public InputKeyIterator<Integer, T> getInputKeys(int inputId) {
+      return EmptyInputKeyIterator.getInstance();
+    }
+
+    @Override
+    public void putInputData(int inputId, @NotNull Map<Integer, T> data) throws IOException {
+    }
+
+    @Override
+    public void flush() {
+    }
+
+    @Override
+    public void clear() throws IOException {
+    }
+
+    @Override
+    public void close() throws IOException {
     }
   }
 }
