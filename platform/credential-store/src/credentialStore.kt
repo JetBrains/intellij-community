@@ -27,8 +27,6 @@ import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(CredentialStore::class.java)
 
-internal val SERVICE_NAME_PREFIX = "IntelliJ Platform"
-
 private fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
 
 internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(hash))

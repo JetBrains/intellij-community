@@ -423,23 +423,24 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun getActionIds(shortcut: MouseShortcut): Array<String> {
     var list = mouseShortcutToActionIds.get(shortcut)
+    var parent = parent ?: return sortInRegistrationOrder(list)
+
     var originalListInstance = list != null
-    var keymap = parent ?: return sortInRegistrationOrder(list)
+    var child = this
     var convertedShortcut = convertMouseShortcut(shortcut)
     do {
-      for (id in (keymap.mouseShortcutToActionIds.get(convertedShortcut) ?: emptyList<String>())) {
-        if (actionIdToShortcuts.containsKey(id)) {
+      for (id in (parent.mouseShortcutToActionIds.get(convertedShortcut) ?: emptyList<String>())) {
+        if (child.actionIdToShortcuts.containsKey(id)) {
           // on remove shortcut we put empty list to actionIdToShortcuts, our mouseShortcutToActionIds doesn't contain mapping
           // so, we add actions from parent keymap only if they are absent in this keymap
           continue
         }
 
-        if (list != null && list.contains(id)) {
-          continue
-        }
-
         if (list == null) {
           list = SmartList<String>()
+        }
+        else if (list.contains(id)) {
+          continue
         }
         else if (originalListInstance) {
           list = SmartList(list)
@@ -448,9 +449,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         list.add(id)
       }
 
-      val parent = keymap.parent ?: return sortInRegistrationOrder(list)
-      convertedShortcut = keymap.convertMouseShortcut(shortcut)
-      keymap = parent
+      child = parent
+      parent = child.parent ?: return sortInRegistrationOrder(list)
+      convertedShortcut = child.convertMouseShortcut(shortcut)
     }
     while (true)
   }
@@ -636,14 +637,16 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     cleanShortcutsCache()
   }
 
-  override fun getActionIds(): Array<String> = ArrayUtilRt.toStringArray(getActionIdSet())
+  override fun getActionIds(): Array<String> = ArrayUtilRt.toStringArray(actionIdList)
 
-  fun getActionIdSet(): Set<String> {
+  override fun getActionIdList(): Set<String> {
     val ids = LinkedHashSet<String>()
-    parent?.let {
-      ids.addAll(it.actionIds)
-    }
     ids.addAll(actionIdToShortcuts.keys)
+    var parent = parent
+    while (parent != null) {
+      ids.addAll(parent.actionIdToShortcuts.keys)
+      parent = parent.parent
+    }
     return ids
   }
 

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +44,9 @@ public interface Keymap extends Scheme {
   /**
    * @return Action ids including parent keymap ids
    */
+  @NotNull
+  Collection<String> getActionIdList();
+
   @NotNull
   String[] getActionIds();
 
