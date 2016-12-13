@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
@@ -40,6 +41,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.StepicAdaptiveReactionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -294,31 +296,56 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   public void updateCourseProgress(@NotNull final Project project) {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null) {
-      int taskNum = 0;
-      int taskSolved = 0;
       List<Lesson> lessons = course.getLessons();
-      for (Lesson lesson : lessons) {
-        if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
-        taskNum += lesson.getTaskList().size();
-        taskSolved += getSolvedTasks(lesson);
+
+      Pair<Integer, Integer> progress = countProgressAsOneTaskWithSubtasks(lessons);
+      if (progress == null) {
+        progress = countProgressWithoutSubtasks(lessons);
       }
-      if (lessons.size() == 1 && lessons.get(0).getTaskList().size() == 1) {
-        final Lesson lesson = lessons.get(0);
-        final Task task = lesson.getTaskList().get(0);
-        if (task.hasSubtasks()) {
-          taskNum = task.getLastSubtaskIndex() + 1;
-          taskSolved = task.getActiveSubtaskIndex();
-          if (task.getActiveSubtaskIndex() == task.getLastSubtaskIndex() && task.getStatus() == StudyStatus.Solved) {
-            taskSolved = taskNum;
-          }
-        }
-      }
+
+      int taskSolved = progress.getFirst();
+      int taskNum = progress.getSecond();
       String completedTasks = String.format("%d of %d tasks completed", taskSolved, taskNum);
       double percent = (taskSolved * 100.0) / taskNum;
 
       myStatisticLabel.setText(completedTasks);
       myStudyProgressBar.setFraction(percent / 100);
     }
+  }
+
+  /**
+   * Counts current progress for course which consists of only on task with subtasks
+   * In this case we count each subtasks as task
+   * @return Pair (number of solved tasks, number of tasks) or null if lessons can't be interpreted as one task with subtasks
+   */
+  @Nullable
+  private static Pair<Integer, Integer> countProgressAsOneTaskWithSubtasks(List<Lesson> lessons) {
+    if (lessons.size() == 1 && lessons.get(0).getTaskList().size() == 1) {
+      final Lesson lesson = lessons.get(0);
+      final Task task = lesson.getTaskList().get(0);
+      if (!task.hasSubtasks()) {
+        return null;
+      }
+      int taskNum = task.getLastSubtaskIndex() + 1;
+      boolean isLastSubtaskSolved = task.getActiveSubtaskIndex() == task.getLastSubtaskIndex() && task.getStatus() == StudyStatus.Solved;
+      return Pair.create(isLastSubtaskSolved ? taskNum : task.getActiveSubtaskIndex(), taskNum);
+    }
+    return null;
+  }
+
+  /**
+   * @return Pair (number of solved tasks, number of tasks)
+   */
+  @NotNull
+  private static Pair<Integer, Integer> countProgressWithoutSubtasks(List<Lesson> lessons) {
+    int taskNum = 0;
+    int taskSolved = 0;
+    for (Lesson lesson : lessons) {
+      if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) continue;
+      taskNum += lesson.getTaskList().size();
+      taskSolved += getSolvedTasks(lesson);
+    }
+    return Pair.create(taskSolved, taskNum);
   }
 
   private static int getSolvedTasks(@NotNull final Lesson lesson) {
