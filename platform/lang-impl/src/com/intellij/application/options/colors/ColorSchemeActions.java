@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.DefaultSchemeActions;
+import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;

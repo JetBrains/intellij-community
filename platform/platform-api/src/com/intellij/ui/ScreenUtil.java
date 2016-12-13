@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -535,6 +536,7 @@ public class ScreenUtil {
    */
   public static Rectangle boundsFromDeviceSpace(@NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
+    if (SystemInfo.isLinux/* && !UIUtil.isJDKManagedHiDPI()*/) return b; // [tav] todo: leave default on Linux so far
     try {
       for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
         Rectangle screenBounds = screenBoundsToDeviceSpace(gd);
@@ -561,6 +563,7 @@ public class ScreenUtil {
    */
   public static Rectangle boundsToDeviceSpace(Graphics2D g, @NotNull Rectangle bounds) {
     Rectangle b = bounds.getBounds();
+    if (SystemInfo.isLinux/*  && !UIUtil.isJDKManagedHiDPI()*/) return b; // [tav] todo: leave default on Linux so far
     try {
       if (g != null) {
         float screenScale = screenScale(g.getDeviceConfiguration().getDevice());

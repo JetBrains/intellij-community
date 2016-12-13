@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.ManageSchemesComboAction;
+import com.intellij.application.options.schemes.ManageSchemesComboAction;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;

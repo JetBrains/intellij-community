@@ -52,18 +52,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.vcs.log.ui.render.RectanglePainter.LABEL_ARC;
+
 public class LabelPainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(1);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(2);
-  public static final int RIGHT_PADDING = JBUI.scale(2);
+  public static final int RIGHT_PADDING = JBUI.scale(4);
   public static final int LEFT_PADDING = JBUI.scale(2);
   public static final int COMPACT_MIDDLE_PADDING = JBUI.scale(2);
-  public static final int MIDDLE_PADDING = JBUI.scale(6);
+  public static final int MIDDLE_PADDING = JBUI.scale(12);
   private static final int MAX_LENGTH = 22;
   private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
@@ -115,7 +118,7 @@ public class LabelPainter {
     VcsLogRefManager manager = getRefManager(myLogData, references);
     List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references, myCompact, myShowTagNames);
 
-    myGreyBackground = calculateGreyBackground(refGroups, background, isSelected);
+    myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
       calculatePresentation(refGroups, metrics, myHeight, myGreyBackground != null ? myGreyBackground : myBackground, availableWidth,
                             myCompact);
@@ -155,7 +158,7 @@ public class LabelPainter {
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
       LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
-      int newWidth = width + labelIcon.getIconWidth() + COMPACT_MIDDLE_PADDING;
+      int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING : 0);
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
       newWidth += fontMetrics.stringWidth(text);
@@ -184,12 +187,12 @@ public class LabelPainter {
       int doNotFitWidth = 0;
       if (i < refGroups.size() - 1) {
         LabelIcon lastIcon = new LabelIcon(height, background, getColors(refGroups.subList(i + 1, refGroups.size())));
-        doNotFitWidth = lastIcon.getIconWidth() + MIDDLE_PADDING;
+        doNotFitWidth = lastIcon.getIconWidth();
       }
 
       List<Color> colors = group.getColors();
       LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
-      int newWidth = width + labelIcon.getIconWidth() + MIDDLE_PADDING;
+      int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING : 0);
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
@@ -198,7 +201,7 @@ public class LabelPainter {
         LabelIcon lastIcon = new LabelIcon(height, background, getColors(refGroups.subList(i, refGroups.size())));
         String name = labels.isEmpty() ? text : "";
         labels.add(Pair.create(name, lastIcon));
-        width += fontMetrics.stringWidth(name) + lastIcon.getIconWidth() + MIDDLE_PADDING;
+        width += fontMetrics.stringWidth(name) + lastIcon.getIconWidth();
         break;
       }
       else {
@@ -264,8 +267,12 @@ public class LabelPainter {
   }
 
   @Nullable
-  private static Color calculateGreyBackground(@NotNull List<RefGroup> refGroups, @NotNull Color background, boolean isSelected) {
+  private static Color calculateGreyBackground(@NotNull List<RefGroup> refGroups,
+                                               @NotNull Color background,
+                                               boolean isSelected,
+                                               boolean isCompact) {
     if (isSelected) return null;
+    if (!isCompact) return ColorUtil.mix(background, BACKGROUND, BALANCE);
 
     boolean paintGreyBackground;
     for (RefGroup group : refGroups) {
@@ -318,10 +325,10 @@ public class LabelPainter {
     g2.setColor(myBackground);
     g2.fillRect(x, y, myWidth, height);
 
-    if (myGreyBackground != null) {
+    if (myGreyBackground != null && myCompact) {
       g2.setColor(myGreyBackground);
       g2.fillRect(x, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING,
-                  myWidth - RIGHT_PADDING + LEFT_PADDING,
+                  myWidth,
                   fontMetrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING);
     }
 
@@ -330,6 +337,13 @@ public class LabelPainter {
     for (Pair<String, LabelIcon> label : myLabels) {
       LabelIcon icon = label.second;
       String text = label.first;
+
+      if (myGreyBackground != null && !myCompact) {
+        g2.setColor(myGreyBackground);
+        g2.fill(new RoundRectangle2D.Double(x - LEFT_PADDING, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING,
+                                            icon.getIconWidth() + fontMetrics.stringWidth(text) + 3 * LEFT_PADDING,
+                                            fontMetrics.getHeight() + TOP_TEXT_PADDING + BOTTOM_TEXT_PADDING, LABEL_ARC, LABEL_ARC));
+      }
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
       x += icon.getIconWidth();
