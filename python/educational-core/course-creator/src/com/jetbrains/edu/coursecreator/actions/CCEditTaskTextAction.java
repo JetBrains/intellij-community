@@ -2,11 +2,12 @@ package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,9 +45,11 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
     if (window == null) {
       return;
     }
-
-    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor == null) {
+      return;
+    }
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
     if (virtualFile == null) {
       StudyTaskManager.getInstance(project).setTurnEditingMode(true);
       return;
