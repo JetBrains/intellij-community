@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +44,10 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
     myMember = SmartPointerManager.getInstance(member.getProject()).createSmartPsiElementPointer(member);
   }
 
+  @NotNull
   @Override
   public final T getPsiMember() {
-    return myMember.getElement();
+    return ObjectUtils.assertNotNull(myMember.getElement());
   }
 
   @Override
