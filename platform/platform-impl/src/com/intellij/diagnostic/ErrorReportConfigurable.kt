@@ -17,6 +17,7 @@ package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.SERVICE_NAME_PREFIX
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.*
 import com.intellij.util.io.decodeBase64
@@ -33,7 +34,7 @@ internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
 
   companion object {
     @JvmStatic
-    val SERVICE_NAME = "IntelliJ Platform — JetBrains Account"
+    val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
     val instance: ErrorReportConfigurable
       get() = ServiceManager.getService(ErrorReportConfigurable::class.java)

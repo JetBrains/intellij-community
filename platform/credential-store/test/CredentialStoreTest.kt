@@ -6,7 +6,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.*
 
-private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
+private const val TEST_SERVICE_NAME = "$SERVICE_NAME_PREFIX Test"
 
 inline fun macTest(task: () -> Unit) {
   if (SystemInfo.isMacIntel64 && !UsefulTestCase.IS_UNDER_TEAMCITY) {
