@@ -55,7 +55,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myUiProperties = uiProperties;
 
     myFilterUi = new FileHistoryFilterUi(path);
-    myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack);
+    myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
     myRefresher.onFiltersChange(myFilterUi.getFilters());
 

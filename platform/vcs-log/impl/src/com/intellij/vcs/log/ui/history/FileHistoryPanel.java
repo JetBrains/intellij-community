@@ -19,11 +19,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.frame.CommitSelectionListenerForDiff;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
@@ -34,20 +43,31 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
   @NotNull private final VcsLogData myLogData;
+  @NotNull private final FilePath myFilePath;
   @NotNull private final FileHistoryUi myUi;
 
   @NotNull private Runnable myContainingBranchesListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
 
-  public FileHistoryPanel(@NotNull FileHistoryUi ui, @NotNull VcsLogData logData, @NotNull VisiblePack visiblePack) {
+  @NotNull private List<Change> mySelectedChanges = Collections.emptyList();
+
+  public FileHistoryPanel(@NotNull FileHistoryUi ui,
+                          @NotNull VcsLogData logData,
+                          @NotNull VisiblePack visiblePack,
+                          @NotNull FilePath filePath) {
     myUi = ui;
     myLogData = logData;
+    myFilePath = filePath;
     myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack);
     myDetailsPanel = new DetailsPanel(logData, myUi.getColorManager(), this);
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
@@ -76,6 +96,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsSplitter.setFirstComponent(progressStripe);
     myDetailsSplitter.setSecondComponent(myUi.getProperties().get(MainVcsLogUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
+    myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     updateWhenDetailsAreLoaded();
 
@@ -134,10 +155,46 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Nullable
   @Override
   public Object getData(String dataId) {
+    if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+      return ArrayUtil.toObjectArray(mySelectedChanges, Change.class);
+    }
     if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUi.getProperties();
     }
     return null;
+  }
+
+  @NotNull
+  private List<Change> collectRelevantChanges(@NotNull Collection<Change> changes) {
+    Set<FilePath> renames = myLogData.getIndex().getAllRenames(myFilePath);
+    if (myFilePath.isDirectory()) {
+      return ContainerUtil.filter(changes, change -> affectsDirectories(change, renames));
+    }
+    else {
+      return ContainerUtil.filter(changes, change -> affectsFiles(change, renames));
+    }
+  }
+
+  private static boolean affectsFiles(@NotNull Change change, @NotNull Set<FilePath> files) {
+    if (change.getAfterRevision() == null) {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      return files.contains(ObjectUtils.assertNotNull(beforeRevision).getFile());
+    }
+    return files.contains(change.getAfterRevision().getFile());
+  }
+
+  private static boolean affectsDirectories(@NotNull Change change, @NotNull Set<FilePath> directories) {
+    FilePath file;
+    if (change.getAfterRevision() == null) {
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision == null) return false;
+      file = beforeRevision.getFile();
+    }
+    else {
+      file = change.getAfterRevision().getFile();
+    }
+
+    return ContainerUtil.find(directories, dir -> VfsUtilCore.isAncestor(dir.getIOFile(), file.getIOFile(), false)) != null;
   }
 
   @Override
@@ -146,5 +203,29 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myLogData.getContainingBranchesGetter().removeTaskCompletedListener(myContainingBranchesListener);
 
     myDetailsSplitter.dispose();
+  }
+
+  private class MyCommitSelectionListenerForDiff extends CommitSelectionListenerForDiff {
+    protected MyCommitSelectionListenerForDiff() {
+      super(myLogData, FileHistoryPanel.this.myGraphTable);
+    }
+
+    @Override
+    protected void setChangesToDisplay(@NotNull List<Change> changes) {
+      mySelectedChanges = collectRelevantChanges(changes);
+    }
+
+    @Override
+    protected void clearChanges() {
+      mySelectedChanges = Collections.emptyList();
+    }
+
+    @Override
+    protected void startLoading() {
+    }
+
+    @Override
+    protected void stopLoading() {
+    }
   }
 }

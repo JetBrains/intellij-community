@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -109,7 +108,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
     setupDetailsSplitter(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
 
-    myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDiff());
+    myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     updateWhenDetailsAreLoaded();
 
@@ -313,33 +312,37 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.dispose();
   }
 
-  private class CommitSelectionListenerForDiff extends CommitSelectionListener {
-    protected CommitSelectionListenerForDiff() {
-      super(myLogData, MainFrame.this.myGraphTable, myChangesLoadingPane);
+  private class MyCommitSelectionListenerForDiff extends CommitSelectionListenerForDiff {
+    protected MyCommitSelectionListenerForDiff() {
+      super(myLogData, MainFrame.this.myGraphTable);
     }
 
     @Override
-    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
-      List<Change> changes = ContainerUtil.newArrayList();
-      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-      for (VcsFullCommitDetails details : detailsListReversed) {
-        changes.addAll(details.getChanges());
-      }
-      changes = CommittedChangesTreeBrowser.zipChanges(changes);
+    protected void onEmptySelection() {
+      super.onEmptySelection();
+      myChangesBrowser.getViewer().setEmptyText("No commits selected");
+    }
+
+    @Override
+    protected void setChangesToDisplay(@NotNull List<Change> changes) {
       myChangesBrowser.setChangesToDisplay(changes);
     }
 
     @Override
-    protected void onSelection(@NotNull int[] selection) {
+    protected void clearChanges() {
       // just reset and wait for details to be loaded
       myChangesBrowser.setChangesToDisplay(Collections.emptyList());
       myChangesBrowser.getViewer().setEmptyText("");
     }
 
     @Override
-    protected void onEmptySelection() {
-      myChangesBrowser.getViewer().setEmptyText("No commits selected");
-      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
+    protected void startLoading() {
+      myChangesLoadingPane.startLoading();
+    }
+
+    @Override
+    protected void stopLoading() {
+      myChangesLoadingPane.stopLoading();
     }
   }
 

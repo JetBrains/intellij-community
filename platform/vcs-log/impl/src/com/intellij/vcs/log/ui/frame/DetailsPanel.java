@@ -204,7 +204,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener {
     public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
-      super(DetailsPanel.this.myLogData, graphTable, DetailsPanel.this.myLoadingPanel);
+      super(DetailsPanel.this.myLogData, graphTable);
     }
 
     @Override
@@ -253,6 +253,16 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     @Override
     protected List<Integer> getSelectionToLoad() {
       return mySelection;
+    }
+
+    @Override
+    protected void startLoading() {
+      myLoadingPanel.startLoading();
+    }
+
+    @Override
+    protected void stopLoading() {
+      myLoadingPanel.stopLoading();
     }
   }
 }
