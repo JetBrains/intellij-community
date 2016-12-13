@@ -36,6 +36,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         super(astNode);
     }
 
+    @Override
     @NotNull
     public Type getType() {
         final ASTNode child = getNode().getFirstChildNode();
@@ -54,6 +55,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         }
     }
 
+    @Override
     @Nullable
     public Character getValue() {
       final String s = getUnescapedText();
@@ -68,7 +70,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
 
         boolean escaped = false;
         for (int idx = 0; idx < length; idx++) {
-            char ch = s.charAt(idx);
+            final char ch = s.charAt(idx);
             if (!escaped) {
                 if (ch == '\\') {
                     escaped = true;
@@ -101,6 +103,9 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                       }
                       return length == 4 ? parseNumber(idx, s, 16, 2, true) : null;
                     case 'u':
+                        if (length != 6) {
+                            return ch;
+                        }
                         return parseNumber(idx, s, 16, 4, true);
                     case '0':
                     case '1':
@@ -112,9 +117,6 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                     case '7':
                         return parseNumber(idx - 1, s, 8, length - idx, false);
                     default:
-                        if (Character.isLetter(ch)) {
-                            return null;
-                        }
                         return ch;
                 }
             }
