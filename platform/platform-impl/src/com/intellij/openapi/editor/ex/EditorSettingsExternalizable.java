@@ -94,6 +94,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_PARAMETER_NAME_HINTS = true;
     public int MIN_PARAM_NAME_LENGTH_TO_SHOW = 3;
     public int MIN_PARAMS_TO_SHOW = 2;
+    
+    public boolean KEEP_TRAILING_SPACE_ON_CARET_LINE = true;
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -561,4 +563,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.MIN_PARAMS_TO_SHOW = minParamsToShow;
   }
 
+  public boolean isKeepTrailingSpacesOnCaretLine() {
+    return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
+  }
+  
+  public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
+    myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
+  }
 }
