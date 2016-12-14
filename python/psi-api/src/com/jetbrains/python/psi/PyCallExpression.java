@@ -232,10 +232,10 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * Couples function with a flag describing the way it is called.
    */
   class PyMarkedCallee {
-    @NotNull final PyCallable myCallable;
-    PyFunction.Modifier myModifier;
-    int myImplicitOffset;
-    boolean myImplicitlyResolved;
+    @NotNull private final PyCallable myCallable;
+    @Nullable private final PyFunction.Modifier myModifier;
+    private final int myImplicitOffset;
+    private final boolean myImplicitlyResolved;
 
     /**
      * Method-oriented constructor.
@@ -245,7 +245,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
      * @param offset             implicit argument offset; parameters up to this are implicitly filled in the call.
      * @param implicitlyResolved value for {@link #isImplicitlyResolved()}
      */
-    public PyMarkedCallee(@NotNull PyCallable function, PyFunction.Modifier modifier, int offset, boolean implicitlyResolved) {
+    public PyMarkedCallee(@NotNull PyCallable function, @Nullable PyFunction.Modifier modifier, int offset, boolean implicitlyResolved) {
       myCallable = function;
       myModifier = modifier;
       myImplicitOffset = offset;
@@ -257,6 +257,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
       return myCallable;
     }
 
+    @Nullable
     public PyFunction.Modifier getModifier() {
       return myModifier;
     }
