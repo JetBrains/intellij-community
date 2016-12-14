@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
@@ -310,6 +311,11 @@ public final class IpnbConnectionManager implements ProjectComponent {
     if (hostPort.getSecond() != null) {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
+    }
+    final PyPackage notebookPackage = PyPackageUtil.findPackage(packages, "notebook");
+    if (notebookPackage != null && VersionComparatorUtil.compare(notebookPackage.getVersion(),
+                                                                 "4.3.0") >= 0) {
+      parameters.add("--NotebookApp.token=''");
     }
     final String arguments = ipnbSettings.getArguments();
     if (!StringUtil.isEmptyOrSpaces(arguments)) {
