@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -316,7 +315,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     final RangeMarker key = wrapElement(element);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
     myVariableNamesMap.put(key, varName);
-    mySkipOnStartMap.put(key, Boolean.valueOf(skipOnStart));
+    mySkipOnStartMap.put(key, skipOnStart);
     replaceElement(key, expression);
   }
 

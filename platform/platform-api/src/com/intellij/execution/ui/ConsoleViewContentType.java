@@ -101,12 +101,7 @@ public class ConsoleViewContentType {
   }
 
   public static synchronized ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
-    if (ourRegisteredTypes.containsKey(processOutputType)) {
-      return ourRegisteredTypes.get(processOutputType);
-    }
-    else {
-      return SYSTEM_OUTPUT;
-    }
+    return ourRegisteredTypes.getOrDefault(processOutputType, SYSTEM_OUTPUT);
   }
 
   public static synchronized Collection<ConsoleViewContentType> getRegisteredTypes() {
