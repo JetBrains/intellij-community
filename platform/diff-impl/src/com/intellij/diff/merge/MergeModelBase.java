@@ -218,14 +218,14 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     }
   }
 
-  public void executeMergeCommand(@Nullable String commandName,
-                                  @Nullable String commandGroupId,
-                                  @NotNull UndoConfirmationPolicy confirmationPolicy,
-                                  boolean underBulkUpdate,
-                                  @Nullable TIntArrayList affectedChanges,
-                                  @NotNull Runnable task) {
+  public boolean executeMergeCommand(@Nullable String commandName,
+                                     @Nullable String commandGroupId,
+                                     @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                     boolean underBulkUpdate,
+                                     @Nullable TIntArrayList affectedChanges,
+                                     @NotNull Runnable task) {
     TIntArrayList allAffectedChanges = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
-    DiffUtil.executeWriteCommand(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, () -> {
+    return DiffUtil.executeWriteCommand(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, () -> {
       LOG.assertTrue(!myInsideCommand);
 
       // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
