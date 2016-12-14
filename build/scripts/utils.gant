@@ -1189,6 +1189,7 @@ binding.setVariable("layoutUpdater", { String target, String jarName = "updater.
       module("updater")
       manifest {
         attribute(name: "Main-Class", value: "com.intellij.updater.Bootstrap")
+        attribute(name: "Patcher-Version", value: "2.0")
       }
     }
   }
