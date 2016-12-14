@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,6 @@ import java.util.*;
  * @since 4/5/11 5:26 PM
  */
 public class ConsoleBuffer {
-
   private static final int DEFAULT_CYCLIC_BUFFER_UNIT_SIZE = 256;
 
   private static final boolean DEBUG_PROCESSING = false;
@@ -52,7 +52,7 @@ public class ConsoleBuffer {
    * <p/>
    * Feel free to check rationale for using this approach at {@link #myCyclicBufferSize} contract.
    */
-  private final Deque<StringBuilder> myDeferredOutput = new ArrayDeque<>();
+  final Deque<StringBuilder> myDeferredOutput = new ArrayDeque<>();
   private final Set<ConsoleViewContentType> myContentTypesToNotStripOnCycling = new HashSet<>();
 
   /**
@@ -104,8 +104,7 @@ public class ConsoleBuffer {
    * <p/>
    * Target offsets are anchored to the {@link #myDeferredOutput deferred buffer}.
    */
-  private final List<ConsoleViewImpl.TokenInfo> myDeferredTokens = new ArrayList<>();
-  private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<>();
+  private final List<ConsoleViewImpl.TokenInfo> myTokens = new ArrayList<>();
 
   private boolean myKeepSlashR = true;
 
@@ -147,10 +146,6 @@ public class ConsoleBuffer {
     myKeepSlashR = keep;
   }
 
-  boolean isEmpty() {
-    return myDeferredOutput.isEmpty() || myDeferredOutput.size() == 1 && myDeferredOutput.getFirst().length() <= 0;
-  }
-
   int getLength() {
     return myDeferredOutputLength;
   }
@@ -160,18 +155,8 @@ public class ConsoleBuffer {
   }
 
   @NotNull
-  List<ConsoleViewImpl.TokenInfo> getDeferredTokens() {
-    return myDeferredTokens;
-  }
-
-  @NotNull
-  Set<ConsoleViewContentType> getDeferredTokenTypes() {
-    return myDeferredTypes;
-  }
-
-  @NotNull
-  Deque<StringBuilder> getDeferredOutput() {
-    return myDeferredOutput;
+  List<ConsoleViewImpl.TokenInfo> getTokens() {
+    return myTokens;
   }
 
   @NotNull
@@ -218,8 +203,7 @@ public class ConsoleBuffer {
       }
     }
     myDeferredOutputLength = 0;
-    myDeferredTypes.clear();
-    myDeferredTokens.clear();
+    myTokens.clear();
     if (clearUserInputAsWell) {
       myDeferredUserInput = new StringBuffer();
     }
@@ -284,8 +268,6 @@ public class ConsoleBuffer {
       text = text.substring(text.length() - numberOfSymbolsToProceed);
     }
 
-    myDeferredTypes.add(contentType);
-
     text = StringUtil.convertLineSeparators(text, myKeepSlashR);
 
     myDeferredOutputLength += text.length();
@@ -313,68 +295,9 @@ public class ConsoleBuffer {
       myDeferredUserInput.append(text);
     }
 
-    ConsoleUtil.addToken(text.length(), info, contentType, myDeferredTokens);
+    ConsoleUtil.addToken(text.length(), info, contentType, myTokens);
     return new Pair<>(text, trimmedSymbolsNumber);
   }
-
-  //private void checkState() {
-  //  int bufferOffset = 0;
-  //  Iterator<StringBuilder> iterator = myDeferredOutput.iterator();
-  //  StringBuilder currentBuffer = null;
-  //  int prevTokenEnd = 0;
-  //  for (TokenInfo token : myDeferredTokens) {
-  //    if (prevTokenEnd != token.startOffset) {
-  //      try {
-  //        System.out.println("Problem detected!");
-  //        System.in.read();
-  //      }
-  //      catch (IOException e) {
-  //        e.printStackTrace();
-  //      }
-  //    }
-  //    prevTokenEnd = token.endOffset;
-  //    char c = token.contentType == ConsoleViewContentType.ERROR_OUTPUT ? '2' : '1';
-  //    int length = token.getLength();
-  //    if (currentBuffer == null) {
-  //      currentBuffer = iterator.next();
-  //    }
-  //    
-  //    while (length > 0) {
-  //      if (bufferOffset == currentBuffer.length()) {
-  //        if (!iterator.hasNext()) {
-  //          try {
-  //            System.out.println("Problem detected!");
-  //            System.in.read();
-  //          }
-  //          catch (IOException e) {
-  //            e.printStackTrace();
-  //          }
-  //        }
-  //        currentBuffer = iterator.next();
-  //        bufferOffset = 0;
-  //      }
-  //      else {
-  //        int endOffset = Math.min(bufferOffset + length, currentBuffer.length());
-  //        if (token.contentType == ConsoleViewContentType.NORMAL_OUTPUT || token.contentType == ConsoleViewContentType.ERROR_OUTPUT) {
-  //          for (int i = bufferOffset; i < endOffset; i++) {
-  //            char c1 = currentBuffer.charAt(i);
-  //            if (c1 != c && c1 != '\n') {
-  //              try {
-  //                System.out.println("Problem detected!");
-  //                System.in.read();
-  //              }
-  //              catch (IOException e) {
-  //                e.printStackTrace();
-  //              }
-  //            }
-  //          }
-  //        }
-  //        length -= endOffset - bufferOffset;
-  //        bufferOffset = endOffset;
-  //      }
-  //    }
-  //  }
-  //}
 
   /**
    * IJ console works as follows - it receives managed process outputs from dedicated thread that serves that process and
@@ -395,7 +318,6 @@ public class ConsoleBuffer {
     }
 
     final int numberOfSymbolsToRemove = Math.min(myDeferredOutputLength, myDeferredOutputLength + numberOfNewSymbols - myCyclicBufferSize);
-    myDeferredTypes.clear();
 
     if (DEBUG_PROCESSING) {
       log("Starting console trimming. Need to delete %d symbols (deferred output length: %d, number of new symbols: %d, "
@@ -408,15 +330,14 @@ public class ConsoleBuffer {
     Context context = new Context(numberOfSymbolsToRemove);
 
     TIntArrayList indicesOfTokensToRemove = new TIntArrayList();
-    for (int i = 0; i < myDeferredTokens.size(); i++) {
-      ConsoleViewImpl.TokenInfo tokenInfo = myDeferredTokens.get(i);
-      tokenInfo.startOffset -= context.removedSymbolsNumber;
-      tokenInfo.endOffset -= context.removedSymbolsNumber;
+    for (int i = 0; i < myTokens.size(); i++) {
+      ConsoleViewImpl.TokenInfo tokenInfo = myTokens.get(i);
+      tokenInfo.startOffset -= context.removedSymbols;
+      tokenInfo.endOffset -= context.removedSymbols;
 
       if (!context.canContinueProcessing()) {
         // Just update token offsets.
-        myDeferredTypes.add(tokenInfo.contentType);
-        if (context.removedSymbolsNumber == 0) {
+        if (context.removedSymbols == 0) {
           break;
         }
         continue;
@@ -427,7 +348,6 @@ public class ConsoleBuffer {
       // Don't remove input text.
       if (myContentTypesToNotStripOnCycling.contains(tokenInfo.contentType)) {
         skip(context, tokenLength);
-        myDeferredTypes.add(tokenInfo.contentType);
         continue;
       }
 
@@ -437,22 +357,19 @@ public class ConsoleBuffer {
       }
       else {
         tokenInfo.endOffset -= removedTokenSymbolsNumber;
-        myDeferredTypes.add(tokenInfo.contentType);
       }
     }
 
     for (int i = indicesOfTokensToRemove.size() - 1; i >= 0; i--) {
-      myDeferredTokens.remove(indicesOfTokensToRemove.get(i));
+      myTokens.remove(indicesOfTokensToRemove.get(i));
     }
 
-    if (!myDeferredTokens.isEmpty()) {
-      ConsoleViewImpl.TokenInfo tokenInfo = myDeferredTokens.get(0);
+    if (!myTokens.isEmpty()) {
+      ConsoleViewImpl.TokenInfo tokenInfo = myTokens.get(0);
       if (tokenInfo.startOffset > 0) {
         final HyperlinkInfo hyperlinkInfo = tokenInfo.getHyperlinkInfo();
-        myDeferredTokens
-          .add(0, hyperlinkInfo != null ? new ConsoleViewImpl.HyperlinkTokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset, hyperlinkInfo)
-                                        : new ConsoleViewImpl.TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset));
-        myDeferredTypes.add(ConsoleViewContentType.USER_INPUT);
+        ConsoleViewImpl.TokenInfo info = new ConsoleViewImpl.TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset, hyperlinkInfo);
+        myTokens.add(0, info);
       }
     }
 
@@ -500,7 +417,7 @@ public class ConsoleBuffer {
 
   private int remove(@NotNull Context context, int tokenLength) {
     int removedSymbolsNumber = 0;
-    int remainingTotalNumberOfSymbolsToRemove = context.numberOfSymbolsToRemove - context.removedSymbolsNumber;
+    int remainingTotalNumberOfSymbolsToRemove = context.numberOfSymbolsToRemove - context.removedSymbols;
     int numberOfTokenSymbolsToRemove = Math.min(remainingTotalNumberOfSymbolsToRemove, tokenLength);
     while (numberOfTokenSymbolsToRemove > 0 && context.currentBuffer != null) {
       int diff = numberOfTokenSymbolsToRemove - (context.currentBuffer.length() - context.bufferOffset);
@@ -508,12 +425,12 @@ public class ConsoleBuffer {
       int numberOfSymbolsRemovedFromCurrentBuffer = endDeleteBufferOffset - context.bufferOffset;
       if (DEBUG_PROCESSING) {
         log("About to delete %d symbols from the current buffer (offset is %d). Removed symbols number: %d. Current buffer: %d: '%s'",
-            numberOfSymbolsRemovedFromCurrentBuffer, context.bufferOffset, context.removedSymbolsNumber, context.currentBuffer.length(),
+            numberOfSymbolsRemovedFromCurrentBuffer, context.bufferOffset, context.removedSymbols, context.currentBuffer.length(),
             StringUtil.convertLineSeparators(context.currentBuffer.toString()));
       }
       numberOfTokenSymbolsToRemove -= numberOfSymbolsRemovedFromCurrentBuffer;
       removedSymbolsNumber += numberOfSymbolsRemovedFromCurrentBuffer;
-      context.removedSymbolsNumber += numberOfSymbolsRemovedFromCurrentBuffer;
+      context.removedSymbols += numberOfSymbolsRemovedFromCurrentBuffer;
       myDeferredOutputLength -= numberOfSymbolsRemovedFromCurrentBuffer;
 
       if (context.bufferOffset == 0 && (diff >= 0 || endDeleteBufferOffset == context.currentBuffer.length())) {
@@ -539,7 +456,7 @@ public class ConsoleBuffer {
     StringBuilder currentBuffer;
     public final Iterator<StringBuilder> iterator;
     int bufferOffset;
-    int removedSymbolsNumber;
+    int removedSymbols;
 
     Context(int numberOfSymbolsToRemove) {
       this.numberOfSymbolsToRemove = numberOfSymbolsToRemove;
@@ -548,7 +465,7 @@ public class ConsoleBuffer {
     }
 
     boolean canContinueProcessing() {
-      return removedSymbolsNumber < numberOfSymbolsToRemove && currentBuffer != null;
+      return removedSymbols < numberOfSymbolsToRemove && currentBuffer != null;
     }
 
     boolean nextBuffer() {
@@ -566,7 +483,7 @@ public class ConsoleBuffer {
       return;
     }
     log("Tokens:");
-    for (ConsoleViewImpl.TokenInfo token : myDeferredTokens) {
+    for (ConsoleViewImpl.TokenInfo token : myTokens) {
       log("\t" + token);
     }
     log("Data:");
@@ -577,34 +494,8 @@ public class ConsoleBuffer {
   }
 
   private static void log(Object o) {
-    //try {
-    //  doLog(o);
-    //}
-    //catch (Exception e) {
-    //  e.printStackTrace();
-    //}
   }
 
   private static void log(String message, Object... formatData) {
-    //try {
-    //  doLog(String.format(message, formatData));
-    //}
-    //catch (Exception e) {
-    //  e.printStackTrace();
-    //}
   }
-
-  //private static BufferedWriter myWriter;
-  //private static void doLog(Object o) throws Exception {
-  //  if (!DEBUG_PROCESSING) {
-  //    return;
-  //  }
-  //  File file = new File("/home/denis/log/console.log");
-  //  if (myWriter == null || !file.exists()) {
-  //    myWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
-  //  }
-  //  myWriter.write(o.toString());
-  //  myWriter.newLine();
-  //  myWriter.flush();
-  //}
 }
