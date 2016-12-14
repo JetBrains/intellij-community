@@ -798,7 +798,7 @@ public class RedundantCastUtil {
 
     final PsiExpression stripParenthesisOperand = PsiUtil.skipParenthesizedExprDown(operand);
     if (stripParenthesisOperand instanceof PsiFunctionalExpression) {
-      if (isCastToSerializable(typeCast)) return true;
+      if (isCastToSerializable(castType)) return true;
     }
     else if (stripParenthesisOperand instanceof PsiConditionalExpression) {
       final PsiExpression thenExpr = PsiUtil.skipParenthesizedExprDown(((PsiConditionalExpression)stripParenthesisOperand).getThenExpression());
@@ -833,26 +833,7 @@ public class RedundantCastUtil {
     return false;
   }
 
-  /**
-   * Returns true if given type cast casts to the serializable type
-   *
-   * @param typeCast a {@link PsiTypeCastExpression} to check
-   * @return true if given type cast casts to the serializable type
-   */
-  public static boolean isCastToSerializable(@NotNull PsiTypeCastExpression typeCast) {
-    PsiTypeElement typeElement = typeCast.getCastType();
-    if (typeElement == null) return false;
-    PsiType castType = typeElement.getType();
-    if (isSerializableInheritor(castType)) return true;
-    if (castType instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)castType).getConjuncts()) {
-        if (isSerializableInheritor(type)) return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isSerializableInheritor(PsiType castType) {
+  private static boolean isCastToSerializable(PsiType castType) {
     return InheritanceUtil.isInheritor(castType, CommonClassNames.JAVA_IO_SERIALIZABLE);
   }
 
