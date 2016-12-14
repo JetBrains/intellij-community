@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -37,19 +39,24 @@ public interface PyCallExpression extends PyCallSiteExpression {
   PyExpression getCallee();
 
   /**
-   * @return ArgumentList used in the call.
+   * @return the argument list used in the call.
    */
   @Nullable
-  PyArgumentList getArgumentList();
+  default PyArgumentList getArgumentList() {
+    return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
+  }
 
   /**
-   * @return The array of call arguments, or an empty array if the call has no argument list.
+   * @return the argument array used in the call, or an empty array if the call has no argument list.
    */
   @NotNull
-  PyExpression[] getArguments();
+  default PyExpression[] getArguments() {
+    final PyArgumentList argList = getArgumentList();
+    return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
+  }
 
   /**
-   * If the list of arguments has at least {@code index} elements and the index'th element is of type argClass,
+   * If the list of arguments has at least {@code index} elements and the {@code index}'th element is of type {@code argClass},
    * returns it. Otherwise, returns null.
    *
    * @param index    argument index
@@ -57,18 +64,27 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @return the argument or null
    */
   @Nullable
-  <T extends PsiElement> T getArgument(int index, Class<T> argClass);
+  default <T extends PsiElement> T getArgument(int index, @NotNull Class<T> argClass) {
+    final PyExpression[] args = getArguments();
+    return args.length > index ? ObjectUtils.tryCast(args[index], argClass) : null;
+  }
 
   /**
-   * Returns the argument at the specified position or the argument marked with the specified keyword, if one is present in the list.
+   * Returns the argument marked with the specified keyword or the argument at the specified position, if one is present in the list.
    *
    * @param index    argument index
-   * @param keyword  the argument keyword
+   * @param keyword  argument keyword
    * @param argClass argument expected type
    * @return the argument or null
    */
   @Nullable
-  <T extends PsiElement> T getArgument(int index, String keyword, Class<T> argClass);
+  default <T extends PsiElement> T getArgument(int index, @NotNull String keyword, @NotNull Class<T> argClass) {
+    final PyExpression arg = getKeywordArgument(keyword);
+    if (arg != null) {
+      return ObjectUtils.tryCast(arg, argClass);
+    }
+    return getArgument(index, argClass);
+  }
 
   /**
    * Returns the argument if one is present in the list.

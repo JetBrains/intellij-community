@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,32 +101,6 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     catch (ClassCastException cce) { // error node instead
       return null;
     }
-  }
-
-  @Nullable
-  public PyArgumentList getArgumentList() {
-    return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
-  }
-
-  @NotNull
-  public PyExpression[] getArguments() {
-    final PyArgumentList argList = getArgumentList();
-    return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
-  }
-
-  @Override
-  public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
-    PyExpression[] args = getArguments();
-    return args.length > index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
-  }
-
-  @Override
-  public <T extends PsiElement> T getArgument(int index, String keyword, Class<T> argClass) {
-    final PyExpression argument = getKeywordArgument(keyword);
-    if (argument != null) {
-      return argClass.isInstance(argument) ? argClass.cast(argument) : null;
-    }
-    return getArgument(index, argClass);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.*;
@@ -47,31 +46,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     PsiElement seeker = getFirstChild();
     while (seeker instanceof PyParenthesizedExpression) seeker = ((PyParenthesizedExpression)seeker).getContainedExpression();
     return seeker instanceof PyExpression ? (PyExpression) seeker : null;
-  }
-
-  public PyArgumentList getArgumentList() {
-    return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
-  }
-
-  @NotNull
-  public PyExpression[] getArguments() {
-    final PyArgumentList argList = getArgumentList();
-    return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
-  }
-
-  @Override
-  public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
-    PyExpression[] args = getArguments();
-    return args.length > index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
-  }
-
-  @Override
-  public <T extends PsiElement> T getArgument(int index, String keyword, Class<T> argClass) {
-    final PyExpression argument = getKeywordArgument(keyword);
-    if (argument != null) {
-      return argClass.isInstance(argument) ? argClass.cast(argument) : null;
-    }
-    return getArgument(index, argClass);
   }
 
   @Nullable
