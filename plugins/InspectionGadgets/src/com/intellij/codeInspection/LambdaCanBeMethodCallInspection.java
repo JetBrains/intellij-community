@@ -20,14 +20,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * @author Tagir Valeev
@@ -48,54 +47,33 @@ public class LambdaCanBeMethodCallInspection extends BaseJavaBatchLocalInspectio
         PsiType type = lambda.getFunctionalInterfaceType();
         if (!(type instanceof PsiClassType)) return;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambda.getParent());
-        if(parent instanceof PsiTypeCastExpression) {
-          PsiType castType = ((PsiTypeCastExpression)parent).getType();
-          if( castType instanceof PsiIntersectionType) {
-            PsiType[] conjuncts = ((PsiIntersectionType)castType).getConjuncts();
-            if(Arrays.stream(conjuncts).anyMatch(t -> t.equalsToText(CommonClassNames.JAVA_IO_SERIALIZABLE))) return;
-          }
-        }
+        if(parent instanceof PsiTypeCastExpression && RedundantCastUtil.isCastToSerializable((PsiTypeCastExpression)parent)) return;
         PsiExpression expression = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(body));
         if (expression == null) return;
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
-        if (parameters.length == 1 && ExpressionUtils.isReferenceTo(expression, parameters[0])) {
-          PsiClass aClass = ((PsiClassType)type).resolve();
-          if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) {
-            PsiType[] typeParameters = ((PsiClassType)type).getParameters();
-            if (typeParameters.length == 2 && typeParameters[1].isAssignableFrom(typeParameters[0])) {
-              registerProblem(lambda, "Function.identity()", CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()");
+        if (parameters.length == 1) {
+          PsiParameter parameter = parameters[0];
+          if (ExpressionUtils.isReferenceTo(expression, parameter)) {
+            PsiClass aClass = ((PsiClassType)type).resolve();
+            if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) {
+              PsiType[] typeParameters = ((PsiClassType)type).getParameters();
+              if (typeParameters.length == 2 && typeParameters[1].isAssignableFrom(typeParameters[0])) {
+                registerProblem(lambda, "Function.identity()", CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()");
+              }
             }
           }
-        }
-        if (parameters.length == 1 && expression instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-          PsiClass aClass = ((PsiClassType)type).resolve();
-          if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE.equals(aClass.getQualifiedName())) {
-            handlePredicate(lambda, parameters, call);
+          if (expression instanceof PsiMethodCallExpression) {
+            PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+            PsiClass aClass = ((PsiClassType)type).resolve();
+            if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE.equals(aClass.getQualifiedName())) {
+              handlePredicateIsEqual(lambda, parameter, call);
+              handlePatternAsPredicate(lambda, parameter, call);
+            }
           }
         }
       }
 
-      private void handlePredicate(PsiLambdaExpression lambda, PsiParameter[] parameters, PsiMethodCallExpression call) {
-        if (MethodCallUtils.isCallToStaticMethod(call, "java.util.Objects", "equals", 2)) {
-          PsiExpression[] args = call.getArgumentList().getExpressions();
-          if (args.length == 2) {
-            PsiExpression comparedWith;
-            if (ExpressionUtils.isReferenceTo(args[0], parameters[0])) {
-              comparedWith = args[1];
-            }
-            else if (ExpressionUtils.isReferenceTo(args[1], parameters[0])) {
-              comparedWith = args[0];
-            }
-            else {
-              return;
-            }
-            if (LambdaCanBeMethodReferenceInspection.checkQualifier(comparedWith)) {
-              registerProblem(lambda, "Predicate.isEqual()",
-                              CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE + ".isEqual(" + comparedWith.getText() + ")");
-            }
-          }
-        }
+      private void handlePatternAsPredicate(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {
         if (MethodCallUtils.isCallToMethod(call, "java.util.regex.Matcher", PsiType.BOOLEAN, "find")) {
           PsiExpression matcher = call.getMethodExpression().getQualifierExpression();
           if (matcher instanceof PsiMethodCallExpression) {
@@ -103,13 +81,33 @@ public class LambdaCanBeMethodCallInspection extends BaseJavaBatchLocalInspectio
             if (MethodCallUtils.isCallToMethod(matcherCall, "java.util.regex.Pattern", null, "matcher",
                                                new PsiType[]{null})) {
               PsiExpression[] matcherArgs = matcherCall.getArgumentList().getExpressions();
-              if (matcherArgs.length == 1 && ExpressionUtils.isReferenceTo(matcherArgs[0], parameters[0])) {
+              if (matcherArgs.length == 1 && ExpressionUtils.isReferenceTo(matcherArgs[0], parameter)) {
                 PsiExpression pattern = matcherCall.getMethodExpression().getQualifierExpression();
                 if (pattern != null && LambdaCanBeMethodReferenceInspection.checkQualifier(pattern)) {
                   registerProblem(lambda, "Pattern.asPredicate()",
                                   ParenthesesUtils.getText(pattern, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".asPredicate()");
                 }
               }
+            }
+          }
+        }
+      }
+
+      private void handlePredicateIsEqual(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {
+        if (MethodCallUtils.isCallToStaticMethod(call, "java.util.Objects", "equals", 2)) {
+          PsiExpression[] args = call.getArgumentList().getExpressions();
+          if (args.length == 2) {
+            PsiExpression comparedWith;
+            if (ExpressionUtils.isReferenceTo(args[0], parameter)) {
+              comparedWith = args[1];
+            }
+            else if (ExpressionUtils.isReferenceTo(args[1], parameter)) {
+              comparedWith = args[0];
+            }
+            else return;
+            if (LambdaCanBeMethodReferenceInspection.checkQualifier(comparedWith)) {
+              registerProblem(lambda, "Predicate.isEqual()",
+                              CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE + ".isEqual(" + comparedWith.getText() + ")");
             }
           }
         }
