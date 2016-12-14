@@ -87,6 +87,13 @@ public class RegexpFilterTest {
     assertNull(applyFilter(line));
   }
 
+  @Test
+  public void testUnixPathWithSemicolonPrefix() {
+    createFilter("$FILE_PATH$");
+    HLInfo info = (HLInfo)applyFilter("error:/usr/local/bar").hyperlinkInfo;
+    info.checkInfo("/usr/local/bar", 0, 0);
+  }
+
   private Filter.Result applyFilter(String line) {
     return myFilter.applyFilter(line, line.length());
   }

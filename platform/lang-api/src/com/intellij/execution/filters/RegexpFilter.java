@@ -36,7 +36,7 @@ public class RegexpFilter implements Filter, DumbAware {
   @NonNls public static final String LINE_MACROS = "$LINE$";
   @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
 
-  @NonNls private static final String FILE_PATH_REGEXP = "(?<file>(?:\\p{Alpha}\\:|/)[0-9 a-z_A-Z\\-\\\\./]+)";
+  @NonNls private static final String FILE_PATH_REGEXP = "(^|[\\W])(?<file>(?:\\p{Alpha}\\:|/)[0-9 a-z_A-Z\\-\\\\./]+)";
   @NonNls private static final String LINE_REGEXP = "(?<line>[0-9]+)";
   @NonNls private static final String COLUMN_REGEXP = "(?<column>[0-9]+)";
 
