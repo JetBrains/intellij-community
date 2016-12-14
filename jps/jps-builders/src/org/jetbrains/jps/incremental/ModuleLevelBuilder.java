@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -70,6 +71,8 @@ public abstract class ModuleLevelBuilder extends Builder {
     @NotNull
     Map<String, CompiledClass> getCompiledClasses();
 
+    @NotNull
+    MultiMap<String, File> getOutputFiles();
     /**
      * @param className fully qualified dot-separated name of a class
      */

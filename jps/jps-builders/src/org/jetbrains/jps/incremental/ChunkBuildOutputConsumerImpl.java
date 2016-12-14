@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,20 +25,20 @@ import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
 * @author Eugene Zhuravlev
 *         Date: 11/16/12
 */
 class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
+  private static final Logger LOG = Logger.getInstance(ChunkBuildOutputConsumerImpl.class);
+
   private final CompileContext myContext;
-  private Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
-  private Map<String, CompiledClass> myClasses = new THashMap<String, CompiledClass>();
-  private Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<BuildTarget<?>, Collection<CompiledClass>>();
+  private final Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<BuildTarget<?>, BuildOutputConsumerImpl>();
+  private final Map<String, CompiledClass> myClasses = new THashMap<String, CompiledClass>();
+  private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<BuildTarget<?>, Collection<CompiledClass>>();
+  private final MultiMap<String, File> myOutputFiles = new MultiMap<String, File>();
 
   public ChunkBuildOutputConsumerImpl(CompileContext context) {
     myContext = context;
@@ -55,6 +57,12 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
   @Override
   public Map<String, CompiledClass> getCompiledClasses() {
     return Collections.unmodifiableMap(myClasses);
+  }
+
+  @NotNull
+  @Override
+  public MultiMap<String, File> getOutputFiles() {
+    return myOutputFiles;
   }
 
   @Override
@@ -88,6 +96,9 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
     if (consumer == null) {
       consumer = new BuildOutputConsumerImpl(target, myContext);
       myTarget2Consumer.put(target, consumer);
+    }
+    for (String path : sourcePaths) {
+      myOutputFiles.putValue(path, outputFile);
     }
     consumer.registerOutputFile(outputFile, sourcePaths);
   }

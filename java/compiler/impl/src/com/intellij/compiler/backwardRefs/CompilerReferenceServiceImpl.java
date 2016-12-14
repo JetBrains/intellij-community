@@ -26,6 +26,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -49,6 +50,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -81,7 +83,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     super(project);
 
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myFileTypes = Stream.of(LanguageLightRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
+    //myFileTypes = Stream.of(LanguageLightRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
+
+    myFileTypes = StreamEx.of(LanguageLightRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).append(
+      FileTypeManager.getInstance().getFileTypeByExtension("kt"))/*.append(
+      FileTypeManager.getInstance().getFileTypeByExtension("groovy"))*/.collect(Collectors.toSet());
+
     myDirtyModulesHolder = new DirtyModulesHolder(this, fileDocumentManager, psiDocumentManager);
   }
 

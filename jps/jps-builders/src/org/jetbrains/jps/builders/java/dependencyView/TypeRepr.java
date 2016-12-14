@@ -41,7 +41,7 @@ public class TypeRepr {
 
   }
 
-  interface AbstractType extends RW.Savable {
+  public interface AbstractType extends RW.Savable {
     AbstractType[] EMPTY_TYPE_ARRAY = new AbstractType[0];
 
     void updateClassUsages(DependencyContext context, int owner, Set<UsageRepr.Usage> s);

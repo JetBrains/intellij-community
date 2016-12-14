@@ -38,14 +38,14 @@ import java.util.Set;
  * @author: db
  * Date: 31.01.11
  */
-class ClassfileAnalyzer {
+public class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.jps.builders.java.dependencyView.ClassfileAnalyzer");
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
 
   private final DependencyContext myContext;
 
-  ClassfileAnalyzer(DependencyContext context) {
+  public ClassfileAnalyzer(DependencyContext context) {
     this.myContext = context;
   }
 

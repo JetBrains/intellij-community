@@ -252,6 +252,10 @@ public class Mappings {
   private static final ClassRepr MOCK_CLASS = null;
   private static final MethodRepr MOCK_METHOD = null;
 
+  public DependencyContext getDependencyContext() {
+    return myContext;
+  }
+
   private interface MemberComparator {
     boolean isSame(ProtoMember member);
   }

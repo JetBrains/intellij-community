@@ -46,6 +46,10 @@ public class BackwardReferenceIndexWriter {
     myIndex = index;
   }
 
+  public ByteArrayEnumerator getByteEnumerator() {
+    return myIndex.getByteSeqEum();
+  }
+
   public static void closeIfNeed() {
     if (ourInstance != null) {
       try {

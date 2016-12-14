@@ -33,7 +33,7 @@ import java.util.*;
  * @author: db
  * Date: 14.02.11
  */
-class UsageRepr {
+public class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;
   private static final byte FIELD_ASSIGN_USAGE = 0x1;
   private static final byte METHOD_USAGE = 0x2;
