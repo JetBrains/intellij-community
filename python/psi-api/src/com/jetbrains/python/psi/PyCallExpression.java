@@ -18,8 +18,10 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
+import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,17 +89,39 @@ public interface PyCallExpression extends PyCallSiteExpression {
   }
 
   /**
-   * Returns the argument if one is present in the list.
+   * Returns the argument if one is present in the list and has appropriate type.
    *
    * @param parameter parameter
    * @param argClass  argument expected type
+   * @return the argument expression or null if has wrong type or does not exist
+   */
+  @Nullable
+  default <T extends PsiElement> T getArgument(@NotNull FunctionParameter parameter, @NotNull Class<T> argClass) {
+    final PyArgumentList list = getArgumentList();
+    if (list == null) {
+      return null;
+    }
+    return ObjectUtils.tryCast(list.getValueExpressionForParam(parameter), argClass);
+  }
+
+  /**
+   * Returns the argument marked with the specified keyword, if one is present in the list.
+   *
+   * @param keyword argument keyword
    * @return the argument or null
    */
   @Nullable
-  <T extends PsiElement> T getArgument(@NotNull final FunctionParameter parameter, @NotNull Class<T> argClass);
-
-  @Nullable
-  PyExpression getKeywordArgument(String keyword);
+  default PyExpression getKeywordArgument(@NotNull String keyword) {
+    for (PyExpression arg : getArguments()) {
+      if (arg instanceof PyKeywordArgument) {
+        final PyKeywordArgument keywordArg = (PyKeywordArgument)arg;
+        if (keyword.equals(keywordArg.getKeyword())) {
+          return keywordArg.getValueExpression();
+        }
+      }
+    }
+    return null;
+  }
 
   /**
    * TODO: Copy/Paste with {@link PyArgumentList#addArgument(PyExpression)}
@@ -142,22 +166,30 @@ public interface PyCallExpression extends PyCallSiteExpression {
   /**
    * Checks if the unqualified name of the callee matches any of the specified names
    *
-   * @param nameCandidates the names to check
+   * @param nameCandidates names to check
    * @return true if matches, false otherwise
    */
-  boolean isCalleeText(@NotNull String... nameCandidates);
+  default boolean isCalleeText(@NotNull String... nameCandidates) {
+    final PyExpression callee = getCallee();
+
+    return callee instanceof PyReferenceExpression &&
+           ContainerUtil.exists(nameCandidates, name -> name.equals(((PyReferenceExpression)callee).getReferencedName()));
+  }
 
   /**
    * Checks if the qualified name of the callee matches any of the specified names provided by provider.
    * May be <strong>heavy</strong>.
-   * Use {@link com.jetbrains.python.nameResolver.NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider)}
+   * Use {@link NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider)}
    * if you can.
    *
    * @param name providers that provides one or more names to check
    * @return true if matches, false otherwise
    * @see com.jetbrains.python.nameResolver
    */
-  boolean isCallee(@NotNull FQNamesProvider... name);
+  default boolean isCallee(@NotNull FQNamesProvider... name) {
+    final PyExpression callee = getCallee();
+    return callee != null && NameResolverTools.isName(callee, name);
+  }
 
   class PyArgumentsMapping {
     @NotNull private final PyCallExpression myCallExpression;

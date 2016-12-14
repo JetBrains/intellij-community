@@ -17,8 +17,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
@@ -48,17 +46,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return seeker instanceof PyExpression ? (PyExpression) seeker : null;
   }
 
-  @Nullable
-  @Override
-  public <T extends PsiElement> T getArgument(@NotNull final FunctionParameter parameter, @NotNull final Class<T> argClass) {
-    return PyCallExpressionHelper.getArgument(parameter, argClass, this);
-  }
-
-  @Override
-  public PyExpression getKeywordArgument(String keyword) {
-    return PyCallExpressionHelper.getKeywordArgument(this, keyword);
-  }
-
   public void addArgument(PyExpression expression) {
     PyCallExpressionHelper.addArgument(this, expression);
   }
@@ -86,16 +73,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   @Override
   public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
     return PyCallExpressionHelper.mapArguments(this, resolveContext, implicitOffset);
-  }
-
-  @Override
-  public boolean isCalleeText(@NotNull String... nameCandidates) {
-    return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
-  }
-
-  @Override
-  public boolean isCallee(@NotNull final FQNamesProvider... name) {
-    return PyCallExpressionHelper.isCallee(this, name);
   }
 
   @Override

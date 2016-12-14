@@ -22,10 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.nameResolver.FQNamesProvider;
-import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
@@ -378,53 +375,6 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  static boolean isCalleeText(PyCallExpression pyCallExpression, String[] nameCandidates) {
-    final PyExpression callee = pyCallExpression.getCallee();
-    if (!(callee instanceof PyReferenceExpression)) {
-      return false;
-    }
-    for (String name : nameCandidates) {
-      if (name.equals(((PyReferenceExpression)callee).getReferencedName())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-
-  /**
-   * Returns argument if it exists and has appropriate type
-   * @param parameter  argument
-   * @param argClass   expected class
-   * @param expression call expression
-   * @param <T>        expected class
-   * @return argument expression or null if has wrong type of does not exist
-   */
-  @Nullable
-  public static <T extends PsiElement> T getArgument(
-    @NotNull final FunctionParameter parameter,
-    @NotNull final Class<T> argClass,
-    @NotNull final PyCallExpression expression) {
-    final PyArgumentList list = expression.getArgumentList();
-    if (list == null) {
-      return null;
-    }
-    return PyUtil.as(list.getValueExpressionForParam(parameter), argClass);
-  }
-
-  @Nullable
-  public static PyExpression getKeywordArgument(PyCallExpression expr, String keyword) {
-    for (PyExpression arg : expr.getArguments()) {
-      if (arg instanceof PyKeywordArgument) {
-        PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-        if (keyword.equals(kwarg.getKeyword())) {
-          return kwarg.getValueExpression();
-        }
-      }
-    }
-    return null;
-  }
-
   public static PyType getCallType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     if (!TypeEvalStack.mayEvaluate(call)) {
       return null;
@@ -663,19 +613,6 @@ public class PyCallExpressionHelper {
       return PyUnionType.union(superTypes);
     }
     return null;
-  }
-
-  /**
-   * Checks if expression callee's name matches one of names, provided by appropriate {@link FQNamesProvider}
-   *
-   * @param expression     call expression
-   * @param namesProviders name providers to check name against
-   * @return true if matches
-   * @see com.jetbrains.python.nameResolver
-   */
-  public static boolean isCallee(@NotNull final PyCallExpression expression, @NotNull final FQNamesProvider... namesProviders) {
-    final PyExpression callee = expression.getCallee();
-    return (callee != null) && NameResolverTools.isName(callee, namesProviders);
   }
 
   @NotNull
