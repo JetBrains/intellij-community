@@ -33,7 +33,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
@@ -160,7 +159,11 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         }
         Operation op = Operation.createIntermediate(name, args, outVar, elementType);
         if (op != null) return op;
-        op = TerminalOperation.createTerminal(name, args, elementType, callType, call.getParent() instanceof PsiExpressionStatement);
+        PsiElement parent = call.getParent();
+        boolean isVoid = parent instanceof PsiExpressionStatement ||
+                         (parent instanceof PsiLambdaExpression &&
+                          PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent)));
+        op = TerminalOperation.createTerminal(name, args, elementType, callType, isVoid);
         if (op != null) return op;
       }
     }
@@ -287,28 +290,40 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       CodeStyleManager.getInstance(project).reformat(element);
     }
 
+    /**
+     * Ensures that given call is surrounded by {@link PsiCodeBlock} (that is, it has a parent statement
+     * which is located inside the code block). If not, tries to create a code block.
+     *
+     * <p>
+     * Note that the expression is not necessarily a child of {@link PsiExpressionStatement}; it could be a subexpression,
+     * {@link PsiIfStatement}, etc.
+     * </p>
+     *
+     * @param expression an expression which should be located inside the code block
+     * @param factory a factory to use to generate code if necessary
+     * @return a passed expression if it's already surrounded by code block and no changes are necessary;
+     *         a replacement expression (which is equivalent to the passed expression) if a new code block was created;
+     *         {@code null} if the expression cannot be surrounded with code block.
+     */
     @Nullable
     private static PsiMethodCallExpression ensureCodeBlock(PsiMethodCallExpression expression, PsiElementFactory factory) {
       PsiElement parent = RefactoringUtil.getParentStatement(expression, false);
       if (parent == null) return null;
       if (parent instanceof PsiStatement && parent.getParent() instanceof PsiCodeBlock) return expression;
-      PsiElement nameElement = expression.getMethodExpression().getReferenceNameElement();
-      if (nameElement == null) return null;
-      int delta = nameElement.getTextOffset() - parent.getTextOffset();
+      Object marker = new Object();
+      PsiTreeUtil.mark(expression, marker);
+      PsiElement copy = parent.copy();
       PsiElement newParent;
       if (parent instanceof PsiExpression) {
-        newParent = LambdaUtil.extractSingleExpressionFromBody(
-          ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(parent, false)).getBody());
+        PsiLambdaExpression lambda = (PsiLambdaExpression)parent.getParent();
+        String replacement = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda)) ? "{a;}" : "{return a;}";
+        PsiElement block = parent.replace(factory.createCodeBlockFromText(replacement, lambda));
+        newParent = LambdaUtil.extractSingleExpressionFromBody(block).replace(copy);
       } else {
-        PsiElement blockStatement = parent.replace(factory.createStatementFromText("{" + parent.getText() + "}", parent));
-        newParent = ((PsiBlockStatement)blockStatement).getCodeBlock().getStatements()[0];
+        PsiBlockStatement blockStatement = (PsiBlockStatement)parent.replace(factory.createStatementFromText("{}", parent));
+        newParent = blockStatement.getCodeBlock().add(copy);
       }
-      LOG.assertTrue(newParent != null);
-      int targetOffset = newParent.getTextOffset() + delta;
-      PsiElement element = PsiUtilCore.getElementAtOffset(newParent.getContainingFile(), targetOffset);
-      PsiMethodCallExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-      LOG.assertTrue(newExpression != null);
-      return newExpression;
+      return (PsiMethodCallExpression)PsiTreeUtil.releaseMark(newParent, marker);
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {

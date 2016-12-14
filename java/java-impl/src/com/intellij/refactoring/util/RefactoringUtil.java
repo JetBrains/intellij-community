@@ -986,10 +986,6 @@ public class RefactoringUtil {
   }
 
   public static PsiElement expandExpressionLambdaToCodeBlock(@NotNull PsiElement element) {
-    return expandExpressionLambdaToCodeBlock(element, true);
-  }
-
-  public static PsiElement expandExpressionLambdaToCodeBlock(@NotNull PsiElement element, boolean reformat) {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
     LOG.assertTrue(lambdaExpression != null);
     final PsiElement body = lambdaExpression.getBody();
@@ -1001,8 +997,7 @@ public class RefactoringUtil {
     final String resultedLambdaText = lambdaExpression.getParameterList().getText() + "->" + blockText;
     final PsiExpression expressionFromText =
       JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(resultedLambdaText, lambdaExpression);
-    PsiElement result = lambdaExpression.replace(expressionFromText);
-    return reformat ? CodeStyleManager.getInstance(element.getProject()).reformat(result) : result;
+    return CodeStyleManager.getInstance(element.getProject()).reformat(lambdaExpression.replace(expressionFromText));
   }
 
   public interface ImplicitConstructorUsageVisitor {
