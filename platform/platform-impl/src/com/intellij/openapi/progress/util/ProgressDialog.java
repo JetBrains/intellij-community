@@ -170,7 +170,9 @@ class ProgressDialog implements Disposable {
         if (myLastClicked == null) {
           return;
         }
-        final Point draggedTo = new RelativePoint(e).getScreenPoint();
+        // use absolute location, because the relative point was set when creating the event, and the dialog might have been moved since that
+        // (e.g. if processing of previous events was delayed by something)
+        final Point draggedTo = e.getLocationOnScreen();
         draggedTo.x -= myLastClicked.x;
         draggedTo.y -= myLastClicked.y;
 
