@@ -35,6 +35,7 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   public void setUp() throws Exception {
     myDefaultEnableState = CompilerReferenceService.IS_ENABLED_KEY.asBoolean();
     CompilerReferenceService.IS_ENABLED_KEY.setValue(true);
+    CompilerReferenceService.enabledInTests = true;
     super.setUp();
     myCompilerTester = new CompilerTester(myModule);
   }
@@ -43,6 +44,7 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   public void tearDown() throws Exception {
     try {
       CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
+      CompilerReferenceService.enabledInTests = false;
       myCompilerTester.tearDown();
     }
     finally {
