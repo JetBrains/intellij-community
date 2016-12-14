@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -120,10 +121,10 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
 
       val domainObjectFqn = TypesUtil.getQualifiedName(domainObjectType) ?: return
       val psiManager = GroovyPsiManager.getInstance(place.project)
-      val psiClass = psiManager.findClassWithCache(domainObjectFqn, place.resolveScope) ?: return
-      if (GradleResolverUtil.canBeMethodOf(propCandidate, psiClass)) return
-      if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), psiClass)) return
-      if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), psiClass)) return
+      val domainObjectPsiClass = psiManager.findClassWithCache(domainObjectFqn, place.resolveScope) ?: return
+      if (GradleResolverUtil.canBeMethodOf(propCandidate, domainObjectPsiClass)) return
+      if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), domainObjectPsiClass)) return
+      if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), domainObjectPsiClass)) return
 
       val closure = PsiTreeUtil.getParentOfType(place, GrClosableBlock::class.java)
       val typeToDelegate = closure?.let { getDelegatesToInfo(it)?.typeToDelegate }
@@ -139,7 +140,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       }
 
       if (!shouldProcessMethods && shouldProcessProperties && place is GrReferenceExpression && place.parent !is GrApplicationStatement) {
-        val variable = object : GrLightVariable(place.manager, propCandidate, domainObjectType, place) {
+        val variable = object : GrLightField(propCandidate, domainObjectFqn, place) {
           override fun getNavigationElement(): PsiElement {
             val navigationElement = super.getNavigationElement()
             return navigationElement
