@@ -17,26 +17,24 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.IndentsPass;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,7 +55,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;
     final Project project = file.getProject();
-    CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
+    CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessor.getInstance();
     Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
     try {
       WriteAction.run(() -> {
@@ -101,7 +99,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
         pos = Math.max(matcher.end(1), matcher.end(2));
       }
       while (matcher.find(pos));
-      Collections.sort(ranges, IndentsPass.RANGE_COMPARATOR);
+      Collections.sort(ranges, Segment.BY_START_OFFSET_THEN_END_OFFSET);
     }
     if (!ranges.isEmpty()) {
       int pos = 0;
@@ -112,7 +110,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       sb.append(sequence, pos, sequence.length());
     }
     else {
-      final int[] offset = new int[] {0};
+      final int[] offset = {0};
       final ArrayList<HighlightInfo> infos = new ArrayList<>();
       DaemonCodeAnalyzerEx.processHighlights(
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
@@ -120,11 +118,11 @@ public class ToggleHighlightingMarkupAction extends AnAction {
           if (info.getSeverity() != HighlightSeverity.WARNING && info.getSeverity() != HighlightSeverity.ERROR) return true;
           if (info.getStartOffset() >= endOffset) return false;
           if (info.getEndOffset() > startOffset) {
-            offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
+            offset[0] = appendInfo(info, sb, sequence, offset[0], infos);
           }
           return true;
         });
-      offset[0] = appendInfo(null, sb, sequence, offset[0], infos, false);
+      offset[0] = appendInfo(null, sb, sequence, offset[0], infos);
       sb.append(sequence.subSequence(offset[0], sequence.length()));
     }
     document.setText(sb);
@@ -134,27 +132,27 @@ public class ToggleHighlightingMarkupAction extends AnAction {
                                 StringBuilder sb,
                                 CharSequence sequence,
                                 int offset,
-                                ArrayList<HighlightInfo> infos, final boolean compact) {
+                                ArrayList<HighlightInfo> infos) {
     if (info == null || !infos.isEmpty() && getMaxEnd(infos) < info.getStartOffset()) {
       if (infos.size() == 1) {
         HighlightInfo cur = infos.remove(0);
         sb.append(sequence.subSequence(offset, cur.getStartOffset()));
-        appendTag(sb, cur, true, compact);
+        appendTag(sb, cur, true);
         sb.append(sequence.subSequence(cur.getStartOffset(), cur.getEndOffset()));
-        appendTag(sb, cur, false, compact);
+        appendTag(sb, cur, false);
         offset = cur.getEndOffset();
       }
       else {
         // process overlapped
         LinkedList<HighlightInfo> stack = new LinkedList<>();
         for (HighlightInfo cur : infos) {
-          offset = processStack(stack, sb, sequence, offset, cur.getStartOffset(), compact);
+          offset = processStack(stack, sb, sequence, offset, cur.getStartOffset());
           sb.append(sequence.subSequence(offset, cur.getStartOffset()));
           offset = cur.getStartOffset();
-          appendTag(sb, cur, true, compact);
+          appendTag(sb, cur, true);
           stack.addLast(cur);
         }
-        offset = processStack(stack, sb, sequence, offset, sequence.length(), compact);
+        offset = processStack(stack, sb, sequence, offset, sequence.length());
         infos.clear();
       }
     }
@@ -185,24 +183,20 @@ public class ToggleHighlightingMarkupAction extends AnAction {
                                   StringBuilder sb,
                                   CharSequence sequence,
                                   int offset,
-                                  final int endOffset,
-                                  final boolean compact) {
+                                  final int endOffset) {
     if (stack.isEmpty()) return offset;
     for (HighlightInfo cur = stack.peekLast(); cur != null && cur.getEndOffset() <= endOffset; cur = stack.peekLast()) {
       stack.removeLast();
       if (offset <= cur.getEndOffset()) {
         sb.append(sequence.subSequence(offset, cur.getEndOffset()));
       }
-      else {
-        //System.out.println("Incorrect overlapping infos: " + offset + " > " + cur.getEndOffset());
-      }
       offset = cur.getEndOffset();
-      appendTag(sb, cur, false, compact);
+      appendTag(sb, cur, false);
     }
     return offset;
   }
 
-  private static void appendTag(StringBuilder sb, HighlightInfo cur, boolean opening, final boolean compact) {
+  private static void appendTag(StringBuilder sb, HighlightInfo cur, boolean opening) {
     sb.append("<");
     if (!opening) sb.append("/");
     if (cur.isAfterEndOfLine()) {
@@ -211,7 +205,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     else {
       sb.append(cur.getSeverity() == HighlightSeverity.WARNING ? "warning" : "error");
     }
-    if (opening && !compact) {
+    if (opening) {
       sb.append(" descr=\"").append(cur.getDescription()).append("\"");
 
     }
