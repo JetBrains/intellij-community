@@ -48,7 +48,8 @@ public class EditorStressTest extends AbstractEditorTest {
                                                                          new ChangeBulkModeState(),
                                                                          new ChangeEditorVisibility(),
                                                                          new AddInlay(),
-                                                                         new RemoveInlay());
+                                                                         new RemoveInlay(),
+                                                                         new MoveCaret());
 
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
@@ -225,6 +226,15 @@ public class EditorStressTest extends AbstractEditorTest {
     public void perform(EditorEx editor, Random random) {
       List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
       if (!inlays.isEmpty()) Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
+    }
+  }
+
+  private static class MoveCaret implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
+      if (document.isInBulkUpdate()) return;
+      myEditor.getCaretModel().moveToOffset(random.nextInt(document.getTextLength() + 1));
     }
   }
 }
