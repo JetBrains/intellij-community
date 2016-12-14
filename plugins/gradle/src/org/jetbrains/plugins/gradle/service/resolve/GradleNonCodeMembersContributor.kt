@@ -162,7 +162,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
           containingClass = aClass
           val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
           closureParam.putUserData(DELEGATES_TO_KEY, domainObjectFqn)
-          closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST)
+          closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
 
           val method = aClass.findMethodsByName("create", true).firstOrNull { it.parameterList.parametersCount == argsCount }
           if (method != null) navigationElement = method
