@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="jps-builders-6" exported="" />
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="forms_rt" />
     <orderEntry type="module" module-name="forms-compiler" />
@@ -18,15 +19,6 @@
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" exported="" name="protobuf" level="project" />
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/optimizedFileManager.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="java-runtime" scope="RUNTIME" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />

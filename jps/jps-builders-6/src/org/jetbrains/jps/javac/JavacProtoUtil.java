@@ -16,11 +16,12 @@
 package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -46,25 +47,25 @@ public class JavacProtoUtil {
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
     builder.addAllOption(options);
     for (File file : files) {
-      builder.addFile(FileUtil.toSystemIndependentName(file.getPath()));
+      builder.addFile(FileUtilRt.toSystemIndependentName(file.getPath()));
     }
     for (File file : classpath) {
-      builder.addClasspath(FileUtil.toSystemIndependentName(file.getPath()));
+      builder.addClasspath(FileUtilRt.toSystemIndependentName(file.getPath()));
     }
     for (File file : platformCp) {
-      builder.addPlatformClasspath(FileUtil.toSystemIndependentName(file.getPath()));
+      builder.addPlatformClasspath(FileUtilRt.toSystemIndependentName(file.getPath()));
     }
     for (File file : modulePath) {
-      builder.addModulePath(FileUtil.toSystemIndependentName(file.getPath()));
+      builder.addModulePath(FileUtilRt.toSystemIndependentName(file.getPath()));
     }
     for (File file : sourcePath) {
-      builder.addSourcepath(FileUtil.toSystemIndependentName(file.getPath()));
+      builder.addSourcepath(FileUtilRt.toSystemIndependentName(file.getPath()));
     }
     for (Map.Entry<File, Set<File>> entry : outs.entrySet()) {
       final JavacRemoteProto.Message.Request.OutputGroup.Builder groupBuilder = JavacRemoteProto.Message.Request.OutputGroup.newBuilder();
-      groupBuilder.setOutputRoot(FileUtil.toSystemIndependentName(entry.getKey().getPath()));
+      groupBuilder.setOutputRoot(FileUtilRt.toSystemIndependentName(entry.getKey().getPath()));
       for (File srcRoot : entry.getValue()) {
-        groupBuilder.addSourceRoot(FileUtil.toSystemIndependentName(srcRoot.getPath()));
+        groupBuilder.addSourceRoot(FileUtilRt.toSystemIndependentName(srcRoot.getPath()));
       }
       builder.addOutput(groupBuilder.build());
     }
@@ -76,7 +77,7 @@ public class JavacProtoUtil {
     final JavacRemoteProto.Message.Response.OutputObject.Builder msgBuilder = JavacRemoteProto.Message.Response.OutputObject.newBuilder();
 
     msgBuilder.setKind(convertKind(fileObject.getKind()));
-    msgBuilder.setFilePath(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()));
+    msgBuilder.setFilePath(FileUtilRt.toSystemIndependentName(fileObject.getFile().getPath()));
     final BinaryContent content = fileObject.getContent();
     if (content != null) {
       msgBuilder.setContent(ByteString.copyFrom(content.getBuffer(), content.getOffset(), content.getLength()));
@@ -87,7 +88,7 @@ public class JavacProtoUtil {
     }
     final File outputRoot = fileObject.getOutputRoot();
     if (outputRoot != null) {
-      msgBuilder.setOutputRoot(FileUtil.toSystemIndependentName(outputRoot.getPath()));
+      msgBuilder.setOutputRoot(FileUtilRt.toSystemIndependentName(outputRoot.getPath()));
     }
     final String relativePath = fileObject.getRelativePath();
     if (relativePath != null) {
@@ -120,7 +121,7 @@ public class JavacProtoUtil {
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {
 
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
-      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setFilePath(FileUtil.toSystemIndependentName(srcFile.getPath())).build();
+      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
 
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED).setOutputObject(outObjMsg);

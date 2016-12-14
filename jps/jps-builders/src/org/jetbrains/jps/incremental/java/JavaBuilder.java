@@ -31,6 +31,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -63,7 +64,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.ServerSocket;
 import java.util.*;
@@ -1046,7 +1048,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
       vmOptions.addAll(extension.getExternalBuildProcessOptions(compilingTool));
     }
 
-    compilingTool.processCompilerOptions(context, options);
+    if (JavaCompilers.ECLIPSE_ID.equals(compilingTool.getId())) {
+      for (String option : options) {
+        if (option.startsWith("-proceedOnError")) {
+          Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
+          break;
+        }
+      }
+    }
 
     JAVAC_OPTIONS.set(context, options);
     JAVAC_VM_OPTIONS.set(context, vmOptions);
@@ -1171,7 +1180,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         // for eclipse compiler just an attempt to call getSource() may lead to an NPE,
         // so calling this method under try/catch to avoid induced compiler errors
         final JavaFileObject source = diagnostic.getSource();
-        sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
+        sourceFile = source != null ? PathUtils.convertToFile(source.toUri()) : null;
       }
       catch (Exception e) {
         LOG.info(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
  */
 package org.jetbrains.jps.builders.impl.java;
 
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.JavacMain;
-import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,16 +33,20 @@ import java.util.List;
  * @author nik
  */
 public class JavacCompilerTool extends JavaCompilingTool {
+
+  public static final String ID = "Javac"; // duplicates org.jetbrains.jps.model.java.compiler.JavaCompilers.JAVAC_ID;
+  public static final String ALTERNATIVE_ID = "compAPI"; // duplicates org.jetbrains.jps.model.java.compiler.JavaCompilers.JAVAC_API_ID;
+
   @NotNull
   @Override
   public String getId() {
-    return JavaCompilers.JAVAC_ID;
+    return ID;
   }
 
   @Nullable
   @Override
   public String getAlternativeId() {
-    return JavaCompilers.JAVAC_API_ID;
+    return ALTERNATIVE_ID;
   }
 
   @NotNull
@@ -64,7 +69,11 @@ public class JavacCompilerTool extends JavaCompilingTool {
       Class.forName("com.sun.tools.javac.api.JavacTool", false, JavacMain.class.getClassLoader());
     }
     catch (Throwable ex) {
-      message = message + ":\n" + ExceptionUtil.getThrowableText(ex);
+      StringWriter stringWriter = new StringWriter();
+      stringWriter.write(message);
+      stringWriter.write(":\n");
+      ex.printStackTrace(new PrintWriter(stringWriter));
+      message = stringWriter.getBuffer().toString();
     }
     throw new CannotCreateJavaCompilerException(message);
   }

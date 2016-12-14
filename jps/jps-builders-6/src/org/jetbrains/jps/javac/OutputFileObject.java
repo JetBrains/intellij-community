@@ -18,8 +18,8 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.incremental.BinaryContent;
-import org.jetbrains.jps.incremental.Utils;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -64,7 +64,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
                           @Nullable final URI srcUri,
                           @Nullable final String encodingName, 
                           @Nullable BinaryContent content) {
-    super(Utils.toURI(file.getPath()), kind);
+    super(PathUtils.toURI(file.getPath()), kind);
     myContext = context;
     mySourceUri = srcUri;
     myContent = content;
@@ -72,7 +72,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     myRelativePath = relativePath;
     myFile = file;
     myClassName = className != null? className.replace('/', '.') : null;
-    mySourceFile = srcUri != null? Utils.convertToFile(srcUri) : null;
+    mySourceFile = srcUri != null? PathUtils.convertToFile(srcUri) : null;
     myEncodingName = encodingName;
   }
 

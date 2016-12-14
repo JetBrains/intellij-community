@@ -15,7 +15,8 @@
  */
 package org.jetbrains.jps.javac;
 
-import javax.tools.*;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.Collection;
 

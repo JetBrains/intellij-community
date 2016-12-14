@@ -15,16 +15,15 @@
  */
 package org.jetbrains.jps.incremental;
 
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.SingleCharSequence;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Writer;
 
 /**
-* @author Eugene Zhuravlev
-*         Date: 9/24/11
-*/
+ * @author Eugene Zhuravlev
+ *         Date: 9/24/11
+ */
 public abstract class LineOutputWriter extends Writer {
   private final LineParser myLineParser = new LineParser();
 
@@ -105,7 +104,7 @@ public abstract class LineOutputWriter extends Writer {
 
   private static class LineParser {
     private final StringBuilder myData = new StringBuilder();
-    private boolean myFoundCR;
+    private boolean myFoundCR = false;
 
     public boolean parse(CharIterator it) {
       while (it.hasData()) {
@@ -128,7 +127,7 @@ public abstract class LineOutputWriter extends Writer {
       return false;
     }
 
-    boolean hasData() {
+    public boolean hasData() {
       return myData.length() > 0;
     }
 
@@ -144,7 +143,7 @@ public abstract class LineOutputWriter extends Writer {
 
   private static class CharSequenceIterator implements CharIterator {
     private final CharSequence myChars;
-    private int myCursor;
+    private int myCursor = 0;
 
     CharSequenceIterator(final int ch) {
       this((char)ch);
@@ -174,6 +173,70 @@ public abstract class LineOutputWriter extends Writer {
     @Override
     public boolean hasData() {
       return myCursor < myChars.length();
+    }
+  }
+
+  private  static class CharArrayCharSequence implements CharSequence {
+    protected final char[] myChars;
+    protected final int myStart;
+    protected final int myEnd;
+
+    public CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
+      if (start < 0 || end > chars.length || start > end) {
+        throw new IndexOutOfBoundsException("chars.length:" + chars.length + ", start:" + start + ", end:" + end);
+      }
+      myChars = chars;
+      myStart = start;
+      myEnd = end;
+    }
+
+    @Override
+    public final int length() {
+      return myEnd - myStart;
+    }
+
+    @Override
+    public final char charAt(int index) {
+      return myChars[index + myStart];
+    }
+
+    @NotNull
+    @Override
+    public CharSequence subSequence(int start, int end) {
+      return start == 0 && end == length() ? this : new CharArrayCharSequence(myChars, myStart + start, myStart + end);
+    }
+
+    @Override
+    @NotNull
+    public String toString() {
+      return new String(myChars, myStart, myEnd - myStart);
+    }
+  }
+
+  private static final class SingleCharSequence implements CharSequence {
+    private final char myCh;
+
+    public SingleCharSequence(char ch) {
+      myCh = ch;
+    }
+
+    public int length() {
+      return 1;
+    }
+
+    public char charAt(int index) {
+      if (index != 0) {
+        throw new IndexOutOfBoundsException("Index out of bounds: " + index);
+      }
+      return myCh;
+    }
+
+    public CharSequence subSequence(int start, int end) {
+      throw new RuntimeException("Method subSequence not implemented");
+    }
+
+    public String toString() {
+      return String.valueOf(myCh);
     }
   }
 }

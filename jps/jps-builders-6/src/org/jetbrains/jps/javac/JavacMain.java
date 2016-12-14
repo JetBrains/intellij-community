@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -24,7 +23,6 @@ import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
-import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.LineOutputWriter;
 
 import javax.tools.*;
@@ -48,6 +46,7 @@ public class JavacMain {
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   ));
+  public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
 
   public static boolean compile(Collection<String> options,
                                 final Collection<File> sources,
@@ -72,11 +71,9 @@ public class JavacMain {
       outputDir.mkdirs();
     }
 
-    final List<JavaSourceTransformer> transformers = getSourceTransformers();
-
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
     final JavacFileManager fileManager = new JavacFileManager(
-      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, canUseOptimizedFileManager(compilingTool)), transformers
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, canUseOptimizedFileManager(compilingTool)), JavaSourceTransformer.getTransformers()
     );
 
     if (!platformClasspath.isEmpty()) {
@@ -226,21 +223,11 @@ public class JavacMain {
 
   private static boolean canUseOptimizedFileManager(JavaCompilingTool compilingTool) {
     // since java 9 internal API's used by the optimizedFileManager have changed
-    return compilingTool instanceof JavacCompilerTool && !SystemInfo.isJavaVersionAtLeast("1.9");
+    return compilingTool instanceof JavacCompilerTool && (JAVA_RUNTIME_VERSION.startsWith("1.8.") || JAVA_RUNTIME_VERSION.startsWith("1.7.") || JAVA_RUNTIME_VERSION.startsWith("1.6."));
   }
 
   private static void handleCancelException(DiagnosticOutputConsumer diagnosticConsumer) {
     diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Compilation was canceled"));
-  }
-
-  private static List<JavaSourceTransformer> getSourceTransformers() {
-    final Class<JavaSourceTransformer> transformerClass = JavaSourceTransformer.class;
-    final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());
-    final List<JavaSourceTransformer> transformers = new SmartList<JavaSourceTransformer>();
-    for (JavaSourceTransformer t : loader) {
-      transformers.add(t);
-    }
-    return transformers;
   }
 
   private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {
@@ -382,7 +369,7 @@ public class JavacMain {
       StandardJavaFileManager optimizedManager = null;
       Method cacheClearMethod = null;
       if (canUseOptimizedmanager) {
-        final Class<StandardJavaFileManager> optimizedManagerClass = ClasspathBootstrap.getOptimizedFileManagerClass();
+        final Class<StandardJavaFileManager> optimizedManagerClass = OptimizedFileManagerUtil.getManagerClass();
         if (optimizedManagerClass != null) {
           try {
             final Constructor<StandardJavaFileManager> constructor = optimizedManagerClass.getConstructor();
@@ -390,10 +377,10 @@ public class JavacMain {
             // that's why we need to call setAccessible() to ensure access
             constructor.setAccessible(true);
             optimizedManager = constructor.newInstance();
-            cacheClearMethod = ClasspathBootstrap.getOptimizedFileManagerCacheClearMethod();
+            cacheClearMethod = OptimizedFileManagerUtil.getCacheClearMethod();
           }
           catch (Throwable e) {
-            if (SystemInfo.isWindows) {
+            if (SystemInfoRt.isWindows) {
               reportMissingOptimizedManager(outConsumer, e.getMessage());
             }
           }
@@ -414,7 +401,7 @@ public class JavacMain {
     private static void reportMissingOptimizedManager(DiagnosticOutputConsumer outConsumer, String message) {
       if (!ourOptimizedManagerMissingReported.getAndSet(true)) {
         if (message == null) {
-          message = ClasspathBootstrap.getOptimizedFileManagerLoadError();
+          message = OptimizedFileManagerUtil.getLoadError();
           if (message == null) {
             message = "";
           }

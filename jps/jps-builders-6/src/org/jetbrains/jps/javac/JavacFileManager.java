@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
-import org.jetbrains.jps.incremental.Utils;
 
 import javax.tools.*;
 import java.io.File;
@@ -255,7 +255,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (loc == StandardLocation.CLASS_OUTPUT) {
       if (myOutputsMap.size() > 1 && sourceFile != null) {
         // multiple outputs case
-        final File outputDir = findOutputDir(Utils.convertToFile(sourceFile.toUri()));
+        final File outputDir = findOutputDir(PathUtils.convertToFile(sourceFile.toUri()));
         if (outputDir != null) {
           return outputDir;
         }

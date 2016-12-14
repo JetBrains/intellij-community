@@ -27,21 +27,22 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
 import org.jetbrains.jps.javac.JavaCompilerToolExtension;
+import org.jetbrains.jps.javac.OptimizedFileManagerUtil;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -51,78 +52,6 @@ import java.util.*;
 public class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.ClasspathBootstrap");
 
-  private static class OptimizedFileManagerClassHolder {
-    static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
-    @Nullable
-    static final Class<StandardJavaFileManager> managerClass;
-    static final Method directoryCacheClearMethod;
-    @Nullable
-    static final String initError;
-    static {
-      Class<StandardJavaFileManager> aClass = null;
-      Method cacheClearMethod = null;
-      String error = null;
-      try {
-        @SuppressWarnings("unchecked")
-        Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
-        aClass = c;
-        try {
-          cacheClearMethod = c.getMethod("fileGenerated", File.class);
-          cacheClearMethod.setAccessible(true);
-        }
-        catch (NoSuchMethodException e) {
-          LOG.info(e);
-        }
-      }
-      catch (Throwable ex) {
-        aClass = null;
-        error = ex.getClass().getName() + ": " + ex.getMessage();
-      }
-      managerClass = aClass;
-      directoryCacheClearMethod = cacheClearMethod;
-      initError = error;
-    }
-
-    private OptimizedFileManagerClassHolder() {
-    }
-  }
-
-  private static class OptimizedFileManager17ClassHolder {
-    static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager17";
-    @Nullable
-    static final Class<StandardJavaFileManager> managerClass;
-    static final Method directoryCacheClearMethod;
-    @Nullable
-    static final String initError;
-    static {
-      Class<StandardJavaFileManager> aClass;
-      Method cacheClearMethod = null;
-      String error = null;
-      try {
-        @SuppressWarnings("unchecked")
-        Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
-        aClass = c;
-        try {
-          cacheClearMethod = c.getMethod("fileGenerated", File.class);
-          cacheClearMethod.setAccessible(true);
-        }
-        catch (NoSuchMethodException e) {
-          LOG.info(e);
-        }
-      }
-      catch (Throwable ex) {
-        aClass = null;
-        error = ex.getClass().getName() + ": " + ex.getMessage();
-      }
-      managerClass = aClass;
-      directoryCacheClearMethod = cacheClearMethod;
-      initError = error;
-    }
-
-    private OptimizedFileManager17ClassHolder() {
-    }
-  }
-
   private ClasspathBootstrap() {
   }
 
@@ -130,6 +59,7 @@ public class ClasspathBootstrap {
     final Set<String> cp = ContainerUtil.newHashSet();
 
     cp.add(getResourcePath(BuildMain.class));
+    cp.add(getResourcePath(ExternalJavacProcess.class));  // jps-builders-6 part
 
     cp.addAll(PathManager.getUtilClassPath()); // util
     cp.add(getResourcePath(Message.class)); // protobuf
@@ -159,7 +89,7 @@ public class ClasspathBootstrap {
   }
 
   public static void appendJavaCompilerClasspath(Collection<String> cp, boolean includeEcj) {
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
+    final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
     if (optimizedFileManagerClass != null) {
       cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
     }
@@ -179,13 +109,10 @@ public class ClasspathBootstrap {
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
     }
-    cp.add(getResourceFile(JpsModel.class));  // jps-model-api
-    cp.add(getResourceFile(JpsModelImpl.class));  // jps-model-impl
     cp.add(getResourceFile(Message.class)); // protobuf
     cp.add(getResourceFile(NetUtil.class)); // netty
-    cp.add(getJpsPluginSystemClassesPath());
-    
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
+
+    final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
     if (optimizedFileManagerClass != null) {
       cp.add(getResourceFile(optimizedFileManagerClass));  // optimizedFileManager, if applicable
     }
@@ -236,9 +163,7 @@ public class ClasspathBootstrap {
 
     cp.addAll(compilingTool.getAdditionalClasspath());
 
-    final Class<JavaSourceTransformer> transformerClass = JavaSourceTransformer.class;
-    final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());
-    for (JavaSourceTransformer t : loader) {
+    for (JavaSourceTransformer t : JavaSourceTransformer.getTransformers()) {
       cp.add(getResourceFile(t.getClass()));
     }
 
@@ -247,39 +172,6 @@ public class ClasspathBootstrap {
     }
 
     return new ArrayList<File>(cp);
-  }
-
-  @Nullable
-  public static Class<StandardJavaFileManager> getOptimizedFileManagerClass() {
-    final Class<StandardJavaFileManager> aClass = OptimizedFileManagerClassHolder.managerClass;
-    if (aClass != null) {
-      return aClass;
-    }
-    return OptimizedFileManager17ClassHolder.managerClass;
-  }
-
-  @Nullable
-  public static Method getOptimizedFileManagerCacheClearMethod() {
-    final Method method = OptimizedFileManagerClassHolder.directoryCacheClearMethod;
-    if (method != null) {
-      return method;
-    }
-    return OptimizedFileManager17ClassHolder.directoryCacheClearMethod;
-  }
-
-  @Nullable
-  public static String getOptimizedFileManagerLoadError() {
-    StringBuilder builder = new StringBuilder();
-    if (OptimizedFileManagerClassHolder.initError != null) {
-      builder.append(OptimizedFileManagerClassHolder.initError);
-    }
-    if (OptimizedFileManager17ClassHolder.initError != null) {
-      if (builder.length() > 0) {
-        builder.append("\n");
-      }
-      builder.append(OptimizedFileManager17ClassHolder.initError);
-    }
-    return builder.toString();
   }
 
   public static String getResourcePath(Class aClass) {

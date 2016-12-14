@@ -17,9 +17,8 @@ package org.jetbrains.jps.builders.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.CompileContext;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -44,9 +43,6 @@ public abstract class JavaCompilingTool {
 
   @NotNull
   public abstract List<File> getAdditionalClasspath();
-
-  public void processCompilerOptions(@NotNull CompileContext context, @NotNull List<String> options) {
-  }
 
   public List<String> getDefaultCompilerOptions() {
     return Collections.emptyList();

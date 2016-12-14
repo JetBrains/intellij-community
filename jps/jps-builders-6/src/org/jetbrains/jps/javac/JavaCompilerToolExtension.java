@@ -17,10 +17,10 @@ package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.ExtensionsSupport;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.service.JpsServiceManager;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -57,8 +57,10 @@ public abstract class JavaCompilerToolExtension {
     return Collections.emptyList();
   }
 
-  public static Iterable<JavaCompilerToolExtension> getExtensions() {
-    return JpsServiceManager.getInstance().getExtensions(JavaCompilerToolExtension.class);
+  private static final ExtensionsSupport<JavaCompilerToolExtension> ourExtSupport = new ExtensionsSupport<JavaCompilerToolExtension>(JavaCompilerToolExtension.class);
+  @NotNull
+  public static Collection<JavaCompilerToolExtension> getExtensions() {
+    return ourExtSupport.getExtensions();
   }
 
   @Nullable

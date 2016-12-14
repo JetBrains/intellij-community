@@ -15,12 +15,12 @@
  */
 package org.jetbrains.jps.javac;
 
+import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
-import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.URI;
 import java.util.Collection;
@@ -45,7 +45,7 @@ public class TransformableJavaFileObject implements JavaFileObject {
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     // todo: cache transformed content?
-    final File file = Utils.convertToFile(myOriginal.toUri());
+    final File file = PathUtils.convertToFile(myOriginal.toUri());
     CharSequence content = myOriginal.getCharContent(ignoreEncodingErrors);
     for (JavaSourceTransformer transformer : myTransformers) {
       content = transformer.transform(file, content);

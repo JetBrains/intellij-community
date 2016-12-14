@@ -15,7 +15,8 @@
  */
 package org.jetbrains.jps.javac;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.util.Locale;
 
 /**

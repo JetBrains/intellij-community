@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,14 @@ import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
-import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,6 +51,7 @@ public class ExternalJavacProcess {
   private final EventLoopGroup myEventLoopGroup;
   private volatile ChannelFuture myConnectFuture;
   private volatile CancelHandler myCancelHandler;
+  private final ExecutorService myThreadPool = Executors.newCachedThreadPool();
 
   static {
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
@@ -62,8 +64,8 @@ public class ExternalJavacProcess {
   
   public ExternalJavacProcess() {
     final JavacRemoteProto.Message msgDefaultInstance = JavacRemoteProto.Message.getDefaultInstance();
-    
-    myEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+
+    myEventLoopGroup = new NioEventLoopGroup(1, myThreadPool);
     myChannelInitializer = new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
@@ -210,9 +212,11 @@ public class ExternalJavacProcess {
   private static JavaCompilingTool getCompilingTool() {
     String property = System.getProperty(JPS_JAVA_COMPILING_TOOL_PROPERTY);
     if (property != null) {
-      JavaCompilingTool tool = JavaBuilderUtil.findCompilingTool(property);
-      if (tool != null) {
-        return tool;
+      final ServiceLoader<JavaCompilingTool> loader = ServiceLoader.load(JavaCompilingTool.class, JavaCompilingTool.class.getClassLoader());
+      for (JavaCompilingTool tool : loader) {
+        if (property.equals(tool.getId()) || property.equals(tool.getAlternativeId())) {
+          return tool;
+        }
       }
     }
     return new JavacCompilerTool();
@@ -251,7 +255,7 @@ public class ExternalJavacProcess {
 
               final CancelHandler cancelHandler = new CancelHandler();
               myCancelHandler = cancelHandler;
-              SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
+              myThreadPool.submit(new Runnable() {
                 @Override
                 public void run() {
                   try {
@@ -262,6 +266,7 @@ public class ExternalJavacProcess {
                   finally {
                     myCancelHandler = null;
                     ExternalJavacProcess.this.stop();
+                    Thread.interrupted(); // reset interrupted status
                   }
                 }
               });
