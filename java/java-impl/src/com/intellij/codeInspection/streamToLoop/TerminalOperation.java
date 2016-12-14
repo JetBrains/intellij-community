@@ -333,7 +333,7 @@ abstract class TerminalOperation extends Operation {
       String seen = context.declare("seen", "boolean", "false");
       String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
       myUpdater.transform(context, accumulator, inVar.getName());
-      context.setFinisher(new Condition.Optional(myType, seen, accumulator));
+      context.setFinisher(new ConditionalExpression.Optional(myType, seen, accumulator));
       String ifClause = "if(!" + seen + ") {\n" +
                         seen + "=true;\n" +
                         accumulator + "=" + inVar + ";\n" +
@@ -400,10 +400,10 @@ abstract class TerminalOperation extends Operation {
       String count = context.declare("count", "long", "0");
       String seenCheck = count + ">0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
-      Condition condition = myUseOptional ?
-                            new Condition.Optional("double", seenCheck, result) :
-                            new Condition.Plain("double", seenCheck, result, "0.0");
-      context.setFinisher(condition);
+      ConditionalExpression conditionalExpression = myUseOptional ?
+                                                    new ConditionalExpression.Optional("double", seenCheck, result) :
+                                                    new ConditionalExpression.Plain("double", seenCheck, result, "0.0");
+      context.setFinisher(conditionalExpression);
       return sum + "+=" + inVar + ";\n" + count + "++;\n";
     }
   }
@@ -434,7 +434,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      return context.assignAndBreak(new Condition.Optional(myType, "found", inVar.getName()));
+      return context.assignAndBreak(new ConditionalExpression.Optional(myType, "found", inVar.getName()));
     }
   }
 
@@ -484,7 +484,7 @@ abstract class TerminalOperation extends Operation {
         expression = myFn.getText();
       }
       return "if(" + expression + ") {\n" +
-             context.assignAndBreak(new Condition.Boolean("b", myDefaultValue)) +
+             context.assignAndBreak(new ConditionalExpression.Boolean("b", myDefaultValue)) +
              "}\n";
     }
   }
@@ -661,7 +661,7 @@ abstract class TerminalOperation extends Operation {
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
       String type = myType;
-      context.setFinisher(new Condition.Optional(type, seen, best));
+      context.setFinisher(new ConditionalExpression.Optional(type, seen, best));
       String comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName()).replace("{comparator}", comparator);
       return "if(!" + seen + " || " + comparePredicate + ") {\n" +
              seen + "=true;\n" +

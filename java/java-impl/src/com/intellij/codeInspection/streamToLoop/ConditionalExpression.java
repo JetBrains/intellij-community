@@ -23,7 +23,7 @@ import com.intellij.psi.util.TypeConversionUtil;
  *
  * @author Tagir Valeev
  */
-interface Condition {
+interface ConditionalExpression {
   String getType();
 
   String getCondition();
@@ -36,7 +36,7 @@ interface Condition {
     return getCondition() + "?" + getTrueBranch() + ":" + getFalseBranch();
   }
 
-  class Plain implements Condition {
+  class Plain implements ConditionalExpression {
     private final String myType;
     private final String myCondition;
     private final String myTrueBranch;
@@ -66,7 +66,7 @@ interface Condition {
     }
   }
 
-  class Boolean implements Condition {
+  class Boolean implements ConditionalExpression {
     private String myCondition;
     private boolean myInvert;
 
@@ -110,7 +110,7 @@ interface Condition {
     }
   }
 
-  class Optional implements Condition {
+  class Optional implements ConditionalExpression {
     private final String myType;
     private final String myCondition;
     private final String myPresentExpression;
