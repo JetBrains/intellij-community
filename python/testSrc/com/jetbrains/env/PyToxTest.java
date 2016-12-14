@@ -330,6 +330,7 @@ public final class PyToxTest extends PyEnvTestCase {
         // Check expected output
         final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
                                String.format("All: %s \n", all) +
+                               String.format("Test tree: %s \n", getTestTree(interpreterSuite, 0)) +
                                String.format("Error: %s \n", stderr);
 
 
