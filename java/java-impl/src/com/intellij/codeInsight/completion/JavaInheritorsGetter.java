@@ -189,7 +189,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   private static boolean areInferredTypesApplicable(@NotNull PsiType[] types, PsiElement position) {
     final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(position, PsiNewExpression.class, false);
     if (!PsiUtil.isLanguageLevel8OrHigher(position)) {
-      return PsiTypesUtil.getExpectedTypeByParent(newExpression) != null;
+      return newExpression != null && PsiTypesUtil.getExpectedTypeByParent(newExpression) != null;
     }
     final PsiCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(newExpression, PsiCallExpression.class, false, PsiStatement.class);
     if (methodCallExpression != null && PsiUtil.isLanguageLevel8OrHigher(methodCallExpression)) {

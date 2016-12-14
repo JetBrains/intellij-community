@@ -204,7 +204,7 @@ public class PsiTypesUtil {
    * Return type explicitly declared in parent
    */
   @Nullable
-  public static PsiType getExpectedTypeByParent(PsiElement element) {
+  public static PsiType getExpectedTypeByParent(@NotNull PsiElement element) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiVariable) {
       if (PsiUtil.checkSameExpression(element, ((PsiVariable)parent).getInitializer())) {
