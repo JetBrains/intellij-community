@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -47,7 +47,8 @@ public class LambdaCanBeMethodCallInspection extends BaseJavaBatchLocalInspectio
         PsiType type = lambda.getFunctionalInterfaceType();
         if (!(type instanceof PsiClassType)) return;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambda.getParent());
-        if(parent instanceof PsiTypeCastExpression && RedundantCastUtil.isCastToSerializable((PsiTypeCastExpression)parent)) return;
+        if(parent instanceof PsiTypeCastExpression &&
+           InheritanceUtil.isInheritor(((PsiTypeCastExpression)parent).getType(), CommonClassNames.JAVA_IO_SERIALIZABLE)) return;
         PsiExpression expression = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(body));
         if (expression == null) return;
         PsiParameter[] parameters = lambda.getParameterList().getParameters();
