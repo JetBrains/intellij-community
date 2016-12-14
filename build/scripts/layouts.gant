@@ -46,6 +46,9 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("jps-standalone-builder")
         module("java-runtime")
       }
+      jar("jps-builders-6.jar") {
+        module("jps-builders-6")
+      }
       jar("jps-plugin-system.jar") {
         module("jps-plugin-system")
       }

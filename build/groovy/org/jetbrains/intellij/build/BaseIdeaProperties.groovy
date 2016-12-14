@@ -89,6 +89,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "external-system-rt")
     productLayout.additionalPlatformJars.put("jps-launcher.jar", "jps-launcher")
     productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")
+    productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
     productLayout.additionalPlatformJars.putAll("jps-model.jar", ["jps-model-impl", "jps-model-serialization"])
     productLayout.additionalPlatformJars.put("forms_rt.jar", "forms-compiler")
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
