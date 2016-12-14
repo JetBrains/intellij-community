@@ -101,10 +101,6 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
-  public void addArgument(PyExpression expression) {
-    PyCallExpressionHelper.addArgument(this, expression);
-  }
-
   public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
     return resolveCallee(resolveContext, 0);
   }

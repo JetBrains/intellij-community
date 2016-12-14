@@ -43,22 +43,6 @@ public class PyCallExpressionHelper {
   }
 
   /**
-   * TODO: Copy/Paste with {@link PyArgumentList#addArgument(PyExpression)}
-   * Adds an argument to the end of argument list.
-   *
-   * @param us         the arg list
-   * @param expression what to add
-   */
-  public static void addArgument(PyCallExpression us, PyExpression expression) {
-    final PyArgumentList argumentList = us.getArgumentList();
-    if (argumentList != null) {
-      final PyExpression[] arguments = argumentList.getArguments();
-      final PyExpression last_arg = arguments.length == 0 ? null : arguments[arguments.length - 1];
-      PyElementGenerator.getInstance(us.getProject()).insertItemIntoList(us, last_arg, expression);
-    }
-  }
-
-  /**
    * Tries to interpret a call as a call to built-in {@code classmethod} or {@code staticmethod}.
    *
    * @param redefiningCall the possible call, generally a result of chasing a chain of assignments

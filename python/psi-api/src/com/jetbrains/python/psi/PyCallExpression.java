@@ -124,11 +124,19 @@ public interface PyCallExpression extends PyCallSiteExpression {
   }
 
   /**
-   * TODO: Copy/Paste with {@link PyArgumentList#addArgument(PyExpression)}
+   * Adds an argument to the end of argument list.
    *
-   * @param expression
+   * @param expression what to add
+   * @deprecated Use {@link PyCallExpression#getArgumentList()} and {@link PyArgumentList#addArgument(PyExpression)} instead.
+   * This method will be removed in 2018.1.
    */
-  void addArgument(PyExpression expression);
+  @Deprecated
+  default void addArgument(@NotNull PyExpression expression) {
+    final PyArgumentList argumentList = getArgumentList();
+    if (argumentList != null) {
+      argumentList.addArgument(expression);
+    }
+  }
 
   /**
    * Resolves callee down to particular function (standalone, method, or constructor).

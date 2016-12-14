@@ -46,10 +46,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return seeker instanceof PyExpression ? (PyExpression) seeker : null;
   }
 
-  public void addArgument(PyExpression expression) {
-    PyCallExpressionHelper.addArgument(this, expression);
-  }
-
   public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
     return PyCallExpressionHelper.resolveCallee(this, resolveContext);
   }
