@@ -4,6 +4,7 @@ import java.util.*;
 
 public class Main {
   public void testOptional(Optional<String> str) {
+    if (str == null) str = Optional.empty();
     if (str.isPrese<caret>nt()) {
       System.out.println(str.get());
     }
