@@ -741,8 +741,6 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    private final MyPaintable myPaintable = new MyPaintable(0, 1);
-
     public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
       super(new EditorEx[]{editor}, disposable);
     }
