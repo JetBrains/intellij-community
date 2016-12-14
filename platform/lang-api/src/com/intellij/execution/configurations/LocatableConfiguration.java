@@ -40,5 +40,7 @@ public interface LocatableConfiguration extends RunConfiguration {
    * run configuration settings (such as "Unnamed").
    */
   @Nullable
-  String suggestedName();
+  default String suggestedName() {
+    return null;
+  }
 }
