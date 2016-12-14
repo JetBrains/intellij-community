@@ -1105,17 +1105,17 @@ public class DiffUtil {
   //
 
   @CalledInAwt
-  public static void executeWriteCommand(@Nullable Project project,
-                                         @NotNull Document document,
-                                         @Nullable String commandName,
-                                         @Nullable String commandGroupId,
-                                         @NotNull UndoConfirmationPolicy confirmationPolicy,
-                                         boolean underBulkUpdate,
-                                         @NotNull Runnable task) {
+  public static boolean executeWriteCommand(@Nullable Project project,
+                                            @NotNull Document document,
+                                            @Nullable String commandName,
+                                            @Nullable String commandGroupId,
+                                            @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                            boolean underBulkUpdate,
+                                            @NotNull Runnable task) {
     if (!makeWritable(project, document)) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
-      return;
+      return false;
     }
 
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -1128,14 +1128,15 @@ public class DiffUtil {
         }
       }, commandName, commandGroupId, confirmationPolicy, document);
     });
+    return true;
   }
 
   @CalledInAwt
-  public static void executeWriteCommand(@NotNull final Document document,
-                                         @Nullable final Project project,
-                                         @Nullable final String commandName,
-                                         @NotNull final Runnable task) {
-    executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
+  public static boolean executeWriteCommand(@NotNull final Document document,
+                                            @Nullable final Project project,
+                                            @Nullable final String commandName,
+                                            @NotNull final Runnable task) {
+    return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }
 
   public static boolean isEditable(@NotNull Editor editor) {

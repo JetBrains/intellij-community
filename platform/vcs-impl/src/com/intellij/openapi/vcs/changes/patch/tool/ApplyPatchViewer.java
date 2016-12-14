@@ -401,9 +401,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myContentPanel.repaintDivider();
   }
 
-  public void executeCommand(@Nullable String commandName,
-                             @NotNull final Runnable task) {
-    myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, false, null, task);
+  public boolean executeCommand(@Nullable String commandName,
+                                @NotNull final Runnable task) {
+    return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, false, null, task);
   }
 
   class MyModel extends MergeModelBase<ApplyPatchChange.State> {

@@ -680,10 +680,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     /*
      * affected changes should be sorted
      */
-    public void executeMergeCommand(@Nullable String commandName,
-                                    boolean underBulkUpdate,
-                                    @Nullable List<TextMergeChange> affected,
-                                    @NotNull Runnable task) {
+    public boolean executeMergeCommand(@Nullable String commandName,
+                                       boolean underBulkUpdate,
+                                       @Nullable List<TextMergeChange> affected,
+                                       @NotNull Runnable task) {
       myContentModified = true;
 
       TIntArrayList affectedIndexes = null;
@@ -694,13 +694,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         }
       }
 
-      myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, affectedIndexes, task);
+      return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, affectedIndexes, task);
     }
 
-    public void executeMergeCommand(@Nullable String commandName,
-                                    @Nullable List<TextMergeChange> affected,
-                                    @NotNull Runnable task) {
-      executeMergeCommand(commandName, false, affected, task);
+    public boolean executeMergeCommand(@Nullable String commandName,
+                                       @Nullable List<TextMergeChange> affected,
+                                       @NotNull Runnable task) {
+      return executeMergeCommand(commandName, false, affected, task);
     }
 
     @CalledInAwt
