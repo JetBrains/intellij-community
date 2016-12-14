@@ -7,9 +7,8 @@
     <option name="DEFAULT_COMPILER" value="Javac" />
     <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
     <excludeFromCompile>
-      <file url="file://$PROJECT_DIR$/jps/jps-builders/src/org/jetbrains/jps/incremental/java/OptimizedFileManager.java" />
-      <file url="file://$PROJECT_DIR$/jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager.java" />
-      <file url="file://$PROJECT_DIR$/jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager17.java" />
+      <file url="file://$PROJECT_DIR$/jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager.java" />
+      <file url="file://$PROJECT_DIR$/jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager17.java" />
       <file url="file://$PROJECT_DIR$/java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala" />
     </excludeFromCompile>
     <resourceExtensions>
