@@ -194,7 +194,7 @@ class UpdateStrategyTest {
     assertBuild("162.48", result.newBuild)
   }
 
-  @Test fun `duplicate builds - first suitable channel wins`() {
+  @Test fun `for duplicate builds, first matching channel is preferred`() {
     val build = """<build number="163.9166" version="2016.3.1"/>"""
     val eap15 = """<channel id="IDEA15_EAP" status="eap" licensing="eap" majorVersion="15">$build</channel>"""
     val eap = """<channel id="IDEA_EAP" status="eap" licensing="eap" majorVersion="2016">$build</channel>"""
