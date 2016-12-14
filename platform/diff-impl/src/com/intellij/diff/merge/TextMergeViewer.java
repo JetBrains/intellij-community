@@ -290,7 +290,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
             return;
           }
           if (result == MergeResult.RESOLVED) {
-            if ((getChangesCount() != 0 || getConflictsCount() != 0) &&
+            if ((getChangesCount() > 0 || getConflictsCount() > 0) &&
                 Messages.showYesNoDialog(myPanel.getRootPane(),
                                          DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
                                          DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
@@ -312,11 +312,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     // Diff
     //
 
-    private void setInitialOutputContent() {
+    private boolean setInitialOutputContent() {
       final Document baseDocument = ThreeSide.BASE.select(myMergeRequest.getContents()).getDocument();
       final Document outputDocument = myMergeRequest.getOutputContent().getDocument();
 
-      DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", () -> {
+      return DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", () -> {
         outputDocument.setText(baseDocument.getCharsSequence());
 
         DiffUtil.putNonundoableOperation(getProject(), outputDocument);
@@ -423,14 +423,18 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
                            @NotNull final List<MergeConflictType> conflictTypes) {
       return () -> {
-        setInitialOutputContent();
-
         clearDiffPresentation();
-        resetChangeCounters();
+
+        boolean success = setInitialOutputContent();
+        if (!success) {
+          myPanel.addNotification(DiffNotifications.createNotification("Can't resolve conflicts in a read-only file"));
+          return;
+        }
 
         myModel.setChanges(ContainerUtil.map(fragments, f -> new LineRange(f.getStartLine(ThreeSide.BASE),
                                                                            f.getEndLine(ThreeSide.BASE))));
 
+        resetChangeCounters();
         for (int index = 0; index < fragments.size(); index++) {
           MergeLineFragment fragment = fragments.get(index);
           MergeConflictType conflictType = conflictTypes.get(index);
