@@ -452,4 +452,21 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText(SURROGATE_PAIR);
     assertEquals(new LogicalPosition(0, 1), myEditor.offsetToLogicalPosition(2));
   }
+
+  public void testCaretDoesntGetInsideSurrogatePair() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> myEditor.getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+    myEditor.getCaretModel().moveToOffset(2);
+    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
+    assertFalse(DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
+  }
+
+  public void testFoldingBoundaryDoesntGetInsideSurrogatePair() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> myEditor.getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+    addFoldRegion(2, 3, "...");
+    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
+    FoldRegion[] foldRegions = myEditor.getFoldingModel().getAllFoldRegions();
+    assertFalse(foldRegions.length > 0 && DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), foldRegions[0].getStartOffset()));
+  }
 }

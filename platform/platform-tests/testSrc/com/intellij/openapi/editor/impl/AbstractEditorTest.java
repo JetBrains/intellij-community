@@ -53,8 +53,8 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
   public static final String SURROGATE_PAIR = new String(new int[]{Character.MIN_SUPPLEMENTARY_CODE_POINT}, 0, 1);
-  public static final char HIGH_SURROGATE = SURROGATE_PAIR.charAt(0);
-  public static final char LOW_SURROGATE = SURROGATE_PAIR.charAt(1);
+  public static final String HIGH_SURROGATE = SURROGATE_PAIR.substring(0, 1);
+  public static final String LOW_SURROGATE = SURROGATE_PAIR.substring(1, 2);
 
   @Override
   protected void setUp() throws Exception {

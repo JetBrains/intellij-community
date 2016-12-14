@@ -228,17 +228,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
           if (marker == null) continue; // node remains removed from the tree
           marker.documentChanged(e);
           if (marker.isValid()) {
-            RMNode<T> insertedNode = (RMNode)findOrInsert(node);
-            // can change if two range become the one
-            if (insertedNode != node) {
-              // merge happened
-              for (Getter<T> key : keys) {
-                T interval = key.get();
-                if (interval != null) {
-                  insertedNode.addInterval(interval);
-                }
-              }
-            }
+            findOrInsertWithIntervals(node);
             assert marker.isValid();
           }
           else {
@@ -253,6 +243,20 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
     finally {
       l.writeLock().unlock();
+    }
+  }
+
+  private void findOrInsertWithIntervals(IntervalNode<T> node) {
+    IntervalNode<T> insertedNode = findOrInsert(node);
+    // can change if two range become the one
+    if (insertedNode != node) {
+      // merge happened
+      for (Getter<T> key : node.intervals) {
+        T interval = key.get();
+        if (interval != null) {
+          insertedNode.addInterval(interval);
+        }
+      }
     }
   }
 
@@ -385,15 +389,26 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         node.changeDelta(shift);
         node.setValid(true);
         pushDelta(node);
-        IntervalNode<T> inserted = findOrInsert(node);
-        if (inserted != node) {
-          // the node already exists, reuse
-          for (Getter<T> interval : node.intervals) {
-            T t = interval.get();
-            if (t != null) {
-              inserted.addInterval(t);
-            }
+
+        List<Getter<T>> keys = node.intervals;
+        if (keys.isEmpty()) continue; // collected away
+
+        RangeMarkerImpl marker = null;
+        for (int i = keys.size() - 1; i >= 0; i--) {
+          Getter<T> key = keys.get(i);
+          marker = (RangeMarkerImpl)key.get();
+          if (marker != null) {
+            if (marker.isValid()) break;
+            node.removeIntervalInternal(i);
+            marker = null;
           }
+        }
+        if (marker == null) continue;
+
+        marker.onReTarget(start, end, newBase);
+
+        if (marker.isValid()) {
+          findOrInsertWithIntervals(node);
         }
       }
     }

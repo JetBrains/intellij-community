@@ -148,6 +148,14 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   @Override
+  protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+    if (DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart()) ||
+        DocumentUtil.isInsideSurrogatePair(getDocument(), intervalEnd())) {
+      invalidate("border moved inside surrogate pair on retarget");
+    }
+  }
+
+  @Override
   public String toString() {
     return "FoldRegion " + (myIsExpanded ? "-" : "+") + "(" + getStartOffset() + ":" + getEndOffset() + ")"
            + (isValid() ? "" : "(invalid)") + ", placeholder='" + myPlaceholderText + "'";

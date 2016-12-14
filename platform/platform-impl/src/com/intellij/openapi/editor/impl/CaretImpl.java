@@ -1561,6 +1561,15 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return e.getOffset() > 0 && Character.isWhitespace(e.getDocument().getImmutableCharSequence().charAt(e.getOffset() - 1)) &&
              CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) && !CharArrayUtil.containLineBreaks(e.getNewFragment());
     }
+
+    @Override
+    protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+      int offset = intervalStart();
+      if (DocumentUtil.isInsideSurrogatePair(getDocument(), offset)) {
+        setIntervalStart(offset - 1);
+        setIntervalEnd(offset - 1);
+      }
+    }
   }
 
   class SelectionMarker extends RangeMarkerImpl {
@@ -1606,6 +1615,18 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         if (!DocumentUtil.isAtLineEnd(endAfter, document) || document.getLineNumber(startAfter) != document.getLineNumber(endAfter)) {
           resetVirtualSelection();
         }
+      }
+    }
+
+    @Override
+    protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+      int start = intervalStart();
+      if (DocumentUtil.isInsideSurrogatePair(getDocument(), start)) {
+        setIntervalStart(start - 1);
+      }
+      int end = intervalEnd();
+      if (DocumentUtil.isInsideSurrogatePair(getDocument(), end)) {
+        setIntervalStart(end - 1);
       }
     }
 

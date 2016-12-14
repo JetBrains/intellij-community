@@ -67,6 +67,13 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   }
 
   @Override
+  protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+    if (DocumentUtil.isInsideSurrogatePair(getDocument(), getOffset())) {
+      invalidate("moved inside surrogate pair on retarget");
+    }
+  }
+
+  @Override
   public void dispose() {
     if (isValid()) {
       myOffsetBeforeDisposal = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
