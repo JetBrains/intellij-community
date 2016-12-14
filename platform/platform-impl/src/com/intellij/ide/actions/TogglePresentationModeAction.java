@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
@@ -49,6 +50,9 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class TogglePresentationModeAction extends AnAction implements DumbAware {
+  private static final String TEXT_ENTER_PRESENTATION_MODE = ActionsBundle.message("action.TogglePresentationMode.text.enter");
+  private static final String TEXT_EXIT_PRESENTATION_MODE = ActionsBundle.message("action.TogglePresentationMode.text.exit");
+
   private static final Map<Object, Object> ourSavedValues = ContainerUtil.newLinkedHashMap();
   private static float ourSavedScaleFactor = JBUI.scale(1f);
   private static int ourSavedConsoleFontSize;
@@ -56,7 +60,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean selected = UISettings.getInstance().PRESENTATION_MODE;
-    e.getPresentation().setText(selected ? "Exit Presentation Mode" : "Enter Presentation Mode");
+    e.getPresentation().setText(selected ? TEXT_EXIT_PRESENTATION_MODE : TEXT_ENTER_PRESENTATION_MODE);
   }
 
   @Override
