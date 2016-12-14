@@ -219,6 +219,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   public void testStripTrailingSpacesAtCaretLineOnExplicitSave() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    settings.setKeepTrailingSpacesOnCaretLine(false);
     configureFromFileText(
       "x.txt",
       "xxx   <caret>\nyyy   "
