@@ -116,6 +116,19 @@ public final class PsiUtil extends PsiUtilCore {
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
     if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
+    final JavaResolveResult accessObject = getAccessObjectClass(type, expression.getProject());
+    if (accessObject != null) return accessObject;
+
+    if (type == null && expression instanceof PsiReferenceExpression) {
+      JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
+      if (resolveResult.getElement() instanceof PsiClass) {
+        return resolveResult;
+      }
+    }
+    return JavaResolveResult.EMPTY;
+  }
+
+  private static JavaResolveResult getAccessObjectClass(PsiType type, Project project) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
     }
@@ -132,22 +145,19 @@ public final class PsiUtil extends PsiUtilCore {
         final PsiClass resolved = ((PsiClassType)upperBound).resolve();
         final PsiFile containingFile = resolved != null ? resolved.getContainingFile() : null;
         final String packageName = containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : null;
-        String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " +packageName + ";\n ";
+        String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " + packageName + ";\n ";
         classText += "class I<T extends " + upperBound.getCanonicalText() + "> {}";
         final PsiJavaFile file =
-          (PsiJavaFile)PsiFileFactory.getInstance(expression.getProject()).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
+          (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
         final PsiTypeParameter freshParameter = file.getClasses()[0].getTypeParameters()[0];
         return new ClassCandidateInfo(freshParameter, PsiSubstitutor.EMPTY);
       }
     }
 
-    if (type == null && expression instanceof PsiReferenceExpression) {
-      JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
-      if (resolveResult.getElement() instanceof PsiClass) {
-        return resolveResult;
-      }
+    if (type instanceof PsiArrayType) {
+      return getAccessObjectClass(((PsiArrayType)type).getComponentType(), project);
     }
-    return JavaResolveResult.EMPTY;
+    return null;
   }
 
   public static boolean isConstantExpression(@Nullable PsiExpression expression) {
