@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
@@ -285,10 +286,14 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   protected void initPatchViewer() {
     final Document outputDocument = myResultEditor.getDocument();
-    DiffUtil.executeWriteCommand(outputDocument, myProject, "Init merge content", () -> {
+    boolean success = DiffUtil.executeWriteCommand(outputDocument, myProject, "Init merge content", () -> {
       outputDocument.setText(myPatchRequest.getLocalContent());
       if (!isReadOnly()) DiffUtil.putNonundoableOperation(myProject, outputDocument);
     });
+    if (!success && !StringUtil.equals(outputDocument.getText(), myPatchRequest.getLocalContent())) {
+      myPanel.setErrorContent("Failed to display patch applier - local content was modified");
+      return;
+    }
 
 
     PatchChangeBuilder builder = new PatchChangeBuilder();
