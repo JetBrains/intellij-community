@@ -82,7 +82,7 @@ public class ParametersListUtil {
    * @return a string with parameters.
    */
   @NotNull
-  public static String join(@NotNull final List<String> parameters) {
+  public static String join(@NotNull final List<? extends CharSequence> parameters) {
     return encode(parameters);
   }
 
@@ -182,29 +182,30 @@ public class ParametersListUtil {
   }
 
   @NotNull
-  private static String encode(@NotNull final List<String> parameters) {
+  private static String encode(@NotNull final List<? extends CharSequence> parameters) {
     if (parameters.isEmpty()) {
       return "";
     }
 
     final StringBuilder buffer = new StringBuilder();
-    for (final String parameter : parameters) {
+    final StringBuilder paramBuilder = new StringBuilder();
+    for (CharSequence parameter : parameters) {
       if (buffer.length() > 0) {
         buffer.append(' ');
       }
-      buffer.append(encode(parameter));
+
+      paramBuilder.append(parameter);
+      encodeParam(paramBuilder);
+      buffer.append(paramBuilder);
+      paramBuilder.setLength(0);
     }
     return buffer.toString();
   }
 
-  @NotNull
-  private static String encode(@NotNull String parameter) {
-    final StringBuilder builder = new StringBuilder();
-    builder.append(parameter);
+  private static void encodeParam(@NotNull StringBuilder builder) {
     StringUtil.escapeQuotes(builder);
     if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
       StringUtil.quote(builder);
     }
-    return builder.toString();
   }
 }
