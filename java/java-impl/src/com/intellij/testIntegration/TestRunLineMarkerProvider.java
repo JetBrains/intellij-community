@@ -28,7 +28,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +37,6 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
-
-  private static final Function<PsiElement, String> TOOLTIP_PROVIDER = element -> "Run Test";
-
   @Nullable
   @Override
   public Info getInfo(@NotNull PsiElement e) {
@@ -70,7 +66,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
   @NotNull
   private static Info getInfo(String url, Project project, boolean isClass) {
     Icon icon = getTestStateIcon(url, project, isClass);
-    return new Info(icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+    return new Info(icon, ExecutorAction.getActions(1), RunLineMarkerContributor.RUN_TEST_TOOLTIP_PROVIDER);
   }
 
   protected boolean isIdentifier(PsiElement e) {

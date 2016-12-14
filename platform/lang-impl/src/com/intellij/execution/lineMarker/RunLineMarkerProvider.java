@@ -70,7 +70,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
       final StringBuilder tooltip = new StringBuilder();
       for (RunLineMarkerContributor.Info info : infos) {
         if (info.tooltipProvider != null) {
-          String string = info.tooltipProvider.fun(element1);
+          String string = info.tooltipProvider.apply(element1);
           if (string == null) continue;
           if (tooltip.length() != 0) {
             tooltip.append("\n");
