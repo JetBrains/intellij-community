@@ -463,6 +463,15 @@ public class PyEditingTest extends PyTestCase {
     myFixture.checkResult(after);
   }
 
+  // PY-21478
+  public void testContinuationIndentForFunctionArguments() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;
+    doTestEnter("func(<caret>)",
+                "func(\n" +
+                "        <caret>\n" +
+                ")");
+  }
+
   private String doTestTyping(final String text, final int offset, final char character) {
     final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
       @Override
