@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +59,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * @author max
@@ -228,6 +230,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.CORES_COUNT);
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new java.util.HashSet<>();
+    boolean parallel = Registry.is("parallel.modules.loading");
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
         break;
@@ -235,6 +238,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       try {
         String path = modulePath.getPath();
         if (!paths.add(path)) continue;
+        if (!parallel) {
+          tasks.add(Pair.create(null, modulePath));
+          continue;
+        }
         ThrowableComputable<Module, IOException> computable = moduleModel.loadModuleInternal(path);
         Future<Module> future = service.submit(() -> {
           progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
@@ -261,7 +268,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         break;
       }
       try {
-        Module module = task.first.get();
+        Module module;
+        if (parallel) {
+          module = task.first.get();
+        }
+        else {
+          module = moduleModel.loadModuleInternal(task.second.getPath()).compute();
+          progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
+        }
         if (module == null) continue;
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
