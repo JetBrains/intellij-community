@@ -39,6 +39,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   private JPasswordField myPasswordField;
   private JPanel myPane;
   private JBCheckBox myEnableTestingFromSamples;
+  private final Project myProject;
 
   public StepicStudyOptions() {
     myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -47,6 +48,12 @@ public class StepicStudyOptions implements StudyOptionsProvider {
         erasePassword();
       }
     });
+    myProject = StudyUtils.getStudyProject();
+    if (myProject == null) {
+      myLoginTextField.setEnabled(false);
+      myPasswordField.setEnabled(false);
+      myEnableTestingFromSamples.setEnabled(false);
+    }
   }
 
   private void erasePassword() {
@@ -102,9 +109,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @Override
   public void apply() throws ConfigurationException {
-    final Project project = StudyUtils.getStudyProject();
-    if (project != null) {
-      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+    if (myProject != null) {
+      StudyTaskManager taskManager = StudyTaskManager.getInstance(myProject);
       
       if (isTestingFromSamplesEnabled() != taskManager.isEnableTestingFromSamples()){
         taskManager.setEnableTestingFromSamples(isTestingFromSamplesEnabled());
@@ -123,7 +129,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
               ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
               stepicUser[0] = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(login, password));
             }, "Logging In", true,
-            project);
+            myProject);
 
           if (stepicUser[0] != null && stepicUser[0].getAccessToken() != null) {
             taskManager.setUser(stepicUser[0]);
