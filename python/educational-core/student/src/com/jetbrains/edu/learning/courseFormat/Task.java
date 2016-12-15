@@ -45,6 +45,7 @@ public class Task implements StudyItem {
 
   @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters = new ChoiceParameters();
   private int myActiveSubtaskIndex = 0;
+  @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;
 
   public Task() {}
