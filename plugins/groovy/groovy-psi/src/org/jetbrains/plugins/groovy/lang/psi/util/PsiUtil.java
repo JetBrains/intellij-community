@@ -280,11 +280,20 @@ public class PsiUtil {
         );
       }
     }
-    else if (parent instanceof GrBinaryExpression || parent instanceof GrAssignmentExpression) {
-      GrExpression right = parent instanceof GrBinaryExpression
-                           ? ((GrBinaryExpression)parent).getRightOperand()
-                           : ((GrAssignmentExpression)parent).getRValue();
+    else if (parent instanceof GrBinaryExpression) {
+      GrExpression right = ((GrBinaryExpression)parent).getRightOperand();
       PsiType type = right != null ? right.getType() : null;
+      return new PsiType[]{notNullizeType(type, nullAsBottom, parent)};
+    }
+    else if (parent instanceof GrAssignmentExpression) {
+      GrAssignmentExpression assignment = (GrAssignmentExpression)parent;
+      PsiType type;
+      if (TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(assignment.getOperationTokenType())) {
+        type = assignment.getType();
+      }
+      else {
+        type = assignment.getRightType();
+      }
       return new PsiType[]{notNullizeType(type, nullAsBottom, parent)};
     }
 

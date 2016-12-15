@@ -25,12 +25,16 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -151,7 +155,11 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Nullable
   @Override
   public PsiType getLeftType() {
-    return getLValue().getType();
+    GrExpression expression = CachedValuesManager.getCachedValue(this, () -> Result.create(
+      GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(getLValue().getText(), getContext()),
+      PsiModificationTracker.MODIFICATION_COUNT
+    ));
+    return expression.getType();
   }
 
   @Nullable
@@ -178,7 +186,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
         lType = ((GrIndexProperty)lValue).getGetterType();
       }
       else {
-        lType = lValue.getType();
+        lType = assignmentExpression.getLeftType();
       }
       if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
