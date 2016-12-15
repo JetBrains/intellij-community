@@ -39,6 +39,8 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.components.TargetHolder;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
@@ -131,6 +133,10 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public Rectangle getVisibleAreaOnScrollingFinished() {
     assertIsDispatchThread();
+    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+      Rectangle viewRect = myEditor.getScrollPane().getViewport().getViewRect();
+      return new Rectangle(getOffset(getHorizontalScrollBar()), getOffset(getVerticalScrollBar()), viewRect.width, viewRect.height);
+    }
     if (myCurrentAnimationRequest != null) {
       return myCurrentAnimationRequest.getTargetVisibleArea();
     }
@@ -290,7 +296,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private static int getOffset(JScrollBar scrollBar) {
-    return scrollBar == null ? 0 : scrollBar.getValue();
+    return scrollBar == null ? 0 :
+           scrollBar instanceof TargetHolder ? ((TargetHolder)scrollBar).getTarget() : scrollBar.getValue();
   }
 
   private static int getExtent(JScrollBar scrollBar) {

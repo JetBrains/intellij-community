@@ -29,7 +29,10 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,9 +74,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.*;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -2682,13 +2683,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent {
+  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, TargetHolder {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
+    private final Interpolator myInterpolator = new Interpolator(super::getValue, super::setValue);
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
       setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
+      setModel(new SmoothBoundedRangeModel(this));
     }
 
     void setPersistentUI(ScrollBarUI ui) {
@@ -2711,6 +2714,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
         This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
       setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
+    }
+
+    /**
+     * Because {@link MyScrollBar} doesn't extend {@link SmoothScrollPane.SmoothScrollBar}
+     * we need to add the interpolation support separately.
+     *
+     * @see SmoothScrollPane.SmoothScrollBar#setValue(int)
+     */
+    @Override
+    public void setValue(int value) {
+      if (isShowing() &&
+          SystemProperties.isTrueSmoothScrollingEnabled() &&
+          ComponentSettings.getInstance().isSmoothScrollingEligible()) {
+
+        myInterpolator.setTarget(value, ((MyScrollPane)myScrollPane).getInitialDelay(getValueIsAdjusting()));
+      }
+      else {
+        super.setValue(value);
+      }
+    }
+
+    @Override
+    public int getTarget() {
+      return myInterpolator.getTarget();
     }
 
     /**

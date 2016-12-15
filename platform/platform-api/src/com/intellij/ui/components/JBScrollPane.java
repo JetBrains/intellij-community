@@ -245,7 +245,7 @@ public class JBScrollPane extends SmoothScrollPane {
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
 
-  private class MyScrollBar extends ScrollBar implements IdeGlassPane.TopComponent {
+  private class MyScrollBar extends SmoothScrollBar implements IdeGlassPane.TopComponent {
     public MyScrollBar(int orientation) {
       super(orientation);
     }
