@@ -424,11 +424,6 @@ public class RefactoringUtil {
     return element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element);
   }
 
-  @Contract("null -> false")
-  public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
-    return PsiUtil.isIncrementDecrementOperation(element);
-  }
-
   private static void removeFinalParameters(PsiMethod method) throws IncorrectOperationException {
     PsiParameterList paramList = method.getParameterList();
     PsiParameter[] params = paramList.getParameters();
@@ -633,7 +628,7 @@ public class RefactoringUtil {
       return EXPR_COPY_PROHIBITED;
     }
 
-    if (isPlusPlusOrMinusMinus(element)) {
+    if (PsiUtil.isIncrementDecrementOperation(element)) {
       return EXPR_COPY_PROHIBITED;
     }
 

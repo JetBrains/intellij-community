@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,7 +173,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       PsiElement element = info.getElement();
       if (element != null) {
         PsiElement parent = element.getParent();
-        if (RefactoringUtil.isPlusPlusOrMinusMinus(parent) && !(parent.getParent() instanceof PsiExpressionStatement)) {
+        if (PsiUtil.isIncrementDecrementOperation(parent) && !(parent.getParent() instanceof PsiExpressionStatement)) {
           conflicts.putValue(parent, "Unable to proceed with postfix/prefix expression when it's result type is used");
         }
       }
