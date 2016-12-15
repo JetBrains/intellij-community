@@ -171,6 +171,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return createRevisionForFirstSelectedCommit();
     }
+    else if (VcsDataKeys.FILE_PATH.is(dataId)) {
+      return myFilePath;
+    }
     else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
       VcsLogFileRevision revision = createRevisionForFirstSelectedCommit();
       if (revision != null) {
