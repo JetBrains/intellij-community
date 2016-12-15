@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
+import static com.intellij.project.ProjectKt.guessProjectDir;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
@@ -93,8 +94,10 @@ public class VcsRootProblemNotifier {
     if (importantUnregisteredRoots.size() == 1) {
       VcsRootError singleUnregRoot = notNull(getFirstItem(importantUnregisteredRoots));
       String mappingPath = singleUnregRoot.getMapping();
+      VirtualFile projectDir = guessProjectDir(myProject);
       if (!myVcsManager.hasAnyMappings()
           && !myReportedUnregisteredRoots.contains(mappingPath)
+          && projectDir != null && FileUtil.isAncestor(projectDir.getPath(), mappingPath, false)
           && Registry.is("vcs.auto.add.single.root")) {
         VcsDirectoryMapping mapping = new VcsDirectoryMapping(mappingPath, singleUnregRoot.getVcsKey().getName());
         myVcsManager.setDirectoryMappings(Collections.singletonList(mapping));
