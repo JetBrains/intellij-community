@@ -19,11 +19,11 @@ import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -54,7 +54,7 @@ class EditorColorSchemeTest {
     val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")
 
-    (scheme as AbstractColorsScheme).isSaveNeeded = true
+    (scheme as AbstractColorsScheme).setSaveNeeded(true)
 
     schemeManagerFactory.save()
 
