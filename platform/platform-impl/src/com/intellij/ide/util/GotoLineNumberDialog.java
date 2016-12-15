@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,12 @@ public class GotoLineNumberDialog extends DialogWrapper {
   private JTextField myField;
   private JTextField myOffsetField;
   private final Editor myEditor;
-  private final Pattern myPattern = PatternUtil.compileSafe("\\s*(\\d+)\\s*(?:[,:]?\\s*(\\d+)?)?\\s*", null);
+  private final Pattern myPattern = PatternUtil.compileSafe("\\s*(\\d+)?\\s*(?:[,:]?\\s*(\\d+)?)?\\s*", null);
 
   public GotoLineNumberDialog(Project project, Editor editor) {
     super(project, true);
     myEditor = editor;
-    setTitle("Go to Line");
+    setTitle("Go to Line/Column");
     init();
   }
 
@@ -63,7 +63,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
     Matcher m = myPattern.matcher(getText());
     if (!m.matches()) return null;
 
-    int l = StringUtil.parseInt(m.group(1), -1);
+    int l = StringUtil.parseInt(m.group(1), myEditor.getCaretModel().getLogicalPosition().line + 1);
     int c = StringUtil.parseInt(m.group(2), -1);
     return l > 0 ? new LogicalPosition(l - 1, Math.max(0, c - 1)) : null;
   }
@@ -104,7 +104,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    JLabel label = new JLabel("Line [:column]:");
+    JLabel label = new JLabel("[Line] [:column]:");
     panel.add(label, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.BOTH;
