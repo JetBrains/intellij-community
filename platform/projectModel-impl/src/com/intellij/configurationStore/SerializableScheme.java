@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle;
+package com.intellij.configurationStore;
 
-import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeState;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface CodeStyleScheme extends Scheme {
-  @Override
+public interface SerializableScheme {
   @NotNull
-  String getName();
+  Element writeScheme();
 
-  boolean isDefault();
-
-  default void resetToDefaults() {
+  /**
+   * Null if unsure.
+   */
+  @Nullable
+  default SchemeState getSchemeState() {
+    return null;
   }
-
-  @NotNull
-  CodeStyleSettings getCodeStyleSettings();
 }

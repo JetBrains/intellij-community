@@ -28,11 +28,8 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.options.SchemeState;
+import com.intellij.openapi.util.*;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -831,12 +828,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
   }
 
-  public boolean isSaveNeeded() {
-    return myIsSaveNeeded;
+  @NotNull
+  @Override
+  public SchemeState getSchemeState() {
+    return myIsSaveNeeded ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
   }
 
-  public void setSaveNeeded(boolean isSaveNeeded) {
-    myIsSaveNeeded = isSaveNeeded;
+  public void setSaveNeeded(boolean value) {
+    myIsSaveNeeded = value;
   }
   
   public boolean isReadOnly() { return  false; }

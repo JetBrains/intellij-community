@@ -28,7 +28,6 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
@@ -55,9 +54,6 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
                                 name: String,
                                 attributeProvider: Function<String, String?>,
                                 isBundled: Boolean) = KeymapImpl(name, dataHolder)
-
-      override fun getState(scheme: Keymap) = if (scheme.canModify()) SchemeState.POSSIBLY_CHANGED else SchemeState.NON_PERSISTENT
-
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
         for (listener in listeners) {
           listener.activeKeymapChanged(newScheme)
