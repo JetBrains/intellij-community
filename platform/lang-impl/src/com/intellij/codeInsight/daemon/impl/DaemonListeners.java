@@ -508,22 +508,19 @@ public class DaemonListeners implements Disposable {
 
     @Override
     public void profilesInitialized() {
-      inspectionProfilesInitialized();
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (myProject.isDisposed()) return;
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
+        statusBar.addWidget(myTogglePopupHintsPanel, myProject);
+        updateStatusBar();
+
+        stopDaemonAndRestartAllFiles("Inspection profiles activated");
+      });
     }
   }
 
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
-  private void inspectionProfilesInitialized() {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed()) return;
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
-      statusBar.addWidget(myTogglePopupHintsPanel, myProject);
-      updateStatusBar();
-
-      stopDaemonAndRestartAllFiles("Inspection profiles activated");
-    });
-  }
 
   public void updateStatusBar() {
     if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();

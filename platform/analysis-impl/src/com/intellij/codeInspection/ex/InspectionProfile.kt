@@ -19,13 +19,25 @@ import com.intellij.codeInspection.InspectionProfile
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.project.Project
 import com.intellij.profile.ProfileEx
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
 
+const val DEFAULT_PROFILE_NAME = "Default"
+val BASE_PROFILE by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
+
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
   private var isProjectLevel: Boolean = false
+
+  @JvmField
+  @Transient
+  internal var schemeState: SchemeState? = null
+
+  override fun getSchemeState() = schemeState
 
   @Transient
   fun isProjectLevel() = isProjectLevel
@@ -46,4 +58,18 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       val profileManager = profileManager
       return PathMacroManager.getInstance((profileManager as? ProjectInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
     }
+
+  override fun toString() = name
+
+  override fun equals(other: Any?) = super.equals(other) && (other as NewInspectionProfile).profileManager === profileManager
+}
+
+fun createSimple(name: String, project: Project, toolWrappers: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {
+  val profile = InspectionProfileImpl(name, object : InspectionToolRegistrar() {
+    override fun createTools() = toolWrappers
+  }, InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
+  for (toolWrapper in toolWrappers) {
+    profile.enableTool(toolWrapper.shortName, project)
+  }
+  return profile
 }

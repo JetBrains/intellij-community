@@ -366,7 +366,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
             LOG.assertTrue(panel != null);
             InspectionProfileImpl profile = getSelectedObject();
             LOG.assertTrue(true);
-            Element element = profile.writeScheme();
+            Element element = profile.writeScheme(false);
             File file = new File(FileUtil.toSystemDependentName(dir.getPath()), sanitizeFileName(profile.getName()) + ".xml");
             if (file.isFile() &&
                 Messages.showOkCancelDialog(wholePanel, "File \'" + file + "\' already exist. Do you want to overwrite it?", "Warning",
