@@ -17,8 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ComponentSettings;
-import com.intellij.util.SystemProperties;
-import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollPaneUI;
@@ -132,34 +131,48 @@ public class SmoothScrollPane extends JScrollPane {
    */
   private void mouseWheelMoved(MouseWheelEvent e) {
     JScrollBar scrollbar = e.isShiftDown() ? getHorizontalScrollBar() : getVerticalScrollBar();
-
-    @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
-    int orientation = scrollbar.getOrientation();
-
     JViewport viewport = getViewport();
 
-    if (viewport != null && (viewport.getView() instanceof Scrollable)) {
-      Scrollable view = (Scrollable)(viewport.getView());
+    double rotation = e.getPreciseWheelRotation();
+    int direction = rotation < 0 ? -1 : 1;
+    int unitIncrement = getUnitIncrement(viewport, scrollbar, direction);
+    double delta = rotation * e.getScrollAmount() * unitIncrement;
 
-      double rotation = e.getPreciseWheelRotation();
+    boolean limitDelta = abs(rotation) < 1.0D + EPSILON;
+    int blockIncrement = getBlockIncrement(viewport, scrollbar, direction);
+    double adjustedDelta = limitDelta ? max(-(double)blockIncrement, min(delta, (double)blockIncrement)) : delta;
 
+    int value = scrollbar instanceof TargetHolder ? (((TargetHolder)scrollbar).getTarget()) : scrollbar.getValue();
+    int newValue = max(scrollbar.getMinimum(), min((int)round(value + adjustedDelta), scrollbar.getMaximum()));
+
+    if (newValue != value) {
+      scrollbar.setValue(newValue);
+    }
+  }
+
+  private static int getUnitIncrement(JViewport viewport, JScrollBar scrollbar, int direction) {
+    Scrollable scrollable = getScrollable(viewport);
+
+    if (scrollable == null) {
+      return scrollbar.getUnitIncrement(direction);
+    }
+    else {
       // Use (0, 0) view position to obtain constant unit increment (which might otherwise be variable on smaller-than-unit scrolling).
       Rectangle r = new Rectangle(new Point(0, 0), viewport.getViewSize());
-      int unitIncrement = view.getScrollableUnitIncrement(r, orientation, 1);
-
-      double delta = rotation * e.getScrollAmount() * unitIncrement;
-
-      boolean limitDelta = abs(rotation) < 1.0D + EPSILON;
-      int blockIncrement = view.getScrollableBlockIncrement(r, orientation, 1);
-      double adjustedDelta = limitDelta ? max(-(double)blockIncrement, min(delta, (double)blockIncrement)) : delta;
-
-      int value = scrollbar instanceof TargetHolder ? (((TargetHolder)scrollbar).getTarget()) : scrollbar.getValue();
-      int newValue = max(scrollbar.getMinimum(), min((int)round(value + adjustedDelta), scrollbar.getMaximum()));
-
-      if (newValue != value) {
-        scrollbar.setValue(newValue);
-      }
+      return scrollable.getScrollableUnitIncrement(r, scrollbar.getOrientation(), 1);
     }
+  }
+
+  private static int getBlockIncrement(JViewport viewport, JScrollBar scrollbar, int direction) {
+    Scrollable scrollable = getScrollable(viewport);
+    Rectangle r = new Rectangle(new Point(0, 0), viewport.getViewSize());
+    return scrollable == null ? scrollbar.getBlockIncrement(direction)
+                              : scrollable.getScrollableBlockIncrement(r, scrollbar.getOrientation(), 1);
+  }
+
+  @Nullable
+  private static Scrollable getScrollable(JViewport viewport) {
+    return viewport != null && (viewport.getView() instanceof Scrollable) ? (Scrollable)(viewport.getView()) : null;
   }
 
   public int getInitialDelay(boolean valueIsAdjusting) {
