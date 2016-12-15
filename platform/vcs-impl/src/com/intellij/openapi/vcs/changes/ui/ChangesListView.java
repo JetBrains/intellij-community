@@ -63,13 +63,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
 
-  @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
-  @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
 
   private ActionGroup myMenuGroup;
 
@@ -188,8 +186,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, getSelectedModifiedWithoutEditing().findAny().isPresent());
     } else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
       sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
-    } else if (key == HELP_ID_DATA_KEY) {
-      sink.put(HELP_ID_DATA_KEY, ourHelpId);
+    } else if (key == PlatformDataKeys.HELP_ID) {
+      sink.put(PlatformDataKeys.HELP_ID, ourHelpId);
     }
     else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
       final TreePath selectionPath = getSelectionPath();
