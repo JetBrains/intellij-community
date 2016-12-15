@@ -83,18 +83,8 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isAccessedForWriting(@NotNull PsiExpression expr) {
     if (isOnAssignmentLeftHand(expr)) return true;
-    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
-    if (parent instanceof PsiPrefixExpression) {
-      IElementType tokenType = ((PsiPrefixExpression) parent).getOperationTokenType();
-      return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
-    }
-    else if (parent instanceof PsiPostfixExpression) {
-      IElementType tokenType = ((PsiPostfixExpression) parent).getOperationTokenType();
-      return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
-    }
-    else {
-      return false;
-    }
+    PsiElement parent = skipParenthesizedExprUp(expr.getParent());
+    return isIncrementDecrementOperation(parent);
   }
 
   public static boolean isAccessedForReading(@NotNull PsiExpression expr) {

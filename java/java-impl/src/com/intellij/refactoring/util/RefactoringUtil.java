@@ -44,7 +44,6 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -421,25 +420,13 @@ public class RefactoringUtil {
     return type;
   }
 
-  public static boolean isAssignmentLHS(PsiElement element) {
-    PsiElement parent = element.getParent();
-
-    return parent instanceof PsiAssignmentExpression && element.equals(((PsiAssignmentExpression)parent).getLExpression()) ||
-           isPlusPlusOrMinusMinus(parent);
+  public static boolean isAssignmentLHS(@NotNull PsiElement element) {
+    return element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element);
   }
 
+  @Contract("null -> false")
   public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
-    if (element instanceof PsiPrefixExpression) {
-      return ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
-             ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.MINUSMINUS;
-    }
-    else if (element instanceof PsiPostfixExpression) {
-      IElementType operandTokenType = ((PsiPostfixExpression)element).getOperationTokenType();
-      return operandTokenType == JavaTokenType.PLUSPLUS || operandTokenType == JavaTokenType.MINUSMINUS;
-    }
-    else {
-      return false;
-    }
+    return PsiUtil.isIncrementDecrementOperation(element);
   }
 
   private static void removeFinalParameters(PsiMethod method) throws IncorrectOperationException {
