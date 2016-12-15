@@ -264,7 +264,7 @@ abstract class Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myExpression = FunctionHelper.renameVarReference(myExpression, oldName, newName, context);
+      myExpression = FunctionHelper.replaceVarReference(myExpression, oldName, newName, context);
     }
 
     @Override
@@ -288,7 +288,7 @@ abstract class Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myLimit = FunctionHelper.renameVarReference(myLimit, oldName, newName, context);
+      myLimit = FunctionHelper.replaceVarReference(myLimit, oldName, newName, context);
     }
 
     @Override

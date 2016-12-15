@@ -181,31 +181,31 @@ abstract class FunctionHelper {
   }
 
   /**
-   * Renames references to the variable oldName in given expression into newName
+   * Replaces all the references to the variable {@code name} in given expression with {@code replacement}.
+   *
+   * <p>
+   *   If the replacement is a new name to the variable, the caller must take care that this new name was not used before.
+   * </p>
+   *
    * @param expression an expression to search-and-replace references inside
-   * @param oldName old name
-   * @param newName new name
+   * @param name a reference name to replace
+   * @param replacement a replacement expression (new name or literal)
    * @param context context
-   * @return resulting expression (might be the same as input expression) or null if expression already had references to newName,
-   *   so rename may merge two variables
+   * @return resulting expression (might be the same as input expression)
    */
   @NotNull
-  static PsiExpression renameVarReference(@NotNull PsiExpression expression,
-                                          String oldName,
-                                          String newName,
-                                          StreamToLoopReplacementContext context) {
-    if(oldName.equals(newName)) return expression;
-    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression("("+oldName+","+newName+")-> "+expression.getText());
-    PsiParameter[] parameters = lambda.getParameterList().getParameters();
-    PsiParameter oldVar = parameters[0];
-    PsiParameter newVar = parameters[1];
+  static PsiExpression replaceVarReference(@NotNull PsiExpression expression,
+                                           String name,
+                                           String replacement,
+                                           StreamToLoopReplacementContext context) {
+    if(name.equals(replacement)) return expression;
+    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name+"->"+expression.getText());
+    PsiParameter var = lambda.getParameterList().getParameters()[0];
     PsiElement body = lambda.getBody();
     LOG.assertTrue(body != null);
-    if(ReferencesSearch.search(newVar, new LocalSearchScope(body)).findFirst() != null) {
-      throw new IllegalStateException("Reference with name "+newVar+" already exists in "+lambda.getText());
-    }
-    for (PsiReference ref : ReferencesSearch.search(oldVar, new LocalSearchScope(body)).findAll()) {
-      ref.handleElementRename(newName);
+    PsiExpression replacementExpression = context.createExpression(replacement);
+    for (PsiReference ref : ReferencesSearch.search(var, new LocalSearchScope(body)).findAll()) {
+      ref.getElement().replace(replacementExpression);
     }
     return (PsiExpression)lambda.getBody();
   }
@@ -304,7 +304,7 @@ abstract class FunctionHelper {
       LOG.assertTrue(body instanceof PsiExpression);
       myExpression = (PsiExpression)body;
       EntryStream.zip(lambda.getParameterList().getParameters(), newNames)
-        .forKeyValue((param, newName) -> myExpression = renameVarReference(myExpression, param.getName(), newName, context));
+        .forKeyValue((param, newName) -> myExpression = replaceVarReference(myExpression, param.getName(), newName, context));
     }
 
     @Override
@@ -336,7 +336,7 @@ abstract class FunctionHelper {
       if(oldName.equals(newName)) return;
       PsiExpression qualifier = myMethodRef.getQualifierExpression();
       if(qualifier == null) return;
-      qualifier = renameVarReference(qualifier, oldName, newName, context);
+      qualifier = replaceVarReference(qualifier, oldName, newName, context);
       myMethodRef = fromText(context, qualifier.getText()+"::"+myMethodRef.getReferenceName());
     }
   }
@@ -382,7 +382,7 @@ abstract class FunctionHelper {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myExpression = renameVarReference(myExpression, oldName, newName, context);
+      myExpression = replaceVarReference(myExpression, oldName, newName, context);
     }
 
     @Override
@@ -421,7 +421,7 @@ abstract class FunctionHelper {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myReference = renameVarReference(myReference, oldName, newName, context);
+      myReference = replaceVarReference(myReference, oldName, newName, context);
     }
 
     @Override
@@ -473,7 +473,7 @@ abstract class FunctionHelper {
     void transform(StreamToLoopReplacementContext context, String... newNames) {
       LOG.assertTrue(newNames.length == myParameters.length);
       EntryStream.zip(myParameters, newNames).forKeyValue(
-        (oldName, newName) -> myBody = renameVarReference(myBody, oldName, newName, context));
+        (oldName, newName) -> myBody = replaceVarReference(myBody, oldName, newName, context));
     }
 
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
@@ -484,7 +484,7 @@ abstract class FunctionHelper {
           if (!paramName.equals(oldName) &&
               !StreamEx.of(myParameters).has(paramName)) {
             try {
-              myBody = renameVarReference(myBody, newName, paramName, context);
+              myBody = replaceVarReference(myBody, newName, paramName, context);
               myParameters[(int)idx.getAsLong()] = paramName;
               break;
             }
@@ -496,7 +496,7 @@ abstract class FunctionHelper {
           }
         }
       }
-      myBody = renameVarReference(myBody, oldName, newName, context);
+      myBody = replaceVarReference(myBody, oldName, newName, context);
     }
 
     @Override
