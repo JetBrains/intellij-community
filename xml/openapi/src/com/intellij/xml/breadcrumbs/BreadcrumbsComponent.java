@@ -343,7 +343,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   @Override
   public Dimension getPreferredSize() {
-    Graphics2D g2 = (Graphics2D) (SystemProperties.isTrueSmoothScrollingEnabled() ? GraphicsUtil.safelyGetGraphics(this) : getGraphics());
+    Graphics2D g2 = (Graphics2D) GraphicsUtil.safelyGetGraphics(this);
     Dimension dim = new Dimension(Integer.MAX_VALUE, g2 != null ? DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1 : 1);
     JBInsets.addTo(dim, getInsets());
     return dim;

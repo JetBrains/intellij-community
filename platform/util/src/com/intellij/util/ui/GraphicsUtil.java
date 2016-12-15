@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.MethodInvocator;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -110,8 +111,8 @@ public class GraphicsUtil {
 
      True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
      frame buffer content without the usual repainting, even when the EDT is blocked. */
-  public static Graphics safelyGetGraphics(JComponent c) {
-    return ourSafelyGetGraphicsMethod.isAvailable()
+  public static Graphics safelyGetGraphics(Component c) {
+    return SystemProperties.isTrueSmoothScrollingEnabled() && ourSafelyGetGraphicsMethod.isAvailable()
            ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c)
            : c.getGraphics();
   }

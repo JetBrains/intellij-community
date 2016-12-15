@@ -1082,8 +1082,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     DataContext context = getDataContext();
 
-    Graphics graphics = SystemProperties.isTrueSmoothScrollingEnabled() ?
-                        GraphicsUtil.safelyGetGraphics(myEditorComponent) : myEditorComponent.getGraphics();
+    Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
     if (graphics != null) { // editor component is not showing
       processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();

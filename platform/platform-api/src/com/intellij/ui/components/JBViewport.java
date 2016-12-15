@@ -157,7 +157,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
      frame buffer content without the usual repainting, even when the EDT is blocked.
 
      Generally, this requires default RepaintManager, swing.bufferPerWindow = true and
-     no prior direct invocations of JComponent.getGraphics() within JRootPane. */
+     no prior direct invocations of JComponent.getGraphics() within JRootPane.
+
+     Use a breakpoint in JRootPane.disableTrueDoubleBuffering() to detect direct getGraphics() calls. */
   @Nullable
   private static Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
     if (ourGetPaintManagerMethod.isAvailable()) {

@@ -1940,7 +1940,7 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
     return comp != null ?
-           createImage(comp.getGraphics(), width, height, type) :
+           createImage(GraphicsUtil.safelyGetGraphics(comp), width, height, type) :
            createImage(width, height, type);
   }
 
