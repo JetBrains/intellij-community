@@ -156,7 +156,7 @@ public class TestLoggerFactory implements Logger.Factory {
       //return;
     }
     LoggingEvent event = new LoggingEvent(CFQN, logger, level, message, t);
-    APPENDER.append(event);
+    APPENDER.doAppend(event);
 
     if (BUFFER.length() > MAX_BUFFER_LENGTH) {
       synchronized (BUFFER) {
