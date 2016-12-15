@@ -117,6 +117,7 @@
       <reference id="Vcs.Log.CreatePatch"/>
       <reference id="Vcs.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
+      <reference id="VcsHistory.ShowAllAffected"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">

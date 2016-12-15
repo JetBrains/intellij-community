@@ -182,6 +182,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                : new VcsVirtualFile(revision.getPath().getPath(), revision, VcsFileSystem.getInstance());
       }
     }
+    else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
+      return false;
+    }
     return null;
   }
 
