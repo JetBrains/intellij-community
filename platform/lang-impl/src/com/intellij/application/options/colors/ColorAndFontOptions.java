@@ -376,7 +376,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     if (myRootSchemesPanel == null) {
       ensureSchemesPanel();
     }
-    return myRootSchemesPanel;
+    return myRootSchemesPanel.getRootPanel();
   }
 
   @Override
