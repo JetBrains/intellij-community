@@ -40,7 +40,7 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
           checkBox.isWrapText = true
           checkBox.maxWidthProperty().bind(scene.widthProperty().subtract(LEFT_INSET).subtract(RIGHT_INSET))
           checkBox.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
-          checkBox.stylesheets.add(String::class.java.getResource("/style/buttons.css").toExternalForm())
+          checkBox.stylesheets.add(StudyChoiceVariantsPanel::class.java.getResource("/style/buttons.css").toExternalForm())
           checkBox.selectedProperty().addListener { observableValue, wasSelected, isSelected ->
             if (isSelected) {
               task.selectedVariants.add(index)
