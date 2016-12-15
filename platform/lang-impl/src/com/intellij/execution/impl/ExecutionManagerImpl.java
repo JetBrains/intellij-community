@@ -114,6 +114,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   }
 
   private static void start(@NotNull ExecutionEnvironment environment) {
+    //start() can be called during restartRunProfile() after pretty long 'awaitTermination()' so we have to check if the project is still here
+    if (environment.getProject().isDisposed()) return;
+
     RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
     ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
   }
