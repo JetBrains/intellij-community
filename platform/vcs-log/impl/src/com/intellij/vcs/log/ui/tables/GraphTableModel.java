@@ -67,12 +67,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
     final int commitIndex = myLogData.getCommitIndex(hash, root);
-    return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getVisibleGraph()), new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer == commitIndex;
-      }
-    });
+    return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getVisibleGraph()), (Condition<Integer>)i -> i == commitIndex);
   }
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
@@ -110,7 +105,8 @@ public class GraphTableModel extends AbstractTableModel {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
       case COMMIT_COLUMN:
-        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex), myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
+        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
+                                   myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
       case AUTHOR_COLUMN:
         String authorString = VcsUserUtil.getShortPresentation(data.getAuthor());
         return authorString + (VcsUserUtil.isSamePerson(data.getAuthor(), data.getCommitter()) ? "" : "*");
@@ -217,6 +213,6 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public List<Integer> convertToCommitIds(@NotNull List<Integer> rows) {
-    return ContainerUtil.map(rows, (NotNullFunction<Integer, Integer>)row -> getIdAtRow(row));
+    return ContainerUtil.map(rows, (NotNullFunction<Integer, Integer>)this::getIdAtRow);
   }
 }
