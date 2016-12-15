@@ -137,12 +137,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       }
 
       private void handleToArray(PsiMethodCallExpression methodCall) {
-        PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-        PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier instanceof PsiMethodCallExpression && isCollectionStream((PsiMethodCallExpression)qualifier)) {
+        if(isCollectionStream(getQualifierMethodCall(methodCall))) {
           PsiArrayType type = getArrayType(methodCall);
           if(type != null) {
-            PsiElement nameElement = methodExpression.getReferenceNameElement();
+            PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
             LOG.assertTrue(nameElement != null);
             String replacement = type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT+"[]") ? "" :
                                  "new "+type.getCanonicalText().replaceFirst("\\[]", "[0]");
