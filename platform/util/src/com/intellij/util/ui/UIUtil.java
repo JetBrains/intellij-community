@@ -3564,12 +3564,13 @@ public class UIUtil {
 
   private static void getAllTextsRecursivelyImpl(Component component, StringBuilder builder) {
     String candidate = "";
-    int limit = builder.length() > 60 ? 20 : 40;
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
     if (StringUtil.isNotEmpty(candidate)) {
-      builder.append(candidate.length() > limit ? (candidate.substring(0, limit - 3) + "...") : candidate).append('|');
+      candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
+      if (builder.length() > 0) builder.append(' ');
+      builder.append(StringUtil.removeHtmlTags(candidate).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
