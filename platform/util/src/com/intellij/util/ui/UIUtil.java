@@ -361,6 +361,8 @@ public class UIUtil {
   /**
    * Returns whether the JDK-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
+   *
+   * @see JBUI.ScaleType
    */
   public static boolean isJDKManagedHiDPI() {
     if (jdkManagedHiDPI != null) {
