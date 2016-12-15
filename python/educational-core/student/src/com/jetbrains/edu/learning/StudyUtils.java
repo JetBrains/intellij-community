@@ -263,7 +263,11 @@ public class StudyUtils {
   }
 
   public static void showNoSdkNotification(@NotNull final Task currentTask, @NotNull final Project project) {
-    final Language language = currentTask.getLesson().getCourse().getLanguageById();
+    final Lesson lesson = currentTask.getLesson();
+    if (lesson == null) return;
+    final Course course = lesson.getCourse();
+    if (course == null) return;
+    final Language language = course.getLanguageById();
     StudyExecutor.INSTANCE.forLanguage(language).showNoSdkNotification(project);
   }
 
