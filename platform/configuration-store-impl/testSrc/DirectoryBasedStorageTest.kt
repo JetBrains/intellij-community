@@ -18,10 +18,10 @@ package com.intellij.configurationStore
 import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
-import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.loadElement
 import org.jdom.Element
@@ -50,7 +50,7 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
   override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
 }
 
-@Bombed(user = "vladimir.krivosheev", year = 2016, month = Calendar.DECEMBER, day = 10)
+@Bombed(user = "vladimir.krivosheev", year = 2018, month = Calendar.DECEMBER, day = 10)
 internal class DirectoryBasedStorageTest {
   companion object {
     @JvmField
