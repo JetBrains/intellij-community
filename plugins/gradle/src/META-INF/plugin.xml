@@ -158,7 +158,7 @@
     <completion.contributor language="Groovy" order="first"
                             implementationClass="org.jetbrains.plugins.gradle.codeInsight.ConfigurationsCompletionContributor"/>
     <completion.contributor language="Groovy" order="first"
-                            implementationClass="org.jetbrains.plugins.gradle.codeInsight.PropertiesCompletionContributor"/>
+                            implementationClass="org.jetbrains.plugins.gradle.codeInsight.PropertiesTasksCompletionContributor"/>
 
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
                      bundle="org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle"

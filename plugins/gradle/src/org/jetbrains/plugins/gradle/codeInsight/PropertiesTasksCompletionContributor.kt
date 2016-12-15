@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import icons.ExternalSystemIcons
 import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor.Companion.getDocumentation
@@ -38,8 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
  * @author Vladislav.Soroka
  * @since 12/12/2016
  */
-class PropertiesCompletionContributor : AbstractGradleCompletionContributor() {
-  class ConfigurationsCompletionProvider : CompletionProvider<CompletionParameters>() {
+class PropertiesTasksCompletionContributor : AbstractGradleCompletionContributor() {
+  class PropertiesTasksCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     override fun addCompletions(params: CompletionParameters,
                                 context: ProcessingContext,
@@ -52,26 +53,44 @@ class PropertiesCompletionContributor : AbstractGradleCompletionContributor() {
       val extensionsData = GradleExtensionsContributor.getExtensionsFor(position) ?: return
       for (gradleProp in extensionsData.findAllProperties()) {
         val docRef = Ref.create<String>()
-        val confVar = object : GrLightVariable(position.manager, gradleProp.name, gradleProp.typeFqn, position) {
+        val propVar = object : GrLightVariable(position.manager, gradleProp.name, gradleProp.typeFqn, position) {
           override fun getNavigationElement(): PsiElement {
             val navigationElement = super.getNavigationElement()
             navigationElement.putUserData(NonCodeMembersHolder.DOCUMENTATION, docRef.get())
             return navigationElement
           }
         }
-        docRef.set(getDocumentation(gradleProp, confVar))
-        val elementBuilder = LookupElementBuilder.create(confVar, gradleProp.name)
+        docRef.set(getDocumentation(gradleProp, propVar))
+        val elementBuilder = LookupElementBuilder.create(propVar, gradleProp.name)
           .withIcon(AllIcons.Nodes.Property)
           .withPresentableText(gradleProp.name)
-          .withTailText(" (ext)", true)
-          .withTypeText(confVar.type.presentableText, GradleIcons.Gradle, false)
+          .withTailText("  via ext", true)
+          .withTypeText(propVar.type.presentableText, GradleIcons.Gradle, false)
+        result.addElement(elementBuilder)
+      }
+
+      for (gradleTask in extensionsData.tasks) {
+        val docRef = Ref.create<String>()
+        val taskVar = object : GrLightVariable(position.manager, gradleTask.name, gradleTask.typeFqn, position) {
+          override fun getNavigationElement(): PsiElement {
+            val navigationElement = super.getNavigationElement()
+            navigationElement.putUserData(NonCodeMembersHolder.DOCUMENTATION, docRef.get())
+            return navigationElement
+          }
+        }
+        docRef.set(getDocumentation(gradleTask, taskVar))
+        val elementBuilder = LookupElementBuilder.create(taskVar, gradleTask.name)
+          .withIcon(ExternalSystemIcons.Task)
+          .withPresentableText(gradleTask.name)
+          .withTailText("  task", true)
+          .withTypeText(taskVar.type.presentableText)
         result.addElement(elementBuilder)
       }
     }
   }
 
   init {
-    extend(CompletionType.BASIC, PATTERN, ConfigurationsCompletionProvider())
+    extend(CompletionType.BASIC, PATTERN, PropertiesTasksCompletionProvider())
   }
 
   companion object {
