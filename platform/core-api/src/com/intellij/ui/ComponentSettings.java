@@ -24,7 +24,7 @@ import java.awt.*;
  * IDE-agnostic component settings.
  */
 public class ComponentSettings {
-  private boolean mySmoothScrollingEnabled;
+  private boolean mySmoothScrollingEnabled = true;
   private boolean myRemoteDesktopConnected;
   private boolean myPowerSaveModeEnabled;
 
