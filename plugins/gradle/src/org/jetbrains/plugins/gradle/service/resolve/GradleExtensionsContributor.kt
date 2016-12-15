@@ -262,7 +262,15 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       buffer.append(" " + gradleProp.name)
       val hasInitializer = !gradleProp.value.isNullOrBlank()
       if (hasInitializer) {
-        buffer.append(" = " + gradleProp.value)
+        buffer.append(" = ");
+        val longString = gradleProp.value!!.toString().length > 100
+        if (longString) {
+          buffer.append("<blockquote>")
+        }
+        buffer.append(gradleProp.value)
+        if (longString) {
+          buffer.append("</blockquote>")
+        }
       }
       buffer.append("</PRE>")
       if (hasInitializer) {
