@@ -52,15 +52,6 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     return new JBColor(() -> ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75));
   }
 
-  @NotNull
-  public static JBColor getIndicatorColor(@NotNull final Color baseRootColor) {
-    if (Registry.is("vcs.log.square.labels")) return getBackgroundColor(baseRootColor);
-    return new JBColor(() -> {
-      if (UIUtil.isUnderDarcula()) return baseRootColor;
-      return ColorUtil.darker(ColorUtil.softer(baseRootColor), 2);
-    });
-  }
-
   @Override
   public boolean isMultipleRoots() {
     return myRoots.size() > 1;
