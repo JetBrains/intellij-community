@@ -1919,6 +1919,8 @@ public class UIUtil {
       if (isJDKManagedHiDPIScreen(g2d)) {
         return RetinaImage.create(g2d, width, height, type);
       }
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(width, height, type);
     }
     return createImage(width, height, type);
   }
