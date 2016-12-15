@@ -61,6 +61,7 @@ class EditorColorSchemeTest {
     // JAVA_NUMBER is removed - see isParentOverwritingInheritance
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
     <scheme name="Foo" version="142" parent_scheme="Default">
+      <option name="FONT_SCALE" value="1.0" />
       <option name="EDITOR_FONT_SIZE" value="12" />
       <option name="EDITOR_FONT_NAME" value="${scheme.editorFontName}" />
     </scheme>""".trimIndent())
