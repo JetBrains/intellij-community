@@ -18,6 +18,7 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -109,6 +110,7 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
     if (result == null) return;
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+    result = SimplifyStreamApiCallChainsInspection.simplifyCollectionStreamCalls(result);
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
   }
 
