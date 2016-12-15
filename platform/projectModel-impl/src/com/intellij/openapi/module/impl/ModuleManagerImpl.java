@@ -17,11 +17,13 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -30,21 +32,18 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
@@ -59,6 +58,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author max
@@ -216,25 +216,57 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     myFailedModulePaths.addAll(myModulePathsToLoad);
 
-    final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (progressIndicator != null) {
-      progressIndicator.setText("Loading modules...");
-      progressIndicator.setText2("");
-    }
+    ProgressIndicator globalIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ProgressIndicator progressIndicator = myProject.isDefault() || globalIndicator == null ? new EmptyProgressIndicator() : globalIndicator;
+    progressIndicator.setText("Loading modules...");
+    progressIndicator.setText2("");
 
     List<Module> modulesWithUnknownTypes = new ArrayList<>();
-    List<ModuleLoadingErrorDescription> errors = new ArrayList<>();
+    List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
+
+    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.CORES_COUNT);
+    List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
+    Set<String> paths = new java.util.HashSet<>();
     for (ModulePath modulePath : myModulePathsToLoad) {
-      if (progressIndicator != null) {
-        progressIndicator.checkCanceled();
-        progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
+      if (progressIndicator.isCanceled()) {
+        break;
       }
       try {
-        final Module module = moduleModel.loadModuleInternal(modulePath.getPath());
+        String path = modulePath.getPath();
+        if (!paths.add(path)) continue;
+        ThrowableComputable<Module, IOException> computable = moduleModel.loadModuleInternal(path);
+        Future<Module> future = service.submit(() -> {
+          progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
+          try {
+            return computable.compute();
+          }
+          catch (IOException e) {
+            reportError(errors, modulePath, e);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+          return null;
+        });
+        tasks.add(Pair.create(future, modulePath));
+      }
+      catch (IOException e) {
+        reportError(errors, modulePath, e);
+      }
+    }
+
+    for (Pair<Future<Module>, ModulePath> task : tasks) {
+      if (progressIndicator.isCanceled()) {
+        break;
+      }
+      try {
+        Module module = task.first.get();
+        if (module == null) continue;
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
         }
+        ModulePath modulePath = task.second;
         final String groupPathString = modulePath.getGroup();
         if (groupPathString != null) {
           // model should be updated too
@@ -242,18 +274,22 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         }
         myFailedModulePaths.remove(modulePath);
       }
-      catch (IOException e) {
-        errors.add(ModuleLoadingErrorDescription
-                     .create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
-      }
-      catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-        errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
+    service.shutdown();
+
+    progressIndicator.checkCanceled();
 
     onModuleLoadErrors(errors);
 
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
+  }
+
+  private void reportError(List<ModuleLoadingErrorDescription> errors, ModulePath modulePath, Exception e) {
+    errors.add(ModuleLoadingErrorDescription
+                 .create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
   }
 
   public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }
@@ -562,7 +598,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    final Map<String, Module> myModules = new LinkedHashMap<>();
+    final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
     private volatile Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<>();
@@ -696,7 +732,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
       assertWritable();
       try {
-        return loadModuleInternal(filePath);
+        Module module = getModuleByFilePath(filePath);
+        if (module != null) return module;
+        return loadModuleInternal(filePath).compute();
       }
       catch (FileNotFoundException e) {
         throw e;
@@ -707,7 +745,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @NotNull
-    private Module loadModuleInternal(@NotNull String filePath) throws ModuleWithNameAlreadyExists, IOException {
+    private ThrowableComputable<Module, IOException> loadModuleInternal(@NotNull String filePath) throws IOException {
       filePath = resolveShortWindowsName(filePath);
       final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {
@@ -715,13 +753,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
 
       String path = moduleFile.getPath();
-      ModuleEx module = getModuleByFilePath(path);
-      if (module == null) {
-        ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
-        module = createAndLoadModule(path);
-        initModule(module, path, null);
-      }
-      return module;
+      ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
+      return () -> ApplicationManager.getApplication().runReadAction((ThrowableComputable<ModuleEx, IOException>)() -> {
+        if (myProject.isDisposed()) return null;
+        ModuleEx result = createAndLoadModule(path);
+        initModule(result, path, null);
+        return result;
+      });
     }
 
     private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
