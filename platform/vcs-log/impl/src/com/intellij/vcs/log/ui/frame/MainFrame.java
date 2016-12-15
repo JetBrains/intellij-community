@@ -343,14 +343,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @Override
     protected void onSelection(@NotNull int[] selection) {
       // just reset and wait for details to be loaded
-      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
       myChangesBrowser.getViewer().setEmptyText("");
     }
 
     @Override
     protected void onEmptySelection() {
       myChangesBrowser.getViewer().setEmptyText("No commits selected");
-      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
     }
   }
 
@@ -358,7 +358,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(), myTextFilter.getTextEditor());
+      return Arrays.asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(), myTextFilter.getTextEditor());
     }
   }
 }
