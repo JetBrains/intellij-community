@@ -26,7 +26,7 @@ enum class ConnectingState {
     TryConnect
 }
 
-class IdePluginClient(val project : Project) :
+class IdePluginClient(val project: Project) :
     AbstractProjectComponent(project),
     ILifetimedComponent by LifetimedComponent(project) {
 
@@ -49,7 +49,7 @@ class IdePluginClient(val project : Project) :
         }
 
         state.view(componentLifetime) { lt, state ->
-            when(state){
+            when (state) {
                 ConnectingState.TryConnect -> tryReconnect(lt)
                 ConnectingState.AuthFailed -> authCheckFailedNotification()
                 ConnectingState.Connected -> notifyConnected()
@@ -106,13 +106,13 @@ class IdePluginClient(val project : Project) :
                             if (ask)
                                 askPassword()
                         }
-                    }. failureLater(lifetime, modality) {
-                        notifyReconnect(lifetime)
-                        JobScheduler.getScheduler().schedule({
-                            if (!lifetime.isTerminated)
-                                tryReconnect(lifetime)
-                        }, 5000, TimeUnit.MILLISECONDS)
-                        state.value = ConnectingState.TryConnect
+                    }.failureLater(lifetime, modality) {
+                    notifyReconnect(lifetime)
+                    JobScheduler.getScheduler().schedule({
+                        if (!lifetime.isTerminated)
+                            tryReconnect(lifetime)
+                    }, 5000, TimeUnit.MILLISECONDS)
+                    state.value = ConnectingState.TryConnect
                 }
             }
         }
@@ -122,18 +122,18 @@ class IdePluginClient(val project : Project) :
         LoginDialog(LoginDialogViewModel(component<CircletLoginComponent>())).show()
     }
 
-    private fun connectWithToken(lifetime : Lifetime, token: String) {
+    private fun connectWithToken(lifetime: Lifetime, token: String) {
         val clientLocal = CircletClient("ws://localhost:8084/api/v1/connect", token)
         client.value = clientLocal
-        clientLocal.services.profile.isMyProfileReady()
+        clientLocal.services.user.isMyProfileReady()
             .flatMap {
                 if (!it) {
-                    clientLocal.services.profile.createMyProfile("Hey! ${Random.nextUID()}")
+                    clientLocal.services.user.createProfile("Hey! ${Random.nextUID()}", null)
                 } else {
-                    clientLocal.services.profile.getMyUid().map {
+                    clientLocal.services.user.getMyUid().map {
                         log.debug { "My Profile: $it" }
                     }
-                    clientLocal.services.profile.editNick("Hey! ${Random.nextUID()}")
+                    clientLocal.services.user.editUsername("heytwo")
                 }
             }
             .then {
