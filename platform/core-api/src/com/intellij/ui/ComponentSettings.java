@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.components;
+package com.intellij.ui;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.SystemProperties;
+
+import java.awt.*;
 
 /**
  * IDE-agnostic component settings.
@@ -21,6 +26,7 @@ package com.intellij.ui.components;
 public class ComponentSettings {
   private boolean mySmoothScrollingEnabled;
   private boolean myRemoteDesktopConnected;
+  private boolean myPowerSaveModeEnabled;
 
   private static final ComponentSettings ourInstance = new ComponentSettings();
 
@@ -28,8 +34,14 @@ public class ComponentSettings {
     return ourInstance;
   }
 
-  public boolean isSmoothScrollingEligible() {
-    return mySmoothScrollingEnabled && !myRemoteDesktopConnected;
+  public boolean isSmoothScrollingEligibleFor(Component component) {
+    return SystemProperties.isTrueSmoothScrollingEnabled() &&
+           !ApplicationManager.getApplication().isUnitTestMode() &&
+           mySmoothScrollingEnabled &&
+           !myRemoteDesktopConnected &&
+           !myPowerSaveModeEnabled &&
+           component != null &&
+           component.isShowing();
   }
 
   public void setSmoothScrollingEnabled(boolean enabled) {
@@ -38,5 +50,9 @@ public class ComponentSettings {
 
   public void setRemoteDesktopConnected(boolean connected) {
     myRemoteDesktopConnected = connected;
+  }
+
+  public void setPowerSaveModeEnabled(boolean enabled) {
+    myPowerSaveModeEnabled = enabled;
   }
 }

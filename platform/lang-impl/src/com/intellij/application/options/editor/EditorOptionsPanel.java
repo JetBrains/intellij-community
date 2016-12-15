@@ -51,7 +51,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.ComponentSettings;
+import com.intellij.ui.ComponentSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

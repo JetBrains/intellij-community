@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.ComponentSettings;
 import com.intellij.util.SystemProperties;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -111,7 +112,7 @@ public class SmoothScrollPane extends JScrollPane {
   }
 
   private void handleMouseWheelEvent(MouseWheelEvent e, MouseWheelListener delegate) {
-    if (SystemProperties.isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().isSmoothScrollingEligible() &&
+    if (ComponentSettings.getInstance().isSmoothScrollingEligibleFor(this) &&
         isWheelScrollingEnabled() && e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
 
       mouseWheelMoved(e);
@@ -184,10 +185,7 @@ public class SmoothScrollPane extends JScrollPane {
 
     @Override
     public void setValue(int value) {
-      if (isShowing() &&
-          SystemProperties.isTrueSmoothScrollingEnabled() &&
-          ComponentSettings.getInstance().isSmoothScrollingEligible()) {
-
+      if (ComponentSettings.getInstance().isSmoothScrollingEligibleFor(getViewport().getView())) {
         myInterpolator.setTarget(value, getInitialDelay(getValueIsAdjusting()));
       }
       else {
