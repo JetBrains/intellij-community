@@ -661,7 +661,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     return myContent;
   }
 
-  public Component getComponent() {
+  public JComponent getComponent() {
     return myComp;
   }
 
