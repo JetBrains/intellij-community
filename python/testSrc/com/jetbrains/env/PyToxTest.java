@@ -71,10 +71,8 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxNose/", 1,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py26", new InterpreterExpectations("", true)),
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
                                                        // Does not support 3.4
-                                                       Pair.create("py32", new InterpreterExpectations("SyntaxError", false)),
                                                        Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
@@ -276,6 +274,8 @@ public final class PyToxTest extends PyEnvTestCase {
       // Interpreter should either run tests or mentioned as NotFound
       for (final SMTestProxy interpreterSuite : runner.getTestProxy().getChildren()) {
         final String interpreterName = interpreterSuite.getName();
+        assert interpreterName.startsWith("py") : String
+          .format("Bad interpreter name: %s. Tree is %s \n", interpreterName, getTestTree(interpreterSuite, 0));
         checkedInterpreters.add(interpreterName);
 
         final InterpreterExpectations expectations = myInterpreters.get(interpreterName);
