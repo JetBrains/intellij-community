@@ -16,48 +16,41 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
@@ -1189,142 +1182,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private class MyGetVersionAction extends AbstractActionForSomeSelection {
-    public MyGetVersionAction() {
-      super(VcsBundle.message("action.name.get.file.content.from.repository"),
-            VcsBundle.message("action.description.get.file.content.from.repository"), "get", 1, FileHistoryPanelImpl.this);
-    }
-
+  private static class MyGetVersionAction extends GetVersionAction {
     @Override
-    public boolean isEnabled() {
-      return super.isEnabled() && myFilePath.getVirtualFileParent() != null &&
-             myHistorySession.isContentAvailable(getFirstSelectedRevision()) && !myFilePath.isDirectory();
-    }
-
-    protected void executeAction(AnActionEvent e) {
-      if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
-      final VcsFileRevision revision = getFirstSelectedRevision();
-      VirtualFile virtualFile = getVirtualFile();
-      if (virtualFile != null) {
-        if (!new ReplaceFileConfirmationDialog(myVcs.getProject(), VcsBundle.message("acton.name.get.revision"))
-          .confirmFor(new VirtualFile[]{virtualFile})) {
-          return;
-        }
+    protected boolean isContentAvailable(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull AnActionEvent e) {
+      VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
+      if (historySession == null) {
+        return false;
       }
-
-      getVersion(revision);
-      refreshFile(revision);
-    }
-
-    private void refreshFile(VcsFileRevision revision) {
-      Runnable refresh = null;
-      final VirtualFile vf = getVirtualFile();
-      if (vf == null) {
-        final LocalHistoryAction action = startLocalHistoryAction(revision);
-        final VirtualFile vp = myFilePath.getVirtualFileParent();
-        if (vp != null) {
-          refresh = () -> vp.refresh(false, true, action::finish);
-        }
-      }
-      else {
-        refresh = () -> vf.refresh(false, false);
-      }
-      if (refresh != null) {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(refresh, "Refreshing Files...", false, myVcs.getProject());
-      }
-    }
-
-    private void getVersion(final VcsFileRevision revision) {
-      final VirtualFile file = getVirtualFile();
-      final Project project = myVcs.getProject();
-
-      new Task.Backgroundable(project, VcsBundle.message("show.diff.progress.title")) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
-          final byte[] revisionContent;
-          try {
-            revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
-          }
-          catch (final IOException | VcsException e) {
-            LOG.info(e);
-            ApplicationManager.getApplication().invokeLater(
-              () -> Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                               VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon()));
-            return;
-          }
-          catch (ProcessCanceledException ex) {
-            return;
-          }
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            try {
-              new WriteCommandAction.Simple(project) {
-                @Override
-                protected void run() throws Throwable {
-                  if (file != null &&
-                      !file.isWritable() &&
-                      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
-                    return;
-                  }
-
-                  try {
-                    write(revisionContent);
-                  }
-                  catch (IOException e) {
-                    Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                               VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
-                  }
-                }
-              }.execute();
-              if (file != null) {
-                VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-              }
-            }
-            finally {
-              action.finish();
-            }
-          });
-        }
-      }.queue();
-    }
-
-    private LocalHistoryAction startLocalHistoryAction(final VcsFileRevision revision) {
-      return LocalHistory.getInstance().startAction(createGetActionTitle(revision));
-    }
-
-    private String createGetActionTitle(final VcsFileRevision revision) {
-      return VcsBundle.message("action.name.for.file.get.version", myFilePath.getPath(), revision.getRevisionNumber());
-    }
-
-    private void write(byte[] revision) throws IOException {
-      VirtualFile virtualFile = getVirtualFile();
-      if (virtualFile == null) {
-        writeContentToIOFile(revision);
-      }
-      else {
-        Document document = null;
-        if (!virtualFile.getFileType().isBinary()) {
-          document = FileDocumentManager.getInstance().getDocument(virtualFile);
-        }
-        if (document == null) {
-          virtualFile.setBinaryContent(revision);
-        }
-        else {
-          writeContentToDocument(document, revision);
-        }
-      }
-    }
-
-    private void writeContentToIOFile(byte[] revisionContent) throws IOException {
-      FileUtil.writeToFile(myFilePath.getIOFile(), revisionContent);
-    }
-
-    private void writeContentToDocument(final Document document, byte[] revisionContent) throws IOException {
-      final String content = StringUtil.convertLineSeparators(new String(revisionContent, myFilePath.getCharset().name()));
-
-      CommandProcessor.getInstance().executeCommand(myVcs.getProject(), () -> document.replaceString(0, document.getTextLength(), content),
-                                                    VcsBundle.message("message.title.get.version"), null);
+      return historySession.isContentAvailable(revision) && !filePath.isDirectory();
     }
   }
 
