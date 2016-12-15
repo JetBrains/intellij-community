@@ -33,7 +33,6 @@ public class VirtualFileHolder implements FileHolder {
   private final Set<VirtualFile> myFiles = new HashSet<>();
   private final Project myProject;
   private final HolderType myType;
-  private int myNumDirs;
 
   public VirtualFileHolder(Project project, final HolderType type) {
     myProject = project;
@@ -50,7 +49,6 @@ public class VirtualFileHolder implements FileHolder {
 
   public void cleanAll() {
     myFiles.clear();
-    myNumDirs = 0;
   }
 
   // returns number of removed directories
@@ -106,7 +104,7 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
-    myNumDirs -= cleanScope(myProject, myFiles, scope);
+    cleanScope(myProject, myFiles, scope);
   }
 
   private static boolean fileDropped(final VirtualFile file) {
@@ -114,19 +112,11 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   public void addFile(VirtualFile file) {
-    if (myFiles.add(file)) {
-      if (file.isDirectory()) {
-        ++myNumDirs;
-      }
-    }
+    myFiles.add(file);
   }
 
   public void removeFile(VirtualFile file) {
-    if (myFiles.remove(file)) {
-      if (file.isDirectory()) {
-        -- myNumDirs;
-      }
-    }
+    myFiles.remove(file);
   }
 
   // todo track number of copies made
@@ -138,7 +128,6 @@ public class VirtualFileHolder implements FileHolder {
   public VirtualFileHolder copy() {
     final VirtualFileHolder copyHolder = new VirtualFileHolder(myProject, myType);
     copyHolder.myFiles.addAll(myFiles);
-    copyHolder.myNumDirs = myNumDirs;
     return copyHolder;
   }
 
@@ -159,14 +148,5 @@ public class VirtualFileHolder implements FileHolder {
 
   public int hashCode() {
     return myFiles.hashCode();
-  }
-
-  public int getSize() {
-    return myFiles.size();
-  }
-
-  public int getNumDirs() {
-    assert myNumDirs >= 0;
-    return myNumDirs;
   }
 }

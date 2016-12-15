@@ -201,7 +201,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
     builder.setChanges(findChanges(objects), changeNodeDecorator);
     if (isShowUnversioned()) {
-      builder.setUnversioned(manager.getUnversionedFiles(), manager.getUnversionedFilesSize());
+      builder.setUnversioned(manager.getUnversionedFiles());
     }
 
     return builder.build();

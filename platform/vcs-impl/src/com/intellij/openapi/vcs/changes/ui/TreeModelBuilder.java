@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -135,18 +134,22 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setUnversioned(@Nullable List<VirtualFile> unversionedFiles, @NotNull Couple<Integer> sizes) {
+  public TreeModelBuilder setUnversioned(@Nullable List<VirtualFile> unversionedFiles) {
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
+    int dirsCount = ContainerUtil.count(unversionedFiles, it -> it.isDirectory());
+    int filesCount = unversionedFiles.size() - dirsCount;
     boolean manyFiles = unversionedFiles.size() > UNVERSIONED_MAX_SIZE;
-    ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, sizes.first, sizes.second, manyFiles);
+    ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, filesCount, dirsCount, manyFiles);
     return insertSpecificNodeToModel(unversionedFiles, node);
   }
 
   @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, @NotNull Couple<Integer> sizes, boolean updatingMode) {
+  public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, boolean updatingMode) {
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
+    int dirsCount = ContainerUtil.count(ignoredFiles, it -> it.isDirectory());
+    int filesCount = ignoredFiles.size() - dirsCount;
     boolean manyFiles = ignoredFiles.size() > UNVERSIONED_MAX_SIZE;
-    ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, sizes.first, sizes.second, manyFiles, updatingMode);
+    ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, filesCount, dirsCount, manyFiles, updatingMode);
     return insertSpecificNodeToModel(ignoredFiles, node);
   }
 
