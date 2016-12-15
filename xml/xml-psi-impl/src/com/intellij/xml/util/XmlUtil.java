@@ -729,7 +729,7 @@ public class XmlUtil {
     if (file != null) {
 
       final Language language = file.getLanguage();
-      if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
+      if (language.isKindOf(HTMLLanguage.INSTANCE) || language == XHTMLLanguage.INSTANCE) {
         return new String[][]{new String[]{"", XHTML_URI}};
       }
     }
