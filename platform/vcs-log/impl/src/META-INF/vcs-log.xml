@@ -114,6 +114,7 @@
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.Log.ShowDiff"/>
       <reference id="Vcs.Log.ShowDiffWithLocal"/>
+      <reference id="Vcs.Log.CreatePatch"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="Vcs.CopyRevisionNumberAction"/>
     </group>

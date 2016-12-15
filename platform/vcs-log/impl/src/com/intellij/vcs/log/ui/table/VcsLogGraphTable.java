@@ -28,7 +28,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
@@ -51,7 +54,6 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
@@ -306,6 +308,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       int[] selectedRows = getSelectedRows();
       if (selectedRows.length != 1) return null;
       return getModel().getBranchesAtRow(selectedRows[0]);
+    }
+    else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.is(dataId)) {
+      int[] selectedRows = getSelectedRows();
+      if (selectedRows.length == 0) return null;
+
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
+        sb.append(getModel().getValueAt(selectedRows[i], GraphTableModel.COMMIT_COLUMN).toString());
+        if (i != selectedRows.length - 1) sb.append("\n");
+      }
+      return sb.toString();
     }
     return null;
   }
