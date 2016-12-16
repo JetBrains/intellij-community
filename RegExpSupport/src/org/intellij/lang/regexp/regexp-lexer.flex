@@ -259,14 +259,14 @@ HEX_CHAR=[0-9a-fA-F]
                                    }
 }
 
-{LBRACKET} / {RBRACKET}   { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
-{LBRACKET} / {ESCAPE} {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
+{LBRACKET} / ({RBRACKET} | {ESCAPE} {RBRACKET})   {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER;
+                                                     if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; }
 
-{LBRACKET} / "^" {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
-{LBRACKET} / "^" {ESCAPE} {RBRACKET} { if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
+{LBRACKET} / "^" ({RBRACKET} | {ESCAPE} {RBRACKET}) {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER;
+                                                       if (allowEmptyCharacterClass) yypushstate(CLASS2); else yypushstate(NEGATE_CLASS1); return RegExpTT.CLASS_BEGIN; }
 
-{LBRACKET} / "^"          { yypushstate(NEGATE_CLASS2); return RegExpTT.CLASS_BEGIN; }
-{LBRACKET}                { yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN; }
+{LBRACKET} / "^"          {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER; yypushstate(NEGATE_CLASS2); return RegExpTT.CLASS_BEGIN; }
+{LBRACKET}                {  if (yystate() == CLASS2 && !allowNestedCharacterClasses) return RegExpTT.CHARACTER; yypushstate(CLASS2); return RegExpTT.CLASS_BEGIN; }
 
 /* []abc] is legal. The first ] is treated as literal character */
 <CLASS1> {
@@ -387,3 +387,5 @@ HEX_CHAR=[0-9a-fA-F]
 [\n\b\t\r\f]   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
 
 {ANY}        { return RegExpTT.CHARACTER; }
+
+}
