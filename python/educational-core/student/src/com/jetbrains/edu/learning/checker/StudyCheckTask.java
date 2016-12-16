@@ -104,7 +104,9 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-        EduStepicConnector.postSolution(myTask, testsOutput.isSuccess(), myProject);
+        if (StudyTaskManager.getInstance(myProject).getUser().getAccessToken() != null) {
+          EduStepicConnector.postSolution(myTask, testsOutput.isSuccess(), myProject);
+        }
       }
     }
   }
