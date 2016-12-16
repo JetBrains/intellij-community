@@ -934,10 +934,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = myModuleModel.myModules.values();
     final Collection<Module> newModules = moduleModel.myModules.values();
-    final List<Module> removedModules = new ArrayList<>(oldModules);
-    removedModules.removeAll(newModules);
-    final List<Module> addedModules = new ArrayList<>(newModules);
-    addedModules.removeAll(oldModules);
+
+    final Collection<Module> addedModules;
+    final Collection<Module> removedModules;
+    if (oldModules.isEmpty()) {
+      // create immutable copy
+      addedModules = new ArrayList<>(newModules);
+      removedModules = Collections.emptyList();
+    }
+    else {
+      addedModules = new THashSet<>(newModules);
+      addedModules.removeAll(oldModules);
+
+      removedModules = new THashSet<>(oldModules);
+      removedModules.removeAll(newModules);
+    }
 
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(() -> {
       for (Module removedModule : removedModules) {
@@ -945,11 +956,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         cleanCachedStuff();
       }
 
-      List<Module> neverAddedModules = new ArrayList<>(moduleModel.myModulesToDispose);
-      neverAddedModules.removeAll(myModuleModel.myModules.values());
-      for (final Module neverAddedModule : neverAddedModules) {
-        neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
-        Disposer.dispose(neverAddedModule);
+      if (!moduleModel.myModulesToDispose.isEmpty()) {
+        List<Module> neverAddedModules = new ArrayList<>(moduleModel.myModulesToDispose);
+        neverAddedModules.removeAll(myModuleModel.myModules.values());
+        for (final Module neverAddedModule : neverAddedModules) {
+          neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
+          Disposer.dispose(neverAddedModule);
+        }
       }
 
       if (runnable != null) {
