@@ -261,11 +261,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  @Override
-  public boolean checkImmediateParentsBeforeCommit() {
-    return true;
-  }
-
   private void upgradeIfNeeded(final MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, new LocalChangeListsLoadedListener() {

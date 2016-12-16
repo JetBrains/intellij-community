@@ -498,11 +498,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return VcsType.centralized;
   }
 
-  // todo ?
-  public boolean checkImmediateParentsBeforeCommit() {
-    return false;
-  }
-
   @Nullable
   protected VcsOutgoingChangesProvider<ComList> getOutgoingProviderImpl() {
     return null;
