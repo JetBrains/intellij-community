@@ -353,7 +353,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
         if (stepicUser != null && stepicUser.getAccessToken() != null) {
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
-          myGenerator.myUser = stepicUser;
+          StepicUpdateSettings.getInstance().setUser(stepicUser);
           myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {

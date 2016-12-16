@@ -27,6 +27,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -188,7 +189,8 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(), myGenerator.myUser));
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(),
+                                                                                   StepicUpdateSettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

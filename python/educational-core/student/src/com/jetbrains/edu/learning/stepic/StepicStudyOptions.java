@@ -92,7 +92,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     Project project = StudyUtils.getStudyProject();
     if (project != null) {
       StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-      final StepicUser user = taskManager.getUser();
+      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
       setLogin(user.getEmail());
       setPassword(user.getPassword());
       myEnableTestingFromSamples.setSelected(taskManager.isEnableTestingFromSamples());
@@ -116,7 +116,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
         taskManager.setEnableTestingFromSamples(isTestingFromSamplesEnabled());
       }
 
-      final StepicUser user = taskManager.getUser();
+      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
       final boolean isCredentialsModified = !getLogin().equals(user.getEmail()) || !getPassword().equals(user.getPassword());
       if (isCredentialsModified) {
         final String login = getLogin();
@@ -132,14 +132,14 @@ public class StepicStudyOptions implements StudyOptionsProvider {
             myProject);
 
           if (stepicUser[0] != null && stepicUser[0].getAccessToken() != null) {
-            taskManager.setUser(stepicUser[0]);
+            StepicUpdateSettings.getInstance().setUser(stepicUser[0]);
           }
           else {
             throw new ConfigurationException("Unable to login");
           }
         }
         else {
-          removeCredentials(taskManager);
+          removeCredentials();
         }
       }
     }
@@ -148,8 +148,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     }
   }
 
-  private static void removeCredentials(StudyTaskManager taskManager) {
-    taskManager.setUser(new StepicUser());
+  private static void removeCredentials() {
+    StepicUpdateSettings.getInstance().setUser(new StepicUser());
   }
 
   @Nullable
@@ -163,7 +163,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     if (project == null) return false;
 
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    final StepicUser user = taskManager.getUser();
+    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
     
     return !getLogin().equals(user.getEmail()) 
            || !getPassword().equals(user.getPassword())
