@@ -222,15 +222,20 @@ public class StudyProjectGenerator {
     flushCourseJson(course, courseDirectory);
 
     int lessonIndex = 1;
+    List<Lesson> additionalLessons = new ArrayList<>();
     for (Lesson lesson : course.getLessons()) {
       if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) {
         flushAdditionalFiles(courseDirectory, lesson);
+        additionalLessons.add(lesson);
       }
       else {
         final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
         flushLesson(lessonDirectory, lesson);
         lessonIndex += 1;
       }
+    }
+    for (Lesson lesson : additionalLessons) {
+      course.getLessons().remove(lesson);
     }
   }
 
