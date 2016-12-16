@@ -106,12 +106,8 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       final int lineStartOffset = copiedFragment.getLineStartOffset(i);
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
       final ExceptionWorker worker = new ExceptionWorker(myCache);
-      final String[] lineText = new String[1];
-      ApplicationManager.getApplication().runReadAction(() -> {
-        lineText[0] = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-        worker.execute(lineText[0], lineEndOffset);
-      });
-      if (worker.getResult() != null) {
+      final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
+      if (ApplicationManager.getApplication().runReadAction((Computable<Result>)() -> worker.execute(lineText, lineEndOffset)) != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
         if (vf.getFileSystem().isReadOnly()) continue;
 
@@ -133,7 +129,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
           if (document == null) return;
 
           int startFileOffset = worker.getInfo().getThird().getStartOffset();
-          int idx = lineText[0].indexOf(':', startFileOffset);
+          int idx = lineText.indexOf(':', startFileOffset);
           int endIdx = idx == -1 ? worker.getInfo().getThird().getEndOffset() : idx;
           consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileOffset + 1, startOffset + lineStartOffset + endIdx));
 

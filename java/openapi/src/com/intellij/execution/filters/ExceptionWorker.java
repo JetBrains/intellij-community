@@ -61,11 +61,11 @@ public class ExceptionWorker {
     myCache = cache;
   }
 
-  public void execute(final String line, final int textEndOffset) {
+  public Filter.Result execute(final String line, final int textEndOffset) {
     myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null) {
-      return;
+      return null;
     }
 
     myMethod = myInfo.getSecond().substring(line);
@@ -75,10 +75,10 @@ public class ExceptionWorker {
     final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
 
     final int colonIndex = fileAndLine.lastIndexOf(':');
-    if (colonIndex < 0) return;
+    if (colonIndex < 0) return null;
 
     final int lineNumber = getLineNumber(fileAndLine.substring(colonIndex + 1));
-    if (lineNumber < 0) return;
+    if (lineNumber < 0) return null;
 
     Pair<PsiClass[], PsiFile[]> pair = myCache.resolveClass(myInfo.first.substring(line).trim());
     myClasses = pair.first;
@@ -88,7 +88,7 @@ public class ExceptionWorker {
       //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
       myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
     }
-    if (myFiles.length == 0) return;
+    if (myFiles.length == 0) return null;
 
     /*
      IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
@@ -130,7 +130,9 @@ public class ExceptionWorker {
       virtualFiles = virtualFilesInContent;
     }
     HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);
-    myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    myResult = result;
+    return result;
   }
 
   private static int getLineNumber(String lineString) {
