@@ -55,7 +55,7 @@ abstract class FunctionHelper {
     return myResultType;
   }
 
-  String getText() {
+  final String getText() {
     return getExpression().getText();
   }
 
@@ -63,23 +63,26 @@ abstract class FunctionHelper {
 
   /**
    * Try to perform "light" transformation. Works only for single-argument SAM. The function helper decides by itself
-   * how to name the SAM argument and returns it. After this method invocation normal transform cannot be performed.
+   * how to name the SAM argument and returns the assigned name. After this method invocation normal transform cannot be performed.
    *
    * @return SAM argument name or null if function helper refused to perform a transformation.
-   * @param type
+   * @param type type of the input variable (after generic substitution if applicable)
    */
   String tryLightTransform(PsiType type) {
     return null;
   }
 
   /**
-   * Perform an adaptation of current function helper to the replacement context with given parameter names.
-   * Must be called exactly once prior using getExpression() or getText()
+   * Adapts this function helper converting it to the valid expression and inlining SAM parameters with provided values.
+   * Must be called exactly once prior using getExpression() or getText().
    *
    * @param context a context for which transformation should be performed
-   * @param newNames names of the SAM parameters (the length must be exactly the same as number of SAM parameters)
+   * @param argumentValues values (expressions) of the SAM parameters to be inlined into function body
+   *                       (the length must be exactly the same as the number of SAM parameters).
+   *                       Usually it's just the references to the existing variables, but other expressions
+   *                       (e.g. constant literals) could be used as well if necessary.
    */
-  abstract void transform(StreamToLoopReplacementContext context, String... newNames);
+  abstract void transform(StreamToLoopReplacementContext context, String... argumentValues);
 
   /**
    * Rename the references of some variable if it's used inside this function
@@ -173,8 +176,8 @@ abstract class FunctionHelper {
       }
 
       @Override
-      void transform(StreamToLoopReplacementContext context, String... newNames) {
-        LOG.assertTrue(newNames.length == 0);
+      void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+        LOG.assertTrue(argumentValues.length == 0);
         myExpression = context.createExpression("new java.util.HashMap<>()");
       }
     };
@@ -273,7 +276,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       PsiMethodReferenceExpression methodRef = fromText(context, myMethodRef.getText());
       PsiExpression qualifier = methodRef.getQualifierExpression();
       if(qualifier != null) {
@@ -303,7 +306,7 @@ abstract class FunctionHelper {
       PsiElement body = lambda.getBody();
       LOG.assertTrue(body instanceof PsiExpression);
       myExpression = (PsiExpression)body;
-      EntryStream.zip(lambda.getParameterList().getParameters(), newNames)
+      EntryStream.zip(lambda.getParameterList().getParameters(), argumentValues)
         .forKeyValue((param, newName) -> myExpression = replaceVarReference(myExpression, param.getName(), newName, context));
     }
 
@@ -391,9 +394,9 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       String varName = context.declare(myNameCandidate, myFnType, myExpression.getText());
-      myFinalExpression = context.createExpression(varName + "." + myMethodName + "(" + String.join(",", newNames) + ")");
+      myFinalExpression = context.createExpression(varName + "." + myMethodName + "(" + String.join(",", argumentValues) + ")");
     }
   }
 
@@ -415,8 +418,8 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
-      myExpression = context.createExpression(myReference.getText() + "." + myName + "(" + String.join(",", newNames) + ")");
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      myExpression = context.createExpression(myReference.getText() + "." + myName + "(" + String.join(",", argumentValues) + ")");
     }
 
     @Override
@@ -444,9 +447,9 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
-      LOG.assertTrue(newNames.length == 1);
-      myExpression = context.createExpression(newNames[0]);
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      LOG.assertTrue(argumentValues.length == 1);
+      myExpression = context.createExpression(argumentValues[0]);
     }
   }
 
@@ -470,9 +473,9 @@ abstract class FunctionHelper {
       return myBody;
     }
 
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
-      LOG.assertTrue(newNames.length == myParameters.length);
-      EntryStream.zip(myParameters, newNames).forKeyValue(
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      LOG.assertTrue(argumentValues.length == myParameters.length);
+      EntryStream.zip(myParameters, argumentValues).forKeyValue(
         (oldName, newName) -> myBody = replaceVarReference(myBody, oldName, newName, context));
     }
 
