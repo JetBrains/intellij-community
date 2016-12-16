@@ -15,12 +15,22 @@
  */
 package org.jetbrains.jps.javac.ast;
 
+import com.sun.source.tree.Tree;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
+import javax.lang.model.element.Element;
+import javax.lang.model.util.Types;
+
 interface JavacTreeScannerSink {
 
-  void sinkReference(JavacRef.JavacSymbolRefBase ref);
+  void sinkReference(JavacRef.JavacElementRefBase ref);
 
   void sinkDeclaration(JavacDef def);
+
+  JavacRef.JavacElementRefBase asJavacRef(Element element);
+
+  Element getReferencedElement(Tree tree);
+
+  Types getTypeUtility();
 }

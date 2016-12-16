@@ -15,9 +15,12 @@
  */
 package org.jetbrains.jps.javac.ast.api;
 
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.util.Convert;
+import com.sun.tools.javac.util.Name;
 import org.jetbrains.annotations.NotNull;
+
+import javax.lang.model.element.*;
+import javax.lang.model.util.Elements;
+import java.util.Set;
 
 public interface JavacRef {
   JavacRef[] EMPTY_ARRAY = new JavacRef[0];
@@ -25,7 +28,7 @@ public interface JavacRef {
   @NotNull
   byte[] getName();
 
-  long getFlags();
+  Set<Modifier> getModifiers();
 
   @NotNull
   byte[] getOwnerName();
@@ -43,11 +46,11 @@ public interface JavacRef {
 
   abstract class JavacRefBase implements JavacRef {
     private final byte[] myName;
-    private final long myFlags;
+    private final Set<Modifier> myModifiers;
 
-    protected JavacRefBase(byte[] name, long flags) {
+    protected JavacRefBase(byte[] name, Set<Modifier> modifiers) {
       myName = name;
-      myFlags = flags;
+      myModifiers = modifiers;
     }
 
     @NotNull
@@ -57,16 +60,16 @@ public interface JavacRef {
     }
 
     @Override
-    public final long getFlags() {
-      return myFlags;
+    public final Set<Modifier> getModifiers() {
+      return myModifiers;
     }
   }
 
   class JavacClassImpl extends JavacRefBase implements JavacClass {
     private boolean myAnonymous;
 
-    public JavacClassImpl(boolean anonymous, long flags, byte[] name) {
-      super(name, flags);
+    public JavacClassImpl(boolean anonymous, Set<Modifier> modifiers, byte[] name) {
+      super(name, modifiers);
       myAnonymous = anonymous;
     }
 
@@ -79,19 +82,14 @@ public interface JavacRef {
     public boolean isAnonymous() {
       return myAnonymous;
     }
-
-    @Override
-    public String toString() {
-      return Convert.utf2string(getName());
-    }
   }
 
   class JavacMethodImpl extends JavacRefBase implements JavacMethod {
     private final byte[] myOwnerName;
     private final byte myParamCount;
 
-    public JavacMethodImpl(byte[] ownerName, byte paramCount, long flags, byte[] name) {
-      super(name, flags);
+    public JavacMethodImpl(byte[] ownerName, byte paramCount, Set<Modifier> modifiers, byte[] name) {
+      super(name, modifiers);
       myOwnerName = ownerName;
       myParamCount = paramCount;
     }
@@ -105,18 +103,13 @@ public interface JavacRef {
     public byte[] getOwnerName() {
       return myOwnerName;
     }
-
-    @Override
-    public String toString() {
-      return Convert.utf2string(getOwnerName()) + "." + Convert.utf2string(getName()) + "(" + myParamCount + ")";
-    }
   }
 
   class JavacFieldImpl extends JavacRefBase implements JavacField {
     private final byte[] myOwnerName;
 
-    public JavacFieldImpl(byte[] ownerName, long flags, byte[] name) {
-      super(name, flags);
+    public JavacFieldImpl(byte[] ownerName, Set<Modifier> modifiers, byte[] name) {
+      super(name, modifiers);
       myOwnerName = ownerName;
     }
 
@@ -125,79 +118,84 @@ public interface JavacRef {
     public byte[] getOwnerName() {
       return myOwnerName;
     }
-
-    @Override
-    public String toString() {
-      return Convert.utf2string(getOwnerName()) + "." + Convert.utf2string(getName());
-    }
   }
 
-  abstract class JavacSymbolRefBase implements JavacRef {
-    protected final @NotNull Symbol myOriginalElement;
+  abstract class JavacElementRefBase implements JavacRef {
+    protected final @NotNull Element myOriginalElement;
+    protected final Elements myElementUtility;
 
-    protected JavacSymbolRefBase(@NotNull Symbol element) {myOriginalElement = element;}
+    protected JavacElementRefBase(@NotNull Element element, Elements elementUtility) {
+      myOriginalElement = element;
+      myElementUtility = elementUtility;
+    }
 
     @NotNull
-    public Symbol getOriginalElement() {
+    public Element getOriginalElement() {
       return myOriginalElement;
     }
 
     @NotNull
     @Override
     public byte[] getName() {
-      return myOriginalElement.flatName().toUtf();
+      return ((Name) myOriginalElement.getSimpleName()).toUtf();
     }
 
     @Override
-    public long getFlags() {
-      return myOriginalElement.flags();
+    public Set<Modifier> getModifiers() {
+      return myOriginalElement.getModifiers();
     }
 
     @NotNull
     @Override
     public byte[] getOwnerName() {
-      return myOriginalElement.owner.flatName().toUtf();
+      return ((Name) myElementUtility.getBinaryName(((TypeElement) myOriginalElement.getEnclosingElement()))).toUtf();
     }
 
-    public static JavacRef.JavacSymbolRefBase fromSymbol(Symbol symbol) {
-      if (symbol instanceof Symbol.ClassSymbol) {
-        return new JavacRef.JavacSymbolClassImpl(symbol);
+    public static JavacElementRefBase fromElement(Element element, Elements elementUtility) {
+      if (element instanceof TypeElement) {
+        return new JavacElementClassImpl(element, elementUtility);
       }
-      else if (symbol instanceof Symbol.VarSymbol) {
-        return new JavacRef.JavacSymbolFieldImpl(symbol);
+      else if (element instanceof VariableElement) {
+        return new JavacElementFieldImpl(element, elementUtility);
       }
-      else if (symbol instanceof Symbol.MethodSymbol) {
-        return new JavacRef.JavacSymbolMethodImpl(symbol);
+      else if (element instanceof ExecutableElement) {
+        return new JavacElementMethodImpl(element, elementUtility);
       }
-      throw new AssertionError("unexpected symbol: " + symbol + " class: " + symbol.getClass());
+      throw new AssertionError("unexpected element: " + element + " class: " + element.getClass());
     }
   }
 
-  class JavacSymbolClassImpl extends JavacSymbolRefBase implements JavacClass {
-   public JavacSymbolClassImpl(@NotNull Symbol element) {
-      super(element);
+  class JavacElementClassImpl extends JavacElementRefBase implements JavacClass {
+   public JavacElementClassImpl(@NotNull Element element, Elements elementUtility) {
+      super(element, elementUtility);
+    }
+
+    @NotNull
+    @Override
+    public byte[] getName() {
+      return ((Name) myElementUtility.getBinaryName(((TypeElement) myOriginalElement))).toUtf();
     }
 
     @Override
     public boolean isAnonymous() {
-      return myOriginalElement.name.isEmpty();
+      return ((Name) myOriginalElement.getSimpleName()).isEmpty();
     }
   }
 
-  class JavacSymbolMethodImpl extends JavacSymbolRefBase implements JavacMethod {
-    public JavacSymbolMethodImpl(@NotNull Symbol element) {
-      super(element);
+  class JavacElementMethodImpl extends JavacElementRefBase implements JavacMethod {
+    public JavacElementMethodImpl(@NotNull Element element, Elements elementUtility) {
+      super(element, elementUtility);
     }
 
     @Override
     public byte getParamCount() {
-      return (byte)((Symbol.MethodSymbol)myOriginalElement).type.getParameterTypes().size();
+      return (byte)((ExecutableElement)myOriginalElement).getParameters().size();
     }
   }
 
-  class JavacSymbolFieldImpl extends JavacSymbolRefBase implements JavacField {
-    public JavacSymbolFieldImpl(@NotNull Symbol element) {
-      super(element);
+  class JavacElementFieldImpl extends JavacElementRefBase implements JavacField {
+    public JavacElementFieldImpl(@NotNull Element element, Elements elementUtility) {
+      super(element, elementUtility);
     }
   }
 }

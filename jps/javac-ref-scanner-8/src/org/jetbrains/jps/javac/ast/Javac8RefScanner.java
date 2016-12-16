@@ -7,7 +7,6 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 /**
  * Used via reflection in {@link JavacTreeRefScanner#createASTScanner()}
@@ -20,7 +19,7 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
     final Type type = lambda.type;
     final Symbol.TypeSymbol symbol = type.asElement();
     if (symbol != null) {
-      sink.sinkDeclaration(new JavacDef.JavacFunExprDef(JavacRef.JavacSymbolRefBase.fromSymbol(symbol)));
+      sink.sinkDeclaration(new JavacDef.JavacFunExprDef(sink.asJavacRef(symbol)));
     }
     return super.visitLambdaExpression(node, sink);
   }
@@ -30,8 +29,8 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
     JCTree.JCMemberReference memberRef = (JCTree.JCMemberReference)node;
     final Symbol sym = memberRef.sym;
     if (sym != null) {
-      sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
-      sink.sinkDeclaration(new JavacDef.JavacFunExprDef(JavacRef.JavacSymbolRefBase.fromSymbol(memberRef.type.asElement())));
+      sink.sinkReference(sink.asJavacRef(sym));
+      sink.sinkDeclaration(new JavacDef.JavacFunExprDef(sink.asJavacRef(memberRef.type.asElement())));
     }
     return super.visitMemberReference(node, sink);
   }

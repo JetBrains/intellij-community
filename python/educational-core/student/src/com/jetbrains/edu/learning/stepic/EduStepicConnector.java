@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -313,6 +314,7 @@ public class EduStepicConnector {
     
     try {
       final String response = postAttempt(project, task.getStepId());
+      if (response.isEmpty()) return;
       final StepicWrappers.AttemptWrapper.Attempt attempt =
         new Gson().fromJson(response, StepicWrappers.AttemptContainer.class).attempts.get(0);
       final Map<String, TaskFile> taskFiles = task.getTaskFiles();
@@ -326,10 +328,12 @@ public class EduStepicConnector {
         final String fileName = fileEntry.name;
         final VirtualFile virtualFile = taskDir.findFileByRelativePath(fileName);
         if (virtualFile != null) {
-          final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-          if (document != null) {
-            files.add(new StepicWrappers.SolutionFile(fileName, document.getCharsSequence().toString()));
-          }
+          ApplicationManager.getApplication().runReadAction(() -> {
+            final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+            if (document != null) {
+              files.add(new StepicWrappers.SolutionFile(fileName, document.getCharsSequence().toString()));
+            }
+          });
         }
       }
       
@@ -342,6 +346,7 @@ public class EduStepicConnector {
 
   public static String postAttempt(@NotNull Project project, int id) throws IOException {
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
+    if (StudyTaskManager.getInstance(project).getUser().getAccessToken() == null) return "";
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(id));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));

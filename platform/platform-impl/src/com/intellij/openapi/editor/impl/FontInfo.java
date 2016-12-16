@@ -19,13 +19,17 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.font.FontStrike;
+import sun.font.FontUtilities;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -34,6 +38,7 @@ import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
@@ -45,6 +50,8 @@ public class FontInfo {
   
   private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
+
+  private static Ref<Method> getCodePointAdvanceRef;
 
   private final TIntHashSet mySymbolsToBreakDrawingIteration = new TIntHashSet();
 
@@ -229,6 +236,20 @@ public class FontInfo {
   public int charWidth(int codePoint) {
     final FontMetrics metrics = fontMetrics();
     return FontLayoutService.getInstance().charWidth(metrics, codePoint);
+  }
+
+  public float charWidth2D(int codePoint) {
+    if (getCodePointAdvanceRef == null) {
+      getCodePointAdvanceRef = new Ref<>(ReflectionUtil.getDeclaredMethod(FontStrike.class, "getCodePointAdvance", int.class));
+    }
+    if (getCodePointAdvanceRef.get() != null) {
+      try {
+        FontStrike fs = FontUtilities.getFont2D(myFont).getStrike(myFont, myFontMetrics.getFontRenderContext());
+        return (float)getCodePointAdvanceRef.get().invoke(fs, codePoint);
+      }
+      catch (Exception ignore) {}
+    }
+    return charWidth(codePoint);
   }
 
   public FontMetrics fontMetrics() {
