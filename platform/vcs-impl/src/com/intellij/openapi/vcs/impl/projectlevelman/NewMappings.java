@@ -281,6 +281,7 @@ public class NewMappings {
         }
       }
     }
+    result.removeIf(file -> !file.isDirectory());
     return result;
   }
 

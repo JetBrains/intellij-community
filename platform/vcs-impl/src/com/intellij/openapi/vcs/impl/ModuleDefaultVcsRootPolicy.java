@@ -87,7 +87,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         // explicitly (we know it anyway)
         VcsDirectoryMapping mapping = mappingList.getMappingFor(file, module);
         final String mappingVcs = mapping != null ? mapping.getVcs() : null;
-        if (vcsName.equals(mappingVcs) && !result.contains(file)) {
+        if (vcsName.equals(mappingVcs) && !result.contains(file) && file.isDirectory()) {
           result.add(file);
         }
       }
@@ -116,7 +116,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       return myBaseDir;
     }
     final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file, Registry.is("ide.hide.excluded.files"));
-    if (contentRoot != null) {
+    if (contentRoot != null && contentRoot.isDirectory()) {
       return contentRoot;
     }
     if (ProjectKt.isDirectoryBased(myProject)) {

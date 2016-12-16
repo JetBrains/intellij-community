@@ -72,6 +72,7 @@ public class MappingsToRoots {
         }
       });
     }
+    result.removeIf(file -> !file.isDirectory());
     return VfsUtil.toVirtualFileArray(result);
   }
 
@@ -116,7 +117,7 @@ public class MappingsToRoots {
       });
       result.addAll(modules);
     }
-
+    result.removeIf(file -> !file.isDirectory());
     return result;
   }
 }
