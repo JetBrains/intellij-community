@@ -352,7 +352,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }, ModalityState.NON_MODAL);
     };
-    if (myProgressManager.getProgressIndicator() != null) {
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Preparing workspace...");
       process.run();
       return true;
     }
