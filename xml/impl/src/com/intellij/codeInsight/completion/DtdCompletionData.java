@@ -84,7 +84,7 @@ public class DtdCompletionData extends CompletionData {
       final CompletionVariant variant = new CompletionVariant(entityFilter);
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new DtdEntityGetter());
-      variant.setInsertHandler(new XmlCompletionData.EntityRefInsertHandler());
+      variant.setInsertHandler(XmlCompletionContributor.ENTITY_INSERT_HANDLER);
       registerVariant(variant);
     }
   }

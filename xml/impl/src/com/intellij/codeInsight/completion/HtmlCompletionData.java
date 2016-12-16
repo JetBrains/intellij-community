@@ -15,25 +15,18 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.TextContainFilter;
-import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
-import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Maxim.Mossienko
@@ -41,11 +34,6 @@ import org.jetbrains.annotations.NonNls;
 @SuppressWarnings({"RefusedBequest"})
 public class HtmlCompletionData extends XmlCompletionData {
   private boolean myCaseInsensitive;
-  private static final @NonNls String JAVASCRIPT_LANGUAGE_ID = "JavaScript";
-
-  public HtmlCompletionData() {
-    this(true);
-  }
 
   protected HtmlCompletionData(boolean _caseInsensitive) {
     myCaseInsensitive = _caseInsensitive;
@@ -81,11 +69,6 @@ public class HtmlCompletionData extends XmlCompletionData {
 
   protected void setCaseInsensitive(final boolean caseInsensitive) {
     myCaseInsensitive = caseInsensitive;
-  }
-
-  @Override
-  protected XmlAttributeValueGetter getAttributeValueGetter() {
-    return new HtmlAttributeValueGetter(!isCaseInsensitive());
   }
 
   @Override
@@ -132,36 +115,6 @@ public class HtmlCompletionData extends XmlCompletionData {
     };
   }
 
-  @Override
-  protected ElementFilter createAttributeValueCompletionFilter() {
-    return new ElementFilter() {
-      @Override
-      public boolean isAcceptable(Object element, PsiElement context) {
-        if (isStyleAttributeContext(context)) return false;
-        if (isScriptContext((PsiElement)element)) return false;
-        if (hasCaseSensitiveFileReferences(context)) return false;
-        return true;
-      }
-
-      @Override
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    };
-  }
-
-  private static boolean hasCaseSensitiveFileReferences(PsiElement context) {
-    for (PsiReference reference : context.getReferences()) {
-      if (reference instanceof FileReference && ((FileReference)reference).getFileReferenceSet().isCaseSensitive()) return true;
-    }
-    return false;
-  }
-
-  private static boolean isScriptContext(PsiElement element) {
-    final Language language = element.getLanguage();
-
-    return language.getID().equals(JAVASCRIPT_LANGUAGE_ID);
-  }
 
   private boolean isStyleAttributeContext(PsiElement position) {
     XmlAttribute parentOfType = PsiTreeUtil.getParentOfType(position, XmlAttribute.class, false);
@@ -173,26 +126,4 @@ public class HtmlCompletionData extends XmlCompletionData {
     super.registerVariant(variant);
     if (isCaseInsensitive()) variant.setCaseInsensitive(true);
   }
-
-  @Override
-  public String findPrefix(PsiElement insertedElement, int offset) {
-    String prefix = super.findPrefix(insertedElement, offset);
-
-    boolean searchForEntities =
-      insertedElement instanceof XmlToken &&
-      ( ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS ||
-        ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
-      );
-
-    if (searchForEntities) {
-      if (prefix.startsWith("&")) {
-        prefix = prefix.substring(1);
-      } else if (prefix.contains("&")) {
-        prefix = prefix.substring(prefix.indexOf("&") + 1);
-      }
-    }
-
-    return prefix;
-  }
-
 }

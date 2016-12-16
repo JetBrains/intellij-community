@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,43 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.filters.getters;
+package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.patterns.XmlPatterns;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ProcessingContext;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 24.11.2003
- * Time: 14:17:59
- * To change this template use Options | File Templates.
- */
-public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
-  private final boolean myCaseSensitive;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-  public HtmlAttributeValueGetter(boolean _caseSensitive) {
-    myCaseSensitive = _caseSensitive;
+public class HtmlCompletionContributor extends CompletionContributor {
+  public HtmlCompletionContributor() {
+    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
+        if (PsiTreeUtil.getParentOfType(position, HtmlTag.class, false) == null) {
+          return;
+        }
+        final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(position, XmlAttributeValue.class, false);
+        if (attributeValue != null && attributeValue.getParent() instanceof XmlAttribute) {
+          for (String element : addSpecificCompletions((XmlAttribute)attributeValue.getParent())) {
+            result.addElement(LookupElementBuilder.create(element));
+          }
+        }
+      }
+    });
   }
 
-  @Override
-  @Nullable
+  @NotNull
   @NonNls
-  protected String[] addSpecificCompletions(final XmlAttribute attribute) {
+  protected static String[] addSpecificCompletions(final XmlAttribute attribute) {
     @NonNls String name = attribute.getName();
     final XmlTag tag = attribute.getParent();
-    if (tag == null) return null;
+    if (tag == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     @NonNls String tagName = tag.getName();
-    if (!myCaseSensitive) {
+    if (tag.getDescriptor() instanceof HtmlElementDescriptorImpl) {
       name = name.toLowerCase();
       tagName = tagName.toLowerCase();
     }
@@ -81,7 +97,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
       else if ("http-equiv".equals(name) && "meta".equals(tagName)) {
         return HtmlUtil.RFC2616_HEADERS;
       }
-      else if("content".equals(name) && "meta".equals(tagName) && getAttribute(tag, "name") == null) {
+      else if("content".equals(name) && "meta".equals(tagName) && tag.getAttribute("name") == null) {
         return HtmlUtil.CONTENT_TYPES;
       }
       else if ("accept".equals(name) && "input".equals(tagName)) {
@@ -97,21 +113,6 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
       }
     }
 
-    return null;
-  }
-
-  @Nullable
-  private XmlAttribute getAttribute(@NotNull XmlTag tag, @NotNull String attributeName) {
-    if (myCaseSensitive) {
-      return tag.getAttribute(attributeName);
-    }
-
-    for (XmlAttribute xmlAttribute : tag.getAttributes()) {
-      if (attributeName.equalsIgnoreCase(xmlAttribute.getName())) {
-        return xmlAttribute;
-      }
-    }
-
-    return null;
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }
