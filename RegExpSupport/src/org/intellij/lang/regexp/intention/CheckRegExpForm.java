@@ -21,7 +21,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -112,19 +113,26 @@ public class CheckRegExpForm {
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
 
         final Alarm updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+        Runnable scheduler = () -> {
+          TransactionId transactionId = TransactionGuard.getInstance().getContextTransaction();
+          updater.cancelAllRequests();
+          if (!updater.isDisposed()) {
+            updater.addRequest(() -> {
+              Boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
+              TransactionGuard.getInstance().submitTransaction(myProject, transactionId, () -> setBalloonState(correct));
+            }, 200);
+          }
+        };
         DocumentAdapter documentListener = new DocumentAdapter() {
           @Override
           public void documentChanged(DocumentEvent e) {
-            updater.cancelAllRequests();
-            if (!updater.isDisposed()) {
-              updater.addRequest(CheckRegExpForm.this::updateBalloon, 200);
-            }
+            scheduler.run();
           }
         };
         myRegExp.addDocumentListener(documentListener);
         mySampleText.addDocumentListener(documentListener);
 
-        updateBalloon();
+        scheduler.run();
         mySampleText.selectAll();
       }
 
@@ -138,6 +146,14 @@ public class CheckRegExpForm {
     myRootPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
   }
 
+  private void setBalloonState(Boolean correct) {
+    mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
+    myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
+    myRootPanel.revalidate();
+    Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
+    if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
+  }
+
   @NotNull
   public JComponent getPreferredFocusedComponent() {
     return mySampleText;
@@ -148,40 +164,24 @@ public class CheckRegExpForm {
     return myRootPanel;
   }
 
-  private void updateBalloon() {
-    final Boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
-      myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
-      myRootPanel.revalidate();
-      Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
-      if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
-    });
-  }
-
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
     Boolean result = isMatchingText(regexpFile, sampleText);
     return result != null && result;
   }
-
   private static Boolean isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
     final String regExp = regexpFile.getText();
 
-    Integer patternFlags = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
-        int flags = 0;
-        if (host != null) {
-          for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
-            flags = provider.getFlags(host, regexpFile);
-            if (flags > 0) break;
-          }
+    Integer patternFlags = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
+      PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
+      int flags = 0;
+      if (host != null) {
+        for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
+          flags = provider.getFlags(host, regexpFile);
+          if (flags > 0) break;
         }
-        return flags;
       }
+      return flags;
     });
 
     try {

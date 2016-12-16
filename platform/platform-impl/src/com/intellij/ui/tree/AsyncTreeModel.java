@@ -17,7 +17,7 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ui.tree.AbstractTreeModel;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +32,9 @@ import java.util.IdentityHashMap;
 /**
  * @author Sergey.Malenkov
  */
-public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
+public class AsyncTreeModel extends InvokableTreeModel {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
-  private final Command.Processor processor = new Command.Processor(createForegroundInvoker(), createBackgroundInvoker());
+  private final Command.Processor processor;
   private final Tree tree = new Tree();
   private final TreeModel model;
   private final TreeModelListener listener = new TreeModelAdapter() {
@@ -74,6 +74,16 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
   };
 
   public AsyncTreeModel(TreeModel model) {
+    if (model instanceof Disposable) {
+      Disposer.register(this, (Disposable)model);
+    }
+    if (model instanceof InvokableTreeModel) {
+      InvokableTreeModel invokable = (InvokableTreeModel)model;
+      processor = new Command.Processor(super.invoker, invokable.invoker);
+    }
+    else {
+      processor = new Command.Processor(super.invoker, new Invoker.BackgroundQueue(this));
+    }
     this.model = model;
     this.model.addTreeModelListener(listener);
   }
@@ -121,13 +131,9 @@ public class AsyncTreeModel extends AbstractTreeModel implements Disposable {
   }
 
   @NotNull
-  protected Invoker createForegroundInvoker() {
-    return new Invoker.EDT(getClass().getName());
-  }
-
-  @NotNull
-  protected Invoker createBackgroundInvoker() {
-    return new Invoker.BackgroundQueue(getClass().getName());
+  @Override
+  protected Invoker createInvoker() {
+    return new Invoker.EDT(this);
   }
 
   protected Object createLoadingNode() {

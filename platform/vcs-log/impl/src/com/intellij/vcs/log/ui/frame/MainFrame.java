@@ -260,12 +260,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
       if (details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil
-        .map2Array(details, CommittedChangeListForRevision.class,
-                   details1 -> new CommittedChangeListForRevision(details1.getSubject(), details1.getFullMessage(),
-                                                                  VcsUserUtil.getShortPresentation(details1.getCommitter()),
-                                                                  new Date(details1.getCommitTime()), details1.getChanges(),
-                                                                  convertToRevisionNumber(details1.getId())));
+      return ContainerUtil.map2Array(details, CommittedChangeListForRevision.class,
+                                     detail -> new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
+                                                                                  VcsUserUtil.getShortPresentation(detail.getCommitter()),
+                                                                                  new Date(detail.getCommitTime()),
+                                                                                  detail.getChanges(),
+                                                                                  convertToRevisionNumber(detail.getId())));
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
       List<CommitId> hashes = myLog.getSelectedCommits();
@@ -343,14 +343,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @Override
     protected void onSelection(@NotNull int[] selection) {
       // just reset and wait for details to be loaded
-      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
       myChangesBrowser.getViewer().setEmptyText("");
     }
 
     @Override
     protected void onEmptySelection() {
       myChangesBrowser.getViewer().setEmptyText("No commits selected");
-      myChangesBrowser.setChangesToDisplay(Collections.<Change>emptyList());
+      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
     }
   }
 
@@ -358,7 +358,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(), myTextFilter.getTextEditor());
+      return Arrays.asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(), myTextFilter.getTextEditor());
     }
   }
 }

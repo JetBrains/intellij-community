@@ -16,8 +16,11 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.util.MethodInvocator;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Map;
@@ -26,6 +29,8 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class GraphicsUtil {
+  private static final MethodInvocator ourSafelyGetGraphicsMethod = new MethodInvocator(JComponent.class, "safelyGetGraphics", Component.class);
+
   @SuppressWarnings("UndesirableClassUsage")
   private static final Graphics2D ourGraphics = new BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB).createGraphics();
   static {
@@ -97,5 +102,18 @@ public class GraphicsUtil {
 
     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     return config;
+  }
+
+  /* Invoking getGraphics() on any component disables true double buffering
+     withing JRootPane, even if no subsequent drawing is actually performed.
+
+     This matters only if we use the default RepaintManager and swing.bufferPerWindow = true.
+
+     True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+     frame buffer content without the usual repainting, even when the EDT is blocked. */
+  public static Graphics safelyGetGraphics(Component c) {
+    return SystemProperties.isTrueSmoothScrollingEnabled() && ourSafelyGetGraphicsMethod.isAvailable()
+           ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c)
+           : c.getGraphics();
   }
 }

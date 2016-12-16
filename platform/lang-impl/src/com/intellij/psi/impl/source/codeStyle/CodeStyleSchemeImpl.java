@@ -19,6 +19,7 @@ import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -102,6 +103,12 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   @Override
   public void resetToDefaults() {
     myCodeStyleSettings = new CodeStyleSettings();
+  }
+
+  @Nullable
+  @Override
+  public SchemeState getSchemeState() {
+    return isInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
   }
 
   @Override

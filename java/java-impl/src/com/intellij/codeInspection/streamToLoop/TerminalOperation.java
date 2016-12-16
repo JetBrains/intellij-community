@@ -111,20 +111,12 @@ abstract class TerminalOperation extends Operation {
         if(args.length == 0) return new ToPrimitiveArrayTerminalOperation(componentType.getCanonicalText());
       }
       else {
-        String arr = "";
+        FunctionHelper fn = null;
         if(args.length == 1) {
-          if(!(args[0] instanceof PsiMethodReferenceExpression)) return null;
-          PsiMethodReferenceExpression arrCtor = (PsiMethodReferenceExpression)args[0];
-          if(!arrCtor.isConstructor()) return null;
-          PsiTypeElement typeElement = arrCtor.getQualifierType();
-          if(typeElement == null) return null;
-          PsiType type = typeElement.getType();
-          if(!(type instanceof PsiArrayType)) return null;
-          arr = "new "+type.getCanonicalText().replaceFirst("\\[]", "[0]");
+          fn = FunctionHelper.create(args[0], 1);
+          if(fn == null) return null;
         }
-        return new AccumulatedTerminalOperation("list", CommonClassNames.JAVA_UTIL_LIST + "<" + elementType.getCanonicalText() + ">",
-                                                "new "+ CommonClassNames.JAVA_UTIL_ARRAY_LIST+"<>()", "{acc}.add({item});",
-                                                "{acc}.toArray("+arr+")");
+        return new ToArrayTerminalOperation(elementType, fn);
       }
     }
     if ((name.equals("max") || name.equals("min")) && args.length < 2) {
@@ -422,6 +414,29 @@ abstract class TerminalOperation extends Operation {
       context.setFinisher("java.util.Arrays.copyOfRange("+arr+",0,"+count+")");
       return "if(" + arr + ".length==" + count + ") " + arr + "=java.util.Arrays.copyOf(" + arr + "," + count + "*2);\n" +
              arr + "[" + count + "++]=" + inVar + ";\n";
+    }
+  }
+
+  static class ToArrayTerminalOperation extends TerminalOperation {
+    private final String myType;
+    private final FunctionHelper mySupplier;
+
+    public ToArrayTerminalOperation(PsiType type, FunctionHelper supplier) {
+      myType = type.getCanonicalText();
+      mySupplier = supplier;
+    }
+
+    @Override
+    String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      String list = context.declareResult("list", CommonClassNames.JAVA_UTIL_LIST + "<" + myType + ">",
+                                          "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>()", false);
+      String toArrayArg = "";
+      if(mySupplier != null) {
+        mySupplier.transform(context, "0");
+        toArrayArg = mySupplier.getText();
+      }
+      context.setFinisher(list + ".toArray(" + toArrayArg + ")");
+      return list+".add("+inVar+");\n";
     }
   }
 

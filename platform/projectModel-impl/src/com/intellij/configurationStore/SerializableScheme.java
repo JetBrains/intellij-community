@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.configurationStore;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements;
+import com.intellij.openapi.options.SchemeState;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+public interface SerializableScheme {
+  @NotNull
+  Element writeScheme();
 
-/**
- * author ven
- */
-public interface GrTopLevelDefinition extends GrNamedElement, GrTopStatement {
-  GrTopLevelDefinition[] EMPTY_ARRAY = new GrTopLevelDefinition[0];
+  /**
+   * Null if unsure.
+   */
+  @Nullable
+  default SchemeState getSchemeState() {
+    return null;
+  }
 }

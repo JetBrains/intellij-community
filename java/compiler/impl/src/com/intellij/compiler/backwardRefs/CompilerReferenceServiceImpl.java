@@ -141,25 +141,27 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
       myDirtyModulesHolder.installVFSListener();
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
-        boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
-        executeOnBuildThread(() -> {
-          Module[] modules = ReadAction.compute(() -> {
-            if (myProject.isDisposed()) return null;
-            return projectCompileScope.getAffectedModules();
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+          boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+          executeOnBuildThread(() -> {
+            Module[] modules = ReadAction.compute(() -> {
+              if (myProject.isDisposed()) return null;
+              return projectCompileScope.getAffectedModules();
+            });
+            if (modules == null) return;
+            if (isUpToDate) {
+              myDirtyModulesHolder.compilerActivityFinished(modules, Module.EMPTY_ARRAY);
+              myCompilationCount.increment();
+              openReaderIfNeed();
+            }
+            else {
+              myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, modules);
+            }
           });
-          if (modules == null) return;
-          if (isUpToDate) {
-            myDirtyModulesHolder.compilerActivityFinished(modules, Module.EMPTY_ARRAY);
-            myCompilationCount.increment();
-            openReaderIfNeed();
-          }
-          else {
-            myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, modules);
-          }
         });
-      });
+      }
     }
   }
 

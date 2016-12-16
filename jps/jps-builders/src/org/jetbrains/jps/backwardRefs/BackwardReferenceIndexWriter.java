@@ -22,8 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -74,7 +76,12 @@ public class BackwardReferenceIndexWriter {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
       }
       else if (CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-        throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
+        if (areAllJavaModulesAffected(context)) {
+          throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
+        } else {
+          // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
+          CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
+        }
       }
 
       if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
@@ -156,6 +163,17 @@ public class BackwardReferenceIndexWriter {
 
   private static int id(byte[] name, ByteArrayEnumerator byteArrayEnumerator) {
     return byteArrayEnumerator.enumerate(name);
+  }
+
+  private static boolean areAllJavaModulesAffected(CompileContext context) {
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      for (ModuleBuildTarget target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets(type)) {
+        if (!context.getScope().isWholeTargetAffected(target)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
 

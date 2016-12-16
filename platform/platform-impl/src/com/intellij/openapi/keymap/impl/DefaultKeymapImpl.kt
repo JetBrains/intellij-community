@@ -19,6 +19,7 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.SystemInfo
 import org.jdom.Element
 import java.awt.event.MouseEvent
@@ -29,6 +30,8 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>) : KeymapI
     set(value) {
       // ignore
     }
+
+  override fun getSchemeState() = SchemeState.NON_PERSISTENT
 
   override fun getPresentableName(): String = DefaultKeymap.instance.getKeymapPresentableName(this)
 

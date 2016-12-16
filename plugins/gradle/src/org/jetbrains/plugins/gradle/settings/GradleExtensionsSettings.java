@@ -25,7 +25,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +41,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -226,6 +225,24 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Nullable
     public GradleProp findProperty(@Nullable String name) {
       return findProperty(this, name);
+    }
+
+    @NotNull
+    public Collection<GradleProp> findAllProperties() {
+      return findAllProperties(this, ContainerUtil.newHashMap());
+    }
+
+    @NotNull
+    private static Collection<GradleProp> findAllProperties(@NotNull GradleExtensionsData extensionsData,
+                                                            @NotNull Map<String, GradleProp> result) {
+      for (GradleProp property : extensionsData.properties) {
+        if (result.containsKey(property.name)) continue;
+        result.put(property.name, property);
+      }
+      if (extensionsData.getParent() != null) {
+        findAllProperties(extensionsData.getParent(), result);
+      }
+      return result.values();
     }
 
     @Nullable

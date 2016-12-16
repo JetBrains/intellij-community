@@ -22,24 +22,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.execution.impl.ConsoleViewImpl.HyperlinkTokenInfo;
-import static com.intellij.execution.impl.ConsoleViewImpl.TokenInfo;
-
 /**
  * Holds utility methods for console processing.
  * 
  * @author Denis Zhdanov
  * @since 4/6/11 3:50 PM
  */
-public class ConsoleUtil {
-
-  private ConsoleUtil() {
-  }
-
-  public static void addToken(int length, @Nullable HyperlinkInfo info, @NotNull ConsoleViewContentType contentType, @NotNull List<TokenInfo> tokens) {
+class ConsoleUtil {
+  static void addToken(int length, @Nullable HyperlinkInfo info, @NotNull ConsoleViewContentType contentType, @NotNull List<ConsoleViewImpl.TokenInfo> outTokens) {
     int startOffset = 0;
-    if (!tokens.isEmpty()) {
-      final TokenInfo lastToken = tokens.get(tokens.size() - 1);
+    if (!outTokens.isEmpty()) {
+      final ConsoleViewImpl.TokenInfo lastToken = outTokens.get(outTokens.size() - 1);
       if (lastToken.contentType == contentType && info == lastToken.getHyperlinkInfo()) {
         lastToken.endOffset += length; // optimization
         return;
@@ -49,8 +42,7 @@ public class ConsoleUtil {
       }
     }
 
-    tokens.add(info != null ? new HyperlinkTokenInfo(contentType, startOffset, startOffset + length, info)
-                            : new TokenInfo(contentType, startOffset, startOffset + length));
+    outTokens.add(new ConsoleViewImpl.TokenInfo(contentType, startOffset, startOffset + length, info));
   }
 
   /**
@@ -62,7 +54,7 @@ public class ConsoleUtil {
    * @param startOffset  start offset of the removed text (inclusive)
    * @param endOffset    end offset of the removed text (exclusive)
    */
-  public static void updateTokensOnTextRemoval(@NotNull List<? extends TokenInfo> tokens, int startOffset, int endOffset) {
+  static void updateTokensOnTextRemoval(@NotNull List<? extends ConsoleViewImpl.TokenInfo> tokens, int startOffset, int endOffset) {
     final int firstIndex = findTokenInfoIndexByOffset(tokens, startOffset);
     if (firstIndex >= tokens.size()) {
       return;
@@ -72,7 +64,7 @@ public class ConsoleUtil {
     boolean updateOnly = false;
     int removeIndexStart = -1;
     int removeIndexEnd = -1;
-    final TokenInfo firstToken = tokens.get(firstIndex);
+    final ConsoleViewImpl.TokenInfo firstToken = tokens.get(firstIndex);
 
     if (startOffset == firstToken.startOffset) {
       // Removed range is located entirely at the first token.
@@ -92,7 +84,7 @@ public class ConsoleUtil {
     }
 
     for (int i = firstIndex + 1; i < tokens.size(); i++) {
-      final TokenInfo tokenInfo = tokens.get(i);
+      final ConsoleViewImpl.TokenInfo tokenInfo = tokens.get(i);
       if (updateOnly) {
         tokenInfo.startOffset -= removedSymbolsNumber;
         tokenInfo.endOffset -= removedSymbolsNumber;
@@ -111,7 +103,7 @@ public class ConsoleUtil {
       
       // Update current token offsets and adjust ranges of all subsequent tokens.
       tokenInfo.startOffset = startOffset;
-      tokenInfo.endOffset = startOffset + (tokenInfo.endOffset - endOffset);
+      tokenInfo.endOffset = startOffset + tokenInfo.endOffset - endOffset;
       updateOnly = true;
     }
 
@@ -129,13 +121,13 @@ public class ConsoleUtil {
    * @param offset  target offset
    * @return        index of the target token within the given list; given list length if no such token is found
    */
-  public static int findTokenInfoIndexByOffset(@NotNull List<? extends TokenInfo> tokens, final int offset) {
+  static int findTokenInfoIndexByOffset(@NotNull List<? extends ConsoleViewImpl.TokenInfo> tokens, final int offset) {
     int low = 0;
     int high = tokens.size() - 1;
 
     while (low <= high) {
       final int mid = (low + high) / 2;
-      final TokenInfo midVal = tokens.get(mid);
+      final ConsoleViewImpl.TokenInfo midVal = tokens.get(mid);
       if (offset < midVal.startOffset) {
         high = mid - 1;
       }

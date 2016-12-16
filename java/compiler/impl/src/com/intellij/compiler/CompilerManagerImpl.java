@@ -24,6 +24,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -64,6 +65,8 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class CompilerManagerImpl extends CompilerManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerManagerImpl");
+
   private final Project myProject;
 
   private final List<Compiler> myCompilers = new ArrayList<>();
@@ -507,6 +510,9 @@ public class CompilerManagerImpl extends CompilerManager {
     public void outputLineAvailable(String line) {
       // for debugging purposes uncomment this line
       //System.out.println(line);
+      if (line != null && line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
+        LOG.info(line.trim());
+      }
     }
 
     public void registerImports(String className, Collection<String> imports, Collection<String> staticImports) {

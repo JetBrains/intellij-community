@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.concurrency;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicReference;
+package com.intellij.ui.components;
 
 /**
- * Executes given runnable exactly once.
- * <p/>
- * Author: dmitrylomov
+ * An entity that has a target value.
  */
-public class DoOnce {
-  private final AtomicReference<Runnable> myRunnable;
-
-  public DoOnce(@NotNull Runnable runnable) {
-    myRunnable = new AtomicReference<Runnable>(runnable);
-  }
-
-  public void execute() {
-    Runnable runnable = myRunnable.getAndSet(null);
-    if (runnable != null) {
-      runnable.run();
-    }
-  }
+public interface TargetHolder {
+  /**
+   * Gets the target value.
+   *
+   * @return the target value.
+   */
+  int getTarget();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
-public interface GrBinaryFacade {
-
-  @NotNull
-  GrExpression getLeftOperand();
+public interface GrOperatorExpression extends GrExpression, PsiPolyVariantReference {
 
   @Nullable
-  GrExpression getRightOperand();
+  PsiType getLeftType();
 
-  @NotNull
-  IElementType getOperationTokenType();
+  @Nullable
+  PsiType getRightType();
 
   @NotNull
   PsiElement getOperationToken();
 
   @NotNull
-  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
+  IElementType getOperationTokenType();
 
   @NotNull
-  GrExpression getPsiElement();
+  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
+import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -61,12 +62,18 @@ private val LOG = logger<KeymapImpl>()
 fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapImpl {
   val result = KeymapImpl(dataHolder)
   result.name = name
+  result.schemeState = SchemeState.UNCHANGED
   return result
 }
 
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
   open var canModify = true
+
+  @JvmField
+  internal var schemeState: SchemeState? = null
+
+  override fun getSchemeState() = schemeState
 
   private val actionIdToShortcuts = THashMap<String, MutableList<Shortcut>>()
     get() {
@@ -218,6 +225,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   private fun cleanShortcutsCache() {
     _keystrokeToIds = null
     _mouseShortcutToListOfIds = null
+    schemeState = SchemeState.POSSIBLY_CHANGED
   }
 
   override fun removeAllActionShortcuts(actionId: String) {
@@ -587,6 +595,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       keymapElement.setAttribute(PARENT_ATTRIBUTE, it.name)
     }
     writeOwnActionIds(keymapElement)
+
+    schemeState = SchemeState.UNCHANGED
     return keymapElement
   }
 

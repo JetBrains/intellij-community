@@ -361,6 +361,8 @@ public class UIUtil {
   /**
    * Returns whether the JDK-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
+   *
+   * @see JBUI.ScaleType
    */
   public static boolean isJDKManagedHiDPI() {
     if (jdkManagedHiDPI != null) {
@@ -1919,6 +1921,8 @@ public class UIUtil {
       if (isJDKManagedHiDPIScreen(g2d)) {
         return RetinaImage.create(g2d, width, height, type);
       }
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(width, height, type);
     }
     return createImage(width, height, type);
   }
@@ -1936,7 +1940,7 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
     return comp != null ?
-           createImage(comp.getGraphics(), width, height, type) :
+           createImage(GraphicsUtil.safelyGetGraphics(comp), width, height, type) :
            createImage(width, height, type);
   }
 
@@ -3562,12 +3566,13 @@ public class UIUtil {
 
   private static void getAllTextsRecursivelyImpl(Component component, StringBuilder builder) {
     String candidate = "";
-    int limit = builder.length() > 60 ? 20 : 40;
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
     if (StringUtil.isNotEmpty(candidate)) {
-      builder.append(candidate.length() > limit ? (candidate.substring(0, limit - 3) + "...") : candidate).append('|');
+      candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
+      if (builder.length() > 0) builder.append(' ');
+      builder.append(StringUtil.removeHtmlTags(candidate).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();

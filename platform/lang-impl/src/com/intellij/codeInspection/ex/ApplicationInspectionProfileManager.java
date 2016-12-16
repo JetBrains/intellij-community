@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -41,9 +40,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.*;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -118,11 +117,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     return mySchemeManager;
   }
 
-  @NotNull
-  private InspectionProfileImpl createSampleProfile(@NotNull String name, InspectionProfileImpl baseProfile) {
-    return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this, baseProfile, null);
-  }
-
   // It should be public to be available from Upsource
   public static void registerProvidedSeverities() {
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
@@ -159,7 +153,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     mySchemeManager.loadSchemes();
 
     if (mySchemeManager.isEmpty()) {
-      mySchemeManager.addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getBaseProfile()));
+      mySchemeManager.addScheme(new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this));
     }
   }
 
@@ -239,16 +233,16 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     }
 
     // use default as base, not random custom profile
-    InspectionProfileImpl result = mySchemeManager.findSchemeByName(InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+    InspectionProfileImpl result = mySchemeManager.findSchemeByName(InspectionProfileKt.DEFAULT_PROFILE_NAME);
     if (result == null) {
-      return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
+      return new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, null, null);
     }
     return result;
   }
 
   @NotNull
   public String getRootProfileName() {
-    return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+    return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileKt.DEFAULT_PROFILE_NAME);
   }
 
   @Override
@@ -261,17 +255,8 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   public static void onProfilesChanged() {
-    //cleanup caches blindly for all projects in case ide profile was modified
-    for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
-      //noinspection EmptySynchronizedStatement
-      synchronized (HighlightingSettingsPerFile.getInstance(project)) {
-      }
-
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!project.isDisposed()) {
-          DaemonListeners.getInstance(project).updateStatusBar();
-        }
-      });
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      AppUIUtil.invokeLaterIfProjectAlive(project, () -> DaemonListeners.getInstance(project).updateStatusBar());
     }
   }
 }

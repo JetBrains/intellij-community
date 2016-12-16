@@ -24,12 +24,14 @@ public abstract class CompilerReferencesTestBase extends AbstractCompilerAwareTe
   public void setUp() throws Exception {
     myDefaultEnableState = CompilerReferenceService.IS_ENABLED_KEY.asBoolean();
     CompilerReferenceService.IS_ENABLED_KEY.setValue(true);
+    CompilerReferenceService.enabledInTests = true;
     super.setUp();
   }
 
   @Override
   public void tearDown() throws Exception {
     CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
+    CompilerReferenceService.enabledInTests = false;
     super.tearDown();
   }
 }

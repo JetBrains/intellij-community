@@ -134,6 +134,15 @@ public class ToolsImpl implements Tools {
     }
   }
 
+  public void scopesChanged() {
+    if (myTools != null) {
+      for (ScopeToolState tool : myTools) {
+        tool.scopesChanged();
+      }
+    }
+    myDefaultState.scopesChanged();
+  }
+
   public void writeExternal(@NotNull Element inspectionElement) {
     if (myTools != null) {
       for (ScopeToolState state : myTools) {

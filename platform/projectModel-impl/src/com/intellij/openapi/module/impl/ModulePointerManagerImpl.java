@@ -61,7 +61,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
     });
   }
 
-  private void moduleAppears(Module module) {
+  private synchronized void moduleAppears(Module module) {
     ModulePointerImpl pointer = myUnresolved.remove(module.getName());
     if (pointer != null && pointer.getModule() == null) {
       pointer.moduleAdded(module);
@@ -79,7 +79,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
     });
   }
 
-  private void unregisterPointer(Module module) {
+  private synchronized void unregisterPointer(Module module) {
     final ModulePointerImpl pointer = myPointers.remove(module);
     if (pointer != null) {
       pointer.moduleRemoved(module);
@@ -89,7 +89,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
 
   @NotNull
   @Override
-  public ModulePointer create(@NotNull Module module) {
+  public synchronized ModulePointer create(@NotNull Module module) {
     ModulePointerImpl pointer = myPointers.get(module);
     if (pointer == null) {
       pointer = myUnresolved.get(module.getName());
@@ -106,7 +106,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
 
   @NotNull
   @Override
-  public ModulePointer create(@NotNull String moduleName) {
+  public synchronized ModulePointer create(@NotNull String moduleName) {
     final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
     if (module != null) {
       return create(module);
