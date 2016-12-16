@@ -280,10 +280,16 @@ public class EduStepicConnector {
     task.setStepId(stepicId);
     task.setUpdateDate(step.update_date);
     task.setName(block.options != null ? block.options.title : (PYCHARM_PREFIX + CURRENT_VERSION));
-    task.setText(block.text);
     task.setLastSubtaskIndex(block.options.lastSubtaskIndex);
-    for (StepicWrappers.TestFileWrapper wrapper : block.options.test) {
+    for (StepicWrappers.FileWrapper wrapper : block.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);
+    }
+    if (block.options.text != null) {
+      for (StepicWrappers.FileWrapper wrapper : block.options.text) {
+        task.addTaskText(wrapper.name, wrapper.text);
+      }
+    } else {
+      task.setText(block.text);
     }
 
     task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore
