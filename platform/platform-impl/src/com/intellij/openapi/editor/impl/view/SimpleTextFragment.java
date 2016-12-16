@@ -36,7 +36,7 @@ class SimpleTextFragment extends TextFragment {
     myFont = fontInfo.getFont();
     float x = 0;
     for (int i = 0; i < myText.length; i++) {
-      x += fontInfo.charWidth(myText[i]);
+      x += fontInfo.charWidth2D(myText[i]);
       myCharPositions[i] = x;
     }
   }
@@ -54,7 +54,7 @@ class SimpleTextFragment extends TextFragment {
   @Override
   public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
     g.setFont(myFont);
-    g.drawChars(myText, startColumn, endColumn - startColumn, (int)x, (int)y);
+    g.drawString(new String(myText, startColumn, endColumn - startColumn), x, y);
   }
 
   @Override
