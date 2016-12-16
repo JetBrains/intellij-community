@@ -17,7 +17,6 @@ package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.InvertedIndex;
-import com.sun.tools.javac.code.Flags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
@@ -31,11 +30,10 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
+import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-
-import static com.sun.tools.javac.code.Flags.PRIVATE;
 
 public class BackwardReferenceIndexWriter {
   public static final String PROP_KEY = "jps.backward.ref.index.builder";
@@ -152,9 +150,8 @@ public class BackwardReferenceIndexWriter {
     return null;
   }
 
-  //see Symbol.isPrivate() method
   private static boolean isPrivate(JavacRef ref) {
-    return (ref.getFlags() & Flags.AccessFlags) == PRIVATE;
+    return ref.getModifiers().contains(Modifier.PRIVATE);
   }
 
   private static int id(JavacRef ref, ByteArrayEnumerator byteArrayEnumerator) {

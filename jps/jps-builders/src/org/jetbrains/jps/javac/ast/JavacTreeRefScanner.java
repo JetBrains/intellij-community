@@ -17,17 +17,28 @@ package org.jetbrains.jps.javac.ast;
 
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.util.List;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
+  private static final Set<ElementKind> ALLOWED_ELEMENTS = EnumSet.of(ElementKind.ENUM,
+                                                                      ElementKind.CLASS,
+                                                                      ElementKind.ANNOTATION_TYPE,
+                                                                      ElementKind.INTERFACE,
+                                                                      ElementKind.ENUM_CONSTANT,
+                                                                      ElementKind.FIELD,
+                                                                      ElementKind.CONSTRUCTOR,
+                                                                      ElementKind.METHOD);
+
   @Override
   public Tree visitCompilationUnit(CompilationUnitTree node, JavacTreeScannerSink sink) {
     scan(node.getPackageAnnotations(), sink);
@@ -37,49 +48,39 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
 
   @Override
   public Tree visitIdentifier(IdentifierTree node, JavacTreeScannerSink sink) {
-    final JCTree.JCIdent javacIdentifier = (JCTree.JCIdent)node;
-    final Type type = javacIdentifier.type;
-    if (type == null) {
+    final Element element = sink.getReferencedElement(node);
+    if (element == null) {
       return null;
     }
-    if (type.getKind() == TypeKind.PACKAGE) {
-      return null;
+    if (ALLOWED_ELEMENTS.contains(element.getKind())) {
+      sink.sinkReference(sink.asJavacRef(element));
     }
-    final Symbol sym = javacIdentifier.sym;
-    if (sym == null ||
-        sym.getKind() == ElementKind.PARAMETER ||
-        sym.getKind() == ElementKind.LOCAL_VARIABLE ||
-        sym.getKind() == ElementKind.EXCEPTION_PARAMETER ||
-        sym.getKind() == ElementKind.TYPE_PARAMETER) {
-      return null;
-    }
-    sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
     return null;
   }
 
   @Override
   public Tree visitVariable(VariableTree node, JavacTreeScannerSink sink) {
-    final Symbol.VarSymbol sym = ((JCTree.JCVariableDecl)node).sym;
-    if (sym != null && sym.getKind() == ElementKind.FIELD) {
-      sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
+    final Element element = sink.getReferencedElement(node);
+    if (element != null && element.getKind() == ElementKind.FIELD) {
+      sink.sinkReference(sink.asJavacRef(element));
     }
     return super.visitVariable(node, sink);
   }
 
   @Override
   public Tree visitMemberSelect(MemberSelectTree node, JavacTreeScannerSink sink) {
-    final Symbol sym = ((JCTree.JCFieldAccess)node).sym;
-    if (sym != null && sym.getKind() != ElementKind.PACKAGE) {
-      sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
+    final Element element = sink.getReferencedElement(node);
+    if (element != null && element.getKind() != ElementKind.PACKAGE) {
+      sink.sinkReference(sink.asJavacRef(element));
     }
     return super.visitMemberSelect(node, sink);
   }
 
   @Override
   public Tree visitMethod(MethodTree node, JavacTreeScannerSink sink) {
-    final Symbol.MethodSymbol sym = ((JCTree.JCMethodDecl)node).sym;
-    if (sym != null) {
-      sink.sinkReference(JavacRef.JavacSymbolRefBase.fromSymbol(sym));
+    final Element element = sink.getReferencedElement(node);
+    if (element != null) {
+      sink.sinkReference(sink.asJavacRef(element));
     }
     return super.visitMethod(node, sink);
   }
@@ -87,25 +88,26 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
   
   @Override
   public Tree visitClass(ClassTree node, JavacTreeScannerSink sink) {
-    JCTree.JCClassDecl classDecl = (JCTree.JCClassDecl)node;
-    Symbol.ClassSymbol sym = classDecl.sym;
-    if (sym == null) return null;
+    TypeElement element = (TypeElement)sink.getReferencedElement(node);
+    if (element == null) return null;
 
-    final Type superclass = sym.getSuperclass();
-    final List<Type> interfaces = sym.getInterfaces();
+    final TypeMirror superclass = element.getSuperclass();
+    final List<? extends TypeMirror> interfaces = element.getInterfaces();
     final JavacRef[] supers;
-    if (superclass != Type.noType) {
+    if (superclass != sink.getTypeUtility().getNoType(TypeKind.NONE)) {
       supers = new JavacRef[interfaces.size() + 1];
-      supers[interfaces.size()] = JavacRef.JavacSymbolRefBase.fromSymbol(superclass.asElement());
+      supers[interfaces.size()] = sink.asJavacRef(sink.getTypeUtility().asElement(superclass));
+
     } else {
       supers = interfaces.isEmpty() ? JavacRef.EMPTY_ARRAY : new JavacRef[interfaces.size()];
     }
 
     int i = 0;
-    for (Type anInterface : interfaces) {
-      supers[i++] = JavacRef.JavacSymbolRefBase.fromSymbol(anInterface.asElement());
+    for (TypeMirror anInterface : interfaces) {
+      supers[i++] = sink.asJavacRef(sink.getTypeUtility().asElement(anInterface));
+
     }
-    final JavacRef.JavacSymbolRefBase aClass = JavacRef.JavacSymbolRefBase.fromSymbol(sym);
+    final JavacRef.JavacElementRefBase aClass = sink.asJavacRef(element);
 
     sink.sinkReference(aClass);
     sink.sinkDeclaration(new JavacDef.JavacClassDef(aClass, supers));

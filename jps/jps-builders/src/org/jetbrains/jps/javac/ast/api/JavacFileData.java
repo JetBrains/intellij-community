@@ -19,12 +19,14 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.util.Collection;
-import java.util.List;
+import javax.lang.model.element.Modifier;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.*;
 
 public class JavacFileData {
   private final String myFilePath;
@@ -212,7 +214,7 @@ public class JavacFileData {
         } else {
           throw new IllegalStateException("unknown type: " + ref.getClass());
         }
-        out.writeLong(ref.getFlags());
+        writeModifiers(out, ref.getModifiers());
         writeBytes(out, ref.getName());
       }
 
@@ -221,11 +223,11 @@ public class JavacFileData {
         final byte marker = in.readByte();
         switch (marker) {
           case CLASS_MARKER:
-            return new JavacRef.JavacClassImpl(in.readBoolean(), in.readLong(), readBytes(in));
+            return new JavacRef.JavacClassImpl(in.readBoolean(), readModifiers(in), readBytes(in));
           case METHOD_MARKER:
-            return new JavacRef.JavacMethodImpl(readBytes(in), in.readByte(), in.readLong(), readBytes(in));
+            return new JavacRef.JavacMethodImpl(readBytes(in), in.readByte(), readModifiers(in), readBytes(in));
           case FIELD_MARKER:
-            return new JavacRef.JavacFieldImpl(readBytes(in), in.readLong(), readBytes(in));
+            return new JavacRef.JavacFieldImpl(readBytes(in), readModifiers(in), readBytes(in));
           default:
             throw new IllegalStateException("unknown marker " + marker);
         }
@@ -241,6 +243,24 @@ public class JavacFileData {
         final byte[] buf = new byte[len];
         in.readFully(buf);
         return buf;
+      }
+
+      private void writeModifiers(final DataOutput output, Set<Modifier> modifiers) throws IOException {
+        DataInputOutputUtil.writeSeq(output, modifiers, new ThrowableConsumer<Modifier, IOException>() {
+          @Override
+          public void consume(Modifier modifier) throws IOException {
+            IOUtil.writeUTF(output, modifier.name());
+          }
+        });
+      }
+
+      private Set<Modifier> readModifiers(final DataInput input) throws IOException {
+        return EnumSet.copyOf(DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
+          @Override
+          public Modifier compute() throws IOException {
+            return null;
+          }
+        }));
       }
     };
   }
