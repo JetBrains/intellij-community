@@ -187,7 +187,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         return true;
       }).
       setCouldPin(popup1 -> {
-        usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project));
+        usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), gotoData.source.getProject()));
         popup1.cancel();
         return false;
       }).
