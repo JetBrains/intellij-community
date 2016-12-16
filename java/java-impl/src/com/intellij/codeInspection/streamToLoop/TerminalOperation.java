@@ -19,8 +19,10 @@ import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToL
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -32,6 +34,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * @author Tagir Valeev
@@ -162,14 +165,15 @@ abstract class TerminalOperation extends Operation {
     switch (collectorName) {
       case "toList":
         if (collectorArgs.length != 0) return null;
-        return AccumulatedTerminalOperation.toList(resultType);
+        return ToCollectionTerminalOperation.toList(resultType);
       case "toSet":
         if (collectorArgs.length != 0) return null;
-        return AccumulatedTerminalOperation.toCollection(resultType, CommonClassNames.JAVA_UTIL_HASH_SET, "set");
+        return new ToCollectionTerminalOperation(resultType,
+                                                 FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_SET), "set");
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
-        return fn == null ? null : new ToCollectionTerminalOperation(fn);
+        return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
       case "toMap": {
         if (collectorArgs.length < 2 || collectorArgs.length > 4) return null;
         FunctionHelper key = FunctionHelper.create(collectorArgs[0], 1);
@@ -178,7 +182,7 @@ abstract class TerminalOperation extends Operation {
         PsiExpression merger = collectorArgs.length > 2 ? collectorArgs[2] : null;
         FunctionHelper supplier = collectorArgs.length == 4
                    ? FunctionHelper.create(collectorArgs[3], 0)
-                   : FunctionHelper.hashMapSupplier(resultType);
+                   : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
         if(supplier == null) return null;
         return new ToMapTerminalOperation(key, value, merger, supplier, resultType);
       }
@@ -241,7 +245,7 @@ abstract class TerminalOperation extends Operation {
         if (resultSubType == null) return null;
         CollectorOperation downstreamCollector;
         if (collectorArgs.length == 1) {
-          downstreamCollector = AccumulatedTerminalOperation.toList(resultSubType).asCollector();
+          downstreamCollector = ToCollectionTerminalOperation.toList(resultSubType).asCollector();
         }
         else {
           PsiExpression downstream = collectorArgs[collectorArgs.length - 1];
@@ -255,7 +259,7 @@ abstract class TerminalOperation extends Operation {
         }
         FunctionHelper supplier = collectorArgs.length == 3
                                   ? FunctionHelper.create(collectorArgs[1], 0)
-                                  : FunctionHelper.hashMapSupplier(resultType);
+                                  : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
         return new GroupByTerminalOperation(fn, supplier, resultType, downstreamCollector);
       }
       case "minBy":
@@ -279,6 +283,67 @@ abstract class TerminalOperation extends Operation {
         return null;
     }
     return null;
+  }
+
+  /**
+   * Eliminates &lt;? extends&gt; wildcards which correspond to the first supplied superclass.
+   * If there are more than one superclass supplied, performs the same operation for the last generic argument.
+   * Do not touch unrelated generic arguments which don't map to superclass type parameters.
+   *
+   * E.g.:
+   * <pre>{@code
+   * (List<? extends X>, Collection) -> List<X>
+   * (MyList<? extends X>, Collection) -> MyList<? extends X> (assuming MyList<T> extends List<String>)
+   * (HashMap<? extends X, ? extends List<? extends Y>, Map, Collection) -> HashMap<X, List<Y>>
+   * (HashMap<? extends X, ? extends List<? extends Y>, Map) -> HashMap<X, List<? extends Y>>
+   * }</pre>
+   *
+   * @param type
+   * @param superClasses
+   * @return
+   */
+  @NotNull
+  static PsiType eliminateCollectionWildcards(PsiType type, String... superClasses) {
+    if(superClasses.length == 0) return type;
+    String superClass = superClasses[0];
+    PsiClass aClass = PsiTypesUtil.getPsiClass(type);
+    if(aClass == null) return type;
+    PsiTypeParameter[] parameters = aClass.getTypeParameters();
+
+    if(parameters.length == 0) return type;
+    PsiSubstitutor substitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+    PsiClassType classType = factory.createType(aClass, Stream.of(parameters).map(factory::createType).toArray(PsiType[]::new));
+    PsiClass baseClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(superClass, aClass.getResolveScope());
+    if(baseClass == null) return type;
+    PsiTypeParameter[] baseClassTypeParameters = baseClass.getTypeParameters();
+
+    for (int idx = 0; idx < baseClassTypeParameters.length; idx++) {
+      PsiClass parameter = PsiTypesUtil.getPsiClass(PsiUtil.substituteTypeParameter(classType, superClass, idx, false));
+      if(parameter instanceof PsiTypeParameter) {
+        PsiType origType = PsiUtil.substituteTypeParameter(type, superClass, idx, false);
+        PsiType replacedType = origType;
+        if(origType instanceof PsiCapturedWildcardType) {
+          replacedType = ((PsiCapturedWildcardType)origType).getUpperBound();
+        }
+        if(origType instanceof PsiWildcardType) {
+          replacedType = ((PsiWildcardType)origType).getExtendsBound();
+        }
+        if (idx == baseClassTypeParameters.length - 1) {
+          replacedType = eliminateCollectionWildcards(replacedType, Arrays.copyOfRange(superClasses, 1, superClasses.length));
+        }
+        if(replacedType != origType) {
+          substitutor = substitutor.put((PsiTypeParameter)parameter, replacedType);
+        }
+      }
+    }
+    return factory.createType(aClass, substitutor);
+  }
+
+  @NotNull
+  static String eliminateCollectionWildcards(StreamToLoopReplacementContext context,
+                                             String typeText, String... superClasses) {
+    return eliminateCollectionWildcards(context.createType(typeText), superClasses).getCanonicalText();
   }
 
   static class ReduceTerminalOperation extends TerminalOperation {
@@ -511,6 +576,11 @@ abstract class TerminalOperation extends Operation {
     default void registerUsedNames(Consumer<String> usedNameConsumer) {}
     String getSupplier();
     String getAccumulator(String acc, String item);
+
+    // Returns array of base classes for which "? extends" should be eliminated from generic arguments
+    // Several elements are used for downstream collection, in this case the first element is java.util.Map
+    // and second one corresponds to the map value
+    default String[] getBaseClassChain() {return ArrayUtil.EMPTY_STRING_ARRAY;}
   }
 
   abstract static class CollectorBasedTerminalOperation extends TerminalOperation implements CollectorOperation {
@@ -528,7 +598,8 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       transform(context, inVar.getName());
-      String acc = context.declareResult(myAccNameSupplier.apply(context), myType, getSupplier(), true);
+      String acc = context.declareResult(myAccNameSupplier.apply(context),
+                                         eliminateCollectionWildcards(context, myType, getBaseClassChain()), getSupplier(), true);
       return getAccumulator(acc, inVar.getName());
     }
 
@@ -604,17 +675,6 @@ abstract class TerminalOperation extends Operation {
     }
 
     @NotNull
-    static AccumulatedTerminalOperation toCollection(PsiType collectionType, String implementationType, String varName) {
-      return new AccumulatedTerminalOperation(varName, collectionType.getCanonicalText(), "new " + implementationType + "<>()",
-                                              "{acc}.add({item});");
-    }
-
-    @NotNull
-    private static AccumulatedTerminalOperation toList(@NotNull PsiType resultType) {
-      return toCollection(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST, "list");
-    }
-
-    @NotNull
     static AccumulatedTerminalOperation summing(PsiType type) {
       return new AccumulatedTerminalOperation("sum", type.getCanonicalText(), "0", "{acc}+={item};");
     }
@@ -627,13 +687,23 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ToCollectionTerminalOperation extends CollectorBasedTerminalOperation {
-    public ToCollectionTerminalOperation(FunctionHelper fn) {
-      super(fn.getResultType(), context -> fn.suggestFinalOutputNames(context, null, "collection").get(0), fn);
+    public ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
+      super(resultType.getCanonicalText(), context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
     }
 
     @Override
     public String getAccumulator(String acc, String item) {
       return acc+".add("+item+");\n";
+    }
+
+    @Override
+    public String[] getBaseClassChain() {
+      return new String[] {CommonClassNames.JAVA_UTIL_COLLECTION};
+    }
+
+    @NotNull
+    private static ToCollectionTerminalOperation toList(@NotNull PsiType resultType) {
+      return new ToCollectionTerminalOperation(resultType, FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST), "list");
     }
   }
 
@@ -716,6 +786,11 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
+    public String[] getBaseClassChain() {
+      return new String[] {CommonClassNames.JAVA_UTIL_MAP};
+    }
+
+    @Override
     public void registerUsedNames(Consumer<String> usedNameConsumer) {
       super.registerUsedNames(usedNameConsumer);
       myKeyExtractor.registerUsedNames(usedNameConsumer);
@@ -779,6 +854,11 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
+    public String[] getBaseClassChain() {
+      return ArrayUtil.prepend(CommonClassNames.JAVA_UTIL_MAP, myCollector.getBaseClassChain());
+    }
+
+    @Override
     public void registerUsedNames(Consumer<String> usedNameConsumer) {
       super.registerUsedNames(usedNameConsumer);
       myKeyExtractor.registerUsedNames(usedNameConsumer);
@@ -831,7 +911,9 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String map = context.declareResult("map", myResultType, "new java.util.HashMap<>()", true);
+      String resultType = eliminateCollectionWildcards(context, myResultType,
+                                                       ArrayUtil.prepend(CommonClassNames.JAVA_UTIL_MAP, myCollector.getBaseClassChain()));
+      String map = context.declareResult("map", resultType, "new java.util.HashMap<>()", true);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
       context.addInitStep(map+".put(false, "+myCollector.getSupplier()+");");
@@ -860,6 +942,11 @@ abstract class TerminalOperation extends Operation {
     @Override
     public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
       myMapper.suggestVariableName(inVar, 0);
+    }
+
+    @Override
+    public String[] getBaseClassChain() {
+      return myDownstreamCollector.getBaseClassChain();
     }
 
     @Override

@@ -169,7 +169,7 @@ abstract class FunctionHelper {
 
   @NotNull
   @Contract(pure = true)
-  static FunctionHelper hashMapSupplier(PsiType type) {
+  static FunctionHelper newObjectSupplier(PsiType type, String instanceClassName) {
     return new FunctionHelper(type) {
       PsiExpression myExpression;
 
@@ -181,7 +181,7 @@ abstract class FunctionHelper {
       @Override
       void transform(StreamToLoopReplacementContext context, String... argumentValues) {
         LOG.assertTrue(argumentValues.length == 0);
-        myExpression = context.createExpression("new java.util.HashMap<>()");
+        myExpression = context.createExpression("new "+instanceClassName+"<>()");
       }
     };
   }
