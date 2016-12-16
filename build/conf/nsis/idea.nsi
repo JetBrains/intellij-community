@@ -335,13 +335,13 @@ Function ConfirmDesktopShortcut
         !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
       ${EndIf}
       ${If} ${RunningX64}
-        ; if 64-bit Win OS and jre64 for the build is available then add checkbox to Installation Options dialog
-        StrCmp "${LINK_TO_JRE64}" "null" customPreActions 0
-        inetc::head /SILENT /TOSTACK ${LINK_TO_JRE64} "" /END
+        ; if jre x86 for the build is available then add checkbox to Installation Options dialog
+        StrCmp "${LINK_TO_JRE}" "null" customPreActions 0
+        inetc::head /SILENT /TOSTACK ${LINK_TO_JRE} "" /END
         Pop $0
         ${If} $0 == "OK"
           !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install 64-bit JRE by JetBrains (will be used with 64-bit launcher)"
+          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install x86 JRE by JetBrains"
         ${EndIf}
       ${EndIf}
     ${EndIf}
@@ -366,21 +366,21 @@ done:
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
 FunctionEnd
 
-Function downloadJre64
+Function downloadJre
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field 4" "State"
   ${If} $R0 == 1
-    inetc::get ${LINK_TO_JRE64} "$TEMP\jre64.tar.gz" /END
+    inetc::get ${LINK_TO_JRE} "$TEMP\jre.tar.gz" /END
     Pop $0
     ${If} $0 == "OK"
-      untgz::extract "-d" "$INSTDIR\jre64" "$TEMP\jre64.tar.gz"
-      StrCmp $R0 "success" removeTempJre64
-      DetailPrint "Failed to extract jre64.tar.gz"
-      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre64.tar.gz"
-removeTempJre64:
-      IfFileExists "$TEMP\jre64.tar.gz" 0 done
-      Delete "$TEMP\jre64.tar.gz"
+      untgz::extract "-d" "$INSTDIR\jre" "$TEMP\jre.tar.gz"
+      StrCmp $R0 "success" removeTempJre
+      DetailPrint "Failed to extract jre.tar.gz"
+      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"
+removeTempJre:
+      IfFileExists "$TEMP\jre.tar.gz" 0 done
+      Delete "$TEMP\jre.tar.gz"
     ${Else}
-      MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE64} download is failed: $0"
+      MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE} download is failed: $0"
     ${EndIf}
   ${EndIf}
 done:
@@ -778,9 +778,9 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
 
-  ;download and install JRE 64
-  StrCmp "${LINK_TO_JRE64}" "null" shortcuts 0
-  Call downloadJre64
+  StrCmp "${LINK_TO_JRE}" "null" shortcuts 0
+  ;download and install JRE x86
+  Call downloadJre
 
 shortcuts:
   ;create shortcuts
