@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
@@ -74,6 +75,7 @@ class PrintDialog extends DialogWrapper {
   private String myFileName = null;
   private String myDirectoryName = null;
   private final boolean isSelectedTextEnabled;
+  private final int mySelectedFileCount;
 
   private static final Map<Object, String> PLACEMENT_MAP = new HashMap<>();
   private static final Map<Object, String> ALIGNMENT_MAP = new HashMap<>();
@@ -89,13 +91,14 @@ class PrintDialog extends DialogWrapper {
   }
 
 
-  public PrintDialog(String fileName, String directoryName, String selectedText, Project project) {
+  public PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
     super(project, true);
     mySelectedText = selectedText;
     setOKButtonText(CodeEditorBundle.message("print.print.button"));
     myFileName = fileName;
     myDirectoryName = directoryName;
-    this.isSelectedTextEnabled = selectedText != null;
+    isSelectedTextEnabled = selectedText != null;
+    mySelectedFileCount = selectedFileCount;
     setTitle(CodeEditorBundle.message("print.title"));
     init();
   }
@@ -115,7 +118,9 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.insets = new Insets(0,0,0,0);
 
-    myRbCurrentFile = new JRadioButton(CodeEditorBundle.message("print.file.name.radio", (myFileName != null ? myFileName : "")));
+    myRbCurrentFile = new JRadioButton(mySelectedFileCount > 1 ? CodeEditorBundle.message("print.files.radio", mySelectedFileCount)
+                                                               : CodeEditorBundle.message("print.file.name.radio",
+                                                                                          (myFileName != null ? myFileName : "")));
     panel.add(myRbCurrentFile, gbConstraints);
 
     myRbSelectedText = new JRadioButton(mySelectedText != null ? mySelectedText : CodeEditorBundle.message("print.selected.text.radio"));
@@ -504,8 +509,8 @@ class PrintDialog extends DialogWrapper {
 
     myRbSelectedText.setEnabled(isSelectedTextEnabled);
     myRbSelectedText.setSelected(isSelectedTextEnabled);
-    myRbCurrentFile.setEnabled(myFileName != null);
-    myRbCurrentFile.setSelected(myFileName != null && !isSelectedTextEnabled);
+    myRbCurrentFile.setEnabled(myFileName != null || mySelectedFileCount > 1);
+    myRbCurrentFile.setSelected(myFileName != null && !isSelectedTextEnabled || mySelectedFileCount > 1);
     myRbCurrentPackage.setEnabled(myDirectoryName != null);
     myRbCurrentPackage.setSelected(myDirectoryName != null && !isSelectedTextEnabled && myFileName == null);
 

@@ -32,10 +32,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +41,7 @@ import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -86,7 +84,9 @@ class PrintManager {
       }
     }
 
-    PrintDialog printDialog = new PrintDialog(shortFileName, directoryName, text, project);
+    List<PsiFile> psiFiles = getSelectedPsiFiles(dataContext);
+
+    PrintDialog printDialog = new PrintDialog(shortFileName, directoryName, text, psiFiles.size(), project);
     printDialog.reset();
     if (!printDialog.showAndGet()) {
       return;
@@ -97,7 +97,16 @@ class PrintManager {
     final BasePainter painter;
 
     PrintSettings printSettings = PrintSettings.getInstance();
-    if (printSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
+    if (printSettings.getPrintScope() == PrintSettings.PRINT_FILE && psiFiles.size() > 1) {
+      painter = new MultiFilePainter(psiFiles);
+    }
+    else if (printSettings.getPrintScope() == PrintSettings.PRINT_DIRECTORY) {
+      List<PsiFile> filesList = ContainerUtil.newArrayList();
+      boolean isRecursive = printSettings.isIncludeSubdirectories();
+      addToPsiFileList(psiDirectory, filesList, isRecursive);
+      painter = new MultiFilePainter(filesList);
+    }
+    else {
       if (psiFile == null && editor == null) return;
       TextPainter textPainter =
         psiFile != null ? initTextPainter(psiFile) : initTextPainter((DocumentEx)editor.getDocument(), project);
@@ -109,12 +118,6 @@ class PrintManager {
         textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
       }
       painter = textPainter;
-    }
-    else {
-      List<PsiFile> filesList = ContainerUtil.newArrayList();
-      boolean isRecursive = printSettings.isIncludeSubdirectories();
-      addToPsiFileList(psiDirectory, filesList, isRecursive);
-      painter = new MultiFilePainter(filesList);
     }
 
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
@@ -167,6 +170,22 @@ class PrintManager {
         }
       }
     }
+  }
+
+  static List<PsiFile> getSelectedPsiFiles(DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return Collections.emptyList();
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (virtualFiles == null) return Collections.emptyList();
+    PsiManager psiManager = PsiManager.getInstance(project);
+    List<PsiFile> psiFiles = new ArrayList<>(virtualFiles.length);
+    for (VirtualFile virtualFile : virtualFiles) {
+      if (virtualFile.isDirectory()) return Collections.emptyList();
+      PsiFile psiFile = psiManager.findFile(virtualFile);
+      if (psiFile == null) return Collections.emptyList();
+      psiFiles.add(psiFile);
+    }
+    return psiFiles;
   }
 
   private static PageFormat createPageFormat() {
