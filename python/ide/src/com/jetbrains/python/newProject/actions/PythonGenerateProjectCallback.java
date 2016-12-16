@@ -72,7 +72,7 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
       }
     }
     final Project newProject = generateProject(settingsStep);
-    if (generator instanceof PythonProjectGenerator && sdk == null) {
+    if (generator instanceof PythonProjectGenerator && sdk == null && newProject != null) {
       final PyNewProjectSettings settings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
       ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, settings);
       sdk = settings.getSdk();
