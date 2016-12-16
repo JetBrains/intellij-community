@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class StepicWrappers {
   private static final Logger LOG = Logger.getInstance(StepOptions.class);
@@ -44,10 +47,10 @@ public class StepicWrappers {
   }
 
   public static class StepOptions {
-    @Expose List<TestFileWrapper> test;
+    @Expose List<FileWrapper> test;
     @Expose String title;
     @Expose List<TaskFile> files;
-    @Expose String text;
+    @Expose List<FileWrapper> text;
     @Expose List<List<String>> samples;
     @Expose Integer executionMemoryLimit;
     @Expose Integer executionTimeLimit;
@@ -61,6 +64,7 @@ public class StepicWrappers {
       final StepOptions source = new StepOptions();
       source.lastSubtaskIndex = task.getLastSubtaskIndex();
       setTests(task, source, project);
+      setTaskTexts(task, source, project);
       source.files = new ArrayList<>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
@@ -104,20 +108,61 @@ public class StepicWrappers {
       return source;
     }
 
-    private static void setTests(@NotNull final Task task, @NotNull final StepOptions source, @NotNull final Project project) {
+    private static void setTaskTexts(@NotNull Task task, @NotNull StepOptions stepOptions, @NotNull Project project) {
+      stepOptions.text = new ArrayList<>();
+      VirtualFile taskDir = task.getTaskDir(project);
+      if (taskDir == null) {
+        return;
+      }
+      List<VirtualFile> taskDescriptionFiles = Arrays.stream(taskDir.getChildren())
+        .filter(virtualFile -> StudyUtils.isTaskDescriptionFile(virtualFile.getName()))
+        .collect(Collectors.toList());
+      for (VirtualFile taskDescriptionFile : taskDescriptionFiles) {
+        addFileWrapper(taskDescriptionFile, stepOptions.text);
+      }
+    }
+
+    private static void setTests(@NotNull Task task, @NotNull StepOptions source, @NotNull Project project) {
       final Map<String, String> testsText = task.getTestsText();
+      source.test = new ArrayList<>();
       if (testsText.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          source.test = Collections.singletonList(new TestFileWrapper(EduNames.TESTS_FILE, task.getTestsText(project)));
-        });
+        List<VirtualFile> testFiles = getTestFiles(task, project);
+        for (VirtualFile testFile : testFiles) {
+          addFileWrapper(testFile, source.test);
+        }
       }
       else {
-        source.test = new ArrayList<>();
         for (Map.Entry<String, String> entry : testsText.entrySet()) {
-          source.test.add(new TestFileWrapper(entry.getKey(), entry.getValue()));
+          source.test.add(new FileWrapper(entry.getKey(), entry.getValue()));
         }
       }
     }
+  }
+
+  private static void addFileWrapper(@NotNull VirtualFile file, List<FileWrapper> wrappers) {
+    try {
+      wrappers.add(new FileWrapper(file.getName(), VfsUtilCore.loadText(file)));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  private static List<VirtualFile> getTestFiles(@NotNull Task task, @NotNull Project project) {
+    List<VirtualFile> testFiles = new ArrayList<>();
+    VirtualFile taskDir = task.getTaskDir(project);
+    if (taskDir == null) {
+      return testFiles;
+    }
+    if (!task.hasSubtasks()) {
+      VirtualFile testFile = taskDir.findChild(EduNames.TESTS_FILE);
+      testFiles.add(testFile);
+      return testFiles;
+    }
+    testFiles.addAll(Arrays.stream(taskDir.getChildren())
+                       .filter(file -> StudyUtils.isTestsFile(project, file.getName()))
+                       .collect(Collectors.toList()));
+    return testFiles;
   }
 
   static class CodeTemplatesWrapper {
@@ -191,11 +236,11 @@ public class StepicWrappers {
     }
   }
 
-  static class TestFileWrapper {
+  static class FileWrapper {
     @Expose public final String name;
     @Expose public final String text;
 
-    public TestFileWrapper(String name, String text) {
+    public FileWrapper(String name, String text) {
       this.name = name;
       this.text = text;
     }
@@ -269,12 +314,12 @@ public class StepicWrappers {
       public Attempt(int step) {
         this.step = step;
       }
-      
+
       public boolean isActive() {
         return status.equals("active");
       }
     }
-    
+
     static class Dataset {
       boolean is_multiple_choice;
       List<String> options;
@@ -382,7 +427,7 @@ public class StepicWrappers {
     public SubmissionToPostWrapper(@NotNull String attemptId, @NotNull String language, @NotNull String code) {
       submission = new Submission(attemptId, new Submission.CodeReply(language, code));
     }
-    
+
     public SubmissionToPostWrapper(@NotNull String attemptId, boolean[] choices) {
       submission = new Submission(attemptId, new Submission.ChoiceReply(choices));
     }
@@ -396,11 +441,11 @@ public class StepicWrappers {
         this.reply = reply;
       }
 
-      
+
       interface Reply {
-        
+
       }
-      
+
       static class CodeReply implements Reply {
         String language;
         String code;
@@ -410,7 +455,7 @@ public class StepicWrappers {
           this.code = code;
         }
       }
-      
+
       static class ChoiceReply implements Reply {
         boolean[] choices;
 

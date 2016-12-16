@@ -39,6 +39,7 @@ public class Task implements StudyItem {
 
   private String text;
   private Map<String, String> testsText = new HashMap<>();
+  private Map<String, String> taskTexts = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
@@ -95,8 +96,16 @@ public class Task implements StudyItem {
     return testsText;
   }
 
+  public Map<String, String> getTaskTexts() {
+    return taskTexts;
+  }
+
   public void addTestsTexts(String name, String text) {
     testsText.put(name, text);
+  }
+
+  public void addTaskText(String name, String text) {
+    taskTexts.put(name, text);
   }
 
   public Map<String, TaskFile> getTaskFiles() {
