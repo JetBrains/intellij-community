@@ -63,6 +63,7 @@ class PrintDialog extends DialogWrapper {
   private JTextField myRightMarginField = null;
 
   private JCheckBox myCbDrawBorder = null;
+  private JCheckBox myCbEvenNumberOfPages = null;
 
   private JTextField myLineTextField1 = null;
   private JComboBox myLinePlacementCombo1 = null;
@@ -144,18 +145,18 @@ class PrintDialog extends DialogWrapper {
     buttonGroup.add(myRbSelectedText);
     buttonGroup.add(myRbCurrentPackage);
 
-    ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
-      }
-    };
+    ActionListener actionListener = e -> updateDependentComponents();
 
     myRbCurrentFile.addActionListener(actionListener);
     myRbSelectedText.addActionListener(actionListener);
     myRbCurrentPackage.addActionListener(actionListener);
 
     return panel;
+  }
+
+  private void updateDependentComponents() {
+    myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
+    myCbEvenNumberOfPages.setVisible(myRbCurrentFile.isSelected() && mySelectedFileCount > 1 || myRbCurrentPackage.isSelected());
   }
 
   @Override
@@ -210,6 +211,10 @@ class PrintDialog extends DialogWrapper {
     myCbDrawBorder = new JCheckBox(CodeEditorBundle.message("print.settings.draw.border.checkbox"));
     gbConstraints.gridy++;
     panel.add(myCbDrawBorder, gbConstraints);
+
+    myCbEvenNumberOfPages = new JCheckBox(CodeEditorBundle.message("print.settings.even.number.of.pages"));
+    gbConstraints.gridy++;
+    panel.add(myCbEvenNumberOfPages, gbConstraints);
 
     gbConstraints.insets = new Insets(0, 0, 6, 4);
     gbConstraints.gridx = 0;
@@ -515,7 +520,8 @@ class PrintDialog extends DialogWrapper {
     myRbCurrentPackage.setSelected(myDirectoryName != null && !isSelectedTextEnabled && myFileName == null);
 
     myCbIncludeSubpackages.setSelected(printSettings.isIncludeSubdirectories());
-    myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
+
+    updateDependentComponents();
 
     Object selectedPageSize = PageSizes.getItem(printSettings.PAPER_SIZE);
     if(selectedPageSize != null) {
@@ -549,7 +555,7 @@ class PrintDialog extends DialogWrapper {
     myRightMarginField.setText(String.valueOf(printSettings.RIGHT_MARGIN));
 
     myCbDrawBorder.setSelected(printSettings.DRAW_BORDER);
-
+    myCbEvenNumberOfPages.setSelected(printSettings.EVEN_NUMBER_OF_PAGES);
 
     myLineTextField1.setText(printSettings.FOOTER_HEADER_TEXT1);
     myLinePlacementCombo1.setSelectedItem(printSettings.FOOTER_HEADER_PLACEMENT1);
@@ -618,6 +624,7 @@ class PrintDialog extends DialogWrapper {
     catch(NumberFormatException ignored) { }
 
     printSettings.DRAW_BORDER = myCbDrawBorder.isSelected();
+    printSettings.EVEN_NUMBER_OF_PAGES = myCbEvenNumberOfPages.isSelected();
     printSettings.FOOTER_HEADER_TEXT1 = myLineTextField1.getText();
     printSettings.FOOTER_HEADER_ALIGNMENT1 = (String)myLineAlignmentCombo1.getSelectedItem();
     printSettings.FOOTER_HEADER_PLACEMENT1 = (String)myLinePlacementCombo1.getSelectedItem();

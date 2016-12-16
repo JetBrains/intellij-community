@@ -47,6 +47,8 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings> {
 
   public boolean DRAW_BORDER = true;
 
+  public boolean EVEN_NUMBER_OF_PAGES = false;
+
   public String FOOTER_HEADER_TEXT1 = CodeEditorBundle.message("print.header.default.line.1");
   public String FOOTER_HEADER_PLACEMENT1 = HEADER;
   public String FOOTER_HEADER_ALIGNMENT1 = LEFT;

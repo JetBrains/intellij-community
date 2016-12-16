@@ -98,13 +98,13 @@ class PrintManager {
 
     PrintSettings printSettings = PrintSettings.getInstance();
     if (printSettings.getPrintScope() == PrintSettings.PRINT_FILE && psiFiles.size() > 1) {
-      painter = new MultiFilePainter(psiFiles);
+      painter = new MultiFilePainter(psiFiles, printSettings.EVEN_NUMBER_OF_PAGES);
     }
     else if (printSettings.getPrintScope() == PrintSettings.PRINT_DIRECTORY) {
       List<PsiFile> filesList = ContainerUtil.newArrayList();
       boolean isRecursive = printSettings.isIncludeSubdirectories();
       addToPsiFileList(psiDirectory, filesList, isRecursive);
-      painter = new MultiFilePainter(filesList);
+      painter = new MultiFilePainter(filesList, printSettings.EVEN_NUMBER_OF_PAGES);
     }
     else {
       if (psiFile == null && editor == null) return;
