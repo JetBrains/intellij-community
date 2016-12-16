@@ -128,7 +128,7 @@ class IdePluginClient(val project: Project) :
         clientLocal.services.user.isMyProfileReady()
             .flatMap {
                 if (!it) {
-                    clientLocal.services.user.createProfile("Hey! ${Random.nextUID()}", null)
+                    clientLocal.services.user.createProfile("your", "name", null)
                 } else {
                     clientLocal.services.user.getMyUid().map {
                         log.debug { "My Profile: $it" }
