@@ -38,7 +38,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
@@ -114,7 +114,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myExcludesConfiguration = new ExcludesConfigNotificationsWrapper<>(project, new ExcludedEntriesConfiguration());
     Disposer.register(project, myExcludesConfiguration.getDelegate());
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());

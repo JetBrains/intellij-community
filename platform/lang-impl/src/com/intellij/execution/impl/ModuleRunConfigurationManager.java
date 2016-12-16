@@ -24,7 +24,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 @State(name = ModuleRunConfigurationManager.COMPONENT_NAME)
-public final class ModuleRunConfigurationManager extends ModuleAdapter implements ModuleComponent, PersistentStateComponent<Element> {
+public final class ModuleRunConfigurationManager implements ModuleComponent, ModuleListener, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
   @NonNls static final String COMPONENT_NAME = "ModuleRunConfigurationManager";
   @NotNull

@@ -21,7 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
@@ -41,7 +41,7 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
 
   public ModulePointerManagerImpl(Project project) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         unregisterPointer(module);

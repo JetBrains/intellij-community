@@ -7,7 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.ModuleAdapter
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.project.modifyModules
@@ -49,7 +49,7 @@ internal class ModuleStoreRenameTest {
           module = projectRule.createModule(tempDirManager.newPath(refreshVfs = true).resolve("m.iml"))
         }
 
-        module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleAdapter() {
+        module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
           override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
             assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))

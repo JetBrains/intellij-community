@@ -15,25 +15,8 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-
 /**
- * @author nik
+ * @deprecated Please use ModuleListener directly.
  */
 public abstract class ModuleAdapter implements ModuleListener {
-  @Override
-  public void moduleAdded(@NotNull Project project, @NotNull Module module) { }
-
-  @Override
-  public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) { }
-
-  @Override
-  public void moduleRemoved(@NotNull Project project, @NotNull Module module) { }
-
-  @Override
-  public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) { }
 }
