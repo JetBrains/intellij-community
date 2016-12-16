@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.RegionPainter;
@@ -46,6 +45,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
 
+import static com.intellij.util.SystemProperties.isTrueSmoothScrollingEnabled;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBScrollPane extends SmoothScrollPane {
@@ -734,8 +734,16 @@ public class JBScrollPane extends SmoothScrollPane {
     // event should not be consumed already
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
-    if (!SystemProperties.isTrueSmoothScrollingEnabled() && event.getWheelRotation() == 0) return false;
-    return 0 == (SCROLL_MODIFIERS & event.getModifiers());
+    boolean ignore = event.getWheelRotation() == 0;
+    if (ignore && isPreciseRotationSupported()) {
+      double rotation = event.getPreciseWheelRotation();
+      ignore = rotation == 0 || !Double.isFinite(rotation);
+    }
+    return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
+  }
+
+  private static boolean isPreciseRotationSupported() {
+    return isTrueSmoothScrollingEnabled();
   }
 
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
