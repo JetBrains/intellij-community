@@ -230,17 +230,17 @@ public class EduStepicConnector {
 
   public static List<Lesson> getLessons(@NotNull Project project, int sectionId) throws IOException {
     final StepicWrappers.SectionContainer
-      sectionContainer = EduStepicClient.getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId), 
-                                                       StepicWrappers.SectionContainer.class);
+      sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId),
+                                                       StepicWrappers.SectionContainer.class, project);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
     final List<Lesson> lessons = new ArrayList<>();
     for (Integer unitId : unitIds) {
       StepicWrappers.UnitContainer
-        unit = EduStepicClient.getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
+        unit = getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class, project);
       int lessonID = unit.units.get(0).lesson;
       StepicWrappers.LessonContainer
-        lessonContainer = EduStepicClient.getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID), 
-                                                        StepicWrappers.LessonContainer.class);
+        lessonContainer = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID),
+                                                        StepicWrappers.LessonContainer.class, project);
       Lesson lesson = lessonContainer.lessons.get(0);
       lesson.taskList = new ArrayList<>();
       for (int stepId : lesson.steps) {
@@ -255,6 +255,17 @@ public class EduStepicConnector {
     }
 
     return lessons;
+  }
+
+  private static <T> T getFromStepic(String link, final Class<T> container, @Nullable final Project project) throws IOException{
+    if (project != null) {
+      final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+      final boolean isAuthorized = user.getAccessToken() != null;
+      if (isAuthorized) {
+        return EduStepicAuthorizedClient.getFromStepic(link, container, user);
+      }
+    }
+    return EduStepicClient.getFromStepic(link, container);
   }
 
   @Nullable
@@ -285,16 +296,8 @@ public class EduStepicConnector {
   }
 
   public static StepicWrappers.StepSource getStep(@NotNull Project project, int step) throws IOException {
-    final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    final boolean isAuthorized = taskManager.getUser().getAccessToken() != null;
-    if (isAuthorized) {
-      return EduStepicAuthorizedClient.getFromStepic(EduStepicNames.STEPS + String.valueOf(step),
+    return getFromStepic(EduStepicNames.STEPS + String.valueOf(step),
                                                      StepicWrappers.StepContainer.class, project).steps.get(0);
-    }
-    else {
-      return EduStepicClient.getFromStepic(EduStepicNames.STEPS + String.valueOf(step),
-                                           StepicWrappers.StepContainer.class).steps.get(0);
-    }
   }
 
   public static void postSolution(@NotNull final Task task, boolean passed, @NotNull final Project project) {
