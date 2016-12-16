@@ -34,7 +34,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
@@ -181,6 +184,14 @@ abstract class FunctionHelper {
         myExpression = context.createExpression("new java.util.HashMap<>()");
       }
     };
+  }
+
+  static boolean hasVarReference(PsiExpression expression, String name, StreamToLoopReplacementContext context) {
+    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name+"->"+expression.getText());
+    PsiParameter var = lambda.getParameterList().getParameters()[0];
+    PsiElement body = lambda.getBody();
+    LOG.assertTrue(body != null);
+    return ReferencesSearch.search(var, new LocalSearchScope(body)).findFirst() != null;
   }
 
   /**
@@ -480,22 +491,15 @@ abstract class FunctionHelper {
     }
 
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      OptionalLong idx = StreamEx.of(myParameters).indexOf(newName);
-      if(idx.isPresent()) {
+      int idx = ArrayUtil.indexOf(myParameters, newName);
+      if(idx >= 0) {
+        // If new name collides with existing parameter, rename it
         for(int i = 1;; i++) {
           String paramName = newName+'$'+i;
-          if (!paramName.equals(oldName) &&
-              !StreamEx.of(myParameters).has(paramName)) {
-            try {
-              myBody = replaceVarReference(myBody, newName, paramName, context);
-              myParameters[(int)idx.getAsLong()] = paramName;
-              break;
-            }
-            catch(IllegalStateException ise) {
-              // something is really wrong if we already have references to all newName$1, newName$2, ... newName$50
-              // or probably IllegalStateException was thrown by something else: at least we don't stuck in endless loop
-              if(i > 50) throw ise;
-            }
+          if (!paramName.equals(oldName) && !StreamEx.of(myParameters).has(paramName) && !hasVarReference(myBody, paramName, context)) {
+            myBody = replaceVarReference(myBody, newName, paramName, context);
+            myParameters[idx] = paramName;
+            break;
           }
         }
       }
