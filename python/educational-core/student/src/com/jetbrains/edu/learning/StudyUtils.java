@@ -310,7 +310,11 @@ public class StudyUtils {
     if (manager == null) {
       return false;
     }
-    return manager.getTestFileName().equals(name);
+    String testFileName = manager.getTestFileName();
+    if (name.equals(testFileName)) {
+      return true;
+    }
+    return name.startsWith(FileUtil.getNameWithoutExtension(testFileName)) && name.contains(EduNames.SUBTASK_MARKER);
   }
 
   @Nullable

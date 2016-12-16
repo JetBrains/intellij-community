@@ -222,15 +222,20 @@ public class StudyProjectGenerator {
     flushCourseJson(course, courseDirectory);
 
     int lessonIndex = 1;
+    List<Lesson> additionalLessons = new ArrayList<>();
     for (Lesson lesson : course.getLessons()) {
       if (lesson.getName().equals(EduNames.PYCHARM_ADDITIONAL)) {
         flushAdditionalFiles(courseDirectory, lesson);
+        additionalLessons.add(lesson);
       }
       else {
         final File lessonDirectory = new File(courseDirectory, EduNames.LESSON + String.valueOf(lessonIndex));
         flushLesson(lessonDirectory, lesson);
         lessonIndex += 1;
       }
+    }
+    for (Lesson lesson : additionalLessons) {
+      course.getLessons().remove(lesson);
     }
   }
 
@@ -284,30 +289,43 @@ public class StudyProjectGenerator {
         }
       }
       catch (IOException e) {
-        LOG.error("ERROR copying file " + name);
+        LOG.error(e);
       }
     }
-    final Map<String, String> testsText = task.getTestsText();
-    for (Map.Entry<String, String> entry : testsText.entrySet()) {
-      final File testsFile = new File(taskDirectory, entry.getKey());
-      if (testsFile.exists()) {
-        FileUtil.delete(testsFile);
-      }
-      FileUtil.createIfDoesntExist(testsFile);
-      try {
-        FileUtil.writeToFile(testsFile, entry.getValue());
-      }
-      catch (IOException e) {
-        LOG.error("ERROR copying tests file");
-      }
+    createFiles(taskDirectory, task.getTestsText());
+    if (task.getTaskTexts().isEmpty()) {
+      createTaskHtml(task, taskDirectory);
+      return;
     }
-    final File taskText = new File(taskDirectory, "task.html");
+    task.setText(null);
+    createFiles(taskDirectory, task.getTaskTexts());
+
+  }
+
+  private static void createTaskHtml(@NotNull Task task, @NotNull File taskDirectory) {
+    final File taskText = new File(taskDirectory, EduNames.TASK_HTML);
     FileUtil.createIfDoesntExist(taskText);
     try {
       FileUtil.writeToFile(taskText, task.getText());
     }
     catch (IOException e) {
-      LOG.error("ERROR copying tests file");
+      LOG.error(e);
+    }
+  }
+
+  private static void createFiles(@NotNull File taskDirectory, Map<String, String> files) {
+    for (Map.Entry<String, String> entry : files.entrySet()) {
+      final File file = new File(taskDirectory, entry.getKey());
+      if (file.exists()) {
+        FileUtil.delete(file);
+      }
+      FileUtil.createIfDoesntExist(file);
+      try {
+        FileUtil.writeToFile(file, entry.getValue());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 

@@ -432,7 +432,7 @@ public class EduAdaptiveStepicConnector {
     }
 
     if (step.options.test != null) {
-      for (StepicWrappers.TestFileWrapper wrapper : step.options.test) {
+      for (StepicWrappers.FileWrapper wrapper : step.options.test) {
         task.addTestsTexts(wrapper.name, wrapper.text);
       }
     }

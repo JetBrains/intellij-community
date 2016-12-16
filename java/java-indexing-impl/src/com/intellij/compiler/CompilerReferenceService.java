@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CompilerReferenceService extends AbstractProjectComponent {
   public static final RegistryValue IS_ENABLED_KEY = Registry.get("compiler.ref.index");
-  public static volatile boolean enabledInTests = false;
 
   protected CompilerReferenceService(Project project) {
     super(project);
@@ -55,6 +53,6 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
                                                                 @NotNull FileType searchFileType);
 
   public static boolean isEnabled() {
-    return (!ApplicationManager.getApplication().isHeadlessEnvironment() || enabledInTests) && IS_ENABLED_KEY.asBoolean();
+    return IS_ENABLED_KEY.asBoolean();
   }
 }

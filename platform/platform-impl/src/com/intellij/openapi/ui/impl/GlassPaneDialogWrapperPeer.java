@@ -44,7 +44,6 @@ import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -383,9 +382,10 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     private JComponent myContentPane;
     private MyRootPane myRootPane;
     private BufferedImage shadow;
+    private int shadowWidth;
+    private int shadowHeight;
     private final JLayeredPane myTransparentPane;
     private JButton myDefaultButton;
-    private Dimension myShadowSize = null;
     private final Container myWrapperPane;
     private Component myPreviouslyFocusedComponent;
     private Dimension myCachedSize = null;
@@ -466,10 +466,6 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       });
 
       return result;
-    }
-
-    public Container getTransparentPane() {
-      return myTransparentPane;
     }
 
     private TransparentLayeredPane getExistingTransparentPane() {
@@ -570,15 +566,13 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       }
       super.setBounds(x, y, width, height);
 
-      if (myShadowSize == null || !myShadowSize.equals(getSize())) {
-        createShadow();
-        myShadowSize = getSize();
+      if (RemoteDesktopDetector.isRemoteSession()) {
+        shadow = null;
       }
-    }
-
-    private void createShadow() {
-      if (!RemoteDesktopDetector.isRemoteSession() && !JBUI.isHiDPI()) {
-        shadow = ShadowBorderPainter.createShadow(this, getWidth(), getHeight());
+      else if (shadow == null || shadowWidth != width || shadowHeight != height) {
+        shadow = ShadowBorderPainter.createShadow(this, width, height);
+        shadowWidth = width;
+        shadowHeight = height;
       }
     }
 
