@@ -584,18 +584,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     @Override
     public void dispose() {
+      setVisible(false);
       remove(getContentPane());
-      repaint();
-
-      final Runnable disposer = () -> setVisible(false);
-
-      if (EventQueue.isDispatchThread()) {
-        disposer.run();
-      } else {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(disposer);
-      }
-
       myRootPane = null;
     }
 
@@ -693,6 +683,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     @Override
     public void dispose() {
+      DialogWrapper.cleanupRootPane(this);
       myDialog = null;
     }
 
