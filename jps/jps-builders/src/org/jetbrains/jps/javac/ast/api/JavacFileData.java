@@ -205,17 +205,17 @@ public class JavacFileData {
         }
         else if (ref instanceof JavacRef.JavacField) {
           out.writeByte(FIELD_MARKER);
-          writeBytes(out, ref.getOwnerName());
+          IOUtil.writeUTF(out, ref.getOwnerName());
         }
         else if (ref instanceof JavacRef.JavacMethod) {
           out.writeByte(METHOD_MARKER);
-          writeBytes(out, ref.getOwnerName());
+          IOUtil.writeUTF(out, ref.getOwnerName());
           out.write(((JavacRef.JavacMethod)ref).getParamCount());
         } else {
           throw new IllegalStateException("unknown type: " + ref.getClass());
         }
         writeModifiers(out, ref.getModifiers());
-        writeBytes(out, ref.getName());
+        IOUtil.writeUTF(out, ref.getName());
       }
 
       @Override
@@ -223,26 +223,14 @@ public class JavacFileData {
         final byte marker = in.readByte();
         switch (marker) {
           case CLASS_MARKER:
-            return new JavacRef.JavacClassImpl(in.readBoolean(), readModifiers(in), readBytes(in));
+            return new JavacRef.JavacClassImpl(in.readBoolean(), readModifiers(in), IOUtil.readUTF(in));
           case METHOD_MARKER:
-            return new JavacRef.JavacMethodImpl(readBytes(in), in.readByte(), readModifiers(in), readBytes(in));
+            return new JavacRef.JavacMethodImpl(IOUtil.readUTF(in), in.readByte(), readModifiers(in), IOUtil.readUTF(in));
           case FIELD_MARKER:
-            return new JavacRef.JavacFieldImpl(readBytes(in), readModifiers(in), readBytes(in));
+            return new JavacRef.JavacFieldImpl(IOUtil.readUTF(in), readModifiers(in), IOUtil.readUTF(in));
           default:
             throw new IllegalStateException("unknown marker " + marker);
         }
-      }
-
-      private void writeBytes(DataOutput out, byte[] bytes) throws IOException {
-        out.writeInt(bytes.length);
-        out.write(bytes);
-      }
-
-      private byte[] readBytes(DataInput in) throws IOException {
-        final int len = in.readInt();
-        final byte[] buf = new byte[len];
-        in.readFully(buf);
-        return buf;
       }
 
       private void writeModifiers(final DataOutput output, Set<Modifier> modifiers) throws IOException {

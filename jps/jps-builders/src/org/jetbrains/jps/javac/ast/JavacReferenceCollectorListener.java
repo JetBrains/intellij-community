@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.jps.javac.ast.api.NameTableCache;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -48,6 +49,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private final Elements myElementUtility;
   private final Types myTypeUtility;
   private final Trees myTreeUtility;
+  private final NameTableCache myNameTableCache;
 
   private NotNullLazyValue<Name> myAsterisk = new NotNullLazyValue<Name>() {
     @NotNull
@@ -96,6 +98,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     myTypeUtility = typeUtility;
     myTreeUtility = treeUtility;
     myAstScanner = JavacTreeRefScanner.createASTScanner();
+    myNameTableCache = new NameTableCache(elementUtility);
   }
 
   @Override
@@ -161,7 +164,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
           @Override
           public JavacRef.JavacElementRefBase asJavacRef(Element element) {
-            return JavacRef.JavacElementRefBase.fromElement(element, myElementUtility);
+            return JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache);
           }
 
           @Override
@@ -211,7 +214,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {
-                elements.add(JavacRef.JavacElementRefBase.fromElement(memberElement, myElementUtility));
+                elements.add(JavacRef.JavacElementRefBase.fromElement(memberElement, myNameTableCache));
               }
             }
           }
@@ -228,7 +231,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     for (Element element = baseImport;
          element != null && element.getKind() != ElementKind.PACKAGE;
          element = element.getEnclosingElement()) {
-      collector.add(JavacRef.JavacElementRefBase.fromElement(element, myElementUtility));
+      collector.add(JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache));
     }
   }
 

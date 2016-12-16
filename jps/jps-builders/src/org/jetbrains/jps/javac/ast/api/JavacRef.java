@@ -15,23 +15,21 @@
  */
 package org.jetbrains.jps.javac.ast.api;
 
-import com.sun.tools.javac.util.Name;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.*;
-import javax.lang.model.util.Elements;
 import java.util.Set;
 
 public interface JavacRef {
   JavacRef[] EMPTY_ARRAY = new JavacRef[0];
 
   @NotNull
-  byte[] getName();
+  String getName();
 
   Set<Modifier> getModifiers();
 
   @NotNull
-  byte[] getOwnerName();
+  String getOwnerName();
 
   interface JavacClass extends JavacRef {
     boolean isAnonymous();
@@ -45,17 +43,17 @@ public interface JavacRef {
   }
 
   abstract class JavacRefBase implements JavacRef {
-    private final byte[] myName;
+    private final String myName;
     private final Set<Modifier> myModifiers;
 
-    protected JavacRefBase(byte[] name, Set<Modifier> modifiers) {
+    protected JavacRefBase(String name, Set<Modifier> modifiers) {
       myName = name;
       myModifiers = modifiers;
     }
 
     @NotNull
     @Override
-    public final byte[] getName() {
+    public final String getName() {
       return myName;
     }
 
@@ -68,14 +66,14 @@ public interface JavacRef {
   class JavacClassImpl extends JavacRefBase implements JavacClass {
     private boolean myAnonymous;
 
-    public JavacClassImpl(boolean anonymous, Set<Modifier> modifiers, byte[] name) {
+    public JavacClassImpl(boolean anonymous, Set<Modifier> modifiers, String name) {
       super(name, modifiers);
       myAnonymous = anonymous;
     }
 
     @NotNull
     @Override
-    public byte[] getOwnerName() {
+    public String getOwnerName() {
       throw new UnsupportedOperationException();
     }
 
@@ -85,10 +83,10 @@ public interface JavacRef {
   }
 
   class JavacMethodImpl extends JavacRefBase implements JavacMethod {
-    private final byte[] myOwnerName;
+    private final String myOwnerName;
     private final byte myParamCount;
 
-    public JavacMethodImpl(byte[] ownerName, byte paramCount, Set<Modifier> modifiers, byte[] name) {
+    public JavacMethodImpl(String ownerName, byte paramCount, Set<Modifier> modifiers, String name) {
       super(name, modifiers);
       myOwnerName = ownerName;
       myParamCount = paramCount;
@@ -100,33 +98,33 @@ public interface JavacRef {
 
     @NotNull
     @Override
-    public byte[] getOwnerName() {
+    public String getOwnerName() {
       return myOwnerName;
     }
   }
 
   class JavacFieldImpl extends JavacRefBase implements JavacField {
-    private final byte[] myOwnerName;
+    private final String myOwnerName;
 
-    public JavacFieldImpl(byte[] ownerName, Set<Modifier> modifiers, byte[] name) {
+    public JavacFieldImpl(String ownerName, Set<Modifier> modifiers, String name) {
       super(name, modifiers);
       myOwnerName = ownerName;
     }
 
     @NotNull
     @Override
-    public byte[] getOwnerName() {
+    public String getOwnerName() {
       return myOwnerName;
     }
   }
 
   abstract class JavacElementRefBase implements JavacRef {
     protected final @NotNull Element myOriginalElement;
-    protected final Elements myElementUtility;
+    protected final NameTableCache myNameTableCache;
 
-    protected JavacElementRefBase(@NotNull Element element, Elements elementUtility) {
+    protected JavacElementRefBase(@NotNull Element element, NameTableCache nameTableCache) {
       myOriginalElement = element;
-      myElementUtility = elementUtility;
+      myNameTableCache = nameTableCache;
     }
 
     @NotNull
@@ -136,8 +134,8 @@ public interface JavacRef {
 
     @NotNull
     @Override
-    public byte[] getName() {
-      return ((Name) myOriginalElement.getSimpleName()).toUtf();
+    public String getName() {
+      return myNameTableCache.get(myOriginalElement.getSimpleName());
     }
 
     @Override
@@ -147,44 +145,44 @@ public interface JavacRef {
 
     @NotNull
     @Override
-    public byte[] getOwnerName() {
-      return ((Name) myElementUtility.getBinaryName(((TypeElement) myOriginalElement.getEnclosingElement()))).toUtf();
+    public String getOwnerName() {
+      return myNameTableCache.get(myNameTableCache.getBinaryName(myOriginalElement.getEnclosingElement()));
     }
 
-    public static JavacElementRefBase fromElement(Element element, Elements elementUtility) {
+    public static JavacElementRefBase fromElement(Element element, NameTableCache nameTableCache) {
       if (element instanceof TypeElement) {
-        return new JavacElementClassImpl(element, elementUtility);
+        return new JavacElementClassImpl(element, nameTableCache);
       }
       else if (element instanceof VariableElement) {
-        return new JavacElementFieldImpl(element, elementUtility);
+        return new JavacElementFieldImpl(element, nameTableCache);
       }
       else if (element instanceof ExecutableElement) {
-        return new JavacElementMethodImpl(element, elementUtility);
+        return new JavacElementMethodImpl(element, nameTableCache);
       }
       throw new AssertionError("unexpected element: " + element + " class: " + element.getClass());
     }
   }
 
   class JavacElementClassImpl extends JavacElementRefBase implements JavacClass {
-   public JavacElementClassImpl(@NotNull Element element, Elements elementUtility) {
-      super(element, elementUtility);
+   public JavacElementClassImpl(@NotNull Element element, NameTableCache nameTableCache) {
+      super(element, nameTableCache);
     }
 
     @NotNull
     @Override
-    public byte[] getName() {
-      return ((Name) myElementUtility.getBinaryName(((TypeElement) myOriginalElement))).toUtf();
+    public String getName() {
+      return myNameTableCache.get(myNameTableCache.getBinaryName(myOriginalElement));
     }
 
     @Override
     public boolean isAnonymous() {
-      return ((Name) myOriginalElement.getSimpleName()).isEmpty();
+      return myNameTableCache.get(myOriginalElement.getSimpleName()).isEmpty();
     }
   }
 
   class JavacElementMethodImpl extends JavacElementRefBase implements JavacMethod {
-    public JavacElementMethodImpl(@NotNull Element element, Elements elementUtility) {
-      super(element, elementUtility);
+    public JavacElementMethodImpl(@NotNull Element element, NameTableCache nameTableCache) {
+      super(element, nameTableCache);
     }
 
     @Override
@@ -194,8 +192,8 @@ public interface JavacRef {
   }
 
   class JavacElementFieldImpl extends JavacElementRefBase implements JavacField {
-    public JavacElementFieldImpl(@NotNull Element element, Elements elementUtility) {
-      super(element, elementUtility);
+    public JavacElementFieldImpl(@NotNull Element element, NameTableCache nameTableCache) {
+      super(element, nameTableCache);
     }
   }
 }

@@ -125,23 +125,23 @@ public class BackwardReferenceIndexWriter {
 
   @Nullable
   LightRef enumerateNames(JavacRef ref) {
-    ByteArrayEnumerator byteArrayEnumerator = myIndex.getByteSeqEum();
+    NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
-        return new LightRef.JavaLightClassRef(id(ref, byteArrayEnumerator));
+        return new LightRef.JavaLightClassRef(id(ref, nameEnumerator));
       }
     }
     else {
-      byte[] ownerName = ref.getOwnerName();
+      String ownerName = ref.getOwnerName();
       if (isPrivate(ref)) {
         return null;
       }
       if (ref instanceof JavacRef.JavacField) {
-        return new LightRef.JavaLightFieldRef(id(ownerName, byteArrayEnumerator), id(ref, byteArrayEnumerator));
+        return new LightRef.JavaLightFieldRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator));
       }
       else if (ref instanceof JavacRef.JavacMethod) {
         int paramCount = ((JavacRef.JavacMethod) ref).getParamCount();
-        return new LightRef.JavaLightMethodRef(id(ownerName, byteArrayEnumerator), id(ref, byteArrayEnumerator), paramCount);
+        return new LightRef.JavaLightMethodRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
       }
       else {
         throw new AssertionError("unexpected symbol: " + ref + " class: " + ref.getClass());
@@ -154,12 +154,12 @@ public class BackwardReferenceIndexWriter {
     return ref.getModifiers().contains(Modifier.PRIVATE);
   }
 
-  private static int id(JavacRef ref, ByteArrayEnumerator byteArrayEnumerator) {
-    return id(ref.getName(), byteArrayEnumerator);
+  private static int id(JavacRef ref, NameEnumerator nameEnumerator) {
+    return id(ref.getName(), nameEnumerator);
   }
 
-  private static int id(byte[] name, ByteArrayEnumerator byteArrayEnumerator) {
-    return byteArrayEnumerator.enumerate(name);
+  private static int id(String name, NameEnumerator nameEnumerator) {
+    return nameEnumerator.enumerate(name);
   }
 
   private static boolean areAllJavaModulesAffected(CompileContext context) {
