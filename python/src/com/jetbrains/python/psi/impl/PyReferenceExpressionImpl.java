@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -132,54 +133,61 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static final QualifiedResolveResult EMPTY_RESULT = new QualifiedResolveResultEmpty();
 
   @NotNull
-  public QualifiedResolveResult followAssignmentsChain(PyResolveContext resolveContext) {
-    PyReferenceExpression seeker = this;
-    QualifiedResolveResult ret = null;
-    List<PyExpression> qualifiers = new ArrayList<>();
-    PyExpression qualifier = seeker.getQualifier();
-    if (qualifier != null) {
-      qualifiers.add(qualifier);
-    }
-    Set<PsiElement> visited = new HashSet<>();
+  public QualifiedResolveResult followAssignmentsChain(@NotNull PyResolveContext resolveContext) {
+    final List<QualifiedResolveResult> resolveResults = multiFollowAssignmentsChain(resolveContext);
+
+    return resolveResults
+      .stream()
+      .filter(result -> !result.isImplicit())
+      .findFirst()
+      .orElseGet(() -> ContainerUtil.getFirstItem(resolveResults, EMPTY_RESULT));
+  }
+
+  @NotNull
+  @Override
+  public List<QualifiedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext) {
+    final List<QualifiedResolveResult> result = new ArrayList<>();
+    final Queue<MultiFollowQueueNode> queue = new LinkedList<>();
+    final Set<PyReferenceExpression> visited = new HashSet<>();
+
+    queue.add(MultiFollowQueueNode.create(null, this));
     visited.add(this);
-    SEARCH:
-    while (ret == null) {
-      ResolveResult[] targets = seeker.getReference(resolveContext).multiResolve(false);
-      for (ResolveResult target : targets) {
-        PsiElement elt = target.getElement();
-        if (elt instanceof PyTargetExpression) {
-          final PyTargetExpression expr = (PyTargetExpression)elt;
-          final TypeEvalContext context = resolveContext.getTypeEvalContext();
-          final PsiElement assigned_from;
-          if (context.maySwitchToAST(expr)) {
-            assigned_from = expr.findAssignedValue();
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+
+    while (!queue.isEmpty()) {
+      final MultiFollowQueueNode node = queue.remove();
+
+      for (ResolveResult resolveResult : node.myReferenceExpression.getReference(resolveContext).multiResolve(false)) {
+        final PsiElement element = resolveResult.getElement();
+        if (element instanceof PyTargetExpression) {
+          final PyTargetExpression target = (PyTargetExpression)element;
+
+          final PsiElement assignedFrom;
+          if (context.maySwitchToAST(target)) {
+            assignedFrom = target.findAssignedValue();
           }
           else {
-            assigned_from = expr.resolveAssignedValue(resolveContext);
+            assignedFrom = target.resolveAssignedValue(resolveContext);
           }
-          if (assigned_from instanceof PyReferenceExpression) {
-            if (visited.contains(assigned_from)) {
-              break;
-            }
-            visited.add(assigned_from);
-            seeker = (PyReferenceExpression)assigned_from;
-            if (seeker.getQualifier() != null) {
-              qualifiers.add(seeker.getQualifier());
-            }
-            continue SEARCH;
+
+          if (assignedFrom instanceof PyReferenceExpression) {
+            final PyReferenceExpression assignedReference = (PyReferenceExpression)assignedFrom;
+
+            if (!visited.add(assignedReference)) continue;
+
+            queue.add(MultiFollowQueueNode.create(node, assignedReference));
           }
-          else if (assigned_from != null) ret = new QualifiedResolveResultImpl(assigned_from, qualifiers, false);
+          else if (assignedFrom != null) {
+            result.add(new QualifiedResolveResultImpl(assignedFrom, node.myQualifiers, false));
+          }
         }
-        else if (ret == null && elt instanceof PyElement && target.isValidResult()) {
-          // remember this result, but a further reference may be the next resolve result
-          ret = new QualifiedResolveResultImpl(elt, qualifiers, target instanceof ImplicitResolveResult);
+        else if (element instanceof PyElement && resolveResult.isValidResult()) {
+          result.add(new QualifiedResolveResultImpl(element, node.myQualifiers, resolveResult instanceof ImplicitResolveResult));
         }
       }
-      // all resolve results checked, reassignment not detected, nothing more to do
-      break;
     }
-    if (ret == null) ret = EMPTY_RESULT;
-    return ret;
+
+    return result;
   }
 
   @Nullable
@@ -514,5 +522,27 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
   }
 
+  private static class MultiFollowQueueNode {
+
+    @NotNull
+    private final PyReferenceExpression myReferenceExpression;
+
+    @NotNull
+    private final List<PyExpression> myQualifiers;
+
+    private MultiFollowQueueNode(@NotNull PyReferenceExpression referenceExpression, @NotNull List<PyExpression> qualifiers) {
+      myReferenceExpression = referenceExpression;
+      myQualifiers = qualifiers;
+    }
+
+    @NotNull
+    public static MultiFollowQueueNode create(@Nullable MultiFollowQueueNode previous, @NotNull PyReferenceExpression referenceExpression) {
+      final PyExpression qualifier = referenceExpression.getQualifier();
+      final List<PyExpression> previousQualifiers = previous == null ? Collections.emptyList() : previous.myQualifiers;
+      final List<PyExpression> newQualifiers = qualifier == null ? previousQualifiers : ContainerUtil.append(previousQualifiers, qualifier);
+
+      return new MultiFollowQueueNode(referenceExpression, newQualifiers);
+    }
+  }
 }
 
