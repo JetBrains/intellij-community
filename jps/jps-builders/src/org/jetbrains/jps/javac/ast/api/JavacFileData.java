@@ -258,7 +258,7 @@ public class JavacFileData {
         return EnumSet.copyOf(DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
           @Override
           public Modifier compute() throws IOException {
-            return null;
+            return Modifier.valueOf(IOUtil.readUTF(input));
           }
         }));
       }
