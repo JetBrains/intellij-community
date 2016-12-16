@@ -71,7 +71,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @NotNull
   @Override
-  public PsiPolyVariantReference getReference(PyResolveContext context) {
+  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     // Handle import reference
     final PsiElement importParent = PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class);
     if (importParent != null) {

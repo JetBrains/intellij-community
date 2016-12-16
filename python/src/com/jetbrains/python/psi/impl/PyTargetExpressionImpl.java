@@ -563,7 +563,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @NotNull
   @Override
-  public PsiPolyVariantReference getReference(final PyResolveContext resolveContext) {
+  public PsiPolyVariantReference getReference(@NotNull final PyResolveContext resolveContext) {
     if (isQualified()) {
       return new PyQualifiedReference(this, resolveContext);
     }
