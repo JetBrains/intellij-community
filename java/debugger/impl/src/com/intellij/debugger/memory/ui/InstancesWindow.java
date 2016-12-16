@@ -154,7 +154,7 @@ public class InstancesWindow extends DialogWrapper {
     private static final int FILTERING_CHUNK_SIZE = 50;
 
     private static final int MAX_DURATION_TO_UPDATE_TREE_SECONDS = 3;
-    private static final int FILTERING_PROGRESS_UPDATING_MIN_DELAY_MILLIS = 50;
+    private static final int FILTERING_PROGRESS_UPDATING_MIN_DELAY_MILLIS = 17; // ~ 60 fps
 
     private final InstancesTree myInstancesTree;
     private final XDebuggerExpressionEditor myFilterConditionEditor;
