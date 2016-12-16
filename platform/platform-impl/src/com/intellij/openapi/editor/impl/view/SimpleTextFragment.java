@@ -36,7 +36,7 @@ class SimpleTextFragment extends TextFragment {
     myFont = fontInfo.getFont();
     float x = 0;
     for (int i = 0; i < myText.length; i++) {
-      x += fontInfo.charWidth2D(myText[i]);
+      x += fontInfo.charWidth/*2D*/(myText[i]);
       myCharPositions[i] = x;
     }
   }
