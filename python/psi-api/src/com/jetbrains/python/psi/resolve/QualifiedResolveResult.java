@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,83 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
-/**
- * Knows about the last qualifier that occurred in assignment resolution chain.
- * See {@link com.jetbrains.python.psi.PyReferenceExpression#followAssignmentsChain(com.jetbrains.python.psi.types.TypeEvalContext) followAssignmentsChain()}
- * <br/>
- * User: dcheryasov
- * Date: May 6, 2010 6:55:30 PM
- */
 public interface QualifiedResolveResult extends ResolveResult {
-  @Nullable
+
+  @NotNull
+  QualifiedResolveResult EMPTY = new QualifiedResolveResult() {
+
+    @NotNull
+    @Override
+    public List<PyExpression> getQualifiers() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isImplicit() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getElement() {
+      return null;
+    }
+
+    @Override
+    public boolean isValidResult() {
+      return false;
+    }
+  };
+
+  /**
+   * @return the qualifiers which were collected while following assignments chain.
+   *
+   * @see com.jetbrains.python.psi.PyReferenceExpression#followAssignmentsChain(PyResolveContext)
+   * @see com.jetbrains.python.psi.PyReferenceExpression#multiFollowAssignmentsChain(PyResolveContext)
+   */
+  @NotNull
   List<PyExpression> getQualifiers();
 
   /**
    * @return true iff the resolve result is implicit, that is, not exact but by divination and looks reasonable. 
    */
   boolean isImplicit();
+
+  @NotNull
+  static QualifiedResolveResult create(@NotNull PsiElement element, @NotNull List<PyExpression> qualifiers, boolean isImplicit) {
+    class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
+
+      @NotNull
+      private final List<PyExpression> myQualifiers;
+      private final boolean myIsImplicit;
+
+      private QualifiedResolveResultImpl(@NotNull PsiElement element, @NotNull List<PyExpression> qualifiers, boolean isImplicit) {
+        super(isImplicit ? RATE_LOW : RATE_NORMAL, element);
+        myQualifiers = qualifiers;
+        myIsImplicit = isImplicit;
+      }
+
+      @Override
+      @NotNull
+      public List<PyExpression> getQualifiers() {
+        return myQualifiers;
+      }
+
+      @Override
+      public boolean isImplicit() {
+        return myIsImplicit;
+      }
+    }
+
+    return new QualifiedResolveResultImpl(element, qualifiers, isImplicit);
+  }
 }

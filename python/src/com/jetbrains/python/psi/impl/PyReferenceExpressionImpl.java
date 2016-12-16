@@ -38,7 +38,10 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +55,6 @@ import java.util.*;
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
-  private static final QualifiedResolveResult EMPTY_RESOLVE_RESULT = new QualifiedResolveResultEmpty();
 
   private QualifiedName myQualifiedName = null;
 
@@ -135,7 +137,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       .stream()
       .filter(result -> !result.isImplicit())
       .findFirst()
-      .orElseGet(() -> ContainerUtil.getFirstItem(resolveResults, EMPTY_RESOLVE_RESULT));
+      .orElseGet(() -> ContainerUtil.getFirstItem(resolveResults, QualifiedResolveResult.EMPTY));
   }
 
   @NotNull
@@ -173,11 +175,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             queue.add(MultiFollowQueueNode.create(node, assignedReference));
           }
           else if (assignedFrom != null) {
-            result.add(new QualifiedResolveResultImpl(assignedFrom, node.myQualifiers, false));
+            result.add(QualifiedResolveResult.create(assignedFrom, node.myQualifiers, false));
           }
         }
         else if (element instanceof PyElement && resolveResult.isValidResult()) {
-          result.add(new QualifiedResolveResultImpl(element, node.myQualifiers, resolveResult instanceof ImplicitResolveResult));
+          result.add(QualifiedResolveResult.create(element, node.myQualifiers, resolveResult instanceof ImplicitResolveResult));
         }
       }
     }
@@ -492,51 +494,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public void subtreeChanged() {
     super.subtreeChanged();
     myQualifiedName = null;
-  }
-
-  private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
-    // a trivial implementation
-    private List<PyExpression> myQualifiers;
-    private boolean myIsImplicit;
-
-    public boolean isImplicit() {
-      return myIsImplicit;
-    }
-
-    private QualifiedResolveResultImpl(@NotNull PsiElement element, List<PyExpression> qualifiers, boolean isImplicit) {
-      super(isImplicit ? RATE_LOW : RATE_NORMAL, element);
-      myQualifiers = qualifiers;
-      myIsImplicit = isImplicit;
-    }
-
-    @Override
-    public List<PyExpression> getQualifiers() {
-      return myQualifiers;
-    }
-  }
-
-  private static class QualifiedResolveResultEmpty implements QualifiedResolveResult {
-    // a trivial implementation
-
-    private QualifiedResolveResultEmpty() {
-    }
-
-    @Override
-    public List<PyExpression> getQualifiers() {
-      return Collections.emptyList();
-    }
-
-    public PsiElement getElement() {
-      return null;
-    }
-
-    public boolean isValidResult() {
-      return false;
-    }
-
-    public boolean isImplicit() {
-      return false;
-    }
   }
 
   private static class MultiFollowQueueNode {

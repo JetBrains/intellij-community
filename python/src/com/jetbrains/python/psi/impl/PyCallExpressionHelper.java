@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -185,8 +186,7 @@ public class PyCallExpressionHelper {
         else if (PyNames.STATICMETHOD.equals(wrapper_name)) wrappedModifier = PyFunction.Modifier.STATICMETHOD;
       }
     }
-    final List<PyExpression> resolvedQualifiers = resolveResult != null ? resolveResult.getQualifiers() : null;
-    final List<PyExpression> qualifiers = resolvedQualifiers != null ? resolvedQualifiers : Collections.emptyList();
+    final List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.emptyList();
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     if (resolved instanceof PyFunction) {
       final PyFunction function = (PyFunction)resolved;
@@ -247,9 +247,8 @@ public class PyCallExpressionHelper {
     }
     QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
     final List<PyExpression> qualifiers = followed.getQualifiers();
-    final PyExpression firstQualifier = qualifiers != null && !qualifiers.isEmpty() ? qualifiers.get(0) : null;
-    boolean isByInstance = isQualifiedByInstance(function, qualifiers != null ? qualifiers : Collections.emptyList(),
-                                                 resolveContext.getTypeEvalContext());
+    final PyExpression firstQualifier = ContainerUtil.getFirstItem(qualifiers);
+    boolean isByInstance = isQualifiedByInstance(function, qualifiers, resolveContext.getTypeEvalContext());
     final boolean isConstructorCall = isConstructorName(function.getName()) &&
                                       (!callReference.isQualified() || !isConstructorName(callReference.getName()));
     boolean isByClass = firstQualifier != null && isQualifiedByClass(function, firstQualifier, resolveContext.getTypeEvalContext());
