@@ -59,6 +59,7 @@ public enum ConfigKey {
   SYNCHRONIZED_FLAG_USAGE("lombok.synchronized.flagUsage", ""),
   TOSTRING_FLAG_USAGE("lombok.toString.flagUsage", ""),
   VAL_FLAG_USAGE("lombok.val.flagUsage", ""),
+  VAR_FLAG_USAGE("lombok.var.flagUsage", ""),
   VALUE_FLAG_USAGE("lombok.value.flagUsage", ""),
   WITHER_FLAG_USAGE("lombok.wither.flagUsage", ""),
   UTILITYCLASS_FLAG_USAGE("lombok.utilityClass.flagUsage", ""),

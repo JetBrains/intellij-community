@@ -43,12 +43,17 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       "lombok.synchronized.flagUsage", "lombok.toString.flagUsage", "lombok.val.flagUsage", "lombok.value.flagUsage",
       "lombok.wither.flagUsage"));
 
+    final Collection<String> flagUsageAllowable = new HashSet<String>(Arrays.asList(
+      "lombok.var.flagUsage"
+    ));
+
     final Collection<String> otherOptions = new HashSet<String>(Arrays.asList(
       ConfigKey.ACCESSORS_PREFIX.getConfigKey(), ConfigKey.LOG_FIELDNAME.getConfigKey(),
       ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(), ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey()));
 
     final Collection<String> allOptions = new HashSet<String>(booleanOptions);
     allOptions.addAll(flagUsageOptions);
+    allOptions.addAll(flagUsageAllowable);
     allOptions.addAll(otherOptions);
 
     extend(CompletionType.BASIC,
@@ -64,6 +69,9 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
             } else if (flagUsageOptions.contains(configPropertyKey)) {
               resultSet.addElement(LookupElementBuilder.create("WARNING"));
               resultSet.addElement(LookupElementBuilder.create("ERROR"));
+            } else if (flagUsageAllowable.contains(configPropertyKey)) {
+              resultSet.addElement(LookupElementBuilder.create("ALLOW"));
+              resultSet.addElement(LookupElementBuilder.create("WARNING"));
             } else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey)) {
               resultSet.addElement(LookupElementBuilder.create("CALL"));
               resultSet.addElement(LookupElementBuilder.create("SKIP"));
