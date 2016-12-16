@@ -43,7 +43,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
-  private boolean myEnableTestingFromSamples = true;
+  private boolean myEnableTestingFromSamples = false;
 
   @Transient private final Project myProject;
 
