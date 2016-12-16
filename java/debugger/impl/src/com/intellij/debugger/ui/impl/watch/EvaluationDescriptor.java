@@ -74,13 +74,12 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
 
       ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () -> {
+        PsiCodeFragment code = getEvaluationCode(thisEvaluationContext);
         try {
-          return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext)
-            .getEvaluatorBuilder()
-            .build(getEvaluationCode(thisEvaluationContext), position);
+          return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
         }
         catch (UnsupportedExpressionException ex) {
-          ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, psiContext, this::createCodeFragment);
+          ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, code.getContext(), element -> code);
           if (eval != null) {
             return eval;
           }
