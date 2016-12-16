@@ -56,7 +56,7 @@ public class FilteringTask implements Runnable {
   public void run() {
     myCallback.started(myReferences.size());
     int proceedCount;
-    for (proceedCount = 0; proceedCount < myReferences.size(); proceedCount++) {
+    for (proceedCount = 0; proceedCount < myReferences.size() && !myIsCancelled; proceedCount++) {
       ObjectReference ref = myReferences.get(proceedCount);
       CheckingResult result = myChecker.check(ref);
       FilteringTaskCallback.Action action = FilteringTaskCallback.Action.CONTINUE;

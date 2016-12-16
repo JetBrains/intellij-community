@@ -151,7 +151,10 @@ public class InstancesWindow extends DialogWrapper {
 
   private class MyInstancesView extends JBPanel implements Disposable {
     private static final int MAX_TREE_NODE_COUNT = 2000;
-    private static final int FILTERING_CHUNK_SIZE = 30;
+    private static final int FILTERING_CHUNK_SIZE = 50;
+
+    private static final int MAX_DURATION_TO_UPDATE_TREE_SECONDS = 3;
+    private static final int FILTERING_PROGRESS_UPDATING_MIN_DELAY_MILLIS = 50;
 
     private final InstancesTree myInstancesTree;
     private final XDebuggerExpressionEditor myFilterConditionEditor;
@@ -286,7 +289,7 @@ public class InstancesWindow extends DialogWrapper {
       if (myFilteringTask != null) {
         synchronized (myFilteringTaskLock) {
           if (myFilteringTask != null) {
-            myFilteringTask.cancel(true);
+            myFilteringTask.cancel();
             myFilteringTask = null;
           }
         }
@@ -372,6 +375,9 @@ public class InstancesWindow extends DialogWrapper {
       private int myMatchedCount = 0;
       private int myErrorsCount = 0;
 
+      private long myLastTreeUpdatingTime;
+      private long myLastProgressUpdatingTime;
+
       public MyFilteringCallback(@NotNull EvaluationContextImpl evaluationContext) {
         myEvaluationContext = evaluationContext;
       }
@@ -381,6 +387,8 @@ public class InstancesWindow extends DialogWrapper {
       @Override
       public void started(int total) {
         myFilteringStartedTime = System.nanoTime();
+        myLastTreeUpdatingTime = myFilteringStartedTime;
+        myLastProgressUpdatingTime = System.nanoTime();
         ApplicationManager.getApplication().invokeLater(() -> myProgress.start(total));
       }
 
@@ -388,21 +396,12 @@ public class InstancesWindow extends DialogWrapper {
       @Override
       public Action matched(@NotNull ObjectReference ref) {
         final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
-                                              myEvaluationContext, myNodeManager);
+                                                    myEvaluationContext, myNodeManager);
         myMatchedCount++;
         myProceedCount++;
         myChildren.add(val);
-        if (myChildren.size() >= FILTERING_CHUNK_SIZE) {
-          final int proceed = myProceedCount;
-          final int matched = myMatchedCount;
-          final int errors = myErrorsCount;
-          XValueChildrenList children = myChildren;
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myProgress.updateProgress(proceed, matched, errors);
-            myInstancesTree.addChildren(children, false);
-          });
-          myChildren = new XValueChildrenList();
-        }
+        updateProgress();
+        updateTree();
 
         return myMatchedCount < MAX_TREE_NODE_COUNT ? Action.CONTINUE : Action.STOP;
       }
@@ -411,6 +410,8 @@ public class InstancesWindow extends DialogWrapper {
       @Override
       public Action notMatched(@NotNull ObjectReference ref) {
         myProceedCount++;
+        updateProgress();
+
         return Action.CONTINUE;
       }
 
@@ -418,10 +419,11 @@ public class InstancesWindow extends DialogWrapper {
       @Override
       public Action error(@NotNull ObjectReference ref, @NotNull String description) {
         final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
-                                              myEvaluationContext, myNodeManager);
+                                                    myEvaluationContext, myNodeManager);
         myErrorsGroup.addErrorValue(description, val);
         myProceedCount++;
         myErrorsCount++;
+        updateProgress();
         return Action.CONTINUE;
       }
 
@@ -446,6 +448,29 @@ public class InstancesWindow extends DialogWrapper {
           myFilterButton.setEnabled(true);
           myProgress.complete(reason);
         });
+      }
+
+      private void updateProgress() {
+        final long now = System.nanoTime();
+        if (now - myLastProgressUpdatingTime > TimeUnit.MILLISECONDS.toNanos(FILTERING_PROGRESS_UPDATING_MIN_DELAY_MILLIS)) {
+          final int proceed = myProceedCount;
+          final int matched = myMatchedCount;
+          final int errors = myErrorsCount;
+          ApplicationManager.getApplication().invokeLater(() -> myProgress.updateProgress(proceed, matched, errors));
+          myLastProgressUpdatingTime = now;
+        }
+      }
+
+      private void updateTree() {
+        final long now = System.nanoTime();
+        final int newChildrenCount = myChildren.size();
+        if (newChildrenCount >= FILTERING_CHUNK_SIZE ||
+            (newChildrenCount > 0 && now - myLastTreeUpdatingTime > TimeUnit.SECONDS.toNanos(MAX_DURATION_TO_UPDATE_TREE_SECONDS))) {
+          final XValueChildrenList children = myChildren;
+          ApplicationManager.getApplication().invokeLater(() -> myInstancesTree.addChildren(children, false));
+          myChildren = new XValueChildrenList();
+          myLastTreeUpdatingTime = System.nanoTime();
+        }
       }
     }
 
@@ -473,6 +498,11 @@ public class InstancesWindow extends DialogWrapper {
         }
 
         return null;
+      }
+
+      public void cancel() {
+        myTask.cancel();
+        super.cancel(false);
       }
     }
   }
