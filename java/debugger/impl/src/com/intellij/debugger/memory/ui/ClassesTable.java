@@ -1,5 +1,24 @@
-package org.jetbrains.debugger.memory.view;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.debugger.memory.ui;
 
+import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.utils.AbstractTableColumnDescriptor;
+import com.intellij.debugger.memory.utils.AbstractTableModelWithColumns;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -17,16 +36,12 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
-import icons.MemoryViewIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.component.InstancesTracker;
-import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
-import org.jetbrains.debugger.memory.tracking.TrackingType;
-import org.jetbrains.debugger.memory.utils.AbstractTableColumnDescriptor;
-import org.jetbrains.debugger.memory.utils.AbstractTableModelWithColumns;
-import org.jetbrains.debugger.memory.utils.InstancesProvider;
+import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
+import com.intellij.debugger.memory.tracking.TrackingType;
+import com.intellij.debugger.memory.utils.InstancesProvider;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -39,9 +54,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public static final DataKey<ReferenceType> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
   public static final DataKey<XDebugSession> DEBUG_SESSION_KEY = DataKey.create("ClassesTable.DebugSession");
   public static final DataKey<InstancesProvider> NEW_INSTANCES_PROVIDER_KEY =
-      DataKey.create("ClassesTable.NewInstances");
+    DataKey.create("ClassesTable.NewInstances");
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
-      DataKey.create("ClassesTable.ReferenceCountProvider");
+    DataKey.create("ClassesTable.ReferenceCountProvider");
 
   private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
 
@@ -63,7 +78,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
   private String myFilteringPattern = "";
 
-  private volatile List<ReferenceType> myElems = Collections.unmodifiableList(new ArrayList<>());
+  private volatile List<ReferenceType> myItems = Collections.unmodifiableList(new ArrayList<>());
 
   ClassesTable(@NotNull XDebugSession session, boolean onlyWithDiff, boolean onlyWithInstances,
                boolean onlyTracked, @NotNull ClassesFilteredView parent) {
@@ -99,20 +114,20 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       @Override
       public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
         int ix = entry.getIdentifier();
-        ReferenceType ref = myElems.get(ix);
+        ReferenceType ref = myItems.get(ix);
         DiffValue diff = myCounts.getOrDefault(ref, myUnknownValue);
 
         boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
-            || myOnlyWithInstances && !diff.hasInstance()
-            || myOnlyTracked && myParent.getStrategy(ref) == null;
+                                            || myOnlyWithInstances && !diff.hasInstance()
+                                            || myOnlyTracked && myParent.getStrategy(ref) == null;
         return !(isFilteringOptionsRefused) && myMatcher.matches(ref.name());
       }
     });
 
     List<RowSorter.SortKey> myDefaultSortingKeys = Arrays.asList(
-        new RowSorter.SortKey(DiffViewTableModel.DIFF_COLUMN_INDEX, SortOrder.DESCENDING),
-        new RowSorter.SortKey(DiffViewTableModel.COUNT_COLUMN_INDEX, SortOrder.DESCENDING),
-        new RowSorter.SortKey(DiffViewTableModel.CLASSNAME_COLUMN_INDEX, SortOrder.ASCENDING)
+      new RowSorter.SortKey(DiffViewTableModel.DIFF_COLUMN_INDEX, SortOrder.DESCENDING),
+      new RowSorter.SortKey(DiffViewTableModel.COUNT_COLUMN_INDEX, SortOrder.DESCENDING),
+      new RowSorter.SortKey(DiffViewTableModel.CLASSNAME_COLUMN_INDEX, SortOrder.ASCENDING)
     );
     sorter.setSortKeys(myDefaultSortingKeys);
     setRowSorter(sorter);
@@ -121,12 +136,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myCountProvider = new ReferenceCountProvider() {
       @Override
       public int getTotalCount(@NotNull ReferenceType ref) {
-        return (int) myCounts.get(ref).myCurrentCount;
+        return (int)myCounts.get(ref).myCurrentCount;
       }
 
       @Override
       public int getDiffCount(@NotNull ReferenceType ref) {
-        return (int) myCounts.get(ref).diff();
+        return (int)myCounts.get(ref).diff();
       }
 
       @Override
@@ -150,7 +165,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     int selectedRow = getSelectedRow();
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);
-      return myElems.get(ix);
+      return myItems.get(ix);
     }
 
     return null;
@@ -158,7 +173,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Nullable
   ReferenceType getClassByName(@NotNull String name) {
-    for (ReferenceType ref : myElems) {
+    for (ReferenceType ref : myItems) {
       if (name.equals(ref.name())) {
         return ref;
       }
@@ -207,14 +222,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     assert classes.size() == counts.length;
     ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
     int newSelectedIndex = classes.indexOf(selectedClass);
-    boolean isInitialized = !myElems.isEmpty();
-    myElems = Collections.unmodifiableList(new ArrayList<>(classes));
+    boolean isInitialized = !myItems.isEmpty();
+    myItems = Collections.unmodifiableList(new ArrayList<>(classes));
 
     for (int i = 0, size = classes.size(); i < size; i++) {
       ReferenceType ref = classes.get(i);
       DiffValue oldValue = isInitialized && !myCounts.containsKey(ref)
-          ? new DiffValue(0, 0)
-          : myCounts.getOrDefault(ref, myUnknownValue);
+                           ? new DiffValue(0, 0)
+                           : myCounts.getOrDefault(ref, myUnknownValue);
       myCounts.put(ref, oldValue.update(counts[i]));
     }
 
@@ -223,7 +238,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     if (newSelectedIndex != -1 && !myModel.isHided()) {
       int ix = convertRowIndexToView(newSelectedIndex);
       changeSelection(ix,
-          DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
+                      DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
 
     getRowSorter().allRowsChanged();
@@ -253,7 +268,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         TrackerForNewInstances strategy = myParent.getStrategy(selectedClass);
         if (strategy != null && strategy.isReady()) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
-          return (InstancesProvider) limit -> newInstances;
+          return (InstancesProvider)limit -> newInstances;
         }
       }
     }
@@ -271,7 +286,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Nullable
   private TrackingType getTrackingType(int row) {
-    ReferenceType ref = (ReferenceType) getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
+    ReferenceType ref = (ReferenceType)getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
     return myInstancesTracker.getTrackingType(ref.name());
   }
 
@@ -286,24 +301,24 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
     DiffViewTableModel() {
       super(new AbstractTableColumnDescriptor[]{
-          new AbstractTableColumnDescriptor("Class", ReferenceType.class) {
-            @Override
-            public Object getValue(int ix) {
-              return myElems.get(ix);
-            }
-          },
-          new AbstractTableColumnDescriptor("Count", Long.class) {
-            @Override
-            public Object getValue(int ix) {
-              return myCounts.getOrDefault(myElems.get(ix), myUnknownValue).myCurrentCount;
-            }
-          },
-          new AbstractTableColumnDescriptor("Diff", DiffValue.class) {
-            @Override
-            public Object getValue(int ix) {
-              return myCounts.getOrDefault(myElems.get(ix), myUnknownValue);
-            }
+        new AbstractTableColumnDescriptor("Class", ReferenceType.class) {
+          @Override
+          public Object getValue(int ix) {
+            return myItems.get(ix);
           }
+        },
+        new AbstractTableColumnDescriptor("Count", Long.class) {
+          @Override
+          public Object getValue(int ix) {
+            return myCounts.getOrDefault(myItems.get(ix), myUnknownValue).myCurrentCount;
+          }
+        },
+        new AbstractTableColumnDescriptor("Diff", DiffValue.class) {
+          @Override
+          public Object getValue(int ix) {
+            return myCounts.getOrDefault(myItems.get(ix), myUnknownValue);
+          }
+        }
       });
     }
 
@@ -333,7 +348,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
     @Override
     public int getRowCount() {
-      return myIsWithContent ? myElems.size() : 0;
+      return myIsWithContent ? myItems.size() : 0;
     }
   }
 
@@ -408,34 +423,34 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       }
 
       if (trackingType != null && column == DiffViewTableModel.DIFF_COLUMN_INDEX) {
-        setIcon(MemoryViewIcons.CLASS_TRACKED);
+        setIcon(AllIcons.Debugger.MemoryView.ClassTracked);
         setTransparentIconBackground(true);
       }
 
       if (value != null) {
-        addText(table, value, isSelected, hasFocus, row, column);
+        addText(value, isSelected, row);
       }
     }
 
-    protected abstract void addText(JTable table, @NotNull Object value, boolean isSelected,
-                                    boolean hasFocus, int row, int column);
+    protected abstract void addText(@NotNull Object value, boolean isSelected, int row);
   }
 
   private class MyClassColumnRenderer extends MyTableCellRenderer {
     @Override
-    protected void addText(JTable table, @NotNull Object value, boolean isSelected,
-                           boolean hasFocus, int row, int column) {
-      String presentation = ((ReferenceType) value).name();
+    protected void addText(@NotNull Object value, boolean isSelected,
+                           int row) {
+      String presentation = ((ReferenceType)value).name();
       append(" ");
       if (isSelected) {
         FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
         if (textRanges != null) {
           SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
-              SimpleTextAttributes.STYLE_SEARCH_MATCH);
+                                                                     SimpleTextAttributes.STYLE_SEARCH_MATCH);
           SpeedSearchUtil.appendColoredFragments(this, presentation, textRanges,
-              SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
+                                                 SimpleTextAttributes.REGULAR_ATTRIBUTES, attributes);
         }
-      } else {
+      }
+      else {
         append(String.format("%s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
@@ -443,8 +458,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private class MyCountColumnRenderer extends MyTableCellRenderer {
     @Override
-    protected void addText(JTable table, @NotNull Object value, boolean isSelected,
-                           boolean hasFocus, int row, int column) {
+    protected void addText(@NotNull Object value, boolean isSelected,
+                           int row) {
       setTextAlign(SwingConstants.RIGHT);
       append(value.toString());
     }
@@ -452,14 +467,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private class MyDiffColumnRenderer extends MyTableCellRenderer {
     private final SimpleTextAttributes myClickableCellAttributes =
-        new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.BLUE);
+      new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.BLUE);
 
     @Override
-    protected void addText(JTable table, @NotNull Object value, boolean isSelected,
-                           boolean hasFocus, int row, int column) {
+    protected void addText(@NotNull Object value, boolean isSelected,
+                           int row) {
       setTextAlign(SwingConstants.RIGHT);
 
-      ReferenceType ref = myElems.get(convertRowIndexToModel(row));
+      ReferenceType ref = myItems.get(convertRowIndexToModel(row));
 
       long diff = myCountProvider.getDiffCount(ref);
       String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
@@ -468,13 +483,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       if (newInstancesCount >= 0) {
         if (newInstancesCount == diff) {
           append(text, diff == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES : myClickableCellAttributes);
-        } else {
+        }
+        else {
           append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (newInstancesCount != 0) {
             append(String.format(" (%d)", newInstancesCount), myClickableCellAttributes);
           }
         }
-      } else {
+      }
+      else {
         append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }

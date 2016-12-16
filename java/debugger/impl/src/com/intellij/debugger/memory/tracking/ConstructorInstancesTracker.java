@@ -1,4 +1,19 @@
-package org.jetbrains.debugger.memory.tracking;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.debugger.memory.tracking;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -8,11 +23,15 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.memory.component.CreationPositionTracker;
+import com.intellij.debugger.memory.utils.StackFrameDescriptor;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState;
@@ -26,10 +45,8 @@ import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.component.CreationPositionTracker;
-import org.jetbrains.debugger.memory.component.InstancesTracker;
-import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
-import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
 import java.util.*;
@@ -59,7 +76,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     myPositionTracker = CreationPositionTracker.getInstance(debugSession.getProject());
     Project project = debugSession.getProject();
     myIsBackgroundTrackingEnabled = InstancesTracker.getInstance(myDebugSession.getProject())
-        .isBackgroundTrackingEnabled();
+      .isBackgroundTrackingEnabled();
 
     InstancesTracker.getInstance(myDebugSession.getProject()).addTrackerListener(new InstancesTrackerListener() {
       @Override
@@ -71,7 +88,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
             protected void action() throws Exception {
               if (newState) {
                 myBreakpoint.enable();
-              } else {
+              }
+              else {
                 myBreakpoint.disable();
               }
             }
@@ -80,14 +98,14 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       }
     }, this);
 
-    myDebugProcess = (DebugProcessImpl) DebuggerManager.getInstance(project)
-        .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
+    myDebugProcess = (DebugProcessImpl)DebuggerManager.getInstance(project)
+      .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
     JavaLineBreakpointType breakPointType = new JavaLineBreakpointType();
 
     XBreakpoint bpn = new XLineBreakpointImpl<>(breakPointType,
-        ((XDebuggerManagerImpl) XDebuggerManagerImpl.getInstance(project)).getBreakpointManager(),
-        new JavaLineBreakpointProperties(),
-        new LineBreakpointState<>());
+                                                ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getBreakpointManager(),
+                                                new JavaLineBreakpointProperties(),
+                                                new LineBreakpointState<>());
 
     myBreakpoint = new MyConstructorBreakpoints(project, bpn);
     myBreakpoint.createRequestForPreparedClass(myDebugProcess, myReference);
@@ -136,7 +154,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   @Override
   public void dispose() {
-    myBreakpoint.dispose();
+    Disposer.dispose(myBreakpoint);
   }
 
   @Override
@@ -148,7 +166,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     myIsBackgroundMode = isBackgroundMode;
     if (isBackgroundMode) {
       doEnableBackgroundMode();
-    } else {
+    }
+    else {
       doDisableBackgroundMode();
     }
   }
@@ -164,7 +183,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   }
 
   private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties>
-      implements Disposable {
+    implements Disposable {
 
     private boolean myIsEnabled = false;
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
@@ -205,7 +224,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
     @Override
     public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
-        throws EventProcessingException {
+      throws EventProcessingException {
       try {
         SuspendContextImpl suspendContext = action.getSuspendContext();
         if (suspendContext != null) {
@@ -223,7 +242,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
                   String typeName = loc.declaringType().name();
                   String methodName = loc.method().name();
                   return new StackFrameDescriptor(typeName, methodName, loc.lineNumber());
-                } catch (EvaluateException e) {
+                }
+                catch (EvaluateException e) {
                   return null;
                 }
               }).filter(Objects::nonNull).collect(Collectors.toList());
@@ -231,7 +251,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
             }
           }
         }
-      } catch (EvaluateException e) {
+      }
+      catch (EvaluateException e) {
         return false;
       }
 

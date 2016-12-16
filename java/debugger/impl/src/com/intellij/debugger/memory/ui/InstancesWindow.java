@@ -1,33 +1,47 @@
-package org.jetbrains.debugger.memory.view;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.memory.filtering.FilteringResult;
+import com.intellij.debugger.memory.filtering.FilteringTask;
+import com.intellij.debugger.memory.filtering.FilteringTaskCallback;
+import com.intellij.debugger.memory.utils.*;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.render.CachedEvaluator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBDimension;
@@ -43,17 +57,13 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.utils.*;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.*;
@@ -63,9 +73,6 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.lang.Math.min;
 
 public class InstancesWindow extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(InstancesWindow.class);
@@ -74,7 +81,7 @@ public class InstancesWindow extends DialogWrapper {
   private static final int DEFAULT_WINDOW_HEIGHT = 400;
   private static final int FILTERING_BUTTON_ADDITIONAL_WIDTH = 30;
   private static final int BORDER_LAYOUT_DEFAULT_GAP = 5;
-  private static final int DEFAULT_INSTANCES_LIMIT = 500000; // All
+  private static final int DEFAULT_INSTANCES_LIMIT = 500000;
 
   private final Project myProject;
   private final XDebugSession myDebugSession;
@@ -96,17 +103,13 @@ public class InstancesWindow extends DialogWrapper {
     myDebugSession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
-        SwingUtilities.invokeLater(() -> close(OK_EXIT_CODE));
+        ApplicationManager.getApplication().invokeLater(() -> close(OK_EXIT_CODE));
       }
     }, myDisposable);
     setModal(false);
     init();
     JRootPane root = myInstancesView.getRootPane();
     root.setDefaultButton(myInstancesView.myFilterButton);
-  }
-
-  enum FilteringCompletionReason {
-    ALL_CHECKED, INTERRUPTED, LIMIT_REACHED
   }
 
   private void addWarningMessage(@Nullable String message) {
@@ -125,7 +128,7 @@ public class InstancesWindow extends DialogWrapper {
   protected JComponent createCenterPanel() {
     myInstancesView = new MyInstancesView();
     myInstancesView.setPreferredSize(
-        new JBDimension(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
+      new JBDimension(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
     return myInstancesView;
   }
 
@@ -154,7 +157,6 @@ public class InstancesWindow extends DialogWrapper {
     private final XDebuggerExpressionEditor myFilterConditionEditor;
     private final XDebugSessionListener myDebugSessionListener = new MySessionListener();
 
-    private final MyCachedEvaluator myEvaluator = new MyCachedEvaluator();
     private final MyNodeManager myNodeManager = new MyNodeManager(myProject);
 
     private final JButton myFilterButton = new JButton("Filter");
@@ -170,19 +172,19 @@ public class InstancesWindow extends DialogWrapper {
     MyInstancesView() {
       super(new BorderLayout(0, JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP)));
 
-      Disposer.register(InstancesWindow.this.myDisposable, MyInstancesView.this);
+      Disposer.register(InstancesWindow.this.myDisposable, this);
       XValueMarkers<?, ?> markers = getValueMarkers();
       ActionManager.getInstance().addAnActionListener(myActionListener, InstancesWindow.this.myDisposable);
       myDebugSession.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
       JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
 
       myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myClassName,
-          editorsProvider, InstancesWindow.this.myDisposable);
+                                                                editorsProvider, InstancesWindow.this.myDisposable);
 
       myFilterButton.setBorder(BorderFactory.createEmptyBorder());
       Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
       filteringButtonSize.width = JBUI.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
-          myFilterButton.getPreferredSize().width;
+                                  myFilterButton.getPreferredSize().width;
       myFilterButton.setPreferredSize(filteringButtonSize);
 
       JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
@@ -212,8 +214,8 @@ public class InstancesWindow extends DialogWrapper {
 
 
       StackFrameList list = new StackFrameList(myProject,
-          Collections.emptyList(),
-          GlobalSearchScope.allScope(myProject));
+                                               Collections.emptyList(),
+                                               GlobalSearchScope.allScope(myProject));
 
       list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
       new DoubleClickListener() {
@@ -225,15 +227,15 @@ public class InstancesWindow extends DialogWrapper {
       }.installOn(list);
 
       InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(myDebugSession,
-          myInstancesTree, list, myClassName);
+                                                                                            myInstancesTree, list, myClassName);
 
       add(filteringPane, BorderLayout.NORTH);
       add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
 
       JComponent focusedComponent = myFilterConditionEditor.getEditorComponent();
       UiNotifyConnector.doWhenFirstShown(focusedComponent, () ->
-          IdeFocusManager.findInstanceByComponent(focusedComponent)
-              .requestFocus(focusedComponent, true));
+        IdeFocusManager.findInstanceByComponent(focusedComponent)
+          .requestFocus(focusedComponent, true));
     }
 
     @Override
@@ -243,8 +245,8 @@ public class InstancesWindow extends DialogWrapper {
     }
 
     private void updateInstances() {
-      DebugProcessImpl debugProcess = (DebugProcessImpl) DebuggerManager.getInstance(myProject)
-          .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
+      DebugProcessImpl debugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
+        .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
 
       cancelFilteringTask();
 
@@ -258,47 +260,26 @@ public class InstancesWindow extends DialogWrapper {
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           myIsAndroidVM = AndroidUtil.isAndroidVM(debugProcess.getVirtualMachineProxy().getVirtualMachine());
           int limit = myIsAndroidVM
-              ? AndroidUtil.ANDROID_INSTANCES_LIMIT
-              : DEFAULT_INSTANCES_LIMIT;
+                      ? AndroidUtil.ANDROID_INSTANCES_LIMIT
+                      : DEFAULT_INSTANCES_LIMIT;
           List<ObjectReference> instances = myInstancesProvider.getInstances(limit + 1);
 
           EvaluationContextImpl evaluationContext = debugProcess
-              .getDebuggerContext().createEvaluationContext();
+            .getDebuggerContext().createEvaluationContext();
 
           if (instances.size() > limit) {
             addWarningMessage(String.format("Not all instances will be loaded (only %d)", limit));
             instances = instances.subList(0, limit);
           }
 
-          final int progressSize = instances.size();
           if (evaluationContext != null) {
             synchronized (myFilteringTaskLock) {
-              myFilteringTask = new MyFilteringWorker(instances, evaluationContext, createEvaluator());
-              SwingUtilities.invokeLater(() -> {
-                myProgress.start(progressSize);
-                myFilteringTask.execute();
-              });
+              myFilteringTask = new MyFilteringWorker(instances, myFilterConditionEditor.getExpression(), evaluationContext);
+              myFilteringTask.execute();
             }
           }
         }
       });
-    }
-
-    @Nullable
-    private ExpressionEvaluator createEvaluator() {
-      ExpressionEvaluator evaluator = null;
-
-      XExpression expression = myFilterConditionEditor.getExpression();
-      if (expression != null && !expression.getExpression().isEmpty()) {
-        try {
-          myEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(expression));
-          evaluator = myEvaluator.getEvaluator();
-        } catch (EvaluateException ignored) {
-          LOG.info("cannot create evaluator by the expression = " + expression.getExpression());
-        }
-      }
-
-      return evaluator;
     }
 
     private void cancelFilteringTask() {
@@ -314,8 +295,8 @@ public class InstancesWindow extends DialogWrapper {
 
     private XValueMarkers<?, ?> getValueMarkers() {
       return myDebugSession instanceof XDebugSessionImpl
-          ? ((XDebugSessionImpl) myDebugSession).getValueMarkers()
-          : null;
+             ? ((XDebugSessionImpl)myDebugSession).getValueMarkers()
+             : null;
     }
 
     private class MySessionListener implements XDebugSessionListener {
@@ -323,18 +304,18 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       public void sessionResumed() {
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           myTreeState = XDebuggerTreeState.saveState(myInstancesTree);
           cancelFilteringTask();
 
-          myInstancesTree.setMessage(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
-              "The application is running", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          myInstancesTree.setInfoMessage(
+            "The application is running");
         });
       }
 
       @Override
       public void sessionPaused() {
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           myProgress.setVisible(true);
           myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, myTreeState);
         });
@@ -346,8 +327,8 @@ public class InstancesWindow extends DialogWrapper {
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == myInstancesView.myInstancesTree &&
             (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
-          XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);
-          XValueMarkers<?, ?> markers = getValueMarkers();
+          final XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);
+          final XValueMarkers<?, ?> markers = getValueMarkers();
 
           if (markers != null && selectedNode != null) {
 
@@ -356,174 +337,142 @@ public class InstancesWindow extends DialogWrapper {
               currentNode = currentNode.getParent();
             }
 
-            XValue valueContainer = ((XValueNodeImpl) currentNode).getValueContainer();
+            final XValue valueContainer = ((XValueNodeImpl)currentNode).getValueContainer();
 
-            String expression = valueContainer.getEvaluationExpression();
+            final String expression = valueContainer.getEvaluationExpression();
             if (expression != null) {
               markers.markValue(valueContainer,
-                  new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
+                                new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
             }
 
-            SwingUtilities.invokeLater(() -> myInstancesTree
-                .rebuildTree(InstancesTree.RebuildPolicy.ONLY_UPDATE_LABELS));
+            ApplicationManager.getApplication().invokeLater(() -> myInstancesTree
+              .rebuildTree(InstancesTree.RebuildPolicy.ONLY_UPDATE_LABELS));
           }
         }
       }
 
       private boolean isAddToWatchesAction(AnAction action) {
-        String className = action.getClass().getSimpleName();
+        final String className = action.getClass().getSimpleName();
         return action instanceof XDebuggerTreeActionBase && className.equals("XAddToWatchesAction");
       }
 
       private boolean isEvaluateExpressionAction(AnAction action) {
-        String className = action.getClass().getSimpleName();
+        final String className = action.getClass().getSimpleName();
         return action instanceof XDebuggerActionBase && className.equals("EvaluateAction");
       }
     }
 
-    private final class MyCachedEvaluator extends CachedEvaluator {
-      @Override
-      @NotNull
-      protected String getClassName() {
-        return myClassName;
+    private class MyFilteringCallback implements FilteringTaskCallback {
+      private final ErrorsValueGroup myErrorsGroup = new ErrorsValueGroup();
+      private final EvaluationContextImpl myEvaluationContext;
+
+      private long myFilteringStartedTime;
+
+      private int myProceedCount = 0;
+      private int myMatchedCount = 0;
+      private int myErrorsCount = 0;
+
+      public MyFilteringCallback(@NotNull EvaluationContextImpl evaluationContext) {
+        myEvaluationContext = evaluationContext;
       }
 
-      ExpressionEvaluator getEvaluator() throws EvaluateException {
-        return getEvaluator(myProject);
+      private XValueChildrenList myChildren = new XValueChildrenList();
+
+      @Override
+      public void started(int total) {
+        myFilteringStartedTime = System.nanoTime();
+        ApplicationManager.getApplication().invokeLater(() -> myProgress.start(total));
+      }
+
+      @NotNull
+      @Override
+      public Action matched(@NotNull ObjectReference ref) {
+        final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
+                                              myEvaluationContext, myNodeManager);
+        myMatchedCount++;
+        myProceedCount++;
+        myChildren.add(val);
+        if (myChildren.size() >= FILTERING_CHUNK_SIZE) {
+          final int proceed = myProceedCount;
+          final int matched = myMatchedCount;
+          final int errors = myErrorsCount;
+          XValueChildrenList children = myChildren;
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myProgress.updateProgress(proceed, matched, errors);
+            myInstancesTree.addChildren(children, false);
+          });
+          myChildren = new XValueChildrenList();
+        }
+
+        return myMatchedCount < MAX_TREE_NODE_COUNT ? Action.CONTINUE : Action.STOP;
+      }
+
+      @NotNull
+      @Override
+      public Action notMatched(@NotNull ObjectReference ref) {
+        myProceedCount++;
+        return Action.CONTINUE;
+      }
+
+      @NotNull
+      @Override
+      public Action error(@NotNull ObjectReference ref, @NotNull String description) {
+        final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
+                                              myEvaluationContext, myNodeManager);
+        myErrorsGroup.addErrorValue(description, val);
+        myProceedCount++;
+        myErrorsCount++;
+        return Action.CONTINUE;
+      }
+
+      @Override
+      public void completed(@NotNull FilteringResult reason) {
+        if (!myErrorsGroup.isEmpty()) {
+          myChildren.addBottomGroup(myErrorsGroup);
+        }
+
+        final long duration = System.nanoTime() - myFilteringStartedTime;
+        LOG.info(String.format("Filtering completed in %d ms for %d instances",
+                               TimeUnit.NANOSECONDS.toMillis(duration),
+                               myProceedCount));
+
+        final int proceed = myProceedCount;
+        final int matched = myMatchedCount;
+        final int errors = myErrorsCount;
+        final XValueChildrenList childrenList = myChildren;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myProgress.updateProgress(proceed, matched, errors);
+          myInstancesTree.addChildren(childrenList, true);
+          myFilterButton.setEnabled(true);
+          myProgress.complete(reason);
+        });
       }
     }
 
     private class MyFilteringWorker extends SwingWorker<Void, Void> {
-      private final List<ObjectReference> myReferences;
-      private final ErrorsValueGroup myErrorsGroup = new ErrorsValueGroup("Errors");
-      private final ExpressionEvaluator myExpressionEvaluator;
-
-      private final EvaluationContextImpl myEvaluationContext;
-      private volatile boolean myDebuggerTaskCompleted = false;
-
-      @NotNull
-      private volatile FilteringCompletionReason myCompletionReason = FilteringCompletionReason.INTERRUPTED;
+      private final FilteringTask myTask;
 
       MyFilteringWorker(@NotNull List<ObjectReference> refs,
-                        @NotNull EvaluationContextImpl evaluationContext,
-                        @Nullable ExpressionEvaluator evaluator) {
-        myReferences = refs;
-        myEvaluationContext = evaluationContext;
-        myExpressionEvaluator = evaluator;
-      }
-
-      @Override
-      protected void done() {
-        if (!myErrorsGroup.isEmpty()) {
-          XValueChildrenList lst = new XValueChildrenList();
-          lst.addBottomGroup(myErrorsGroup);
-          myInstancesTree.addChildren(lst, true);
-        } else {
-          myInstancesTree.addChildren(XValueChildrenList.EMPTY, true);
+                        @NotNull XExpression expression,
+                        @NotNull EvaluationContextImpl evaluationContext) {
+        if (refs.size() != 0) {
+          DebugProcessImpl debugProcess =
+            (DebugProcessImpl)DebuggerManager.getInstance(myProject).getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
+          myTask = new FilteringTask(refs.get(0).referenceType(), debugProcess, expression, refs,
+                                     new MyFilteringCallback(evaluationContext));
         }
-
-        myFilterButton.setEnabled(true);
-        SwingUtilities.invokeLater(() -> myProgress.complete(myCompletionReason));
+        else {
+          myTask = null;
+        }
       }
 
       @Override
       protected Void doInBackground() throws Exception {
-        DebugProcessImpl debugProcess = (DebugProcessImpl) DebuggerManager.getInstance(myProject)
-            .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
-
-        AtomicInteger totalChildren = new AtomicInteger(0);
-        AtomicInteger totalViewed = new AtomicInteger(0);
-        long start = System.nanoTime();
-        for (int i = 0, size = myReferences.size(); i < size && totalChildren.get() < MAX_TREE_NODE_COUNT;
-             i += FILTERING_CHUNK_SIZE) {
-          myDebuggerTaskCompleted = false;
-          final int chunkBegin = i;
-          debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debugProcess.getDebuggerContext()) {
-            @Override
-            public Priority getPriority() {
-              return Priority.LOWEST;
-            }
-
-            @Override
-            public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-              // TODO: need to rewrite this
-              XValueChildrenList children = new XValueChildrenList();
-              int endOfChunk = min(chunkBegin + FILTERING_CHUNK_SIZE, size);
-              int errorCount = 0;
-              for (int j = chunkBegin; j < endOfChunk && totalChildren.get() < MAX_TREE_NODE_COUNT; j++) {
-                ObjectReference ref = myReferences.get(j);
-                totalViewed.incrementAndGet();
-                Pair<MyFilteringResult, String> comparison = null;
-                if (myExpressionEvaluator != null) {
-                  comparison = isSatisfy(myExpressionEvaluator, ref);
-                  if (comparison.first == MyFilteringResult.EVAL_ERROR) {
-                    errorCount++;
-                  }
-
-                  if (comparison.first == MyFilteringResult.NO_MATCH) {
-                    continue;
-                  }
-                }
-
-                JavaValue val = new InstanceJavaValue(null, new InstanceValueDescriptor(myProject, ref),
-                    myEvaluationContext, myNodeManager, true);
-                if (comparison == null || comparison.first == MyFilteringResult.MATCH) {
-                  children.add(val);
-                } else {
-                  myErrorsGroup.addErrorValue(comparison.second, val);
-                }
-
-                totalChildren.incrementAndGet();
-              }
-
-              if (children.size() > 0) {
-                SwingUtilities.invokeLater(() -> {
-                  if (MyFilteringWorker.this == myFilteringTask) {
-                    myInstancesTree.addChildren(children, false);
-                  }
-                });
-              }
-
-              final int childrenSize = children.size();
-              final int finalErrorsCount = errorCount;
-              SwingUtilities.invokeLater(() ->
-                  myProgress.updateProgress(endOfChunk - chunkBegin, childrenSize, finalErrorsCount));
-
-              synchronized (MyFilteringWorker.this) {
-                myDebuggerTaskCompleted = true;
-                MyFilteringWorker.this.notify();
-              }
-            }
-          });
-
-          synchronized (MyFilteringWorker.this) {
-            while (!myDebuggerTaskCompleted) {
-              MyFilteringWorker.this.wait();
-            }
-          }
+        if (myTask != null) {
+          myTask.run();
         }
-
-        LOG.info(String.format("Filtering time = %d ms, count = %d, matched = %d",
-            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start), totalViewed.get(), totalChildren.get()));
-
-        myCompletionReason = totalViewed.get() == myReferences.size()
-            ? FilteringCompletionReason.ALL_CHECKED
-            : FilteringCompletionReason.LIMIT_REACHED;
 
         return null;
-      }
-
-      private Pair<MyFilteringResult, String> isSatisfy(@NotNull ExpressionEvaluator evaluator, @NotNull Value value) {
-        try {
-          Value result = evaluator.evaluate(myEvaluationContext.createEvaluationContext(value));
-          if (result instanceof BooleanValue && ((BooleanValue) result).value()) {
-            return Pair.create(MyFilteringResult.MATCH, "");
-          }
-        } catch (EvaluateException e) {
-          return Pair.create(MyFilteringResult.EVAL_ERROR, e.getMessage());
-        }
-
-        return Pair.create(MyFilteringResult.NO_MATCH, "");
       }
     }
   }
@@ -547,9 +496,5 @@ public class InstancesWindow extends DialogWrapper {
     public DebuggerTreeNodeImpl createMessageNode(String message) {
       return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
     }
-  }
-
-  private enum MyFilteringResult {
-    MATCH, NO_MATCH, EVAL_ERROR
   }
 }

@@ -1,4 +1,19 @@
-package org.jetbrains.debugger.memory.view;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -11,6 +26,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -20,7 +36,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,10 +85,10 @@ public class InstancesTree extends XDebuggerTree {
     rebuildTree(policy, XDebuggerTreeState.saveState(this));
   }
 
-  void setMessage(@Nullable Icon icon, @NotNull String text, @NotNull SimpleTextAttributes textAttributes) {
+  void setInfoMessage(@SuppressWarnings("SameParameterValue") @NotNull String text) {
     myChildren = null;
     myRoot.clearChildren();
-    myRoot.setMessage(text, icon, textAttributes, null);
+    myRoot.setMessage(text, XDebuggerUIConstants.INFORMATION_MESSAGE_ICON, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
   }
 
   @Nullable

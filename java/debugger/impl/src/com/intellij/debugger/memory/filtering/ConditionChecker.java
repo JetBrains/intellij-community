@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.memory.utils;
+package com.intellij.debugger.memory.filtering;
 
-import java.awt.event.KeyEvent;
+import com.sun.jdi.ObjectReference;
+import org.jetbrains.annotations.NotNull;
 
-public class KeyboardUtils {
-  public static boolean isEnterKey(int keyCode) {
-    return keyCode == KeyEvent.VK_ENTER;
-  }
+/**
+ * @author Vitaliy.Bibaev
+ */
+public interface ConditionChecker {
+  CheckingResult check(@NotNull ObjectReference ref);
 
-  public static boolean isUpDownKey(int keyCode) {
-    return keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN;
-  }
-
-  public static boolean isBackSpace(int keyCode) {
-    return keyCode == KeyEvent.VK_BACK_SPACE;
-  }
-
-  public static boolean isCharacter(int keyCode) {
-    return KeyEvent.getKeyText(keyCode).length() == 1;
-  }
+  ConditionChecker ALL_MATCHED_CHECKER = new ConditionChecker() {
+    @Override
+    public CheckingResult check(@NotNull ObjectReference ref) {
+      return CheckingResultImpl.SUCCESS;
+    }
+  };
 }

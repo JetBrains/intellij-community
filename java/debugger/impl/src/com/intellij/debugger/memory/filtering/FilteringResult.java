@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.memory.utils;
+package com.intellij.debugger.memory.filtering;
 
-import java.awt.event.KeyEvent;
+/**
+ * @author Vitaliy.Bibaev
+ */
+public enum FilteringResult {
+  ALL_CHECKED,
 
-public class KeyboardUtils {
-  public static boolean isEnterKey(int keyCode) {
-    return keyCode == KeyEvent.VK_ENTER;
-  }
+  INTERRUPTED,
 
-  public static boolean isUpDownKey(int keyCode) {
-    return keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN;
-  }
-
-  public static boolean isBackSpace(int keyCode) {
-    return keyCode == KeyEvent.VK_BACK_SPACE;
-  }
-
-  public static boolean isCharacter(int keyCode) {
-    return KeyEvent.getKeyText(keyCode).length() == 1;
-  }
+  LIMIT_REACHED
 }

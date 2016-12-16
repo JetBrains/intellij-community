@@ -1,14 +1,34 @@
-package org.jetbrains.debugger.memory.view;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.memory.event.MemoryViewManagerListener;
+import com.intellij.debugger.memory.utils.KeyboardUtils;
+import com.intellij.debugger.memory.utils.LowestPriorityCommand;
+import com.intellij.debugger.memory.utils.SingleAlarmWithMutableDelay;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -22,20 +42,16 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.component.CreationPositionTracker;
-import org.jetbrains.debugger.memory.component.InstancesTracker;
-import org.jetbrains.debugger.memory.component.MemoryViewManager;
-import org.jetbrains.debugger.memory.component.MemoryViewManagerState;
-import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
-import org.jetbrains.debugger.memory.event.MemoryViewManagerListener;
-import org.jetbrains.debugger.memory.tracking.ClassPreparedListener;
-import org.jetbrains.debugger.memory.tracking.ConstructorInstancesTracker;
-import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
-import org.jetbrains.debugger.memory.tracking.TrackingType;
-import org.jetbrains.debugger.memory.utils.AndroidUtil;
-import org.jetbrains.debugger.memory.utils.KeyboardUtils;
-import org.jetbrains.debugger.memory.utils.LowestPriorityCommand;
-import org.jetbrains.debugger.memory.utils.SingleAlarmWithMutableDelay;
+import com.intellij.debugger.memory.component.CreationPositionTracker;
+import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.component.MemoryViewManager;
+import com.intellij.debugger.memory.component.MemoryViewManagerState;
+import com.intellij.debugger.memory.event.InstancesTrackerListener;
+import com.intellij.debugger.memory.tracking.ClassPreparedListener;
+import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
+import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
+import com.intellij.debugger.memory.tracking.TrackingType;
+import com.intellij.debugger.memory.utils.AndroidUtil;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
@@ -49,8 +65,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import static org.jetbrains.debugger.memory.view.ClassesTable.DiffViewTableModel.CLASSNAME_COLUMN_INDEX;
-import static org.jetbrains.debugger.memory.view.ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX;
+import static com.intellij.debugger.memory.ui.ClassesTable.DiffViewTableModel.CLASSNAME_COLUMN_INDEX;
+import static com.intellij.debugger.memory.ui.ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX;
 
 public class ClassesFilteredView extends BorderLayoutPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
@@ -221,7 +237,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       public void sessionResumed() {
         myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::obsolete);
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
           myTable.hideContent();
         });
@@ -235,7 +251,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
       @Override
       public void sessionPaused() {
-        SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
+        ApplicationManager.getApplication().invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
         updateClassesAndCounts();
       }
     };
@@ -243,7 +259,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
       myLastSuspendContext = getSuspendContext();
       if (myLastSuspendContext != null) {
-        SwingUtilities.invokeLater(() -> myTable.setBusy(true));
+        ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
         myDebugProcess.getManagerThread()
             .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
       }
@@ -287,7 +303,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         tracker.disable();
       }
 
-      Disposer.register(ClassesFilteredView.this, tracker);
+      Disposer.register(this, tracker);
       myConstructorTrackedClasses.put(ref, tracker);
     }
   }
@@ -303,7 +319,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   }
 
   private SuspendContextImpl getSuspendContext() {
-    return DebuggerManagerImpl.getInstanceEx(myProject).getContext().getSuspendContext();
+    return DebuggerManagerEx.getInstanceEx(myProject).getContext().getSuspendContext();
   }
 
   private void updateClassesAndCounts() {
@@ -312,9 +328,9 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     }
   }
 
-  private ActionPopupMenu createContextMenu() {
-    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("ClassesView.PopupActionGroup");
-    return ActionManager.getInstance().createActionPopupMenu("ClassesView.PopupActionGroup", group);
+  private static ActionPopupMenu createContextMenu() {
+    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("MemoryView.ClassesPopupActionGroup");
+    return ActionManager.getInstance().createActionPopupMenu("MemoryView.ClassesPopupActionGroup", group);
   }
 
   @Override
@@ -340,7 +356,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   }
 
   private void doActivate() {
-    myDebugSession.addSessionListener(myDebugSessionListener, ClassesFilteredView.this);
+    myDebugSession.addSessionListener(myDebugSessionListener, this);
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
     final SuspendContextImpl lastContext = myLastSuspendContext;
     if (lastContext == null || !lastContext.equals(getSuspendContext())) {
@@ -400,10 +416,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         final long[] counts = chunks.size() == 1 ? chunks.get(0) : IntStream.range(0, chunks.size()).boxed()
             .flatMapToLong(integer -> Arrays.stream(chunks.get(integer)))
             .toArray();
-        SwingUtilities.invokeLater(() -> myTable.setClassesAndUpdateCounts(classes, counts));
+        ApplicationManager.getApplication().invokeLater(() -> myTable.setClassesAndUpdateCounts(classes, counts));
       }
 
-      SwingUtilities.invokeLater(() -> myTable.setBusy(false));
+      ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(false));
     }
 
     private boolean isContextValid() {
@@ -411,7 +427,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     }
   }
 
-  private class FilterTextField extends SearchTextField {
+  private static class FilterTextField extends SearchTextField {
     FilterTextField() {
       super(false);
     }

@@ -1,13 +1,30 @@
-package org.jetbrains.debugger.memory.toolwindow;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.debugger.memory.toolwindow;
 
+import com.intellij.debugger.memory.component.MemoryViewManager;
+import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -23,11 +40,8 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
-import icons.MemoryViewIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.memory.component.MemoryViewManager;
-import org.jetbrains.debugger.memory.view.ClassesFilteredView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +64,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   {
     myEmptyContent = new JBLabel("Run debugging to see loaded classes", SwingConstants.CENTER);
     myMemoryViewNotSupportedContent = new JBLabel("The Memory View not available for this session",
-        SwingConstants.CENTER);
+                                                  SwingConstants.CENTER);
   }
 
   @Override
@@ -60,34 +74,29 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     connection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        SwingUtilities.invokeLater(() -> updateCurrentMemoryView(project, toolWindow));
+        ApplicationManager.getApplication().invokeLater(() -> updateCurrentMemoryView(project, toolWindow));
       }
 
       @Override
       public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        SwingUtilities.invokeLater(() -> updateCurrentMemoryView(project, toolWindow));
+        ApplicationManager.getApplication().invokeLater(() -> updateCurrentMemoryView(project, toolWindow));
       }
     });
 
-    ((ToolWindowImpl) toolWindow).getToolWindowManager()
-        .addToolWindowManagerListener(new ToolWindowManagerAdapter() {
-          @Override
-          public void stateChanged() {
-            if (!myMemoryViews.isEmpty() && !toolWindow.isDisposed()) {
-              myMemoryViews.values().forEach(classesFilteredView ->
-                  classesFilteredView.setActive(toolWindow.isVisible()));
-            }
+    ((ToolWindowImpl)toolWindow).getToolWindowManager()
+      .addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+        @Override
+        public void stateChanged() {
+          if (!myMemoryViews.isEmpty() && !toolWindow.isDisposed()) {
+            myMemoryViews.values().forEach(classesFilteredView ->
+                                             classesFilteredView.setActive(toolWindow.isVisible()));
           }
-        }, project);
+        }
+      }, project);
 
-    ActionGroup group = new DefaultActionGroup(
-        ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithInstances"),
-        ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithDiff"),
-        ActionManager.getInstance().getAction("MemoryView.ShowOnlyTracked"),
-        Separator.getInstance(),
-        ActionManager.getInstance().getAction("MemoryView.EnableTrackingWithClosedWindow")
-    );
-    ((ToolWindowEx) toolWindow).setAdditionalGearActions(group);
+    final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
+
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
     toolWindow.getComponent().setLayout(new BorderLayout());
 
     for (XDebugSession session : XDebuggerManager.getInstance(project).getDebugSessions()) {
@@ -105,7 +114,8 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
         ClassesFilteredView newView = new ClassesFilteredView(session);
         newView.setActive(toolWindow != null && toolWindow.isVisible());
         myMemoryViews.put(session, newView);
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         LOG.warn("Cannot create new instance of the memory view. " + e.getMessage());
       }
     }
@@ -126,7 +136,8 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
         if (myMemoryViews.containsKey(session)) {
           view = myMemoryViews.get(session);
           replaceToolWindowContent(toolWindow, view);
-        } else {
+        }
+        else {
           view = null;
           replaceToolWindowContent(toolWindow, myMemoryViewNotSupportedContent);
         }
@@ -143,7 +154,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     replaceToolWindowContent(toolWindow, myEmptyContent);
   }
 
-  private void replaceToolWindowContent(@NotNull ToolWindow toolWindow, JComponent comp) {
+  private static void replaceToolWindowContent(@NotNull ToolWindow toolWindow, JComponent comp) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     JComponent toolWindowComp = toolWindow.getComponent();
     toolWindowComp.removeAll();
@@ -152,7 +163,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   }
 
   @Nullable
-  private ToolWindow getToolWindow(@NotNull Project project) {
+  private static ToolWindow getToolWindow(@NotNull Project project) {
     return MemoryViewManager.getInstance().getToolWindow(project);
   }
 
@@ -170,15 +181,15 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
         public void processStopped(@NotNull XDebugProcess debugProcess) {
           Project project = debugProcess.getSession().getProject();
           boolean enabled = Arrays.stream(XDebuggerManager.getInstance(project)
-              .getDebugSessions()).anyMatch(session -> !session.getDebugProcess().equals(debugProcess));
+                                            .getDebugSessions()).anyMatch(session -> !session.getDebugProcess().equals(debugProcess));
           updateIcon(project, enabled);
         }
 
         private void updateIcon(@NotNull Project project, boolean enabled) {
           ToolWindow toolWindow = MemoryViewManager.getInstance().getToolWindow(project);
           if (toolWindow != null) {
-            SwingUtilities.invokeLater(() ->
-                toolWindow.setIcon(enabled ? MemoryViewIcons.MAIN_ENABLED : MemoryViewIcons.MAIN_DISABLED));
+            Icon icon = enabled ? AllIcons.Debugger.MemoryView.ToolWindowEnabled : AllIcons.Debugger.MemoryView.ToolWindowDisabled;
+            ApplicationManager.getApplication().invokeLater(() -> toolWindow.setIcon(icon));
           }
         }
       });
@@ -189,7 +200,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   private final class MyDebuggerStatusChangedListener implements XDebuggerManagerListener {
     @Override
     public void processStarted(@NotNull XDebugProcess xDebugProcess) {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         XDebugSession session = xDebugProcess.getSession();
         addNewSession(session);
         updateView(session);
@@ -200,7 +211,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     public void processStopped(@NotNull XDebugProcess xDebugProcess) {
       XDebugSession session = xDebugProcess.getSession();
       removeSession(session);
-      SwingUtilities.invokeLater(() -> updateView(session));
+      ApplicationManager.getApplication().invokeLater(() -> updateView(session));
     }
 
     private void updateView(@NotNull XDebugSession debugSession) {

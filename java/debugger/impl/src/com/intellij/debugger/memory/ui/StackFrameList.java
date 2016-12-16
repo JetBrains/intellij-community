@@ -1,4 +1,19 @@
-package org.jetbrains.debugger.memory.view;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
@@ -17,15 +32,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.utils.StackFrameDescriptor;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class StackFrameList extends JBList {
+class StackFrameList extends JBList<StackFrameDescriptor> {
   private static final char ANONYMOUS_CLASS_DELIMITER = '$';
   private static final MyOpenFilesState myEditorState = new MyOpenFilesState();
 
@@ -45,7 +59,6 @@ class StackFrameList extends JBList {
 
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    //noinspection unchecked
     setModel(myModel);
 
     setCellRenderer(new ColoredListCellRenderer<StackFrameDescriptor>() {
@@ -54,7 +67,7 @@ class StackFrameList extends JBList {
                                            StackFrameDescriptor value, int index, boolean isSelected, boolean hasFocus) {
         append(String.format("%s:%d, %s", value.methodName(), value.line(), value.className()));
         String packageName = value.packageName();
-        if (!StringUtils.isEmpty(packageName)) {
+        if (packageName.trim().isEmpty() /*!StringUtils.isEmpty(packageName)*/) {
           append(String.format(" (%s)", value.packageName()), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
         }
       }
@@ -66,7 +79,7 @@ class StackFrameList extends JBList {
   }
 
   void navigateToSelectedValue(boolean focusOnEditor) {
-    StackFrameDescriptor selectedValue = (StackFrameDescriptor) getSelectedValue();
+    StackFrameDescriptor selectedValue = getSelectedValue();
     if (selectedValue != null) {
       navigateToFrame(selectedValue, focusOnEditor);
     }
@@ -88,7 +101,7 @@ class StackFrameList extends JBList {
         }
 
         OpenFileHyperlinkInfo info =
-            new OpenFileHyperlinkInfo(myProject, file, frame.line() - 1);
+          new OpenFileHyperlinkInfo(myProject, file, frame.line() - 1);
         OpenFileDescriptor descriptor = info.getDescriptor();
         if (descriptor != null) {
           FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
