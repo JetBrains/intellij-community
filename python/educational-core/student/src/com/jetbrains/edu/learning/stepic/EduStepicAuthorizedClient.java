@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -78,10 +79,7 @@ public class EduStepicAuthorizedClient {
     }
     ourClient = initializeClient(stepicUser);
     if (ourClient == null) {
-      final StepicUser user = login(stepicUser);
-      if (user != null) {
-        ourClient = initializeClient(stepicUser);
-      }
+      ourClient = EduStepicClient.getHttpClient();
     }
     return ourClient;
   }
@@ -106,6 +104,10 @@ public class EduStepicAuthorizedClient {
     else {
       final StepicUser authorizedUser = login(stepicUser);
       if (authorizedUser != null) {
+        final Project project = StudyUtils.getStudyProject();
+        if (project != null) {
+          StudyTaskManager.getInstance(project).setUser(authorizedUser);
+        }
         return initializeClient(authorizedUser);
       }
     }
