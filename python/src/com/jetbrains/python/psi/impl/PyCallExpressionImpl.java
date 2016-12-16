@@ -24,6 +24,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -46,17 +48,10 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return seeker instanceof PyExpression ? (PyExpression) seeker : null;
   }
 
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.resolveCallee(this, resolveContext);
-  }
-
+  @NotNull
   @Override
-  public PyCallable resolveCalleeFunction(PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);
-  }
-
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int offset) {
-    return PyCallExpressionHelper.resolveCallee(this, resolveContext, offset);
+  public List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return PyCallExpressionHelper.multiResolveCallee(this, resolveContext, implicitOffset);
   }
 
   @NotNull

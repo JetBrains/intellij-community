@@ -20,7 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -32,6 +34,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author dcheryasov
@@ -101,17 +105,22 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
-    return resolveCallee(resolveContext, 0);
-  }
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int offset) {
-    PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this, resolveContext);
-    if (callee == null) return null;
-    if (!hasArgumentList()) {
-      // NOTE: that +1 thing looks fishy
-      callee = new PyMarkedCallee(callee.getCallable(), callee.getModifier(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
-    }
-    return callee;
+  @NotNull
+  @Override
+  public List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    final Function<PyMarkedCallee, PyMarkedCallee> mapping = callee -> {
+      if (!hasArgumentList()) {
+        // NOTE: that +1 thing looks fishy
+        return new PyMarkedCallee(callee.getCallable(),
+                                  callee.getModifier(),
+                                  callee.getImplicitOffset() + 1,
+                                  callee.isImplicitlyResolved());
+      }
+
+      return callee;
+    };
+
+    return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext, implicitOffset), mapping);
   }
 
   @NotNull
@@ -124,11 +133,6 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   @Override
   public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
     return PyCallExpressionHelper.mapArguments(this, resolveContext, implicitOffset);
-  }
-
-  @Override
-  public PyCallable resolveCalleeFunction(PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);
   }
 
   @Override

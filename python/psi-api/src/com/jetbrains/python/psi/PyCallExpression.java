@@ -139,31 +139,78 @@ public interface PyCallExpression extends PyCallSiteExpression {
   }
 
   /**
-   * Resolves callee down to particular function (standalone, method, or constructor).
-   * Return's function part contains a function, never null.
-   * Return's flag part marks the particulars of the call, esp. the implicit first arg situation.
-   * Return is null if callee cannot be resolved.
+   * Resolves the callee down to particular function (standalone, method, or constructor).
    *
-   * @param resolveContext the reference resolve context
+   * @param resolveContext resolve context
+   * @return the resolved callee or null if it cannot be resolved
+   * @see PyCallExpression#multiResolveCalleeFunction(PyResolveContext)
    */
   @Nullable
-  PyMarkedCallee resolveCallee(PyResolveContext resolveContext);
+  default PyCallable resolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
+    return ContainerUtil.getFirstItem(multiResolveCalleeFunction(resolveContext));
+  }
 
   /**
-   * Resolves callee down to particular function (standalone, method, or constructor).
-   * Return is null if callee cannot be resolved.
+   * Resolves the callee down to particular function (standalone, method, or constructor).
    *
-   * @param resolveContext the reference resolve context
+   * @param resolveContext resolve context
+   * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * Returns null if the callee cannot be resolved.
+   * @see PyCallExpression#multiResolveCallee(PyResolveContext)
    */
   @Nullable
-  PyCallable resolveCalleeFunction(PyResolveContext resolveContext);
+  default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext) {
+    return ContainerUtil.getFirstItem(multiResolveCallee(resolveContext));
+  }
 
   /**
-   * @param resolveContext the reference resolve context
-   * @param implicitOffset known from the context implicit offset
+   * Resolves the callee down to particular function (standalone, method, or constructor).
+   *
+   * @param resolveContext resolve context
+   * @param implicitOffset implicit offset which is known from the context
+   * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * Returns null if the callee cannot be resolved.
+   * @see PyCallExpression#multiResolveCallee(PyResolveContext, int)
    */
   @Nullable
-  PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int implicitOffset);
+  default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return ContainerUtil.getFirstItem(multiResolveCallee(resolveContext, implicitOffset));
+  }
+
+  /**
+   * Resolves the callee to possible functions.
+   *
+   * @param resolveContext resolve context
+   * @return the resolved callees or an empty list.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  default List<PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
+    return ContainerUtil.map(multiResolveCallee(resolveContext), PyMarkedCallee::getCallable);
+  }
+
+  /**
+   * Resolves the callee to possible functions.
+   *
+   * @param resolveContext resolve context
+   * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  default List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
+    return multiResolveCallee(resolveContext, 0);
+  }
+
+  /**
+   * Resolves the callee to possible functions.
+   *
+   * @param resolveContext resolve context
+   * @param implicitOffset implicit offset which is known from the context
+   * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
 
   @NotNull
   PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext);
