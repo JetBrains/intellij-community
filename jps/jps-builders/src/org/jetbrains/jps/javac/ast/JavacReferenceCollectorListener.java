@@ -33,6 +33,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.*;
@@ -169,10 +170,14 @@ final class JavacReferenceCollectorListener implements TaskListener {
           }
 
           @Override
+          public TypeMirror getType(Tree tree) {
+            return finalIncompletelyProcessedFile.getTreeHelper().getType(tree);
+          }
+
+          @Override
           public Types getTypeUtility() {
             return myTypeUtility;
           }
-
         };
         myAstScanner.scan(declarationToProcess, sink);
 
@@ -281,6 +286,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     private Element getReferencedElement(Tree tree) {
       return myTreeUtil.getElement(new TreePath(myUnitPath, tree));
+    }
+
+    public TypeMirror getType(Tree tree) {
+      return myTreeUtil.getTypeMirror(new TreePath(myUnitPath, tree));
     }
   }
 }

@@ -20,6 +20,7 @@ import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 
 interface JavacTreeScannerSink {
@@ -31,6 +32,8 @@ interface JavacTreeScannerSink {
   JavacRef.JavacElementRefBase asJavacRef(Element element);
 
   Element getReferencedElement(Tree tree);
+
+  TypeMirror getType(Tree tree);
 
   Types getTypeUtility();
 }
