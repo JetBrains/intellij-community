@@ -312,9 +312,6 @@
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
 
-    <!--<completionData fileType="XML" className="com.intellij.codeInsight.completion.XmlCompletionData"/>-->
-    <!--<completionData fileType="HTML" className="com.intellij.codeInsight.completion.HtmlCompletionData"/>-->
-    <!--<completionData fileType="XHTML" className="com.intellij.codeInsight.completion.XHtmlCompletionData"/>-->
     <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
 
     <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
