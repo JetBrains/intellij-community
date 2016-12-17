@@ -67,7 +67,7 @@ public class EduAdaptiveStepicConnector {
   @Nullable
   public static Task getNextRecommendation(@NotNull Project project, @NotNull Course course) {
     try {
-      final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+      final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
       final URI uri = new URIBuilder(EduStepicNames.STEPIC_API_URL + EduStepicNames.RECOMMENDATIONS_URL)
         .addParameter(EduNames.COURSE, String.valueOf(course.getId()))
         .build();
@@ -88,7 +88,8 @@ public class EduAdaptiveStepicConnector {
           final StepicWrappers.Recommendation recommendation = recomWrapper.recommendations[0];
           final String lessonId = recommendation.lesson;
           final StepicWrappers.LessonContainer lessonContainer = EduStepicAuthorizedClient.getFromStepic(EduStepicNames.LESSONS + lessonId,
-                                                                                                         StepicWrappers.LessonContainer.class);
+                                                                                                         StepicWrappers.LessonContainer.class,
+                                                                                                         project);
           if (lessonContainer.lessons.size() == 1) {
             final Lesson realLesson = lessonContainer.lessons.get(0);
             course.getLessons().get(0).setId(Integer.parseInt(lessonId));
@@ -98,8 +99,8 @@ public class EduAdaptiveStepicConnector {
               if (taskFromStep != null) return taskFromStep;
             }
 
-            final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-            postRecommendationReaction(lessonId,
+            final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+            postRecommendationReaction(project, lessonId,
                                        String.valueOf(user.getId()), -1);
             return getNextRecommendation(project, course);
           }
@@ -136,29 +137,30 @@ public class EduAdaptiveStepicConnector {
 
   @Nullable
   private static Task getTask(@NotNull Project project, @NotNull String name, int stepId) throws IOException {
-    final StepicWrappers.StepSource step = getStep(stepId);
+    final StepicWrappers.StepSource step = getStep(project, stepId);
     final String stepType = step.block.name;
     if (stepType.equals(CODE_TASK_TYPE)) {
       return getCodeTaskFromStep(project, step.block, name, stepId);
     }
     else if (stepType.equals(CHOICE_TYPE_TEXT)) {
-      return getChoiceTaskFromStep(name, step.block, stepId);
+      return getChoiceTaskFromStep(project, name, step.block, stepId);
     }
     else if (stepType.startsWith(EduStepicConnector.PYCHARM_PREFIX)) {
-      return EduStepicConnector.createTask(stepId);
+      return EduStepicConnector.createTask(project, stepId);
     }
 
     return null;
   }
 
-  private static Task getChoiceTaskFromStep(@NotNull String lessonName,
+  private static Task getChoiceTaskFromStep(@NotNull Project project,
+                                            @NotNull String lessonName,
                                             @NotNull StepicWrappers.Step block,
                                             int stepId) {
     final Task task = new Task(lessonName);
     task.setStepId(stepId);
     task.setText(block.text);
 
-    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(stepId);
+    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(project, stepId);
     if (attempt != null) {
       final StepicWrappers.AdaptiveAttemptWrapper.Dataset dataset = attempt.dataset;
       if (dataset != null) {
@@ -182,16 +184,16 @@ public class EduAdaptiveStepicConnector {
   }
 
   @Nullable
-  private static StepicWrappers.AdaptiveAttemptWrapper.Attempt getAttemptForStep(int id) {
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+  private static StepicWrappers.AdaptiveAttemptWrapper.Attempt getAttemptForStep(@NotNull Project project, int id) {
+    final StepicUser user = StudyTaskManager.getInstance(project).getUser();
     try {
       final List<StepicWrappers.AdaptiveAttemptWrapper.Attempt> attempts = getAttempts(user, id);
       if (attempts != null && attempts.size() > 0) {
         final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = attempts.get(0);
-        return attempt.isActive() ? attempt : createNewAttempt(id);
+        return attempt.isActive() ? attempt : createNewAttempt(project, id);
       }
       else {
-        return createNewAttempt(id);
+        return createNewAttempt(project, id);
       }
     }
     catch (URISyntaxException | IOException e) {
@@ -200,8 +202,8 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  private static StepicWrappers.AdaptiveAttemptWrapper.Attempt createNewAttempt(int id) throws IOException {
-    final String response = EduStepicConnector.postAttempt(id);
+  private static StepicWrappers.AdaptiveAttemptWrapper.Attempt createNewAttempt(@NotNull Project project, int id) throws IOException {
+    final String response = EduStepicConnector.postAttempt(project, id);
     final StepicWrappers.AdaptiveAttemptContainer attempt = new Gson().fromJson(response, StepicWrappers.AdaptiveAttemptContainer.class);
     return attempt.attempts.get(0);
   }
@@ -235,14 +237,15 @@ public class EduAdaptiveStepicConnector {
     request.setConfig(requestConfig);
   }
 
-  public static boolean postRecommendationReaction(@NotNull String lessonId,
+  public static boolean postRecommendationReaction(@NotNull Project project,
+                                                   @NotNull String lessonId,
                                                    @NotNull String user,
                                                    int reaction) {
     final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.RECOMMENDATION_REACTIONS_URL);
     final String json = new Gson()
       .toJson(new StepicWrappers.RecommendationReactionWrapper(new StepicWrappers.RecommendationReaction(reaction, user, lessonId)));
     post.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
     setTimeout(post);
     try {
       final CloseableHttpResponse execute = client.execute(post);
@@ -271,10 +274,10 @@ public class EduAdaptiveStepicConnector {
     final Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course != null && editor != null && editor.getTaskFile() != null) {
       indicator.checkCanceled();
-      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      final StepicUser user = StudyTaskManager.getInstance(project).getUser();
 
       final boolean recommendationReaction =
-        postRecommendationReaction(String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
+        postRecommendationReaction(project, String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
                                    String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
         indicator.checkCanceled();
@@ -470,7 +473,7 @@ public class EduAdaptiveStepicConnector {
 
   public static Pair<Boolean, String> checkChoiceTask(@NotNull Project project, @NotNull Task task) {
     if (task.getSelectedVariants().isEmpty()) return Pair.create(false, "No variants selected");
-    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(task.getStepId());
+    final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(project, task.getStepId());
 
     if (attempt != null) {
       final int attemptId = attempt.id;
@@ -480,10 +483,10 @@ public class EduAdaptiveStepicConnector {
       if (!isActiveAttempt) return Pair.create(false, "Your solution is out of date. Please try again");
       final StepicWrappers.SubmissionToPostWrapper wrapper = new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId),
                                                                                                         createChoiceTaskAnswerArray(task));
-      final Pair<Boolean, String> pair = doAdaptiveCheck(wrapper, attemptId);
+      final Pair<Boolean, String> pair = doAdaptiveCheck(project, wrapper, attemptId);
       if (!pair.getFirst()) {
         try {
-          createNewAttempt(task.getStepId());
+          createNewAttempt(project, task.getStepId());
           final Task updatedTask = getTask(project, task.getName(), task.getStepId());
           if (updatedTask != null) {
             final List<String> variants = updatedTask.getChoiceVariants();
@@ -514,7 +517,7 @@ public class EduAdaptiveStepicConnector {
   public static Pair<Boolean, String> checkCodeTask(@NotNull Project project, @NotNull Task task) {
     int attemptId = -1;
     try {
-      attemptId = getAttemptId(task);
+      attemptId = getAttemptId(project, task);
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
@@ -526,7 +529,7 @@ public class EduAdaptiveStepicConnector {
         final String answer = PYCHARM_COMMENT + editor.getDocument().getText();
         final StepicWrappers.SubmissionToPostWrapper submissionToPost =
           new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, answer);
-        return doAdaptiveCheck(submissionToPost, attemptId);
+        return doAdaptiveCheck(project, submissionToPost, attemptId);
       }
     }
     else {
@@ -535,10 +538,11 @@ public class EduAdaptiveStepicConnector {
     return Pair.create(false, "");
   }
 
-  private static Pair<Boolean, String> doAdaptiveCheck(@NotNull StepicWrappers.SubmissionToPostWrapper submission,
+  private static Pair<Boolean, String> doAdaptiveCheck(@NotNull Project project,
+                                                       @NotNull StepicWrappers.SubmissionToPostWrapper submission,
                                                        int attemptId) {
-    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
+    final StepicUser user = StudyTaskManager.getInstance(project).getUser();
     StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, submission);
     if (wrapper != null) {
       wrapper = getCheckResults(client, wrapper, attemptId, user.getId());
@@ -636,13 +640,13 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
-  private static int getAttemptId(@NotNull Task task) throws IOException {
+  private static int getAttemptId(@NotNull final Project project, @NotNull Task task) throws IOException {
     final StepicWrappers.AdaptiveAttemptWrapper attemptWrapper = new StepicWrappers.AdaptiveAttemptWrapper(task.getStepId());
 
     final HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     post.setEntity(new StringEntity(new Gson().toJson(attemptWrapper)));
 
-    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+    final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(project);
     setTimeout(post);
     final CloseableHttpResponse httpResponse = client.execute(post);
     final int statusCode = httpResponse.getStatusLine().getStatusCode();

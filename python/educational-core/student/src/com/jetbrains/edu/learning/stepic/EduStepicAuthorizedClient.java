@@ -5,9 +5,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -45,24 +48,24 @@ public class EduStepicAuthorizedClient {
   }
 
   @NotNull
-  public static CloseableHttpClient getHttpClient() {
+  public static CloseableHttpClient getHttpClient(@NotNull final Project project) {
     if (ourClient != null) {
       return ourClient;
     }
-    final StepicUser stepicUser = StepicUpdateSettings.getInstance().getUser();
+    final StepicUser stepicUser = StudyTaskManager.getInstance(project).getUser();
     ourClient = initializeClient(stepicUser);
     if (ourClient == null) {
       final StepicUser user = login(stepicUser);
       if (user != null) {
-        StepicUpdateSettings.getInstance().setUser(user);
+        StudyTaskManager.getInstance(project).setUser(user);
         ourClient = initializeClient(stepicUser);
       }
     }
     return ourClient;
   }
 
-  public static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
-    return EduStepicClient.getFromStepic(link, container, getHttpClient());
+  public static <T> T getFromStepic(String link, final Class<T> container, @NotNull final Project project) throws IOException {
+    return EduStepicClient.getFromStepic(link, container, getHttpClient(project));
   }
 
   /*
@@ -101,7 +104,10 @@ public class EduStepicAuthorizedClient {
     else {
       final StepicUser authorizedUser = login(stepicUser);
       if (authorizedUser != null) {
-        StepicUpdateSettings.getInstance().setUser(authorizedUser);
+        final Project project = StudyUtils.getStudyProject();
+        if (project != null) {
+          StudyTaskManager.getInstance(project).setUser(authorizedUser);
+        }
         return initializeClient(authorizedUser);
       }
     }
