@@ -53,7 +53,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     setTitle(generators.length == 0 ? "Create Project" : "New Project");
     DefaultActionGroup root = createRootStep();
 
-    Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null);
+    Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null, getDisposable());
     Dimension size = JBUI.size(666, 385);
     JPanel component = pair.first;
     component.setMinimumSize(size);

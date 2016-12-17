@@ -470,7 +470,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack());
+        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack(), this);
         final Runnable onDone = () -> {
           setTitle("New Project");
           final JBList list = panel.second;
@@ -786,11 +786,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private JPanel actions;
   }
   
-  public static Pair<JPanel, JBList> createActionGroupPanel(final ActionGroup action, final JComponent parent, final Runnable backAction) {
+  public static Pair<JPanel, JBList> createActionGroupPanel(final ActionGroup action,
+                                                            final JComponent parent,
+                                                            final Runnable backAction,
+                                                            @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     final List<AnAction> groups = flattenActionGroups(action);
     final JBList<AnAction> list = new JBList<>(groups);
+    for (AnAction group : groups) {
+      if (group instanceof Disposable) {
+        Disposer.register(parentDisposable, (Disposable)group);
+      }
+    }
 
     list.setBackground(getProjectsBackground());
     list.setCellRenderer(new GroupedItemsListRenderer<AnAction>(new ListItemDescriptorAdapter<AnAction>() {
