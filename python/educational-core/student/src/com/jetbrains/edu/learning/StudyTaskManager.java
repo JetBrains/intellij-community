@@ -13,6 +13,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -34,6 +35,7 @@ import java.util.Map;
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
   public static final int CURRENT_VERSION = 4;
+  private StepicUser myUser = new StepicUser();
   private Course myCourse;
   public int VERSION = 4;
 
@@ -197,6 +199,15 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     myTurnEditingMode = turnEditingMode;
   }
   
+  @NotNull
+  public StepicUser getUser() {
+    return myUser;
+  }
+
+  public void setUser(@NotNull final StepicUser user) {
+    myUser = user;
+  }
+
   public boolean isEnableTestingFromSamples() {
     return myEnableTestingFromSamples;
   }

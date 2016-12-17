@@ -61,7 +61,6 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import com.petebevin.markdown.MarkdownProcessor;
@@ -628,12 +627,12 @@ public class StudyUtils {
   }
 
   @NotNull
-  public static File getCourseDirectory(Course course) {
+  public static File getCourseDirectory(@NotNull Project project, Course course) {
     final File courseDirectory;
     if (course.isAdaptive()) {
       courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR,
                                  StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
-                                 + "_" + StepicUpdateSettings.getInstance().getUser().getEmail());
+                                 + "_" + StudyTaskManager.getInstance(project).getUser().getEmail());
     }
     else {
       courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR, course.getName());

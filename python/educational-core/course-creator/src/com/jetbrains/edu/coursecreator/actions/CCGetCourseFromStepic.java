@@ -61,14 +61,14 @@ public class CCGetCourseFromStepic extends DumbAwareAction {
 
   private static void createCourse(Project project, String courseId) {
     final VirtualFile baseDir = project.getBaseDir();
-    final CourseInfo info = CCStepicConnector.getCourseInfo(courseId);
+    final CourseInfo info = CCStepicConnector.getCourseInfo(project, courseId);
     if (info == null) return;
 
     final Course course = EduStepicConnector.getCourse(project, info);
     if (course != null) {
-      flushCourse(course);
+      flushCourse(project, course);
 
-      final File courseDirectory = StudyUtils.getCourseDirectory(course);
+      final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
       ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
         final VirtualFile[] children = baseDir.getChildren();
         for (VirtualFile child : children) {
