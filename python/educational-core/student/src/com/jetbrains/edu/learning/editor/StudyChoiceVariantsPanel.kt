@@ -1,6 +1,10 @@
 package com.jetbrains.edu.learning.editor
 
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.edu.learning.courseFormat.Task
 import javafx.application.Platform
 import javafx.beans.value.ObservableValue
@@ -13,7 +17,9 @@ import javafx.scene.control.CheckBox
 import javafx.scene.control.RadioButton
 import javafx.scene.control.ToggleGroup
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import javafx.scene.text.Font
+import java.util.*
 import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
 
@@ -24,12 +30,15 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
   private val RIGHT_INSET = 10.0
   private val TOP_INSET = 15.0
   private val BOTTOM_INSET = 10.0
+  
+  private val buttons: ArrayList<ButtonBase> = ArrayList()
 
   init {
     val jfxPanel = JFXPanel()
+    LafManager.getInstance().addLafManagerListener(StudyLafManagerListener(jfxPanel))
     Platform.runLater {
       val group = Group()
-      val scene = Scene(group)
+      val scene = Scene(group, getSceneBackground())
       jfxPanel.scene = scene
       val vBox = VBox()
       vBox.spacing = 10.0
@@ -42,6 +51,7 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
           checkBox.selectedProperty().addListener(createSelectionListener(task, index))
           setUpButtonStyle(checkBox, scene)
           vBox.children.add(checkBox)
+          buttons.add(checkBox)
         }
       }
       else {
@@ -54,6 +64,7 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
           radioButton.selectedProperty().addListener(createSelectionListener(task, index))
           setUpButtonStyle(radioButton, scene)
           vBox.children.add(radioButton)
+          buttons.add(radioButton)
         }
       }
 
@@ -61,6 +72,11 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
     }
     setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
     setViewportView(jfxPanel)
+  }
+
+  private fun getSceneBackground(): Color{
+    val panelBackground = UIUtil.getPanelBackground()
+    return Color.rgb(panelBackground.red, panelBackground.green, panelBackground.blue)
   }
 
   private fun createSelectionListener(task: Task, index: Int): (ObservableValue<out Boolean>, Boolean, Boolean) -> Unit {
@@ -78,6 +94,27 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
     button.isWrapText = true
     button.maxWidthProperty().bind(scene.widthProperty().subtract(LEFT_INSET).subtract(RIGHT_INSET))
     button.font = Font.font((EditorColorsManager.getInstance().globalScheme.editorFontSize + 2).toDouble())
-    button.stylesheets.add(javaClass.getResource("/style/buttons.css").toExternalForm())
+    
+    setButtonLaf(button)
+  }
+
+  private fun setButtonLaf(button: ButtonBase) {
+    val darcula = LafManager.getInstance().currentLookAndFeel is DarculaLookAndFeelInfo
+    val stylesheetPath = if (darcula) "/style/buttonsDarcula.css" else "/style/buttons.css"
+    button.stylesheets.removeAll()
+    button.stylesheets.add(javaClass.getResource(stylesheetPath).toExternalForm())
+  }
+
+  private inner class StudyLafManagerListener(val jfxPanel: JFXPanel) : LafManagerListener {
+    override fun lookAndFeelChanged(manager: LafManager) {
+      Platform.runLater {
+        val panelBackground = UIUtil.getPanelBackground()
+        jfxPanel.scene.fill = Color.rgb(panelBackground.red, panelBackground.green, panelBackground.blue)
+        for (button in buttons) {
+          setButtonLaf(button)
+        }
+        jfxPanel.repaint()
+      }
+    }
   }
 }
