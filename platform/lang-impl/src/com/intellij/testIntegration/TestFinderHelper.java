@@ -39,7 +39,8 @@ public class TestFinderHelper {
   public static Collection<PsiElement> findTestsForClass(PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
-      result.addAll(each.findTestsForClass(element));
+      final PsiElement selectedElement = each.findSelectedElement(element);
+      if (selectedElement != null) result.addAll(each.findTestsForClass(selectedElement));
     }
     return result;
   }
@@ -47,7 +48,8 @@ public class TestFinderHelper {
   public static Collection<PsiElement> findClassesForTest(PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
-      result.addAll(each.findClassesForTest(element));
+      final PsiElement selectedElement = each.findSelectedElement(element);
+      if (selectedElement != null) result.addAll(each.findClassesForTest(selectedElement));
     }
     return result;
   }
