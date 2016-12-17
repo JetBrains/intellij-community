@@ -387,5 +387,3 @@ HEX_CHAR=[0-9a-fA-F]
 [\n\b\t\r\f]   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
 
 {ANY}        { return RegExpTT.CHARACTER; }
-
-}
