@@ -967,7 +967,7 @@ public abstract class DialogWrapper {
     });
   }
 
-  private static void unregisterKeyboardActions(@Nullable JRootPane rootPane) {
+  public static void unregisterKeyboardActions(@Nullable Component rootPane) {
     int[] flags = {JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW};
     for (JComponent eachComp : UIUtil.uiTraverser(rootPane).traverse().filter(JComponent.class)) {
       ActionMap actionMap = eachComp.getActionMap();
