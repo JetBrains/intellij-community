@@ -27,7 +27,7 @@ import java.util.EnumSet;
 
     int capturingGroupCount = 0;
 
-    private boolean allowDanglingMetacharacters;
+    private Boolean allowDanglingMetacharacters;
     private boolean allowNestedCharacterClasses;
     private boolean allowOctalNoLeadingZero;
     private boolean allowHexDigitClass;
@@ -39,7 +39,8 @@ import java.util.EnumSet;
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
       this.xmlSchemaMode = capabilities.contains(RegExpCapability.XML_SCHEMA_MODE);
-      this.allowDanglingMetacharacters = capabilities.contains(RegExpCapability.DANGLING_METACHARACTERS);
+      if (capabilities.contains(RegExpCapability.DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.TRUE;
+      if (capabilities.contains(RegExpCapability.NO_DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.FALSE;
       this.allowNestedCharacterClasses = capabilities.contains(RegExpCapability.NESTED_CHARACTER_CLASSES);
       this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
       this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
@@ -177,6 +178,8 @@ HEX_CHAR=[0-9a-fA-F]
                               }
 
 {ESCAPE}  "-"                 { return (yystate() == CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+{ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != Boolean.TRUE && yystate() != CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+{ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == Boolean.FALSE && yystate() != CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 {ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {META2}             { return (yystate() == CLASS2) ? RegExpTT.REDUNDANT_ESCAPE : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CLASS}             { return RegExpTT.CHAR_CLASS;    }
@@ -221,7 +224,7 @@ HEX_CHAR=[0-9a-fA-F]
 {LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
 {LBRACE} / [:digit:]+ "," [:digit:]+ {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
 {LBRACE} / "," [:digit:]+ {RBRACE}            { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-{LBRACE}  { if (yystate() != CLASS2 && !allowDanglingMetacharacters) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+{LBRACE}  { if (yystate() != CLASS2 && allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
 
 <QUANTIFIER> {
   [:digit:]+          { return RegExpTT.NUMBER; }
@@ -312,6 +315,7 @@ HEX_CHAR=[0-9a-fA-F]
 <YYINITIAL> {
   {LPAREN}      { capturingGroupCount++; return RegExpTT.GROUP_BEGIN; }
   {RPAREN}      { return RegExpTT.GROUP_END;   }
+  {RBRACE}      { return (allowDanglingMetacharacters != Boolean.FALSE) ? RegExpTT.CHARACTER : RegExpTT.RBRACE;  }
 
   "|"           { return RegExpTT.UNION;  }
   "?"           { return RegExpTT.QUEST;  }
@@ -375,7 +379,7 @@ HEX_CHAR=[0-9a-fA-F]
 "-"                   { return RegExpTT.CHARACTER; }
 
 /* "dangling ]" */
-<YYINITIAL> {RBRACKET}    { return RegExpTT.CHARACTER; }
+<YYINITIAL> {RBRACKET}    { return allowDanglingMetacharacters == Boolean.FALSE ? RegExpTT.CLASS_END : RegExpTT.CHARACTER; }
 
 
 "#"           { if (commentMode) { yypushstate(COMMENT); return RegExpTT.COMMENT; } else return RegExpTT.CHARACTER; }

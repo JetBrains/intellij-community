@@ -525,7 +525,7 @@ public class RegExpParser implements PsiParser {
     if (token == RegExpTT.GROUP_END) {
       builder.error("Unmatched closing ')'");
     }
-    else if (RegExpTT.QUANTIFIERS.contains(token)) {
+    else if (RegExpTT.QUANTIFIERS.contains(token) || token == RegExpTT.RBRACE || token == RegExpTT.CLASS_END) {
       builder.error("Dangling metacharacter");
     }
     else {

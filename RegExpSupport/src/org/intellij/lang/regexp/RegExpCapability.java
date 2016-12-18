@@ -20,7 +20,18 @@ package org.intellij.lang.regexp;
  */
 public enum RegExpCapability {
   XML_SCHEMA_MODE,
+
+  /**
+   * Normal mode is ']' and '}' allowed as regular character.
+   * In this mode '{' is also allowed as character when not part of quantifier.
+   */
   DANGLING_METACHARACTERS,
+
+  /**
+   * In this mode ']' and '}' are NOT allowed as regular character.
+   * This mode overrides DANGLING_METACHARACTERS.
+   */
+  NO_DANGLING_METACHARACTERS,
   NESTED_CHARACTER_CLASSES,
 
   /**
@@ -29,8 +40,15 @@ public enum RegExpCapability {
    */
   OCTAL_NO_LEADING_ZERO,
 
+  /**
+   * '{,1}' is legal
+   */
   OMIT_NUMBERS_IN_QUANTIFIERS,
   COMMENT_MODE,
+
+  /**
+   * '\h'
+   */
   ALLOW_HEX_DIGIT_CLASS,
   /**
    * supports [] to be valid character class
