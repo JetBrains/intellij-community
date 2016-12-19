@@ -265,4 +265,10 @@ class Test88 {
     myFixture.type('l\t')
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  void testFinishMethodReferenceWithColon() {
+    configureByTestName()
+    myFixture.type(':')
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 }
