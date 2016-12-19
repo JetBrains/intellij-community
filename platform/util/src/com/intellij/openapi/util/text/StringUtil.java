@@ -830,8 +830,9 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String pluralize(@NotNull String word) {
     String plural = Pluralizer.PLURALIZER.plural(word);
-    return equalsIgnoreCase(plural, word) && !endsWithIgnoreCase(plural, "es") ?
-           Pluralizer.restoreCase(word, word + "s") : plural;
+    if (plural != null) return plural;
+    if (word.endsWith("s")) return Pluralizer.restoreCase(word, word + "es");
+    return Pluralizer.restoreCase(word, word + "s");
   }
 
   @NotNull
@@ -1647,10 +1648,10 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String unpluralize(@NotNull String word) {
     String singular = Pluralizer.PLURALIZER.singular(word);
-    if (equalsIgnoreCase(singular, word)) {
-      singular = nullize(trimEnd(singular, "s", true));
-    }
-    return equalsIgnoreCase(singular, word) ? null : singular;
+    if (singular != null) return singular;
+    if (word.endsWith("es")) return nullize(trimEnd(word, "es", true));
+    if (word.endsWith("s")) return nullize(trimEnd(word, "s", true));
+    return null;
   }
 
   @Contract(pure = true)
