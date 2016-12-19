@@ -30,8 +30,6 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
@@ -39,8 +37,6 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -66,7 +62,6 @@ public class ProcessorProfilePanel extends JPanel {
   private JPanel myProcessorPanel;
   private JPanel myOptionsPanel;
   private OptionsTableModel myOptionsModel;
-  private JLabel myWarninglabel;
   private JLabel myStoreGenSourcesLabel;
   private JLabel myProductionLabel;
   private JLabel myTestLabel;
@@ -132,12 +127,6 @@ public class ProcessorProfilePanel extends JPanel {
     myGeneratedProductionDirField = new JTextField();
     myGeneratedTestsDirField = new JTextField();
 
-    myWarninglabel = new JLabel("<html>WARNING!<br>" +
-                                              /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
-                                              "If option 'Clear output directory on rebuild' is enabled, " +
-                                              "the entire contents of directories where generated sources are stored WILL BE CLEARED on rebuild.</html>");
-    myWarninglabel.setFont(myWarninglabel.getFont().deriveFont(Font.BOLD));
-
     add(myCbEnableProcessing,
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     add(myRbClasspath,
@@ -171,28 +160,16 @@ public class ProcessorProfilePanel extends JPanel {
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.insetsTop(10), 0, 0));
     add(myOptionsTablePanel,
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.insetsTop(10), 0, 0));
-    add(myWarninglabel,
-        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 5, 0, 0), 0, 0));
 
-    myRbClasspath.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
+    myRbClasspath.addItemListener(e -> updateEnabledState());
+
+    myProcessorTable.getSelectionModel().addListSelectionListener(e -> {
+      if (!e.getValueIsAdjusting()) {
         updateEnabledState();
       }
     });
 
-    myProcessorTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        if (!e.getValueIsAdjusting()) {
-          updateEnabledState();
-        }
-      }
-    });
-
-    myCbEnableProcessing.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        updateEnabledState();
-      }
-    });
+    myCbEnableProcessing.addItemListener(e -> updateEnabledState());
 
     updateEnabledState();
 
@@ -273,7 +250,6 @@ public class ProcessorProfilePanel extends JPanel {
     myGeneratedTestsDirField.setEnabled(enabled);
     myRbRelativeToOutputRoot.setEnabled(enabled);
     myRbRelativeToContentRoot.setEnabled(enabled);
-    myWarninglabel.setEnabled(enabled);
     myStoreGenSourcesLabel.setEnabled(enabled);
     myProductionLabel.setEnabled(enabled);
     myTestLabel.setEnabled(enabled);
