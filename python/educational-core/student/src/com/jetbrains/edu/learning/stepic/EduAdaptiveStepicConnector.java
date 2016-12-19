@@ -156,7 +156,7 @@ public class EduAdaptiveStepicConnector {
                                             @NotNull String lessonName,
                                             @NotNull StepicWrappers.Step block,
                                             int stepId) {
-    final Task task = new Task(lessonName);
+    final Task task = Task.createChoiceTask(lessonName);
     task.setStepId(stepId);
     task.setText(block.text);
 
