@@ -43,7 +43,8 @@ public class JavacNameTable {
     return myParsedNameCache.get(name);
   }
 
-  public Name getBinaryName(Element element) {
-    return myElements.getBinaryName((TypeElement)element);
+  @NotNull
+  public String parseBinaryName(Element element) {
+    return parseName(myElements.getBinaryName((TypeElement)element));
   }
 }

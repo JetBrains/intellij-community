@@ -146,7 +146,7 @@ public interface JavacRef {
     @NotNull
     @Override
     public String getOwnerName() {
-      return myNameTableCache.parseName(myNameTableCache.getBinaryName(myOriginalElement.getEnclosingElement()));
+      return myNameTableCache.parseBinaryName(myOriginalElement.getEnclosingElement());
     }
 
     public static JavacElementRefBase fromElement(Element element, JavacNameTable nameTableCache) {
@@ -171,7 +171,7 @@ public interface JavacRef {
     @NotNull
     @Override
     public String getName() {
-      return myNameTableCache.parseName(myNameTableCache.getBinaryName(myOriginalElement));
+      return myNameTableCache.parseBinaryName(myOriginalElement);
     }
 
     @Override
