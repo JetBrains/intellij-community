@@ -120,9 +120,9 @@ public interface JavacRef {
 
   abstract class JavacElementRefBase implements JavacRef {
     protected final @NotNull Element myOriginalElement;
-    protected final NameTableCache myNameTableCache;
+    protected final JavacNameTable myNameTableCache;
 
-    protected JavacElementRefBase(@NotNull Element element, NameTableCache nameTableCache) {
+    protected JavacElementRefBase(@NotNull Element element, JavacNameTable nameTableCache) {
       myOriginalElement = element;
       myNameTableCache = nameTableCache;
     }
@@ -135,7 +135,7 @@ public interface JavacRef {
     @NotNull
     @Override
     public String getName() {
-      return myNameTableCache.get(myOriginalElement.getSimpleName());
+      return myNameTableCache.parseName(myOriginalElement.getSimpleName());
     }
 
     @Override
@@ -146,10 +146,10 @@ public interface JavacRef {
     @NotNull
     @Override
     public String getOwnerName() {
-      return myNameTableCache.get(myNameTableCache.getBinaryName(myOriginalElement.getEnclosingElement()));
+      return myNameTableCache.parseName(myNameTableCache.getBinaryName(myOriginalElement.getEnclosingElement()));
     }
 
-    public static JavacElementRefBase fromElement(Element element, NameTableCache nameTableCache) {
+    public static JavacElementRefBase fromElement(Element element, JavacNameTable nameTableCache) {
       if (element instanceof TypeElement) {
         return new JavacElementClassImpl(element, nameTableCache);
       }
@@ -164,24 +164,24 @@ public interface JavacRef {
   }
 
   class JavacElementClassImpl extends JavacElementRefBase implements JavacClass {
-   public JavacElementClassImpl(@NotNull Element element, NameTableCache nameTableCache) {
+   public JavacElementClassImpl(@NotNull Element element, JavacNameTable nameTableCache) {
       super(element, nameTableCache);
     }
 
     @NotNull
     @Override
     public String getName() {
-      return myNameTableCache.get(myNameTableCache.getBinaryName(myOriginalElement));
+      return myNameTableCache.parseName(myNameTableCache.getBinaryName(myOriginalElement));
     }
 
     @Override
     public boolean isAnonymous() {
-      return myNameTableCache.get(myOriginalElement.getSimpleName()).isEmpty();
+      return myNameTableCache.parseName(myOriginalElement.getSimpleName()).isEmpty();
     }
   }
 
   class JavacElementMethodImpl extends JavacElementRefBase implements JavacMethod {
-    public JavacElementMethodImpl(@NotNull Element element, NameTableCache nameTableCache) {
+    public JavacElementMethodImpl(@NotNull Element element, JavacNameTable nameTableCache) {
       super(element, nameTableCache);
     }
 
@@ -192,7 +192,7 @@ public interface JavacRef {
   }
 
   class JavacElementFieldImpl extends JavacElementRefBase implements JavacField {
-    public JavacElementFieldImpl(@NotNull Element element, NameTableCache nameTableCache) {
+    public JavacElementFieldImpl(@NotNull Element element, JavacNameTable nameTableCache) {
       super(element, nameTableCache);
     }
   }

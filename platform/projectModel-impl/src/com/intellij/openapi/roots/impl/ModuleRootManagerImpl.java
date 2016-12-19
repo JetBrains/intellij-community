@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -42,8 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
-public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent {
+public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -52,7 +54,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private RootModelImpl myRootModel;
   private boolean myIsDisposed = false;
   private boolean myLoaded = false;
-  private boolean isModuleAdded = false;
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
@@ -81,17 +82,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "NewModuleRootManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myRootModel.dispose();
     myIsDisposed = true;
 
@@ -107,7 +98,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
     }
   }
-
 
   @Override
   @NotNull
@@ -140,7 +130,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   void makeRootsChange(@NotNull Runnable runnable) {
     ProjectRootManagerEx projectRootManagerEx = (ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject());
     // IMPORTANT: should be the first listener!
-    projectRootManagerEx.makeRootsChange(runnable, false, isModuleAdded);
+    projectRootManagerEx.makeRootsChange(runnable, false, myModule.isLoaded());
   }
 
   public RootModelImpl getRootModel() {
@@ -318,20 +308,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getSourceRoots(rootTypes);
   }
 
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void moduleAdded() {
-    isModuleAdded = true;
-  }
-
-
   public void dropCaches() {
     myOrderRootsCache.clearCache();
   }
@@ -341,7 +317,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void loadState(ModuleRootManagerState object) {
-    loadState(object, myLoaded || isModuleAdded);
+    loadState(object, myLoaded || myModule.isLoaded());
     myLoaded = true;
   }
 

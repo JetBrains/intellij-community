@@ -76,12 +76,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
           loadState(object, false);
         }
       };
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        moduleRootManager.disposeComponent();
-      }
-    });
+    Disposer.register(parentDisposable, moduleRootManager);
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, createModulePathMacroManager(project));
     getPicoContainer().registerComponentInstance(ModuleFileIndex.class, createModuleFileIndex(project));

@@ -2690,7 +2690,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
       setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
-      setModel(new SmoothBoundedRangeModel(this));
+      if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+        setModel(new SmoothBoundedRangeModel(this));
+      }
     }
 
     void setPersistentUI(ScrollBarUI ui) {

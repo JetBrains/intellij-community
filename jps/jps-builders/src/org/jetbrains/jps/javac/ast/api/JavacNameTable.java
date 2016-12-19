@@ -23,18 +23,24 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
-public class NameTableCache extends SLRUCache<Name, String> {
+public class JavacNameTable {
+  private final SLRUCache<Name, String> myParsedNameCache;
   private final Elements myElements;
 
-  public NameTableCache(Elements elements) {
-    super(1000, 1000);
+  public JavacNameTable(Elements elements) {
+    myParsedNameCache = new SLRUCache<Name, String>(1000, 1000) {
+      @NotNull
+      @Override
+      public String createValue(Name key) {
+        return key.toString();
+      }
+    };
     myElements = elements;
   }
 
   @NotNull
-  @Override
-  public String createValue(Name name) {
-    return name.toString();
+  public String parseName(Name name) {
+    return myParsedNameCache.get(name);
   }
 
   public Name getBinaryName(Element element) {

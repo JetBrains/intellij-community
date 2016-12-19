@@ -39,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -223,7 +224,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     progressIndicator.setText("Loading modules...");
     progressIndicator.setText2("");
 
-    List<Module> modulesWithUnknownTypes = new ArrayList<>();
+    List<Module> modulesWithUnknownTypes = new SmartList<>();
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
@@ -898,9 +899,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     public void projectClosed() {
-      for (Module aCollection : myModules.values()) {
-        ModuleEx module = (ModuleEx)aCollection;
-        module.projectClosed();
+      for (Module module : myModules.values()) {
+        ((ModuleEx)module).projectClosed();
       }
     }
 

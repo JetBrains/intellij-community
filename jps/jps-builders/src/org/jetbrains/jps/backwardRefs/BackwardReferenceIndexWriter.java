@@ -20,7 +20,6 @@ import com.intellij.util.indexing.InvertedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
-import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -64,7 +63,7 @@ public class BackwardReferenceIndexWriter {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
-      boolean isRebuild = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context);
+      boolean isRebuild = isRebuildInAllJavaModules(context);
 
       if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context))) {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
@@ -160,6 +159,17 @@ public class BackwardReferenceIndexWriter {
 
   private static int id(String name, NameEnumerator nameEnumerator) {
     return nameEnumerator.enumerate(name);
+  }
+
+  private static boolean isRebuildInAllJavaModules(CompileContext context) {
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      for (ModuleBuildTarget target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets(type)) {
+        if (!context.getScope().isBuildForced(target)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private static boolean areAllJavaModulesAffected(CompileContext context) {
