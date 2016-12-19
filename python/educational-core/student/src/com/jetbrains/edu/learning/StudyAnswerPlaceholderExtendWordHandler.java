@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -54,7 +55,7 @@ public class StudyAnswerPlaceholderExtendWordHandler implements ExtendWordSelect
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     AnswerPlaceholder placeholder = getAnswerPlaceholder(e, cursorOffset);
     assert placeholder != null;
-    int startOffset = placeholder.getOffset();
-    return Collections.singletonList(new TextRange(startOffset, startOffset + placeholder.getRealLength()));
+    final Pair<Integer, Integer> offsets = StudyUtils.getPlaceholderOffsets(placeholder, editor.getDocument());
+    return Collections.singletonList(new TextRange(offsets.getFirst(), offsets.getSecond()));
   }
 }
