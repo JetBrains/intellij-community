@@ -37,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,9 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
-import static java.util.stream.Collectors.*;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author max
@@ -289,15 +292,13 @@ public class ChangesUtil {
                                            @NotNull VcsSeparator<T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
     Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(
-      () -> items.stream()
-        .filter(it -> separator.getVcsFor(it) != null)
-        .collect(groupingBy(separator::getVcsFor)));
+      () -> StreamEx.of(items)
+        .mapToEntry(separator::getVcsFor, identity())
+        .nonNullKeys()
+        .grouping()
+    );
 
-    changesByVcs.forEach((vcs, vcsItems) -> {
-      if (vcs != null) {
-        processor.process(vcs, vcsItems);
-      }
-    });
+    changesByVcs.forEach(processor::process);
   }
 
   public static void processChangesByVcs(@NotNull Project project,
