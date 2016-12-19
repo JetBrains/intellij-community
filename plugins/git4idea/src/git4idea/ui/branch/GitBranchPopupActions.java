@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,8 @@ import java.util.stream.Collectors;
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_BRANCH_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
+import static git4idea.branch.GitBranchType.GIT_LOCAL;
+import static git4idea.branch.GitBranchType.GIT_REMOTE;
 
 class GitBranchPopupActions {
 
@@ -142,6 +145,7 @@ class GitBranchPopupActions {
   static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
 
     private final Project myProject;
+    private final GitVcsSettings myGitVcsSettings;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
@@ -152,7 +156,9 @@ class GitBranchPopupActions {
       myRepositories = repositories;
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
+      myGitVcsSettings = GitVcsSettings.getInstance(project);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
+      setFavourite(myGitVcsSettings.isFavourite(GIT_LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
     @NotNull
@@ -189,6 +195,17 @@ class GitBranchPopupActions {
     @Nullable
     public String getInfoText() {
      return new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
+    }
+
+    @Override
+    public void toggle() {
+      super.toggle();
+      if (isFavourite()) {
+        myGitVcsSettings.addToFavourites(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
+      }
+      else {
+        myGitVcsSettings.removeFromFavourites(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
+      }
     }
 
     static class CheckoutAction extends DumbAwareAction {
@@ -288,17 +305,32 @@ class GitBranchPopupActions {
   static class RemoteBranchActions extends BranchActionGroup {
 
     private final Project myProject;
+    private final GitVcsSettings myGitVcsSettings;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
 
     RemoteBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                         @NotNull GitRepository selectedRepository) {
+                        
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
+      myGitVcsSettings = GitVcsSettings.getInstance(project);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
+      setFavourite(myGitVcsSettings.isFavourite(GIT_REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+    }
+
+    @Override
+    public void toggle() {
+      super.toggle();
+      if (isFavourite()) {
+        myGitVcsSettings.addToFavourites(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
+      }
+      else {
+        myGitVcsSettings.removeFromFavourites(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
+      }
     }
 
     @NotNull
