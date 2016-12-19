@@ -20,7 +20,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class UserNameRegex implements Function<String, String> {
-  @NotNull public static final UserNameRegex BASIC_INSTANCE = new UserNameRegex(false);
   @NotNull public static final UserNameRegex EXTENDED_INSTANCE = new UserNameRegex(true);
   @NotNull private static final char[] BASIC_REGEX_CHARS = new char[]{'.', '^', '$', '*', '[', ']'};
   @NotNull public static final char[] EXTENDED_REGEX_CHARS = new char[]{'.', '^', '$', '*', '+', '-', '?', '(', ')', '[', ']', '{', '}', '|'};
