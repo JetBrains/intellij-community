@@ -19,7 +19,6 @@ import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToL
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -296,7 +295,7 @@ abstract class TerminalOperation extends Operation {
    */
   @NotNull
   static PsiType correctTypeParameters(PsiType type, String superClass, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
-    PsiClass aClass = PsiTypesUtil.getPsiClass(type);
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if(aClass == null) return type;
 
     PsiSubstitutor origSubstitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
@@ -306,7 +305,7 @@ abstract class TerminalOperation extends Operation {
     if(baseClass == null) return type;
     PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
     for (PsiTypeParameter baseParameter : baseClass.getTypeParameters()) {
-      PsiClass substitution = PsiTypesUtil.getPsiClass(superClassSubstitutor.substitute(baseParameter));
+      PsiClass substitution = PsiUtil.resolveClassInClassTypeOnly(superClassSubstitutor.substitute(baseParameter));
       if(substitution instanceof PsiTypeParameter) {
         PsiTypeParameter subClassParameter = (PsiTypeParameter)substitution;
         PsiType origType = origSubstitutor.substitute(subClassParameter);
