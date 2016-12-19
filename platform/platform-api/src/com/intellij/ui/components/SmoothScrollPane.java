@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ComponentSettings;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -193,7 +194,9 @@ public class SmoothScrollPane extends JScrollPane {
 
     protected SmoothScrollBar(int orientation) {
       super(orientation);
-      setModel(new SmoothBoundedRangeModel(this));
+      if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+        setModel(new SmoothBoundedRangeModel(this));
+      }
     }
 
     @Override
