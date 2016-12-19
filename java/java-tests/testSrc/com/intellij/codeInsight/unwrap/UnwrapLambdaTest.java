@@ -62,6 +62,20 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                     "}\n");
   }
 
+  public void testUnwrapAssignment() throws Exception {
+    assertUnwrapped("{\n" +
+                    "    interface I {int get();}" +
+                    "    void bar(I i) {}" +
+                    "    I i = bar(() -> 1<caret>1);\n" +
+                    "}\n",
+
+                    "{\n" +
+                    "    interface I {int get();}" +
+                    "    void bar(I i) {}" +
+                    "    I i = 11;\n" +
+                    "}\n", 1);
+  }
+
   public void testUnwrapUnresolved() throws Exception {
     assertUnwrapped("{\n" +
                     "    () -> <caret>null;\n" +
