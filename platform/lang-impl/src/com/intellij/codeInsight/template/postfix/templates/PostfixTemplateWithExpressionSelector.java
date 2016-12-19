@@ -66,14 +66,14 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
     }
 
     if (expressions.size() == 1) {
-      startExpandForChooseExpression(expressions.get(0), editor);
+      prepareAndExpandForChooseExpression(expressions.get(0), editor);
       return;
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       PsiElement item = ContainerUtil.getLastItem(expressions);
       assert item != null;
-      startExpandForChooseExpression(item, editor);
+      prepareAndExpandForChooseExpression(item, editor);
       return;
     }
 
@@ -81,7 +81,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
       editor, expressions,
       new Pass<PsiElement>() {
         public void pass(@NotNull final PsiElement e) {
-          startExpandForChooseExpression(e, editor);
+          prepareAndExpandForChooseExpression(e, editor);
         }
       },
       mySelector.getRenderer(),
@@ -89,7 +89,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
     );
   }
 
-  protected void startExpandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
+  protected void prepareAndExpandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
       .executeCommand(expression.getProject(), () -> expandForChooseExpression(expression, editor), "Expand postfix template",
                       PostfixLiveTemplate.POSTFIX_TEMPLATE_ID));
