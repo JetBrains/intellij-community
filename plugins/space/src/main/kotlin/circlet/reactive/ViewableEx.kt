@@ -10,7 +10,7 @@ fun <T : Any> IViewableSet<T>.createIsEmpty(lifetime: Lifetime): IReadonlyProper
 }
 
 fun <T : Any> IViewableSet<T>.createIsEmpty() = createIsEmpty(Lifetime.Eternal)
-fun <T : Any> IViewableSet<T>.createIsNotEmpty(lifetime: Lifetime) = createIsEmpty(lifetime).not(lifetime)
+fun <T : Any> IViewableSet<T>.createIsNotEmpty(lifetime: Lifetime) = createIsEmpty(lifetime).not()
 fun <T : Any> IViewableSet<T>.createIsNotEmpty() = createIsNotEmpty(Lifetime.Eternal)
 
 
@@ -21,5 +21,5 @@ fun <K : Any, V: Any> IViewableMap<K, V>.createIsEmpty(lifetime: Lifetime): IRea
 }
 
 fun <K : Any, V: Any> IViewableMap<K, V>.createIsEmpty() = createIsEmpty(Lifetime.Eternal)
-fun <K : Any, V: Any> IViewableMap<K, V>.createIsNotEmpty(lifetime: Lifetime) = createIsEmpty(lifetime).not(lifetime)
+fun <K : Any, V: Any> IViewableMap<K, V>.createIsNotEmpty(lifetime: Lifetime) = createIsEmpty(lifetime).not()
 fun <K : Any, V: Any> IViewableMap<K, V>.createIsNotEmpty() = createIsNotEmpty(Lifetime.Eternal)
