@@ -295,7 +295,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
         }
         final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
-        
+
         final String chunkName = chunk.getName();
         context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
 
@@ -471,8 +471,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
-          forkSdk.getFirst(), 
-          getExternalJavacHeapSize(context), 
+          forkSdk.getFirst(),
+          getExternalJavacHeapSize(context),
           vmOptions, options, platformCp, classPath, modulePath, sourcePath,
           files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
@@ -508,7 +508,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (maxMbytes < 0) {
       return -1; // in case of int overflow, return -1 to let VM choose the heap size
     }
-    return Math.max(maxMbytes * 75 / 100, 256); // minimum 256 Mb, maximum 75% from JPS max heap size 
+    return Math.max(maxMbytes * 75 / 100, 256); // minimum 256 Mb, maximum 75% from JPS max heap size
   }
 
   @Nullable
@@ -580,7 +580,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
     return Math.abs(compilerSdkVersion - chunkLanguageLevel) > 3;
   }
-  
+
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
     return compilingTool != null && (compilingTool.getId() == JavaCompilers.JAVAC_ID || compilingTool.getId() == JavaCompilers.JAVAC_API_ID);
   }
@@ -623,11 +623,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     if (!isTargetPlatformSameAsBuildRuntime) {
       // compact profile was requested, but we have to use alternative platform classpath to meet project settings
-      // consider this a compile error and let user re-configure the project 
+      // consider this a compile error and let user re-configure the project
       return null;
     }
-    // returning empty list will force default behaviour for platform classpath calculation 
-    // javac will resolve against its own bootclasspath and use ct.sym file when available 
+    // returning empty list will force default behaviour for platform classpath calculation
+    // javac will resolve against its own bootclasspath and use ct.sym file when available
     return Collections.emptyList();
   }
 
@@ -751,7 +751,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                            @Nullable ProcessorConfigProfile profile) {
     addCompilationOptions(getCompilerSdkVersion(context), options, context, chunk, profile);
   }
-  
+
   public static void addCompilationOptions(int compilerSdkVersion,
                                            List<String> options,
                                            CompileContext context, ModuleChunk chunk,
@@ -866,7 +866,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         bytecodeTarget = langLevel;
       }
       else {
-        // last resort and backward compatibility: 
+        // last resort and backward compatibility:
         // check if user explicitly defined bytecode target in additional compiler options
         bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
       }
@@ -874,7 +874,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     if (bytecodeTarget != null) {
       options.add("-target");
-      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) { 
+      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
         // if compiler is newer than module JDK
         final int userSpecifiedTargetVersion = JpsJavaSdkType.parseVersion(bytecodeTarget);
         if (userSpecifiedTargetVersion > 0 && userSpecifiedTargetVersion <= compilerSdkVersion) {
@@ -917,7 +917,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     return "--release";
   }
-  
+
   private static String getLanguageLevel(JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
     return level != null ? level.getComplianceOption() : null;
@@ -982,7 +982,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                " At least version 6 is required.");
       return null;
     }
-    return Pair.create(fallbackJdkHome, fallbackVersion); 
+    return Pair.create(fallbackJdkHome, fallbackVersion);
   }
 
   @Nullable
