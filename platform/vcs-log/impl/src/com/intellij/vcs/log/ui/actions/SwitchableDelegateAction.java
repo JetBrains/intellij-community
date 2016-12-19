@@ -36,10 +36,14 @@ public class SwitchableDelegateAction extends AnAction {
 
   @NotNull
   private AnAction getDelegateAction() {
-    if (Registry.is(myRegistryKey)) {
+    if (useMainAction()) {
       return myMainDelegate;
     }
     return myAlternateDelegate;
+  }
+
+  protected boolean useMainAction() {
+    return Registry.is(myRegistryKey);
   }
 
   @Override
