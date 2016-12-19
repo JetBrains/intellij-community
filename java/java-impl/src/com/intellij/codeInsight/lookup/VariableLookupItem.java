@@ -215,7 +215,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN && isTernaryCondition(ref)) {
       context.setAddCompletionChar(false);
       TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
     }
@@ -229,6 +229,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         document.insertString(ref.getTextRange().getStartOffset(), "!");
       }
     }
+  }
+
+  private static boolean isTernaryCondition(PsiReferenceExpression ref) {
+    PsiElement parent = ref == null ? null : ref.getParent();
+    return parent instanceof PsiConditionalExpression && ref == ((PsiConditionalExpression)parent).getThenExpression();
   }
 
   public static void makeFinalIfNeeded(@NotNull InsertionContext context, @NotNull PsiVariable variable) {
