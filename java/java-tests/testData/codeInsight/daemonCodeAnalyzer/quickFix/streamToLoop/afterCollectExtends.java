@@ -14,7 +14,7 @@ public class Main {
   private void collect() {
       List<CharSequence> list = new ArrayList<>();
       for (CharSequence charSequence : getList()) {
-          if (Objects.nonNull(charSequence)) {
+          if (charSequence != null) {
               list.add(charSequence);
           }
       }

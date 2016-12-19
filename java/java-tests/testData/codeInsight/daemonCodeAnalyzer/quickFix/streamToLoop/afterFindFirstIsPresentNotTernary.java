@@ -6,7 +6,7 @@ import java.util.Objects;
 public class Main {
   String test(List<List<String>> strings) {
       for (List<String> string : strings) {
-          if (Objects.nonNull(string)) {
+          if (string != null) {
               for (String s : string) {
                   return "abc";
               }

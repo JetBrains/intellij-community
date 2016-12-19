@@ -8,7 +8,7 @@ public class Main {
   public static void test(List<String> strings) {
       Map<Integer, Set<String>> map = new HashMap<>();
       for (String string : strings) {
-          if (Objects.nonNull(string)) {
+          if (string != null) {
               map.computeIfAbsent(string.length(), k -> new HashSet<>()).add(string);
           }
       }

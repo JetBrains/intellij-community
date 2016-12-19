@@ -16,7 +16,7 @@ public class Main {
   private void collect() {
       Map<CharSequence, List<? extends CharSequence>> result = new HashMap<>();
       for (CharSequence charSequence : getList()) {
-          if (Objects.nonNull(charSequence)) {
+          if (charSequence != null) {
               if (result.put(charSequence, asList(charSequence)) != null) {
                   throw new IllegalStateException("Duplicate key");
               }

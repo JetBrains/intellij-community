@@ -8,7 +8,7 @@ public class Main {
   private static Number[] test(Object[] objects) {
       List<Object> list = new ArrayList<>();
       for (Object object : objects) {
-          if (Number.class.isInstance(object)) {
+          if (object instanceof Number) {
               list.add(object);
           }
       }
