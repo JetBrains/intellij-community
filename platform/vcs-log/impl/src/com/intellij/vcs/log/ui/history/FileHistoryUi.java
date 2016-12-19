@@ -42,6 +42,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                                                                           CurrentBranchHighlighter.Factory.ID);
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
+  @NotNull private final FilePath myPath;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
   private final MyPropertiesChangeListener myPropertiesChangeListener;
 
@@ -55,6 +56,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myUiProperties = uiProperties;
 
     myFilterUi = new FileHistoryFilterUi(path);
+    myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
     myRefresher.onFiltersChange(myFilterUi.getFilters());
@@ -66,6 +68,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
     myUiProperties.addChangeListener(myPropertiesChangeListener);
+  }
+
+  @NotNull
+  public FilePath getPath() {
+    return myPath;
   }
 
   @NotNull

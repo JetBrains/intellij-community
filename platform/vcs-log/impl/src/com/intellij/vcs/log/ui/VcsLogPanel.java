@@ -44,6 +44,11 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     add(myUi.getMainComponent(), BorderLayout.CENTER);
   }
 
+  @NotNull
+  public AbstractVcsLogUi getUi() {
+    return myUi;
+  }
+
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {

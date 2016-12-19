@@ -21,12 +21,14 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import com.intellij.vcs.log.ui.history.FileHistoryUiFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +42,13 @@ public class ShowHistoryAction extends DumbAwareAction {
     Project project = e.getProject();
     assert project != null;
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
-    VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
-    assert logManager != null;
-    VcsLogContentProvider.openLogTab(project, logManager, TAB_NAME, file.getName(), new FileHistoryUiFactory(VcsUtil.getFilePath(file)));
+
+    FilePath path = VcsUtil.getFilePath(file);
+    if (!VcsLogContentProvider.findAndSelectContent(project, FileHistoryUi.class, ui -> ui.getPath().equals(path))) {
+      VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
+      assert logManager != null;
+      VcsLogContentProvider.openLogTab(project, logManager, TAB_NAME, file.getName(), new FileHistoryUiFactory(path));
+    }
   }
 
   @Override

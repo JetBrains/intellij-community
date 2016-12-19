@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.wm.ToolWindow;
@@ -23,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ContentsUtil;
@@ -31,9 +33,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,6 +92,25 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   public void disposeContent() {
     myContainer.removeAll();
     closeLogTabs();
+  }
+
+  @Nullable
+  public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
+                                                                          @NotNull Class<U> clazz,
+                                                                          @NotNull Condition<U> condition) {
+    ContentManager manager = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).getContentManager();
+    JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
+      if (c instanceof VcsLogPanel) {
+        AbstractVcsLogUi ui = ((VcsLogPanel)c).getUi();
+        //noinspection unchecked
+        return clazz.isInstance(ui) && condition.value((U)ui);
+      }
+      return false;
+    });
+    if (component == null) return false;
+    //noinspection unchecked
+
+    return ContentUtilEx.selectContent(manager, component, true);
   }
 
   public static void openAnotherLogTab(@NotNull VcsLogManager logManager, @NotNull Project project) {
