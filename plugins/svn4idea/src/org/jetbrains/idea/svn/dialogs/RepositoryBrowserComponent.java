@@ -71,6 +71,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return myRepositoryTree;
   }
 
+  @NotNull
   public Project getProject() {
     return myVCS.getProject();
   }
