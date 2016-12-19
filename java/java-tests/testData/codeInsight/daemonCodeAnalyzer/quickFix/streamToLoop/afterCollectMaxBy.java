@@ -5,12 +5,11 @@ import java.util.stream.Collectors;
 
 public class Main {
   public static Optional<String> test(List<String> strings) {
-      Comparator<String> comparator = Comparator.naturalOrder();
       boolean seen = false;
       String best = null;
       for (String s : strings) {
           if (!s.isEmpty()) {
-              if (!seen || comparator.compare(s, best) > 0) {
+              if (!seen || s.compareTo(best) > 0) {
                   seen = true;
                   best = s;
               }

@@ -6,9 +6,9 @@ import java.util.List;
 
 public class Main {
   public static String test(List<String> strings) {
-      Comparator<String> comparator = Comparator.comparing(String::length);
       boolean seen = false;
       String best = null;
+      Comparator<String> comparator = Comparator.comparing(String::length);
       for (String string : strings) {
           if (!seen || comparator.compare(string, best) > 0) {
               seen = true;

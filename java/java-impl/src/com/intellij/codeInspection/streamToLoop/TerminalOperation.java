@@ -19,12 +19,10 @@ import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToL
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -684,43 +682,36 @@ abstract class TerminalOperation extends Operation {
     private String myType;
     private String myTemplate;
     private String myComparatorType;
-    private @Nullable PsiExpression myComparator;
+    private @Nullable FunctionHelper myComparator;
 
-    public MinMaxTerminalOperation(String type, String template, @Nullable PsiExpression comparator) {
+    public MinMaxTerminalOperation(String type, String template, @Nullable FunctionHelper comparator) {
       myType = type;
       myTemplate = template;
       myComparator = comparator;
       if(comparator != null) {
-        PsiType comparatorType = comparator.getType();
-        if(comparatorType != null) {
-          myComparatorType = comparatorType.getCanonicalText();
-        } else {
-          myComparatorType = CommonClassNames.JAVA_UTIL_COMPARATOR+"<"+myType+">";
-        }
+        myComparatorType = CommonClassNames.JAVA_UTIL_COMPARATOR+"<"+myType+">";
       }
     }
 
     @Override
     public void registerUsedNames(Consumer<String> usedNameConsumer) {
       if(myComparator != null) {
-        FunctionHelper.processUsedNames(myComparator, usedNameConsumer);
+        myComparator.registerUsedNames(usedNameConsumer);
       }
     }
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String comparator = "";
-      if(myComparator != null) {
-        comparator = myComparator.getText();
-        if(!ExpressionUtils.isSimpleExpression(context.createExpression(comparator))) {
-          comparator = context.declare("comparator", myComparatorType, comparator);
-        }
-      }
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
-      String type = myType;
-      context.setFinisher(new ConditionalExpression.Optional(type, seen, best));
-      String comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName()).replace("{comparator}", comparator);
+      context.setFinisher(new ConditionalExpression.Optional(myType, seen, best));
+      String comparePredicate;
+      if(myComparator != null) {
+        myComparator.transform(context, inVar.getName(), best);
+        comparePredicate = myTemplate.replace("{comparator}", myComparator.getText());
+      } else {
+        comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName());
+      }
       return "if(!" + seen + " || " + comparePredicate + ") {\n" +
              seen + "=true;\n" +
              best + "=" + inVar + ";\n}\n";
@@ -736,8 +727,12 @@ abstract class TerminalOperation extends Operation {
         if (PsiType.DOUBLE.equalsToText(elementType)) {
           return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null);
         }
-      } else if(InheritanceUtil.isInheritor(comparator.getType(), CommonClassNames.JAVA_UTIL_COMPARATOR)) {
-        return new MinMaxTerminalOperation(elementType, "{comparator}.compare({item},{best})" + sign + "0", comparator);
+      }
+      else {
+        FunctionHelper fn = FunctionHelper.create(comparator, 2);
+        if(fn != null) {
+          return new MinMaxTerminalOperation(elementType, "{comparator}"+sign+"0", fn);
+        }
       }
       return null;
     }

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -159,10 +160,18 @@ abstract class FunctionHelper {
     if (expression instanceof PsiReferenceExpression && ExpressionUtils.isSimpleExpression(expression)) {
       return new SimpleReferenceFunctionHelper(returnType, expression, interfaceMethod.getName());
     }
-    if (expression instanceof PsiMethodCallExpression &&
-        MethodCallUtils
-          .isCallToStaticMethod((PsiMethodCallExpression)expression, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, "identity", 0)) {
-      return paramCount == 1 ? new IdentityFunctionHelper(returnType) : null;
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, "identity", 0)) {
+        return paramCount == 1 ? new InlinedFunctionHelper(returnType, 1, "{0}") : null;
+      }
+      if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COMPARATOR, "naturalOrder", 0)) {
+        return paramCount == 2 ? new InlinedFunctionHelper(returnType, 2, "{0}.compareTo({1})") : null;
+      }
+      if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COMPARATOR, "reverseOrder", 0) ||
+          MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COLLECTIONS, "reverseOrder", 0)) {
+        return paramCount == 2 ? new InlinedFunctionHelper(returnType, 2, "{1}.compareTo({0})") : null;
+      }
     }
     return new ComplexExpressionFunctionHelper(returnType, type, interfaceMethod.getName(), expression);
   }
@@ -444,11 +453,15 @@ abstract class FunctionHelper {
     }
   }
 
-  private static class IdentityFunctionHelper extends FunctionHelper {
+  private static class InlinedFunctionHelper extends FunctionHelper {
+    private final int myArgCount;
+    private final String myTemplate;
     private PsiExpression myExpression;
 
-    public IdentityFunctionHelper(PsiType type) {
+    public InlinedFunctionHelper(PsiType type, int argCount, String template) {
       super(type);
+      myArgCount = argCount;
+      myTemplate = template;
     }
 
     @Override
@@ -459,8 +472,8 @@ abstract class FunctionHelper {
 
     @Override
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {
-      LOG.assertTrue(argumentValues.length == 1);
-      myExpression = context.createExpression(argumentValues[0]);
+      LOG.assertTrue(argumentValues.length == myArgCount);
+      myExpression = context.createExpression(MessageFormat.format(myTemplate, (Object[])argumentValues));
     }
   }
 
