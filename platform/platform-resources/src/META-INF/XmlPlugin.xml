@@ -138,6 +138,7 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.HtmlCompletionContributor" id="html"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlNonFirstCompletionContributor" id="xmlNonFirst" order="after xml"/>
 
+    <completion.contributor language="DTD" implementationClass="com.intellij.codeInsight.completion.DtdCompletionContributor" id="dtd" />
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor"/>
 
@@ -311,8 +312,6 @@
     <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
-
-    <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
 
     <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
