@@ -75,7 +75,8 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
   }
 
   private fun getSceneBackground(): Color{
-    val panelBackground = UIUtil.getPanelBackground()
+    val isDarcula = LafManager.getInstance().currentLookAndFeel is DarculaLookAndFeelInfo
+    val panelBackground = if (isDarcula) UIUtil.getPanelBackground() else UIUtil.getTextFieldBackground()
     return Color.rgb(panelBackground.red, panelBackground.green, panelBackground.blue)
   }
 
