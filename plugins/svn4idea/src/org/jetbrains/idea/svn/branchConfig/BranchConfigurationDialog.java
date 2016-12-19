@@ -51,8 +51,8 @@ import static org.jetbrains.idea.svn.dialogs.SelectLocationDialog.selectLocation
 public class BranchConfigurationDialog extends DialogWrapper {
   private JPanel myTopPanel;
   private TextFieldWithBrowseButton myTrunkLocationTextField;
-  private JBList<String> myLocationList;
-  @NotNull private final MyListModel myLocationModel;
+  private JBList<String> myBranchLocationsList;
+  @NotNull private final MyListModel myBranchLocationsModel;
   private JPanel myListPanel;
   private JLabel myErrorPrompt;
   @NotNull private final NewRootBunch mySvnBranchConfigManager;
@@ -90,15 +90,15 @@ public class BranchConfigurationDialog extends DialogWrapper {
     myErrorPrompt.setUI(new MultiLineLabelUI());
     myErrorPrompt.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
 
-    myLocationModel = new MyListModel(configuration);
-    myLocationList = new JBList<>(myLocationModel);
+    myBranchLocationsModel = new MyListModel(configuration);
+    myBranchLocationsList = new JBList<>(myBranchLocationsModel);
 
     myListPanel.add(wrapLocationsWithToolbar(project, rootUrl), BorderLayout.CENTER);
   }
 
   @NotNull
   private JPanel wrapLocationsWithToolbar(@NotNull Project project, @NotNull SVNURL rootUrl) {
-    return ToolbarDecorator.createDecorator(myLocationList)
+    return ToolbarDecorator.createDecorator(myBranchLocationsList)
       .setAddAction(new AnActionButtonRunnable() {
 
         @Nullable private SVNURL usedRootUrl;
@@ -111,12 +111,12 @@ public class BranchConfigurationDialog extends DialogWrapper {
             usedRootUrl = result.second;
             if (selectedUrl != null) {
               String selectedUrlValue = selectedUrl.toString();
-              if (!myLocationModel.getConfiguration().getBranchUrls().contains(selectedUrlValue)) {
-                myLocationModel.getConfiguration()
+              if (!myBranchLocationsModel.getConfiguration().getBranchUrls().contains(selectedUrlValue)) {
+                myBranchLocationsModel.getConfiguration()
                   .addBranches(selectedUrlValue, new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
                 mySvnBranchConfigManager.reloadBranchesAsync(myRoot, selectedUrlValue, InfoReliability.setByUser);
-                myLocationModel.fireItemAdded();
-                myLocationList.setSelectedIndex(myLocationModel.getSize() - 1);
+                myBranchLocationsModel.fireItemAdded();
+                myBranchLocationsList.setSelectedIndex(myBranchLocationsModel.getSize() - 1);
               }
             }
           }
@@ -125,15 +125,15 @@ public class BranchConfigurationDialog extends DialogWrapper {
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          int selectedIndex = myLocationList.getSelectedIndex();
-          for (String url : myLocationList.getSelectedValuesList()) {
-            int index = myLocationModel.getConfiguration().getBranchUrls().indexOf(url);
-            myLocationModel.getConfiguration().removeBranch(url);
-            myLocationModel.fireItemRemoved(index);
+          int selectedIndex = myBranchLocationsList.getSelectedIndex();
+          for (String url : myBranchLocationsList.getSelectedValuesList()) {
+            int index = myBranchLocationsModel.getConfiguration().getBranchUrls().indexOf(url);
+            myBranchLocationsModel.getConfiguration().removeBranch(url);
+            myBranchLocationsModel.fireItemRemoved(index);
           }
-          if (myLocationModel.getSize() > 0) {
-            selectedIndex = min(selectedIndex, myLocationModel.getSize() - 1);
-            myLocationList.setSelectedIndex(selectedIndex);
+          if (myBranchLocationsModel.getSize() > 0) {
+            selectedIndex = min(selectedIndex, myBranchLocationsModel.getSize() - 1);
+            myBranchLocationsList.setSelectedIndex(selectedIndex);
           }
         }
       })
