@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class DtdCompletionContributor extends CompletionContributor {
-  private static String[] KEYWORDS = new String[] {
+  private static final String[] KEYWORDS = new String[] {
     "#PCDATA","#IMPLIED","#REQUIRED","#FIXED","<!ATTLIST", "<!ELEMENT", "<!NOTATION", "INCLUDE",
     "IGNORE", "CDATA", "ID" , "IDREF", "EMPTY", "ANY", "IDREFS", "ENTITIES", "ENTITY", "<!ENTITY",
     "NMTOKEN", "NMTOKENS", "SYSTEM", "PUBLIC"
@@ -44,7 +43,7 @@ public class DtdCompletionContributor extends CompletionContributor {
       super.handleInsert(context, item);
 
       if (item.getObject().toString().startsWith("<!")) {
-        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+        context.commitDocument();
 
         int caretOffset = context.getEditor().getCaretModel().getOffset();
         PsiElement tag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), PsiNamedElement.class);
@@ -66,7 +65,7 @@ public class DtdCompletionContributor extends CompletionContributor {
         PsiElement position = parameters.getPosition();
         PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
         if (prev != null && hasDtdKeywordCompletion(prev)) {
-          addKeywordCompletions(result.withPrefixMatcher(keywordPrefixMatcher(position, result.getPrefixMatcher().getPrefix())));
+          addKeywordCompletions(result.withPrefixMatcher(keywordPrefix(position, result.getPrefixMatcher().getPrefix())));
         }
         if (prev != null && prev.textMatches("%")) {
           addEntityCompletions(result, position);
@@ -76,7 +75,7 @@ public class DtdCompletionContributor extends CompletionContributor {
   }
 
   @NotNull
-  private static String keywordPrefixMatcher(@NotNull PsiElement position, @NotNull String prefix) {
+  private static String keywordPrefix(@NotNull PsiElement position, @NotNull String prefix) {
     final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(position);
     final PsiElement prevPrevLeaf = prevLeaf != null ? PsiTreeUtil.prevLeaf(prevLeaf):null;
 
