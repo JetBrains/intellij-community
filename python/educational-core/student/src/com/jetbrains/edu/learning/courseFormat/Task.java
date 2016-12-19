@@ -44,7 +44,7 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
-  @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters = new ChoiceParameters();
+  @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters;
   private int myActiveSubtaskIndex = 0;
   @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;
@@ -53,6 +53,12 @@ public class Task implements StudyItem {
 
   public Task(@NotNull final String name) {
     this.name = name;
+  }
+  
+  public static Task createChoiceTask(@NotNull String name) {
+    final Task task = new Task(name);
+    task.setChoiceParameters(new ChoiceParameters());
+    return task;
   }
 
   /**
@@ -326,7 +332,7 @@ public class Task implements StudyItem {
   }
   
   public boolean isChoiceTask() {
-    return !myChoiceParameters.getChoiceVariants().isEmpty();
+    return myChoiceParameters != null;
   }
 
   // used for serialization
