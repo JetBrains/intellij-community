@@ -34,6 +34,8 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -76,11 +78,8 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
       final CommittedChangeList originalChangeList = ReceivedChangeList.unwrap(changeList);
       for(ChangeListColumn column: provider.getColumns()) {
         if (ChangeListColumn.isCustom(column)) {
-          String value = column.getValue(originalChangeList).toString();
-          if (value.length() == 0) {
-            value = "<none>";
-          }
-          detailsBuilder.append(column.getTitle()).append(": ").append(XmlStringUtil.escapeString(value)).append("<br>");
+          Object value = column.getValue(originalChangeList);
+          detailsBuilder.append(column.getTitle()).append(": ").append(XmlStringUtil.escapeString(toString(value))).append("<br>");
         }
       }
     }
@@ -105,4 +104,9 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
     hint.showInBestPositionFor(DataManager.getInstance().getDataContext());
   }
 
+  @NotNull
+  private static String toString(@Nullable Object value) {
+    String result = value != null ? value.toString() : "";
+    return result.isEmpty() ? "<none>" : result;
+  }
 }
