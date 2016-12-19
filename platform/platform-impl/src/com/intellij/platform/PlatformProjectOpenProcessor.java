@@ -140,7 +140,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject()) {
+      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
         final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
         if (!dialog.showAndGet()) {
           return null;
@@ -250,7 +250,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return moduleRef.get();
   }
 
-  private static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
+  public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
     for (ProjectAttachProcessor processor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;
