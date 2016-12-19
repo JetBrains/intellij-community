@@ -482,6 +482,12 @@ public class PyEditingTest extends PyTestCase {
                           "re.compile(ur'\\U00010000t')");
   }
 
+  // PY-21697
+  public void testTripleQuotesInsideTripleQuotedStringLiteral() {
+    // TODO an extra quote is inserted due to PY-21993
+    doTypingTest("'");
+  }
+
   private String doTestTyping(final String text, final int offset, final char character) {
     final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
       @Override
