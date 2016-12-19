@@ -130,7 +130,7 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
       @Nullable
       @Override
       protected EditorColorsScheme getCurrentScheme() {
-        return myOptions.getScheme(getSelectedSchemeName());
+        return myOptions != null ? myOptions.getScheme(getSelectedSchemeName()) : null;
       }
     };
   }
