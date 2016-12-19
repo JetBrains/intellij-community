@@ -18,6 +18,7 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,48 +27,53 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableList;
 
 /**
  * @author Sergey.Malenkov
  */
 public class AsyncTreeModel extends InvokableTreeModel {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
+  private final CmdGetRoot rootLoader = new CmdGetRoot();
+  private final AtomicBoolean rootLoaded = new AtomicBoolean();
   private final Command.Processor processor;
-  private final Tree tree = new Tree();
+  private final MapBasedTree<Object, Object> tree = new MapBasedTree<>(true, object -> object);
   private final TreeModel model;
   private final TreeModelListener listener = new TreeModelAdapter() {
     protected void process(TreeModelEvent event, EventType type) {
       TreePath path = event.getTreePath();
       if (path == null) {
         // request a new root from model according to the specification
-        processor.process(new CmdGetRoot("Reload root", null));
+        processor.process(rootLoader);
         return;
       }
       Object object = path.getLastPathComponent();
       if (path.getParentPath() == null && type == EventType.StructureChanged) {
         // set a new root object according to the specification
-        processor.process(new CmdGetRoot("Update root", object));
+        processor.consume(rootLoader, object);
         return;
       }
       processor.foreground.invokeLaterIfNeeded(() -> {
-        Node node = tree.map.get(object);
-        if (node == null || node.children == null) {
-          debug("ignore updating of nonexistent node", object);
+        Entry<Object> entry = tree.findEntry(object);
+        if (entry == null || entry.isLoadingRequired()) {
+          LOG.debug("ignore updating of nonexistent node: ", object);
         }
         else if (type == EventType.NodesChanged) {
           // the object is already updated, so we should not start additional command to update
           AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), event.getChildIndices(), event.getChildren());
         }
         else if (type == EventType.NodesInserted) {
-          processor.process(new CmdGetChildren("Insert children", node, false));
+          processor.process(new CmdGetChildren("Insert children", entry, false));
         }
         else if (type == EventType.NodesRemoved) {
-          processor.process(new CmdGetChildren("Remove children", node, false));
+          processor.process(new CmdGetChildren("Remove children", entry, false));
         }
         else {
-          processor.process(new CmdGetChildren("Update children", node, true));
+          processor.process(new CmdGetChildren("Update children", entry, true));
         }
       });
     }
@@ -95,29 +101,27 @@ public class AsyncTreeModel extends InvokableTreeModel {
 
   @Override
   public Object getRoot() {
-    Object root = tree.root;
-    if (root != Tree.ROOT) return root;
     if (!isValidThread()) return null;
-    tree.root = null;
-    processor.process(new CmdGetRoot("Load root", null));
-    return tree.root;
+    if (!rootLoaded.getAndSet(true)) processor.process(rootLoader);
+    Entry<Object> entry = tree.getRootEntry();
+    return entry == null ? null : entry.getNode();
   }
 
   @Override
   public Object getChild(Object object, int index) {
-    Node[] children = getChildren(object);
-    return 0 <= index && index < children.length ? children[index].getLastPathComponent() : null;
+    List<Object> children = getChildren(object);
+    return 0 <= index && index < children.size() ? children.get(index) : null;
   }
 
   @Override
   public int getChildCount(Object object) {
-    return getChildren(object).length;
+    return getChildren(object).size();
   }
 
   @Override
   public boolean isLeaf(Object object) {
-    Node node = getNode(object);
-    return node == null || node.leaf;
+    Entry<Object> entry = getEntry(object);
+    return entry == null || entry.isLeaf();
   }
 
   @Override
@@ -140,22 +144,12 @@ public class AsyncTreeModel extends InvokableTreeModel {
     return null;
   }
 
-  private static void debug(String message, Object object) {
-    if (LOG.isDebugEnabled()) LOG.debug(message + ": " + object);
-  }
-
-  private static int getIndex(Node[] children, Object object) {
-    for (int i = 0; i < children.length; i++) {
-      if (object == children[i].getLastPathComponent()) return i;
+  private static int getIndex(List<Object> children, Object object) {
+    int index = children.size();
+    while (0 < index--) {
+      if (object == children.get(index)) break;
     }
-    return -1;
-  }
-
-  private static Node getNode(Node[] children, Object object) {
-    for (Node node : children) {
-      if (object == node.getLastPathComponent()) return node;
-    }
-    return null;
+    return index;
   }
 
   private boolean isValidThread() {
@@ -164,270 +158,105 @@ public class AsyncTreeModel extends InvokableTreeModel {
     return false;
   }
 
-  private Node getNode(Object object) {
-    return object == null || !isValidThread() ? null : tree.map.get(object);
+  private Entry<Object> getEntry(Object object) {
+    return object == null || !isValidThread() ? null : tree.findEntry(object);
   }
 
-  private Node[] getChildren(Object object) {
-    Node node = getNode(object);
-    if (node == null) return Node.EMPTY;
-    Node[] children = node.children;
+  private List<Object> getChildren(Object object) {
+    Entry<Object> entry = getEntry(object);
+    if (entry == null) return emptyList();
+    List<Object> children = entry.getChildren();
     if (children != null) return children;
-
-    Object loading = createLoadingNode();
-    node.children = loading == null ? Node.EMPTY : new Node[]{new Node(node, loading, true)};
-    processor.process(new CmdGetChildren("Load children", node, true));
-    return node.children;
+    loadChildren(entry, true);
+    return entry.getChildren();
   }
 
-  private static final class Tree {
-    private final IdentityHashMap<Object, Node> map = new IdentityHashMap<>();
-    private static final Object ROOT = new Object();
-    private volatile Object root = ROOT;
+  private void loadChildren(Entry<Object> entry, boolean insertLoadingNode) {
+    String name = insertLoadingNode ? "Load children" : "Reload children";
+    if (insertLoadingNode) entry.setLoadingChildren(createLoadingNode());
+    processor.process(new CmdGetChildren(name, entry, true));
+  }
 
-    private void add(Node node) {
-      if (node != null) {
-        Node old = map.put(node.getLastPathComponent(), node);
-        if (old != null && old != node) {
-          LOG.warn("AsyncTreeModel replaces node");
-          remove(old.children);
-        }
-        add(node.children);
-      }
+  private final class CmdGetRoot implements Command<Object> {
+    @Override
+    public Object get() {
+      return model.getRoot();
     }
 
-    private void add(Node[] children) {
-      if (children != null) {
-        for (Node child : children) {
-          add(child);
-        }
-      }
-    }
-
-    private void remove(Object object) {
-      if (object != null) {
-        Node node = map.remove(object);
-        if (node != null) {
-          remove(node.children);
-        }
-      }
-    }
-
-    private void remove(Node[] children) {
-      if (children != null) {
-        for (Node child : children) {
-          remove(child.getLastPathComponent());
-        }
-      }
+    @Override
+    public void accept(Object root) {
+      boolean updated = tree.updateRoot(root);
+      Entry<Object> entry = tree.getRootEntry();
+      if (updated) treeStructureChanged(entry, null, null);
+      if (entry != null) loadChildren(entry, entry.isLoadingRequired());
     }
   }
 
-  private static final class Node extends TreePath {
-    private static final Node[] EMPTY = new Node[0];
-    private final TreeModel model;
-    private volatile boolean leaf;
-    private volatile Node[] children;
-
-    private Node(Object object, TreeModel model) {
-      super(object);
-      this.model = model;
-      this.leaf = model.isLeaf(object);
-    }
-
-    private Node(Node parent, Object object, boolean loading) {
-      super(parent, object);
-      this.model = parent.model;
-      this.leaf = loading || model.isLeaf(object);
-      if (loading) children = EMPTY;
-    }
-
-    private Node[] loadChildren() {
-      int count = model.getChildCount(getLastPathComponent());
-      if (count <= 0) return EMPTY;
-
-      Node[] children = new Node[count];
-      for (int i = 0; i < count; i++) {
-        Object child = model.getChild(getLastPathComponent(), i);
-        if (child == null) return null;
-        children[i] = new Node(this, child, false);
-      }
-      return children;
-    }
-  }
-
-  private final class CmdGetRoot implements Command<Node> {
+  private final class CmdGetChildren implements Command<List<Object>> {
     private final String name;
-    private final Object root;
-
-    private CmdGetRoot(String name, Object root) {
-      this.name = name;
-      this.root = root;
-    }
-
-    @Override
-    public String toString() {
-      return name + ": " + root;
-    }
-
-    @Override
-    public Node get() {
-      Object object = root != null ? root : model.getRoot();
-      return object == null ? null : new Node(object, model);
-    }
-
-    @Override
-    public void accept(Node node) {
-      if (node != null) {
-        Object object = node.getLastPathComponent();
-        if (tree.root == object) {
-          Node root = tree.map.get(object);
-          if (root == null) {
-            debug("ignore updating of changed root", object);
-          }
-          else {
-            root.leaf = node.leaf;
-            processor.process(new CmdGetChildren("Reload children", root, true));
-          }
-        }
-        else {
-          tree.root = object;
-          tree.map.clear();
-          tree.map.put(object, node);
-          treeStructureChanged(node, null, null);
-        }
-      }
-      else if (tree.root != null) {
-        tree.root = null;
-        tree.map.clear();
-        treeStructureChanged(null, null, null);
-      }
-    }
-  }
-
-  private final class CmdGetChildren implements Command<Node[]> {
-    private final String name;
-    private final Node node;
+    private final Entry<Object> entry;
     private final boolean deep;
 
-    public CmdGetChildren(String name, Node node, boolean deep) {
+    public CmdGetChildren(String name, Entry<Object> entry, boolean deep) {
       this.name = name;
-      this.node = node;
+      this.entry = entry;
       this.deep = deep;
     }
 
     @Override
     public String toString() {
-      return name + ": " + node.getLastPathComponent();
+      return name + ": " + entry.getNode();
     }
 
     @Override
-    public Node[] get() {
-      return node.loadChildren();
+    public List<Object> get() {
+      Object object = entry.getNode();
+      if (model.isLeaf(object)) return null;
+
+      int count = model.getChildCount(object);
+      if (count <= 0) return emptyList();
+
+      ArrayList<Object> children = new ArrayList<>(count);
+      for (int i = 0; i < count; i++) {
+        children.add(model.getChild(object, i));
+      }
+      return unmodifiableList(children);
     }
 
     @Override
-    public void accept(Node[] children) {
-      Object object = node.getLastPathComponent();
-      if (node != tree.map.get(object)) {
-        debug("ignore updating of changed node", object);
+    public void accept(List<Object> children) {
+      Object object = entry.getNode();
+      if (entry != tree.findEntry(object)) {
+        LOG.debug("ignore updating of changed node: ", object);
         return;
       }
-      if (children == null) {
-        LOG.warn("AsyncTreeModel cannot load children of " + object);
-        return;
-      }
-      Node[] old = node.children;
-      node.children = children;
-      if (old == null) {
-        tree.add(children);
-        return;
-      }
-      if (old.length == 0) {
-        if (children.length == 0) return;
-        tree.add(children);
-        if (listeners.isEmpty()) return;
-        int[] indices = new int[children.length];
-        Arrays.setAll(indices, i -> i);
-        Object[] objects = new Object[children.length];
-        Arrays.setAll(objects, i -> children[i].getLastPathComponent());
-        treeNodesInserted(node, indices, objects);
-        return;
-      }
-      if (children.length == 0) {
-        tree.remove(old);
-        if (listeners.isEmpty()) return;
-        int[] indices = new int[old.length];
-        Arrays.setAll(indices, i -> i);
-        Object[] objects = new Object[old.length];
-        Arrays.setAll(objects, i -> old[i].getLastPathComponent());
-        treeNodesRemoved(node, indices, objects);
-        return;
-      }
-      if (!deep) {
-        int[] insert = getIndices(children, old);
-        if (insert != null) {
-          for (int i : insert) tree.add(children[insert[i]]);
+      boolean isLoadingRequired = entry.isLoadingRequired();
+      MapBasedTree.UpdateResult<Object> update = tree.update(entry, children);
+      if (isLoadingRequired) return;
+
+      boolean removed = !update.getRemoved().isEmpty();
+      boolean inserted = !update.getInserted().isEmpty();
+      boolean contained = !update.getContained().isEmpty();
+      if (!removed && !inserted && !contained) return;
+
+      if (!deep || !contained) {
+        if (!removed && inserted) {
           if (listeners.isEmpty()) return;
-          Object[] objects = new Object[insert.length];
-          Arrays.setAll(objects, i -> children[insert[i]].getLastPathComponent());
-          treeNodesInserted(node, insert, objects);
+          listeners.treeNodesInserted(update.getEvent(AsyncTreeModel.this, entry, update.getInserted()));
           return;
         }
-        int[] remove = getIndices(old, children);
-        if (remove != null) {
-          for (int i : remove) tree.remove(old[remove[i]]);
+        if (!inserted && removed) {
           if (listeners.isEmpty()) return;
-          Object[] objects = new Object[remove.length];
-          Arrays.setAll(objects, i -> old[remove[i]].getLastPathComponent());
-          treeNodesRemoved(node, remove, objects);
+          listeners.treeNodesRemoved(update.getEvent(AsyncTreeModel.this, entry, update.getRemoved()));
           return;
         }
       }
-      ArrayList<CmdGetChildren> commands = new ArrayList<>();
-      for (Node oldNode : old) {
-        Object child = oldNode.getLastPathComponent();
-        Node newNode = getNode(children, child);
-        if (newNode == null) {
-          tree.remove(child);
+      treeStructureChanged(entry, null, null);
+      for (Entry<Object> entry : update.getContained()) {
+        if (!entry.isLoadingRequired()) {
+          loadChildren(entry, false);
         }
       }
-      for (Node newNode : children) {
-        Object child = newNode.getLastPathComponent();
-        Node oldNode = getNode(old, child);
-        if (oldNode == null) {
-          tree.add(newNode);
-        }
-        else {
-          tree.map.put(child, newNode);
-          if (oldNode.children != null) {
-            newNode.children = oldNode.children;
-            commands.add(new CmdGetChildren("Reload children recursively", newNode, true));
-          }
-        }
-      }
-      treeStructureChanged(node, null, null);
-      for (Command command : commands) {
-        processor.process(command);
-      }
-    }
-
-    private int[] getIndices(Node[] large, Node[] small) {
-      int size = large.length - small.length;
-      if (size <= 0) return null;
-
-      int i = 0, s = 0;
-      int[] indices = new int[size];
-      for (int l = 0; l < large.length; l++) {
-        if (s == small.length) return null;
-        if (large[l].getLastPathComponent() == small[s].getLastPathComponent()) {
-          s++;
-        }
-        else {
-          if (i == indices.length) return null;
-          indices[i++] = l;
-        }
-      }
-      return indices;
     }
   }
 }
