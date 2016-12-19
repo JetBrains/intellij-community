@@ -44,6 +44,7 @@
     <option name="DEPRECATION" value="false" />
   </component>
   <component name="JavacSettings">
+    <option name="PREFER_TARGET_JDK_COMPILER" value="false"/>
     <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>
 </project>
