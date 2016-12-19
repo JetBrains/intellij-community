@@ -390,8 +390,41 @@ public class JBUI {
     return JBInsets.create(insets);
   }
 
+  /**
+   * @deprecated use {@link #isHiDPI(Graphics2D, ScaleType)}, {@link #isHiDPI(ScaleType)}
+   */
+  @Deprecated
   public static boolean isHiDPI() {
-    return pixScale(1f) > 1.0f;
+    return isHiDPI(ScaleType.USR);
+  }
+
+  /**
+   * Returns whether the scale factor associated with the graphics device assumes HiDPI-awareness.
+   *
+   * @param g the graphics of the device
+   * @param type the type of the scale factor
+   * @return whether HiDPI-awareness is assumed for the scale factor
+   */
+  public static boolean isHiDPI(@Nullable Graphics2D g, ScaleType type) {
+    switch (type) {
+      case USR:
+        return scale(1f) > 1f;
+      case SYS:
+        return sysScale(g) > 1f;
+      case PIX:
+        return pixScale(g) > 1f;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Equivalent of {@link #isHiDPI(Graphics2D, ScaleType)} called for the graphics of the default screen device.
+   *
+   * @see #isHiDPI(Graphics2D, ScaleType)
+   */
+  public static boolean isHiDPI(ScaleType type) {
+    return isHiDPI(null, type);
   }
 
   public static class Fonts {

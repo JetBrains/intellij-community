@@ -147,7 +147,7 @@ public class TipUIUtil {
 //    }
 
     String suffix = "";
-    if (JBUI.isHiDPI()) suffix += "@2x";
+    if (JBUI.isHiDPI(JBUI.ScaleType.PIX)) suffix += "@2x";
     if (dark) suffix += "_dark";
     int index = text.indexOf("<img", 0);
     while (index != -1) {
