@@ -54,7 +54,7 @@ public interface Transformations {
 
     // custom
     .put(GET_AT, new GetAtTransformation())
-    .put(PUT_AT, new PutAtTransformation(new GetAtTransformation()))
+    .put(PUT_AT, new PutAtTransformation())
 
     .build();
 }

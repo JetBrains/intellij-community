@@ -46,6 +46,9 @@ public class UnaryTransformation extends Transformation {
   @Override
   @Nullable
   public String getReplacement(MethodCallData call, OptionsData options) {
+    String[] arguments = call.getArguments();
+    if (arguments.length != 0) return null;
+
     String prefix = getPrefix(call, options);
     String base = call.getBase();
     if (prefix == null) return null;

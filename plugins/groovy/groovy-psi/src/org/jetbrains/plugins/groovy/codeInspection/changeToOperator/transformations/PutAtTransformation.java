@@ -22,19 +22,13 @@ import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.Options
 import static java.lang.String.format;
 
 class PutAtTransformation extends Transformation {
-  private final Transformation getAtTransformation;
-
-  public PutAtTransformation(Transformation getAtTransformation) {
-    this.getAtTransformation = getAtTransformation;
-  }
 
   @Override
   @Nullable
   public String getReplacement(MethodCallData methodInfo, OptionsData optionsData) {
-    String argument = methodInfo.getArgument(1);
-    if (argument == null) return null;
+    String[] arguments = methodInfo.getArguments();
+    if (arguments.length != 2) return null;
 
-    return format("%s = %s",
-                  getAtTransformation.getReplacement(methodInfo, optionsData), argument);
+    return format("%s[%s] = %s", methodInfo.getBase(), arguments[0], arguments[1]);
   }
 }
