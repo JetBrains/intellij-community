@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -707,7 +708,9 @@ abstract class TerminalOperation extends Operation {
       String comparePredicate;
       if(myComparator != null) {
         myComparator.transform(context, inVar.getName(), best);
-        comparePredicate = myTemplate.replace("{comparator}", myComparator.getText());
+        PsiExpression expression = myComparator.getExpression();
+        String text = ParenthesesUtils.areParenthesesNeeded(JavaTokenType.GT, expression) ? "("+expression.getText()+")" : expression.getText();
+        comparePredicate = myTemplate.replace("{comparator}", text);
       } else {
         comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName());
       }
