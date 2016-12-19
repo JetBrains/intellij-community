@@ -45,7 +45,7 @@ public class EduStepicConnector {
   }
 
   public static boolean enrollToCourse(final int courseId, final StepicUser stepicUser) {
-    if (stepicUser.getAccessToken() == null) return false;
+    if (stepicUser != null && stepicUser.getAccessToken() == null) return false;
     HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ENROLLMENTS);
     try {
       final StepicWrappers.EnrollmentWrapper enrollment = new StepicWrappers.EnrollmentWrapper(String.valueOf(courseId));
