@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +48,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -830,5 +832,19 @@ public class StudyUtils {
       taskDir = srcDir;
     }
     return FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), '/');
+  }
+
+  public static Pair<Integer, Integer> getPlaceholderOffsets(@NotNull final AnswerPlaceholder answerPlaceholder,
+                                                             @NotNull final Document document) {
+    int startOffset = answerPlaceholder.getOffset();
+    int delta = 0;
+    final int length = answerPlaceholder.getRealLength();
+    int nonSpaceCharOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, startOffset, startOffset + length);
+    if (nonSpaceCharOffset != startOffset) {
+      delta = startOffset - nonSpaceCharOffset;
+      startOffset = nonSpaceCharOffset;
+    }
+    final int endOffset = startOffset + length + delta;
+    return Pair.create(startOffset, endOffset);
   }
 }
