@@ -17,12 +17,12 @@ package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -31,10 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * @author Tagir Valeev
@@ -286,64 +287,39 @@ abstract class TerminalOperation extends Operation {
   }
 
   /**
-   * Eliminates &lt;? extends&gt; wildcards which correspond to the first supplied superclass.
-   * If there are more than one superclass supplied, performs the same operation for the last generic argument.
-   * Do not touch unrelated generic arguments which don't map to superclass type parameters.
+   * Eliminates &lt;? extends&gt; wildcards from type parameters which directly map to the supplied superclass
+   * type parameters and performs downstream correction steps if necessary.
    *
-   * E.g.:
-   * <pre>{@code
-   * (List<? extends X>, Collection) -> List<X>
-   * (MyList<? extends X>, Collection) -> MyList<? extends X> (assuming MyList<T> extends List<String>)
-   * (HashMap<? extends X, ? extends List<? extends Y>, Map, Collection) -> HashMap<X, List<Y>>
-   * (HashMap<? extends X, ? extends List<? extends Y>, Map) -> HashMap<X, List<? extends Y>>
-   * }</pre>
-   *
-   * @param type
-   * @param superClasses
-   * @return
+   * @param type type to process
+   * @param superClass superclass which type parameters should be corrected
+   * @param downstreamCorrectors Map which keys are superclass type parameter names and values are functions to perform additional
+   *                             superclass type parameter correction if necessary
+   * @return the corrected type.
    */
   @NotNull
-  static PsiType eliminateCollectionWildcards(PsiType type, String... superClasses) {
-    if(superClasses.length == 0) return type;
-    String superClass = superClasses[0];
+  static PsiType correctTypeParameters(PsiType type, String superClass, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
     PsiClass aClass = PsiTypesUtil.getPsiClass(type);
     if(aClass == null) return type;
-    PsiTypeParameter[] parameters = aClass.getTypeParameters();
 
-    if(parameters.length == 0) return type;
-    PsiSubstitutor substitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
-    PsiClassType classType = factory.createType(aClass, Stream.of(parameters).map(factory::createType).toArray(PsiType[]::new));
-    PsiClass baseClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(superClass, aClass.getResolveScope());
+    PsiSubstitutor origSubstitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
+    PsiSubstitutor substitutor = origSubstitutor;
+    Project project = aClass.getProject();
+    PsiClass baseClass = JavaPsiFacade.getInstance(project).findClass(superClass, aClass.getResolveScope());
     if(baseClass == null) return type;
-    PsiTypeParameter[] baseClassTypeParameters = baseClass.getTypeParameters();
-
-    for (int idx = 0; idx < baseClassTypeParameters.length; idx++) {
-      PsiClass parameter = PsiTypesUtil.getPsiClass(PsiUtil.substituteTypeParameter(classType, superClass, idx, false));
-      if(parameter instanceof PsiTypeParameter) {
-        PsiType origType = PsiUtil.substituteTypeParameter(type, superClass, idx, false);
-        PsiType replacedType = origType;
-        if(origType instanceof PsiCapturedWildcardType) {
-          replacedType = ((PsiCapturedWildcardType)origType).getUpperBound();
-        }
-        if(origType instanceof PsiWildcardType) {
-          replacedType = ((PsiWildcardType)origType).getExtendsBound();
-        }
-        if (idx == baseClassTypeParameters.length - 1) {
-          replacedType = eliminateCollectionWildcards(replacedType, Arrays.copyOfRange(superClasses, 1, superClasses.length));
-        }
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
+    for (PsiTypeParameter baseParameter : baseClass.getTypeParameters()) {
+      PsiClass substitution = PsiTypesUtil.getPsiClass(superClassSubstitutor.substitute(baseParameter));
+      if(substitution instanceof PsiTypeParameter) {
+        PsiTypeParameter subClassParameter = (PsiTypeParameter)substitution;
+        PsiType origType = origSubstitutor.substitute(subClassParameter);
+        PsiType replacedType = GenericsUtil.eliminateWildcards(origType, false, true);
+        replacedType = downstreamCorrectors.getOrDefault(subClassParameter.getName(), Function.identity()).apply(replacedType);
         if(replacedType != origType) {
-          substitutor = substitutor.put((PsiTypeParameter)parameter, replacedType);
+          substitutor = substitutor.put(subClassParameter, replacedType);
         }
       }
     }
-    return factory.createType(aClass, substitutor);
-  }
-
-  @NotNull
-  static String eliminateCollectionWildcards(StreamToLoopReplacementContext context,
-                                             String typeText, String... superClasses) {
-    return eliminateCollectionWildcards(context.createType(typeText), superClasses).getCanonicalText();
+    return substitutor == origSubstitutor ? type : JavaPsiFacade.getElementFactory(project).createType(aClass, substitutor);
   }
 
   static class ReduceTerminalOperation extends TerminalOperation {
@@ -577,10 +553,7 @@ abstract class TerminalOperation extends Operation {
     String getSupplier();
     String getAccumulator(String acc, String item);
 
-    // Returns array of base classes for which "? extends" should be eliminated from generic arguments
-    // Several elements are used for downstream collection, in this case the first element is java.util.Map
-    // and second one corresponds to the map value
-    default String[] getBaseClassChain() {return ArrayUtil.EMPTY_STRING_ARRAY;}
+    default PsiType correctReturnType(PsiType type) {return type;}
   }
 
   abstract static class CollectorBasedTerminalOperation extends TerminalOperation implements CollectorOperation {
@@ -598,8 +571,8 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       transform(context, inVar.getName());
-      String acc = context.declareResult(myAccNameSupplier.apply(context),
-                                         eliminateCollectionWildcards(context, myType, getBaseClassChain()), getSupplier(), true);
+      PsiType resultType = correctReturnType(context.createType(myType));
+      String acc = context.declareResult(myAccNameSupplier.apply(context), resultType.getCanonicalText(), getSupplier(), true);
       return getAccumulator(acc, inVar.getName());
     }
 
@@ -697,8 +670,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public String[] getBaseClassChain() {
-      return new String[] {CommonClassNames.JAVA_UTIL_COLLECTION};
+    public PsiType correctReturnType(PsiType type) {
+      return correctTypeParameters(type, CommonClassNames.JAVA_UTIL_COLLECTION, Collections.emptyMap());
     }
 
     @NotNull
@@ -786,8 +759,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public String[] getBaseClassChain() {
-      return new String[] {CommonClassNames.JAVA_UTIL_MAP};
+    public PsiType correctReturnType(PsiType type) {
+      return correctTypeParameters(type, CommonClassNames.JAVA_UTIL_MAP, Collections.emptyMap());
     }
 
     @Override
@@ -854,8 +827,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public String[] getBaseClassChain() {
-      return ArrayUtil.prepend(CommonClassNames.JAVA_UTIL_MAP, myCollector.getBaseClassChain());
+    public PsiType correctReturnType(PsiType type) {
+      return correctTypeParameters(type, CommonClassNames.JAVA_UTIL_MAP, Collections.singletonMap("V", myCollector::correctReturnType));
     }
 
     @Override
@@ -911,13 +884,14 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String resultType = eliminateCollectionWildcards(context, myResultType,
-                                                       ArrayUtil.prepend(CommonClassNames.JAVA_UTIL_MAP, myCollector.getBaseClassChain()));
-      String map = context.declareResult("map", resultType, "new java.util.HashMap<>()", true);
+      PsiType resultType = context.createType(myResultType);
+      resultType = correctTypeParameters(resultType, CommonClassNames.JAVA_UTIL_MAP,
+                                         Collections.singletonMap("V", myCollector::correctReturnType));
+      String map = context.declareResult("map", resultType.getCanonicalText(), "new java.util.HashMap<>()", true);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
-      context.addInitStep(map+".put(false, "+myCollector.getSupplier()+");");
-      context.addInitStep(map+".put(true, "+myCollector.getSupplier()+");");
+      context.addInitStep(map + ".put(false, " + myCollector.getSupplier() + ");");
+      context.addInitStep(map + ".put(true, " + myCollector.getSupplier() + ");");
       return myCollector.getAccumulator(map + ".get(" + myPredicate.getText() + ")", inVar.getName());
     }
   }
@@ -945,8 +919,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public String[] getBaseClassChain() {
-      return myDownstreamCollector.getBaseClassChain();
+    public PsiType correctReturnType(PsiType type) {
+      return myDownstreamCollector.correctReturnType(type);
     }
 
     @Override
