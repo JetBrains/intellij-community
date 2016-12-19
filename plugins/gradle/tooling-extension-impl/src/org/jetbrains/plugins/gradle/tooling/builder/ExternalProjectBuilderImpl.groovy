@@ -29,6 +29,7 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.annotations.NotNull
@@ -263,7 +264,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         additionalIdeaGenDirs.removeAll(files)
       }
 
-      if (SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
+      if (SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name || isTestSourceSet(project, sourceSet)) {
         if (!inheritOutputDirs && ideaTestOutDir != null) {
           javaDirectorySet.outputDir = ideaTestOutDir
           resourcesDirectorySet.outputDir = ideaTestOutDir
@@ -406,6 +407,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     cleanupSharedSourceFolders(result)
 
     result
+  }
+
+  private static boolean isTestSourceSet(Project project, SourceSet sourceSet) {
+    !project.tasks.withType(Test).matching { it.testClassesDir == sourceSet.output.classesDir }.empty
   }
 
   private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {
