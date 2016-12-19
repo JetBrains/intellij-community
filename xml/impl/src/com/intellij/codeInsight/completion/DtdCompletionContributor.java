@@ -37,7 +37,7 @@ public class DtdCompletionContributor extends CompletionContributor {
     "NMTOKEN", "NMTOKENS", "SYSTEM", "PUBLIC"
   };
 
-  private static InsertHandler<LookupElement> INSERT_HANDLER = new BasicInsertHandler<LookupElement>() {
+  private static final InsertHandler<LookupElement> INSERT_HANDLER = new BasicInsertHandler<LookupElement>() {
     @Override
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
