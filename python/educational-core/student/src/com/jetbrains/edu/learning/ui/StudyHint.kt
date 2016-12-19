@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.edu.learning.StudyTaskManager
 import com.jetbrains.edu.learning.StudyUtils
 import com.jetbrains.edu.learning.core.EduNames
@@ -95,8 +96,14 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
   private inner class EditHint : AnAction("Edit Hint", "Edit Hint", AllIcons.Modules.Edit) {
     
     override fun actionPerformed(e: AnActionEvent?) {
-      val dialog = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText, myPlaceholder.hints)
-      dialog.show()
+      val dlg = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText, myPlaceholder.hints)
+      dlg.title = "Edit Answer Placeholder"
+      if (dlg.showAndGet()) {
+        val answerPlaceholderText = dlg.taskText
+        myPlaceholder.taskText = answerPlaceholderText
+        myPlaceholder.length = if (myPlaceholder.activeSubtaskInfo.isNeedInsertText) 0 else StringUtil.notNullize(answerPlaceholderText).length
+        myPlaceholder.hints = dlg.hints
+      }
     }
 
     override fun update(e: AnActionEvent) {
