@@ -175,6 +175,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         }
 
         @Override
+        public boolean startInWriteAction() {
+          return creator.startInWriteAction();
+        }
+
+        @Override
         protected String getActionName(String newName) {
           return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
         }
@@ -211,5 +216,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     @NotNull
     String getActionName(@NotNull String name, @NotNull String templateName);
+
+    boolean startInWriteAction();
   }
 }

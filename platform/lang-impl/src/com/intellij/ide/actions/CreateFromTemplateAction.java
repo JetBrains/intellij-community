@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -38,7 +39,7 @@ import java.util.Map;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction {
+public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateFromTemplateAction");
 
   public CreateFromTemplateAction(String text, String description, Icon icon) {
@@ -70,6 +71,11 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
         public T createFile(@NotNull String name, @NotNull String templateName) {
           selectedTemplateName.set(templateName);
           return CreateFromTemplateAction.this.createFile(name, templateName, dir);
+        }
+
+        @Override
+        public boolean startInWriteAction() {
+          return CreateFromTemplateAction.this.startInWriteAction();
         }
 
         @Override

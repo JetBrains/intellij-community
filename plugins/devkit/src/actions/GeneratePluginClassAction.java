@@ -127,6 +127,11 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     return fileIndex.getModuleForFile(vFile);
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     final Project project = directory.getProject();
