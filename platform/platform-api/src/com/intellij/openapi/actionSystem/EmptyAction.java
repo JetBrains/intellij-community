@@ -136,6 +136,11 @@ public final class EmptyAction extends AnAction {
       copyFrom(action);
       setEnabledInModalContext(action.isEnabledInModalContext());
     }
+    
+    @NotNull
+    public ActionGroup getDelegate() {
+      return myDelegate;
+    }
 
     @Override
     public boolean isPopup() {

@@ -108,6 +108,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     BranchActionGroup branchActionGroup = getSelectedBranchGroup();
     if (branchActionGroup != null && e instanceof MouseEvent && myListElementRenderer.isIconAt(((MouseEvent)e).getPoint())) {
       branchActionGroup.toggle();
+      getList().repaint();
     }
     else {
       super.handleSelect(handleFinalChoices, e);
@@ -175,8 +176,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       if (clazz.isInstance(action)) {
         return clazz.cast(action);
       }
-      else if (action instanceof MySpeedSearchActionGroup) {
-        ActionGroup group = ((MySpeedSearchActionGroup)action).getActionGroup();
+      else if (action instanceof EmptyAction.MyDelegatingActionGroup) {
+        ActionGroup group = ((EmptyAction.MyDelegatingActionGroup)action).getDelegate();
         return clazz.isInstance(group) ? clazz.cast(group) : null;
       }
     }
