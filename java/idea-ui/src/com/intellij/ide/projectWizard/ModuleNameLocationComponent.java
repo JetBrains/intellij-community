@@ -72,6 +72,8 @@ public class ModuleNameLocationComponent {
   }
 
   public boolean validate() throws ConfigurationException {
+    AbstractModuleBuilder builder = getModuleBuilder();
+    if (builder != null && !builder.validateModuleName(getModuleName())) return false;
     if (!validateModulePaths()) return false;
     validateExistingModuleName();
     return true;
