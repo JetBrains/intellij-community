@@ -391,4 +391,4 @@ internal class ApplicationStoreTest {
   }
 }
 
-private data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")
+private data class TestState @JvmOverloads constructor(@Attribute var foo: String = "", @Attribute var bar: String = "")
