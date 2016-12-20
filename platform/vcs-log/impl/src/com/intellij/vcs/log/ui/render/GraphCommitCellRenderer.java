@@ -192,7 +192,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
-                                            0 /*left aligned painter does not use available width*/);
+                                            getAvailableWidth(column));
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
         appendText(cell, style);
