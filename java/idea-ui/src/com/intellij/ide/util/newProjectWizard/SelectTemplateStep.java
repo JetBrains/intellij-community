@@ -211,10 +211,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       if (!myNamePathComponent.validateNameAndPath(myWizardContext, myFormatPanel.isDefault())) return false;
     }
 
-    if (!myModuleNameLocationComponent.validateModulePaths()) return false;
-    if (!myWizardContext.isCreatingNewProject()) {
-      myModuleNameLocationComponent.validateExistingModuleName(myWizardContext.getProject());
-    }
+    if (!myModuleNameLocationComponent.validate()) return false;
 
     ValidationInfo info = template.validateSettings();
     if (info != null) {

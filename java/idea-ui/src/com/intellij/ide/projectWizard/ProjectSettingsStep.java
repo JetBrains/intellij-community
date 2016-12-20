@@ -135,15 +135,11 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
   @Override
   public boolean validate() throws ConfigurationException {
-
     if (myWizardContext.isCreatingNewProject()) {
       if (!myNamePathComponent.validateNameAndPath(myWizardContext, myFormatPanel.isDefault())) return false;
     }
 
-    if (!myModuleNameLocationComponent.validateModulePaths()) return false;
-    if (!myWizardContext.isCreatingNewProject()) {
-      myModuleNameLocationComponent.validateExistingModuleName(myWizardContext.getProject());
-    }
+    if (!myModuleNameLocationComponent.validate()) return false;
 
     if (mySettingsStep != null) {
       return mySettingsStep.validate();

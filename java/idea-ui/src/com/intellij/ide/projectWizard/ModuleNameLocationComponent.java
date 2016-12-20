@@ -65,6 +65,12 @@ public class ModuleNameLocationComponent {
     myWizardContext = wizardContext;
   }
 
+  public boolean validate() throws ConfigurationException {
+    if (!validateModulePaths()) return false;
+    validateExistingModuleName();
+    return true;
+  }
+
   public void updateDataModel(AbstractModuleBuilder moduleBuilder) {
     final String moduleName = getModuleName();
     moduleBuilder.setName(moduleName);
@@ -195,8 +201,10 @@ public class ModuleNameLocationComponent {
     }
   }
 
+  private void validateExistingModuleName() throws ConfigurationException {
+    Project project = myWizardContext.getProject();
+    if (project == null) return;
 
-  public void validateExistingModuleName(Project project) throws ConfigurationException {
     final String moduleName = getModuleName();
     final Module module;
     final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
@@ -211,7 +219,7 @@ public class ModuleNameLocationComponent {
     }
   }
 
-  public boolean validateModulePaths() throws ConfigurationException {
+  private boolean validateModulePaths() throws ConfigurationException {
     final String moduleName = getModuleName();
     final String moduleFileDirectory = myModuleFileLocation.getText();
     if (moduleFileDirectory.length() == 0) {
