@@ -496,10 +496,10 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
     keymapElement.getAttributeValue(PARENT_ATTRIBUTE)?.let { parentSchemeName ->
-      var parentScheme = keymapManager.schemeManager.findSchemeByName(parentSchemeName)
+      var parentScheme = findParentScheme(parentSchemeName)
       if (parentScheme == null && parentSchemeName == "Default for Mac OS X") {
         // https://youtrack.jetbrains.com/issue/RUBY-17767#comment=27-1374197
-        parentScheme = keymapManager.schemeManager.findSchemeByName("Mac OS X")
+        parentScheme = findParentScheme("Mac OS X")
       }
 
       if (parentScheme == null) {
@@ -581,6 +581,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
     cleanShortcutsCache()
   }
+
+  protected open fun findParentScheme(parentSchemeName: String) = keymapManager.schemeManager.findSchemeByName(parentSchemeName)
 
   override fun writeScheme(): Element {
     dataHolder?.let {
