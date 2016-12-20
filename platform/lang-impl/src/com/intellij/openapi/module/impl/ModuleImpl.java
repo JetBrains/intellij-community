@@ -31,9 +31,9 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,7 +84,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void init(@NotNull final String path, @Nullable final Runnable beforeComponentCreation) {
-    init(ProgressManager.getInstance().getProgressIndicator(), () -> {
+    init((ProgressIndicator)null, () -> {
       // create ServiceManagerImpl at first to force extension classes registration
       getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
       ServiceKt.getStateStore(this).setPath(path);
@@ -95,9 +95,11 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     });
   }
 
+  @Nullable
   @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+  protected ProgressIndicator getProgressIndicator() {
     // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
+    return null;
   }
 
   @Override
@@ -163,6 +165,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public void projectOpened() {
     for (ModuleComponent component : getComponentInstancesOfType(ModuleComponent.class)) {
       try {
+        //noinspection deprecation
         component.projectOpened();
       }
       catch (Exception e) {
@@ -211,7 +214,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void setOption(@NotNull String key, @NotNull String value) {
-    getOptionManager().state.options.put(key, value);
+    DeprecatedModuleOptionManager manager = getOptionManager();
+    if (!value.equals(manager.state.options.put(key, value))) {
+      manager.incModificationCount();
+    }
   }
 
   @NotNull
@@ -222,7 +228,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void clearOption(@NotNull String key) {
-    getOptionManager().state.options.remove(key);
+    DeprecatedModuleOptionManager manager = getOptionManager();
+    if (manager.state.options.remove(key) != null) {
+      manager.incModificationCount();
+    }
   }
 
   @Override
@@ -356,8 +365,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return Extensions.getArea(this).getPicoContainer();
   }
 
+  @Override
+  public long getOptionsModificationCount() {
+    return getOptionManager().getModificationCount();
+  }
+
   @State(name = "DeprecatedModuleOptionManager")
-  static class DeprecatedModuleOptionManager implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
+  static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")

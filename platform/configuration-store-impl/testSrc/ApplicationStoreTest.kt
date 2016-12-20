@@ -17,12 +17,14 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
@@ -31,7 +33,6 @@ import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
 import org.junit.Before
@@ -49,14 +50,17 @@ import kotlin.properties.Delegates
 internal class ApplicationStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
-  private val tempDirManager = TemporaryDirectory()
-  @Rule fun getTemporaryFolder() = tempDirManager
+  @JvmField
+  @Rule
+  val tempDirManager = TemporaryDirectory()
 
-  private val edtRule = EdtRule()
-  @Rule fun _edtRule() = edtRule
+  @JvmField
+  @Rule
+  val edtRule = EdtRule()
 
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
@@ -92,7 +96,7 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).isRegularFile()
+    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).isRegularFile
   }
 
   @Test fun `remove deprecated storage on write`() {
@@ -156,7 +160,7 @@ internal class ApplicationStoreTest {
     val configDir = Paths.get(configPath)
 
     val componentPath = configDir.resolve("a.xml")
-    assertThat(componentPath).isRegularFile()
+    assertThat(componentPath).isRegularFile
     val componentFile = componentPath
 
     // additional export path
@@ -206,14 +210,12 @@ internal class ApplicationStoreTest {
   }
 
   @State(name = "A", storages = arrayOf(Storage("a.xml")), additionalExportFile = "foo")
-  private open class A : PersistentStateComponent<A.State> {
-    data class State(@Attribute var foo: String = "", @Attribute var bar: String = "")
-
-    var options = State()
+  private open class A : PersistentStateComponent<TestState> {
+    var options = TestState()
 
     override fun getState() = options
 
-    override fun loadState(state: State) {
+    override fun loadState(state: TestState) {
       this.options = state
     }
   }
@@ -226,7 +228,7 @@ internal class ApplicationStoreTest {
 
     val component = A()
     componentStore.initComponent(component, false)
-    assertThat(component.options).isEqualTo(A.State("old"))
+    assertThat(component.options).isEqualTo(TestState("old"))
 
     saveStore()
 
@@ -240,6 +242,63 @@ internal class ApplicationStoreTest {
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
   }
 
+  @Test fun `modification tracker`() {
+    testAppConfig.refreshVfs()
+
+    @State(name = "A", storages = arrayOf(Storage("a.xml")))
+    open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
+      var options = TestState()
+
+      var stateCalledCount = 0
+
+      override fun getState(): TestState {
+        stateCalledCount++
+        return options
+      }
+
+      override fun loadState(state: TestState) {
+        this.options = state
+      }
+    }
+
+    val component = A()
+    componentStore.initComponent(component, false)
+
+    assertThat(component.modificationCount).isEqualTo(0)
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // test that store correctly set last modification count to component modification count on init
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // change modification count - store will be forced to check changes using serialization and A.getState will be called
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    // test that store correctly save last modification time and doesn't call our state on next save
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    val componentFile = testAppConfig.resolve("a.xml")
+    assertThat(componentFile).doesNotExist()
+
+    // update data but "forget" to update modification count
+    component.options.foo = "new"
+
+    saveStore()
+    assertThat(componentFile).doesNotExist()
+
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(2)
+
+    assertThat(componentFile).hasContent("""
+    <application>
+      <component name="A" foo="new" />
+    </application>""".trimIndent())
+  }
+
   @Test fun `do not check if only format changed for non-roamable storage`() {
     @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
@@ -250,7 +309,7 @@ internal class ApplicationStoreTest {
 
     val component = AWorkspace()
     componentStore.initComponent(component, false)
-    assertThat(component.options).isEqualTo(A.State("old"))
+    assertThat(component.options).isEqualTo(TestState("old"))
 
     saveStore()
 
@@ -331,3 +390,5 @@ internal class ApplicationStoreTest {
     }
   }
 }
+
+private data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")

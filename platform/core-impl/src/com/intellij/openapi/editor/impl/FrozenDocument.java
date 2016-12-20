@@ -106,11 +106,6 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public int getListenersCount() {
-    return 0;
-  }
-
-  @Override
   public void suppressGuardedExceptions() {
     throw new UnsupportedOperationException();
   }

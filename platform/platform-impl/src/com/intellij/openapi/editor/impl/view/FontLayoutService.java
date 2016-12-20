@@ -15,19 +15,26 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import sun.font.FontStrike;
+import sun.font.FontUtilities;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.lang.reflect.Method;
 
 /**
  * Encapsulates logic related to font metrics. Mock instance can be used in tests to make them independent on font properties on particular
  * platform.
  */
 public abstract class FontLayoutService {
+  private static final Logger LOG = Logger.getInstance(FontLayoutService.class);
+
   private static final FontLayoutService DEFAULT_INSTANCE = new DefaultFontLayoutService();
   private static FontLayoutService INSTANCE = DEFAULT_INSTANCE;
   
@@ -43,6 +50,8 @@ public abstract class FontLayoutService {
 
   public abstract int charWidth(@NotNull FontMetrics fontMetrics, int codePoint);
 
+  public abstract float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint);
+
   public abstract int getHeight(@NotNull FontMetrics fontMetrics);
   
   public abstract int getAscent(@NotNull FontMetrics fontMetrics);
@@ -55,6 +64,15 @@ public abstract class FontLayoutService {
   private static class DefaultFontLayoutService extends FontLayoutService {
     // this flag is supported by JetBrains Runtime
     private static final int LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT = 8;
+
+    private final Method getCodePointAdvanceRef;
+
+    private DefaultFontLayoutService() {
+      getCodePointAdvanceRef = ReflectionUtil.getDeclaredMethod(FontStrike.class, "getCodePointAdvance", int.class);
+      if (getCodePointAdvanceRef == null) {
+        LOG.warn("Couldn't access FontStrike.getCodePointAdvance method");
+      }
+    }
 
     @NotNull
     @Override
@@ -72,6 +90,21 @@ public abstract class FontLayoutService {
     @Override
     public int charWidth(@NotNull FontMetrics fontMetrics, int codePoint) {
       return fontMetrics.charWidth(codePoint);
+    }
+
+    @Override
+    public float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint) {
+      if (getCodePointAdvanceRef != null) {
+        Font font = fontMetrics.getFont();
+        FontStrike fs = FontUtilities.getFont2D(font).getStrike(font, fontMetrics.getFontRenderContext());
+        try {
+          return (float)getCodePointAdvanceRef.invoke(fs, codePoint);
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+      return charWidth(fontMetrics, codePoint);
     }
 
     @Override

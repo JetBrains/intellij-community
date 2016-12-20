@@ -50,8 +50,6 @@ public interface DocumentEx extends Document {
    */
   void moveText(int srcStart, int srcEnd, int dstOffset);
 
-  int getListenersCount();
-
   void suppressGuardedExceptions();
   void unSuppressGuardedExceptions();
 

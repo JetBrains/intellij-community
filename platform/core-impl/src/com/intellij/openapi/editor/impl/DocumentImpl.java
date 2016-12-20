@@ -459,11 +459,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  public int getListenersCount() {
-    return getListeners().length;
-  }
-
-  @Override
   public void insertString(int offset, @NotNull CharSequence s) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
@@ -873,12 +868,23 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
     addDocumentListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeDocumentListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, new DocumentListenerDisposable(myDocumentListeners, listener));
+  }
+
+  // this contortion is for avoiding document leak when the listener is leaked
+  private static class DocumentListenerDisposable implements Disposable {
+    @NotNull private final LockFreeCOWSortedArray<DocumentListener> myList;
+    @NotNull private final DocumentListener myListener;
+
+    DocumentListenerDisposable(@NotNull LockFreeCOWSortedArray<DocumentListener> list, @NotNull DocumentListener listener) {
+      myList = list;
+      myListener = listener;
+    }
+
+    @Override
+    public void dispose() {
+      myList.remove(myListener);
+    }
   }
 
   @Override

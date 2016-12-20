@@ -385,7 +385,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) { }
     @Override public void replaceText(@NotNull CharSequence chars, long newModificationStamp) { }
     @Override public void moveText(int srcStart, int srcEnd, int dstOffset) { }
-    @Override public int getListenersCount() { return 0; }
+
     @Override public void suppressGuardedExceptions() { }
     @Override public void unSuppressGuardedExceptions() { }
     @Override public boolean isInEventsHandling() { return false; }

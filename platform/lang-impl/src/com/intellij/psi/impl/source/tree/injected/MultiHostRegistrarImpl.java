@@ -231,7 +231,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
       SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = ((ShredImpl)shreds.get(0)).getSmartPointer();
 
-      synchronized (PsiLock.LOCK) {
+      synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         final ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
 
         assert parsedNode instanceof FileElement : "Parsed to "+parsedNode+" instead of FileElement";

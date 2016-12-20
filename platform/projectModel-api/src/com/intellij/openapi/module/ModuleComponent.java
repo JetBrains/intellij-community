@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.project.Project;
 
 /**
  * Base interface for module-level components. The constructor of the classes
@@ -27,25 +28,38 @@ import com.intellij.openapi.components.BaseComponent;
  * {@link #initComponent()}, {@link #projectOpened()}, {@link #moduleAdded()} methods will be called for each module even if user doesn't use
  * any feature of your plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance
  * until user calls its actions explicitly.</strong>
+ *
+ * Consider to use {@link com.intellij.ProjectTopics#MODULES}
  */
 public interface ModuleComponent extends BaseComponent {
   /**
    * Invoked when the project corresponding to this component instance is opened.<p>
    * Note that components may be created for even unopened projects and this method can be never
    * invoked for a particular component instance (for example for default project).
+   *
+   * @deprecated Please use {@link com.intellij.openapi.project.ProjectManager#TOPIC} ({@link com.intellij.openapi.project.ProjectManagerListener#projectOpened(Project)} (Project, Module)})
    */
-  void projectOpened();
+  @Deprecated
+  default void projectOpened() {
+  }
 
   /**
    * Invoked when the project corresponding to this component instance is closed.<p>
    * Note that components may be created for even unopened projects and this method can be never
    * invoked for a particular component instance (for example for default project).
+   *
+   * @deprecated Please use {@link com.intellij.openapi.project.ProjectManager#TOPIC} ({@link com.intellij.openapi.project.ProjectManagerListener#projectClosed(Project)} (Project, Module)})
    */
-  void projectClosed();
+  @Deprecated
+  default void projectClosed() {
+  }
 
   /**
    * Invoked when the module corresponding to this component instance has been completely
    * loaded and added to the project.
+   *
+   * Consider to use {@link com.intellij.ProjectTopics#MODULES} ({@link com.intellij.openapi.project.ModuleListener#moduleAdded(Project, Module)})
    */
-  void moduleAdded();
+  default void moduleAdded() {
+  }
 }

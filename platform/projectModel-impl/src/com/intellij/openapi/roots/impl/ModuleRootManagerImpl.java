@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleServiceManager;
+import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -31,7 +32,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
@@ -45,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
+public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -57,6 +58,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
+  private volatile long myModificationCount;
 
   public ModuleRootManagerImpl(Module module,
                                ProjectRootManagerImpl projectRootManager,
@@ -163,9 +165,15 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);
 
+    boolean changed = rootModel.isChanged();
+
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
     ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+
+    if (changed) {
+      myModificationCount++;
+    }
   }
 
   static void doCommit(RootModelImpl rootModel) {
@@ -344,6 +352,15 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     }
   }
 
+  @Override
+  public long getModificationCount() {
+    long result = myModificationCount;
+    if (myModule instanceof ModuleEx) {
+      result += ((ModuleEx)myModule).getOptionsModificationCount();
+    }
+    return result;
+  }
+
   public static class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
     private Element myRootModelElement;
@@ -361,7 +378,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       myRootModel.writeExternal(element);
     }
 
