@@ -44,7 +44,7 @@ class AttachProjectAction : AnAction("Attach project"), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent?) {
-    val descriptor = OpenProjectFileChooserDescriptor(false)
+    val descriptor = OpenProjectFileChooserDescriptor(true)
     val project = e?.getData(CommonDataKeys.PROJECT)
 
 
