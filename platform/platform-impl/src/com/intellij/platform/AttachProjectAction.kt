@@ -37,7 +37,7 @@ import java.nio.file.Paths
  *
  * @author traff
  */
-class AttachProjectAction : AnAction("Attach project"), DumbAware {
+class AttachProjectAction : AnAction("Attach project..."), DumbAware {
   override fun update(e: AnActionEvent?) {
     e?.presentation?.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
                                            GeneralSettings.getInstance().confirmOpenNewProject != GeneralSettings.OPEN_PROJECT_ASK
