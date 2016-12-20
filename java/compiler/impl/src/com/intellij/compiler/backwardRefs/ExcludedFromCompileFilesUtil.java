@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +50,7 @@ class ExcludedFromCompileFilesUtil {
           return Stream.of(file.getChildren());
         }
       })
-      .filter(f -> !f.isDirectory() && f instanceof VirtualFileWithId && fileTypes.contains(f.getFileType()))
+      .filter(f -> !f.isDirectory() && fileTypes.contains(f.getFileType()))
       .collect(Collectors.toList());
 
     return GlobalSearchScope.filesWithoutLibrariesScope(project, excludedFiles);
