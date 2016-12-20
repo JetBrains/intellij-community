@@ -2,10 +2,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 
@@ -38,13 +41,20 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
         EditorModificationUtil.insertStringAtCaret(editor, " ");
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       }
-      else {
+      else if (shouldMoveCaret(editor)) {
         editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
       }
       if (myTriggerAutoPopup) {
         AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
       }
     }
+  }
+
+  private static boolean shouldMoveCaret(Editor editor) {
+    TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+    TextRange range = state == null ? null : state.getCurrentVariableRange();
+    int offset = editor.getCaretModel().getOffset();
+    return range == null || offset != range.getEndOffset();
   }
 
   private static boolean isCharAtSpace(Editor editor) {
