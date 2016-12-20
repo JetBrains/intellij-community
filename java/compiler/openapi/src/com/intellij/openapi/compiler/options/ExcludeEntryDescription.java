@@ -46,7 +46,7 @@ public class ExcludeEntryDescription implements Disposable {
     return new ExcludeEntryDescription(getUrl(), myIncludeSubdirectories, myIsFile,parent);
   }
 
-  public void setPresentableUrl(String newUrl) {
+  void setPresentableUrl(String newUrl) {
     myFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(newUrl)), myParentDisposable, null);
     final VirtualFile file = getVirtualFile();
     if (file != null) {
@@ -70,7 +70,7 @@ public class ExcludeEntryDescription implements Disposable {
     return myIncludeSubdirectories;
   }
 
-  public void setIncludeSubdirectories(boolean includeSubdirectories) {
+  void setIncludeSubdirectories(boolean includeSubdirectories) {
     myIncludeSubdirectories = includeSubdirectories;
   }
 

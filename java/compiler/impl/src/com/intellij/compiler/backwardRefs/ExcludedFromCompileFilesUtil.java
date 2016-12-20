@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -29,9 +29,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class ExcludedFromCompileFilesUtil {
-  static GlobalSearchScope getExcludedFilesScope(@NotNull Project project, @NotNull Set<FileType> fileTypes) {
-    final Collection<VirtualFile> excludedFiles = Stream
-      .of(CompilerConfiguration.getInstance(project).getExcludedEntriesConfiguration().getExcludeEntryDescriptions())
+  static GlobalSearchScope getExcludedFilesScope(@NotNull ExcludeEntryDescription[] descriptions,
+                                                 @NotNull Set<FileType> fileTypes,
+                                                 @NotNull Project project) {
+    final Collection<VirtualFile> excludedFiles = Stream.of(descriptions)
       .flatMap(description -> {
         final VirtualFile file = description.getVirtualFile();
         if (file == null) return Stream.empty();

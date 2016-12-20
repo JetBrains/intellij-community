@@ -28,6 +28,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -88,7 +89,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
-  private final ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration> myExcludesConfiguration;
+  private final ExcludedEntriesConfiguration myExcludesConfiguration;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<>();
   private JavacCompiler JAVAC_EXTERNAL_BACKEND;
@@ -111,8 +112,19 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
-    myExcludesConfiguration = new ExcludesConfigNotificationsWrapper<>(project, new ExcludedEntriesConfiguration());
-    Disposer.register(project, myExcludesConfiguration.getDelegate());
+    myExcludesConfiguration = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
+    Disposer.register(project, myExcludesConfiguration);
+    project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
+      @Override
+      public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
+        BuildManager.getInstance().clearState(myProject);
+      }
+
+      @Override
+      public void onEntryRemoved(@NotNull ExcludeEntryDescription description) {
+        BuildManager.getInstance().clearState(myProject);
+      }
+    });
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
@@ -150,7 +162,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     if (myExcludesConfiguration.getExcludeEntryDescriptions().length > 0) {
-      myExcludesConfiguration.getDelegate().writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
+      myExcludesConfiguration.writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
     }
 
     Element resourceExtensions = new Element(JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
@@ -703,7 +715,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
     if (node != null) {
-      myExcludesConfiguration.getDelegate().readExternal(node);
+      myExcludesConfiguration.readExternal(node);
     }
 
     try {
@@ -1024,65 +1036,4 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     parent.addContent(child);
     return child;
   }
-
-  private static class ExcludesConfigNotificationsWrapper<T extends ExcludesConfiguration> implements ExcludesConfiguration {
-    private final Project myProject;
-    private final T myDelegate;
-
-    public ExcludesConfigNotificationsWrapper(@NotNull Project project, @NotNull T delegate) {
-      myProject = project;
-      myDelegate = delegate;
-    }
-
-    @NotNull
-    public T getDelegate() {
-      return myDelegate;
-    }
-
-    @Override
-    public ExcludeEntryDescription[] getExcludeEntryDescriptions() {
-      return myDelegate.getExcludeEntryDescriptions();
-    }
-
-    @Override
-    public void addExcludeEntryDescription(ExcludeEntryDescription description) {
-      try {
-        myDelegate.addExcludeEntryDescription(description);
-      }
-      finally {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    }
-
-    @Override
-    public void removeExcludeEntryDescription(ExcludeEntryDescription description) {
-      try {
-        myDelegate.removeExcludeEntryDescription(description);
-      }
-      finally {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    }
-
-    @Override
-    public void removeAllExcludeEntryDescriptions() {
-      try {
-        myDelegate.removeAllExcludeEntryDescriptions();
-      }
-      finally {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    }
-
-    @Override
-    public boolean containsExcludeEntryDescription(ExcludeEntryDescription description) {
-      return myDelegate.containsExcludeEntryDescription(description);
-    }
-
-    @Override
-    public boolean isExcluded(VirtualFile virtualFile) {
-      return myDelegate.isExcluded(virtualFile);
-    }
-  }
-  
 }
