@@ -68,7 +68,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   private final static Logger LOG = Logger.getInstance(CompilerReferenceServiceImpl.class);
 
   private final Set<FileType> myFileTypes;
-  private final DirtyModulesHolder myDirtyModulesHolder;
+  private final DirtyScopeHolder myDirtyScopeHolder;
   private final ProjectFileIndex myProjectFileIndex;
   private final LongAdder myCompilationCount = new LongAdder();
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -82,7 +82,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = Stream.of(LanguageLightRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
-    myDirtyModulesHolder = new DirtyModulesHolder(this, fileDocumentManager, psiDocumentManager);
+    myDirtyScopeHolder = new DirtyScopeHolder(this, fileDocumentManager, psiDocumentManager);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
-          myDirtyModulesHolder.compilerActivityStarted();
+          myDirtyScopeHolder.compilerActivityStarted();
           closeReaderIfNeed();
         }
       });
@@ -127,9 +127,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
               modulesWithErrors = Collections.emptySet();
             }
             if (modulesWithErrors.contains(null) /*unknown error location*/) {
-              myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, compilationModules);
+              myDirtyScopeHolder.compilerActivityFinished(Module.EMPTY_ARRAY, compilationModules);
             } else {
-              myDirtyModulesHolder.compilerActivityFinished(compilationModules, modulesWithErrors.toArray(Module.EMPTY_ARRAY));
+              myDirtyScopeHolder.compilerActivityFinished(compilationModules, modulesWithErrors.toArray(Module.EMPTY_ARRAY));
             }
 
             myCompilationCount.increment();
@@ -139,7 +139,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         }
       });
 
-      myDirtyModulesHolder.installVFSListener();
+      myDirtyScopeHolder.installVFSListener();
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -152,12 +152,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
             });
             if (modules == null) return;
             if (isUpToDate) {
-              myDirtyModulesHolder.compilerActivityFinished(modules, Module.EMPTY_ARRAY);
+              myDirtyScopeHolder.compilerActivityFinished(modules, Module.EMPTY_ARRAY);
               myCompilationCount.increment();
               openReaderIfNeed();
             }
             else {
-              myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, modules);
+              myDirtyScopeHolder.compilerActivityFinished(Module.EMPTY_ARRAY, modules);
             }
           });
         });
@@ -233,7 +233,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       });
 
       if (candidatesPerFile == null) return null;
-      GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
+      GlobalSearchScope dirtyScope = myDirtyScopeHolder.getDirtyScope();
       if (ElementPlace.LIB == ReadAction.compute(() -> ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex))) {
         dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
       }
@@ -270,7 +270,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     try {
       if (myReader == null) return null;
       try {
-        return myReader.getDirectInheritors(searchElement, useScope, myDirtyModulesHolder.getDirtyScope(), searchFileType, searchType);
+        return myReader.getDirectInheritors(searchElement, useScope, myDirtyScopeHolder.getDirtyScope(), searchFileType, searchType);
       }
       catch (StorageException e) {
         throw new RuntimeException(e);
@@ -285,7 +285,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     TIntHashSet referentFileIds = getReferentFileIds(element);
     if (referentFileIds == null) return null;
 
-    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds, myProjectFileIndex).intersectWith(notScope(myDirtyModulesHolder.getDirtyScope())),
+    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds, myProjectFileIndex).intersectWith(notScope(
+      myDirtyScopeHolder.getDirtyScope())),
                                          myFileTypes.toArray(new FileType[myFileTypes.size()]));
   }
 
@@ -323,7 +324,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
       if (file == null) return null;
       ElementPlace place = ElementPlace.get(file, myProjectFileIndex);
-      if (place == null || (place == ElementPlace.SRC && myDirtyModulesHolder.contains(file))) {
+      if (place == null || (place == ElementPlace.SRC && myDirtyScopeHolder.contains(file))) {
         return null;
       }
       final LanguageLightRefAdapter adapter = findAdapterForFileType(file.getFileType());
@@ -500,7 +501,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @TestOnly
   @NotNull
-  public DirtyModulesHolder getDirtyModulesHolder() {
-    return myDirtyModulesHolder;
+  public DirtyScopeHolder getDirtyScopeHolder() {
+    return myDirtyScopeHolder;
   }
 }

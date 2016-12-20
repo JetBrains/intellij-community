@@ -37,7 +37,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collections;
 import java.util.Set;
 
-public class DirtyModulesHolder extends UserDataHolderBase {
+public class DirtyScopeHolder extends UserDataHolderBase {
   private final CompilerReferenceServiceImpl myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
@@ -46,10 +46,11 @@ public class DirtyModulesHolder extends UserDataHolderBase {
   private final Object myLock = new Object();
 
   private boolean myCompilationPhase;
+  private volatile GlobalSearchScope myExcludedFilesScope;
 
-  public DirtyModulesHolder(@NotNull CompilerReferenceServiceImpl service,
-                            FileDocumentManager fileDocumentManager,
-                            PsiDocumentManager psiDocumentManager){
+  public DirtyScopeHolder(@NotNull CompilerReferenceServiceImpl service,
+                          FileDocumentManager fileDocumentManager,
+                          PsiDocumentManager psiDocumentManager){
     myService = service;
     myFileDocManager = fileDocumentManager;
     myPsiDocManager = psiDocumentManager;
@@ -69,6 +70,7 @@ public class DirtyModulesHolder extends UserDataHolderBase {
       Collections.addAll(myVFSChangedModules, markAsDirty);
       myVFSChangedModules.addAll(myChangedModulesDuringCompilation);
       myChangedModulesDuringCompilation.clear();
+      myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(myService.getProject(), myService.getFileTypes());
     }
   }
 
@@ -81,13 +83,18 @@ public class DirtyModulesHolder extends UserDataHolderBase {
       return ReadAction.compute(() -> {
         if (project.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getManager(project).getCachedValue(this, () ->
-          CachedValueProvider.Result.create(calculateDirtyModules(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
+          CachedValueProvider.Result.create(calculateDirtyScope(), PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), myService));
       });
     }
   }
 
-  private GlobalSearchScope calculateDirtyModules() {
-    return getAllDirtyModules().stream().map(Module::getModuleWithDependentsScope).reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+  private GlobalSearchScope calculateDirtyScope() {
+    final GlobalSearchScope dirtyModuleScope = getAllDirtyModules()
+      .stream()
+      .map(Module::getModuleWithDependentsScope)
+      .reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+
+    return dirtyModuleScope.union(myExcludedFilesScope);
   }
 
   @NotNull
