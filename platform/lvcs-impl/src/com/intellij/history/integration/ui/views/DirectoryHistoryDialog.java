@@ -23,7 +23,6 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
@@ -35,7 +34,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +131,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return new ChangesTreeList<Change>(myProject, Collections.<Change>emptyList(), false, false, null, null) {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
-        return new TreeModelBuilder(myProject, isShowFlatten()).buildModel(cc, changeNodeDecorator);
+        return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), cc, changeNodeDecorator);
       }
 
       @Override

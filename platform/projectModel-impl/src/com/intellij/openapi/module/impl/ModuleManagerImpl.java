@@ -778,10 +778,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable Runnable beforeComponentCreation) {
-      // make sure it is remembered before initialization which can be interrupted (cancelled)
-      myModules.put(module.getName(), module);
-      myModulesCache = null;
       module.init(path, beforeComponentCreation);
+      myModulesCache = null;
+      myModules.put(module.getName(), module);
     }
 
     @Override
@@ -892,9 +891,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     public void projectOpened() {
-      for (final Module aCollection : myModules.values()) {
-        ModuleEx module = (ModuleEx)aCollection;
-        module.projectOpened();
+      for (final Module module : myModules.values()) {
+        ((ModuleEx)module).projectOpened();
       }
     }
 
@@ -979,7 +977,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         oldNames.put(module, module.getName());
         moduleModel.myModules.remove(module.getName());
         modules.add(module);
-        ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
+        ((ModuleEx)module).rename(modulesToNewNamesMap.get(module), true);
         moduleModel.myModules.put(module.getName(), module);
       }
 
@@ -1009,6 +1007,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     Module moduleInMap = myModuleModel.myModules.remove(oldName);
     LOG.assertTrue(moduleInMap == null || moduleInMap == module);
     myModuleModel.myModules.put(module.getName(), module);
+    incModificationCount();
 
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
       () -> fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName)), false, true);

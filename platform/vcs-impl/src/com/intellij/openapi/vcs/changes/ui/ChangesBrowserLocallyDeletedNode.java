@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.SimpleTextAttributes;
@@ -33,16 +32,11 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
   implements TreeLinkMouseListener.HaveTooltip {
   public ChangesBrowserLocallyDeletedNode(@NotNull LocallyDeletedChange userObject) {
     super(userObject);
-    if (!isDirectory()) {
-      myCount = 1;
-    }
   }
 
-  public boolean canAcceptDrop(ChangeListDragBean dragBean) {
-    return false;
-  }
-
-  public void acceptDrop(ChangeListOwner dragOwner, ChangeListDragBean dragBean) {
+  @Override
+  protected boolean isFile() {
+    return !isDirectory();
   }
 
   @Override
@@ -62,7 +56,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
         renderer.append(spaceAndThinSpace() + parentPath.getPresentableUrl(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
-    else if (getCount() != 1 || getDirectoryCount() != 0) {
+    else if (getFileCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);
     }
 

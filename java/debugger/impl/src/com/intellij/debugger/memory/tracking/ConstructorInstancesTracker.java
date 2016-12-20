@@ -21,10 +21,10 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.component.CreationPositionTracker;
-import com.intellij.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.event.InstancesTrackerListener;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.Disposable;
@@ -45,12 +45,12 @@ import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.debugger.memory.component.InstancesTracker;
-import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 public class ConstructorInstancesTracker implements TrackerForNewInstances, Disposable, BackgroundTracker {
   private static final int TRACKED_INSTANCES_LIMIT = 2000;
@@ -182,15 +182,14 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
   }
 
-  private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties>
-    implements Disposable {
-
+  private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties> implements Disposable {
     private boolean myIsEnabled = false;
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
     private volatile boolean myIsDeleted = false;
 
     MyConstructorBreakpoints(Project project, XBreakpoint xBreakpoint) {
       super(project, xBreakpoint);
+      setVisible(false);
     }
 
     @Override
@@ -232,23 +231,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
           if (myReference.equals(thisRef.referenceType()) && myPositionTracker != null) {
             thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
-            ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
-            List<StackFrameProxyImpl> stack = threadReferenceProxy == null ? null : threadReferenceProxy.frames();
-
-            if (stack != null) {
-              List<StackFrameDescriptor> stackFrameDescriptors = stack.stream().map(frame -> {
-                try {
-                  Location loc = frame.location();
-                  String typeName = loc.declaringType().name();
-                  String methodName = loc.method().name();
-                  return new StackFrameDescriptor(typeName, methodName, loc.lineNumber());
-                }
-                catch (EvaluateException e) {
-                  return null;
-                }
-              }).filter(Objects::nonNull).collect(Collectors.toList());
-              myPositionTracker.addStack(myDebugSession, thisRef, stackFrameDescriptors);
-            }
+            myPositionTracker.addStack(myDebugSession, thisRef, StackFrameItem.createFrames(suspendContext.getThread()));
           }
         }
       }

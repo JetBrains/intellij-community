@@ -50,6 +50,6 @@ public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserSpecificFilesN
 
   @Override
   public int getSortWeight() {
-    return 10;
+    return IGNORED_SORT_WEIGHT;
   }
 }

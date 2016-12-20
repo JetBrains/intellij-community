@@ -32,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBRectangle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -526,6 +527,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutForeground;
   }
 
+  @Nullable
   public Color getAboutLinkColor() {
     return myAboutLinkColor;
   }
@@ -748,7 +750,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (logoX != null && logoY != null && logoW != null && logoH != null) {
         try {
           myAboutLogoRect =
-            new Rectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
+            new JBRectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
         }
         catch (NumberFormatException nfe) {
           // ignore

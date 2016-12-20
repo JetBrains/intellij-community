@@ -430,6 +430,7 @@ public class StudySerializationUtils {
                 convertToAbsoluteOffset(document, placeholder);
                 if (placeholder.getAsJsonObject().getAsJsonObject(SUBTASK_INFOS) == null) {
                   convertToSubtaskInfo(placeholder.getAsJsonObject());
+                  removeIndexFromSubtaskInfos(placeholder.getAsJsonObject());
                 }
               }
             }
@@ -483,19 +484,7 @@ public class StudySerializationUtils {
             JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
             for (JsonElement placeholder : placeholders) {
               JsonObject placeholderObject = placeholder.getAsJsonObject();
-              JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
-              Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
-              for (JsonElement info : infos) {
-                JsonObject object = info.getAsJsonObject();
-                int index = object.getAsJsonPrimitive(INDEX).getAsInt();
-                objectsToInsert.put(index, object);
-              }
-              placeholderObject.remove(SUBTASK_INFOS);
-              JsonObject newInfos = new JsonObject();
-              placeholderObject.add(SUBTASK_INFOS, newInfos);
-              for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
-                newInfos.add(entry.getKey().toString(), entry.getValue());
-              }
+              removeIndexFromSubtaskInfos(placeholderObject);
             }
           }
         }
@@ -557,6 +546,22 @@ public class StudySerializationUtils {
           Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
           placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
         }
+      }
+    }
+
+    private static void removeIndexFromSubtaskInfos(JsonObject placeholderObject) {
+      JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
+      Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
+      for (JsonElement info : infos) {
+        JsonObject object = info.getAsJsonObject();
+        int index = object.getAsJsonPrimitive(INDEX).getAsInt();
+        objectsToInsert.put(index, object);
+      }
+      placeholderObject.remove(SUBTASK_INFOS);
+      JsonObject newInfos = new JsonObject();
+      placeholderObject.add(SUBTASK_INFOS, newInfos);
+      for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
+        newInfos.add(entry.getKey().toString(), entry.getValue());
       }
     }
 

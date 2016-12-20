@@ -466,7 +466,7 @@ public class InjectedLanguageUtil {
     }
     if (hostFile != null) {
       // modification of cachedInjectedDocuments must be under PsiLock
-      synchronized (PsiLock.LOCK) {
+      synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         List<DocumentWindow> cachedInjectedDocuments = getCachedInjectedDocuments(hostFile);
         for (int i = cachedInjectedDocuments.size() - 1; i >= 0; i--) {
           DocumentWindow cachedInjectedDocument = cachedInjectedDocuments.get(i);

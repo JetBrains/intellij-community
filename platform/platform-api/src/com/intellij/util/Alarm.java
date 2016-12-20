@@ -251,18 +251,17 @@ public class Alarm implements Disposable {
     }
   }
 
+  // returns number of requests canceled
   public int cancelAllRequests() {
     synchronized (LOCK) {
-      int count = cancelAllRequests(myRequests);
+      return cancelAllRequests(myRequests) +
       cancelAllRequests(myPendingRequests);
-      return count;
     }
   }
 
   private int cancelAllRequests(@NotNull List<Request> list) {
-    int count = 0;
+    int count = list.size();
     for (Request request : list) {
-      count++;
       request.cancel();
     }
     list.clear();

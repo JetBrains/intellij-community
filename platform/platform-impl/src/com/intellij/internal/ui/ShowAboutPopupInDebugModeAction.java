@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.completion;
+package com.intellij.internal.ui;
+
+import com.intellij.ide.actions.AboutPopup;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.wm.WindowManager;
 
 /**
- * @author maxim
+ * @author nik
  */
-public class XHtmlCompletionData extends HtmlCompletionData {
-  public XHtmlCompletionData() {
-    super(false);
-  }
-
+public class ShowAboutPopupInDebugModeAction extends DumbAwareAction {
   @Override
-  protected boolean isCaseInsensitive() {
-    return false;
+  public void actionPerformed(AnActionEvent e) {
+    AboutPopup.show(WindowManager.getInstance().suggestParentWindow(getEventProject(e)), true);
   }
 }

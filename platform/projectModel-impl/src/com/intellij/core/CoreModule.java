@@ -118,18 +118,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void rename(String newName) {
-  }
-
-  @Override
   public void clearScopesCache() {
     myModuleScopeProvider.clearCache();
   }

@@ -384,6 +384,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
       val stateStorageChooser = component as? StateStorageChooserEx
       for (storageSpec in storageSpecs) {
+        @Suppress("IfThenToElvis")
         val resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE)
         if (resolution == Resolution.SKIP) {
           continue

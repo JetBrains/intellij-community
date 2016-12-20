@@ -42,7 +42,6 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xml.CommonXmlStrings;
 import com.sun.jdi.Location;
@@ -307,7 +306,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
    */
   @Override
   public final void updateUI() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isVisible() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
     DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
@@ -338,11 +337,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   private void updateGutter() {
-    if (myVisible) {
-      if (isValid()) {
-        final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
-        breakpointManager.updateBreakpointPresentation((XLineBreakpoint)myXBreakpoint, getIcon(), myInvalidMessage);
-      }
+    if (isVisible() && isValid()) {
+      XDebuggerManager.getInstance(myProject).getBreakpointManager()
+        .updateBreakpointPresentation((XLineBreakpoint)myXBreakpoint, getIcon(), myInvalidMessage);
     }
   }
 
@@ -375,7 +372,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public abstract Key<? extends BreakpointWithHighlighter> getCategory();
 
-  public boolean isVisible() {
+  protected boolean isVisible() {
     return myVisible;
   }
 

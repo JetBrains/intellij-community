@@ -29,7 +29,7 @@ import com.intellij.debugger.memory.component.CreationPositionTracker;
 import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.tracking.TrackingType;
-import com.intellij.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -41,7 +41,7 @@ class InstancesWithStackFrameView {
   private static final String EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED = "Select instance to see stack frame";
   private static final String EMPTY_TEXT_WHEN_STACK_NOT_FOUND = "No stack frame for this instance";
   private static final String TEXT_FOR_ARRAYS = "Arrays could not be tracked";
-  private static final List<StackFrameDescriptor> EMPTY_FRAME = Collections.emptyList();
+  private static final List<StackFrameItem> EMPTY_FRAME = Collections.emptyList();
 
   private float myHidedProportion;
 
@@ -103,7 +103,7 @@ class InstancesWithStackFrameView {
     tree.addTreeSelectionListener(e -> {
       ObjectReference ref = tree.getSelectedReference();
       if (ref != null && tracker != null) {
-        List<StackFrameDescriptor> stack = tracker.getStack(debugSession, ref);
+        List<StackFrameItem> stack = tracker.getStack(debugSession, ref);
         if (stack != null) {
           list.setFrame(stack);
           if (mySplitter.getProportion() == 1.f) {

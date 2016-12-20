@@ -135,15 +135,11 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
   @Override
   public boolean validate() throws ConfigurationException {
-
     if (myWizardContext.isCreatingNewProject()) {
       if (!myNamePathComponent.validateNameAndPath(myWizardContext, myFormatPanel.isDefault())) return false;
     }
 
-    if (!myModuleNameLocationComponent.validateModulePaths()) return false;
-    if (!myWizardContext.isCreatingNewProject()) {
-      myModuleNameLocationComponent.validateExistingModuleName(myWizardContext.getProject());
-    }
+    if (!myModuleNameLocationComponent.validate()) return false;
 
     if (mySettingsStep != null) {
       return mySettingsStep.validate();
@@ -163,17 +159,15 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
   @Override
   public void updateDataModel() {
-
     myWizardContext.setProjectName(myNamePathComponent.getNameValue());
     myWizardContext.setProjectFileDirectory(myNamePathComponent.getPath());
     myFormatPanel.updateData(myWizardContext);
 
-    ModuleBuilder moduleBuilder = (ModuleBuilder)myWizardContext.getProjectBuilder();
-    if (moduleBuilder != null) {
-      myModuleNameLocationComponent.updateDataModel(moduleBuilder);
-      if (moduleBuilder instanceof TemplateModuleBuilder) {
-        myWizardContext.setProjectStorageFormat(StorageScheme.DIRECTORY_BASED);
-      }
+    myModuleNameLocationComponent.updateDataModel();
+
+    ProjectBuilder moduleBuilder = myWizardContext.getProjectBuilder();
+    if (moduleBuilder instanceof TemplateModuleBuilder) {
+      myWizardContext.setProjectStorageFormat(StorageScheme.DIRECTORY_BASED);
     }
 
     if (mySettingsStep != null) {

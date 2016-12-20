@@ -20,17 +20,17 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 
 import java.util.List;
 
 public class StackFramePopup {
   private final Project myProject;
-  private final List<StackFrameDescriptor> myStackFrame;
+  private final List<StackFrameItem> myStackFrame;
   private final GlobalSearchScope myScope;
 
   public StackFramePopup(@NotNull Project project,
-                         @NotNull List<StackFrameDescriptor> stack,
+                         @NotNull List<StackFrameItem> stack,
                          @NotNull GlobalSearchScope searchScope) {
     myProject = project;
     myStackFrame = stack;

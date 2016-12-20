@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -24,8 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +41,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PsiCopyPasteManager {
   public static PsiCopyPasteManager getInstance() {
@@ -162,7 +163,7 @@ public class PsiCopyPasteManager {
     public PsiElement[] getElements() {
       if (myElements == null) return PsiElement.EMPTY_ARRAY;
 
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.run(() -> {
         int validElementsCount = 0;
         for (PsiElement element : myElements) {
           if (element.isValid()) {
@@ -254,31 +255,19 @@ public class PsiCopyPasteManager {
 
     @Nullable
     private String getDataAsText() {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          final List<String> names = new ArrayList<>();
-          for (PsiElement element : myDataProxy.getElements()) {
-            if (element instanceof PsiNamedElement) {
-              String name = ((PsiNamedElement)element).getName();
-              if (name != null) {
-                names.add(name);
-              }
-            }
-          }
-          return names.isEmpty() ? null : StringUtil.join(names, "\n");
-        }
+      return ReadAction.compute(() -> {
+        String names = Stream.of(myDataProxy.getElements())
+          .filter(PsiNamedElement.class::isInstance)
+          .map(e -> ((PsiNamedElement)e).getName())
+          .filter(Objects::nonNull)
+          .collect(Collectors.joining("\n"));
+        return names.isEmpty() ? null : names;
       });
     }
 
     @Nullable
     private List<File> getDataAsFileList() {
-      return ApplicationManager.getApplication().runReadAction(new Computable<List<File>>() {
-        @Override
-        public List<File> compute() {
-          return asFileList(myDataProxy.getElements());
-        }
-      });
+      return ReadAction.compute(() -> asFileList(myDataProxy.getElements()));
     }
 
     @Override
