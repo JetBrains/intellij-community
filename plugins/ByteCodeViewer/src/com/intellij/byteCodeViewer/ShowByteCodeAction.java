@@ -57,8 +57,7 @@ public class ShowByteCodeAction extends AnAction {
     if (project != null) {
       final PsiElement psiElement = getPsiElement(e.getDataContext(), project, e.getData(CommonDataKeys.EDITOR));
       if (psiElement != null) {
-        if (psiElement.getContainingFile() instanceof PsiClassOwner &&
-            ByteCodeViewerManager.getContainingClass(psiElement) != null) {
+        if (psiElement.getContainingFile() instanceof PsiClassOwner) {
           e.getPresentation().setEnabled(true);
         }
       }
@@ -74,6 +73,11 @@ public class ShowByteCodeAction extends AnAction {
 
     final PsiElement psiElement = getPsiElement(dataContext, project, editor);
     if (psiElement == null) return;
+
+    if (ByteCodeViewerManager.getContainingClass(psiElement) == null) {
+      Messages.showWarningDialog(project, "The selection should contain a class", "Unable to Find Class to Show Bytecode");
+      return;
+    }
 
     final String psiElementTitle = ByteCodeViewerManager.getInstance(project).getTitle(psiElement);
 
@@ -159,7 +163,7 @@ public class ShowByteCodeAction extends AnAction {
   }
 
   @Nullable
-  private static PsiElement getPsiElement(DataContext dataContext, Project project, Editor editor) {
+  private static PsiElement getPsiElement(DataContext dataContext, Project project, @Nullable Editor editor) {
     PsiElement psiElement = null;
     if (editor == null) {
       psiElement = dataContext.getData(CommonDataKeys.PSI_ELEMENT);
@@ -178,7 +182,7 @@ public class ShowByteCodeAction extends AnAction {
     return psiElement;
   }
 
-  private static PsiElement findElementInFile(@Nullable PsiFile psiFile, Editor editor) {
+  private static PsiElement findElementInFile(@Nullable PsiFile psiFile, @NotNull Editor editor) {
     return psiFile != null ? psiFile.findElementAt(editor.getCaretModel().getOffset()) : null;
   }
 }

@@ -206,7 +206,15 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     while (containingClass instanceof PsiTypeParameter) {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
     }
-    if (containingClass == null) return null;
+
+    if (containingClass == null) {
+      PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+        if (classes.length == 1) return classes[0];
+      }
+      return null;
+    }
 
     return containingClass;
   }
