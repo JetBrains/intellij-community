@@ -4002,12 +4002,7 @@ public class AbstractTreeUi {
             }
           });
         }
-      }).doWhenRejected(new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement") {
-      @Override
-      public void perform() {
-        runDone(onDone);
-      }
-    });
+      }).doWhenRejected(wrapDone(onDone, "AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement"));
   }
 
   public void scrollSelectionToVisible(@Nullable final Runnable onDone, final boolean shouldBeCentered) {
@@ -4038,49 +4033,61 @@ public class AbstractTreeUi {
   }
 
   private void selectVisible(@NotNull Object element, final Runnable onDone, boolean addToSelection, boolean canBeCentered, final boolean scroll) {
-    final DefaultMutableTreeNode toSelect = getNodeForElement(element, false);
-
+    DefaultMutableTreeNode toSelect = getNodeToScroll(element);
     if (toSelect == null) {
       runDone(onDone);
       return;
     }
-
-    if (getRootNode() == toSelect && !myTree.isRootVisible()) {
-      runDone(onDone);
-      return;
-    }
-
-    int preselectedRow = getRowIfUnderSelection(element);
-
-    final int row = preselectedRow == -1 ? myTree.getRowForPath(new TreePath(toSelect.getPath())) : preselectedRow;
-
     if (myUpdaterState != null) {
       myUpdaterState.addSelection(element);
     }
+    setHoldSize(false);
+    runDone(wrapScrollTo(onDone, element, toSelect, addToSelection, canBeCentered, scroll));
+  }
 
-    if (Registry.is("ide.tree.autoscrollToVCenter") && canBeCentered) {
-      setHoldSize(false);
-      runDone(new TreeRunnable("AbstractTreeUi.selectVisible") {
-        @Override
-        public void perform() {
-          TreeUtil.showRowCentered(myTree, row, false, scroll).doWhenDone(new TreeRunnable("AbstractTreeUi.selectVisible: on done show row centered") {
-            @Override
-            public void perform() {
-              runDone(onDone);
-            }
-          });
+  public void userScrollTo(Object element, Runnable onDone) {
+    DefaultMutableTreeNode node = getNodeToScroll(element);
+    runDone(node == null ? onDone : wrapScrollTo(onDone, element, node, false, true, true));
+  }
+
+  private DefaultMutableTreeNode getNodeToScroll(Object element) {
+    if (element == null) return null;
+    DefaultMutableTreeNode node = getNodeForElement(element, false);
+    if (node == null) return null;
+    return myTree.isRootVisible() || node != getRootNode() ? node : null;
+  }
+
+  private Runnable wrapDone(Runnable onDone, String name) {
+    return new TreeRunnable(name) {
+      @Override
+      public void perform() {
+        runDone(onDone);
+      }
+    };
+  }
+
+  private Runnable wrapScrollTo(Runnable onDone,
+                                Object element,
+                                DefaultMutableTreeNode node,
+                                boolean addToSelection,
+                                boolean canBeCentered,
+                                boolean scroll) {
+    return new TreeRunnable("AbstractTreeUi.wrapScrollTo") {
+      @Override
+      public void perform() {
+        int row = getRowIfUnderSelection(element);
+        if (row == -1) row = myTree.getRowForPath(new TreePath(node.getPath()));
+        int top = row - 2;
+        int bottom = row - 2;
+        if (canBeCentered && Registry.is("ide.tree.autoscrollToVCenter")) {
+          int count = TreeUtil.getVisibleRowCount(myTree) - 1;
+          top = count > 0 ? row - count / 2 : row;
+          bottom = count > 0 ? top + count : row;
         }
-      });
-    }
-    else {
-      setHoldSize(false);
-      TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection, scroll).doWhenDone(new TreeRunnable("AbstractTreeUi.selectVisible: on done show and select") {
-        @Override
-        public void perform() {
-          runDone(onDone);
-        }
-      });
-    }
+        TreeUtil.showAndSelect(myTree, top, bottom, row, -1, addToSelection, scroll)
+          .doWhenDone(wrapDone(onDone, "AbstractTreeUi.wrapScrollTo.onDone"));
+      }
+    };
   }
 
   private int getRowIfUnderSelection(@NotNull Object element) {
@@ -4215,17 +4222,9 @@ public class AbstractTreeUi {
 
 
           final ActionCallback done = new ActionCallback(element.length);
-          done.doWhenDone(new TreeRunnable("AbstractTreeUi._expand: on done expandNext") {
-            @Override
-            public void perform() {
-              runDone(onDone);
-            }
-          }).doWhenRejected(new TreeRunnable("AbstractTreeUi._expand: on rejected expandNext") {
-            @Override
-            public void perform() {
-              runDone(onDone);
-            }
-          });
+          done
+            .doWhenDone(wrapDone(onDone, "AbstractTreeUi._expand: on done expandNext"))
+            .doWhenRejected(wrapDone(onDone, "AbstractTreeUi._expand: on rejected expandNext"));
 
           expandNext(element, 0, parentsOnly, checkIfInStructure, canSmartExpand, done, 0);
         }
