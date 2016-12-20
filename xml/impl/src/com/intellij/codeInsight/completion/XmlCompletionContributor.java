@@ -56,7 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInsight.completion.XmlCompletionData.findDescriptorFile;
+import static com.intellij.xml.util.XmlUtil.findDescriptorFile;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.psi.filters.getters.XmlAttributeValueGetter.getEnumeratedValues;
 import static com.intellij.xml.util.XmlUtil.VALUE_ATTR_NAME;

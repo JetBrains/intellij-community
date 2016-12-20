@@ -1407,6 +1407,18 @@ public class XmlUtil {
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
+  public static XmlFile findDescriptorFile(@NotNull XmlTag tag, @NotNull XmlFile containingFile) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
+    XmlFile descriptorFile = nsDescriptor != null
+                             ? nsDescriptor.getDescriptorFile()
+                             : containingFile.getDocument().getProlog().getDoctype() != null ? containingFile : null;
+    if (nsDescriptor != null && (descriptorFile == null || descriptorFile.getName().equals(containingFile.getName() + ".dtd"))) {
+      descriptorFile = containingFile;
+    }
+    return descriptorFile;
+  }
+
   public interface DuplicationInfoProvider<T extends PsiElement> {
     @Nullable
     String getName(@NotNull T t);
