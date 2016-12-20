@@ -44,7 +44,10 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.*;
+import com.intellij.xml.Html5SchemaProvider;
+import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.util.XmlUtil;
@@ -56,10 +59,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.xml.util.XmlUtil.findDescriptorFile;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.psi.filters.getters.XmlAttributeValueGetter.getEnumeratedValues;
 import static com.intellij.xml.util.XmlUtil.VALUE_ATTR_NAME;
+import static com.intellij.xml.util.XmlUtil.findDescriptorFile;
 
 /**
  * @author Dmitry Avdeev
@@ -114,27 +116,6 @@ public class XmlCompletionContributor extends CompletionContributor {
           }
 
           addEntityRefCompletions(position, result.withPrefixMatcher(prefix));
-        }
-      }
-    });
-    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull CompletionResultSet result) {
-        XmlAttribute attr = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlAttribute.class);
-        if (attr != null && !hasEnumerationReference(parameters, result)) {
-          final XmlAttributeDescriptor descriptor = attr.getDescriptor();
-
-          if (descriptor != null) {
-            if (descriptor.isFixed() && descriptor.getDefaultValue() != null) {
-              result.addElement(LookupElementBuilder.create(descriptor.getDefaultValue()));
-              return;
-            }
-            for (String value : getEnumeratedValues(attr)) {
-              result.addElement(LookupElementBuilder.create(value));
-            }
-          }
         }
       }
     });
@@ -195,7 +176,7 @@ public class XmlCompletionContributor extends CompletionContributor {
            });
   }
 
-  private static boolean hasEnumerationReference(CompletionParameters parameters, CompletionResultSet result) {
+  static boolean hasEnumerationReference(CompletionParameters parameters, CompletionResultSet result) {
     Ref<Boolean> hasRef = Ref.create(false);
     LegacyCompletionContributor.processReferences(parameters, result, (reference, resultSet) -> {
       if (reference instanceof XmlEnumeratedValueReference) {
