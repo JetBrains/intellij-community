@@ -140,7 +140,9 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} "u" {HEX_CHAR}{1,3} { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 
 /* octal escapes */
-{ESCAPE} "0" [0-7]{1,3}      { return RegExpTT.OCT_CHAR; }
+{ESCAPE} "0" [0-7][0-7]?     { return RegExpTT.OCT_CHAR; }
+/* no more than decimal 255 */
+{ESCAPE} "0" [0-3][0-7][0-7] { if (allowOctalNoLeadingZero) yypushback(1); return RegExpTT.OCT_CHAR; }
 {ESCAPE} "0"                 { return (allowOctalNoLeadingZero ? RegExpTT.OCT_CHAR : RegExpTT.BAD_OCT_VALUE); }
 
 /* single character after "\c" */

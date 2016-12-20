@@ -148,6 +148,18 @@ public class RegExpLexerTest extends LexerTestCase {
                               "CLASS_END (']')", lexer);
   }
 
+  public void testOctalWithLeadingZero2() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\08\\01\\012\\0123\\0377\\0400", "BAD_OCT_VALUE ('\\0')\n" +
+                                              "CHARACTER ('8')\n" +
+                                              "OCT_CHAR ('\\01')\n" +
+                                              "OCT_CHAR ('\\012')\n" +
+                                              "OCT_CHAR ('\\0123')\n" +
+                                              "OCT_CHAR ('\\0377')\n" +
+                                              "OCT_CHAR ('\\040')\n" +
+                                              "CHARACTER ('0')", lexer);
+  }
+
   public void testNoNestedCharacterClasses1() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("[[\\]]", "CLASS_BEGIN ('[')\n" +
