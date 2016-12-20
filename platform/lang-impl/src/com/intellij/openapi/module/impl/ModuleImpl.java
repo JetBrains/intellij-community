@@ -33,6 +33,7 @@ import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -212,7 +213,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void setOption(@NotNull String key, @NotNull String value) {
-    getOptionManager().state.options.put(key, value);
+    DeprecatedModuleOptionManager manager = getOptionManager();
+    if (!value.equals(manager.state.options.put(key, value))) {
+      manager.incModificationCount();
+    }
   }
 
   @NotNull
@@ -223,7 +227,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void clearOption(@NotNull String key) {
-    getOptionManager().state.options.remove(key);
+    DeprecatedModuleOptionManager manager = getOptionManager();
+    if (manager.state.options.remove(key) != null) {
+      manager.incModificationCount();
+    }
   }
 
   @Override
@@ -357,8 +364,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return Extensions.getArea(this).getPicoContainer();
   }
 
+  @Override
+  public long getOptionsModificationCount() {
+    return getOptionManager().getModificationCount();
+  }
+
   @State(name = "DeprecatedModuleOptionManager")
-  static class DeprecatedModuleOptionManager implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
+  static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")

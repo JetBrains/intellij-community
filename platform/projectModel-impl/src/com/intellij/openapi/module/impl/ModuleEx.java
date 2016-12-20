@@ -37,4 +37,8 @@ public interface ModuleEx extends Module {
   void rename(String newName);
 
   void clearScopesCache();
+
+  default long getOptionsModificationCount() {
+    return 0;
+  }
 }

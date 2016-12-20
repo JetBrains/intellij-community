@@ -17,6 +17,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.refreshVfs
@@ -209,14 +210,12 @@ internal class ApplicationStoreTest {
   }
 
   @State(name = "A", storages = arrayOf(Storage("a.xml")), additionalExportFile = "foo")
-  private open class A : PersistentStateComponent<A.State> {
-    data class State(@Attribute var foo: String = "", @Attribute var bar: String = "")
-
-    var options = State()
+  private open class A : PersistentStateComponent<TestState> {
+    var options = TestState()
 
     override fun getState() = options
 
-    override fun loadState(state: State) {
+    override fun loadState(state: TestState) {
       this.options = state
     }
   }
@@ -229,7 +228,7 @@ internal class ApplicationStoreTest {
 
     val component = A()
     componentStore.initComponent(component, false)
-    assertThat(component.options).isEqualTo(A.State("old"))
+    assertThat(component.options).isEqualTo(TestState("old"))
 
     saveStore()
 
@@ -243,6 +242,63 @@ internal class ApplicationStoreTest {
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
   }
 
+  @Test fun `modification tracker`() {
+    testAppConfig.refreshVfs()
+
+    @State(name = "A", storages = arrayOf(Storage("a.xml")))
+    open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
+      var options = TestState()
+
+      var stateCalledCount = 0
+
+      override fun getState(): TestState {
+        stateCalledCount++
+        return options
+      }
+
+      override fun loadState(state: TestState) {
+        this.options = state
+      }
+    }
+
+    val component = A()
+    componentStore.initComponent(component, false)
+
+    assertThat(component.modificationCount).isEqualTo(0)
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // test that store correctly set last modification count to component modification count on init
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // change modification count - store will be forced to check changes using serialization and A.getState will be called
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    // test that store correctly save last modification time and doesn't call our state on next save
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    val componentFile = testAppConfig.resolve("a.xml")
+    assertThat(componentFile).doesNotExist()
+
+    // update data but "forget" to update modification count
+    component.options.foo = "new"
+
+    saveStore()
+    assertThat(componentFile).doesNotExist()
+
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(2)
+
+    assertThat(componentFile).hasContent("""
+    <application>
+      <component name="A" foo="new" />
+    </application>""".trimIndent())
+  }
+
   @Test fun `do not check if only format changed for non-roamable storage`() {
     @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
@@ -253,7 +309,7 @@ internal class ApplicationStoreTest {
 
     val component = AWorkspace()
     componentStore.initComponent(component, false)
-    assertThat(component.options).isEqualTo(A.State("old"))
+    assertThat(component.options).isEqualTo(TestState("old"))
 
     saveStore()
 
@@ -334,3 +390,5 @@ internal class ApplicationStoreTest {
     }
   }
 }
+
+private data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")

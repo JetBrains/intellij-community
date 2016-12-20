@@ -51,5 +51,5 @@ public interface IComponentStore {
   void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
 
   @TestOnly
-  void saveApplicationComponent(@NotNull Object component);
+  void saveApplicationComponent(@NotNull PersistentStateComponent<?> component);
 }
