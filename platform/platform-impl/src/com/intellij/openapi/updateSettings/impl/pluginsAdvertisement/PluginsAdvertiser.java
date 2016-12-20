@@ -387,9 +387,8 @@ public class PluginsAdvertiser implements StartupActivity {
                                                                                entry -> entry.getKey() + "[" + StringUtil.join(entry.getValue(), ", ") + "]", ", ");
         final int addressedFeaturesNumber = addressedFeatures.keySet().size();
         final int pluginsNumber = ids.size();
-        return "Unknown feature" + (addressedFeaturesNumber == 1 ? "" : "s") +
-                         " (" + addressedFeaturesPresentation + ") covered by " + (myPlugins.isEmpty() ? "disabled" : "non-bundled") + " plugin" + (pluginsNumber == 1 ? "" : "s") +
-                         " detected.<br>";
+        return "Plugin" + (pluginsNumber == 1 ? "" : "s") + " supporting feature" + (addressedFeaturesNumber == 1 ? "" : "s") +
+               " (" + addressedFeaturesPresentation + ") is currently " + (myPlugins.isEmpty() ? "disabled" : "not installed") + ".<br>";
       }
     }));
   }
