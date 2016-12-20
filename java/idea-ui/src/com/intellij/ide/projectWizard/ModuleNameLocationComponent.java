@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -65,13 +66,21 @@ public class ModuleNameLocationComponent {
     myWizardContext = wizardContext;
   }
 
+  @Nullable
+  public AbstractModuleBuilder getModuleBuilder() {
+    return ((AbstractModuleBuilder)myWizardContext.getProjectBuilder());
+  }
+
   public boolean validate() throws ConfigurationException {
     if (!validateModulePaths()) return false;
     validateExistingModuleName();
     return true;
   }
 
-  public void updateDataModel(AbstractModuleBuilder moduleBuilder) {
+  public void updateDataModel() {
+    AbstractModuleBuilder moduleBuilder = getModuleBuilder();
+    if (moduleBuilder == null) return;
+
     final String moduleName = getModuleName();
     moduleBuilder.setName(moduleName);
     moduleBuilder.setModuleFilePath(

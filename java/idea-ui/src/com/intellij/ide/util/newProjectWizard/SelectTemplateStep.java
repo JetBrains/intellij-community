@@ -240,17 +240,15 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public void updateDataModel() {
-
     myWizardContext.setProjectBuilder(myModuleBuilder);
     myWizardContext.setProjectName(myNamePathComponent.getNameValue());
     myWizardContext.setProjectFileDirectory(myNamePathComponent.getPath());
     myFormatPanel.updateData(myWizardContext);
 
-    if (myModuleBuilder != null) {
-      myModuleNameLocationComponent.updateDataModel(myModuleBuilder);
-      if (myModuleBuilder instanceof TemplateModuleBuilder) {
-        myWizardContext.setProjectStorageFormat(StorageScheme.DIRECTORY_BASED);
-      }
+    myModuleNameLocationComponent.updateDataModel();
+
+    if (myModuleBuilder instanceof TemplateModuleBuilder) {
+      myWizardContext.setProjectStorageFormat(StorageScheme.DIRECTORY_BASED);
     }
 
     if (mySettingsStep != null) {
