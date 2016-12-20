@@ -32,6 +32,7 @@ import com.intellij.ui.LoadingNode;
 import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.LockToken;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -56,7 +57,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -446,9 +446,7 @@ public class AbstractTreeUi {
   }
 
   private void releaseNow() {
-    try {
-      acquireLock();
-
+    try (LockToken ignored = acquireLock()) {
       myTree.removeTreeExpansionListener(myExpansionListener);
       myTree.removeTreeSelectionListener(mySelectionListener);
       myTree.removeFocusListener(myFocusListener);
@@ -476,9 +474,6 @@ public class AbstractTreeUi {
       myDeferredSelections.clear();
       myDeferredExpansions.clear();
       myYieldingDoneRunnables.clear();
-    }
-    finally {
-      releaseLock();
     }
   }
 
@@ -920,21 +915,15 @@ public class AbstractTreeUi {
   }
 
   private boolean update(@NotNull final NodeDescriptor nodeDescriptor) {
-    try {
+    try (LockToken ignored = acquireLock()) {
       final AtomicBoolean update = new AtomicBoolean();
-      try {
-        acquireLock();
-        execute(new TreeRunnable("AbstractTreeUi.update") {
-          @Override
-          public void perform() {
-            nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
-            update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
-          }
-        });
-      }
-      finally {
-        releaseLock();
-      }
+      execute(new TreeRunnable("AbstractTreeUi.update") {
+        @Override
+        public void perform() {
+          nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
+          update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
+        }
+      });
       return update.get();
     }
     catch (IndexNotReadyException e) {
@@ -1613,8 +1602,7 @@ public class AbstractTreeUi {
   //todo [kirillk] temporary consistency check
   private Object[] getChildrenFor(final Object element) {
     final Ref<Object[]> passOne = new Ref<>();
-    try {
-      acquireLock();
+    try (LockToken ignored = acquireLock()) {
       execute(new TreeRunnable("AbstractTreeUi.getChildrenFor") {
         @Override
         public void perform() {
@@ -1625,9 +1613,6 @@ public class AbstractTreeUi {
     catch (IndexNotReadyException e) {
       warnOnIndexNotReady(e);
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-    finally {
-      releaseLock();
     }
 
     if (!Registry.is("ide.tree.checkStructure")) return passOne.get();
@@ -2017,27 +2002,12 @@ public class AbstractTreeUi {
 
   @Nullable
   private Boolean checkValue(@NotNull Computable<Boolean> computable, boolean attempt) {
-    boolean toRelease = true;
-    try {
-      if (attempt) {
-        if (!attemptLock()) {
-          toRelease = false;
-          return computable.compute();
-        }
-      }
-      else {
-        acquireLock();
-      }
+    try (LockToken ignored = attempt ? attemptLock() : acquireLock()) {
       return computable.compute();
     }
     catch (InterruptedException e) {
       LOG.info(e);
       return null;
-    }
-    finally {
-      if (toRelease) {
-        releaseLock();
-      }
     }
   }
 
@@ -2443,36 +2413,21 @@ public class AbstractTreeUi {
   }
 
   private void setCancelRequested(boolean requested) {
-    boolean acquired = false;
-    try {
-      if (isUnitTestingMode()) {
-        acquireLock();
-        acquired = true;
-      }
-      else {
-        acquired = attemptLock();
-      }
+    try (LockToken ignored = isUnitTestingMode() ? acquireLock() : attemptLock()) {
       myCancelRequest.set(requested);
     }
     catch (InterruptedException ignored) {
     }
-    finally {
-      if (acquired) {
-        releaseLock();
-      }
-    }
   }
 
-  private boolean attemptLock() throws InterruptedException {
-    return myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS);
+  @Nullable
+  private LockToken attemptLock() throws InterruptedException {
+    return LockToken.attemptLock(myStateLock, Registry.intValue("ide.tree.uiLockAttempt"));
   }
 
-  private void acquireLock() {
-    myStateLock.lock();
-  }
-
-  private void releaseLock() {
-    myStateLock.unlock();
+  @NotNull
+  private LockToken acquireLock() {
+    return LockToken.acquireLock(myStateLock);
   }
 
   @NotNull
