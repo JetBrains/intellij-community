@@ -63,6 +63,14 @@ public class PsiCopyPasteManager {
         if (myRecentData != null && myRecentData.getProject() == project) {
           myRecentData = null;
         }
+
+        Transferable[] contents = myCopyPasteManager.getAllContents();
+        for (int i = contents.length - 1; i >= 0; i--) {
+          Transferable t = contents[i];
+          if (t instanceof MyTransferable && ((MyTransferable)t).myDataProxy.getProject() == project) {
+            myCopyPasteManager.removeContent(t);
+          }
+        }
       }
     });
   }
