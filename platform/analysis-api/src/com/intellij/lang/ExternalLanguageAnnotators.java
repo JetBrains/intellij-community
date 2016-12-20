@@ -20,19 +20,21 @@
 package com.intellij.lang;
 
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator>{
+public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator> {
+  public static final ExtensionPointName<LanguageExtensionPoint<ExternalAnnotator>> EP_NAME = ExtensionPointName.create("com.intellij.externalAnnotator");
+
   public static final ExternalLanguageAnnotators INSTANCE = new ExternalLanguageAnnotators();
 
   private ExternalLanguageAnnotators() {
-    super("com.intellij.externalAnnotator");
+    super(EP_NAME.getName());
   }
 
   @NotNull
