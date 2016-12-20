@@ -113,6 +113,7 @@ public class JBUI {
      *
      * @see #sysScale()
      * @see #sysScale(Graphics2D)
+     * @see #sysScale(GraphicsDevice)
      */
     SYS,
     /**
@@ -126,7 +127,9 @@ public class JBUI {
      *
      * @see #pixScale()
      * @see #pixScale(Graphics2D)
+     * @see #pixScale(GraphicsDevice)
      * @see #pixScale(float)
+     * @see #pixScale(Graphics2D, float)
      */
     PIX;
 
@@ -209,10 +212,10 @@ public class JBUI {
   }
 
   /**
-   * Returns the system scale factor, corresponding to the provided graphics device.
+   * Returns the system scale factor, corresponding to the provided graphics context.
    * In App-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(Graphics2D g) {
+  public static float sysScale(@Nullable Graphics2D g) {
     if (UIUtil.isJDKManagedHiDPI() && g != null) {
       if (g.getDeviceConfiguration() instanceof BufferedImageGraphicsConfig) {
         // take BI's scale directly, not inspecting the device
@@ -227,7 +230,7 @@ public class JBUI {
    * Returns the system scale factor, corresponding to the provided device.
    * In App-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(GraphicsDevice gd) {
+  public static float sysScale(@Nullable GraphicsDevice gd) {
     if (UIUtil.isJDKManagedHiDPI() && gd != null) {
       if (SystemInfo.isMac && UIUtil.isJDKManagedHiDPI_earlierVersion()) {
         return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gd) ? 2f : 1f;
@@ -252,6 +255,13 @@ public class JBUI {
   }
 
   /**
+   * Returns "f" scaled by pixScale(g).
+   */
+  public static float pixScale(@Nullable Graphics2D g, float f) {
+    return pixScale(g) * f;
+  }
+
+  /**
    * Returns the pixel scale factor based on the JBUIScaleTrackable.
    */
   public static float pixScale(@NotNull JBUIScaleTrackable trackable) {
@@ -259,10 +269,19 @@ public class JBUI {
   }
 
   /**
-   * Returns the pixel scale factor, corresponding to the provided graphics device.
+   * Returns the pixel scale factor, corresponding to the provided graphics context.
+   * In App-managed HiDPI mode defaults to {@link #pixScale()}
    */
-  public static float pixScale(Graphics2D g) {
-    return UIUtil.isJDKManagedHiDPI() ? sysScale(g) * scale(1f) : scale(1f);
+  public static float pixScale(@Nullable Graphics2D g) {
+    return g != null ? pixScale(g.getDeviceConfiguration().getDevice()) : pixScale();
+  }
+
+  /**
+   * Returns the pixel scale factor, corresponding to the provided graphics device.
+   * In App-managed HiDPI mode defaults to {@link #pixScale()}
+   */
+  public static float pixScale(@Nullable GraphicsDevice gd) {
+    return UIUtil.isJDKManagedHiDPI() ? sysScale(gd) * scale(1f) : scale(1f);
   }
 
   private static void setUserScaleFactorProperty(float scale) {
@@ -399,20 +418,32 @@ public class JBUI {
   }
 
   /**
-   * Returns whether the scale factor associated with the graphics device assumes HiDPI-awareness.
+   * Returns whether the scale factor associated with the graphics context assumes HiDPI-awareness.
    *
-   * @param g the graphics of the device
+   * @param g the graphics context
    * @param type the type of the scale factor
    * @return whether HiDPI-awareness is assumed for the scale factor
    */
   public static boolean isHiDPI(@Nullable Graphics2D g, ScaleType type) {
+    return g != null ? isHiDPI(g.getDeviceConfiguration().getDevice(), type) :
+                       isHiDPI((GraphicsDevice)null, type);
+  }
+
+  /**
+   * Returns whether the scale factor associated with the graphics device assumes HiDPI-awareness.
+   *
+   * @param g the graphics device
+   * @param type the type of the scale factor
+   * @return whether HiDPI-awareness is assumed for the scale factor
+   */
+  public static boolean isHiDPI(@Nullable GraphicsDevice gd, ScaleType type) {
     switch (type) {
       case USR:
         return scale(1f) > 1f;
       case SYS:
-        return sysScale(g) > 1f;
+        return sysScale(gd) > 1f;
       case PIX:
-        return pixScale(g) > 1f;
+        return pixScale(gd) > 1f;
       default:
         return false;
     }
@@ -424,7 +455,7 @@ public class JBUI {
    * @see #isHiDPI(Graphics2D, ScaleType)
    */
   public static boolean isHiDPI(ScaleType type) {
-    return isHiDPI(null, type);
+    return isHiDPI((GraphicsDevice)null, type);
   }
 
   public static class Fonts {
