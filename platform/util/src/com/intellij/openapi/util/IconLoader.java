@@ -608,11 +608,11 @@ public final class IconLoader {
 
     protected abstract Icon compute();
 
-    public Icon inNormalScale(boolean isRetina) {
+    public Icon inOriginalScale() {
       Icon icon = getOrComputeIcon();
       if (icon != null) {
         if (icon instanceof CachedImageIcon) {
-          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(isRetina ? 2f : 1f);
+          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(1f);
           if (img != null) {
             icon = new ImageIcon(img);
           }

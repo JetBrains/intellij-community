@@ -27,7 +27,6 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
@@ -254,7 +253,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       if (icon instanceof IconLoader.LazyIcon) {
         // [tav] JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = ((IconLoader.LazyIcon)icon).inNormalScale(false);
+        icon = ((IconLoader.LazyIcon)icon).inOriginalScale();
       }
     }
     super.setIcon(icon);
