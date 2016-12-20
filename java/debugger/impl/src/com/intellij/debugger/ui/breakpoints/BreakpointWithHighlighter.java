@@ -372,7 +372,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public abstract Key<? extends BreakpointWithHighlighter> getCategory();
 
-  public boolean isVisible() {
+  protected boolean isVisible() {
     return myVisible;
   }
 

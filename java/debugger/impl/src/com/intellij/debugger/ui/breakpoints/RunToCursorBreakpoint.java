@@ -109,7 +109,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   }
 
   @Override
-  public boolean isVisible() {
+  protected boolean isVisible() {
     return false;
   }
 
