@@ -15,15 +15,23 @@
  */
 package com.intellij.debugger.memory.utils;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.sun.jdi.Location;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-public class StackFrameDescriptor {
+import java.util.Collections;
+import java.util.List;
+
+public class StackFrameItem {
   private final String myFilePath;
   private final String myMethodName;
   private final int myLineNumber;
 
-  public StackFrameDescriptor(@NotNull String path, @NotNull String methodName, int line) {
+  public StackFrameItem(@NotNull String path, @NotNull String methodName, int line) {
     myFilePath = path.replace('\\', '.');
     myMethodName = methodName;
     myLineNumber = line;
@@ -51,5 +59,22 @@ public class StackFrameDescriptor {
 
   public int line() {
     return myLineNumber;
+  }
+
+  public static List<StackFrameItem> createFrames(ThreadReferenceProxyImpl threadReferenceProxy) throws EvaluateException {
+    List<StackFrameProxyImpl> stack = threadReferenceProxy == null ? null : threadReferenceProxy.frames();
+
+    if (stack != null) {
+      return StreamEx.of(stack).map(frame -> {
+        try {
+          Location loc = frame.location();
+          return new StackFrameItem(loc.declaringType().name(), loc.method().name(), loc.lineNumber());
+        }
+        catch (EvaluateException e) {
+          return null;
+        }
+      }).nonNull().toList();
+    }
+    return Collections.emptyList();
   }
 }

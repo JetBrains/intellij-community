@@ -33,23 +33,23 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class StackFrameList extends JBList<StackFrameDescriptor> {
+class StackFrameList extends JBList<StackFrameItem> {
   private static final char ANONYMOUS_CLASS_DELIMITER = '$';
   private static final MyOpenFilesState myEditorState = new MyOpenFilesState();
 
-  private List<StackFrameDescriptor> myStackFrames;
+  private List<StackFrameItem> myStackFrames;
   private final Project myProject;
   private final GlobalSearchScope myScope;
   private final MyListModel myModel = new MyListModel();
 
   StackFrameList(@NotNull Project project,
-                 @NotNull List<StackFrameDescriptor> stack,
+                 @NotNull List<StackFrameItem> stack,
                  @NotNull GlobalSearchScope searchScope) {
     super();
 
@@ -61,10 +61,10 @@ class StackFrameList extends JBList<StackFrameDescriptor> {
 
     setModel(myModel);
 
-    setCellRenderer(new ColoredListCellRenderer<StackFrameDescriptor>() {
+    setCellRenderer(new ColoredListCellRenderer<StackFrameItem>() {
       @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends StackFrameDescriptor> list,
-                                           StackFrameDescriptor value, int index, boolean isSelected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends StackFrameItem> list,
+                                           StackFrameItem value, int index, boolean isSelected, boolean hasFocus) {
         append(String.format("%s:%d, %s", value.methodName(), value.line(), value.className()));
         String packageName = value.packageName();
         if (packageName.trim().isEmpty() /*!StringUtils.isEmpty(packageName)*/) {
@@ -74,18 +74,18 @@ class StackFrameList extends JBList<StackFrameDescriptor> {
     });
   }
 
-  void setFrame(@NotNull List<StackFrameDescriptor> stack) {
+  void setFrame(@NotNull List<StackFrameItem> stack) {
     myModel.update(stack);
   }
 
   void navigateToSelectedValue(boolean focusOnEditor) {
-    StackFrameDescriptor selectedValue = getSelectedValue();
+    StackFrameItem selectedValue = getSelectedValue();
     if (selectedValue != null) {
       navigateToFrame(selectedValue, focusOnEditor);
     }
   }
 
-  private void navigateToFrame(@NotNull StackFrameDescriptor frame, boolean focusOnEditor) {
+  private void navigateToFrame(@NotNull StackFrameItem frame, boolean focusOnEditor) {
     String path = frame.path();
     int anonymousClassDelimiterIndex = path.indexOf(ANONYMOUS_CLASS_DELIMITER);
     int pathLength = anonymousClassDelimiterIndex > 0 ? anonymousClassDelimiterIndex : path.length();
@@ -133,9 +133,9 @@ class StackFrameList extends JBList<StackFrameDescriptor> {
     boolean myIsNeedToCloseLastOpenedFile;
   }
 
-  private class MyListModel extends AbstractListModel<StackFrameDescriptor> {
+  private class MyListModel extends AbstractListModel<StackFrameItem> {
 
-    void update(@NotNull List<StackFrameDescriptor> newFrame) {
+    void update(@NotNull List<StackFrameItem> newFrame) {
       fireIntervalRemoved(this, 0, getSize());
       myStackFrames = newFrame;
       fireIntervalAdded(this, 0, getSize());
@@ -147,7 +147,7 @@ class StackFrameList extends JBList<StackFrameDescriptor> {
     }
 
     @Override
-    public StackFrameDescriptor getElementAt(int index) {
+    public StackFrameItem getElementAt(int index) {
       return myStackFrames.get(index);
     }
   }

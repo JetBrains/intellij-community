@@ -28,7 +28,7 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.debugger.memory.component.CreationPositionTracker;
-import com.intellij.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.memory.ui.InstancesTree;
 
 import java.util.List;
@@ -42,7 +42,7 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     Project project = e.getProject();
-    List<StackFrameDescriptor> stack = getStack(e);
+    List<StackFrameItem> stack = getStack(e);
     if(project != null && stack != null) {
       XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
       if(session != null) {
@@ -54,7 +54,7 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
   }
 
   @Nullable
-  private List<StackFrameDescriptor> getStack(AnActionEvent e) {
+  private List<StackFrameItem> getStack(AnActionEvent e) {
     Project project = e.getProject();
     XValueNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     ObjectReference ref = selectedNode != null ? getObjectReference(selectedNode) : null;

@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.memory.component;
 
-import com.intellij.debugger.memory.utils.StackFrameDescriptor;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
@@ -35,10 +35,10 @@ public class CreationPositionTracker extends AbstractProjectComponent {
   /**
    * Stores all tracked instance for each debug session.
    */
-  private final ConcurrentHashMap<XDebugSession, Map<ObjectReference, List<StackFrameDescriptor>>>
+  private final ConcurrentHashMap<XDebugSession, Map<ObjectReference, List<StackFrameItem>>>
       mySession2Reference2Stack = new ConcurrentHashMap<>();
 
-  private final ConcurrentHashMap<XDebugSession, Map<ObjectReference, List<StackFrameDescriptor>>>
+  private final ConcurrentHashMap<XDebugSession, Map<ObjectReference, List<StackFrameItem>>>
       myPinnedSession2Reference2Stack = new ConcurrentHashMap<>();
 
   public CreationPositionTracker(Project project) {
@@ -51,13 +51,13 @@ public class CreationPositionTracker extends AbstractProjectComponent {
   }
 
   @Nullable
-  public List<StackFrameDescriptor> getStack(@NotNull XDebugSession session, @NotNull ObjectReference ref) {
-    List<StackFrameDescriptor> stack = extract(mySession2Reference2Stack, session, ref);
+  public List<StackFrameItem> getStack(@NotNull XDebugSession session, @NotNull ObjectReference ref) {
+    List<StackFrameItem> stack = extract(mySession2Reference2Stack, session, ref);
     return stack != null ? stack : extract(myPinnedSession2Reference2Stack, session, ref);
   }
 
   public void addStack(@NotNull XDebugSession session, @NotNull ObjectReference ref,
-                       @NotNull List< StackFrameDescriptor> stack) {
+                       @NotNull List<StackFrameItem> stack) {
     if (!mySession2Reference2Stack.containsKey(session)) {
       mySession2Reference2Stack.put(session, new ConcurrentHashMap<>());
       session.addSessionListener(new XDebugSessionListener() {
@@ -78,7 +78,7 @@ public class CreationPositionTracker extends AbstractProjectComponent {
   }
 
   public void unpinStacks(@NotNull XDebugSession session, @NotNull ReferenceType ref) {
-    Map<ObjectReference, List<StackFrameDescriptor>> ref2Stack = myPinnedSession2Reference2Stack.getOrDefault(session, null);
+    Map<ObjectReference, List<StackFrameItem>> ref2Stack = myPinnedSession2Reference2Stack.getOrDefault(session, null);
     if (ref2Stack != null) {
       Iterator<ObjectReference> iterator = ref2Stack.keySet().iterator();
       while (iterator.hasNext()) {
@@ -95,9 +95,9 @@ public class CreationPositionTracker extends AbstractProjectComponent {
   }
 
   public void pinStacks(@NotNull XDebugSession session, @NotNull ReferenceType ref) {
-    Map<ObjectReference, List<StackFrameDescriptor>> ref2Stack = mySession2Reference2Stack.getOrDefault(session, null);
+    Map<ObjectReference, List<StackFrameItem>> ref2Stack = mySession2Reference2Stack.getOrDefault(session, null);
     if (ref2Stack != null) {
-      Map<ObjectReference, List<StackFrameDescriptor>> ref2StacksByReferenceType = ref2Stack.entrySet().stream()
+      Map<ObjectReference, List<StackFrameItem>> ref2StacksByReferenceType = ref2Stack.entrySet().stream()
           .filter(entry -> ref.equals(entry.getKey().referenceType()))
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       myPinnedSession2Reference2Stack.put(session, ref2StacksByReferenceType);
