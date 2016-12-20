@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -37,6 +36,7 @@ import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,6 @@ public class StudyProjectGenerator {
   private static final String COURSE_DESCRIPTION = "description";
   private static final String CACHE_NAME = "courseNames.txt";
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
-  @Nullable public StepicUser myUser;
   private List<CourseInfo> myCourses = new ArrayList<>();
   private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
@@ -67,7 +66,8 @@ public class StudyProjectGenerator {
   }
 
   public boolean isLoggedIn() {
-    return myUser != null && !StringUtil.isEmptyOrSpaces(myUser.getPassword()) && !StringUtil.isEmptyOrSpaces(myUser.getEmail());
+    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    return user.getAccessToken() != null;
   }
 
   public void setEnrolledCoursesIds(@NotNull final List<Integer> coursesIds) {
@@ -88,16 +88,13 @@ public class StudyProjectGenerator {
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {
-    if (myUser != null) {
-      StudyTaskManager.getInstance(project).setUser(myUser);
-    }
     final Course course = getCourse(project);
     if (course == null) {
       LOG.warn("Course is null");
       Messages.showWarningDialog("Some problems occurred while creating the course", "Error in Course Creation");
       return;
     }
-    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
+    final File courseDirectory = StudyUtils.getCourseDirectory(course);
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().runWriteAction(() -> {
       StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
@@ -120,12 +117,15 @@ public class StudyProjectGenerator {
       }
       return getCourseFromStepic(project);
     }
-    else if (myUser != null) {
-      final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
-                                                                         mySelectedCourseInfo.getName() + "_" +
-                                                                         myUser.getEmail()), EduNames.COURSE_META_FILE);
-      if (adaptiveCourseFile.exists()) {
-        return readCourseFromCache(adaptiveCourseFile, true);
+    else {
+      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      if (user.getAccessToken() != null) {
+        final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
+                                                                           mySelectedCourseInfo.getName() + "_" +
+                                                                           user.getEmail()), EduNames.COURSE_META_FILE);
+        if (adaptiveCourseFile.exists()) {
+          return readCourseFromCache(adaptiveCourseFile, true);
+        }
       }
     }
     return getCourseFromStepic(project);
@@ -137,7 +137,7 @@ public class StudyProjectGenerator {
       return execCancelable(() -> {
         final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
         if (course != null) {
-          flushCourse(project, course);
+          flushCourse(course);
           course.initCourse(false);
         }
         return course;
@@ -216,8 +216,8 @@ public class StudyProjectGenerator {
     }
   }
 
-  public static void flushCourse(@NotNull final Project project, @NotNull final Course course) {
-    final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
+  public static void flushCourse(@NotNull final Course course) {
+    final File courseDirectory = StudyUtils.getCourseDirectory(course);
     FileUtil.createDirectory(courseDirectory);
     flushCourseJson(course, courseDirectory);
 
@@ -423,7 +423,7 @@ public class StudyProjectGenerator {
       myCourses = getCoursesFromCache();
     }
     if (force || myCourses.isEmpty()) {
-      myCourses = execCancelable(() -> EduStepicConnector.getCourses(myUser));
+      myCourses = execCancelable(() -> EduStepicConnector.getCourses(StepicUpdateSettings.getInstance().getUser()));
       flushCache(myCourses);
     }
     if (myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(CourseInfo.INVALID_COURSE))) {
