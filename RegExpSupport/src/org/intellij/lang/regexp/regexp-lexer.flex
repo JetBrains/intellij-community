@@ -35,6 +35,8 @@ import java.util.EnumSet;
     private boolean allowHorizontalWhitespaceClass;
     private boolean allowPosixBracketExpressions;
     private boolean allowTransformationEscapes;
+    private int maxOctal = 0777;
+    private int minOctalDigits = 1;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -49,6 +51,18 @@ import java.util.EnumSet;
       this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
       this.allowPosixBracketExpressions = capabilities.contains(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
       this.allowTransformationEscapes = capabilities.contains(RegExpCapability.TRANSFORMATION_ESCAPES);
+      if (capabilities.contains(RegExpCapability.MAX_OCTAL_177)) {
+        maxOctal = 0177;
+      }
+      else if (capabilities.contains(RegExpCapability.MAX_OCTAL_377)) {
+        maxOctal = 0377;
+      }
+      if (capabilities.contains(RegExpCapability.MIN_OCTAL_2_DIGITS)) {
+        minOctalDigits = 2;
+      }
+      else if (capabilities.contains(RegExpCapability.MIN_OCTAL_3_DIGITS)) {
+        minOctalDigits = 3;
+      }
     }
 
     private void yypushstate(int state) {
@@ -89,8 +103,6 @@ import java.util.EnumSet;
 %xstate PY_NAMED_GROUP_REF
 %xstate PY_COND_REF
 %xstate BRACKET_EXPRESSION
-
-DIGITS=[1-9][0-9]*
 
 DOT="."
 LPAREN="("
@@ -151,32 +163,47 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} {XML_CLASS}         { if (xmlSchemaMode) return RegExpTT.CHAR_CLASS; else return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 
-/* java.util.regex.Pattern says about backrefs:
-    "In this class, \1 through \9 are always interpreted as back references,
-    and a larger number is accepted as a back reference if at least that many
-    subexpressions exist at that point in the regular expression, otherwise the
-    parser will drop digits until the number is smaller or equal to the existing
-    number of groups or it is one digit."
-*/
-{ESCAPE} {DIGITS}             { if (allowOctalNoLeadingZero) {
-                                  CharSequence s = yytext();
-                                  int i = 1;
-                                  for (; i < s.length(); i++) {
-                                    if (s.charAt(i) > '7') break;
+/* 999 back references should be enough for everybody */
+{ESCAPE} [1-9][0-9]{0,2}      { String text = yytext().toString().substring(1);
+                                if (allowOctalNoLeadingZero) {
+                                  if (Integer.parseInt(text) <= capturingGroupCount && yystate() != CLASS2) return RegExpTT.BACKREF;
+                                  int i = 0;
+                                  int value = 0;
+                                  for (; i < text.length(); i++) {
+                                    char c = text.charAt(i);
+                                    if (c > '7') break;
+                                    value = value * 8 + (c - '0');
                                   }
-                                  if (i > 1) {
-                                    yypushback(yylength() - i);
+                                  if (i > 0) {
+                                    yypushback(text.length() - i);
+                                    if (value > maxOctal) {
+                                      yypushback(1);
+                                      return RegExpTT.BAD_OCT_VALUE;
+                                    }
+                                    if (minOctalDigits > i && yystate() != CLASS2) {
+                                      return RegExpTT.BAD_OCT_VALUE;
+                                    }
                                     return RegExpTT.OCT_CHAR;
                                   }
+                                  return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
                                 }
-                                if (yystate() == CLASS2) {
-                                  yypushback(yylength() - 2);
-                                  return RegExpTT.REDUNDANT_ESCAPE;
+                                else {
+                                  if (yystate() == CLASS2) {
+                                    yypushback(yylength() - 2);
+                                    return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
+                                  }
+                                  /* java.util.regex.Pattern says about backrefs:
+                                      "In this class, \1 through \9 are always interpreted as back references,
+                                      and a larger number is accepted as a back reference if at least that many
+                                      subexpressions exist at that point in the regular expression, otherwise the
+                                      parser will drop digits until the number is smaller or equal to the existing
+                                      number of groups or it is one digit."
+                                  */
+                                  while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
+                                    yypushback(1);
+                                  }
+                                  return RegExpTT.BACKREF;
                                 }
-                                while (yylength() > 2 && Integer.parseInt(yytext().toString().substring(1)) > capturingGroupCount) {
-                                  yypushback(1);
-                                }
-                                return RegExpTT.BACKREF;
                               }
 
 {ESCAPE}  "-"                 { return (yystate() == CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }

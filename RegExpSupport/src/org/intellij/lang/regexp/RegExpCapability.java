@@ -74,5 +74,25 @@ public enum RegExpCapability {
   /**
    * \\u, \l, \\U, \L, and \E
    */
-  TRANSFORMATION_ESCAPES
+  TRANSFORMATION_ESCAPES,
+
+  /**
+   * \\177 (decimal 127) is maximal octal character
+   */
+  MAX_OCTAL_177,
+
+  /**
+   * \\377 (decimal 255) is maximal octal character
+   */
+  MAX_OCTAL_377,
+
+  /**
+   * At least 2 digits needed in octal escape outside character class to be valid (like regexp under ruby)
+   */
+  MIN_OCTAL_2_DIGITS,
+
+  /**
+   * At least 3 digits needed in octal escape outside character class to be valid (like regexp under python)
+   */
+  MIN_OCTAL_3_DIGITS,
 }
