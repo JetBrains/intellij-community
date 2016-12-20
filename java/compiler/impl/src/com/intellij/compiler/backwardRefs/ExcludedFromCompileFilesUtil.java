@@ -40,7 +40,12 @@ class ExcludedFromCompileFilesUtil {
           return Stream.of(file);
         }
         else if (description.isIncludeSubdirectories()) {
-          return iterateChildrenRecursively(file);
+          final Stream.Builder<VirtualFile> builder = Stream.builder();
+          VfsUtilCore.iterateChildrenRecursively(file, null, f -> {
+            builder.accept(f);
+            return true;
+          });
+          return builder.build();
         }
         else {
           return Stream.of(file.getChildren());
@@ -50,14 +55,5 @@ class ExcludedFromCompileFilesUtil {
       .collect(Collectors.toList());
 
     return GlobalSearchScope.filesWithoutLibrariesScope(project, excludedFiles);
-  }
-
-  private static Stream<VirtualFile> iterateChildrenRecursively(VirtualFile file) {
-    final Stream.Builder<VirtualFile> builder = Stream.builder();
-    VfsUtilCore.iterateChildrenRecursively(file, null, f -> {
-      builder.accept(f);
-      return true;
-    });
-    return builder.build();
   }
 }
