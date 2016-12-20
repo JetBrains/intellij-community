@@ -31,7 +31,6 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.io.FileUtil;
@@ -84,7 +83,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void init(@NotNull final String path, @Nullable final Runnable beforeComponentCreation) {
-    init(ProgressManager.getInstance().getProgressIndicator(), () -> {
+    init((ProgressIndicator)null, () -> {
       // create ServiceManagerImpl at first to force extension classes registration
       getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
       ServiceKt.getStateStore(this).setPath(path);
@@ -95,9 +94,11 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     });
   }
 
+  @Nullable
   @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+  protected ProgressIndicator getProgressIndicator() {
     // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
+    return null;
   }
 
   @Override
