@@ -709,7 +709,8 @@ abstract class TerminalOperation extends Operation {
       if(myComparator != null) {
         myComparator.transform(context, inVar.getName(), best);
         PsiExpression expression = myComparator.getExpression();
-        String text = ParenthesesUtils.areParenthesesNeeded(JavaTokenType.GT, expression) ? "("+expression.getText()+")" : expression.getText();
+        int expressionPrecedence = ParenthesesUtils.getPrecedence(expression);
+        String text = expressionPrecedence >= ParenthesesUtils.EQUALITY_PRECEDENCE ? "("+expression.getText()+")" : expression.getText();
         comparePredicate = myTemplate.replace("{comparator}", text);
       } else {
         comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName());

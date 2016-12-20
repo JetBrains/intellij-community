@@ -18,7 +18,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +66,7 @@ public class ParenthesesUtils {
     tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
     tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
   }
-  
+
   static {
     s_binaryOperatorPrecedence.put(JavaTokenType.PLUS, ADDITIVE_PRECEDENCE);
     s_binaryOperatorPrecedence.put(JavaTokenType.MINUS, ADDITIVE_PRECEDENCE);
@@ -555,16 +554,11 @@ public class ParenthesesUtils {
     return parentPrecedence < childPrecedence;
   }
 
-  @Contract("_, null -> false")
   public static boolean areParenthesesNeeded(PsiJavaToken sign, PsiExpression rhs) {
-    return areParenthesesNeeded(sign.getTokenType(), rhs);
-  }
-
-  @Contract("_, null -> false")
-  public static boolean areParenthesesNeeded(IElementType signTokenType, PsiExpression rhs) {
     if (rhs instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)rhs;
       final int precedence1 = getPrecedenceForOperator(binaryExpression.getOperationTokenType());
+      final IElementType signTokenType = sign.getTokenType();
       final IElementType newOperatorToken = tokenMap.get(signTokenType);
       final int precedence2 = getPrecedenceForOperator(newOperatorToken);
       return precedence1 >= precedence2 || !isCommutativeOperator(newOperatorToken);
