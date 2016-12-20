@@ -309,6 +309,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in method reference with side effects in qualifier");
   }
 
+  public void testRedundantCastOnMethodReferenceToLambda() throws Exception {
+    doTest();
+  }
+
   public void testInaccessibleSuperCallWhenQualifiedInline() throws Exception {
     doTestConflict("Inlined method calls super.bar() which won't be accessed in class <b><code>B</code></b>");
   }
