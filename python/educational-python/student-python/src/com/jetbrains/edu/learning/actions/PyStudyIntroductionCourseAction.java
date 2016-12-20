@@ -20,15 +20,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.python.newProject.actions.PythonGenerateProjectCallback;
 import com.jetbrains.python.newProject.actions.ProjectSpecificSettingsStep;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
 
 public class PyStudyIntroductionCourseAction extends AnAction {
 
@@ -45,8 +44,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     if (projectDir.exists()) {
       return;
     }
-    final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
-    if (getIntroCourseInfo(generator.getGenerator().getCourses(false)) != null) {
+    if (StudyProjectGenerator.getBundledIntro() != null) {
       return;
     }
     Presentation presentation = e.getPresentation();
@@ -62,7 +60,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     }
     else {
       final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
-      CourseInfo introCourse = getIntroCourseInfo(generator.getCourses());
+      CourseInfo introCourse = StudyProjectGenerator.getBundledIntro();
       if (introCourse == null) {
         return;
       }
@@ -74,15 +72,5 @@ public class PyStudyIntroductionCourseAction extends AnAction {
 
       callback.consume(step);
     }
-  }
-
-  @Nullable
-  private static CourseInfo getIntroCourseInfo(@NotNull final List<CourseInfo> courses) {
-    for (CourseInfo courseInfo : courses) {
-      if (INTRODUCTION_TO_PYTHON.equals(courseInfo.getName())) {
-        return courseInfo;
-      }
-    }
-    return null;
   }
 }

@@ -427,7 +427,7 @@ public class StudyProjectGenerator {
       flushCache(myCourses);
     }
     if (myCourses.isEmpty() || (myCourses.size() == 1 && myCourses.contains(CourseInfo.INVALID_COURSE))) {
-      myCourses = getBundledIntro();
+      myCourses = Collections.singletonList(getBundledIntro());
     }
     sortCourses(myCourses);
     return myCourses;
@@ -479,14 +479,12 @@ public class StudyProjectGenerator {
     }
   }
 
-  public static List<CourseInfo> getBundledIntro() {
+  public static CourseInfo getBundledIntro() {
     final File introCourse = new File(OUR_COURSES_DIR, "Introduction to Python");
     if (introCourse.exists()) {
-      final CourseInfo courseInfo = getCourseInfo(introCourse);
-
-      return Collections.singletonList(courseInfo);
+      return getCourseInfo(introCourse);
     }
-    return Collections.emptyList();
+    return null;
   }
 
   public static List<CourseInfo> getCoursesFromCache() {
