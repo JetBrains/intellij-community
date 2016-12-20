@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
@@ -99,6 +101,11 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
 
   public boolean isRestoreBreakpoints() {
     return myRestoreBreakpoints;
+  }
+
+  @Override
+  public String getEventMessage(LocatableEvent event) {
+    return DebuggerBundle.message("status.stopped.at.cursor");
   }
 
   @Override
