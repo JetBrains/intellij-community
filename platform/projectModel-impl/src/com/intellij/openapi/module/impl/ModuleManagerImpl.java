@@ -1007,6 +1007,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     Module moduleInMap = myModuleModel.myModules.remove(oldName);
     LOG.assertTrue(moduleInMap == null || moduleInMap == module);
     myModuleModel.myModules.put(module.getName(), module);
+    incModificationCount();
 
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
       () -> fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName)), false, true);
