@@ -324,7 +324,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
         if (!(body instanceof PsiNewExpression)) return false;
         PsiExpressionList ctorArgs = ((PsiNewExpression)body).getArgumentList();
-        return ctorArgs != null && ctorArgs.getExpressions().length == 0;
+        return ctorArgs != null && ctorArgs.getExpressions().length == 0 && extractQualifierClass(tb, qualifierCall) != null;
       }
     }
     return false;
