@@ -3,6 +3,7 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
@@ -55,7 +56,24 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
     FilterMixin filter = (FilterMixin)new ExceptionExFilterFactory().create(GlobalSearchScope.projectScope(getProject()));
     final ArrayList<String> result = new ArrayList<>();
     filter.applyHeavyFilter(document, 0, 0, r -> r.getResultItems().forEach(
-      highlight -> result.add(new TextRange(highlight.getHighlightStartOffset(), highlight.getHighlightEndOffset() - 1).substring(testData))));
+      highlight -> result.add(new TextRange(highlight.getHighlightStartOffset(), highlight.getHighlightEndOffset()).substring(testData))));
     assertSameElements(result, "com.sample.RunningMain.func1", "com.sample.RunningMain.main");
+  }
+
+  public void testAnomalyParenthesisParsing() {
+    String[][] data = new String[][]{
+      {"at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)", "youtrack.jetbrains.com.Issue", "IDEA_125137()",
+        "FooTest.groovy:2"},
+      {"at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm",
+        "FooTest.groovy:2"},
+      {"p1.Cl.mee(p1.Cl.java:87) (A MESSAGE) IDEA-133794 (BUG START WITH 1)", "p1.Cl", "mee", "p1.Cl.java:87"}
+    };
+    for (String[] datum : data) {
+      Trinity<TextRange, TextRange, TextRange> trinity = ExceptionWorker.parseExceptionLine(datum[0]);
+      assertNotNull(trinity);
+      assertEquals(datum[1], trinity.first.subSequence(datum[0]));
+      assertEquals(datum[2], trinity.second.subSequence(datum[0]));
+      assertEquals(datum[3], trinity.third.subSequence(datum[0]));
+    }
   }
 }

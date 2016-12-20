@@ -70,9 +70,7 @@ public class ExceptionWorker {
 
     myMethod = myInfo.getSecond().substring(line);
 
-    final int lparenthIndex = myInfo.third.getStartOffset();
-    final int rparenthIndex = myInfo.third.getEndOffset();
-    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
+    final String fileAndLine = myInfo.third.substring(line).trim();
 
     final int colonIndex = fileAndLine.lastIndexOf(':');
     if (colonIndex < 0) return null;
@@ -100,8 +98,8 @@ public class ExceptionWorker {
 
     final int textStartOffset = textEndOffset - line.length();
 
-    final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
-    final int highlightEndOffset = textStartOffset + rparenthIndex;
+    final int highlightStartOffset = textStartOffset + myInfo.third.getStartOffset();
+    final int highlightEndOffset = textStartOffset + myInfo.third.getEndOffset();
 
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     List<VirtualFile> virtualFilesInLibraries = new ArrayList<>();
@@ -188,8 +186,12 @@ public class ExceptionWorker {
     }
 
     int rParenIdx = line.lastIndexOf(')');
-    while (rParenIdx > 0 && !Character.isDigit(line.charAt(rParenIdx-1))) {
-      rParenIdx = line.lastIndexOf(')', rParenIdx - 1);
+    int i = rParenIdx;
+    while (i > 0) {
+      i = line.lastIndexOf(')', i - 1);
+      if (i > 0 && "1234567890".indexOf(line.charAt(i - 1)) != -1) {
+        rParenIdx = i;
+      }
     }
     if (rParenIdx < 0) return null;
 
@@ -202,16 +204,16 @@ public class ExceptionWorker {
     int classNameIdx = moduleIdx > -1 && moduleIdx < lParenIdx ? moduleIdx + 1 : startIdx + 1 + (startIdx >= 0 ? AT.length() : 0);
 
     // class, method, link
-    return Trinity.create(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1, true)),
-                          new TextRange(handleSpaces(line, dotIdx + 1, 1, true), handleSpaces(line, lParenIdx + 1, -1, true)),
-                          new TextRange(lParenIdx, rParenIdx));
+    return Trinity.create(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1)),
+                          new TextRange(handleSpaces(line, dotIdx + 1, 1), handleSpaces(line, lParenIdx, -1)),
+                          new TextRange(lParenIdx + 1, rParenIdx));
   }
 
-  private static int handleSpaces(String line, int pos, int delta, boolean skip) {
+  private static int handleSpaces(String line, int pos, int delta) {
     int len = line.length();
     while (pos >= 0 && pos < len) {
       final char c = line.charAt(pos);
-      if (skip != Character.isSpaceChar(c)) break;
+      if (!Character.isSpaceChar(c)) break;
       pos += delta;
     }
     return pos;
