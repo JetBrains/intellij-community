@@ -79,6 +79,17 @@ public class EduStepicAuthorizedClient {
     }
     ourClient = initializeClient(stepicUser);
     if (ourClient == null) {
+      final StepicUser user = login(stepicUser);
+      if (user != null) {
+        final Project project = StudyUtils.getStudyProject();
+        if (project != null) {
+          StudyTaskManager.getInstance(project).setUser(user);
+        }
+        ourClient = initializeClient(stepicUser);
+      }
+
+    }
+    if (ourClient == null) {
       ourClient = EduStepicClient.getHttpClient();
     }
     return ourClient;
@@ -100,16 +111,6 @@ public class EduStepicAuthorizedClient {
       headers.add(new BasicHeader("Authorization", "Bearer " + accessToken));
       headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APP_JSON));
       return getBuilder().setDefaultHeaders(headers).build();
-    }
-    else {
-      final StepicUser authorizedUser = login(stepicUser);
-      if (authorizedUser != null) {
-        final Project project = StudyUtils.getStudyProject();
-        if (project != null) {
-          StudyTaskManager.getInstance(project).setUser(authorizedUser);
-        }
-        return initializeClient(authorizedUser);
-      }
     }
     return null;
   }
@@ -154,24 +155,15 @@ public class EduStepicAuthorizedClient {
   }
 
   private static StepicUser login(@NotNull final StepicUser user) {
-    final String login =  user.getEmail();
+    final String login = user.getEmail();
     final String refreshToken = user.getRefreshToken();
     if (StringUtil.isEmptyOrSpaces(login)) {
       return showLoginDialog();
     }
-    else {
-      if (StringUtil.isNotEmpty(refreshToken)) {
-        final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
-        if (tokenInfo != null) {
-          user.setupTokenInfo(tokenInfo);
-        }
-      }
-      else {
-        final StepicUser stepicUser = login(login, user.getPassword());
-        if (stepicUser == null) {
-          return showLoginDialog();
-        }
-        return stepicUser;
+    else if (StringUtil.isNotEmpty(refreshToken)) {
+      final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
+      if (tokenInfo != null) {
+        user.setupTokenInfo(tokenInfo);
       }
     }
     return null;
@@ -205,7 +197,7 @@ public class EduStepicAuthorizedClient {
         user.setId(currentUser.getId());
       }
     }
-    
+    ourClient = initializeClient(user);
     return user;
   }
 
