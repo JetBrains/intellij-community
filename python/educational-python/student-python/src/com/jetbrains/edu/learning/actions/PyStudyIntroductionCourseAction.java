@@ -46,7 +46,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       return;
     }
     final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
-    if (getIntroCourseInfo(generator.getCourses()) != null) {
+    if (getIntroCourseInfo(generator.getGenerator().getCourses(false)) != null) {
       return;
     }
     Presentation presentation = e.getPresentation();
