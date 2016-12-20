@@ -891,9 +891,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     public void projectOpened() {
-      for (final Module aCollection : myModules.values()) {
-        ModuleEx module = (ModuleEx)aCollection;
-        module.projectOpened();
+      for (final Module module : myModules.values()) {
+        ((ModuleEx)module).projectOpened();
       }
     }
 

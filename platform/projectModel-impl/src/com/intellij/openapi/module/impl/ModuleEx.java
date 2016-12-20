@@ -30,9 +30,11 @@ public interface ModuleEx extends Module {
 
   void moduleAdded();
 
-  void projectOpened();
+  default void projectOpened() {
+  }
 
-  void projectClosed();
+  default void projectClosed() {
+  }
 
   void rename(String newName);
 
