@@ -165,6 +165,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public void projectOpened() {
     for (ModuleComponent component : getComponentInstancesOfType(ModuleComponent.class)) {
       try {
+        //noinspection deprecation
         component.projectOpened();
       }
       catch (Exception e) {
