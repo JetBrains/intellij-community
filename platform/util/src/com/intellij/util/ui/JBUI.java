@@ -53,7 +53,7 @@ public class JBUI {
   /**
    * The IDE supports two different HiDPI modes:
    *
-   * 1) App-managed HiDPI mode.
+   * 1) IDE-managed HiDPI mode.
    *
    * Supported for backward compatibility until complete transition to the JDK-managed HiDPI mode happens.
    * In this mode there's a single coordinate space and the whole UI is scaled by the IDE guided by the
@@ -86,13 +86,13 @@ public class JBUI {
      * The user scale factor is set and managed by the IDE. Currently it's derived from the UI font size,
      * specified in the IDE Settings.
      *
-     * The user scale value depends on which HiDPI mode is enabled. In the App-managed HiDPI mode the
+     * The user scale value depends on which HiDPI mode is enabled. In the IDE-managed HiDPI mode the
      * user scale "includes" the default system scale and simply equals it with the default UI font size.
      * In the JDK-managed HiDPI mode the user scale is independent of the system scale and equals 1.0
      * with the default UI font size. In case the default UI font size changes, the user scale changes
      * proportionally in both the HiDPI modes.
      *
-     * In the App-managed HiDPI mode the user scale completely defines the UI scale. In the JDK-managed
+     * In the IDE-managed HiDPI mode the user scale completely defines the UI scale. In the JDK-managed
      * HiDPI mode the user scale can be considered a supplementary scale taking effect in cases like
      * the IDE Presentation Mode and when the default UI scale is changed by the user.
      *
@@ -106,7 +106,7 @@ public class JBUI {
      * Mac Retina monitor device has the system scale 2.0 by default. As there can be multiple devices
      * (multi-monitor configuration) there can be multiple system scale factors, appropriately. However,
      * there's always a single default system scale factor corresponding to the default device. And it's
-     * the only system scale available in the App-managed HiDPI mode.
+     * the only system scale available in the IDE-managed HiDPI mode.
      *
      * In the JDK-managed HiDPI mode, the system scale defines the scale of the transform b/w the user
      * and the device coordinate spaces performed by the JDK.
@@ -122,7 +122,7 @@ public class JBUI {
      *
      * For instance, on Mac Retina monitor (JDK-managed HiDPI) in the Presentation mode (which, say,
      * doubles the UI scale) the pixel scale would equal 4.0. The value is the product of the user
-     * scale 2.0 and the system scale 2.0. In the App-managed HiDPI mode, the pixel scale always equals
+     * scale 2.0 and the system scale 2.0. In the IDE-managed HiDPI mode, the pixel scale always equals
      * the user scale.
      *
      * @see #pixScale()
@@ -202,7 +202,7 @@ public class JBUI {
 
   /**
    * Returns the system scale factor based on the JBUIScaleTrackable.
-   * In App-managed HiDPI mode defaults to {@link #sysScale()}
+   * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(JBUIScaleTrackable trackable) {
     if (UIUtil.isJDKManagedHiDPI() && trackable != null) {
@@ -213,7 +213,7 @@ public class JBUI {
 
   /**
    * Returns the system scale factor, corresponding to the provided graphics context.
-   * In App-managed HiDPI mode defaults to {@link #sysScale()}
+   * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(@Nullable Graphics2D g) {
     if (UIUtil.isJDKManagedHiDPI() && g != null) {
@@ -228,7 +228,7 @@ public class JBUI {
 
   /**
    * Returns the system scale factor, corresponding to the provided device.
-   * In App-managed HiDPI mode defaults to {@link #sysScale()}
+   * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(@Nullable GraphicsDevice gd) {
     if (UIUtil.isJDKManagedHiDPI() && gd != null) {
@@ -270,7 +270,7 @@ public class JBUI {
 
   /**
    * Returns the pixel scale factor, corresponding to the provided graphics context.
-   * In App-managed HiDPI mode defaults to {@link #pixScale()}
+   * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable Graphics2D g) {
     return g != null ? pixScale(g.getDeviceConfiguration().getDevice()) : pixScale();
@@ -278,7 +278,7 @@ public class JBUI {
 
   /**
    * Returns the pixel scale factor, corresponding to the provided graphics device.
-   * In App-managed HiDPI mode defaults to {@link #pixScale()}
+   * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable GraphicsDevice gd) {
     return UIUtil.isJDKManagedHiDPI() ? sysScale(gd) * scale(1f) : scale(1f);
