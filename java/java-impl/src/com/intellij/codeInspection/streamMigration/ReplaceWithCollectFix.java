@@ -65,6 +65,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
                      @NotNull PsiLoopStatement loopStatement,
                      @NotNull PsiStatement body,
                      @NotNull TerminalBlock tb) {
+    tb = tb.tryPeelLimit(loopStatement);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = tb.getSingleMethodCall();
     if (call == null) return null;
