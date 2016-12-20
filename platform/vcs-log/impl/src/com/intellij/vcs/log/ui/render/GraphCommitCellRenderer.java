@@ -100,9 +100,15 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return 0;
   }
 
+  private int getGraphWidth(int row) {
+    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    return myTemplateComponent.getGraphWidth(cell.getPrintElements());
+  }
+
   public int getTooltipXCoordinate(int row) {
     int referencesWidth = getReferencesWidth(row);
     if (referencesWidth != 0) {
+      if (myComponent.getReferencePainter().isLeftAligned()) return getGraphWidth(row) + referencesWidth / 2;
       return getColumnWidth() - referencesWidth / 2;
     }
     return getColumnWidth() / 2;
