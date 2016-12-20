@@ -258,7 +258,7 @@ class TestPermanentGraphInfo(
   }
 
   override fun getPermanentCommitsInfo() = commitInfo
-  override fun getLinearGraph() : PermanentLinearGraphImpl = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
+  override fun getLinearGraph() = graph
   override fun getPermanentGraphLayout() = graphLayout
   override fun getBranchNodeIds() = branchNodes
 }
