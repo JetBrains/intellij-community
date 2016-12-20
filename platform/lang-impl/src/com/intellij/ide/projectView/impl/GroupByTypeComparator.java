@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Comparator;
 
+import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
+
 /**
  * @author cdr
  */
@@ -70,13 +72,8 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
       if (isManualOrder()) {
         final Comparable key1 = node1.getManualOrderKey();
         final Comparable key2 = node2.getManualOrderKey();
-        if (!(key1 == null && key2 == null)) {
-          if (key1 == null) return 1;
-          if (key2 == null) return -1;
-          //noinspection unchecked
-          final int result = key1.compareTo(key2);
-          if (result != 0) return result;
-        }
+        int result = compare(key1, key2);
+        if (result != 0) return result;
       }
 
       boolean isFoldersOnTop = !(projectView instanceof ProjectViewImpl && !((ProjectViewImpl)projectView).isFoldersAlwaysOnTop());
@@ -97,20 +94,14 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
       if (isSortByType()) {
         final Comparable typeSortKey1 = node1.getTypeSortKey();
         final Comparable typeSortKey2 = node2.getTypeSortKey();
-        if (!(typeSortKey1 == null && typeSortKey2 == null)) {
-          if (typeSortKey1 == null) return 1;
-          if (typeSortKey2 == null) return -1;
-          //noinspection unchecked
-          final int result = typeSortKey1.compareTo(typeSortKey2);
-          if (result != 0) return result;
-        }
+        int result = compare(typeSortKey1, typeSortKey2);
+        if (result != 0) return result;
       }
       else {
         final Comparable typeSortKey1 = node1.getSortKey();
         final Comparable typeSortKey2 = node2.getSortKey();
         if (typeSortKey1 != null && typeSortKey2 != null) {
-          //noinspection unchecked
-          final int result = typeSortKey1.compareTo(typeSortKey2);
+          int result = compare(typeSortKey1, typeSortKey2);
           if (result != 0) return result;
         }
       }
@@ -119,7 +110,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
         String key1 = node1.getQualifiedNameSortKey();
         String key2 = node2.getQualifiedNameSortKey();
         if (key1 != null && key2 != null) {
-          return key1.compareToIgnoreCase(key2);
+          return naturalCompare(key1, key2);
         }
       }
     }
@@ -144,5 +135,16 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
 
   private boolean isAbbreviateQualifiedNames() {
     return myProjectView != null && myProjectView.isAbbreviatePackageNames(myPaneId);
+  }
+
+  private static int compare(Comparable key1, Comparable key2) {
+    if (key1 == null && key2 == null) return 0;
+    if (key1 == null) return 1;
+    if (key2 == null) return -1;
+    if (key1 instanceof String && key2 instanceof String) {
+      return naturalCompare((String)key1, (String)key2);
+    }
+    //noinspection unchecked
+    return key1.compareTo(key2);
   }
 }
