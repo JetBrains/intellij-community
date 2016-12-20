@@ -87,6 +87,8 @@ import java.util.function.Consumer;
 public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
+  public static final int DEFAULT_HEIGHT = 460;
+  public static final int MAX_DEFAUL_WIDTH = 777;
   private BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
   private boolean myDisposed;
@@ -109,8 +111,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setContentPane(myScreen.getWelcomePanel());
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-    final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
-    setSize(JBUI.size(width, 460));
+    final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAUL_WIDTH;
+    setSize(JBUI.size(width, DEFAULT_HEIGHT));
     setResizable(false);
     //int x = bounds.x + (bounds.width - getWidth()) / 2;
     //int y = bounds.y + (bounds.height - getHeight()) / 2;
