@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
@@ -44,7 +45,7 @@ public class HtmlCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
-        if (PsiTreeUtil.getParentOfType(position, HtmlTag.class, false) == null) {
+        if (!hasHtmlAttributesCompletion(position)) {
           return;
         }
         final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(position, XmlAttributeValue.class, false);
@@ -55,6 +56,14 @@ public class HtmlCompletionContributor extends CompletionContributor {
         }
       }
     });
+  }
+
+  private static boolean hasHtmlAttributesCompletion(PsiElement position) {
+    if (PsiTreeUtil.getParentOfType(position, HtmlTag.class, false) != null) {
+      return true;
+    }
+    XmlTag xmlTag = PsiTreeUtil.getParentOfType(position, XmlTag.class, false);
+    return xmlTag != null && xmlTag.getLanguage() == XHTMLLanguage.INSTANCE;
   }
 
   @NotNull
