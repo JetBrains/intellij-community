@@ -526,6 +526,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutForeground;
   }
 
+  @Nullable
   public Color getAboutLinkColor() {
     return myAboutLinkColor;
   }
