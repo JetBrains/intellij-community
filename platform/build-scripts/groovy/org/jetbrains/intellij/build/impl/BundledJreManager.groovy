@@ -68,8 +68,8 @@ class BundledJreManager {
   /**
    * Return a .tar.gz archive containing distribution of JRE for Win OS which will be bundled with the product
    */
-  File findWinJreArchive() {
-    return findJreArchive("win")
+  File findWinJreArchive(JvmArchitecture arch) {
+    return findJreArchive("win", arch)
   }
 
   String archiveNameJre(BuildContext buildContext) {
