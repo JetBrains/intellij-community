@@ -157,6 +157,15 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals("System output\n12", editor.getDocument().getText());
   }
 
+  public void testCRLF() throws Exception {
+    ConsoleViewImpl console = myConsole;
+    console.clear();
+    console.print("Hello\r", ConsoleViewContentType.NORMAL_OUTPUT);
+    console.print("\nWorld", ConsoleViewContentType.NORMAL_OUTPUT);
+    console.flushDeferredText();
+    assertEquals("Hello\nWorld", console.getText());
+  }
+
   @NotNull
   static ConsoleViewImpl createConsole() {
     Project project = getProject();

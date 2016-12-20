@@ -691,7 +691,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (myOutputPaused) return;
       if (myDeferredBuffer.getLength() == 0) return;
 
-      addedText = myDeferredBuffer.getText();
+      addedText = myDeferredBuffer.getText().replace(LineSeparator.CRLF.getSeparatorString(), LineSeparator.LF.getSeparatorString());
 
       List<TokenInfo> deferredTokens = myDeferredBuffer.getTokens();
       for (TokenInfo deferredToken : deferredTokens) {
