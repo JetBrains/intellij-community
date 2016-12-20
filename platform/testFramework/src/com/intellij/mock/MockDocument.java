@@ -65,11 +65,6 @@ public class MockDocument implements DocumentEx {
     myModStamp = newModificationStamp;
   }
 
-  @Override
-  public int getListenersCount() {
-    return 0;
-  }
-
   public CharSequence textToCharArray() {
     return getText();
   }
