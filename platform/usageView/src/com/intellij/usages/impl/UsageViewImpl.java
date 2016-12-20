@@ -1524,7 +1524,7 @@ public class UsageViewImpl implements UsageView {
     return myModel.areTargetsValid();
   }
 
-  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable{
+  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator, Disposable{
     @Nullable private OccurenceNavigatorSupport mySupport;
     private final CopyProvider myCopyProvider;
 
@@ -1813,4 +1813,16 @@ public class UsageViewImpl implements UsageView {
   private boolean isFilterDuplicateLines() {
     return myPresentation.isMergeDupLinesAvailable() && UsageViewSettings.getInstance().isFilterDuplicatedLine();
   }
+
+  public Usage getNextToSelect(@NotNull Usage toDelete) {
+    UsageNode usageNode = myUsageNodes.get(toDelete);
+    if (usageNode == null) return null;
+
+    DefaultMutableTreeNode node = myRootPanel.mySupport.findNode(myTree, usageNode, true, null);
+    if (node == null) node = myRootPanel.mySupport.findNode(myTree, usageNode, false, null); // last node
+
+    return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
+  }
+
+
 }
