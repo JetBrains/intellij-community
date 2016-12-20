@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
@@ -31,7 +32,6 @@ import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import gnu.trove.THashMap
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
 import org.junit.Before
@@ -49,14 +49,17 @@ import kotlin.properties.Delegates
 internal class ApplicationStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
-  private val tempDirManager = TemporaryDirectory()
-  @Rule fun getTemporaryFolder() = tempDirManager
+  @JvmField
+  @Rule
+  val tempDirManager = TemporaryDirectory()
 
-  private val edtRule = EdtRule()
-  @Rule fun _edtRule() = edtRule
+  @JvmField
+  @Rule
+  val edtRule = EdtRule()
 
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
@@ -92,7 +95,7 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).isRegularFile()
+    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).isRegularFile
   }
 
   @Test fun `remove deprecated storage on write`() {
@@ -156,7 +159,7 @@ internal class ApplicationStoreTest {
     val configDir = Paths.get(configPath)
 
     val componentPath = configDir.resolve("a.xml")
-    assertThat(componentPath).isRegularFile()
+    assertThat(componentPath).isRegularFile
     val componentFile = componentPath
 
     // additional export path
