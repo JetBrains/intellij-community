@@ -36,7 +36,8 @@ public interface ModuleEx extends Module {
   default void projectClosed() {
   }
 
-  void rename(String newName);
+  default void rename(@NotNull String newName, boolean notifyStorage) {
+  }
 
   void clearScopesCache();
 

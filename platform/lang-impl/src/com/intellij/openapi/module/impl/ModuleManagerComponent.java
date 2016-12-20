@@ -30,6 +30,7 @@ import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
@@ -77,6 +78,8 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
         }
       }
     });
+
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new ModuleFileListener(this));
   }
 
   @Override

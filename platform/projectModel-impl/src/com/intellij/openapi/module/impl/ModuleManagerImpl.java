@@ -977,7 +977,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         oldNames.put(module, module.getName());
         moduleModel.myModules.remove(module.getName());
         modules.add(module);
-        ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
+        ((ModuleEx)module).rename(modulesToNewNamesMap.get(module), true);
         moduleModel.myModules.put(module.getName(), module);
       }
 
