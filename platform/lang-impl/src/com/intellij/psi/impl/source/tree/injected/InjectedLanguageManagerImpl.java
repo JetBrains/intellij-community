@@ -64,6 +64,7 @@ import java.util.*;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
+  static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;
   private volatile DaemonProgressIndicator myProgress;
@@ -152,7 +153,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       if (myProgress.isCanceled()) return;
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), myProgress, true, commitProcessor);
 
-      synchronized (PsiLock.LOCK) {
+      synchronized (ourInjectionPsiLock) {
         injected.clear();
         injected.addAll(newDocuments);
       }
