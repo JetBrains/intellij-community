@@ -79,17 +79,15 @@ public final class MapBasedTree<K, N> {
   public boolean updateRoot(N node) {
     if (node == (root == null ? null : root.node)) return false;
 
-    K key = getKey(node);
-    Entry<N> entry = null;
-    if (key != null) {
-      entry = new Entry<>(null, node);
-    }
-    else if (root == null) {
-      return false;
-    }
-    root = entry;
     map.clear();
-    if (key != null) map.put(key, entry);
+    if (node == null) {
+      root = null;
+    }
+    else {
+      root = new Entry<>(null, node);
+      K key = keyFunction.apply(node);
+      if (key != null) map.put(key, root);
+    }
     return true;
   }
 
