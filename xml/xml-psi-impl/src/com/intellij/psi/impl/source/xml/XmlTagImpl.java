@@ -749,7 +749,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return null;
   }
 
-  protected boolean isCaseSensitive() {
+  public boolean isCaseSensitive() {
     return true;
   }
 
