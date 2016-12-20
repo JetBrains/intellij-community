@@ -65,11 +65,11 @@ public abstract class FontLayoutService {
     // this flag is supported by JetBrains Runtime
     private static final int LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT = 8;
 
-    private final Method getCodePointAdvanceRef;
+    private final Method getCodePointAdvanceMethod;
 
     private DefaultFontLayoutService() {
-      getCodePointAdvanceRef = ReflectionUtil.getDeclaredMethod(FontStrike.class, "getCodePointAdvance", int.class);
-      if (getCodePointAdvanceRef == null) {
+      getCodePointAdvanceMethod = ReflectionUtil.getDeclaredMethod(FontStrike.class, "getCodePointAdvance", int.class);
+      if (getCodePointAdvanceMethod == null) {
         LOG.warn("Couldn't access FontStrike.getCodePointAdvance method");
       }
     }
@@ -94,11 +94,11 @@ public abstract class FontLayoutService {
 
     @Override
     public float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint) {
-      if (getCodePointAdvanceRef != null) {
+      if (getCodePointAdvanceMethod != null) {
         Font font = fontMetrics.getFont();
         FontStrike fs = FontUtilities.getFont2D(font).getStrike(font, fontMetrics.getFontRenderContext());
         try {
-          return (float)getCodePointAdvanceRef.invoke(fs, codePoint);
+          return (float)getCodePointAdvanceMethod.invoke(fs, codePoint);
         }
         catch (Exception e) {
           LOG.debug(e);
