@@ -118,7 +118,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private static String idAndName(TestIdentifier testIdentifier, String displayName) {
-    return " id=\'" + testIdentifier.getUniqueId().toString() + "\' name=\'" + escapeName(displayName);
+    return " id=\'" + escapeName(testIdentifier.getUniqueId().toString()) + "\' name=\'" + escapeName(displayName);
   }
 
   @Override

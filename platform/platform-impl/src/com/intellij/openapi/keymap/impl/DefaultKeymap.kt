@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
+import gnu.trove.THashMap
 import org.jdom.Element
 import java.net.URL
 import java.util.*
@@ -33,6 +34,8 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultK
 
 open class DefaultKeymap {
   private val myKeymaps = ArrayList<Keymap>()
+
+  private val nameToScheme = THashMap<String, Keymap>()
 
   protected open val providers: Array<BundledKeymapProvider>
     get() = Extensions.getExtensions(BundledKeymapProvider.EP_NAME)
@@ -93,13 +96,16 @@ open class DefaultKeymap {
   }
 
   private fun loadKeymapsFromElement(dataHolder: SchemeDataHolder<KeymapImpl>, keymapName: String) {
-    val keymap = if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder) else DefaultKeymapImpl(dataHolder)
+    val keymap = if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder, this) else DefaultKeymapImpl(dataHolder, this)
     keymap.name = keymapName
     myKeymaps.add(keymap)
+    nameToScheme.put(keymapName, keymap)
   }
 
   val keymaps: Array<Keymap>
     get() = myKeymaps.toTypedArray()
+
+  internal fun findScheme(name: String) = nameToScheme.get(name)
 
   open val defaultKeymapName: String
     get() = when {

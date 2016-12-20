@@ -201,7 +201,7 @@ public class ExceptionWorker {
     final int dotIdx = line.lastIndexOf('.', lParenIdx);
     if (dotIdx < 0 || dotIdx < startIdx) return null;
     int moduleIdx = line.indexOf('/');
-    int classNameIdx = moduleIdx > -1 && moduleIdx < lParenIdx ? moduleIdx + 1 : startIdx + 1 + (startIdx >= 0 ? AT.length() : 0);
+    int classNameIdx = moduleIdx > -1 && moduleIdx < lParenIdx && moduleIdx < dotIdx ? moduleIdx + 1 : startIdx + 1 + (startIdx >= 0 ? AT.length() : 0);
 
     // class, method, link
     return Trinity.create(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1)),

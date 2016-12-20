@@ -244,7 +244,8 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   private static boolean isModuleOutputNeeded(Module module, final JavaSourceRootType rootType) {
-    return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
+    CompilerManager compilerManager = CompilerManager.getInstance(module.getProject());
+    return ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream().anyMatch(vFile -> !compilerManager.isExcludedFromCompilation(vFile));
   }
 
   public static boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {
