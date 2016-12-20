@@ -143,6 +143,9 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   @Nullable
   protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull XSourcePosition position, boolean restoreBreakpoints) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
+    if (psiFile == null) {
+      return null;
+    }
     return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
   }
 
