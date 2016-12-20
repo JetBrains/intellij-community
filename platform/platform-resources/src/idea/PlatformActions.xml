@@ -736,6 +736,8 @@
         </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
+        <action id="ShowAboutPopupInDebugModeAction" class="com.intellij.internal.ui.ShowAboutPopupInDebugModeAction"
+                text="Show About Popup in Debug Mode"/>
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />
         <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction" text="Test ColorBlindness" />
