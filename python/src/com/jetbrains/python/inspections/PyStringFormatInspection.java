@@ -35,8 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
 import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
@@ -138,20 +140,29 @@ public class PyStringFormatInspection extends PyInspection {
         }
         else if (rightExpression instanceof PyCallExpression) {
           final PyCallExpression call = (PyCallExpression)rightExpression;
-          final PyCallable callable = call.resolveCalleeFunction(resolveContext);
 
-          if (callable != null) {
-            final PyType callType = callable.getCallType(myTypeEvalContext, call);
+          final IntSummaryStatistics statistics = call.multiResolveCalleeFunction(resolveContext)
+            .stream()
+            .map(callable -> callable.getCallType(myTypeEvalContext, call))
+            .collect(
+              Collectors.summarizingInt(
+                callType -> {
+                  if (callType instanceof PyTupleType) {
+                    return ((PyTupleType)callType).getElementCount();
+                  }
+                  else {
+                    return 1;
+                  }
+                }
+              )
+            );
 
-            if (callType instanceof PyTupleType) {
-              return ((PyTupleType)callType).getElementCount();
-            }
-            else {
-              return 1;
-            }
+          if (statistics.getMin() == statistics.getMax()) {
+            return statistics.getMin();
           }
-
-          return -1;
+          else {
+            return -1;
+          }
         }
         else if (rightExpression instanceof PyParenthesizedExpression) {
           final PyExpression rhs = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
