@@ -92,7 +92,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     
-    panel.setText("Plugins supporting " + extension + " files are found");
+    panel.setText("Plugins supporting " + extension + " files found.");
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {
