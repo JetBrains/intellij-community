@@ -87,7 +87,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.getBaseDownloadUrlForJre64() != null && arch != JvmArchitecture.x64) {
       File archive = buildContext.bundledJreManager.findWinJreArchive()
       if (archive != null && archive.exists()) {
-        buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}", overwrite: "true")
+        buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}", overwrite: "false")
         //prepare JRE64 folder for win archive
         def jreDirectoryPath64 = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64)
         if (! new File("${jreDirectoryPath64}/jre64").exists()) {

@@ -73,7 +73,7 @@ class BundledJreManager {
   }
 
   String archiveNameJre64(BuildContext buildContext) {
-    return "jre64-for-${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.tar.gz"
+    return "jre64-for-${buildContext.buildNumber}.tar.gz"
   }
 
 
