@@ -1069,7 +1069,7 @@ public class IncProjectBuilder {
             final Collection<String> paths = entry.getValue();
             if (paths != null) {
               for (String path : paths) {
-                fsState.registerDeleted(target, new File(path), null);
+                fsState.registerDeleted(context, target, new File(path), null);
               }
             }
           }
