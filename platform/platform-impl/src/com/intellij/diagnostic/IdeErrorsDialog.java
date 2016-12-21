@@ -78,7 +78,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.List;
 
-public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, TypeSafeDataProvider {
+public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, DataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
   private final boolean myInternalMode;
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
@@ -184,6 +184,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
+  @Override
   public void newEntryAdded() {
     SwingUtilities.invokeLater(() -> {
       rebuildHeaders();
@@ -191,6 +192,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     });
   }
 
+  @Override
   public void poolCleared() {
     SwingUtilities.invokeLater(() -> doOKAction());
   }
@@ -227,10 +229,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       goForward();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myIndex < myMergedMessages.size() - 1);
@@ -246,10 +250,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       goBack();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myIndex > 0);
@@ -309,6 +315,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     myAttachmentsTabForm = new AttachmentsTabForm();
     myAttachmentsTabForm.addInclusionListener(new ChangeListener() {
+      @Override
       public void stateChanged(final ChangeEvent e) {
         updateAttachmentWarning(getSelectedMessage());
       }
@@ -355,6 +362,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     myAttachmentWarningLabel.setIcon(UIUtil.getBalloonWarningIcon());
     myAttachmentWarningLabel.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           myTabs.setSelectedIndex(myTabs.indexOfComponent(myAttachmentsTabForm.getContentPane()));
@@ -729,6 +737,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return hash2Messages;
   }
 
+  @Nullable
   private AbstractMessage getSelectedMessage() {
     return getMessageAt(myIndex);
   }
@@ -863,6 +872,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       setEnabled(false);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       boolean closeDialog = myMergedMessages.size() == 1;
       final AbstractMessage logMessage = getSelectedMessage();
@@ -936,13 +946,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     updateControls();
   }
 
-  public void calcData(DataKey key, DataSink sink) {
-    if (CURRENT_TRACE_KEY == key) {
+  @Override
+  public Object getData(String dataId) {
+    if (CURRENT_TRACE_KEY.is(dataId)) {
       final AbstractMessage message = getSelectedMessage();
       if (message != null) {
-        sink.put(CURRENT_TRACE_KEY, getDetailsText(message));
+        return getDetailsText(message);
       }
     }
+    return null;
   }
 
   @Nullable
@@ -1038,6 +1050,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       setEnabled(getSelectedMessage() != null);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest((Component)e.getSource());
       AnActionEvent event = AnActionEvent.createFromAnAction(myAnalyze, null, ActionPlaces.UNKNOWN, dataContext);
