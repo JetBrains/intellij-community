@@ -1016,6 +1016,10 @@
                      groupName="Potentially confusing code constructs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyGStringKey" displayName="GString map key"
+                     groupName="Potentially confusing code constructs"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyGStringKeyInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyDuplicateSwitchBranch" displayName="Duplicate switch case"
                      groupName="Validity issues"
                      enabledByDefault="true" level="WARNING"
