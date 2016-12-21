@@ -155,8 +155,10 @@ abstract class FunctionHelper {
     if (expression instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
       if (methodRef.resolve() == null) return null;
-      FunctionHelper fn = tryInlineMethodReference(paramCount, returnType, methodRef);
-      if (fn != null) return fn;
+      String template = tryInlineMethodReference(paramCount, methodRef);
+      if (template != null) {
+        return new InlinedFunctionHelper(returnType, paramCount, template);
+      }
       return new MethodReferenceFunctionHelper(returnType, type, methodRef);
     }
     if (expression instanceof PsiReferenceExpression && ExpressionUtils.isSimpleExpression(expression)) {
@@ -179,7 +181,7 @@ abstract class FunctionHelper {
   }
 
   @Nullable
-  private static FunctionHelper tryInlineMethodReference(int paramCount, PsiType returnType, PsiMethodReferenceExpression methodRef) {
+  private static String tryInlineMethodReference(int paramCount, PsiMethodReferenceExpression methodRef) {
     PsiElement element = methodRef.resolve();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
@@ -189,26 +191,26 @@ abstract class FunctionHelper {
         String className = aClass.getQualifiedName();
         if("java.util.Objects".equals(className) && paramCount == 1) {
           if (name.equals("nonNull")) {
-            return new InlinedFunctionHelper(returnType, 1, "{0}!=null");
+            return "{0}!=null";
           }
           if (name.equals("isNull")) {
-            return new InlinedFunctionHelper(returnType, 1, "{0}==null");
+            return "{0}==null";
           }
         }
         if (paramCount == 2 && name.equals("sum") && (CommonClassNames.JAVA_LANG_INTEGER.equals(className) ||
                                                       CommonClassNames.JAVA_LANG_LONG.equals(className) ||
                                                       CommonClassNames.JAVA_LANG_DOUBLE.equals(className))) {
-          return new InlinedFunctionHelper(returnType, 2, "{0}+{1}");
+          return "{0}+{1}";
         }
         if(CommonClassNames.JAVA_LANG_CLASS.equals(className) && paramCount == 1) {
           PsiExpression qualifier = methodRef.getQualifierExpression();
           if(qualifier instanceof PsiClassObjectAccessExpression) {
             PsiTypeElement type = ((PsiClassObjectAccessExpression)qualifier).getOperand();
             if(name.equals("isInstance")) {
-              return new InlinedFunctionHelper(returnType, 1, "{0} instanceof "+type.getText());
+              return "{0} instanceof "+type.getText();
             }
             if(name.equals("cast")) {
-              return new InlinedFunctionHelper(returnType, 1, "("+type.getText()+"){0}");
+              return "("+type.getText()+"){0}";
             }
           }
         }
