@@ -35,19 +35,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Tagir Valeev
  */
-class ReplaceWithCollectFix extends MigrateToStreamFix {
-  private static final Logger LOG = Logger.getInstance(ReplaceWithCollectFix.class);
+class CollectMigration extends BaseStreamApiMigration {
+  private static final Logger LOG = Logger.getInstance(CollectMigration.class);
 
-  final String myMethodName;
-
-  protected ReplaceWithCollectFix(String methodName) {
-    myMethodName = methodName;
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Replace with " + myMethodName;
+  protected CollectMigration(String methodName) {
+    super(methodName);
   }
 
   @Nullable

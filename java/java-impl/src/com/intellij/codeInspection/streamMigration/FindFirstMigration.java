@@ -27,12 +27,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Tagir Valeev
  */
-class ReplaceWithFindFirstFix extends MigrateToStreamFix {
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Replace with findFirst()";
-  }
+class FindFirstMigration extends BaseStreamApiMigration {
+  FindFirstMigration() {super("findFirst()");}
 
   @Override
   PsiElement migrate(@NotNull Project project,

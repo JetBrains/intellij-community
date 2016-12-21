@@ -28,19 +28,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Tagir Valeev
  */
-class ReplaceWithMatchFix extends MigrateToStreamFix {
-  private static final Logger LOG = Logger.getInstance("#" + ReplaceWithMatchFix.class.getName());
+class MatchMigration extends BaseStreamApiMigration {
+  private static final Logger LOG = Logger.getInstance("#" + MatchMigration.class.getName());
 
-  private final String myMethodName;
-
-  public ReplaceWithMatchFix(String methodName) {
-    myMethodName = methodName;
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Replace with " + myMethodName + "()";
+  public MatchMigration(String methodName) {
+    super(methodName+"()");
   }
 
   @Override

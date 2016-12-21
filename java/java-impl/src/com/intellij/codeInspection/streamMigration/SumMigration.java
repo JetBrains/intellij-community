@@ -25,13 +25,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Tagir Valeev
  */
-class ReplaceWithSumFix extends MigrateToStreamFix {
+class SumMigration extends BaseStreamApiMigration {
 
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Replace with sum()";
-  }
+  SumMigration() {super("sum()");}
 
   @Override
   PsiElement migrate(@NotNull Project project,

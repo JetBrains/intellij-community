@@ -23,19 +23,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Tagir Valeev
  */
-class ReplaceWithForeachCallFix extends MigrateToStreamFix {
-  private static final Logger LOG = Logger.getInstance(ReplaceWithForeachCallFix.class);
+class ForEachMigration extends BaseStreamApiMigration {
+  private static final Logger LOG = Logger.getInstance(ForEachMigration.class);
 
-  private final String myForEachMethodName;
-
-  protected ReplaceWithForeachCallFix(String forEachMethodName) {
-    myForEachMethodName = forEachMethodName;
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Replace with " + myForEachMethodName;
+  protected ForEachMigration(String forEachMethodName) {
+    super(forEachMethodName);
   }
 
   @Override
@@ -50,7 +42,7 @@ class ReplaceWithForeachCallFix extends MigrateToStreamFix {
     StringBuilder buffer = generateStream(tb.getLastOperation(), true);
     PsiElement block = tb.convertToElement(elementFactory);
 
-    buffer.append(".").append(myForEachMethodName).append("(");
+    buffer.append(".").append(getReplacement()).append("(");
 
     final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(block);
     PsiExpressionStatement callStatement = (PsiExpressionStatement)elementFactory

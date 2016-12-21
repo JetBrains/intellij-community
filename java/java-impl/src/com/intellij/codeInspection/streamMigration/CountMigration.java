@@ -23,13 +23,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Tagir Valeev
  */
-class ReplaceWithCountFix extends MigrateToStreamFix {
+class CountMigration extends BaseStreamApiMigration {
 
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Replace with count()";
-  }
+  CountMigration() {super("count()");}
 
   @Override
   PsiElement migrate(@NotNull Project project,

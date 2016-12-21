@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -45,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.EntryStream;
+import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -622,96 +622,108 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       TerminalBlock tb = TerminalBlock.from(source, body);
       if(tb.isEmpty()) return;
 
+      BaseStreamApiMigration migration = findMigration(statement, body, tb);
+      if(migration != null) {
+        MigrateToStreamFix[] fixes = {new MigrateToStreamFix(migration)};
+        if (migration instanceof ForEachMigration && tb.hasOperations()) { //for .stream()
+          fixes = ArrayUtil.append(fixes, new MigrateToStreamFix(new ForEachMigration("forEachOrdered")));
+        }
+        myHolder.registerProblem(statement, getRange(statement).shiftRight(-statement.getTextOffset()),
+                                 "Can be replaced with '" + migration.getReplacement() + "' call", fixes);
+      }
+    }
+
+    @Nullable
+    private BaseStreamApiMigration findMigration(PsiLoopStatement loop, PsiStatement body, TerminalBlock tb) {
       final ControlFlow controlFlow;
       try {
         controlFlow = ControlFlowFactory.getInstance(myHolder.getProject())
           .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
       }
       catch (AnalysisCanceledException ignored) {
-        return;
+        return null;
       }
       int startOffset = tb.getStartOffset(controlFlow);
       int endOffset = tb.getEndOffset(controlFlow);
-      if(startOffset < 0 || endOffset < 0) return;
+      if(startOffset < 0 || endOffset < 0) return null;
       final Collection<PsiStatement> exitPoints = ControlFlowUtil
         .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
                                      PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
       startOffset = controlFlow.getStartOffset(body);
       endOffset = controlFlow.getEndOffset(body);
-      if(startOffset < 0 || endOffset < 0) return;
-      PsiElement surrounder = PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, PsiClass.class);
+      if(startOffset < 0 || endOffset < 0) return null;
+      PsiElement surrounder = PsiTreeUtil.getParentOfType(loop, PsiLambdaExpression.class, PsiClass.class);
       final List<PsiVariable> nonFinalVariables = StreamEx.of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
         .remove(variable -> variable instanceof PsiField)
         .remove(variable -> PsiTreeUtil.getParentOfType(variable, PsiLambdaExpression.class, PsiClass.class) != surrounder)
-        .remove(variable -> isVariableSuitableForStream(variable, statement, tb)).toList();
+        .remove(variable -> isVariableSuitableForStream(variable, loop, tb)).toList();
 
-      TerminalBlock tbWithLimit = tb.tryPeelLimit(statement);
-      if (isCountOperation(statement, nonFinalVariables, tbWithLimit)) {
-        registerProblem(statement, "count", new ReplaceWithCountFix());
-      } else if (nonFinalVariables.isEmpty() && isCollectCall(tbWithLimit)) {
-        handleCollect(statement, tbWithLimit);
-        return;
-      } else if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
-        registerProblem(statement, "sum", new ReplaceWithSumFix());
+      TerminalBlock tbWithLimit = tb.tryPeelLimit(loop);
+      if (isCountOperation(loop, nonFinalVariables, tbWithLimit)) {
+        return new CountMigration();
       }
-      if (exitPoints.isEmpty()) {
-        if(!nonFinalVariables.isEmpty()) {
-          return;
-        }
-        if (isCollectMapCall(statement, tb) && (REPLACE_TRIVIAL_FOREACH || tb.hasOperations())) {
-          registerProblem(statement, "collect", new ReplaceWithCollectFix("collect"));
-        }
-        // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
-        else if (SUGGEST_FOREACH &&
-                 (tb.hasOperations() || (!(source instanceof ArrayStream) && (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement))))) {
-          ReplaceWithForeachCallFix forEachFix = new ReplaceWithForeachCallFix("forEach");
-          LocalQuickFix[] fixes = {forEachFix};
-          if (tb.hasOperations()) { //for .stream()
-            fixes = new LocalQuickFix[] {forEachFix, new ReplaceWithForeachCallFix("forEachOrdered")};
-          }
-          registerProblem(statement, "forEach", fixes);
-        }
-      } else {
-        if (!tb.hasOperations() && !REPLACE_TRIVIAL_FOREACH) return;
-        if (nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
-          handleSingleReturn(statement, tb);
-        }
-        // Source and intermediate ops should not refer to non-final variables
-        if (tb.intermediateAndSourceExpressions()
-          .flatCollection(expr -> PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class))
-          .map(PsiReferenceExpression::resolve).select(PsiVariable.class).anyMatch(nonFinalVariables::contains)) {
-          return;
-        }
-        PsiStatement[] statements = tb.getStatements();
-        if (statements.length == 2) {
-          PsiStatement breakStatement = statements[1];
-          if (!ControlFlowUtils.statementBreaksLoop(breakStatement, statement)) {
-            return;
-          }
-          if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statements)).findFirst() == null
-              && exitPoints.size() == 1 && exitPoints.contains(breakStatement)) {
-            registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
-            return;
-          }
-          if (nonFinalVariables.isEmpty() && statements[0] instanceof PsiExpressionStatement) {
-            registerProblem(statement, "findFirst", new ReplaceWithFindFirstFix());
-          } else if (nonFinalVariables.size() == 1) {
-            PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
-            if(assignment == null) return;
-            PsiExpression lValue = assignment.getLExpression();
-            if (!(lValue instanceof PsiReferenceExpression)) return;
-            PsiElement var = ((PsiReferenceExpression)lValue).resolve();
-            if(!(var instanceof PsiVariable) || !nonFinalVariables.contains(var)) return;
-            PsiExpression rValue = assignment.getRExpression();
-            if(rValue == null || VariableAccessUtils.variableIsUsed((PsiVariable)var, rValue)) return;
-            if(tb.getVariable().getType() instanceof PsiPrimitiveType && !ExpressionUtils.isReferenceTo(rValue, tb.getVariable())) return;
-            registerProblem(statement, "findFirst", new ReplaceWithFindFirstFix());
-          }
+      if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
+        return new SumMigration();
+      }
+      if (isCollectCall(tbWithLimit) && nonFinalVariables.isEmpty()) {
+        return findCollectMigration(loop, tbWithLimit);
+      }
+      if (isCollectMapCall(loop, tb) && nonFinalVariables.isEmpty() && (REPLACE_TRIVIAL_FOREACH || tb.hasOperations())) {
+        return new CollectMigration("collect");
+      }
+      // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
+      if (SUGGEST_FOREACH && exitPoints.isEmpty() && nonFinalVariables.isEmpty() &&
+          (tb.hasOperations() ||
+           (!(tb.getSource() instanceof ArrayStream) && (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, loop))))) {
+        return new ForEachMigration("forEach");
+      }
+      if (!tb.hasOperations() && !REPLACE_TRIVIAL_FOREACH) return null;
+      if (nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
+        return findMigrationForReturn(loop, tb);
+      }
+      // Source and intermediate ops should not refer to non-final variables
+      if (tb.intermediateAndSourceExpressions()
+        .flatCollection(expr -> PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class))
+        .map(PsiReferenceExpression::resolve).select(PsiVariable.class).anyMatch(nonFinalVariables::contains)) {
+        return null;
+      }
+      PsiStatement[] statements = tb.getStatements();
+      if (statements.length == 2) {
+        PsiStatement breakStatement = statements[1];
+        if (ControlFlowUtils.statementBreaksLoop(breakStatement, loop) &&
+            exitPoints.size() == 1 &&
+            exitPoints.contains(breakStatement)) {
+          return findMigrationForBreak(tb, nonFinalVariables, statements[0]);
         }
       }
+      return null;
     }
 
-    private void handleCollect(PsiLoopStatement statement, TerminalBlock tb) {
+    @Nullable
+    private BaseStreamApiMigration findMigrationForBreak(TerminalBlock tb, List<PsiVariable> nonFinalVariables, PsiStatement statement) {
+      if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statement)).findFirst() == null) {
+        return new MatchMigration("anyMatch");
+      }
+      if (nonFinalVariables.isEmpty() && statement instanceof PsiExpressionStatement) {
+        return new FindFirstMigration();
+      }
+      if (nonFinalVariables.size() == 1) {
+        PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statement);
+        if(assignment == null) return null;
+        PsiExpression lValue = assignment.getLExpression();
+        if (!(lValue instanceof PsiReferenceExpression)) return null;
+        PsiElement var = ((PsiReferenceExpression)lValue).resolve();
+        if(!(var instanceof PsiVariable) || !nonFinalVariables.contains(var)) return null;
+        PsiExpression rValue = assignment.getRExpression();
+        if(rValue == null || VariableAccessUtils.variableIsUsed((PsiVariable)var, rValue)) return null;
+        if(tb.getVariable().getType() instanceof PsiPrimitiveType && !ExpressionUtils.isReferenceTo(rValue, tb.getVariable())) return null;
+        return new FindFirstMigration();
+      }
+      return null;
+    }
+
+    @Nullable
+    private BaseStreamApiMigration findCollectMigration(PsiLoopStatement statement, TerminalBlock tb) {
       boolean addAll = statement instanceof PsiForeachStatement && !tb.hasOperations() && isAddAllCall(tb);
       String methodName;
       if(addAll) {
@@ -727,14 +739,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           else
             methodName = "collect";
         } else {
-          if (!SUGGEST_FOREACH || tb.getLastOperation() instanceof LimitOp) return;
+          if (!SUGGEST_FOREACH || tb.getLastOperation() instanceof LimitOp) return null;
           methodName = "forEach";
         }
       }
-      registerProblem(statement, methodName, new ReplaceWithCollectFix(methodName));
+      return new CollectMigration(methodName);
     }
 
-    void handleSingleReturn(PsiLoopStatement statement, TerminalBlock tb) {
+    @Nullable
+    private BaseStreamApiMigration findMigrationForReturn(PsiLoopStatement statement, TerminalBlock tb) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
       PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
@@ -754,22 +767,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
         if(nextReturnStatement.getParent() == statement.getParent() ||
            ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
-          registerProblem(statement, methodName, new ReplaceWithMatchFix(methodName));
-          return;
+          return new MatchMigration(methodName);
         }
       }
       if (!VariableAccessUtils.variableIsUsed(tb.getVariable(), value)) {
         Operation lastOp = tb.getLastOperation();
         if (!REPLACE_TRIVIAL_FOREACH && lastOp instanceof StreamSource ||
             (lastOp instanceof FilterOp && lastOp.getPreviousOp() instanceof StreamSource)) {
-          return;
+          return null;
         }
-        registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
+        return new MatchMigration("anyMatch");
       }
       if(nextReturnStatement != null && ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())
          && (!(tb.getVariable().getType() instanceof PsiPrimitiveType) || ExpressionUtils.isReferenceTo(value, tb.getVariable()))) {
-        registerProblem(statement, "findFirst", new ReplaceWithFindFirstFix());
+        return new FindFirstMigration();
       }
+      return null;
     }
 
     @NotNull
@@ -800,11 +813,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       } else {
         throw new IllegalStateException("Unexpected statement type: "+statement);
       }
-    }
-
-    private void registerProblem(PsiLoopStatement statement, String methodName, LocalQuickFix... fixes) {
-      myHolder.registerProblem(statement, getRange(statement).shiftRight(-statement.getTextOffset()),
-                               "Can be replaced with '" + methodName + "' call", fixes);
     }
   }
 
@@ -1618,6 +1626,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       ArrayDeque<Operation> ops = new ArrayDeque<>();
       operations().forEach(ops::addFirst);
       return ops;
+    }
+
+    public StreamSource getSource() {
+      return operations().select(StreamSource.class).collect(MoreCollectors.onlyOne())
+        .orElseThrow(IllegalStateException::new);
     }
 
     /**
