@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,26 +137,20 @@ public class PyStringFormatInspection extends PyInspection {
           return inspectArguments((PyExpression)pyElement, problemTarget);
         }
         else if (rightExpression instanceof PyCallExpression) {
-          final PyCallable callable = ((PyCallExpression)rightExpression).resolveCalleeFunction(resolveContext);
-          // TODO: Switch to PyCallable.getCallType()
-          if (callable instanceof PyFunction && myTypeEvalContext.maySwitchToAST(callable)) {
-            PyStatementList statementList = ((PyFunction)callable).getStatementList();
-            PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
-            int expressionsSize = -1;
-            for (PyReturnStatement returnStatement : returnStatements) {
-              if (returnStatement.getExpression() instanceof PyCallExpression) {
-                return -1;
-              }
-              List<PyExpression> expressionList = PyUtil.flattenedParensAndTuples(returnStatement.getExpression());
-              if (expressionsSize < 0) {
-                expressionsSize = expressionList.size();
-              }
-              if (expressionsSize != expressionList.size()) {
-                return -1;
-              }
+          final PyCallExpression call = (PyCallExpression)rightExpression;
+          final PyCallable callable = call.resolveCalleeFunction(resolveContext);
+
+          if (callable != null) {
+            final PyType callType = callable.getCallType(myTypeEvalContext, call);
+
+            if (callType instanceof PyTupleType) {
+              return ((PyTupleType)callType).getElementCount();
             }
-            return expressionsSize;
+            else {
+              return 1;
+            }
           }
+
           return -1;
         }
         else if (rightExpression instanceof PyParenthesizedExpression) {
