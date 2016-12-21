@@ -133,7 +133,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     numOfFavourites = getNumOfFavourites(remoteBranchActions);
     List<AnAction> remoteBranchPresentationList =
       remoteBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());
-    addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavourites > MAX_BRANCH_NUM ? numOfFavourites : MAX_BRANCH_NUM);
+    addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavourites > 0 ? numOfFavourites : MAX_BRANCH_NUM);
     popupGroup.addAll(remoteBranchPresentationList);
   }
 
