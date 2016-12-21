@@ -538,8 +538,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   protected void fireModuleAddedInWriteAction(@NotNull ModuleEx module) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      module.moduleAdded();
-      fireModuleAdded(module);
+      if (!module.isLoaded()) {
+        module.moduleAdded();
+        fireModuleAdded(module);
+      }
     });
   }
 
