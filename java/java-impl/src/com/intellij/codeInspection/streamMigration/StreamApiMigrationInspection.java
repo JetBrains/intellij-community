@@ -315,7 +315,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     PsiExpression counter = PsiUtil.skipParenthesizedExprDown(limitOp.getCountExpression());
     if (tb.isEmpty()) {
       // like "if(++count == limit) break"
-      if(!(counter instanceof PsiPrefixExpression)) return false;
       variable = getIncrementedVariable(counter, tb, nonFinalVariables);
     } else if (!ExpressionUtils.isReferenceTo(counter, variable)) {
       return false;
@@ -1097,12 +1096,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static class LimitOp extends Operation {
-    private final boolean myInclusive;
     private final PsiExpression myCounter;
+    private final int myDelta;
 
-    LimitOp(@Nullable Operation previousOp, PsiExpression counter, PsiExpression expression, PsiVariable variable, boolean inclusive) {
+    LimitOp(@Nullable Operation previousOp, PsiExpression counter, PsiExpression expression, PsiVariable variable, int delta) {
       super(previousOp, expression, variable);
-      myInclusive = inclusive;
+      LOG.assertTrue(delta >= 0);
+      myDelta = delta;
       myCounter = counter;
     }
 
@@ -1116,16 +1116,16 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     private String getLimitExpression() {
-      if(!myInclusive) {
+      if(myDelta == 0) {
         return myExpression.getText();
       }
       if (myExpression instanceof PsiLiteralExpression) {
         Object value = ((PsiLiteralExpression)myExpression).getValue();
         if (value instanceof Integer || value instanceof Long) {
-          return String.valueOf(((Number)value).longValue() + 1);
+          return String.valueOf(((Number)value).longValue() + myDelta);
         }
       }
-      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+1";
+      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+" + myDelta;
     }
   }
 
@@ -1553,16 +1553,17 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(!ComparisonUtils.isComparison(binOp)) return this;
       String comparison = filter.isNegated() ? ComparisonUtils.getNegatedComparison(binOp.getOperationTokenType())
                           : binOp.getOperationSign().getText();
-      boolean inclusive = false, flipped = false;
+      boolean flipped = false;
+      int delta = 0;
       switch (comparison) {
         case "==":
         case ">=":
           break;
         case ">":
-          inclusive = true;
+          delta = 1;
           break;
         case "<":
-          inclusive = true;
+          delta = 1;
           flipped = true;
           break;
         case "<=":
@@ -1571,14 +1572,17 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         default:
           return this;
       }
-      PsiExpression counter = flipped ? binOp.getROperand() : binOp.getLOperand();
+      PsiExpression counter = PsiUtil.skipParenthesizedExprDown(flipped ? binOp.getROperand() : binOp.getLOperand());
       if(counter == null || VariableAccessUtils.variableIsUsed(myVariable, counter)) return this;
       PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
       if(!ExpressionUtils.isSimpleExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
       PsiType type = limit.getType();
       if(!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) return this;
+      if(counter instanceof PsiPostfixExpression) {
+        delta++;
+      }
 
-      LimitOp limitOp = new LimitOp(filter.getPreviousOp(), counter, limit, myVariable, inclusive);
+      LimitOp limitOp = new LimitOp(filter.getPreviousOp(), counter, limit, myVariable, delta);
       return new TerminalBlock(limitOp, myVariable, statements);
     }
 
