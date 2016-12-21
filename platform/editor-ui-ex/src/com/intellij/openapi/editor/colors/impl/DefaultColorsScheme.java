@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,5 +120,11 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   @Override
   public boolean isVisible() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public SchemeState getSchemeState() {
+    return SchemeState.NON_PERSISTENT;
   }
 }
