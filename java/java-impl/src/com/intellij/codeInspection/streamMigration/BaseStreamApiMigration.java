@@ -46,16 +46,14 @@ abstract class BaseStreamApiMigration {
   }
 
   abstract PsiElement migrate(@NotNull Project project,
-                              @NotNull PsiLoopStatement loopStatement,
                               @NotNull PsiStatement body,
                               @NotNull TerminalBlock tb);
 
-  static PsiElement replaceWithNumericAddition(@NotNull Project project,
-                                               PsiLoopStatement loopStatement,
+  static PsiElement replaceWithNumericAddition(PsiLoopStatement loopStatement,
                                                PsiVariable var,
                                                StringBuilder builder,
                                                PsiType expressionType) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
     restoreComments(loopStatement, loopStatement.getBody());
     InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
     if (status != InitializerUsageStatus.UNKNOWN) {
@@ -70,10 +68,10 @@ abstract class BaseStreamApiMigration {
   }
 
   static PsiElement replaceInitializer(PsiLoopStatement loopStatement,
-                                 PsiVariable var,
-                                 PsiExpression initializer,
-                                 String replacement,
-                                 InitializerUsageStatus status) {
+                                       PsiVariable var,
+                                       PsiExpression initializer,
+                                       String replacement,
+                                       InitializerUsageStatus status) {
     Project project = loopStatement.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if(status == InitializerUsageStatus.DECLARED_JUST_BEFORE) {

@@ -298,15 +298,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return StreamEx.of(superMethods).map(PsiMember::getContainingClass).nonNull().map(PsiClass::getQualifiedName).has(className);
   }
 
-  private static boolean isCollectMapCall(PsiLoopStatement loop, TerminalBlock tb) {
+  private static boolean isCollectMapCall(TerminalBlock tb) {
     PsiMethodCallExpression call = tb.getSingleMethodCall();
     if (!isCallOf(call, CommonClassNames.JAVA_UTIL_MAP, "merge", "put", "putIfAbsent")) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-    return extractQualifierClass(tb, call) != null && !tb.dependsOn(qualifierExpression) && canCollect(loop, call);
+    return extractQualifierClass(tb, call) != null && !tb.dependsOn(qualifierExpression) && canCollect(tb.getMainLoop(), call);
   }
 
-  private static boolean isCountOperation(PsiLoopStatement statement, List<PsiVariable> nonFinalVariables, TerminalBlock tb) {
+  private static boolean isCountOperation(List<PsiVariable> nonFinalVariables, TerminalBlock tb) {
     PsiLocalVariable variable = getIncrementedVariable(tb.getSingleExpression(PsiExpression.class), tb, nonFinalVariables);
     LimitOp limitOp = tb.getLastOperation(LimitOp.class);
     if (limitOp == null) {
@@ -321,7 +321,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     return variable != null &&
            ExpressionUtils.isZero(variable.getInitializer()) &&
-           getInitializerUsageStatus(variable, statement) != UNKNOWN;
+           getInitializerUsageStatus(variable, tb.getMainLoop()) != UNKNOWN;
   }
 
   private static boolean isCollectCall(TerminalBlock tb) {
@@ -651,13 +651,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         .remove(variable -> PsiTreeUtil.getParentOfType(variable, PsiLambdaExpression.class, PsiClass.class) != surrounder)
         .remove(variable -> isVariableSuitableForStream(variable, loop, tb)).toList();
 
-      TerminalBlock tbWithLimit = tb.tryPeelLimit(loop);
+      TerminalBlock tbWithLimit = tb.tryPeelLimit();
       List<PsiVariable> nonFinalVariablesWithLimit = nonFinalVariables;
       if(tbWithLimit != tb) {
         nonFinalVariablesWithLimit = StreamEx.of(nonFinalVariables)
           .remove(variable -> isVariableSuitableForStream(variable, loop, tbWithLimit)).toList();
       }
-      if (isCountOperation(loop, nonFinalVariablesWithLimit, tbWithLimit)) {
+      if (isCountOperation(nonFinalVariablesWithLimit, tbWithLimit)) {
         return new CountMigration();
       }
       if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
@@ -666,7 +666,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (isCollectCall(tbWithLimit) && nonFinalVariablesWithLimit.isEmpty()) {
         return findCollectMigration(loop, tbWithLimit);
       }
-      if (isCollectMapCall(loop, tb) && nonFinalVariables.isEmpty() && (REPLACE_TRIVIAL_FOREACH || tb.hasOperations())) {
+      if (isCollectMapCall(tb) && nonFinalVariables.isEmpty() && (REPLACE_TRIVIAL_FOREACH || tb.hasOperations())) {
         return new CollectMigration("collect");
       }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
@@ -1065,12 +1065,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static class FlatMapOp extends Operation {
-    private final PsiLoopStatement myLoop;
     private final StreamSource mySource;
 
-    FlatMapOp(@Nullable Operation previousOp, StreamSource source, PsiVariable variable, PsiLoopStatement loop) {
+    FlatMapOp(@Nullable Operation previousOp, StreamSource source, PsiVariable variable) {
       super(previousOp, source.getExpression(), variable);
-      myLoop = loop;
       mySource = source;
     }
 
@@ -1101,7 +1099,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
-      return statement.findExitedStatement() == myLoop;
+      return statement.findExitedStatement() == mySource.getLoop();
     }
   }
 
@@ -1140,11 +1138,18 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   abstract static class StreamSource extends Operation {
-    protected StreamSource(PsiVariable variable, PsiExpression expression) {
+    private final PsiLoopStatement myLoop;
+
+    protected StreamSource(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
       super(null, expression, variable);
+      myLoop = loop;
     }
 
     void cleanUpSource() {
+    }
+
+    PsiLoopStatement getLoop() {
+      return myLoop;
     }
 
     @Contract("null -> null")
@@ -1164,8 +1169,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static class BufferedReaderLines extends StreamSource {
-    private BufferedReaderLines(PsiVariable variable, PsiExpression expression) {
-      super(variable, expression);
+    private BufferedReaderLines(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
+      super(loop, variable, expression);
     }
 
     @Override
@@ -1215,13 +1220,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(method == null) return null;
       PsiClass aClass = method.getContainingClass();
       if(aClass == null || !"java.io.BufferedReader".equals(aClass.getQualifiedName())) return null;
-      return new BufferedReaderLines(var, readerExpression);
+      return new BufferedReaderLines(whileLoop, var, readerExpression);
     }
   }
 
   static class ArrayStream extends StreamSource {
-    private ArrayStream(PsiVariable variable, PsiExpression expression) {
-      super(variable, expression);
+    private ArrayStream(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
+      super(loop, variable, expression);
     }
 
     @Override
@@ -1244,14 +1249,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         return null;
       }
 
-      return new ArrayStream(parameter, iteratedValue);
+      return new ArrayStream(statement, parameter, iteratedValue);
     }
   }
 
   static class CollectionStream extends StreamSource {
 
-    private CollectionStream(PsiVariable variable, PsiExpression expression) {
-      super(variable, expression);
+    private CollectionStream(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
+      super(loop, variable, expression);
     }
 
     @Override
@@ -1280,7 +1285,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           !isSupported(statement.getIterationParameter().getType())) {
         return null;
       }
-      return new CollectionStream(statement.getIterationParameter(), iteratedValue);
+      return new CollectionStream(statement, statement.getIterationParameter(), iteratedValue);
     }
   }
 
@@ -1288,8 +1293,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     final PsiExpression myBound;
     final boolean myIncluding;
 
-    private CountingLoop(PsiLocalVariable counter, PsiExpression initializer, PsiExpression bound, boolean including) {
-      super(counter, initializer);
+    private CountingLoop(PsiLoopStatement loop,
+                         PsiLocalVariable counter,
+                         PsiExpression initializer,
+                         PsiExpression bound,
+                         boolean including) {
+      super(loop, counter, initializer);
       myBound = bound;
       myIncluding = including;
     }
@@ -1360,7 +1369,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       } else return null;
       if(bound == null || !(ref instanceof PsiReferenceExpression) || !((PsiReferenceExpression)ref).isReferenceTo(counter)) return null;
       if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
-      return new CountingLoop(counter, initializer, bound, closed);
+      return new CountingLoop(forStatement,  counter, initializer, bound, closed);
     }
   }
 
@@ -1484,7 +1493,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         // otherwise it would be necessary to create bogus step like
         // .mapToObj(var -> collection.stream()).flatMap(Function.identity())
         if(myVariable.getType() instanceof PsiPrimitiveType && !myVariable.getType().equals(source.getVariable().getType())) return null;
-        FlatMapOp op = new FlatMapOp(myPreviousOp, source, myVariable, loopStatement);
+        FlatMapOp op = new FlatMapOp(myPreviousOp, source, myVariable);
         TerminalBlock withFlatMap = new TerminalBlock(op, source.getVariable(), body);
         if(!VariableAccessUtils.variableIsUsed(myVariable, body)) {
           return withFlatMap;
@@ -1542,11 +1551,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
      * <p>It's not guaranteed that the peeled condition actually could be translated to the limit operation:
      * additional checks will be necessary</p>
      *
-     * @param loop a main loop for which the condition should be peeled off
      * @return new terminal block with additional limit operation or self if peeling is failed.
-     *
      */
-    TerminalBlock tryPeelLimit(PsiLoopStatement loop) {
+    TerminalBlock tryPeelLimit() {
       if(myStatements.length == 0) return this;
       TerminalBlock tb = this;
       PsiStatement[] statements = {};
@@ -1554,7 +1561,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         statements = new PsiStatement[]{myStatements[0]};
         tb = new TerminalBlock(myPreviousOp, myVariable, Arrays.copyOfRange(myStatements, 1, myStatements.length)).extractFilter();
       }
-      if (tb == null || !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), loop)) return this;
+      if (tb == null || !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), getMainLoop())) return this;
       FilterOp filter = tb.getLastOperation(FilterOp.class);
       if(filter == null) return this;
       PsiExpression condition = PsiUtil.skipParenthesizedExprDown(filter.getExpression());
@@ -1654,6 +1661,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     public StreamSource getSource() {
       return operations().select(StreamSource.class).collect(MoreCollectors.onlyOne())
         .orElseThrow(IllegalStateException::new);
+    }
+
+    public PsiLoopStatement getMainLoop() {
+      return getSource().getLoop();
     }
 
     /**

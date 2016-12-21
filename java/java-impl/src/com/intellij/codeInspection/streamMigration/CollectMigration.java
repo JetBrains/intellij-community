@@ -53,11 +53,9 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project,
-                     @NotNull PsiLoopStatement loopStatement,
-                     @NotNull PsiStatement body,
-                     @NotNull TerminalBlock tb) {
-    tb = tb.tryPeelLimit(loopStatement);
+  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+    PsiLoopStatement loopStatement = tb.getMainLoop();
+    tb = tb.tryPeelLimit();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = tb.getSingleMethodCall();
     if (call == null) return null;
