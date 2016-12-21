@@ -135,7 +135,9 @@ class DependencyResolverImpl implements DependencyResolver {
         resolvedArtifacts.each { artifactMap.put(it.moduleVersion.id, it) }
         //noinspection GroovyAssignabilityCheck
         Set<ComponentArtifactsResult> componentResults = myProject.dependencies.createArtifactResolutionQuery()
-          .forComponents(resolvedArtifacts.collect { toComponentIdentifier(it.moduleVersion.id) })
+          .forComponents(resolvedArtifacts
+                           .findAll{ !isDependencySubstitutionsSupported || it.id.componentIdentifier instanceof ModuleComponentIdentifier }
+                           .collect { toComponentIdentifier(it.moduleVersion.id) })
           .withArtifacts(jvmLibrary, artifactTypes)
           .execute()
           .getResolvedComponents()
