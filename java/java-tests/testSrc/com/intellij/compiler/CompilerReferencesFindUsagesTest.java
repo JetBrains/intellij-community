@@ -160,10 +160,10 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
 
   public void testOverloadedMethods() throws Exception {
     configureByFiles(getName(), getName() + "/Foo.java", getName() + "/A.java", getName() + "/B.java");
-    PsiMethod methodToSearch = findClass("Foo").findMethodsByName("bar", false)[0];
-    assertSize(2, MethodReferencesSearch.search(methodToSearch, false).findAll());
+    PsiMethod[] methodsToSearch = findClass("Foo").findMethodsByName("bar", false);
+    Arrays.stream(methodsToSearch).forEach((m) -> assertSize(2, MethodReferencesSearch.search(m, false).findAll()));
     myCompilerTester.rebuild();
-    assertSize(2, MethodReferencesSearch.search(methodToSearch, false).findAll());
+    Arrays.stream(methodsToSearch).forEach((m) -> assertSize(2, MethodReferencesSearch.search(m, false).findAll()));
   }
 
   private void doTestRunnableFindUsagesWithExcludesConfiguration(@NotNull Consumer<ExcludesConfiguration> excludesConfigurationPatcher,
