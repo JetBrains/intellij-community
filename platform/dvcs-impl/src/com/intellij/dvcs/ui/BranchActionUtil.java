@@ -15,16 +15,16 @@
  */
 package com.intellij.dvcs.ui;
 
+import com.intellij.util.containers.ContainerUtil;
+
 import java.util.Comparator;
 import java.util.List;
 
 public class BranchActionUtil {
-  public static final Comparator<BranchActionGroup> FAVOURITE_BRANCH_COMPARATOR = (o1, o2) -> {
-    if (o1.isFavourite() ^ o2.isFavourite()) return o1.isFavourite() ? -1 : 1;
-    return 0;
-  };
+  public static final Comparator<BranchActionGroup> FAVOURITE_BRANCH_COMPARATOR =
+    Comparator.comparing(branch -> branch.isFavourite() ? -1 : 0);
 
   public static int getNumOfFavourites(List<? extends BranchActionGroup> branchActions) {
-    return (int)branchActions.stream().filter(BranchActionGroup::isFavourite).count();
+    return ContainerUtil.count(branchActions, BranchActionGroup::isFavourite);
   }
 }

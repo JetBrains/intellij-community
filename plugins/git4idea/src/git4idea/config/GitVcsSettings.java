@@ -91,6 +91,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
     @Tag("favourite-branches")
     public BranchStorage FAVOURITE_BRANCHES = new BranchStorage();
+    @Tag("excluded-from-favourite")
+    public BranchStorage EXCLUDED_FAVOURITES = new BranchStorage();
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -302,6 +304,19 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return myState.FAVOURITE_BRANCHES.contains(type.toString(), repository, branchName);
   }
 
+  public void excludedFromFavourites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
+    myState.EXCLUDED_FAVOURITES.add(type.toString(), repository, branchName);
+  }
+
+  public void removeFromExcluded(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
+    myState.EXCLUDED_FAVOURITES.remove(type.toString(), repository, branchName);
+  }
+
+  public boolean isExcludedFromFavourites(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
+    return myState.EXCLUDED_FAVOURITES.contains(type.toString(), repository, branchName);
+  }
+
+
   @Tag("push-target-info")
   private static class PushTargetInfo extends DvcsBranchInfo {
     @Attribute(value = "target-remote") public String targetRemoteName;
@@ -334,7 +349,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
     @Override
     public int hashCode() {
-    return Objects.hash(super.hashCode(), targetRemoteName,targetBranchName);
+      return Objects.hash(super.hashCode(), targetRemoteName, targetBranchName);
     }
   }
 }

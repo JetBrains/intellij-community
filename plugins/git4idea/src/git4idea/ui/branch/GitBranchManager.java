@@ -26,9 +26,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.map2List;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static git4idea.log.GitRefManager.MASTER;
 import static git4idea.log.GitRefManager.ORIGIN_MASTER;
-import static java.util.stream.Collectors.toList;
 
 public class GitBranchManager {
   @NotNull private final GitRepositoryManager myRepositoryManager;
@@ -45,10 +46,9 @@ public class GitBranchManager {
 
   @NotNull
   private List<DvcsBranchInfo> constructDefaultBranchPredefinedList(GitBranchType type) {
-    List<DvcsBranchInfo> branchInfos = myRepositoryManager.getRepositories().stream()
-      .map(repository -> new DvcsBranchInfo(repository.getRoot().getPath(), getDefaultBranchName(type)))
-      .collect(toList());
-    branchInfos.add(new DvcsBranchInfo("", getDefaultBranchName(type)));
+    List<DvcsBranchInfo> branchInfos = newArrayList(new DvcsBranchInfo("", getDefaultBranchName(type)));
+    branchInfos.addAll(map2List(myRepositoryManager.getRepositories(),
+                                repository -> new DvcsBranchInfo(repository.getRoot().getPath(), getDefaultBranchName(type))));
     return branchInfos;
   }
 
@@ -59,7 +59,7 @@ public class GitBranchManager {
 
   public boolean isFavourite(@NotNull GitBranchType branchType, @Nullable GitRepository repository, @NotNull String branchName) {
     if (mySettings.isFavourite(branchType, repository, branchName)) return true;
-    //if (mySettings.isExcludedFromFavourites(branchType, repository, branchName)) return false;
+    if (mySettings.isExcludedFromFavourites(branchType, repository, branchName)) return false;
     return myPredefinedFavouriteBranches.contains(branchType.toString(), repository, branchName);
   }
 
@@ -69,14 +69,14 @@ public class GitBranchManager {
                            boolean shouldBeFavourite) {
     if (shouldBeFavourite) {
       mySettings.addToFavourites(branchType, repository, branchName);
-      //mySettings.removeFromExcluded(branchType, repository, branchName);
+      mySettings.removeFromExcluded(branchType, repository, branchName);
     }
     else {
       if (mySettings.isFavourite(branchType, repository, branchName)) {
         mySettings.removeFromFavourites(branchType, repository, branchName);
       }
       else if (myPredefinedFavouriteBranches.contains(branchType.toString(), repository, branchName)) {
-        //mySettings.excludedFromFavourites()
+        mySettings.excludedFromFavourites(branchType, repository, branchName);
       }
     }
   }
