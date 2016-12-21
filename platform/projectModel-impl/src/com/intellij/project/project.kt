@@ -98,15 +98,18 @@ val Module.rootManager: ModuleRootManager
  *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
  *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
  */
-fun Project.guessProjectDir() : VirtualFile? {
+fun Project.guessProjectDir() : VirtualFile {
+  if (isDefault) {
+    throw IllegalStateException("Not applicable for default project")
+  }
+
   val modules = ModuleManager.getInstance(this).modules
   val module = if (modules.size == 1) modules.first() else modules.find { it.name == this.name }
   if (module != null) {
     val roots = ModuleRootManager.getInstance(module).contentRoots
-    if (roots.size == 1) {
-      val file = roots.first().canonicalFile
-      if (file != null) return file
+    roots.firstOrNull()?.canonicalFile?.let {
+      return it
     }
   }
-  return this.baseDir
+  return this.baseDir!!
 }
