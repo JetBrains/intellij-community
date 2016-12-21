@@ -220,10 +220,6 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
 
     <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="XHTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSP" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSPX" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
 
     <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
