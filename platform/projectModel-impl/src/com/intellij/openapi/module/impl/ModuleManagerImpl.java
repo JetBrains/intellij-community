@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -28,6 +27,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -44,10 +45,10 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.graph.*;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -66,7 +67,9 @@ import java.util.concurrent.Future;
 /**
  * @author max
  */
-public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element> {
+public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element> {
+  public static final String COMPONENT_NAME = "ProjectModuleManager";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   public static final String IML_EXTENSION = ".iml";
@@ -74,7 +77,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected final MessageBus myMessageBus;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl();
 
-  @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
@@ -84,13 +86,34 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
 
+  protected final MessageBusConnection myMessageBusConnection;
+
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
   }
 
-  public ModuleManagerImpl(Project project, MessageBus messageBus) {
+  public ModuleManagerImpl(@NotNull Project project) {
     myProject = project;
-    myMessageBus = messageBus;
+    myMessageBus = project.getMessageBus();
+
+    myMessageBusConnection = myMessageBus.connect();
+    myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(Project project) {
+        fireModulesAdded();
+
+        for (Module module : myModuleModel.getModules()) {
+          ((ModuleEx)module).projectOpened();
+        }
+      }
+
+      @Override
+      public void projectClosed(Project project) {
+        for (Module module : myModuleModel.getModules()) {
+          ((ModuleEx)module).projectClosed();
+        }
+      }
+    });
   }
 
   protected void cleanCachedStuff() {
@@ -99,17 +122,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return COMPONENT_NAME;
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myModuleModel.disposeModel();
   }
 
@@ -577,29 +590,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return myModuleModel.isModuleDependent(module, onModule);
   }
 
-  @Override
-  public void projectOpened() {
-    fireModulesAdded();
-
-    myModuleModel.projectOpened();
-  }
-
   protected void fireModulesAdded() {
-    for (final Module module : myModuleModel.myModules.values()) {
-      fireModuleAddedInWriteAction(module);
+    for (Module module : myModuleModel.getModules()) {
+      fireModuleAddedInWriteAction((ModuleEx)module);
     }
   }
 
-  protected void fireModuleAddedInWriteAction(@NotNull final Module module) {
+  protected void fireModuleAddedInWriteAction(@NotNull ModuleEx module) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      ((ModuleEx)module).moduleAdded();
+      module.moduleAdded();
       fireModuleAdded(module);
     });
-  }
-
-  @Override
-  public void projectClosed() {
-    myModuleModel.projectClosed();
   }
 
   public static void commitModelWithRunnable(@NotNull ModifiableModuleModel model, Runnable runnable) {
@@ -858,8 +859,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final Set<Module> set = new HashSet<>();
-      set.addAll(myModuleModel.myModules.values());
+      final Set<Module> set = new THashSet<>(myModuleModel.myModules.values());
       for (Module thisModule : myModules.values()) {
         if (!set.contains(thisModule)) {
           Disposer.dispose(thisModule);
@@ -888,18 +888,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
       myModules.clear();
       myModuleGroupPath = null;
-    }
-
-    public void projectOpened() {
-      for (final Module module : myModules.values()) {
-        ((ModuleEx)module).projectOpened();
-      }
-    }
-
-    public void projectClosed() {
-      for (Module module : myModules.values()) {
-        ((ModuleEx)module).projectClosed();
-      }
     }
 
     @Override

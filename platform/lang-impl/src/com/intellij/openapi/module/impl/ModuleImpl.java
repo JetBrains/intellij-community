@@ -55,7 +55,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
-  private boolean isModuleAdded;
+  private volatile boolean isModuleAdded;
 
   private String myName;
 
