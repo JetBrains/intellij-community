@@ -652,13 +652,18 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         .remove(variable -> isVariableSuitableForStream(variable, loop, tb)).toList();
 
       TerminalBlock tbWithLimit = tb.tryPeelLimit(loop);
-      if (isCountOperation(loop, nonFinalVariables, tbWithLimit)) {
+      List<PsiVariable> nonFinalVariablesWithLimit = nonFinalVariables;
+      if(tbWithLimit != tb) {
+        nonFinalVariablesWithLimit = StreamEx.of(nonFinalVariables)
+          .remove(variable -> isVariableSuitableForStream(variable, loop, tbWithLimit)).toList();
+      }
+      if (isCountOperation(loop, nonFinalVariablesWithLimit, tbWithLimit)) {
         return new CountMigration();
       }
       if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
         return new SumMigration();
       }
-      if (isCollectCall(tbWithLimit) && nonFinalVariables.isEmpty()) {
+      if (isCollectCall(tbWithLimit) && nonFinalVariablesWithLimit.isEmpty()) {
         return findCollectMigration(loop, tbWithLimit);
       }
       if (isCollectMapCall(loop, tb) && nonFinalVariables.isEmpty() && (REPLACE_TRIVIAL_FOREACH || tb.hasOperations())) {
@@ -997,6 +1002,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     PsiExpression makeIntermediateExpression(PsiElementFactory factory) {
       return factory.createExpressionFromText(myFlatMapOp.getStreamExpression()+".anyMatch("+
         LambdaUtil.createLambda(myMatchVariable, myExpression)+")", myExpression);
+    }
+
+    @Override
+    boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
+      return myFlatMapOp.isWriteAllowed(variable, reference);
     }
 
     @Override
@@ -1572,18 +1582,30 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         default:
           return this;
       }
-      PsiExpression counter = PsiUtil.skipParenthesizedExprDown(flipped ? binOp.getROperand() : binOp.getLOperand());
-      if(counter == null || VariableAccessUtils.variableIsUsed(myVariable, counter)) return this;
+      PsiExpression countExpression = PsiUtil.skipParenthesizedExprDown(flipped ? binOp.getROperand() : binOp.getLOperand());
+      if(countExpression == null || VariableAccessUtils.variableIsUsed(myVariable, countExpression)) return this;
       PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
       if(!ExpressionUtils.isSimpleExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
       PsiType type = limit.getType();
       if(!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) return this;
-      if(counter instanceof PsiPostfixExpression) {
+      if(countExpression instanceof PsiPostfixExpression) {
         delta++;
       }
 
-      LimitOp limitOp = new LimitOp(filter.getPreviousOp(), counter, limit, myVariable, delta);
-      return new TerminalBlock(limitOp, myVariable, statements);
+      Operation prev = filter.getPreviousOp();
+      LOG.assertTrue(prev != null);
+      TerminalBlock block = new TerminalBlock(prev, myVariable, statements);
+      if(extractIncrementedLValue(countExpression) == null) {
+        // when countExpression does not change the counter, we may try to continue extracting ops from the remaining statement
+        // this is helpful to cover cases like for(...) { if(...) list.add(x); if(list.size == limit) break; }
+        while (true) {
+          TerminalBlock newBlock = block.extractOperation();
+          if (newBlock == null || newBlock.getLastOperation() instanceof FlatMapOp) break;
+          block = newBlock;
+        }
+      }
+      LimitOp limitOp = new LimitOp(block.getLastOperation(), countExpression, limit, block.getVariable(), delta);
+      return new TerminalBlock(limitOp, block.getVariable(), block.getStatements());
     }
 
     @NotNull
