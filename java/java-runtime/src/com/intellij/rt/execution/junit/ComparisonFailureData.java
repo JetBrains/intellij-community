@@ -72,22 +72,22 @@ public class ComparisonFailureData {
                                           String failureMessage,
                                           Map attrs,
                                           Throwable throwable) {
-    registerSMAttributes(notification, trace, failureMessage, attrs, throwable, "Comparison Failure: ");
+    registerSMAttributes(notification, trace, failureMessage, attrs, throwable, "Comparison Failure: ", "expected:<");
   }
 
-  public static void registerSMAttributes(ComparisonFailureData notification,
-                                          String trace,
+  public static void registerSMAttributes(ComparisonFailureData notification, String trace,
                                           String failureMessage,
                                           Map attrs,
                                           Throwable throwable,
-                                          String comparisonFailurePrefix) {
+                                          String comparisonFailurePrefix,
+                                          final String expectedPrefix) {
 
     final int failureIdx = failureMessage != null ? trace.indexOf(failureMessage) : -1;
     final int failureMessageLength = failureMessage != null ? failureMessage.length() : 0;
     attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessageLength) : trace);
  
     if (notification != null) {
-      final int expectedIdx = trace.indexOf("expected:<");
+      final int expectedIdx = trace.indexOf(expectedPrefix);
       final String comparisonFailureMessage;
       if (expectedIdx > 0) {
         comparisonFailureMessage = trace.substring(0, expectedIdx);
@@ -125,7 +125,7 @@ public class ComparisonFailureData {
       if (!isAssertionError(throwable.getClass()) && !isAssertionError(throwableCause != null ? throwableCause.getClass() : null)) {
         attrs.put("error", "true");
       }
-      attrs.put("message", failureIdx > -1 ? trace.substring(0, failureIdx + failureMessageLength) 
+      attrs.put("message", failureIdx > -1 ? trace.substring(0, failureIdx + failureMessageLength)
                                            : failureMessage != null ? failureMessage : "");
     }
   }
@@ -156,7 +156,7 @@ public class ComparisonFailureData {
   public static ComparisonFailureData create(Throwable assertion) {
     if (assertion instanceof FileComparisonFailure) {
       final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
-      return new ComparisonFailureData(comparisonFailure.getExpected(), comparisonFailure.getActual(), 
+      return new ComparisonFailureData(comparisonFailure.getExpected(), comparisonFailure.getActual(),
                                        comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
     }
     try {
@@ -170,11 +170,11 @@ public class ComparisonFailureData {
   public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
      return get(assertion, ACTUAL, "fActual");
    }
- 
+
    public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
      return get(assertion, EXPECTED, "fExpected");
    }
- 
+
    private static String get(final Throwable assertion, final Map staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
      String actual;
      if (assertion instanceof ComparisonFailure) {
