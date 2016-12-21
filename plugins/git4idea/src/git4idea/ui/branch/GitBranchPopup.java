@@ -18,6 +18,7 @@ package git4idea.ui.branch;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
+import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -37,6 +38,8 @@ import java.util.Objects;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.*;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
+import static com.intellij.dvcs.ui.BranchActionUtil.FAVOURITE_BRANCH_COMPARATOR;
+import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavourites;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -111,18 +114,24 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Local Branches");
-    List<AnAction> localBranchActions =
+    List<BranchActionGroup> localBranchActions =
       myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
         .collect(toList());
-    addMoreActionIfNeeded(localBranchActions, MAX_BRANCH_NUM);
-    popupGroup.addAll(localBranchActions);
+    int numOfFavourites = getNumOfFavourites(localBranchActions);
+    List<AnAction> localBranchPresentationList =
+      localBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());
+    addMoreActionIfNeeded(localBranchPresentationList, numOfFavourites > MAX_BRANCH_NUM ? numOfFavourites : MAX_BRANCH_NUM);
+    popupGroup.addAll(localBranchPresentationList);
 
     popupGroup.addSeparator("Common Remote Branches");
-    List<AnAction> remoteBranchActions =
+    List<BranchActionGroup> remoteBranchActions =
       ((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches().stream()
         .map(r -> new GitBranchPopupActions.RemoteBranchActions(myProject, allRepositories, r, myCurrentRepository)).collect(toList());
-    addMoreActionIfNeeded(remoteBranchActions, MAX_BRANCH_NUM);
-    popupGroup.addAll(remoteBranchActions);
+    numOfFavourites = getNumOfFavourites(remoteBranchActions);
+    List<AnAction> remoteBranchPresentationList =
+      remoteBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());
+    addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavourites > MAX_BRANCH_NUM ? numOfFavourites : MAX_BRANCH_NUM);
+    popupGroup.addAll(remoteBranchPresentationList);
   }
 
   @Nullable
