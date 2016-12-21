@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   }
 
   @Override
-  protected Map<String, String> getLiveTemplateDefaults(@NotNull DataContext ctx) {
+  protected Map<String, String> getLiveTemplateDefaults(@NotNull DataContext ctx, @NotNull PsiFile file) {
     Module module = LangDataKeys.MODULE.getData(ctx);
     return Collections.singletonMap("MODULE_NAME", module != null ? StringUtil.sanitizeJavaIdentifier(module.getName()) : "module_name");
   }
