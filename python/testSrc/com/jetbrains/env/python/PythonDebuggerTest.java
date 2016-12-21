@@ -630,11 +630,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
       @Override
       public void before() throws Exception {
-        String scriptPath = getScriptName();
-        String longPath = FileUtil
-          .toSystemDependentName((new File(scriptPath).getCanonicalPath()));
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(longPath);
-        toggleBreakpoint(longPath, 2);
+        String longName = "long_name_win_test.py";
+        toggleBreakpoint(longName, 2);
       }
 
       @Override
@@ -739,6 +736,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPyQtQThreadInheritor() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows
+    }
+
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
       @Override
       protected void init() {
@@ -777,6 +778,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPyQtMoveToThread() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows
+    }
+
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
       @Override
       protected void init() {
@@ -816,6 +821,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPyQtQRunnableInheritor() throws Exception {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows
+    }
+
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
       @Override
       protected void init() {

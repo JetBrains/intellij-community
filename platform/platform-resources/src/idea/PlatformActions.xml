@@ -232,6 +232,7 @@
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project" internal="true"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
+          <action id="AttachProject" class="com.intellij.platform.AttachProjectAction"/>
           <group id="$LRU" popup="true">
             <group id="RecentProjectListGroup" class="com.intellij.ide.actions.RecentProjectsGroup" popup="false"/>
             <separator/>
@@ -735,6 +736,8 @@
         </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
+        <action id="ShowAboutPopupInDebugModeAction" class="com.intellij.internal.ui.ShowAboutPopupInDebugModeAction"
+                text="Show About Popup in Debug Mode"/>
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />
         <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction" text="Test ColorBlindness" />
@@ -746,12 +749,13 @@
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
         <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
         <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses" text="Add Many Test Processes"/>
-        <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction" text="Show Progress Test Dialog"/>
         <action id="WriteActionUnderProgress" internal="true" class="com.intellij.internal.TestWriteActionUnderProgress" text="Test Write Action Under Progress"/>
         <separator/>
         <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd" text="Test Dnd"/>
         <action id="AnimatorTestAction" class="com.intellij.internal.ui.AnimatorTestAction" text="Test Animator"/>
+        <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction" text="Test Progress Indicators"/>
+        <action id="ShowSouthPanelTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction" text="Test DialogWrapper South Panel"/>
         <separator/>
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.DebugMigLayoutAction" text="MigLayout Debug Mode" />
       </group>

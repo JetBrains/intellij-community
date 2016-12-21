@@ -44,9 +44,8 @@ public class ImportOldConfigsPanel extends JDialog {
   private File myLastSelection = null;
   private JButton myOkButton;
   private JLabel mySuggestLabel;
-  private JLabel myHomeLabel;
   private JRadioButton myRbImportAuto;
-  private JPanel myCustomPanel;
+  private JRadioButton myCustomButton;
 
   private final File myGuessedOldConfig;
   private final ConfigImportSettings mySettings;
@@ -77,7 +76,6 @@ public class ImportOldConfigsPanel extends JDialog {
     else {
       myRbImportAuto.setVisible(false);
     }
-    myHomeLabel.setText(mySettings.getHomeLabel(productName));
 
     myRbImport.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -124,7 +122,7 @@ public class ImportOldConfigsPanel extends JDialog {
 
     CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
     if (configProvider != null) {
-      configProvider.initConfigsPanel(this, myCustomPanel, mySettings);
+      configProvider.initConfigsPanel(group, myCustomButton);
     }
 
     getContentPane().setLayout(new BorderLayout());

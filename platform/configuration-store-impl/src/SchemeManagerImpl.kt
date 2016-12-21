@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -342,7 +342,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     // todo check is bundled/read-only schemes correctly handled
     val iterator = schemes.iterator()
     for (scheme in iterator) {
-      if (processor.getState(scheme) == SchemeState.NON_PERSISTENT) {
+      if ((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme) == SchemeState.NON_PERSISTENT) {
         continue
       }
 
@@ -499,9 +499,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     var hasSchemes = false
     val nameGenerator = UniqueNameGenerator()
-    val schemesToSave = SmartList<MUTABLE_SCHEME>()
+    val changedSchemes = SmartList<MUTABLE_SCHEME>()
     for (scheme in schemes) {
-      val state = processor.getState(scheme)
+      val state = (scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)
       if (state == SchemeState.NON_PERSISTENT) {
         continue
       }
@@ -510,7 +510,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       if (state != SchemeState.UNCHANGED) {
         @Suppress("UNCHECKED_CAST")
-        schemesToSave.add(scheme as MUTABLE_SCHEME)
+        changedSchemes.add(scheme as MUTABLE_SCHEME)
       }
 
       val fileName = scheme.fileName
@@ -519,7 +519,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    for (scheme in schemesToSave) {
+    for (scheme in changedSchemes) {
       try {
         saveScheme(scheme, nameGenerator)
       }

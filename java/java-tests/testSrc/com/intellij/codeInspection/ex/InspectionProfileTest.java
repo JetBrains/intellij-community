@@ -84,7 +84,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile() {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileImpl.getBaseProfile());
+    return createProfile(InspectionProfileKt.getBASE_PROFILE());
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
@@ -100,8 +100,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     try {
       //normally on open project profile wrappers are init for both managers
       updateProfile(profileManager, localProfile);
-      InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), projectProfileManager,
-                                                                InspectionProfileImpl.getBaseProfile(), null);
+      InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), projectProfileManager, null);
       updateProfile(projectProfileManager, profile);
       projectProfileManager.setRootProfile(profile.getName());
 
@@ -550,7 +549,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionToolRegistrar registrar) {
-    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar);
+    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, (InspectionProfileImpl)null);
     return new InspectionProfileImpl("Foo", registrar, base);
   }
 
@@ -589,7 +588,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDoNotInstantiateOnSave() throws Exception {
-    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileImpl.getBaseProfile());
+    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileKt.getBASE_PROFILE());
     assertEquals(0, countInitializedTools(profile));
     InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     assertTrue(toolWrappers.length > 0);

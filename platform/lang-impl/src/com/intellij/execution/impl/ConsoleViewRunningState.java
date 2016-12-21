@@ -61,7 +61,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     // attach to process stdin
     if (attachToStdIn) {
       final OutputStream processInput = myProcessHandler.getProcessInput();
-      myUserInputWriter = processInput != null ? createOutputStreamWriter(processInput, processHandler) : null;
+      myUserInputWriter = processInput == null ? null : createOutputStreamWriter(processInput, processHandler);
     }
     else {
       myUserInputWriter = null;

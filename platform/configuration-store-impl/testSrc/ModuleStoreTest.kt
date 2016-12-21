@@ -14,11 +14,11 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.parentSystemIndependentPath
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.TObjectIntHashMap
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -83,7 +83,7 @@ class ModuleStoreTest {
     moduleFile.createModule().useAndDispose {
       ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
       saveStore()
-      assertThat(moduleFile).isRegularFile()
+      assertThat(moduleFile).isRegularFile
       assertThat(moduleFile.readText()).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">")
 
       ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")

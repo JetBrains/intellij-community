@@ -167,7 +167,13 @@ public class JavacMain {
         out, wrapWithCallDispatcher(fileManager), diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
-        extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
+        try {
+          extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
+        }
+        catch (Throwable e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.MANDATORY_WARNING, extension.getId() + ": " + e.getMessage());
+          e.printStackTrace(System.err);
+        }
       }
 
       //if (!IS_VM_6_VERSION) { //todo!

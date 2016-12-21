@@ -28,16 +28,14 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.options.SchemeState;
+import com.intellij.openapi.util.*;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -74,9 +72,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   private String mySchemeName;
 
   private float myConsoleLineSpacing = -1;
-  
+
   private boolean myIsSaveNeeded;
-  
+
   private boolean myCanBeDeleted = true;
 
   // version influences XML format and triggers migration
@@ -118,13 +116,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   @NonNls private static final String META_INFO_ELEMENT       = "metaInfo";
   @NonNls private static final String PROPERTY_ELEMENT        = "property";
   @NonNls private static final String PROPERTY_NAME_ATTR      = "name";
-  
+
   @NonNls private static final String META_INFO_CREATION_TIME = "created";
   @NonNls private static final String META_INFO_MODIFIED_TIME = "modified";
   @NonNls private static final String META_INFO_IDE           = "ide";
   @NonNls private static final String META_INFO_IDE_VERSION   = "ideVersion";
   @NonNls private static final String META_INFO_ORIGINAL      = "originalScheme";
-  
+
   //endregion
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
@@ -204,7 +202,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     myFontPreferences.register(getEditorFontName(), fontSize);
     initFonts();
   }
-  
+
   @Override
   public void setQuickDocFontSize(@NotNull FontSize fontSize) {
     if (myQuickDocFontSize != fontSize) {
@@ -262,7 +260,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   public FontSize getQuickDocFontSize() {
     return myQuickDocFontSize;
   }
-  
+
   @Override
   public float getLineSpacing() {
     float spacing = myLineSpacing;
@@ -272,7 +270,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   protected void initFonts() {
     String editorFontName = getEditorFontName();
     int editorFontSize = getEditorFontSize();
-    
+
     myFallbackFontName = FontPreferences.getFallbackName(editorFontName, editorFontSize, myParentScheme);
     if (myFallbackFontName != null) {
       editorFontName = myFallbackFontName;
@@ -399,8 +397,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
     return defaultScheme;
   }
-  
-  
+
+
   private void readMetaInfo(@NotNull Element metaInfoElement) {
     myMetaInfo.clear();
     for (Element e: metaInfoElement.getChildren()) {
@@ -451,7 +449,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       put(TODO_DEFAULT_ATTRIBUTES.getExternalName(),                  of(fromHex("268BD2"),  fromHex("54AAE3")));
     }
   };
-  
+
   private void readColors(Element childNode) {
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
       Color valueColor = myValueReader.read(Color.class, colorElement);
@@ -560,6 +558,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
 
+    /**
+     * FONT_SCALE is used to correctly identify the font size in both the JDK-managed HiDPI mode and
+     * the IDE-managed HiDPI mode: {@link UIUtil#isJDKManagedHiDPI()}. Also, it helps to distinguish
+     * the "hidpi-aware" scheme version from the previous one. Namely, the absence of the FONT_SCALE
+     * attribute in the scheme indicates the previous "hidpi-unaware" scheme and the restored font size
+     * is reset to default. It's assumed this (transition case) happens only once, after which the IDE
+     * will be able to restore the font size according to its scale and the IDE HiDPI mode. The default
+     * FONT_SCALE value should also be written by that reason.
+     */
     JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(JBUI.scale(1f))); // must precede font options
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
@@ -831,12 +838,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
   }
 
-  public boolean isSaveNeeded() {
-    return myIsSaveNeeded;
+  @NotNull
+  @Override
+  public SchemeState getSchemeState() {
+    return myIsSaveNeeded ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
   }
 
-  public void setSaveNeeded(boolean isSaveNeeded) {
-    myIsSaveNeeded = isSaveNeeded;
+  public void setSaveNeeded(boolean value) {
+    myIsSaveNeeded = value;
   }
   
   public boolean isReadOnly() { return  false; }

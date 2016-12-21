@@ -361,6 +361,8 @@ public class UIUtil {
   /**
    * Returns whether the JDK-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
+   *
+   * @see JBUI.ScaleType
    */
   public static boolean isJDKManagedHiDPI() {
     if (jdkManagedHiDPI != null) {
@@ -1803,8 +1805,9 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      if (isJDKManagedHiDPIScreen()) {
-        ((Graphics2D)g).setStroke(new BasicStroke(JBUI.sysScale()));
+      boolean jmHiDPI = isJDKManagedHiDPIScreen((Graphics2D)g);
+      if (jmHiDPI) {
+        ((Graphics2D)g).setStroke(new BasicStroke(2f));
       }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
@@ -1815,8 +1818,7 @@ public class UIUtil {
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
       if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, height - (isJDKManagedHiDPIScreen((Graphics2D)g) ? 1 : 2),
-                                     width, height - (isJDKManagedHiDPIScreen((Graphics2D)g) ? 1 : 2));
+      if (drawBottomLine) g.drawLine(x, height - (jmHiDPI ? 1 : 2), width, height - (jmHiDPI ? 1 : 2));
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);
@@ -1919,6 +1921,8 @@ public class UIUtil {
       if (isJDKManagedHiDPIScreen(g2d)) {
         return RetinaImage.create(g2d, width, height, type);
       }
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(width, height, type);
     }
     return createImage(width, height, type);
   }
@@ -1936,7 +1940,7 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
     return comp != null ?
-           createImage(comp.getGraphics(), width, height, type) :
+           createImage(GraphicsUtil.safelyGetGraphics(comp), width, height, type) :
            createImage(width, height, type);
   }
 
@@ -3562,12 +3566,13 @@ public class UIUtil {
 
   private static void getAllTextsRecursivelyImpl(Component component, StringBuilder builder) {
     String candidate = "";
-    int limit = builder.length() > 60 ? 20 : 40;
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
     if (StringUtil.isNotEmpty(candidate)) {
-      builder.append(candidate.length() > limit ? (candidate.substring(0, limit - 3) + "...") : candidate).append('|');
+      candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
+      if (builder.length() > 0) builder.append(' ');
+      builder.append(StringUtil.removeHtmlTags(candidate).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();

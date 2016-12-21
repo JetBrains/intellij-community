@@ -267,6 +267,14 @@ public class EditorPaintingTest extends AbstractEditorTest {
       }
     }
 
+    @Override
+    public void drawString(String str, float x, float y) {
+      for (int i = 0; i < str.length(); i++) {
+        drawChar(str.charAt(i), (int)x, (int)y);
+        x += BitmapFont.CHAR_WIDTH;
+      }
+    }
+
     private void drawChar(char c, int x, int y) {
       (((getFont().getStyle() & Font.BOLD) == 0) ? myPlainFont : myBoldFont).draw(myDelegate, c, x, y);
     }

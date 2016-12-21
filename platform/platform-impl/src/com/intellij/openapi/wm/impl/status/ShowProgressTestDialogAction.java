@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.LightColors;
@@ -26,31 +27,29 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class ShowProgressTestDialogAction extends AnAction implements DumbAware {
-  public ShowProgressTestDialogAction() {
-    super("Show Progress Test Dialog");
+  public void actionPerformed(AnActionEvent e) {
+    new MyDialogWrapper(e.getProject()).show();
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    new DialogWrapper(e.getProject()) {
-      {
-        init();
-      }
+  private static class MyDialogWrapper extends DialogWrapper {
+    public MyDialogWrapper(Project project) {
+      super(project);
+      init();
+    }
 
-      @Nullable
-      @Override
-      protected JComponent createCenterPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        panel.add(createPanel(false, false));
-        panel.add(createPanel(false, true));
-        panel.add(createPanel(true, false));
-        panel.add(createPanel(true, true));
-        return panel;
-      }
-    }.show();
+      panel.add(createPanel(false, false));
+      panel.add(createPanel(false, true));
+      panel.add(createPanel(true, false));
+      panel.add(createPanel(true, true));
+      return panel;
+    }
   }
 
   private static JComponent createPanel(boolean indeterminate, boolean opaque) {

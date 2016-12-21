@@ -15,10 +15,10 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface VcsLogUiProperties {
@@ -64,4 +64,7 @@ public interface VcsLogUiProperties {
   boolean isShowTagNames();
 
   void setShowTagNames(boolean showTags);
+
+  @NotNull
+  VcsLogUi.TextFilterSettings getTextFilterSettings();
 }

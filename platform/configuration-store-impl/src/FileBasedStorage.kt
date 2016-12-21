@@ -41,6 +41,8 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -112,37 +114,55 @@ open class FileBasedStorage(file: Path,
 
   override fun loadLocalData(): Element? {
     blockSavingTheContent = false
-
-    val attributes: BasicFileAttributes?
     try {
-      attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
-    }
-    catch (e: NoSuchFileException) {
-      return null
-    }
-    catch (e: IOException) {
-      processReadException(e)
-      return null
-    }
+      // use VFS to load module file because it is refreshed and loaded into VFS in any case
+      if (fileSpec != StoragePathMacros.MODULE_FILE) {
+        return loadLocalDataUsingIo()
+      }
 
-    try {
-      if (!attributes.isRegularFile) {
+      val file = virtualFile
+      if (file == null || file.isDirectory || !file.isValid) {
         LOG.debug { "Document was not loaded for $fileSpec, not a file" }
       }
-      else if (attributes.size() == 0L) {
+      else if (file.length == 0L) {
         processReadException(null)
       }
       else {
-        val data = file.readChars()
-        lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
-        return loadElement(data)
+        val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray()))
+        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+        return JDOMUtil.loadDocument(charBuffer).detachRootElement()
       }
+      return null
     }
     catch (e: JDOMException) {
       processReadException(e)
     }
     catch (e: IOException) {
       processReadException(e)
+    }
+    return null
+  }
+
+  private fun loadLocalDataUsingIo(): Element? {
+    val attributes: BasicFileAttributes?
+    try {
+      attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
+    }
+    catch (e: NoSuchFileException) {
+      LOG.debug { "Document was not loaded for $fileSpec, doesn't exist" }
+      return null
+    }
+
+    if (!attributes.isRegularFile) {
+      LOG.debug { "Document was not loaded for $fileSpec, not a file" }
+    }
+    else if (attributes.size() == 0L) {
+      processReadException(null)
+    }
+    else {
+      val data = file.readChars()
+      lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
+      return loadElement(data)
     }
     return null
   }

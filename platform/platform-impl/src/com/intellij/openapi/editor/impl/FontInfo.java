@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -46,16 +45,12 @@ public class FontInfo {
   private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 
-  private final TIntHashSet mySymbolsToBreakDrawingIteration = new TIntHashSet();
-
   private final Font myFont;
   private final int mySize;
   @JdkConstants.FontStyle private final int myStyle;
   private final boolean myUseLigatures;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private FontMetrics myFontMetrics = null;
-  private boolean myHasGlyphsToBreakDrawingIteration;
-  private boolean myCheckedForProblemGlyphs;
 
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
     this(familyName, size, style, false);    
@@ -96,7 +91,7 @@ public class FontInfo {
     return font.deriveFont(Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON));
   }
 
-  private static final Comparator<File> BY_NAME = (file1, file2) -> file1.getName().compareTo(file2.getName());
+  private static final Comparator<File> BY_NAME = Comparator.comparing(File::getName);
 
   @Nullable
   private static File findFileForFont(@NotNull String familyName, int style) {
@@ -141,61 +136,6 @@ public class FontInfo {
     else return ComplementaryFontsRegistry.getFontStyle(fontFileNameLowercase);
   }
 
-  private void parseProblemGlyphs() {
-    myCheckedForProblemGlyphs = true;
-    BufferedImage buffer = UIUtil.createImage(20, 20, BufferedImage.TYPE_INT_RGB);
-    final Graphics graphics = buffer.getGraphics();
-    if (!(graphics instanceof Graphics2D)) {
-      return;
-    }
-    final FontRenderContext context = ((Graphics2D)graphics).getFontRenderContext();
-    char[] charBuffer = new char[1];
-    for (char c = 0; c < 128; c++) {
-      if (!myFont.canDisplay(c)) {
-        continue;
-      }
-      charBuffer[0] = c;
-      final GlyphVector vector = myFont.createGlyphVector(context, charBuffer);
-      final float y = vector.getGlyphMetrics(0).getAdvanceY();
-      if (Math.round(y) != 0) {
-        mySymbolsToBreakDrawingIteration.add(c);
-      }
-    }
-    myHasGlyphsToBreakDrawingIteration = !mySymbolsToBreakDrawingIteration.isEmpty();
-  }
-
-  /**
-   * We've experienced a problem that particular symbols from particular font are represented really weird
-   * by the IJ editor (IDEA-83645).
-   * <p/>
-   * Eventually it was found out that outline font glyphs can have a 'y advance', i.e. instruction on how the subsequent
-   * glyphs location should be adjusted after painting the current glyph. In terms of java that means that such a problem
-   * glyph should be the last symbol at the {@link Graphics#drawChars(char[], int, int, int, int) text drawing iteration}.
-   * <p/>
-   * Hopefully, such glyphs are exceptions from the normal processing, so, this method allows to answer whether a font
-   * {@link #getFont() referenced} by the current object has such a glyph.
-   * 
-   * @return    true if the {@link #getFont() target font} has problem glyphs; <code>false</code> otherwise
-   */
-  public boolean hasGlyphsToBreakDrawingIteration() {
-    if (!myCheckedForProblemGlyphs) {
-      parseProblemGlyphs();
-    }
-    return myHasGlyphsToBreakDrawingIteration;
-  }
-
-  /**
-   * @return    unicode symbols which glyphs {@link #hasGlyphsToBreakDrawingIteration() have problems}
-   * at the {@link #getFont() target font}.
-   */
-  @NotNull
-  public TIntHashSet getSymbolsToBreakDrawingIteration() {
-    if (!myCheckedForProblemGlyphs) {
-      parseProblemGlyphs();
-    }
-    return mySymbolsToBreakDrawingIteration;
-  }
-
   public boolean canDisplay(int codePoint) {
     try {
       if (codePoint < 128) return true;
@@ -229,6 +169,11 @@ public class FontInfo {
   public int charWidth(int codePoint) {
     final FontMetrics metrics = fontMetrics();
     return FontLayoutService.getInstance().charWidth(metrics, codePoint);
+  }
+
+  public float charWidth2D(int codePoint) {
+    FontMetrics metrics = fontMetrics();
+    return FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
   }
 
   public FontMetrics fontMetrics() {

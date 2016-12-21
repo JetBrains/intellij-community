@@ -117,7 +117,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     }
 
     if (focus) {
-      if (UIUtil.isRetina() || JBUI.isHiDPI()) {
+      if (UIUtil.isJDKManagedHiDPIScreen(g) || JBUI.isHiDPI(g, JBUI.ScaleType.USR)) {
         DarculaUIUtil.paintFocusOval(g, JBUI.scale(1), JBUI.scale(1) + 1, w - JBUI.scale(2), h - JBUI.scale(2));
       } else {
         DarculaUIUtil.paintFocusOval(g, 0, JBUI.scale(1), w, h);

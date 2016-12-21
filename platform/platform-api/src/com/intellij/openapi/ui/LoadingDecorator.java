@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -65,7 +66,7 @@ public class LoadingDecorator {
 
       @Override
       protected void paintCycleEnd() {
-        myLoadingLayer.setVisible(false);
+        setLoadingLayerVisible(false);
         myLoadingLayer.setAlpha(-1);
       }
     };
@@ -73,9 +74,42 @@ public class LoadingDecorator {
 
 
     myPane.add(content, JLayeredPane.DEFAULT_LAYER, 0);
-    myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+    if (!SystemProperties.isTrueSmoothScrollingEnabled()) {
+      myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+    }
 
     Disposer.register(parent, myLoadingLayer.myProgress);
+  }
+
+  private void setLoadingLayerVisible(boolean visible) {
+    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+      setLoadingLayerPresent(visible);
+    }
+    myLoadingLayer.setVisible(visible);
+  }
+
+  public void setLoadingLayerVisible(boolean visible, boolean takeSnapshot) {
+    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+      setLoadingLayerPresent(visible);
+    }
+    myLoadingLayer.setVisible(visible, takeSnapshot);
+  }
+
+  /* Placing the invisible layer on top of JViewport suppresses blit-accelerated scrolling
+     as JViewport.canUseWindowBlitter() doesn't take component's visibility into account.
+
+     We need to add / remove the loading layer on demand to preserve the blit-based scrolling.
+
+     Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+     This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+  private void setLoadingLayerPresent(boolean present) {
+    if (present) {
+      if (myPane.getComponentCount() < 2) {
+        myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+      }
+    } else {
+      myPane.remove(myLoadingLayer);
+    }
   }
 
   protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
@@ -114,7 +148,7 @@ public class LoadingDecorator {
   }
 
   protected void _startLoading(final boolean takeSnapshot) {
-    myLoadingLayer.setVisible(true, takeSnapshot);
+    setLoadingLayerVisible(true, takeSnapshot);
   }
 
   public void stopLoading() {
@@ -123,7 +157,7 @@ public class LoadingDecorator {
 
     if (!isLoading()) return;
 
-    myLoadingLayer.setVisible(false, false);
+    setLoadingLayerVisible(false, false);
   }
 
 

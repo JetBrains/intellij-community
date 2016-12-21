@@ -387,11 +387,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           }
         }
       }
-      
-      if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
-        return true;
-      }
-        
+
       // E251 unexpected spaces around keyword / parameter equals
       // Note that E222 (multiple spaces after operator) is not suppressed, though. 
       if (problem.myCode.equals("E251") &&
@@ -399,6 +395,11 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
            element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
         return true;
       }
+    }
+    // W191 (indentation contains tabs) is reported also for indents inside multiline string literals, 
+    // thus underlying PSI element is not necessarily a whitespace
+    if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
+      return true;
     }
     return false;
   }

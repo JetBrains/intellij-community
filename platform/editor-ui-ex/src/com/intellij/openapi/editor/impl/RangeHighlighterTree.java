@@ -21,13 +21,10 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
-public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
+class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   private final MarkupModelEx myMarkupModel;
 
-  public RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelEx markupModel) {
+  RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelEx markupModel) {
     super(document);
     myMarkupModel = markupModel;
   }

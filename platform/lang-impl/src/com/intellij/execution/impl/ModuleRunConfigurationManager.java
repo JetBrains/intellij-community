@@ -23,8 +23,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +40,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-@State(name = ModuleRunConfigurationManager.COMPONENT_NAME)
-public final class ModuleRunConfigurationManager extends ModuleAdapter implements ModuleComponent, PersistentStateComponent<Element> {
+@State(name = "ModuleRunConfigurationManager")
+public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
-  @NonNls static final String COMPONENT_NAME = "ModuleRunConfigurationManager";
   @NotNull
   private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
     settings -> settings != null && usesMyModule(settings.getConfiguration());
@@ -59,34 +56,18 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
   public ModuleRunConfigurationManager(@NotNull final Module module, @NotNull final RunManagerImpl runManager) {
     myModule = module;
     myManager = runManager;
-  }
 
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void moduleAdded() {
-  }
-
-  @Override
-  public void initComponent() {
-    LOG.debug("initComponent(" + myModule + ")");
-    myModule.getMessageBus().connect(myModule).subscribe(ProjectTopics.MODULES, this);
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return COMPONENT_NAME;
+    myModule.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      @Override
+      public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
+        if (myModule.equals(module)) {
+          LOG.debug("time to remove something from project (" + project + ")");
+          for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
+            myManager.removeConfiguration(settings);
+          }
+        }
+      }
+    });
   }
 
   @Nullable
@@ -135,14 +116,13 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
     }
   }
 
-  public void readExternal(@NotNull final Element element) throws InvalidDataException {
+  public void readExternal(@NotNull final Element element) {
     LOG.debug("readExternal(" + myModule + ")");
     myUnloadedElements = null;
     final Set<String> existing = new HashSet<>();
 
-    final List children = element.getChildren();
-    for (final Object child : children) {
-      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration((Element)child, true);
+    for (final Element child : element.getChildren()) {
+      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, true);
       if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
         if (myUnloadedElements == null) myUnloadedElements = new ArrayList<>(2);
         myUnloadedElements.add(element);
@@ -156,8 +136,9 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
     for (final RunConfiguration configuration : myManager.getAllConfigurationsList()) {
       if (!usesMyModule(configuration)) {
         RunnerAndConfigurationSettings settings = myManager.getSettings(configuration);
-        if (settings != null)
+        if (settings != null) {
           existing.add(settings.getUniqueID());
+        }
       }
     }
     myManager.removeNotExistingSharedConfigurations(existing);
@@ -165,15 +146,5 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
     // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
     myManager.setOrdered(false);
     myManager.getSortedConfigurations();
-  }
-
-  @Override
-  public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
-    if (myModule.equals(module)) {
-      LOG.debug("time to remove something from project (" + project + ")");
-      for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-        myManager.removeConfiguration(settings);
-      }
-    }
   }
 }

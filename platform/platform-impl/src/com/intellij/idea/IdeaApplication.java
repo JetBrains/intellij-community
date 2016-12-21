@@ -44,6 +44,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +152,16 @@ public class IdeaApplication {
     
     if (headless) return;
 
-    if (Patches.SUN_BUG_ID_6209673) {
+    /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
+       because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
+
+       At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
+
+       This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
+
+       True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+       frame buffer content without the usual repainting, even when the EDT is blocked. */
+    if (!SystemProperties.isTrueSmoothScrollingEnabled() && Patches.SUN_BUG_ID_6209673) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 

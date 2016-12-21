@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
-  public static final Key<CommitMessage> DATA_KEY = Key.create("commit message data context");
+  public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   private final EditorTextField myEditorField;
   private final TitledSeparator mySeparator;
 

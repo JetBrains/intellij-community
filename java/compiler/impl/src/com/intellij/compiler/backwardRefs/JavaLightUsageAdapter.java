@@ -28,10 +28,9 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.tools.javac.util.Convert;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   }
 
   @Override
-  public LightRef asLightUsage(@NotNull PsiElement element, @NotNull ByteArrayEnumerator names) {
+  public LightRef asLightUsage(@NotNull PsiElement element, @NotNull NameEnumerator names) {
     if (mayBeVisibleOutsideOwnerFile(element)) {
       if (element instanceof PsiField) {
         final PsiField field = (PsiField)element;
@@ -55,7 +54,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
         final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
         final String name = field.getName();
         if (name == null || jvmOwnerName == null) return null;
-        return new LightRef.JavaLightFieldRef(id(jvmOwnerName, names), id(name, names));
+        return new LightRef.JavaLightFieldRef(names.enumerate(jvmOwnerName), names.enumerate(name));
       }
       else if (element instanceof PsiMethod) {
         final PsiClass aClass = ((PsiMethod)element).getContainingClass();
@@ -65,12 +64,12 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
         final PsiMethod method = (PsiMethod)element;
         final String name = method.isConstructor() ? "<init>" : method.getName();
         final int parametersCount = method.getParameterList().getParametersCount();
-        return new LightRef.JavaLightMethodRef(id(jvmOwnerName, names), id(name, names), parametersCount);
+        return new LightRef.JavaLightMethodRef(names.enumerate(jvmOwnerName), names.enumerate(name), parametersCount);
       }
       else if (element instanceof PsiClass) {
         final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)element);
         if (jvmClassName != null) {
-          return new LightRef.JavaLightClassRef(id(jvmClassName, names));
+          return new LightRef.JavaLightClassRef(names.enumerate(jvmClassName));
         }
       }
     }
@@ -81,7 +80,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   @Override
   public List<LightRef> getHierarchyRestrictedToLibraryScope(@NotNull LightRef baseRef,
                                                              @NotNull PsiElement basePsi,
-                                                             @NotNull ByteArrayEnumerator names, @NotNull GlobalSearchScope libraryScope) {
+                                                             @NotNull NameEnumerator names, @NotNull GlobalSearchScope libraryScope) {
     final PsiClass baseClass = ObjectUtils.notNull(basePsi instanceof PsiClass ? (PsiClass)basePsi : ReadAction.compute(() -> (PsiMember)basePsi).getContainingClass());
 
     final List<LightRef> overridden = new ArrayList<>();
@@ -89,7 +88,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
       if (c.hasModifierProperty(PsiModifier.PRIVATE)) return true;
       String qName = ReadAction.compute(() -> c.getQualifiedName());
       if (qName == null) return true;
-      overridden.add(baseRef.override(id(qName, names)));
+      overridden.add(baseRef.override(names.enumerate(qName)));
       return true;
     };
 
@@ -138,9 +137,5 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
     if (!(element instanceof PsiModifierListOwner)) return true;
     if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)) return false;
     return true;
-  }
-
-  private static int id(String name, ByteArrayEnumerator names) {
-    return names.enumerate(Convert.string2utf(name));
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
+import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -61,12 +62,18 @@ private val LOG = logger<KeymapImpl>()
 fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapImpl {
   val result = KeymapImpl(dataHolder)
   result.name = name
+  result.schemeState = SchemeState.UNCHANGED
   return result
 }
 
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
   open var canModify = true
+
+  @JvmField
+  internal var schemeState: SchemeState? = null
+
+  override fun getSchemeState() = schemeState
 
   private val actionIdToShortcuts = THashMap<String, MutableList<Shortcut>>()
     get() {
@@ -218,6 +225,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   private fun cleanShortcutsCache() {
     _keystrokeToIds = null
     _mouseShortcutToListOfIds = null
+    schemeState = SchemeState.POSSIBLY_CHANGED
   }
 
   override fun removeAllActionShortcuts(actionId: String) {
@@ -488,10 +496,10 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
     keymapElement.getAttributeValue(PARENT_ATTRIBUTE)?.let { parentSchemeName ->
-      var parentScheme = keymapManager.schemeManager.findSchemeByName(parentSchemeName)
+      var parentScheme = findParentScheme(parentSchemeName)
       if (parentScheme == null && parentSchemeName == "Default for Mac OS X") {
         // https://youtrack.jetbrains.com/issue/RUBY-17767#comment=27-1374197
-        parentScheme = keymapManager.schemeManager.findSchemeByName("Mac OS X")
+        parentScheme = findParentScheme("Mac OS X")
       }
 
       if (parentScheme == null) {
@@ -574,6 +582,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     cleanShortcutsCache()
   }
 
+  protected open fun findParentScheme(parentSchemeName: String) = keymapManager.schemeManager.findSchemeByName(parentSchemeName)
+
   override fun writeScheme(): Element {
     dataHolder?.let {
       return it.read()
@@ -587,6 +597,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       keymapElement.setAttribute(PARENT_ATTRIBUTE, it.name)
     }
     writeOwnActionIds(keymapElement)
+
+    schemeState = SchemeState.UNCHANGED
     return keymapElement
   }
 

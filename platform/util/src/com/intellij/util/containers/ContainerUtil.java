@@ -2053,6 +2053,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return false;
   }
 
+  @Contract(pure=true)
+  public static <T> int count(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+    int count = 0;
+    for (final T t : iterable) {
+      if (condition.value(t)) count++;
+    }
+    return count;
+  }
+
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<T, T> next) {

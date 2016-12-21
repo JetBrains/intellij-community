@@ -113,7 +113,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       JLabel warningLabel = null;
       if (isVIM || isCloud) {
         if (isCloud) {
-          warningLabel = createHTMLLabel("JBA account");
+          warningLabel = createHTMLLabel("From your JetBrains account");
           warningLabel.setIcon(AllIcons.General.BalloonInformation);
         }
         else {

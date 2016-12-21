@@ -80,7 +80,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
     myImage = image;
     myUserWidth = width;
     myUserHeight = height;
-    myScale = myImage.getWidth(null) / myUserWidth;
+    myScale = myUserWidth > 0 ? myImage.getWidth(null) / myUserWidth : 1f;
   }
 
   public float getScale() {

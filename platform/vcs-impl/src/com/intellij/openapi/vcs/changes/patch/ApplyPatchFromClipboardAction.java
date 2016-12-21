@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -47,9 +47,10 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
             null, null, null, false);
     }
 
+    @Nullable
     @Override
-    protected JComponent createSouthPanel() {
-      return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), FLY_OPTION_PANEL);
+    protected JComponent createDoNotAskCheckbox() {
+      return FLY_OPTION_PANEL;
     }
 
     @NotNull

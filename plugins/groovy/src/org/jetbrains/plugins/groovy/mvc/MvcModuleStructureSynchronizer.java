@@ -29,7 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
@@ -96,7 +96,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
     });
 
-    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         queue(SyncAction.UpdateProjectStructure, module);

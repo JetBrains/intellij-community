@@ -61,6 +61,6 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
 
   private fun dirtyModules() =
       (CompilerReferenceService.getInstance(project) as CompilerReferenceServiceImpl)
-          .dirtyModulesHolder
+          .dirtyScopeHolder
           .allDirtyModulesForTest
 }

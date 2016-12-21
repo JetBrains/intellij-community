@@ -11,6 +11,7 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>collection.stream().collect(Collectors.toList())</code> &rarr; <code>new ArrayList&lt;&gt;(collection)</code></li>
   <li><code>collection.stream().collect(Collectors.toSet())</code> &rarr; <code>new HashSet&lt;&gt;(collection)</code></li>
   <li><code>collection.stream().collect(Collectors.toCollection(CollectionType::new))</code> &rarr; <code>new CollectionType&lt;&gt;(collection)</code></li>
+  <li><code>collection.stream().toArray()</code> &rarr; <code>collection.toArray()</code></li>
   <li><code>Arrays.asList().stream()</code> &rarr; <code>Arrays.stream()</code> or <code>Stream.of()</code></li>
   <li><code>Collections.singleton().stream()</code> &rarr; <code>Stream.of()</code></li>
   <li><code>Collections.singletonList().stream()</code> &rarr; <code>Stream.of()</code></li>

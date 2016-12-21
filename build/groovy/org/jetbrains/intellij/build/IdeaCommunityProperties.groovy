@@ -80,7 +80,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       }
 
       @Override
-      String getBaseDownloadUrlForJre64() { "https://download.jetbrains.com/idea" }
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/idea" }
     }
   }
 

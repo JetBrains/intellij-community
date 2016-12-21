@@ -46,8 +46,7 @@ public class ChangesBrowser extends ChangesBrowserBase<Change> {
 
   @NotNull
   protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
-    return builder.buildModel(changes, changeNodeDecorator);
+    return TreeModelBuilder.buildFromChanges(myProject, showFlatten, changes, changeNodeDecorator);
   }
 
   @NotNull

@@ -77,5 +77,9 @@ abstract class SchemeProcessor<SCHEME : Scheme, in MUTABLE_SCHEME: SCHEME> {
   open fun onCurrentSchemeSwitched(oldScheme: SCHEME?, newScheme: SCHEME?) {
   }
 
-  open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED
+  /**
+   * If scheme implements [com.intellij.configurationStore.SerializableScheme], this method will be called only if [com.intellij.configurationStore.SerializableScheme.getSchemeState] returns `null`
+   */
+  @Suppress("KDocUnresolvedReference")
+  open fun getState(scheme: SCHEME) = SchemeState.POSSIBLY_CHANGED
 }

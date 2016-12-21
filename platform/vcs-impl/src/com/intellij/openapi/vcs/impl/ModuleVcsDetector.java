@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -82,7 +82,7 @@ public class ModuleVcsDetector implements ProjectComponent {
     });
   }
 
-  private class MyModulesListener extends ModuleAdapter implements ModuleRootListener {
+  private class MyModulesListener implements ModuleRootListener, ModuleListener {
     private final List<Pair<String, VcsDirectoryMapping>> myMappingsForRemovedModules = new ArrayList<>();
 
     @Override

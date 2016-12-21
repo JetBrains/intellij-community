@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
+    public TextFilterSettingsImpl TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
   }
 
   @NotNull
@@ -175,6 +177,12 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     getState().SHOW_TAG_NAMES = showTags;
   }
 
+  @NotNull
+  public TextFilterSettingsImpl getTextFilterSettings() {
+    if (getState().TEXT_FILTER_SETTINGS == null) getState().TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
+    return getState().TEXT_FILTER_SETTINGS;
+  }
+
   public static class UserGroup {
     public List<String> users = new ArrayList<>();
 
@@ -190,6 +198,40 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     @Override
     public int hashCode() {
       return users.hashCode();
+    }
+  }
+
+  public static class TextFilterSettingsImpl implements VcsLogUi.TextFilterSettings {
+    public boolean REGEX = false;
+    public boolean MATCH_CASE = false;
+
+    public TextFilterSettingsImpl(boolean isFilterByRegexEnabled, boolean isMatchCaseEnabled) {
+      REGEX = isFilterByRegexEnabled;
+      MATCH_CASE = isMatchCaseEnabled;
+    }
+
+    public TextFilterSettingsImpl() {
+      this(false, false);
+    }
+
+    @Override
+    public boolean isFilterByRegexEnabled() {
+      return REGEX;
+    }
+
+    @Override
+    public void setFilterByRegexEnabled(boolean enabled) {
+      REGEX = enabled;
+    }
+
+    @Override
+    public boolean isMatchCaseEnabled() {
+      return MATCH_CASE;
+    }
+
+    @Override
+    public void setMatchCaseEnabled(boolean enabled) {
+      MATCH_CASE = enabled;
     }
   }
 }

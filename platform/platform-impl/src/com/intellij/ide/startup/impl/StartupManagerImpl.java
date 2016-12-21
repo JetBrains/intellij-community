@@ -141,10 +141,16 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runPostStartupActivitiesFromExtensions() {
-    for (final StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
+    StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
+    for (final StartupActivity extension : extensions) {
       final Runnable runnable = () -> {
         if (!myProject.isDisposed()) {
+          long start = System.currentTimeMillis();
           extension.runActivity(myProject);
+          long duration = System.currentTimeMillis() - start;
+          if (duration > 200) {
+            LOG.info(extension.getClass().getSimpleName() + " run in " + duration);
+          }
         }
       };
       if (extension instanceof DumbAware) {

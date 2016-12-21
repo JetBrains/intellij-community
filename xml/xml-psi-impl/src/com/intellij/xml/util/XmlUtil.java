@@ -729,7 +729,7 @@ public class XmlUtil {
     if (file != null) {
 
       final Language language = file.getLanguage();
-      if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
+      if (language.isKindOf(HTMLLanguage.INSTANCE) || language == XHTMLLanguage.INSTANCE) {
         return new String[][]{new String[]{"", XHTML_URI}};
       }
     }
@@ -1405,6 +1405,18 @@ public class XmlUtil {
       caseSensitive ? StandardPatterns.string().oneOf(names) : StandardPatterns.string().oneOfIgnoreCase(names);
     registrar.registerReferenceProvider(XmlPatterns.xmlTag().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
+  }
+
+  public static XmlFile findDescriptorFile(@NotNull XmlTag tag, @NotNull XmlFile containingFile) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
+    XmlFile descriptorFile = nsDescriptor != null
+                             ? nsDescriptor.getDescriptorFile()
+                             : containingFile.getDocument().getProlog().getDoctype() != null ? containingFile : null;
+    if (nsDescriptor != null && (descriptorFile == null || descriptorFile.getName().equals(containingFile.getName() + ".dtd"))) {
+      descriptorFile = containingFile;
+    }
+    return descriptorFile;
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

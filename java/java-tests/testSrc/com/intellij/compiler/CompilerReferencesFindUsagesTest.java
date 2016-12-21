@@ -18,12 +18,24 @@ package com.intellij.compiler;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
+import com.intellij.openapi.compiler.options.ExcludesConfiguration;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 @SkipSlowTestLocally
 public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
@@ -37,6 +49,7 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     CompilerReferenceService.IS_ENABLED_KEY.setValue(true);
     super.setUp();
     myCompilerTester = new CompilerTester(myModule);
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   @Override
@@ -51,8 +64,14 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/compilerReferenceFindUsages/";
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk18();
   }
 
   public void testMethodUsageOnGetter() throws Exception {
@@ -116,5 +135,41 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     PsiClass classForSearch = myJavaFacade.findClass("java.lang.System");
     PsiReference reference = assertOneElement(ReferencesSearch.search(classForSearch).findAll());
     assertTrue(InjectedLanguageManager.getInstance(getProject()).isInjectedFragment(reference.getElement().getContainingFile()));
+  }
+
+  public void testFindUsagesWithExcludedFromCompilationDirectory() {
+    doTestRunnableFindUsagesWithExcludesConfiguration(configuration -> {
+      final VirtualFile dirToExclude = findClass("A").getContainingFile().getVirtualFile().getParent();
+      configuration.addExcludeEntryDescription(new ExcludeEntryDescription(dirToExclude, false, false, myProject));
+    }, 3, "Foo.java", "excluded/A.java", "excluded/child/ShouldFindHere.java");
+  }
+
+  public void testFindUsagesWithRecursivelyExcludedFromCompilationDirectory() {
+    doTestRunnableFindUsagesWithExcludesConfiguration(configuration -> {
+      final VirtualFile dirToExclude = findClass("ShouldFindHere").getContainingFile().getVirtualFile().getParent().getParent();
+      configuration.addExcludeEntryDescription(new ExcludeEntryDescription(dirToExclude, true, false, myProject));
+    }, 2, "Foo.java", "excluded/child/ShouldFindHere.java");
+  }
+
+  public void testFindUsagesWithExcludedFromCompilationFile() {
+    doTestRunnableFindUsagesWithExcludesConfiguration(configuration -> {
+      final VirtualFile dirToExclude = findClass("Foo").getContainingFile().getVirtualFile();
+      configuration.addExcludeEntryDescription(new ExcludeEntryDescription(dirToExclude, false, true, myProject));
+    }, 2, "Foo.java", "Bar.java");
+  }
+
+  private void doTestRunnableFindUsagesWithExcludesConfiguration(@NotNull Consumer<ExcludesConfiguration> excludesConfigurationPatcher,
+                                                                 int expectedUsagesCount,
+                                                                 String... testFiles) {
+    final ExcludesConfiguration excludesConfiguration = CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration();
+    try {
+      configureByFiles(getName(), Arrays.stream(testFiles).map(f -> getName() + "/" + f).toArray(String[]::new));
+      excludesConfigurationPatcher.consume(excludesConfiguration);
+      //assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
+      myCompilerTester.rebuild();
+      assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
+    } finally {
+      excludesConfiguration.removeAllExcludeEntryDescriptions();
+    }
   }
 }

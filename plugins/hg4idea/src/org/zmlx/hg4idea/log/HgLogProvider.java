@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
+import com.intellij.vcs.log.util.UserNameRegex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -275,7 +276,17 @@ public class HgLogProvider implements VcsLogProvider {
 
     if (filterCollection.getTextFilter() != null) {
       String textFilter = filterCollection.getTextFilter().getText();
-      filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
+      if (filterCollection.getTextFilter().isRegex()) {
+        filterParameters.add("-r");
+        filterParameters.add("grep(r'" + textFilter + "')");
+      }
+      else if (filterCollection.getTextFilter().matchesCase()) {
+        filterParameters.add("-r");
+        filterParameters.add("grep(r'" + StringUtil.escapeChars(textFilter, UserNameRegex.EXTENDED_REGEX_CHARS) + "')");
+      }
+      else {
+        filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
+      }
     }
 
     if (filterCollection.getStructureFilter() != null) {
@@ -325,6 +336,9 @@ public class HgLogProvider implements VcsLogProvider {
   @Nullable
   @Override
   public <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property) {
+    if (property == VcsLogProperties.CASE_INSENSITIVE_REGEX) {
+      return (T)Boolean.FALSE;
+    }
     return null;
   }
 }

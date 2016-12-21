@@ -1046,7 +1046,7 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAccessibility"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="access.to.inaccessible.element" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection"/>
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection" unfair="true"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyConstructorNamedArguments"
                      displayName="Named arguments of constructor call" groupName="Probable bugs"
                      enabledByDefault="true" level="WARNING"

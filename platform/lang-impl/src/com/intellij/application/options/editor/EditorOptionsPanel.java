@@ -51,6 +51,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.ComponentSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -122,7 +123,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
     myStripTrailingSpacesCombo.addItem(STRIP_NONE);
-    
+
     myStripTrailingSpacesCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -256,6 +257,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     // Display
 
     editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
+    ComponentSettings.getInstance().setSmoothScrollingEnabled(myCbSmoothScrolling.isSelected());
 
 
     // Brace Highlighting
@@ -452,7 +454,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     // Strip trailing spaces, ensure EOL on EOF on save
     isModified |= !getStripTrailingSpacesValue().equals(editorSettings.getStripTrailingSpaces());
     isModified |= isModified(myCbKeepTrailingSpacesOnCaretLine, editorSettings.isKeepTrailingSpacesOnCaretLine());
-    
+
     isModified |= isModified(myCbEnsureBlankLineBeforeCheckBox, editorSettings.isEnsureNewLineAtEOF());
 
     isModified |= isModified(myCbShowQuickDocOnMouseMove, editorSettings.isShowQuickDocOnMouseOverElement());

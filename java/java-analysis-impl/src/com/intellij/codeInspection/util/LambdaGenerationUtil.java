@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,13 +105,16 @@ public class LambdaGenerationUtil {
       if(!myCanBeLambdaBody) return;
       super.visitReferenceExpression(expression);
       PsiElement element = expression.resolve();
-      if (element instanceof PsiVariable &&
-          !(element instanceof PsiField) &&
-          !myVariableAllowedPredicate.test((PsiVariable)element) &&
-          !PsiTreeUtil.isAncestor(myRoot, element, true) &&
-          !HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, myRoot, null)) {
+      if (element instanceof PsiVariable && !isAllowedInLambda(expression, (PsiVariable)element)) {
         myCanBeLambdaBody = false;
       }
+    }
+
+    private boolean isAllowedInLambda(PsiReferenceExpression expression, PsiVariable variable) {
+      return variable instanceof PsiField ||
+             myVariableAllowedPredicate.test(variable) ||
+             PsiTreeUtil.isAncestor(myRoot, variable, true) ||
+             !PsiUtil.isAccessedForWriting(expression) && HighlightControlFlowUtil.isEffectivelyFinal(variable, myRoot, null);
     }
 
     @Override

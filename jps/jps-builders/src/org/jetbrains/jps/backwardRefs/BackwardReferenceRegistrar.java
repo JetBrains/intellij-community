@@ -32,7 +32,7 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
 
   @Override
   public boolean isEnabled() {
-    return BackwardReferenceIndexWriter.isEnabled();
+    return BackwardReferenceIndexWriter.isEnabled() && BackwardReferenceIndexWriter.getInstance() != null;
   }
 
   @Override

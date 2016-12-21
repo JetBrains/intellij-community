@@ -21,9 +21,12 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeExporterEP;
 import com.intellij.openapi.options.SchemeImporterEP;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,7 +41,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   }
   
     
-  private Collection<String> getSchemeImportersNames() {
+  protected Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (SchemeImporterEP importerEP : SchemeImporterEP.getExtensions(getSchemeType())) {
       importersNames.add(importerEP.name);
@@ -60,11 +63,23 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
     if (!mySchemeExporterNames.isEmpty()) {
-      actions.add(new ExportGroup());
+      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.export"), mySchemeExporterNames) {
+        @NotNull
+        @Override
+        protected AnAction createAction(@NotNull String actionName) {
+          return new ExportAction(actionName);
+        }
+      });
     }
     actions.add(new Separator());
     if (!mySchemeImportersNames.isEmpty()) {
-      actions.add(new ImportGroup());
+      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.import"), mySchemeImportersNames) {
+        @NotNull
+        @Override
+        protected AnAction createAction(@NotNull String actionName) {
+          return new ImportAction(actionName);
+        }
+      });
     }
     addAdditionalActions(actions);
     return actions;
@@ -112,7 +127,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       T currentScheme = getCurrentScheme();
-      p.setEnabled(currentScheme != null && isCopyToAvailable(currentScheme));
+      p.setEnabledAndVisible(currentScheme != null && isCopyToAvailable(currentScheme));
     }
   }
   
@@ -133,25 +148,36 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       T currentScheme = getCurrentScheme(); 
-      p.setEnabled(currentScheme != null && isDeleteAvailable(currentScheme));
+      p.setEnabledAndVisible(currentScheme != null && isDeleteAvailable(currentScheme));
     }
   }
 
-  private class ImportGroup extends ActionGroup {
+  private abstract class ActionGroupPopupAction extends DumbAwareAction {
+    private final Collection<String> myActionNames;
 
-    public ImportGroup() {
-      super(ApplicationBundle.message("settings.editor.scheme.import"), true);
+    public ActionGroupPopupAction(@NotNull String groupName, @NotNull Collection<String> actionNames) {
+      super(groupName);
+      myActionNames = actionNames;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      ListPopup listPopup =JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(), new ActionGroup() {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          List<AnAction> namedActions = new ArrayList<>();
+          for (String actionName : myActionNames) {
+            namedActions.add(createAction(actionName));
+          }
+          return namedActions.toArray(new AnAction[namedActions.size()]);
+        }
+      }, e.getDataContext(), null, true);
+      listPopup.showUnderneathOf(getParentComponent());
     }
 
     @NotNull
-    @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      List<ImportAction> importActions = new ArrayList<>();
-      for (String importerName : mySchemeImportersNames) {
-        importActions.add(new ImportAction(importerName));
-      }
-      return importActions.toArray(new AnAction[importActions.size()]);
-    }
+    protected abstract AnAction createAction(@NotNull String actionName);
   }
   
   private class ImportAction extends DumbAwareAction {
@@ -166,22 +192,6 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     @Override
     public void actionPerformed(AnActionEvent e) {
       doImport(myImporterName);
-    }
-  }
-
-  private class ExportGroup extends ActionGroup {
-    public ExportGroup() {
-      super(ApplicationBundle.message("settings.editor.scheme.export"), true);
-    }
-
-    @NotNull
-    @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      List<ExportAction> exportActions = new ArrayList<>();
-      for (String exporterName : mySchemeExporterNames) {
-        exportActions.add(new ExportAction(exporterName));
-      }
-      return exportActions.toArray(new AnAction[exportActions.size()]);
     }
   }
   
@@ -226,6 +236,9 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   protected abstract T getCurrentScheme();
   
   protected abstract Class<T> getSchemeType();
+
+  @NotNull
+  protected abstract JComponent getParentComponent();
 
 }
 

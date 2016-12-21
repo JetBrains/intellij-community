@@ -45,7 +45,7 @@ public class CompilerBackwardReferenceIndex {
 
   private static final String VERSION_FILE = "version";
   private final Map<ID<?, ?>, InvertedIndex<?, ?, CompiledFileData>> myIndices;
-  private final ByteArrayEnumerator myNameEnumerator;
+  private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myIndicesDir;
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
@@ -87,7 +87,7 @@ public class CompilerBackwardReferenceIndex {
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir));
       }
 
-      myNameEnumerator = new ByteArrayEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
+      myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
     }
     catch (IOException e) {
       removeIndexFiles(myIndicesDir);
@@ -105,7 +105,7 @@ public class CompilerBackwardReferenceIndex {
   }
 
   @NotNull
-  public ByteArrayEnumerator getByteSeqEum() {
+  public NameEnumerator getByteSeqEum() {
     return myNameEnumerator;
   }
 

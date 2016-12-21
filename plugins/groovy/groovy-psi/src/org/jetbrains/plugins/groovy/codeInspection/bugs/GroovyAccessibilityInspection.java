@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyAccessibilityInspection extends GroovySuppressableInspectionTool {
+public class GroovyAccessibilityInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
   private static final String SHORT_NAME = "GroovyAccessibility";
 
   @Nls

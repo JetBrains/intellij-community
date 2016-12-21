@@ -25,6 +25,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -123,6 +124,9 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
                                                   String name,
                                                   String templateName,
                                                   boolean askToDefineVariables, @NotNull Map<String, String> additionalProperties) throws IncorrectOperationException {
+    if (askToDefineVariables) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed());
+    }
     //checkCreateClassOrInterface(dir, name);
 
     Project project = dir.getProject();

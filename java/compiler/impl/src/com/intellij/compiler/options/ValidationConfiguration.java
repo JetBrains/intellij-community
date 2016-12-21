@@ -81,5 +81,9 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
     name = JpsCompilerValidationExcludeSerializer.COMPONENT_NAME,
     storages = @Storage(JpsCompilerValidationExcludeSerializer.CONFIG_FILE_NAME)
   )
-  public static class ExcludedFromValidationConfiguration extends ExcludedEntriesConfiguration {}
+  public static class ExcludedFromValidationConfiguration extends ExcludedEntriesConfiguration {
+    public ExcludedFromValidationConfiguration() {
+      super(null);
+    }
+  }
 }

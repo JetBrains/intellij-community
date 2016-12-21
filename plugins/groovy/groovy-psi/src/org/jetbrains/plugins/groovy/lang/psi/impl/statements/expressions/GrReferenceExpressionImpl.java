@@ -262,7 +262,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
           PsiClassType[] superTypes = ArrayUtil.mergeArrays(implementsTypes, extendsTypes, PsiClassType.ARRAY_FACTORY);
 
-          return PsiIntersectionType.createIntersection(ArrayUtil.reverseArray(superTypes));
+          if (superTypes.length > 0) {
+            return PsiIntersectionType.createIntersection(ArrayUtil.reverseArray(superTypes));
+          }
         }
         return factory.createType((PsiClass)resolved);
       }

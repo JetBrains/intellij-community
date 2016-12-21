@@ -174,7 +174,7 @@ public class IdeBackgroundUtil {
 
   @NotNull
   public static String getBackgroundSpec(@Nullable Project project, @NotNull String propertyName) {
-    String spec = project == null ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
+    String spec = project == null || project.isDisposed() ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
     if (spec == null) spec = PropertiesComponent.getInstance().getValue(propertyName);
     return StringUtil.notNullize(spec, System.getProperty(propertyName, ""));
   }

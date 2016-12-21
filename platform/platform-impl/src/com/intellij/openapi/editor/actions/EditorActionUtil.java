@@ -47,6 +47,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +86,7 @@ public class EditorActionUtil {
       return;
     }
     
-    Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
+    Rectangle viewRectangle = getVisibleArea(editor);
     int lineNumber = editor.getCaretModel().getVisualPosition().line;
     VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
     int start = startPos.line + 1;
@@ -103,7 +104,7 @@ public class EditorActionUtil {
                                                   int columnShift,
                                                   int lineShift,
                                                   boolean withSelection) {
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     VisualPosition pos = editor.getCaretModel().getVisualPosition();
     Point caretLocation = editor.visualPositionToXY(pos);
     int caretVShift = caretLocation.y - visibleArea.y;
@@ -787,7 +788,7 @@ public class EditorActionUtil {
 
   public static void moveCaretPageUp(@NotNull Editor editor, boolean isWithSelection) {
     int lineHeight = editor.getLineHeight();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int linesIncrement = visibleArea.height / lineHeight;
     editor.getScrollingModel().scrollVertically(visibleArea.y - visibleArea.y % lineHeight - linesIncrement * lineHeight);
     int lineShift = -linesIncrement;
@@ -796,7 +797,7 @@ public class EditorActionUtil {
 
   public static void moveCaretPageDown(@NotNull Editor editor, boolean isWithSelection) {
     int lineHeight = editor.getLineHeight();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int linesIncrement = visibleArea.height / lineHeight;
     int allowedBottom = ((EditorEx)editor).getContentSize().height - visibleArea.height;
     editor.getScrollingModel().scrollVertically(
@@ -810,7 +811,7 @@ public class EditorActionUtil {
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
     LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int lineNumber = visibleArea.y / lineHeight;
     if (visibleArea.y % lineHeight > 0) {
       lineNumber++;
@@ -826,11 +827,17 @@ public class EditorActionUtil {
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
     LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int lineNumber = Math.max(0, (visibleArea.y + visibleArea.height) / lineHeight - 1);
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
     editor.getCaretModel().moveToVisualPosition(pos);
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
+  }
+
+  @NotNull
+  private static Rectangle getVisibleArea(@NotNull Editor editor) {
+    return SystemProperties.isTrueSmoothScrollingEnabled() ? editor.getScrollingModel().getVisibleAreaOnScrollingFinished()
+                                                           : editor.getScrollingModel().getVisibleArea();
   }
 
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {

@@ -21,12 +21,12 @@ package com.intellij.lang;
 
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator>{
   public static final ExternalLanguageAnnotators INSTANCE = new ExternalLanguageAnnotators();
@@ -37,7 +37,11 @@ public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnota
 
   @NotNull
   public static List<ExternalAnnotator> allForFile(@NotNull Language language, @NotNull final PsiFile file) {
-    List<ExternalAnnotator> annotators = INSTANCE.allForLanguage(language);
+    final Set<ExternalAnnotator> annotators = ContainerUtil.newHashSet();
+    while (language != null) {
+      annotators.addAll(INSTANCE.forKey(language));
+      language = language.getBaseLanguage();
+    }
     final ExternalAnnotatorsFilter[] filters = Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
     return ContainerUtil.findAll(annotators, annotator -> {
       for (ExternalAnnotatorsFilter filter : filters) {

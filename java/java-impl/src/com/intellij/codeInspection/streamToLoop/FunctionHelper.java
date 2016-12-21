@@ -34,7 +34,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
@@ -55,7 +59,7 @@ abstract class FunctionHelper {
     return myResultType;
   }
 
-  String getText() {
+  final String getText() {
     return getExpression().getText();
   }
 
@@ -63,23 +67,26 @@ abstract class FunctionHelper {
 
   /**
    * Try to perform "light" transformation. Works only for single-argument SAM. The function helper decides by itself
-   * how to name the SAM argument and returns it. After this method invocation normal transform cannot be performed.
+   * how to name the SAM argument and returns the assigned name. After this method invocation normal transform cannot be performed.
    *
    * @return SAM argument name or null if function helper refused to perform a transformation.
-   * @param type
+   * @param type type of the input variable (after generic substitution if applicable)
    */
   String tryLightTransform(PsiType type) {
     return null;
   }
 
   /**
-   * Perform an adaptation of current function helper to the replacement context with given parameter names.
-   * Must be called exactly once prior using getExpression() or getText()
+   * Adapts this function helper converting it to the valid expression and inlining SAM parameters with provided values.
+   * Must be called exactly once prior using getExpression() or getText().
    *
    * @param context a context for which transformation should be performed
-   * @param newNames names of the SAM parameters (the length must be exactly the same as number of SAM parameters)
+   * @param argumentValues values (expressions) of the SAM parameters to be inlined into function body
+   *                       (the length must be exactly the same as the number of SAM parameters).
+   *                       Usually it's just the references to the existing variables, but other expressions
+   *                       (e.g. constant literals) could be used as well if necessary.
    */
-  abstract void transform(StreamToLoopReplacementContext context, String... newNames);
+  abstract void transform(StreamToLoopReplacementContext context, String... argumentValues);
 
   /**
    * Rename the references of some variable if it's used inside this function
@@ -148,22 +155,73 @@ abstract class FunctionHelper {
     if (expression instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
       if (methodRef.resolve() == null) return null;
+      String template = tryInlineMethodReference(paramCount, methodRef);
+      if (template != null) {
+        return new InlinedFunctionHelper(returnType, paramCount, template);
+      }
       return new MethodReferenceFunctionHelper(returnType, type, methodRef);
     }
     if (expression instanceof PsiReferenceExpression && ExpressionUtils.isSimpleExpression(expression)) {
       return new SimpleReferenceFunctionHelper(returnType, expression, interfaceMethod.getName());
     }
-    if (expression instanceof PsiMethodCallExpression &&
-        MethodCallUtils
-          .isCallToStaticMethod((PsiMethodCallExpression)expression, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, "identity", 0)) {
-      return paramCount == 1 ? new IdentityFunctionHelper(returnType) : null;
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, "identity", 0)) {
+        return paramCount == 1 ? new InlinedFunctionHelper(returnType, 1, "{0}") : null;
+      }
+      if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COMPARATOR, "naturalOrder", 0)) {
+        return paramCount == 2 ? new InlinedFunctionHelper(returnType, 2, "{0}.compareTo({1})") : null;
+      }
+      if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COMPARATOR, "reverseOrder", 0) ||
+          MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COLLECTIONS, "reverseOrder", 0)) {
+        return paramCount == 2 ? new InlinedFunctionHelper(returnType, 2, "{1}.compareTo({0})") : null;
+      }
     }
     return new ComplexExpressionFunctionHelper(returnType, type, interfaceMethod.getName(), expression);
   }
 
+  @Nullable
+  private static String tryInlineMethodReference(int paramCount, PsiMethodReferenceExpression methodRef) {
+    PsiElement element = methodRef.resolve();
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      String name = method.getName();
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null) {
+        String className = aClass.getQualifiedName();
+        if("java.util.Objects".equals(className) && paramCount == 1) {
+          if (name.equals("nonNull")) {
+            return "{0}!=null";
+          }
+          if (name.equals("isNull")) {
+            return "{0}==null";
+          }
+        }
+        if (paramCount == 2 && name.equals("sum") && (CommonClassNames.JAVA_LANG_INTEGER.equals(className) ||
+                                                      CommonClassNames.JAVA_LANG_LONG.equals(className) ||
+                                                      CommonClassNames.JAVA_LANG_DOUBLE.equals(className))) {
+          return "{0}+{1}";
+        }
+        if(CommonClassNames.JAVA_LANG_CLASS.equals(className) && paramCount == 1) {
+          PsiExpression qualifier = methodRef.getQualifierExpression();
+          if(qualifier instanceof PsiClassObjectAccessExpression) {
+            PsiTypeElement type = ((PsiClassObjectAccessExpression)qualifier).getOperand();
+            if(name.equals("isInstance")) {
+              return "{0} instanceof "+type.getText();
+            }
+            if(name.equals("cast")) {
+              return "("+type.getText()+"){0}";
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   @NotNull
   @Contract(pure = true)
-  static FunctionHelper hashMapSupplier(PsiType type) {
+  static FunctionHelper newObjectSupplier(PsiType type, String instanceClassName) {
     return new FunctionHelper(type) {
       PsiExpression myExpression;
 
@@ -173,39 +231,47 @@ abstract class FunctionHelper {
       }
 
       @Override
-      void transform(StreamToLoopReplacementContext context, String... newNames) {
-        LOG.assertTrue(newNames.length == 0);
-        myExpression = context.createExpression("new java.util.HashMap<>()");
+      void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+        LOG.assertTrue(argumentValues.length == 0);
+        myExpression = context.createExpression("new "+instanceClassName+"<>()");
       }
     };
   }
 
-  /**
-   * Renames references to the variable oldName in given expression into newName
-   * @param expression an expression to search-and-replace references inside
-   * @param oldName old name
-   * @param newName new name
-   * @param context context
-   * @return resulting expression (might be the same as input expression) or null if expression already had references to newName,
-   *   so rename may merge two variables
-   */
-  @NotNull
-  static PsiExpression renameVarReference(@NotNull PsiExpression expression,
-                                          String oldName,
-                                          String newName,
-                                          StreamToLoopReplacementContext context) {
-    if(oldName.equals(newName)) return expression;
-    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression("("+oldName+","+newName+")-> "+expression.getText());
-    PsiParameter[] parameters = lambda.getParameterList().getParameters();
-    PsiParameter oldVar = parameters[0];
-    PsiParameter newVar = parameters[1];
+  static boolean hasVarReference(PsiExpression expression, String name, StreamToLoopReplacementContext context) {
+    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name+"->"+expression.getText());
+    PsiParameter var = lambda.getParameterList().getParameters()[0];
     PsiElement body = lambda.getBody();
     LOG.assertTrue(body != null);
-    if(ReferencesSearch.search(newVar, new LocalSearchScope(body)).findFirst() != null) {
-      throw new IllegalStateException("Reference with name "+newVar+" already exists in "+lambda.getText());
-    }
-    for (PsiReference ref : ReferencesSearch.search(oldVar, new LocalSearchScope(body)).findAll()) {
-      ref.handleElementRename(newName);
+    return ReferencesSearch.search(var, new LocalSearchScope(body)).findFirst() != null;
+  }
+
+  /**
+   * Replaces all the references to the variable {@code name} in given expression with {@code replacement}.
+   *
+   * <p>
+   *   If the replacement is a new name to the variable, the caller must take care that this new name was not used before.
+   * </p>
+   *
+   * @param expression an expression to search-and-replace references inside
+   * @param name a reference name to replace
+   * @param replacement a replacement expression (new name or literal)
+   * @param context context
+   * @return resulting expression (might be the same as input expression)
+   */
+  @NotNull
+  static PsiExpression replaceVarReference(@NotNull PsiExpression expression,
+                                           String name,
+                                           String replacement,
+                                           StreamToLoopReplacementContext context) {
+    if(name.equals(replacement)) return expression;
+    PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name+"->"+expression.getText());
+    PsiParameter var = lambda.getParameterList().getParameters()[0];
+    PsiElement body = lambda.getBody();
+    LOG.assertTrue(body != null);
+    PsiExpression replacementExpression = context.createExpression(replacement);
+    for (PsiReference ref : ReferencesSearch.search(var, new LocalSearchScope(body)).findAll()) {
+      ref.getElement().replace(replacementExpression);
     }
     return (PsiExpression)lambda.getBody();
   }
@@ -273,7 +339,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       PsiMethodReferenceExpression methodRef = fromText(context, myMethodRef.getText());
       PsiExpression qualifier = methodRef.getQualifierExpression();
       if(qualifier != null) {
@@ -303,8 +369,8 @@ abstract class FunctionHelper {
       PsiElement body = lambda.getBody();
       LOG.assertTrue(body instanceof PsiExpression);
       myExpression = (PsiExpression)body;
-      EntryStream.zip(lambda.getParameterList().getParameters(), newNames)
-        .forKeyValue((param, newName) -> myExpression = renameVarReference(myExpression, param.getName(), newName, context));
+      EntryStream.zip(lambda.getParameterList().getParameters(), argumentValues)
+        .forKeyValue((param, newName) -> myExpression = replaceVarReference(myExpression, param.getName(), newName, context));
     }
 
     @Override
@@ -336,7 +402,7 @@ abstract class FunctionHelper {
       if(oldName.equals(newName)) return;
       PsiExpression qualifier = myMethodRef.getQualifierExpression();
       if(qualifier == null) return;
-      qualifier = renameVarReference(qualifier, oldName, newName, context);
+      qualifier = replaceVarReference(qualifier, oldName, newName, context);
       myMethodRef = fromText(context, qualifier.getText()+"::"+myMethodRef.getReferenceName());
     }
   }
@@ -382,7 +448,7 @@ abstract class FunctionHelper {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myExpression = renameVarReference(myExpression, oldName, newName, context);
+      myExpression = replaceVarReference(myExpression, oldName, newName, context);
     }
 
     @Override
@@ -391,9 +457,9 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       String varName = context.declare(myNameCandidate, myFnType, myExpression.getText());
-      myFinalExpression = context.createExpression(varName + "." + myMethodName + "(" + String.join(",", newNames) + ")");
+      myFinalExpression = context.createExpression(varName + "." + myMethodName + "(" + String.join(",", argumentValues) + ")");
     }
   }
 
@@ -415,13 +481,13 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
-      myExpression = context.createExpression(myReference.getText() + "." + myName + "(" + String.join(",", newNames) + ")");
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      myExpression = context.createExpression(myReference.getText() + "." + myName + "(" + String.join(",", argumentValues) + ")");
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myReference = renameVarReference(myReference, oldName, newName, context);
+      myReference = replaceVarReference(myReference, oldName, newName, context);
     }
 
     @Override
@@ -430,11 +496,15 @@ abstract class FunctionHelper {
     }
   }
 
-  private static class IdentityFunctionHelper extends FunctionHelper {
+  private static class InlinedFunctionHelper extends FunctionHelper {
+    private final int myArgCount;
+    private final String myTemplate;
     private PsiExpression myExpression;
 
-    public IdentityFunctionHelper(PsiType type) {
+    public InlinedFunctionHelper(PsiType type, int argCount, String template) {
       super(type);
+      myArgCount = argCount;
+      myTemplate = template;
     }
 
     @Override
@@ -444,9 +514,9 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
-      LOG.assertTrue(newNames.length == 1);
-      myExpression = context.createExpression(newNames[0]);
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      LOG.assertTrue(argumentValues.length == myArgCount);
+      myExpression = context.createExpression(MessageFormat.format(myTemplate, (Object[])argumentValues));
     }
   }
 
@@ -470,33 +540,26 @@ abstract class FunctionHelper {
       return myBody;
     }
 
-    void transform(StreamToLoopReplacementContext context, String... newNames) {
-      LOG.assertTrue(newNames.length == myParameters.length);
-      EntryStream.zip(myParameters, newNames).forKeyValue(
-        (oldName, newName) -> myBody = renameVarReference(myBody, oldName, newName, context));
+    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      LOG.assertTrue(argumentValues.length == myParameters.length);
+      EntryStream.zip(myParameters, argumentValues).forKeyValue(
+        (oldName, newName) -> myBody = replaceVarReference(myBody, oldName, newName, context));
     }
 
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      OptionalLong idx = StreamEx.of(myParameters).indexOf(newName);
-      if(idx.isPresent()) {
+      int idx = ArrayUtil.indexOf(myParameters, newName);
+      if(idx >= 0) {
+        // If new name collides with existing parameter, rename it
         for(int i = 1;; i++) {
           String paramName = newName+'$'+i;
-          if (!paramName.equals(oldName) &&
-              !StreamEx.of(myParameters).has(paramName)) {
-            try {
-              myBody = renameVarReference(myBody, newName, paramName, context);
-              myParameters[(int)idx.getAsLong()] = paramName;
-              break;
-            }
-            catch(IllegalStateException ise) {
-              // something is really wrong if we already have references to all newName$1, newName$2, ... newName$50
-              // or probably IllegalStateException was thrown by something else: at least we don't stuck in endless loop
-              if(i > 50) throw ise;
-            }
+          if (!paramName.equals(oldName) && !StreamEx.of(myParameters).has(paramName) && !hasVarReference(myBody, paramName, context)) {
+            myBody = replaceVarReference(myBody, newName, paramName, context);
+            myParameters[idx] = paramName;
+            break;
           }
         }
       }
-      myBody = renameVarReference(myBody, oldName, newName, context);
+      myBody = replaceVarReference(myBody, oldName, newName, context);
     }
 
     @Override

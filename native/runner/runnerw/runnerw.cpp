@@ -237,6 +237,9 @@ int main(int argc, char * argv[]) {
 		processFlag |= CREATE_NO_WINDOW;
 	}
 
+	if (!SetConsoleCtrlHandler(NULL, FALSE)) {
+		ErrorMessage("Cannot restore normal processing of CTRL+C input");
+	}
 	if (!CreateProcess(
 			c_app,
 			c_args,

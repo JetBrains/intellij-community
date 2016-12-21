@@ -39,18 +39,26 @@ public class Task implements StudyItem {
 
   private String text;
   private Map<String, String> testsText = new HashMap<>();
+  private Map<String, String> taskTexts = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
-  @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters = new ChoiceParameters();
+  @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters;
   private int myActiveSubtaskIndex = 0;
+  @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;
 
   public Task() {}
 
   public Task(@NotNull final String name) {
     this.name = name;
+  }
+  
+  public static Task createChoiceTask(@NotNull String name) {
+    final Task task = new Task(name);
+    task.setChoiceParameters(new ChoiceParameters());
+    return task;
   }
 
   /**
@@ -94,8 +102,16 @@ public class Task implements StudyItem {
     return testsText;
   }
 
+  public Map<String, String> getTaskTexts() {
+    return taskTexts;
+  }
+
   public void addTestsTexts(String name, String text) {
     testsText.put(name, text);
+  }
+
+  public void addTaskText(String name, String text) {
+    taskTexts.put(name, text);
   }
 
   public Map<String, TaskFile> getTaskFiles() {
@@ -316,7 +332,7 @@ public class Task implements StudyItem {
   }
   
   public boolean isChoiceTask() {
-    return !myChoiceParameters.getChoiceVariants().isEmpty();
+    return myChoiceParameters != null;
   }
 
   // used for serialization
@@ -338,6 +354,7 @@ public class Task implements StudyItem {
     getTestsText().clear();
     setStatus(StudyStatus.Unchecked);
     setChoiceVariants(task.getChoiceVariants());
+    setMultipleChoice(task.isMultipleChoice());
     final Map<String, String> testsText = task.getTestsText();
     for (String testName : testsText.keySet()) {
       addTestsTexts(testName, testsText.get(testName));

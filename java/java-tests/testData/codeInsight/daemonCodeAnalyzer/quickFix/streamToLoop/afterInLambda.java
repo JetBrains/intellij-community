@@ -11,7 +11,7 @@ public class Main {
         long sum = 0;
         long count = 0;
         for (String s1 : list) {
-            if (Objects.nonNull(s1)) {
+            if (s1 != null) {
                 sum += s1.length();
                 count++;
             }

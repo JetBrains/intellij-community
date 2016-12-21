@@ -60,6 +60,9 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", ui.isCompactReferencesView()));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", ui.isShowTagNames()));
 
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex", ui.getTextFilterSettings().isFilterByRegexEnabled()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase", ui.getTextFilterSettings().isMatchCaseEnabled()));
+
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {
             usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil

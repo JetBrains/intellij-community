@@ -351,7 +351,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         if (intersection != null && !intersection.isEmpty()) {
           final String value = fragment.getSecond();
           final String intersectedValue;
-          if (value.length() == 1 || value.length() == intersection.getLength()) {
+          if (value.codePointCount(0, value.length()) == 1 || value.length() == intersection.getLength()) {
             intersectedValue = value;
           }
           else {
@@ -367,7 +367,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-      int offset = 0;
+      int offset = 0; // running offset in the decoded fragment
       int endOffset = -1;
       for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
         final TextRange encodedTextRange = fragment.getFirst();
@@ -379,13 +379,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
           if (valueLength == 0) {
             return -1;
           }
-          else if (valueLength == 1) {
+          // A long unicode escape of form \U01234567 can be decoded into a surrogate pair
+          else if (value.codePointCount(0, valueLength) == 1) {
             if (offset == offsetInDecoded) {
               return intersection.getStartOffset();
             }
-            offset++;
+            offset += valueLength;
           }
           else {
+            // Literal fragment without escapes: it's safe to use intersection length instead of value length
             if (offset + intersectionLength >= offsetInDecoded) {
               final int delta = offsetInDecoded - offset;
               return intersection.getStartOffset() + delta;

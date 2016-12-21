@@ -19,10 +19,12 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -38,17 +40,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
+import static com.intellij.project.ProjectKt.guessProjectDir;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Searches for Vcs roots problems via {@link VcsRootErrorsFinder} and notifies about them.
  */
 public class VcsRootProblemNotifier {
-
-  public static final Function<VcsRootError, String> PATH_FROM_ROOT_ERROR = VcsRootError::getMapping;
+  private static final Logger LOG = Logger.getInstance(VcsRootProblemNotifier.class);
 
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration mySettings;
@@ -86,7 +91,22 @@ public class VcsRootProblemNotifier {
     Collection<VcsRootError> importantUnregisteredRoots = getImportantUnregisteredMappings(errors);
     Collection<VcsRootError> invalidRoots = getInvalidRoots(errors);
 
-    List<String> unregRootPaths = ContainerUtil.map(importantUnregisteredRoots, PATH_FROM_ROOT_ERROR);
+    if (importantUnregisteredRoots.size() == 1) {
+      VcsRootError singleUnregRoot = notNull(getFirstItem(importantUnregisteredRoots));
+      String mappingPath = singleUnregRoot.getMapping();
+      VirtualFile projectDir = guessProjectDir(myProject);
+      if (!myVcsManager.hasAnyMappings()
+          && !myReportedUnregisteredRoots.contains(mappingPath)
+          && projectDir != null && FileUtil.isAncestor(projectDir.getPath(), mappingPath, false)
+          && Registry.is("vcs.auto.add.single.root")) {
+        VcsDirectoryMapping mapping = new VcsDirectoryMapping(mappingPath, singleUnregRoot.getVcsKey().getName());
+        myVcsManager.setDirectoryMappings(Collections.singletonList(mapping));
+        LOG.info("Added " + mapping.getVcs() + " root " + mapping + " as the only auto-detected root.");
+        return;
+      }
+    }
+
+    List<String> unregRootPaths = ContainerUtil.map(importantUnregisteredRoots, VcsRootError::getMapping);
     if (invalidRoots.isEmpty() && (importantUnregisteredRoots.isEmpty() || myReportedUnregisteredRoots.containsAll(unregRootPaths))) {
       return;
     }
@@ -233,7 +253,7 @@ public class VcsRootProblemNotifier {
         }
       }
       else if (event.getDescription().equals("ignore")) {
-        mySettings.addIgnoredUnregisteredRoots(ContainerUtil.map(myImportantUnregisteredRoots, PATH_FROM_ROOT_ERROR));
+        mySettings.addIgnoredUnregisteredRoots(ContainerUtil.map(myImportantUnregisteredRoots, VcsRootError::getMapping));
         notification.expire();
       }
       else if (event.getDescription().equals("add")) {

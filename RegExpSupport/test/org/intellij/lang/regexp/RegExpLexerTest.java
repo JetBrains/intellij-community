@@ -148,12 +148,56 @@ public class RegExpLexerTest extends LexerTestCase {
                               "CLASS_END (']')", lexer);
   }
 
-  public void testNoNestedCharacterClasses() {
+  public void testNoNestedCharacterClasses1() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("[[\\]]", "CLASS_BEGIN ('[')\n" +
                      "CHARACTER ('[')\n" +
                      "ESC_CHARACTER ('\\]')\n" +
                      "CLASS_END (']')", lexer);
+  }
+
+  public void testNoNestedCharacterClasses2() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("[a-z&&[^aeuoi]]", "CLASS_BEGIN ('[')\n" +
+                              "CHARACTER ('a')\n" +
+                              "MINUS ('-')\n" +
+                              "CHARACTER ('z')\n" +
+                              "CHARACTER ('&')\n" +
+                              "CHARACTER ('&')\n" +
+                              "CHARACTER ('[')\n" +
+                              "CHARACTER ('^')\n" +
+                              "CHARACTER ('a')\n" +
+                              "CHARACTER ('e')\n" +
+                              "CHARACTER ('u')\n" +
+                              "CHARACTER ('o')\n" +
+                              "CHARACTER ('i')\n" +
+                              "CLASS_END (']')\n" +
+                              "CHARACTER (']')", lexer);
+  }
+
+  public void testNestedCharacterClasses1() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES));
+    doTest("[a-z&&[^aeuoi]]", "CLASS_BEGIN ('[')\n" +
+                              "CHARACTER ('a')\n" +
+                              "MINUS ('-')\n" +
+                              "CHARACTER ('z')\n" +
+                              "ANDAND ('&&')\n" +
+                              "CLASS_BEGIN ('[')\n" +
+                              "CARET ('^')\n" +
+                              "CHARACTER ('a')\n" +
+                              "CHARACTER ('e')\n" +
+                              "CHARACTER ('u')\n" +
+                              "CHARACTER ('o')\n" +
+                              "CHARACTER ('i')\n" +
+                              "CLASS_END (']')\n" +
+                              "CLASS_END (']')", lexer);
+  }
+
+  public void testNestedCharacterClasses2() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES));
+    doTest("[]]", "CLASS_BEGIN ('[')\n" +
+                  "CHARACTER (']')\n" +
+                  "CLASS_END (']')", lexer);
   }
 
   @Override

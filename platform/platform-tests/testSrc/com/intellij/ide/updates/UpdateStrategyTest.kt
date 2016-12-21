@@ -194,6 +194,30 @@ class UpdateStrategyTest {
     assertBuild("162.48", result.newBuild)
   }
 
+  @Test fun `for duplicate builds, first matching channel is preferred`() {
+    val build = """<build number="163.9166" version="2016.3.1"/>"""
+    val eap15 = """<channel id="IDEA15_EAP" status="eap" licensing="eap" majorVersion="15">$build</channel>"""
+    val eap = """<channel id="IDEA_EAP" status="eap" licensing="eap" majorVersion="2016">$build</channel>"""
+    val beta15 = """<channel id="IDEA15_Beta" status="beta" licensing="release" majorVersion="15">$build</channel>"""
+    val beta = """<channel id="IDEA_Beta" status="beta" licensing="release" majorVersion="2016">$build</channel>"""
+    val release15 = """<channel id="IDEA15_Release" status="release" licensing="release" majorVersion="15">$build</channel>"""
+    val release = """<channel id="IDEA_Release" status="release" licensing="release" majorVersion="2016">$build</channel>"""
+
+    // note: this is a test; in production, release builds should never be proposed via channels with EAP licensing
+    assertEquals("IDEA15_EAP", check("IU-163.1", ChannelStatus.EAP, (eap15 + eap + beta15 + beta + release15 + release)).updatedChannel?.id)
+    assertEquals("IDEA_EAP", check("IU-163.1", ChannelStatus.EAP, (eap + eap15 + beta + beta15 + release + release15)).updatedChannel?.id)
+    assertEquals("IDEA15_EAP", check("IU-163.1", ChannelStatus.EAP, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_EAP", check("IU-163.1", ChannelStatus.EAP, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+
+    assertEquals("IDEA15_Beta", check("IU-163.1", ChannelStatus.BETA, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_Beta", check("IU-163.1", ChannelStatus.BETA, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+
+    assertEquals("IDEA15_Release", check("IU-163.1", ChannelStatus.RELEASE, (eap15 + eap + beta15 + beta + release15 + release)).updatedChannel?.id)
+    assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (eap + eap15 + beta + beta15 + release + release15)).updatedChannel?.id)
+    assertEquals("IDEA15_Release", check("IU-163.1", ChannelStatus.RELEASE, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+  }
+
   private fun check(currentBuild: String,
                     selectedChannel: ChannelStatus,
                     testData: String,

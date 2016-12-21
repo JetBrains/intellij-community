@@ -54,6 +54,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
@@ -474,7 +475,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
   
   private boolean transparent() {
-    return Registry.is("editor.transparent.scrollbar", false) && EditorUtil.isRealFileEditor(myEditor);
+    /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
+
+       Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+       This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+    return !SystemProperties.isTrueSmoothScrollingEnabled() &&
+           Registry.is("editor.transparent.scrollbar", false) &&
+           EditorUtil.isRealFileEditor(myEditor);
   }
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {

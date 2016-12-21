@@ -52,7 +52,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -305,7 +305,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     MessageBusConnection connection = ourProject.getMessageBus().connect(parentDisposable);
-    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         fail("Adding modules is not permitted in LightIdeaTestCase.");

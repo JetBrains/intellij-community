@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +37,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
 import com.intellij.vcs.log.util.StopWatch;
@@ -54,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
@@ -261,22 +259,18 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   @NotNull
-  public TIntHashSet filterMessages(@NotNull String text) {
+  public TIntHashSet filterMessages(@NotNull VcsLogTextFilter filter) {
     if (myIndexStorage != null) {
       try {
-        if (VcsLogUtil.isRegexp(text)) {
-          Pattern pattern = Pattern.compile(text);
-          return filter(myIndexStorage.messages, message -> pattern.matcher(message).find());
-        }
-        else {
-          TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(text);
+        if (!filter.isRegex()) {
+          TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(filter.getText());
           if (commitsForSearch != null) {
             TIntHashSet result = new TIntHashSet();
             commitsForSearch.forEach(commit -> {
               try {
                 String value = myIndexStorage.messages.get(commit);
                 if (value != null) {
-                  if (StringUtil.containsIgnoreCase(value, text)) {
+                  if (VcsLogTextFilterImpl.matches(filter, value)) {
                     result.add(commit);
                   }
                 }
@@ -295,7 +289,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myFatalErrorsConsumer.consume(this, e);
       }
 
-      return filter(myIndexStorage.messages, message -> StringUtil.containsIgnoreCase(message, text));
+      return filter(myIndexStorage.messages, message -> VcsLogTextFilterImpl.matches(filter, message));
     }
 
     return EmptyIntHashSet.INSTANCE;
@@ -324,7 +318,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     TIntHashSet filteredByMessage = null;
     if (textFilter != null) {
-      filteredByMessage = filterMessages(textFilter.getText());
+      filteredByMessage = filterMessages(textFilter);
     }
 
     TIntHashSet filteredByUser = null;

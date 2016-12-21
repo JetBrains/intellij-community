@@ -74,17 +74,16 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         final int lineStartOffset = copiedFragment.getLineStartOffset(i);
         final int lineEndOffset = copiedFragment.getLineEndOffset(i);
 
-        String text = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-        if (!text.contains(".java:")) continue;
-        Trinity<TextRange, TextRange, TextRange> info = visited.get(text);
+        String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
+        if (!lineText.contains(".java:")) continue;
+        Trinity<TextRange, TextRange, TextRange> info = visited.get(lineText);
         if (info == emptyInfo) continue;
 
         if (info == null) {
           info = emptyInfo;
           AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
           try {
-            worker.execute(text, lineEndOffset);
-            Result result = worker.getResult();
+            Result result = worker.execute(lineText, lineEndOffset);
             if (result == null) continue;
             HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
             if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) continue;
@@ -105,7 +104,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
           }
           finally {
             token.finish();
-            visited.put(text, info);
+            visited.put(lineText, info);
           }
         }
         int off = startOffset + lineStartOffset;

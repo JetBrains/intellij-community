@@ -68,12 +68,12 @@ class BundledJreManager {
   /**
    * Return a .tar.gz archive containing distribution of JRE for Win OS which will be bundled with the product
    */
-  File findWinJreArchive() {
-    return findJreArchive("win")
+  File findWinJreArchive(JvmArchitecture arch) {
+    return findJreArchive("win", arch)
   }
 
-  String archiveNameJre64(BuildContext buildContext) {
-    return "jre64-for-${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.tar.gz"
+  String archiveNameJre(BuildContext buildContext) {
+    return "jre-for-${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.tar.gz"
   }
 
 
@@ -92,6 +92,9 @@ class BundledJreManager {
     }
     buildContext.messages.block("Extract $archive.name JRE") {
       String destination = "$targetDir/jre"
+      if (osDirName == "win" && arch == JvmArchitecture.x64) {
+        destination += "64"
+      }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
         buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip')

@@ -98,6 +98,6 @@ public class ConsoleUtilTest {
   }
   
   private static ConsoleViewImpl.TokenInfo t(@NotNull ConsoleViewContentType contentType, int start, int end) {
-    return new ConsoleViewImpl.TokenInfo(contentType, start, end);
+    return new ConsoleViewImpl.TokenInfo(contentType, start, end, null);
   }
 }

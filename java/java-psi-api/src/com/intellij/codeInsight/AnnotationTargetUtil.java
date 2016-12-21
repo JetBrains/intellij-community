@@ -29,7 +29,7 @@ import java.util.Set;
  * @author peter
  */
 public class AnnotationTargetUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.AnnotationUtil");
+  private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 
   public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
@@ -94,11 +94,11 @@ public class AnnotationTargetUtil {
         if (scope instanceof PsiForeachStatement) {
           return LOCAL_VARIABLE_TARGETS;
         }
-        if (scope instanceof PsiParameterList && scope.getParent() instanceof PsiLambdaExpression && 
+        if (scope instanceof PsiParameterList && scope.getParent() instanceof PsiLambdaExpression &&
             ((PsiParameter)element).getTypeElement() == null) {
           return TargetType.EMPTY_ARRAY;
         }
-        
+
         return PARAMETER_TARGETS;
       }
       if (element instanceof PsiLocalVariable) {

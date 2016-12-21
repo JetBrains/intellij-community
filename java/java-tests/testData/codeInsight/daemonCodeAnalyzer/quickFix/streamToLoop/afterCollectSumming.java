@@ -9,7 +9,7 @@ public class Main {
   public static Double test(List<String> strings) {
       double sum = 0;
       for (String string : strings) {
-          if (Objects.nonNull(string)) {
+          if (string != null) {
               sum += string.length();
           }
       }

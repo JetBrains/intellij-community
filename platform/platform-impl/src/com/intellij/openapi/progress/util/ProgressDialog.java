@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
@@ -30,7 +31,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
@@ -103,7 +104,6 @@ class ProgressDialog implements Disposable {
   private JPanel myInnerPanel;
   DialogWrapper myPopup;
   private final Window myParentWindow;
-  private Point myLastClicked;
 
   public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
     myProgressWindow = progressWindow;
@@ -118,9 +118,7 @@ class ProgressDialog implements Disposable {
 
   public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
     myProgressWindow = progressWindow;
-    myParentWindow = parent instanceof Window
-                     ? (Window)parent
-                     : (Window)SwingUtilities.getAncestorOfClass(Window.class, parent);
+    myParentWindow = UIUtil.getWindow(parent);
     initDialog(shouldShowBackground, cancelText);
   }
 
@@ -154,33 +152,14 @@ class ProgressDialog implements Disposable {
     createCenterPanel();
 
     myTitlePanel.setActive(true);
-    myTitlePanel.addMouseListener(new MouseAdapter() {
+    WindowMoveListener moveListener = new WindowMoveListener(myTitlePanel) {
       @Override
-      public void mousePressed(@NotNull MouseEvent e) {
-        final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
-        myLastClicked = new RelativePoint(e).getScreenPoint();
-        myLastClicked.x -= titleOffset.x;
-        myLastClicked.y -= titleOffset.y;
+      protected Component getView(Component component) {
+        return SwingUtilities.getAncestorOfClass(DialogWrapperDialog.class, component);
       }
-    });
-
-    myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseDragged(@NotNull MouseEvent e) {
-        if (myLastClicked == null) {
-          return;
-        }
-        // use absolute location, because the relative point was set when creating the event, and the dialog might have been moved since that
-        // (e.g. if processing of previous events was delayed by something)
-        final Point draggedTo = e.getLocationOnScreen();
-        draggedTo.x -= myLastClicked.x;
-        draggedTo.y -= myLastClicked.y;
-
-        if (myPopup != null) {
-          myPopup.setLocation(draggedTo);
-        }
-      }
-    });
+    };
+    myTitlePanel.addMouseListener(moveListener);
+    myTitlePanel.addMouseMotionListener(moveListener);
   }
 
   @Override

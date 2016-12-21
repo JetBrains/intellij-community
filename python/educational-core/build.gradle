@@ -1,17 +1,19 @@
 import org.apache.tools.ant.filters.ReplaceTokens
-
 buildscript {
-  ext.kotlin_version = '1.0.3'
+  ext.kotlin_version = '1.0.5'
   repositories {
     mavenCentral()
+    maven {
+      url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+    maven {
+      url 'http://dl.bintray.com/jetbrains/intellij-plugin-service'
+    }
   }
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.2.0-SNAPSHOT"
   }
-}
-
-plugins {
-  id "org.jetbrains.intellij" version "0.0.43"
 }
 
 subprojects {
@@ -34,7 +36,12 @@ subprojects {
   }
 
   intellij {
-    version ideaVersion
+    String ideaPath = getIdeaPath()
+    if (ideaPath == null) {
+      version ideaVersion
+    } else {
+      localPath ideaPath
+    }
     updateSinceUntilBuild Boolean.valueOf(updateBuildNumber)
     downloadSources Boolean.valueOf(downloadIdeaSources)
     sandboxDirectory = new File(rootProject.projectDir, "gradleBuild/idea-sandbox")
@@ -56,6 +63,17 @@ subprojects {
   }
 
   buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
+}
+
+private static String getIdeaPath() {
+  Properties properties = new Properties()
+  try {
+    properties.load(new FileInputStream("local.properties"))
+    return properties.getProperty('ideaPath')
+  }
+  catch (ignored) {
+    return null
+  }
 }
 
 project(':student') {

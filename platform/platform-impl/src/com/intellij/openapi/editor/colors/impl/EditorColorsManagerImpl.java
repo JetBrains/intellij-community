@@ -65,8 +65,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
   private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledColorScheme");
 
-  private static final String DEFAULT_NAME = "Default";
-
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
   private final DefaultColorSchemesManager myDefaultColorSchemeManager;
@@ -100,12 +98,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       @NotNull
       @Override
       public SchemeState getState(@NotNull EditorColorsScheme scheme) {
-        if (scheme instanceof EditorColorsSchemeImpl && !(scheme instanceof ReadOnlyColorsScheme)) {
-          return ((EditorColorsSchemeImpl)scheme).isSaveNeeded() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
-        }
-        else {
-          return SchemeState.NON_PERSISTENT;
-        }
+        return scheme instanceof ReadOnlyColorsScheme ? SchemeState.NON_PERSISTENT : SchemeState.POSSIBLY_CHANGED;
       }
 
       @Override

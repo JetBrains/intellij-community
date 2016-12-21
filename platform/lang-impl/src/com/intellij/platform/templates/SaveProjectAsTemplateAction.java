@@ -31,10 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
@@ -173,6 +170,9 @@ public class SaveProjectAsTemplateAction extends AnAction {
         iterator.setRootAndPrefix(rootFile, prefix);
         index.iterateContentUnderDirectory(rootFile, iterator);
       }
+    }
+    catch (ProcessCanceledException ex){
+      //ignore
     }
     catch (Exception ex) {
       LOG.error(ex);

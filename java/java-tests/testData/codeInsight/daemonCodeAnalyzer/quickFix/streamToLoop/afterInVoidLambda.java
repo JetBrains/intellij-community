@@ -7,7 +7,7 @@ public class Main {
   public void test(String... list) {
     Runnable s = () -> {
         for (String s1 : list) {
-            if (Objects.nonNull(s1)) {
+            if (s1 != null) {
                 System.out.println(s1);
             }
         }

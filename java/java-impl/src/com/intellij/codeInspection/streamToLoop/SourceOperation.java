@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 import static com.intellij.codeInspection.streamToLoop.FunctionHelper.processUsedNames;
-import static com.intellij.codeInspection.streamToLoop.FunctionHelper.renameVarReference;
+import static com.intellij.codeInspection.streamToLoop.FunctionHelper.replaceVarReference;
 
 /**
  * @author Tagir Valeev
@@ -109,7 +109,7 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myQualifier = renameVarReference(myQualifier, oldName, newName, context);
+      myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
     }
 
     @Override
@@ -146,7 +146,7 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      Arrays.asList(myArgList).replaceAll(arg -> renameVarReference(arg, oldName, newName, context));
+      Arrays.asList(myArgList).replaceAll(arg -> replaceVarReference(arg, oldName, newName, context));
     }
 
     @Override
@@ -189,7 +189,7 @@ abstract class SourceOperation extends Operation {
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
       myFn.rename(oldName, newName, context);
       if(myLimit != null) {
-        myLimit = renameVarReference(myLimit, oldName, newName, context);
+        myLimit = replaceVarReference(myLimit, oldName, newName, context);
       }
     }
 
@@ -227,7 +227,7 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myInitializer = renameVarReference(myInitializer, oldName, newName, context);
+      myInitializer = replaceVarReference(myInitializer, oldName, newName, context);
       myFn.rename(oldName, newName, context);
     }
 
@@ -264,8 +264,8 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myOrigin = renameVarReference(myOrigin, oldName, newName, context);
-      myBound = renameVarReference(myBound, oldName, newName, context);
+      myOrigin = replaceVarReference(myOrigin, oldName, newName, context);
+      myBound = replaceVarReference(myBound, oldName, newName, context);
     }
 
     @Override

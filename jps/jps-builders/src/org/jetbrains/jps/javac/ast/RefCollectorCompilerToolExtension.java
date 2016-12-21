@@ -98,7 +98,7 @@ public class RefCollectorCompilerToolExtension extends JavaCompilerToolExtension
       }
 
       if (fileDataConsumer != null) {
-        JavacReferencesCollector.installOn(task, divideImportsRefs, fileDataConsumer);
+        JavacReferenceCollector.installOn(task, divideImportsRefs, fileDataConsumer);
       }
     }
   }

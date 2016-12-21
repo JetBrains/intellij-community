@@ -31,7 +31,6 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.TimestampGetter
 import java.util.*
@@ -258,7 +257,7 @@ class TestPermanentGraphInfo(
   }
 
   override fun getPermanentCommitsInfo() = commitInfo
-  override fun getLinearGraph() : PermanentLinearGraphImpl = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
+  override fun getLinearGraph() = graph
   override fun getPermanentGraphLayout() = graphLayout
   override fun getBranchNodeIds() = branchNodes
 }

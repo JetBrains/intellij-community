@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +48,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,6 +63,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import com.petebevin.markdown.MarkdownProcessor;
@@ -263,7 +266,11 @@ public class StudyUtils {
   }
 
   public static void showNoSdkNotification(@NotNull final Task currentTask, @NotNull final Project project) {
-    final Language language = currentTask.getLesson().getCourse().getLanguageById();
+    final Lesson lesson = currentTask.getLesson();
+    if (lesson == null) return;
+    final Course course = lesson.getCourse();
+    if (course == null) return;
+    final Language language = course.getLanguageById();
     StudyExecutor.INSTANCE.forLanguage(language).showNoSdkNotification(project);
   }
 
@@ -306,7 +313,11 @@ public class StudyUtils {
     if (manager == null) {
       return false;
     }
-    return manager.getTestFileName().equals(name);
+    String testFileName = manager.getTestFileName();
+    if (name.equals(testFileName)) {
+      return true;
+    }
+    return name.startsWith(FileUtil.getNameWithoutExtension(testFileName)) && name.contains(EduNames.SUBTASK_MARKER);
   }
 
   @Nullable
@@ -619,12 +630,12 @@ public class StudyUtils {
   }
 
   @NotNull
-  public static File getCourseDirectory(@NotNull Project project, Course course) {
+  public static File getCourseDirectory(Course course) {
     final File courseDirectory;
     if (course.isAdaptive()) {
       courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR,
                                  StudyProjectGenerator.ADAPTIVE_COURSE_PREFIX + course.getName()
-                                 + "_" + StudyTaskManager.getInstance(project).getUser().getEmail());
+                                 + "_" + StepicUpdateSettings.getInstance().getUser().getEmail());
     }
     else {
       courseDirectory = new File(StudyProjectGenerator.OUR_COURSES_DIR, course.getName());
@@ -822,5 +833,19 @@ public class StudyUtils {
       taskDir = srcDir;
     }
     return FileUtil.getRelativePath(taskDir.getPath(), file.getPath(), '/');
+  }
+
+  public static Pair<Integer, Integer> getPlaceholderOffsets(@NotNull final AnswerPlaceholder answerPlaceholder,
+                                                             @NotNull final Document document) {
+    int startOffset = answerPlaceholder.getOffset();
+    int delta = 0;
+    final int length = answerPlaceholder.getRealLength();
+    int nonSpaceCharOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, startOffset, startOffset + length);
+    if (nonSpaceCharOffset != startOffset) {
+      delta = startOffset - nonSpaceCharOffset;
+      startOffset = nonSpaceCharOffset;
+    }
+    final int endOffset = startOffset + length + delta;
+    return Pair.create(startOffset, endOffset);
   }
 }

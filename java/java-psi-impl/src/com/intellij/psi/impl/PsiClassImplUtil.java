@@ -388,7 +388,7 @@ public class PsiClassImplUtil {
             String currentName = ((PsiMember)element).getName();
             List<PsiMember> listByName = map.get(currentName);
             if (listByName == null) {
-              listByName = ContainerUtil.newArrayList();
+              listByName = ContainerUtil.newSmartList();
               map.put(currentName, listByName);
             }
             listByName.add((PsiMember)element);

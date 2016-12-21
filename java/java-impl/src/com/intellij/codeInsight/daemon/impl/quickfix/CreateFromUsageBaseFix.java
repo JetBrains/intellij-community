@@ -424,9 +424,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       final TemplateEditingListener listener,
                                       final String commandName) {
     Runnable runnable = () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener);
-    ApplicationManager.getApplication().invokeLater(
-      () -> CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName),
-      x -> project.isDisposed() || editor.isDisposed());
+    CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName);
   }
 
   @Override

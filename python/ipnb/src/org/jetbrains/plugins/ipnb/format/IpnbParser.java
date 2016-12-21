@@ -361,7 +361,7 @@ public class IpnbParser {
           }
           raw.data = dataRaw;
           raw.execution_count = outputCell.getPromptNumber();
-          raw.output_type = "execute_result";
+          raw.output_type = outputCell.getPromptNumber() != null ? "execute_result" : "display_data";
         }
         else {
           raw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();

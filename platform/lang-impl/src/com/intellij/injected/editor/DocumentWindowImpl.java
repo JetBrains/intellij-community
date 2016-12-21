@@ -598,11 +598,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public int getListenersCount() {
-    return myDelegate.getListenersCount();
-  }
-
-  @Override
   public void suppressGuardedExceptions() {
     myDelegate.suppressGuardedExceptions();
   }

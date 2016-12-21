@@ -130,7 +130,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @Override
   public VcsLogFilterCollection getFilters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Pair<VcsLogTextFilter, VcsLogHashFilter> filtersFromText = getFiltersFromTextArea(myTextFilterModel.getFilter());
+    Pair<VcsLogTextFilter, VcsLogHashFilter> filtersFromText =
+      getFiltersFromTextArea(myTextFilterModel.getFilter(), myUiProperties.getTextFilterSettings().isFilterByRegexEnabled(),
+                             myUiProperties.getTextFilterSettings().isMatchCaseEnabled());
     return new VcsLogFilterCollectionBuilder().with(myBranchFilterModel.getFilter())
       .with(myUserFilterModel.getFilter())
       .with(filtersFromText.second)
@@ -145,7 +147,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   @NotNull
-  private static Pair<VcsLogTextFilter, VcsLogHashFilter> getFiltersFromTextArea(@Nullable VcsLogTextFilter filter) {
+  private static Pair<VcsLogTextFilter, VcsLogHashFilter> getFiltersFromTextArea(@Nullable VcsLogTextFilter filter,
+                                                                                 boolean isRegexAllowed,
+                                                                                 boolean matchesCase) {
     if (filter == null) {
       return Pair.empty();
     }
@@ -170,7 +174,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       hashFilter = new VcsLogHashFilterImpl(hashes);
     }
     else {
-      textFilter = new VcsLogTextFilterImpl(text);
+      textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
       hashFilter = null;
     }
     return Pair.<VcsLogTextFilter, VcsLogHashFilter>create(textFilter, hashFilter);
@@ -282,7 +286,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull
     @Override
     protected VcsLogTextFilter createFilter(@NotNull List<String> values) {
-      return new VcsLogTextFilterImpl(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)));
+      return new VcsLogTextFilterImpl(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)),
+                                      myUiProperties.getTextFilterSettings().isFilterByRegexEnabled(),
+                                      myUiProperties.getTextFilterSettings().isMatchCaseEnabled());
     }
 
     @NotNull
@@ -459,7 +465,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     protected void applyFilter() {
-      myTextFilterModel.setFilter(new VcsLogTextFilterImpl(getText()));
+      myTextFilterModel.setFilter(new VcsLogTextFilterImpl(getText(),
+                                                           myTextFilterModel.myUiProperties.getTextFilterSettings()
+                                                             .isFilterByRegexEnabled(),
+                                                           myTextFilterModel.myUiProperties.getTextFilterSettings().isMatchCaseEnabled()));
       addCurrentTextToHistory();
     }
 

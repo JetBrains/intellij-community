@@ -49,6 +49,9 @@ abstract class BinaryTransformation extends Transformation {
 
   @Nullable
   protected String getRhs(MethodCallData methodInfo) {
-    return methodInfo.getArgument(0);
+    String[] arguments = methodInfo.getArguments();
+    if (arguments.length != 1) return null;
+
+    return arguments[0];
   }
 }

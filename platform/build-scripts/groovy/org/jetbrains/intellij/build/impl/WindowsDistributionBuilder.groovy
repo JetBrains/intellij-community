@@ -81,21 +81,16 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void buildArtifacts(String winDistPath) {
     def arch = customizer.bundledJreArchitecture
-    def jreDirectoryPath = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
-    List<String> jreDirectoryPaths = [jreDirectoryPath];
+    def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
+    List<String> jreDirectoryPaths = [jreDirectoryPath64];
 
-    if (customizer.getBaseDownloadUrlForJre64() != null && arch != JvmArchitecture.x64) {
-      File archive = buildContext.bundledJreManager.findWinJreArchive()
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+      File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
       if (archive != null && archive.exists()) {
-        buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}", overwrite: "true")
-        //prepare JRE64 folder for win archive
-        def jreDirectoryPath64 = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64)
-        if (! new File("${jreDirectoryPath64}/jre64").exists()) {
-          buildContext.ant.move(todir: "${jreDirectoryPath64}/jre64") {
-            fileset(dir: "${jreDirectoryPath64}/jre")
-          }
-        }
-        jreDirectoryPaths = [jreDirectoryPath, jreDirectoryPath64];
+        buildContext.ant.copy(file: archive, tofile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", overwrite: "true")
+        //prepare folder with jre x86 for win archive
+        def jreDirectoryPath = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
+        jreDirectoryPaths = [jreDirectoryPath64, jreDirectoryPath];
       }
     }
 
@@ -114,7 +109,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath).buildInstaller(winDistPath)
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath)
     }
   }
 

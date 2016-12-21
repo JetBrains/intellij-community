@@ -26,9 +26,9 @@ public class ExceptionFilter implements Filter, DumbAware {
     myCache = new ExceptionInfoCache(scope);
   }
 
+  @Override
   public Result applyFilter(final String line, final int textEndOffset) {
     ExceptionWorker worker = new ExceptionWorker(myCache);
-    worker.execute(line, textEndOffset);
-    return worker.getResult();
+    return worker.execute(line, textEndOffset);
   }
 }

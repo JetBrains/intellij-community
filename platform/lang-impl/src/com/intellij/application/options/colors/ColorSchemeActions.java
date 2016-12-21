@@ -15,14 +15,15 @@
  */
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.application.options.SaveSchemeDialog;
+import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.ui.MessageType;
@@ -32,42 +33,62 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColorsScheme> {
-  private final ColorAndFontOptions myOptions;
-  private JComponent myParentComponent;
 
-  public ColorSchemeActions(@NotNull JComponent parentComponent, @NotNull ColorAndFontOptions options) {
-    myOptions = options;
-    myParentComponent = parentComponent;
+  @Override
+  protected Collection<String> getSchemeImportersNames() {
+    List<String> importersNames = new ArrayList<>();
+    for (ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
+      importersNames.add(importHandler.getTitle());
+    }
+    importersNames.addAll(super.getSchemeImportersNames());
+    return importersNames;
   }
 
   @Override
   protected void doImport(@NotNull String importerName) {
+    if (tryImportWithImportHandler(importerName)) {
+      return;
+    }
     final SchemeImporter<EditorColorsScheme> importer = SchemeImporterEP.getImporter(importerName, EditorColorsScheme.class);
     if (importer != null) {
-      VirtualFile importSource = SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), myParentComponent, null);
+      VirtualFile importSource = SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getParentComponent(), null);
       if (importSource != null) {
         try {
           EditorColorsScheme imported =
-            importer.importScheme(DefaultProjectFactory.getInstance().getDefaultProject(), importSource, myOptions.getSelectedScheme(),
+            importer.importScheme(DefaultProjectFactory.getInstance().getDefaultProject(), importSource, getOptions().getSelectedScheme(),
                                   name -> {
-                                    String newName = myOptions.getUniqueName(name != null ? name : "Unnamed");
+                                    String newName = getOptions().getUniqueName(name != null ? name : "Unnamed");
                                     AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
                                     newScheme.setName(newName);
                                     newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
                                     return newScheme;
                                   });
           if (imported != null) {
-            myOptions.addImportedScheme(imported);
+            getOptions().addImportedScheme(imported);
           }
         }
         catch (SchemeImportException e) {
-          SchemeImportUtil.showStatus(myParentComponent, "Import failed: " + e.getMessage(), MessageType.ERROR);
+          SchemeImportUtil.showStatus(getParentComponent(), "Import failed: " + e.getMessage(), MessageType.ERROR);
         }
       }
     }
+  }
+  
+  private boolean tryImportWithImportHandler(@NotNull String importerName) {
+     for (ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
+       if (importerName.equals(importHandler.getTitle())) {
+         importHandler.performImport(getParentComponent(), scheme -> {
+           if (scheme != null) getOptions().addImportedScheme(scheme);
+         });
+         return true;
+       }
+    }
+    return false;
   }
 
   @Override
@@ -75,24 +96,24 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
       if (Messages
             .showOkCancelDialog(ApplicationBundle.message("color.scheme.reset.message"),
                                 ApplicationBundle.message("color.scheme.reset.title"), Messages.getQuestionIcon()) == Messages.OK) {
-        myOptions.resetSchemeToOriginal(scheme.getName());
+        getOptions().resetSchemeToOriginal(scheme.getName());
       }
   }
 
   @Override
   protected void doSaveAs(@NotNull  EditorColorsScheme scheme) {
-    List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
+    List<String> names = ContainerUtil.newArrayList(getOptions().getSchemeNames());
     String selectedName = AbstractColorsScheme.getDisplayName(scheme);
     SaveSchemeDialog dialog =
-      new SaveSchemeDialog(myParentComponent, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
+      new SaveSchemeDialog(getParentComponent(), ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
     if (dialog.showAndGet()) {
-      myOptions.saveSchemeAs(dialog.getSchemeName());
+      getOptions().saveSchemeAs(dialog.getSchemeName());
     }
   }
 
   @Override
   protected void doDelete(@NotNull EditorColorsScheme scheme) {
-    myOptions.removeScheme(scheme.getName());
+    getOptions().removeScheme(scheme.getName());
   }
 
   @Override
@@ -119,4 +140,7 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
   protected Class<EditorColorsScheme> getSchemeType() {
     return EditorColorsScheme.class;
   }
+  
+  @NotNull
+  protected abstract ColorAndFontOptions getOptions();
 }

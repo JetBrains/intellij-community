@@ -64,7 +64,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -539,100 +538,9 @@ public class GitHistoryUtils {
                                                  @NotNull Consumer<StringBuilder> recordConsumer,
                                                  int bufferSize)
     throws VcsException {
-    final StringBuilder output = new StringBuilder();
-    final StringBuilder errors = new StringBuilder();
-    final Ref<Boolean> foundRecordEnd = Ref.create(false);
-    final Ref<VcsException> ex = new Ref<>();
-    final AtomicInteger records = new AtomicInteger();
-    handler.addLineListener(new GitLineHandlerListener() {
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        if (outputType == ProcessOutputTypes.STDERR) {
-          errors.append(line).append("\n");
-        }
-        else if (outputType == ProcessOutputTypes.STDOUT) {
-          try {
-            // format of the record is <RECORD_START>.*<RECORD_END>.*
-            // then next record goes
-            // (rather inconveniently, after RECORD_END there is a list of modified files)
-            // so here I'm trying to find text between two RECORD_START symbols
-            // that simultaneously contains a RECORD_END
-            // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
-            // wont help with RECORD_END symbols in the message however (have not seen those yet)
-
-            String tail = null;
-            if (!foundRecordEnd.get()) {
-              int recordEnd = line.indexOf(GitLogParser.RECORD_END);
-              if (recordEnd != -1) {
-                foundRecordEnd.set(true);
-                output.append(line.substring(0, recordEnd + 1));
-                line = line.substring(recordEnd + 1);
-              }
-              else {
-                output.append(line).append("\n");
-              }
-            }
-
-            if (foundRecordEnd.get()) {
-              int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
-              if (nextRecordStart == -1) {
-                output.append(line).append("\n");
-              }
-              else if (nextRecordStart == 0) {
-                tail = line + "\n";
-              }
-              else {
-                output.append(line.substring(0, nextRecordStart));
-                tail = line.substring(nextRecordStart) + "\n";
-              }
-            }
-
-            if (tail != null) {
-              if (records.incrementAndGet() > bufferSize) {
-                recordConsumer.consume(output);
-                output.setLength(0);
-              }
-              output.append(tail);
-              foundRecordEnd.set(tail.contains(GitLogParser.RECORD_END));
-            }
-          }
-          catch (Exception e) {
-            ex.set(new VcsException(e));
-          }
-        }
-      }
-
-      @Override
-      public void processTerminated(int exitCode) {
-        if (exitCode != 0) {
-          String errorMessage = errors.toString();
-          if (errorMessage.isEmpty()) {
-            errorMessage = GitBundle.message("git.error.exit", exitCode);
-          }
-          ex.set(new VcsException(errorMessage + "\nCommand line: [" + handler.printableCommandLine() + "]"));
-        }
-        else {
-          try {
-            recordConsumer.consume(output);
-          }
-          catch (Exception e) {
-            ex.set(new VcsException(e));
-          }
-        }
-      }
-
-      @Override
-      public void startFailed(Throwable exception) {
-        ex.set(new VcsException(exception));
-      }
-    });
+    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, recordConsumer, bufferSize);
     handler.runInCurrentThread(null);
-    if (!ex.isNull()) {
-      if (ex.get().getCause() instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)ex.get().getCause();
-      }
-      throw ex.get();
-    }
+    handlerListener.reportErrors();
   }
 
   public static void readCommits(@NotNull Project project,
@@ -1093,6 +1001,115 @@ public class GitHistoryUtils {
     }
     else {
       return GitRevisionNumber.resolve(project, root, output);
+    }
+  }
+
+  private static class MyGitLineHandlerListener implements GitLineHandlerListener {
+    @NotNull private final GitLineHandler myHandler;
+    @NotNull private final Consumer<StringBuilder> myRecordConsumer;
+    private final int myBufferSize;
+
+    @NotNull private final StringBuilder myOutput = new StringBuilder();
+    @NotNull private final StringBuilder myErrors = new StringBuilder();
+    @Nullable private VcsException myException = null;
+
+    private int myRecords = 0;
+    private boolean myIsInsideBody = true;
+
+    public MyGitLineHandlerListener(@NotNull GitLineHandler handler,
+                                    @NotNull Consumer<StringBuilder> recordConsumer,
+                                    int bufferSize) {
+      myHandler = handler;
+      myRecordConsumer = recordConsumer;
+      myBufferSize = bufferSize;
+
+      myHandler.addLineListener(this);
+    }
+
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (outputType == ProcessOutputTypes.STDERR) {
+        myErrors.append(line).append("\n");
+      }
+      else if (outputType == ProcessOutputTypes.STDOUT) {
+        try {
+          processOutputLine(line);
+        }
+        catch (Exception e) {
+          myException = new VcsException(e);
+        }
+      }
+    }
+
+    private void processOutputLine(@NotNull String line) {
+      // format of the record is <RECORD_START><BODY><RECORD_END><CHANGES>
+      // then next record goes
+      // (rather inconveniently, after RECORD_END there is a list of modified files)
+      // so here I'm trying to find text between two RECORD_START symbols
+      // that simultaneously contains a RECORD_END
+      // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
+      // wont help with RECORD_END symbols in the message however (have not seen those yet)
+
+      if (myIsInsideBody) {
+        // find body
+        int bodyEnd = line.indexOf(GitLogParser.RECORD_END);
+        if (bodyEnd >= 0) {
+          myIsInsideBody = false;
+          myOutput.append(line.substring(0, bodyEnd + 1));
+          processOutputLine(line.substring(bodyEnd + 1));
+        }
+        else {
+          myOutput.append(line).append("\n");
+        }
+      }
+      else {
+        int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
+        if (nextRecordStart >= 0) {
+          myOutput.append(line.substring(0, nextRecordStart));
+          if (++myRecords > myBufferSize) {
+            myRecordConsumer.consume(myOutput);
+            myOutput.setLength(0);
+          }
+          myIsInsideBody = true;
+          processOutputLine(line.substring(nextRecordStart));
+        }
+        else {
+          myOutput.append(line).append("\n");
+        }
+      }
+    }
+
+    @Override
+    public void processTerminated(int exitCode) {
+      if (exitCode != 0) {
+        String errorMessage = myErrors.toString();
+        if (errorMessage.isEmpty()) {
+          errorMessage = GitBundle.message("git.error.exit", exitCode);
+        }
+        myException = new VcsException(errorMessage + "\nCommand line: [" + myHandler.printableCommandLine() + "]");
+      }
+      else {
+        try {
+          myRecordConsumer.consume(myOutput);
+        }
+        catch (Exception e) {
+          myException = new VcsException(e);
+        }
+      }
+    }
+
+    @Override
+    public void startFailed(Throwable exception) {
+      myException = new VcsException(exception);
+    }
+
+    public void reportErrors() throws VcsException {
+      if (myException != null) {
+        if (myException.getCause() instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)myException.getCause();
+        }
+        throw myException;
+      }
     }
   }
 }

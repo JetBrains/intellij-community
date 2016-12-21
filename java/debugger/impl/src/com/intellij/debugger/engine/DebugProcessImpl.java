@@ -753,8 +753,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       setRunToCursorBreakpoint(null);
       getRequestsManager().deleteRequest(runToCursorBreakpoint);
       if (runToCursorBreakpoint.isRestoreBreakpoints()) {
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
-        breakpointManager.enableBreakpoints(this);
+        DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(this);
       }
     }
   }
@@ -1625,8 +1624,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private RunToCursorCommand(SuspendContextImpl suspendContext, @NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
       super(suspendContext);
       myIgnoreBreakpoints = ignoreBreakpoints;
-      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-      myRunToCursorBreakpoint = breakpointManager.addRunToCursorBreakpoint(position, ignoreBreakpoints);
+      myRunToCursorBreakpoint =
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addRunToCursorBreakpoint(position, ignoreBreakpoints);
     }
 
     @Override
@@ -1637,8 +1636,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return;
       }
       if (myIgnoreBreakpoints) {
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-        breakpointManager.disableBreakpoints(DebugProcessImpl.this);
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
       applyThreadFilter(getContextThread());
       final SuspendContextImpl context = getSuspendContext();

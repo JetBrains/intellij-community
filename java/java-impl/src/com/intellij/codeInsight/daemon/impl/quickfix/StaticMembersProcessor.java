@@ -78,6 +78,17 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
         return ((PsiAssignmentExpression)parent).getLExpression().getType();
       }
     }
+    else if (parent instanceof PsiBinaryExpression && JavaTokenType.EQEQ.equals(((PsiBinaryExpression)parent).getOperationTokenType())) {
+      if (myPlace.equals(PsiUtil.skipParenthesizedExprDown(((PsiBinaryExpression)parent).getROperand()))) {
+        return ((PsiBinaryExpression)parent).getLOperand().getType();
+      }
+      if (myPlace.equals(PsiUtil.skipParenthesizedExprDown(((PsiBinaryExpression)parent).getLOperand()))) {
+        PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
+        if (rOperand != null) {
+          return rOperand.getType();
+        }
+      }
+    }
     else if (parent instanceof PsiReturnStatement) {
       return PsiTypesUtil.getMethodReturnType(parent);
     }

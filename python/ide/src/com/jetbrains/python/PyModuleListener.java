@@ -19,7 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -33,7 +33,7 @@ import java.util.Collection;
  */
 public class PyModuleListener {
   public PyModuleListener(MessageBus messageBus) {
-    messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);

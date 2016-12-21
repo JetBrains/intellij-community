@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
@@ -408,7 +407,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return e;
   }
 
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) {
     for (ModuleExtension extension : myExtensions) {
       extension.writeExternal(element);
     }

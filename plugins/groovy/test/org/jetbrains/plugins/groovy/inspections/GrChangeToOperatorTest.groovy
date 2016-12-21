@@ -39,12 +39,12 @@ class GrChangeToOperatorTest extends LightGroovyTestCase {
     fixture.with {
       addFileToProject 'Operators.groovy', '''\
 class Operators {
-  def bitwiseNegate() { null }
-  def negative() { null }
-  def positive() { null }
+  def bitwiseNegate(a = null) { null }
+  def negative(a = null) { null }
+  def positive(a = null) { null }
   def call() { null }
-  def next() { null }
-  def previous() { null }
+  def next(a = null) { null }
+  def previous(a = null) { null }
   def plus(b) { null }
   def minus(b) { null }
   def multiply(b) { null }
@@ -59,8 +59,8 @@ class Operators {
   def rightShiftUnsigned(b) { null }
   def asType(b) { null }
   def getAt(b) { null }
-  def putAt(b, c) { null }
-  boolean asBoolean() { true }
+  def putAt(b, c = null, d = null) { null }
+  boolean asBoolean(a = null) { true }
   boolean isCase(b) { true }
   boolean equals(b) { true }
   int compareTo(b) { 0 }
@@ -84,6 +84,15 @@ class Operators {
     doTest "if (a.asBoo<caret>lean());", "if (a);"
     doTest "if (!a.asBo<caret>olean());", "if (!a);"
     doTest "if ('a'.intern().as<caret>Boolean());", "if ('a'.intern());"
+  }
+
+  void 'test unary expression with wrong number arguments'() {
+    doTest "a.bitwiseNegate(1)"
+    doTest "a.negative(1)"
+    doTest "a.positive(1)"
+    doTest "a.next(1)"
+    doTest "a.previous(1)"
+    doTest "a.asBoolean(1)"
   }
 
   void testNegatedOption() {
@@ -114,6 +123,36 @@ class Operators {
     ].each {
       doTest it.key, it.value
     }
+  }
+
+  void 'test binary expression with wrong number of arguments'() {
+    doTest "a.plus()"
+    doTest "a.minus()"
+    doTest "a.multiply()"
+    doTest "a.div()"
+    doTest "a.power()"
+    doTest "a.mod()"
+    doTest "a.or()"
+    doTest "a.and()"
+    doTest "a.xor()"
+    doTest "a.leftShift()"
+    doTest "a.rightShift()"
+    doTest "a.rightShiftUnsigned()"
+    doTest "a.asType()"
+
+    doTest "a.plus(b, 1)"
+    doTest "a.minus(b, 1)"
+    doTest "a.multiply(b, 1)"
+    doTest "a.div(b, 1)"
+    doTest "a.power(b, 1)"
+    doTest "a.mod(b, 1)"
+    doTest "a.or(b, 1)"
+    doTest "a.and(b, 1)"
+    doTest "a.xor(b, 1)"
+    doTest "a.leftShift(b, 1)"
+    doTest "a.rightShift(b, 1)"
+    doTest "a.rightShiftUnsigned(b, 1)"
+    doTest "a.asType(b, 1)"
   }
 
   void testComplexBinaryExpression() {
@@ -160,6 +199,9 @@ class Operators {
     doTest "a.getAt(b)", "a[b]"
     doTest "a.putAt(b, 'c')", "a[b] = 'c'"
     doTest "a.putAt(b, 'c'*2)", "a[b] = ('c' * 2)"
+    doTest "a.getAt(a, b)"
+    doTest "a.putAt(b)"
+    doTest "a.putAt(b, b, b)"
   }
 
   final String DECLARATIONS = 'def (Operators a, Operators b) = [null, null]\n'
