@@ -117,4 +117,12 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     PsiReference reference = assertOneElement(ReferencesSearch.search(classForSearch).findAll());
     assertTrue(InjectedLanguageManager.getInstance(getProject()).isInjectedFragment(reference.getElement().getContainingFile()));
   }
+
+  public void testOverloadedMethods() throws Exception {
+    configureByFiles(getName(), getName() + "/Foo.java", getName() + "/A.java", getName() + "/B.java");
+    PsiMethod methodToSearch = findClass("Foo").findMethodsByName("bar", false)[0];
+    assertSize(2, MethodReferencesSearch.search(methodToSearch, false).findAll());
+    myCompilerTester.rebuild();
+    assertSize(2, MethodReferencesSearch.search(methodToSearch, false).findAll());
+  }
 }
