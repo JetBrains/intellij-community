@@ -173,7 +173,7 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     try {
       configureByFiles(getName(), Arrays.stream(testFiles).map(f -> getName() + "/" + f).toArray(String[]::new));
       excludesConfigurationPatcher.consume(excludesConfiguration);
-      //assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
+      assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
       myCompilerTester.rebuild();
       assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
     } finally {
