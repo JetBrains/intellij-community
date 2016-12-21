@@ -50,6 +50,10 @@
     <stacktrace.fold substring="at org.junit.Assert.fail("/>
     <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
     <stacktrace.fold substring="at org.junit.Assert.failSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.assert"/>
+    <stacktrace.fold substring="at junit.framework.Assert.fail("/>
+    <stacktrace.fold substring="at junit.framework.Assert.failNotSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.failSame("/>
     <stacktrace.fold substring="at org.junit.Assert.internalArrayEquals("/>
     <stacktrace.fold substring="at org.junit.internal.ComparisonCriteria.arrayEquals("/>
     <stacktrace.fold substring="at org.junit.Assert.assert"/>
