@@ -20,7 +20,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLoopStatement;

@@ -36,7 +36,7 @@ class MatchMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
     PsiLoopStatement loopStatement = tb.getMainLoop();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     StringBuilder builder = generateStream(tb.getLastOperation());
@@ -110,7 +110,7 @@ class MatchMigration extends BaseStreamApiMigration {
   }
 
   private static String addTerminalOperation(String origStream, String methodName, @NotNull PsiElement contextElement,
-                                             @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+                                             @NotNull TerminalBlock tb) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(contextElement.getProject());
     PsiExpression stream = elementFactory.createExpressionFromText(origStream, contextElement);
     LOG.assertTrue(stream instanceof PsiMethodCallExpression);

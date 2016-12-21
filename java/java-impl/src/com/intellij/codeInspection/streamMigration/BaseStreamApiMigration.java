@@ -18,7 +18,6 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CollectionStream;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -45,9 +44,7 @@ abstract class BaseStreamApiMigration {
     return myReplacement;
   }
 
-  abstract PsiElement migrate(@NotNull Project project,
-                              @NotNull PsiStatement body,
-                              @NotNull TerminalBlock tb);
+  abstract PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb);
 
   static PsiElement replaceWithNumericAddition(PsiLoopStatement loopStatement,
                                                PsiVariable var,

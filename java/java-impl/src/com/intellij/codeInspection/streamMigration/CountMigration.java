@@ -28,7 +28,7 @@ class CountMigration extends BaseStreamApiMigration {
   CountMigration() {super("count()");}
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
     tb = tb.tryPeelLimit();
     PsiExpression expression = tb.getSingleExpression(PsiExpression.class);
     StreamApiMigrationInspection.Operation lastOperation = tb.getLastOperation();

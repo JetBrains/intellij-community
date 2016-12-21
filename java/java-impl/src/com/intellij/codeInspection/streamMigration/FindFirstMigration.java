@@ -31,7 +31,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
   FindFirstMigration() {super("findFirst()");}
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
     PsiStatement statement = tb.getSingleStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     StringBuilder builder = generateStream(tb.getLastOperation());
@@ -93,7 +93,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
     }
   }
 
-  private static String generateOptionalUnwrap(String qualifier, StreamApiMigrationInspection.TerminalBlock tb,
+  private static String generateOptionalUnwrap(String qualifier, TerminalBlock tb,
                                                PsiExpression trueExpression, PsiExpression falseExpression,
                                                PsiType targetType) {
     return OptionalUtil.generateOptionalUnwrap(qualifier, tb.getVariable(), trueExpression, falseExpression, targetType, false);
