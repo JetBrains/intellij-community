@@ -18,10 +18,7 @@ package com.intellij.ide.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
-import com.intellij.ide.util.projectWizard.NamePathComponent;
-import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -71,6 +68,9 @@ public class ModuleNameLocationComponent {
     return ((AbstractModuleBuilder)myWizardContext.getProjectBuilder());
   }
 
+  /**
+   * @see ModuleWizardStep#validate()
+   */
   public boolean validate() throws ConfigurationException {
     AbstractModuleBuilder builder = getModuleBuilder();
     if (builder != null && !builder.validateModuleName(getModuleName())) return false;
@@ -79,6 +79,9 @@ public class ModuleNameLocationComponent {
     return true;
   }
 
+  /**
+   * @see ModuleWizardStep#updateDataModel()
+   */
   public void updateDataModel() {
     AbstractModuleBuilder moduleBuilder = getModuleBuilder();
     if (moduleBuilder == null) return;
