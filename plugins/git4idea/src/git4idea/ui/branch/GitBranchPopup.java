@@ -40,6 +40,7 @@ import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.*;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVOURITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavourites;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -124,9 +125,11 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addAll(localBranchPresentationList);
 
     popupGroup.addSeparator("Common Remote Branches");
-    List<BranchActionGroup> remoteBranchActions =
-      ((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches().stream()
-        .map(r -> new GitBranchPopupActions.RemoteBranchActions(myProject, allRepositories, r, myCurrentRepository)).collect(toList());
+    List<BranchActionGroup> remoteBranchActions = map(((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches(),
+                                                      remoteBranch -> new GitBranchPopupActions.RemoteBranchActions(myProject,
+                                                                                                                    allRepositories,
+                                                                                                                    remoteBranch,
+                                                                                                                    myCurrentRepository));
     numOfFavourites = getNumOfFavourites(remoteBranchActions);
     List<AnAction> remoteBranchPresentationList =
       remoteBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());

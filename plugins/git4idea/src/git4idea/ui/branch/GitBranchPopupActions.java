@@ -29,7 +29,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
-import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_BRANCH_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
@@ -46,6 +44,7 @@ import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavourites;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 import static git4idea.branch.GitBranchType.GIT_LOCAL;
 import static git4idea.branch.GitBranchType.GIT_REMOTE;
+import static java.util.stream.Collectors.toList;
 
 class GitBranchPopupActions {
 
@@ -74,22 +73,25 @@ class GitBranchPopupActions {
 
     popupGroup.addSeparator("Local Branches" + repoInfo);
     List<BranchActionGroup> localBranchActions =
-      myRepository.getBranches().getLocalBranches().stream().sorted().filter(l -> !l.equals(myRepository.getCurrentBranch()))
-        .map(l -> new LocalBranchActions(myProject, repositoryList, l.getName(), myRepository)).collect(
-        Collectors.toList());
+      myRepository.getBranches().getLocalBranches().stream()
+        .sorted()
+        .filter(branch -> !branch.equals(myRepository.getCurrentBranch()))
+        .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
+        .collect(toList());
     int numOfFavourites = getNumOfFavourites(localBranchActions);
-    List<AnAction> localBranchPresentationList =
-      localBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(Collectors.toList());
+    List<AnAction> localBranchPresentationList = localBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());
+    // if there are only a few local favourites -> show several non-favourite;  for remotes it's better to show only favourites; 
     addMoreActionIfNeeded(localBranchPresentationList, numOfFavourites > MAX_BRANCH_NUM ? numOfFavourites : MAX_BRANCH_NUM);
     popupGroup.addAll(localBranchPresentationList);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
-    List<BranchActionGroup> remoteBranchActions = myRepository.getBranches().getRemoteBranches().stream().sorted()
-      .map(r -> new RemoteBranchActions(myProject, repositoryList, r.getName(), myRepository))
-      .collect(Collectors.toList());
+    List<BranchActionGroup> remoteBranchActions =
+      myRepository.getBranches().getRemoteBranches().stream()
+        .sorted()
+        .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
+        .collect(toList());
     numOfFavourites = getNumOfFavourites(remoteBranchActions);
-    List<AnAction> remoteBranchPresentationList =
-      remoteBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(Collectors.toList());
+    List<AnAction> remoteBranchPresentationList = remoteBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());
     addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavourites > MAX_BRANCH_NUM ? numOfFavourites : MAX_BRANCH_NUM);
     popupGroup.addAll(remoteBranchPresentationList);
     return popupGroup;
@@ -125,7 +127,8 @@ class GitBranchPopupActions {
       myRepositories = repositories;
     }
 
-    @Override public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(AnActionEvent e) {
       // TODO autocomplete branches, tags.
       // on type check ref validity, on OK check ref existence.
       String reference = Messages
@@ -153,10 +156,10 @@ class GitBranchPopupActions {
   static class LocalBranchActions extends BranchActionGroup implements PopupElementWithAdditionalInfo {
 
     private final Project myProject;
-    private final GitVcsSettings myGitVcsSettings;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
+    private final GitBranchManager myGitBranchManager;
 
     LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
@@ -164,9 +167,9 @@ class GitBranchPopupActions {
       myRepositories = repositories;
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
-      myGitVcsSettings = GitVcsSettings.getInstance(project);
+      myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
-      setFavourite(myGitVcsSettings.isFavourite(GIT_LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+      setFavourite(myGitBranchManager.isFavourite(GIT_LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
     @NotNull
@@ -187,7 +190,7 @@ class GitBranchPopupActions {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[] {
+      return new AnAction[]{
         new CheckoutAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
@@ -202,18 +205,13 @@ class GitBranchPopupActions {
     @Override
     @Nullable
     public String getInfoText() {
-     return new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
+      return new GitMultiRootBranchConfig(myRepositories).getTrackedBranch(myBranchName);
     }
 
     @Override
     public void toggle() {
       super.toggle();
-      if (isFavourite()) {
-        myGitVcsSettings.addToFavourites(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
-      }
-      else {
-        myGitVcsSettings.removeFromFavourites(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
-      }
+      myGitBranchManager.setFavourite(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavourite());
     }
 
     static class CheckoutAction extends DumbAwareAction {
@@ -313,38 +311,33 @@ class GitBranchPopupActions {
   static class RemoteBranchActions extends BranchActionGroup {
 
     private final Project myProject;
-    private final GitVcsSettings myGitVcsSettings;
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
+    @NotNull private final GitBranchManager myGitBranchManager;
 
     RemoteBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                         @NotNull GitRepository selectedRepository) {
-                        
+
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
-      myGitVcsSettings = GitVcsSettings.getInstance(project);
+      myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
-      setFavourite(myGitVcsSettings.isFavourite(GIT_REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+      setFavourite(myGitBranchManager.isFavourite(GIT_REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
     @Override
     public void toggle() {
       super.toggle();
-      if (isFavourite()) {
-        myGitVcsSettings.addToFavourites(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
-      }
-      else {
-        myGitVcsSettings.removeFromFavourites(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName);
-      }
+      myGitBranchManager.setFavourite(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavourite());
     }
 
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[] {
+      return new AnAction[]{
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new RebaseAction(myProject, myRepositories, myBranchName),
@@ -369,7 +362,7 @@ class GitBranchPopupActions {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final String name = Messages.showInputDialog(myProject, "New branch name:", "Checkout Remote Branch", null,
-                                               guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
+                                                     guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
           brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
@@ -381,7 +374,7 @@ class GitBranchPopupActions {
         // TODO: check if we already have a branch with that name; check if that branch tracks this remote branch. Show different messages
         int slashPosition = myRemoteBranchName.indexOf("/");
         // if no slash is found (for example, in the case of git-svn remote branches), propose the whole name.
-        return myRemoteBranchName.substring(slashPosition+1);
+        return myRemoteBranchName.substring(slashPosition + 1);
       }
     }
 
@@ -405,7 +398,7 @@ class GitBranchPopupActions {
       }
     }
   }
-  
+
   private static class CompareAction extends DumbAwareAction {
 
     private final Project myProject;
