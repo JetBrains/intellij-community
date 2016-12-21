@@ -17,8 +17,10 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +43,9 @@ public class XmlNonFirstCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
-        XmlAttribute attr = PsiTreeUtil.getParentOfType(parameters.getPosition(), XmlAttribute.class);
+        PsiElement position = parameters.getPosition();
+        if (position.getNode().getElementType() != XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) return;
+        XmlAttribute attr = PsiTreeUtil.getParentOfType(position, XmlAttribute.class);
         if (attr != null && !hasEnumerationReference(parameters, result)) {
           final XmlAttributeDescriptor descriptor = attr.getDescriptor();
 
