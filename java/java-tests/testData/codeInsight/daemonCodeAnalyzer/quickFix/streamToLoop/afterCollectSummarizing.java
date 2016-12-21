@@ -10,7 +10,7 @@ public class Main {
   public static DoubleSummaryStatistics test(List<String> strings) {
       DoubleSummaryStatistics stat = new DoubleSummaryStatistics();
       for (String str : strings) {
-          if (Objects.nonNull(str)) {
+          if (str != null) {
               stat.accept(str.length() / 2.0);
           }
       }

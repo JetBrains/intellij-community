@@ -34,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -208,18 +206,8 @@ public class VcsLogUtil {
     UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
   }
 
-  public static boolean isRegexp(@NotNull String text) {
-    if (!StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|")) {
-      return false;
-    }
-    try {
-      //noinspection ResultOfMethodCallIgnored
-      Pattern.compile(text);
-      return true;
-    }
-    catch (PatternSyntaxException ignored) {
-    }
-    return false;
+  public static boolean maybeRegexp(@NotNull String text) {
+    return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
   }
 
   @NotNull

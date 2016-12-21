@@ -17,7 +17,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -41,8 +40,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -78,15 +79,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       }
     }
     // assertion for read access inside
-    final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
-      @Override
-      public Module[] compute() {
-        return myModuleManager.getModules();
-      }
-    });
-    for(Module module: modules) {
+    Module[] modules = ReadAction.compute(myModuleManager::getModules);
+    for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-      for(VirtualFile file: files) {
+      for (VirtualFile file : files) {
         // if we're currently processing moduleAdded notification, getModuleForFile() will return null, so we pass the module
         // explicitly (we know it anyway)
         VcsDirectoryMapping mapping = mappingList.getMappingFor(file, module);
@@ -159,15 +155,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
   @NotNull
   private Collection<VirtualFile> getContentRoots() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
-      @Override
-      public List<VirtualFile> compute() {
-        List<VirtualFile> contentRoots = ContainerUtil.newArrayList();
-        for (Module module : myModuleManager.getModules()) {
-          ContainerUtil.addAll(contentRoots, ModuleRootManager.getInstance(module).getContentRoots());
-        }
-        return contentRoots;
-      }
-    });
+    Module[] modules = ReadAction.compute(myModuleManager::getModules);
+    return Arrays.stream(modules)
+      .map(module -> ModuleRootManager.getInstance(module).getContentRoots())
+      .flatMap(Arrays::stream)
+      .collect(Collectors.toSet());
   }
 }

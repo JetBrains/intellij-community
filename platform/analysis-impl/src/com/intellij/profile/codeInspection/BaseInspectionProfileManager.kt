@@ -16,7 +16,6 @@
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
-import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.openapi.diagnostic.Logger
@@ -59,7 +58,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  open protected fun schemeRemoved(scheme: InspectionProfile) {
+  open protected fun schemeRemoved(scheme: InspectionProfileImpl) {
   }
 
   abstract fun fireProfileChanged(profile: InspectionProfileImpl)

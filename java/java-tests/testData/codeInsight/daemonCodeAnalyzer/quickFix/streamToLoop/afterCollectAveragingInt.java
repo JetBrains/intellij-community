@@ -9,7 +9,7 @@ public class Main {
       long sum = 0;
       long count = 0;
       for (String s : list) {
-          if (Objects.nonNull(s)) {
+          if (s != null) {
               sum += s.length();
               count++;
           }

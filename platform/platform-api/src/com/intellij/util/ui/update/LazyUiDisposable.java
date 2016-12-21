@@ -66,8 +66,14 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
       }
     }
     if (parent == null) {
-      Logger.getInstance(LazyUiDisposable.class).warn("use application as a parent disposable");
-      parent = Disposer.get("ui");
+      if (project == null) {
+        Logger.getInstance(LazyUiDisposable.class).warn("use application as a parent disposable");
+        parent = Disposer.get("ui");
+      }
+      else {
+        Logger.getInstance(LazyUiDisposable.class).warn("use project as a parent disposable");
+        parent = project;
+      }
     }
     initialize(parent, myChild, project);
     Disposer.register(parent, myChild);

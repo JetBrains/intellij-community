@@ -104,7 +104,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.registerDeleted(rd.target, file, pd.timestamps.getStorage());
+      pd.fsState.registerDeleted(context, rd.target, file, pd.timestamps.getStorage());
     }
   }
 

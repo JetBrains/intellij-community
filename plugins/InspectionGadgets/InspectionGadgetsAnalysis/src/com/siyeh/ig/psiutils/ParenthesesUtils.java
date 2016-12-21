@@ -66,7 +66,7 @@ public class ParenthesesUtils {
     tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
     tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
   }
-  
+
   static {
     s_binaryOperatorPrecedence.put(JavaTokenType.PLUS, ADDITIVE_PRECEDENCE);
     s_binaryOperatorPrecedence.put(JavaTokenType.MINUS, ADDITIVE_PRECEDENCE);

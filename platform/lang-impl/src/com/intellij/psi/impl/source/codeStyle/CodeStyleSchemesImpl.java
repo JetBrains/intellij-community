@@ -19,7 +19,6 @@ import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
-import com.intellij.openapi.options.SchemeState;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import org.jetbrains.annotations.NonNls;
@@ -44,17 +43,6 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
                                               @NotNull Function<String, String> attributeProvider,
                                               boolean isBundled) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
-      }
-
-      @NotNull
-      @Override
-      public SchemeState getState(@NotNull CodeStyleScheme scheme) {
-        if (!(scheme instanceof CodeStyleSchemeImpl)) {
-          return SchemeState.NON_PERSISTENT;
-        }
-        else {
-          return ((CodeStyleSchemeImpl)scheme).isInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
-        }
       }
     });
 

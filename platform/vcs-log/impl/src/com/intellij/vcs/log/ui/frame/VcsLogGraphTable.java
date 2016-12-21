@@ -85,7 +85,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int ROOT_NAME_MAX_WIDTH = 200;
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
-  private static final int MAX_ROWS_TO_CALC_OFFSET = 100;
 
   @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsLogData myLogData;
@@ -178,14 +177,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         setRootColumnSize(column);
       }
       else if (i == GraphTableModel.AUTHOR_COLUMN) { // detect author with the longest name
-        // to avoid querying the last row (it would lead to full graph loading)
-        int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount() - MAX_ROWS_TO_CALC_OFFSET);
-        if (maxRowsToCheck < 0) { // but if the log is small, check all of them
-          maxRowsToCheck = getRowCount();
-        }
+        int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
         int maxWidth = 0;
+        int unloaded = 0;
         for (int row = 0; row < maxRowsToCheck; row++) {
           String value = getModel().getValueAt(row, i).toString();
+          if (value.isEmpty()) {
+            unloaded++;
+            continue;
+          }
           Font font = tableFont;
           VcsLogHighlighter.TextStyle style = getStyle(row, i, false, false).getTextStyle();
           if (BOLD.equals(style)) {
@@ -195,10 +195,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
             font = tableFont.deriveFont(Font.ITALIC);
           }
           maxWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxWidth);
-          if (!value.isEmpty()) sizeCalculated = true;
         }
         int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
         column.setPreferredWidth(min);
+        if (unloaded * 2 <= maxRowsToCheck) sizeCalculated = true;
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
         int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +

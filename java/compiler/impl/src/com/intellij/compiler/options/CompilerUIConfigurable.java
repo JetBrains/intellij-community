@@ -86,6 +86,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JLabel               myEnableAutomakeLegendLabel;
   private JLabel               myParallelCompilationLegendLabel;
   private JButton              myConfigureAnnotations;
+  private JLabel myWarningLabel;
 
   public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
@@ -96,6 +97,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                                    "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
                                    "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name"
     ));
+    myWarningLabel.setText("<html>WARNING!<br>" +
+                                              /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
+                                              "If option 'Clear output directory on rebuild' is enabled, " +
+                                              "the entire contents of directories where generated sources are stored WILL BE CLEARED on rebuild.</html>");
+    myWarningLabel.setFont(myWarningLabel.getFont().deriveFont(Font.BOLD));
+
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
     tweakControls(project);
     myVMOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -109,7 +116,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       @Override
       public void actionPerformed(ActionEvent e) {
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
-        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        if (project == null) {
+          project = ProjectManager.getInstance().getDefaultProject();
+        }
         new NullableNotNullDialog(project).show();
       }
     });
@@ -142,18 +151,16 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     }
     
     Map<Setting, Collection<JComponent>> controls = ContainerUtilRt.newHashMap();
-    controls.put(Setting.RESOURCE_PATTERNS,
-                 ContainerUtilRt.<JComponent>newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
-    controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.<JComponent>singleton(myCbClearOutputDirectory));
-    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.<JComponent>singleton(myCbAssertNotNull));
-    controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.<JComponent>singleton(myCbAutoShowFirstError));
-    controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.<JComponent>singleton(myCbDisplayNotificationPopup));
-    controls.put(Setting.AUTO_MAKE, ContainerUtilRt.<JComponent>newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
-    controls.put(Setting.PARALLEL_COMPILATION,
-                 ContainerUtilRt.<JComponent>newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
-    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtilRt.<JComponent>newArrayList(myCbRebuildOnDependencyChange));
-    controls.put(Setting.HEAP_SIZE, ContainerUtilRt.<JComponent>newArrayList(myHeapSizeLabel, myHeapSizeField));
-    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtilRt.<JComponent>newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
+    controls.put(Setting.RESOURCE_PATTERNS, ContainerUtilRt.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
+    controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory));
+    controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myCbAssertNotNull));
+    controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.singleton(myCbAutoShowFirstError));
+    controls.put(Setting.DISPLAY_NOTIFICATION_POPUP, Collections.singleton(myCbDisplayNotificationPopup));
+    controls.put(Setting.AUTO_MAKE, ContainerUtilRt.newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
+    controls.put(Setting.PARALLEL_COMPILATION, ContainerUtilRt.newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
+    controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtilRt.newArrayList(myCbRebuildOnDependencyChange));
+    controls.put(Setting.HEAP_SIZE, ContainerUtilRt.newArrayList(myHeapSizeLabel, myHeapSizeField));
+    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtilRt.newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
     
     for (Setting setting : myDisabledSettings) {
       Collection<JComponent> components = controls.get(setting);
@@ -189,7 +196,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     if (PowerSaveMode.isEnabled()) {
       myEnableAutomakeLegendLabel.setText("(disabled in Power Save mode)");
       myEnableAutomakeLegendLabel.setFont(myEnableAutomakeLegendLabel.getFont().deriveFont(Font.BOLD));
-    } else {
+    }
+    else {
       myEnableAutomakeLegendLabel.setText("(only works while not running / debugging)");
       myEnableAutomakeLegendLabel.setFont(myEnableAutomakeLegendLabel.getFont().deriveFont(Font.PLAIN));
     }

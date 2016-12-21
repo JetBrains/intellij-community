@@ -23,12 +23,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.NameUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class TestFinderHelper {
-  public static PsiElement findSourceElement(PsiElement from) {
+  public static PsiElement findSourceElement(@NotNull final PsiElement from) {
     for (TestFinder each : getFinders()) {
       PsiElement result = each.findSourceElement(from);
       if (result != null) return result;
@@ -36,18 +37,20 @@ public class TestFinderHelper {
     return null;
   }
 
-  public static Collection<PsiElement> findTestsForClass(PsiElement element) {
+  public static Collection<PsiElement> findTestsForClass(@NotNull final PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
-      result.addAll(each.findTestsForClass(element));
+      final PsiElement selectedElement = each.findSelectedElement(element);
+      if (selectedElement != null) result.addAll(each.findTestsForClass(selectedElement));
     }
     return result;
   }
 
-  public static Collection<PsiElement> findClassesForTest(PsiElement element) {
+  public static Collection<PsiElement> findClassesForTest(@NotNull final PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
-      result.addAll(each.findClassesForTest(element));
+      final PsiElement selectedElement = each.findSelectedElement(element);
+      if (selectedElement != null) result.addAll(each.findClassesForTest(selectedElement));
     }
     return result;
   }

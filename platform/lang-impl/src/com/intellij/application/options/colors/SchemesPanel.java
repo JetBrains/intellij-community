@@ -17,55 +17,26 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.application.options.schemes.ManageSchemesComboAction;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
+public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
-
-  private ComboBox<MySchemeItem> mySchemeComboBox;
-  
-  private JLabel myHintLabel;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public SchemesPanel(ColorAndFontOptions options) {
-    super(new BorderLayout());
     myOptions = options;
-
-    JPanel schemesGroup = new JPanel(new BorderLayout());
-
-    JPanel panel = new JPanel(new BorderLayout());
-    schemesGroup.add(createSchemePanel(), BorderLayout.NORTH);
-    schemesGroup.add(panel, BorderLayout.CENTER);
-    add(schemesGroup, BorderLayout.CENTER);
-
-    mySchemeComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        String selectedName = getSelectedSchemeName();
-        if (selectedName != null) {
-          EditorColorsScheme selected = myOptions.selectScheme(selectedName);
-          myHintLabel.setVisible(ColorAndFontOptions.isReadOnly(selected));
-          if (areSchemesLoaded()) {
-            myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
-          }
-        }
-      }
-    });
   }
 
   private boolean myListLoaded = false;
@@ -74,58 +45,6 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     return myListLoaded;
   }
 
-  private JPanel createSchemePanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    int gridx = 0;
-
-    panel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")),
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5),
-                                     0, 0));
-
-    mySchemeComboBox = new ComboBox<>();
-    panel.add(mySchemeComboBox,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new JBInsets(0, 0, 5, 10),
-                                     0, 0));
-    ManageSchemesComboAction<EditorColorsScheme> schemesComboAction =
-      new ManageSchemesComboAction<>(new ColorSchemeActions(this, myOptions) {
-        @Nullable
-        @Override
-        protected EditorColorsScheme getCurrentScheme() {
-          return myOptions.getScheme(getSelectedSchemeName());
-        }
-      });
-    JButton manageButton = schemesComboAction.createCombo();
-    panel.add(manageButton,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new JBInsets(0, 0, 5, 5),
-                                     0, 0));
-    
-    myHintLabel = new JLabel(ApplicationBundle.message("hint.readonly.scheme.cannot.be.modified"));
-    myHintLabel.setEnabled(false);
-    panel.add(myHintLabel,
-              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
-                                     0));
-
-    for (final ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
-      final JButton button = new JButton(importHandler.getTitle());
-      button.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          importHandler.performImport(button, scheme -> {
-            if (scheme != null) myOptions.addImportedScheme(scheme);
-          });
-        }
-      });
-      panel.add(button,
-                new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
-                                       0));
-    }
-    panel.add(Box.createHorizontalGlue(),
-              new GridBagConstraints(gridx+1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new JBInsets(0, 0, 0, 0), 0,
-                                     0));
-
-    return panel;
-  }
 
   @Deprecated
   public boolean updateDescription(boolean modified) {
@@ -143,7 +62,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       setListLoaded(false);
 
       EditorColorsScheme selectedSchemeBackup = myOptions.getSelectedScheme();
-      mySchemeComboBox.removeAllItems();
+      getSchemesCombo().removeAllItems();
 
       String[] schemeNames = myOptions.getSchemeNames();
       MySchemeItem itemToSelect = null;
@@ -151,10 +70,10 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
         EditorColorsScheme scheme = myOptions.getScheme(schemeName); 
         MySchemeItem item = new MySchemeItem(scheme);
         if (scheme == selectedSchemeBackup) itemToSelect = item;
-        mySchemeComboBox.addItem(item);
+        getSchemesCombo().addItem(item);
       }
 
-      mySchemeComboBox.setSelectedItem(itemToSelect);
+      getSchemesCombo().setSelectedItem(itemToSelect);
       setListLoaded(true);
 
       myDispatcher.getMulticaster().schemeChanged(this);
@@ -163,7 +82,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   
   @Nullable
   private String getSelectedSchemeName() {
-    return mySchemeComboBox.getSelectedIndex() != -1 ? ((MySchemeItem)mySchemeComboBox.getSelectedItem()).getSchemeName() : null;
+    return getSchemesCombo().getSelectedIndex() != -1 ? ((MySchemeItem)getSchemesCombo().getSelectedItem()).getSchemeName() : null;
   }
 
   private void setListLoaded(final boolean b) {
@@ -173,7 +92,49 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
-  
+
+  @Override
+  protected ComboBox createSchemesCombo() {
+    ComboBox schemesCombo = new ComboBox();
+    schemesCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        String selectedName = getSelectedSchemeName();
+        if (selectedName != null) {
+          myOptions.selectScheme(selectedName);
+          if (areSchemesLoaded()) {
+            myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
+          }
+        }
+      }
+    });
+    return schemesCombo;
+  }
+
+  @Override
+  protected DefaultSchemeActions<EditorColorsScheme> createSchemeActions() {
+    return
+      new ColorSchemeActions() {
+      @NotNull
+      @Override
+      protected JComponent getParentComponent() {
+        return getToolbarPanel();
+      }
+
+      @NotNull
+      @Override
+      protected ColorAndFontOptions getOptions() {
+        return myOptions;
+      }
+
+      @Nullable
+      @Override
+      protected EditorColorsScheme getCurrentScheme() {
+        return myOptions != null ? myOptions.getScheme(getSelectedSchemeName()) : null;
+      }
+    };
+  }
+
   private final static class MySchemeItem {
     private EditorColorsScheme myScheme;
 

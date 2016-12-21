@@ -38,7 +38,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
 
   @Override
   String getSystemSelector(ApplicationInfoProperties applicationInfo) {
-    "PyCharmEdu${applicationInfo.majorVersion}0"
+    "PyCharmEdu${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 
   @Override

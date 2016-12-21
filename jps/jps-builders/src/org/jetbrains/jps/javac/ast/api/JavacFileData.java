@@ -19,12 +19,14 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.util.Collection;
-import java.util.List;
+import javax.lang.model.element.Modifier;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.*;
 
 public class JavacFileData {
   private final String myFilePath;
@@ -203,17 +205,17 @@ public class JavacFileData {
         }
         else if (ref instanceof JavacRef.JavacField) {
           out.writeByte(FIELD_MARKER);
-          writeBytes(out, ref.getOwnerName());
+          IOUtil.writeUTF(out, ref.getOwnerName());
         }
         else if (ref instanceof JavacRef.JavacMethod) {
           out.writeByte(METHOD_MARKER);
-          writeBytes(out, ref.getOwnerName());
+          IOUtil.writeUTF(out, ref.getOwnerName());
           out.write(((JavacRef.JavacMethod)ref).getParamCount());
         } else {
           throw new IllegalStateException("unknown type: " + ref.getClass());
         }
-        out.writeLong(ref.getFlags());
-        writeBytes(out, ref.getName());
+        writeModifiers(out, ref.getModifiers());
+        IOUtil.writeUTF(out, ref.getName());
       }
 
       @Override
@@ -221,26 +223,32 @@ public class JavacFileData {
         final byte marker = in.readByte();
         switch (marker) {
           case CLASS_MARKER:
-            return new JavacRef.JavacClassImpl(in.readBoolean(), in.readLong(), readBytes(in));
+            return new JavacRef.JavacClassImpl(in.readBoolean(), readModifiers(in), IOUtil.readUTF(in));
           case METHOD_MARKER:
-            return new JavacRef.JavacMethodImpl(readBytes(in), in.readByte(), in.readLong(), readBytes(in));
+            return new JavacRef.JavacMethodImpl(IOUtil.readUTF(in), in.readByte(), readModifiers(in), IOUtil.readUTF(in));
           case FIELD_MARKER:
-            return new JavacRef.JavacFieldImpl(readBytes(in), in.readLong(), readBytes(in));
+            return new JavacRef.JavacFieldImpl(IOUtil.readUTF(in), readModifiers(in), IOUtil.readUTF(in));
           default:
             throw new IllegalStateException("unknown marker " + marker);
         }
       }
 
-      private void writeBytes(DataOutput out, byte[] bytes) throws IOException {
-        out.writeInt(bytes.length);
-        out.write(bytes);
+      private void writeModifiers(final DataOutput output, Set<Modifier> modifiers) throws IOException {
+        DataInputOutputUtil.writeSeq(output, modifiers, new ThrowableConsumer<Modifier, IOException>() {
+          @Override
+          public void consume(Modifier modifier) throws IOException {
+            IOUtil.writeUTF(output, modifier.name());
+          }
+        });
       }
 
-      private byte[] readBytes(DataInput in) throws IOException {
-        final int len = in.readInt();
-        final byte[] buf = new byte[len];
-        in.readFully(buf);
-        return buf;
+      private Set<Modifier> readModifiers(final DataInput input) throws IOException {
+        return EnumSet.copyOf(DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
+          @Override
+          public Modifier compute() throws IOException {
+            return Modifier.valueOf(IOUtil.readUTF(input));
+          }
+        }));
       }
     };
   }

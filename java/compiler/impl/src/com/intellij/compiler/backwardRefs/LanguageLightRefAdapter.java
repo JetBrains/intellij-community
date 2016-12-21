@@ -22,7 +22,7 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.util.List;
@@ -43,7 +43,7 @@ public interface LanguageLightRefAdapter  {
    * @return
    */
   @Nullable
-  LightRef asLightUsage(@NotNull PsiElement element, @NotNull ByteArrayEnumerator names);
+  LightRef asLightUsage(@NotNull PsiElement element, @NotNull NameEnumerator names);
 
   /**
    * @return "hierarchy" of given element inside the libraries scope.
@@ -51,7 +51,7 @@ public interface LanguageLightRefAdapter  {
   @NotNull
   List<LightRef> getHierarchyRestrictedToLibraryScope(@NotNull LightRef baseRef,
                                                       @NotNull PsiElement basePsi,
-                                                      @NotNull ByteArrayEnumerator names,
+                                                      @NotNull NameEnumerator names,
                                                       @NotNull GlobalSearchScope libraryScope);
 
   /**

@@ -84,7 +84,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     final Condition<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
     //noinspection Convert2Diamond
     myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
-    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Repeat", false, isApplicable, myRepeatAnnotationsModel), gc);
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Copy", false, isApplicable, myRepeatAnnotationsModel), gc);
     return myPanel;
   }
 

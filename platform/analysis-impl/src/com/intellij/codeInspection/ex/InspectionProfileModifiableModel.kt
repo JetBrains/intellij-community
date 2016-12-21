@@ -98,6 +98,13 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     modified = false
   }
 
+  fun resetToEmpty(project: Project) {
+    initInspectionTools(project)
+    for (toolWrapper in getInspectionTools(null)) {
+      disableTool(toolWrapper.shortName, project)
+    }
+  }
+
   private fun InspectionProfileImpl.commit(model: InspectionProfileImpl) {
     name = model.name
     description = model.description

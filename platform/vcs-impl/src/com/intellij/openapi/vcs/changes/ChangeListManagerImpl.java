@@ -514,7 +514,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             myModifier.setWorker(myWorker);
             if (LOG.isDebugEnabled()) {
               LOG.debug("refresh procedure finished, unversioned size: " +
-                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
+                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() + "\nchanges: " + myWorker);
             }
             final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
             myComposite = dataHolder.getComposite();
@@ -786,14 +786,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  @NotNull
-  public Couple<Integer> getUnversionedFilesSize() {
-    synchronized (myDataLock) {
-      final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      return Couple.of(holder.getSize(), holder.getNumDirs());
-    }
-  }
-
   @Override
   public List<VirtualFile> getModifiedWithoutEditing() {
     synchronized (myDataLock) {
@@ -808,14 +800,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public List<VirtualFile> getIgnoredFiles() {
     synchronized (myDataLock) {
       return new ArrayList<>(myComposite.getIgnoredFileHolder().values());
-    }
-  }
-
-  @NotNull
-  public Couple<Integer> getIgnoredFilesSize() {
-    synchronized (myDataLock) {
-      IgnoredFilesCompositeHolder ignoredFileHolder = myComposite.getIgnoredFileHolder();
-      return Couple.of(ignoredFileHolder.getFilesNum(), ignoredFileHolder.getDirNum());
     }
   }
 

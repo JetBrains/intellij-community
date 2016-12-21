@@ -26,11 +26,15 @@ import java.util.List;
  * @author max
  */
 public interface ModuleListener extends EventListener {
-  void moduleAdded(@NotNull Project project, @NotNull Module module);
+  default void moduleAdded(@NotNull Project project, @NotNull Module module) {
+  }
 
-  void beforeModuleRemoved(@NotNull Project project, @NotNull Module module);
+  default void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
+  }
 
-  void moduleRemoved(@NotNull Project project, @NotNull Module module);
+  default void moduleRemoved(@NotNull Project project, @NotNull Module module) {
+  }
 
-  void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider);
+  default void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+  }
 }

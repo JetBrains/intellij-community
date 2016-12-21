@@ -74,18 +74,13 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.*;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
@@ -509,8 +504,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    myVerticalScrollBar.setOpaque(false);
+    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
+    myVerticalScrollBar.setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
     myPanel = new JPanel();
+
+    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
+    myScrollPane.getHorizontalScrollBar().setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
 
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
@@ -1083,7 +1082,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     DataContext context = getDataContext();
 
-    Graphics graphics = myEditorComponent.getGraphics();
+    Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
     if (graphics != null) { // editor component is not showing
       processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();
@@ -2683,13 +2682,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent {
+  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, TargetHolder {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
+    private final Interpolator myInterpolator = new Interpolator(super::getValue, super::setValue);
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
       setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
+      if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+        setModel(new SmoothBoundedRangeModel(this));
+      }
     }
 
     void setPersistentUI(ScrollBarUI ui) {
@@ -2706,7 +2709,33 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setUI(ScrollBarUI ui) {
       if (myPersistentUI == null) myPersistentUI = ui;
       super.setUI(myPersistentUI);
-      setOpaque(false);
+
+      /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
+
+        Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+      setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
+    }
+
+    /**
+     * Because {@link MyScrollBar} doesn't extend {@link SmoothScrollPane.SmoothScrollBar}
+     * we need to add the interpolation support separately.
+     *
+     * @see SmoothScrollPane.SmoothScrollBar#setValue(int)
+     */
+    @Override
+    public void setValue(int value) {
+      if (ComponentSettings.getInstance().isSmoothScrollingEligibleFor(myEditorComponent)) {
+        myInterpolator.setTarget(value, ((MyScrollPane)myScrollPane).getInitialDelay(getValueIsAdjusting()));
+      }
+      else {
+        super.setValue(value);
+      }
+    }
+
+    @Override
+    public int getTarget() {
+      return myInterpolator.getTarget();
     }
 
     /**

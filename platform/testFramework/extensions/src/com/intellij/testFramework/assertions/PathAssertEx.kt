@@ -45,19 +45,21 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
   fun hasChildren(vararg names: String) {
     paths.assertIsDirectory(info, actual)
 
-    Iterables(ComparatorBasedComparisonStrategy(
-      Comparator<Any> { o1, o2 ->
-        if (o1 is Path && o2 is Path) {
-          o1.compareTo(o2)
-        }
-        else if (o1 is String && o2 is String) {
-          o1.compareTo(o2)
-        }
-        else {
-          if ((o1 as Path).endsWith(o2 as String)) 0 else -1
-        }
+    Iterables(ComparatorBasedComparisonStrategy(Comparator<Any> { o1, o2 ->
+      if (o1 is Path && o2 is Path) {
+        o1.compareTo(o2)
       }
-    )).assertContainsOnly(info, Files.newDirectoryStream(actual).use { it.toList() }, names)
+      else if (o1 is String && o2 is String) {
+        o1.compareTo(o2)
+      }
+      else if (o1 is String) {
+        if ((o2 as Path).endsWith(o1)) 0 else -1
+      }
+      else {
+        if ((o1 as Path).endsWith(o2 as String)) 0 else -1
+      }
+    }))
+      .assertContainsOnly(info, Files.newDirectoryStream(actual).use { it.toList() }, names)
   }
 }
 

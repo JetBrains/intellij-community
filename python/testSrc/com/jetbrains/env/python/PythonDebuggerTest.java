@@ -630,11 +630,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
       @Override
       public void before() throws Exception {
-        String scriptPath = getScriptName();
-        String longPath = FileUtil
-          .toSystemDependentName((new File(scriptPath).getCanonicalPath()));
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(longPath);
-        toggleBreakpoint(longPath, 2);
+        String longName = "long_name_win_test.py";
+        toggleBreakpoint(longName, 2);
       }
 
       @Override

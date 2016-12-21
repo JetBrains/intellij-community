@@ -69,7 +69,7 @@
 
     <group id="RefactoringMenu2">
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
-      
+
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="Inline"/>
     </group>
 
@@ -210,6 +210,59 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
+    </group>
+
+    <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
+            id="MemoryView.ShowInstancesFromDebuggerTree"
+            text="Show Instances">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Debugger.ShowReferring"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
+            id="MemoryView.ShowAllocationStackTrace"
+            text="Jump To Allocation Position">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="XDebugger.JumpToTypeSource"/>
+    </action>
+
+    <group id="MemoryView.SettingsPopupActionGroup">
+      <action class="com.intellij.debugger.memory.action.ShowClassesWithInstanceAction"
+              id="MemoryView.ShowOnlyWithInstances"
+              text="Show With Instances Only"/>
+
+      <action class="com.intellij.debugger.memory.action.ShowClassesWithDiffAction"
+              id="MemoryView.ShowOnlyWithDiff"
+              text="Show Non-Zero Diff Only"/>
+
+      <action class="com.intellij.debugger.memory.action.ShowTrackedAction"
+              id="MemoryView.ShowOnlyTracked"
+              text="Show Tracked Classes Only"/>
+
+      <separator/>
+
+      <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
+              id="MemoryView.EnableTrackingWithClosedWindow"
+              text="Enable Tracking With Hidden Memory View"/>
+    </group>
+
+    <group id="MemoryView.ClassesPopupActionGroup">
+      <action class="com.intellij.debugger.memory.action.ShowInstancesFromClassesViewAction"
+              id="MemoryView.ShowInstances"
+              text="Show Instances"/>
+
+      <action class="com.intellij.debugger.memory.action.ShowNewInstancesAction"
+              id="MemoryView.ShowNewInstances"
+              text="Show New Instances"/>
+
+      <action class="com.intellij.debugger.memory.action.JumpToTypeSourceAction"
+              id="MemoryView.JumpToTypeSource"
+              text="Jump To Type Source"/>
+      <separator/>
+
+      <action class="com.intellij.debugger.memory.action.tracking.TrackInstancesToggleAction"
+              id="MemoryView.TrackingAction.NewInstancesTracking"
+              text="Track New Instances"/>
     </group>
 
     <group id="Debugger.Representation">

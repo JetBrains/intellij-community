@@ -23,7 +23,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -189,7 +189,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   }
 
 
-  private static class MyModuleListener extends ModuleAdapter {
+  private static class MyModuleListener implements ModuleListener {
     private final List<String> myLog = new ArrayList<>();
 
     @Override

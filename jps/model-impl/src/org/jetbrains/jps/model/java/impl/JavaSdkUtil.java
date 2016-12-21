@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,12 @@ public class JavaSdkUtil {
     FileFilter jarFileFilter = FileFilters.filesWithExtension("jar");
     Set<String> pathFilter = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
     List<File> rootFiles = ContainerUtil.newArrayList();
+    if (Registry.is("project.structure.add.tools.jar.to.new.jdk")) {
+      File toolsJar = new File(home, "lib/tools.jar");
+      if (toolsJar.isFile()) {
+        rootFiles.add(toolsJar);
+      }
+    }
     for (File jarDir : jarDirs) {
       if (jarDir != null && jarDir.isDirectory()) {
         File[] jarFiles = notNull(jarDir.listFiles(jarFileFilter), ArrayUtil.EMPTY_FILE_ARRAY);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,12 +76,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
           loadState(object, false);
         }
       };
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        moduleRootManager.disposeComponent();
-      }
-    });
+    Disposer.register(parentDisposable, moduleRootManager);
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, createModulePathMacroManager(project));
     getPicoContainer().registerComponentInstance(ModuleFileIndex.class, createModuleFileIndex(project));
@@ -116,22 +111,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   @Override
   public void init(@NotNull String path, @Nullable final Runnable beforeComponentCreation) {
-  }
-
-  @Override
-  public void moduleAdded() {
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void rename(String newName) {
   }
 
   @Override

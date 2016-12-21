@@ -43,7 +43,7 @@ public class LoginDialog extends DialogWrapper {
   protected void doOKAction() {
     if (!validateLoginAndPasswordFields()) return;
     myStepicUser = EduStepicAuthorizedClient.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
-    if (myStepicUser != null) {
+    if (myStepicUser != null && myStepicUser.getId() > 0 && myStepicUser.getAccessToken() != null) {
       doJustOkAction();
     }
     else {

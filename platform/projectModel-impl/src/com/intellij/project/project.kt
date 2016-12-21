@@ -90,3 +90,23 @@ inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() 
 
 val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)
+
+/**
+ *  Tries to guess the "main project directory" of the project.
+ *
+ *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
+ *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
+ *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
+ */
+fun Project.guessProjectDir() : VirtualFile? {
+  val modules = ModuleManager.getInstance(this).modules
+  val module = if (modules.size == 1) modules.first() else modules.find { it.name == this.name }
+  if (module != null) {
+    val roots = ModuleRootManager.getInstance(module).contentRoots
+    if (roots.size == 1) {
+      val file = roots.first().canonicalFile
+      if (file != null) return file
+    }
+  }
+  return this.baseDir
+}

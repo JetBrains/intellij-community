@@ -507,7 +507,6 @@ public final class IconLoader {
         }
       });
 
-      @NotNull
       private Image getOrLoadOrigImage(float pixScale) {
         return getOrLoadOrigImage(pixScale, true);
       }
@@ -515,14 +514,13 @@ public final class IconLoader {
       /**
        * Retrieves the orig image based on the pixScale.
        */
-      @NotNull
       private Image getOrLoadOrigImage(float pixScale, boolean allowFloatScaling) {
         boolean needRetinaImage = (pixScale > 1.0f);
         Image image = SoftReference.dereference(origImagesCache.get(needRetinaImage));
-        if (image != null) {
-          return image;
-        }
+        if (image != null) return image;
+
         image = ImageLoader.loadFromUrl(myUrl, allowFloatScaling, myFilters, pixScale);
+        if (image == null) return null;
         origImagesCache.put(needRetinaImage, new SoftReference<Image>(image));
         return image;
       }
@@ -538,6 +536,8 @@ public final class IconLoader {
         }
 
         Image image = getOrLoadOrigImage(pixScale, allowFloatScaling);
+        if (image == null) return null;
+
         image = ImageUtil.scaleImage(image, instanceScale);
         icon = checkIcon(image, myUrl);
         scaledIconsCache.put(effectiveScale, new SoftReference<ImageIcon>(icon));
@@ -608,11 +608,11 @@ public final class IconLoader {
 
     protected abstract Icon compute();
 
-    public Icon inNormalScale(boolean isRetina) {
+    public Icon inOriginalScale() {
       Icon icon = getOrComputeIcon();
       if (icon != null) {
         if (icon instanceof CachedImageIcon) {
-          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(isRetina ? 2f : 1f);
+          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(1f);
           if (img != null) {
             icon = new ImageIcon(img);
           }

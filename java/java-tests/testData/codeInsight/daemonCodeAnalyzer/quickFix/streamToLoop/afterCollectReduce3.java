@@ -9,7 +9,7 @@ public class Main<T> {
       Integer acc = 0;
       for (String s : Arrays.asList("a", "bb", "ccc")) {
           Integer length = s.length();
-          acc = Integer.sum(acc, length);
+          acc = acc + length;
       }
       Integer totalLength = acc;
   }

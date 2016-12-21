@@ -39,8 +39,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
@@ -736,7 +736,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
     int extendedState = updateFrameBounds(frame);
 
-    Rectangle rectangle = ScreenUtil.boundsToDeviceSpace((Graphics2D)frame.getGraphics(), myFrameBounds);
+    Rectangle rectangle = ScreenUtil.boundsToDeviceSpace((Graphics2D)GraphicsUtil.safelyGetGraphics(frame), myFrameBounds);
 
     final Element frameElement = new Element(FRAME_ELEMENT);
     frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));

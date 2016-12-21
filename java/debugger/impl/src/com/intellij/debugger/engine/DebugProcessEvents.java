@@ -27,7 +27,6 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -93,16 +92,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
     final Event event = descriptor.getSecond();
     final Breakpoint breakpoint = descriptor.getFirst();
     if (event instanceof LocatableEvent) {
-      if (breakpoint instanceof LineBreakpoint && !((LineBreakpoint)breakpoint).isVisible()) {
-        text = DebuggerBundle.message("status.stopped.at.cursor");
+      try {
+        text = breakpoint != null ? breakpoint.getEventMessage(((LocatableEvent)event)) : DebuggerBundle.message("status.generic.breakpoint.reached");
       }
-      else {
-        try {
-          text = breakpoint != null? breakpoint.getEventMessage(((LocatableEvent)event)) : DebuggerBundle.message("status.generic.breakpoint.reached");
-        }
-        catch (InternalException e) {
-          text = DebuggerBundle.message("status.generic.breakpoint.reached");
-        }
+      catch (InternalException e) {
+        text = DebuggerBundle.message("status.generic.breakpoint.reached");
       }
     }
     else if (event instanceof VMStartEvent) {

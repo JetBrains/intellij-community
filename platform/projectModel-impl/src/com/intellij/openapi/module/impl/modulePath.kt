@@ -15,4 +15,55 @@
  */
 package com.intellij.openapi.module.impl
 
-data class ModulePath(val path: String, val group: String?)
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.module.impl.ModuleManagerImpl.*
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.PathUtil
+import com.intellij.util.io.URLUtil
+import org.jdom.Element
+
+/**
+ * Path here must be system-independent.
+ */
+data class ModulePath(val path: String, val group: String?) {
+  /**
+   * Module name (without file extension)
+   */
+  val moduleName: String = getModuleNameByFilePath(path)
+}
+
+fun getModuleNameByFilePath(path: String): String {
+  return PathUtil.getFileName(path).removeSuffix(ModuleFileType.DOT_DEFAULT_EXTENSION)
+}
+
+internal abstract class SaveItem {
+  protected abstract val moduleName: String
+  protected abstract val moduleFilePath: String
+
+  protected abstract val groupPathString: String?
+
+  fun writeExternal(parentElement: Element) {
+    val moduleElement = Element(ELEMENT_MODULE)
+    val moduleFilePath = moduleFilePath
+    val url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath)
+    moduleElement.setAttribute(ATTRIBUTE_FILEURL, url)
+    // support for older builds
+    moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath)
+
+    groupPathString?.let {
+      moduleElement.setAttribute(ATTRIBUTE_GROUP, it)
+    }
+    parentElement.addContent(moduleElement)
+  }
+}
+
+internal class ModulePathSaveItem(private val modulePath: ModulePath) : SaveItem() {
+  override val groupPathString: String?
+    get() = modulePath.group
+
+  override val moduleFilePath: String
+    get() = modulePath.path
+
+  override val moduleName: String
+    get() = modulePath.moduleName
+}

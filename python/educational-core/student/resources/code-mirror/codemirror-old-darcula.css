@@ -67,7 +67,7 @@
 }
 
 .cm-s-default span.cm-string-2 {
-    color: #f50;
+    color: #ff9336;
 }
     
 .cm-s-default span.cm-meta {
@@ -83,7 +83,7 @@
 }
 
 .cm-s-default span.cm-builtin {
-    color: #30a;
+    color: #795faa;
 }
 
 .cm-s-default span.cm-bracket {
@@ -99,7 +99,7 @@
 }
 
 .cm-s-default span.cm-header {
-    color: #a0a;
+    color: #9d6baa;
 }
 
 .cm-s-default span.cm-quote {

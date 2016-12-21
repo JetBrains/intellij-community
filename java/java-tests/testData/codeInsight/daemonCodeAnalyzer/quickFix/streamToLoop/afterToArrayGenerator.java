@@ -7,7 +7,7 @@ public class Main {
   private static <A> A[] toArraySkippingNulls(List<?> list, IntFunction<A[]> generator) {
       List<Object> result = new ArrayList<>();
       for (Object o : list) {
-          if (Objects.nonNull(o)) {
+          if (o != null) {
               result.add(o);
           }
       }

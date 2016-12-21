@@ -115,6 +115,19 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals(-1, escaper.getOffsetInHost(9, range));
   }
 
+  public void testEscaperOffsetInLongUnicodeEscape() {
+    final PyStringLiteralExpression expr = createLiteralFromText("u'XXX a\\U0001F600\\U0001F600b YYY'");
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
+    final TextRange range = TextRange.create(6, 28);
+    assertEquals(6, escaper.getOffsetInHost(0, range));
+    assertEquals(7, escaper.getOffsetInHost(1, range));
+    // Each \\U0001F600 is represented as a surrogate pair, hence 2 characters-wide step in decoded text
+    assertEquals(17, escaper.getOffsetInHost(3, range)); 
+    assertEquals(27, escaper.getOffsetInHost(5, range));
+    assertEquals(28, escaper.getOffsetInHost(6, range));
+    assertEquals(-1, escaper.getOffsetInHost(7, range));
+  }
+
   public void testStringValue() {
     assertEquals("foo", createLiteralFromText("\"\"\"foo\"\"\"").getStringValue());
     assertEquals("foo", createLiteralFromText("u\"foo\"").getStringValue());

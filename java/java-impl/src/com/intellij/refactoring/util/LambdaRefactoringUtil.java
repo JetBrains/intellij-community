@@ -28,7 +28,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.Function;
@@ -77,8 +76,7 @@ public class LambdaRefactoringUtil {
     }
     final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
 
-    final StringBuilder buf = new StringBuilder("(");
-    buf.append(GenericsUtil.getVariableTypeByExpressionType(functionalInterfaceType).getCanonicalText()).append(")");
+    final StringBuilder buf = new StringBuilder();
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 
@@ -224,14 +222,17 @@ public class LambdaRefactoringUtil {
     }
 
 
+    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)referenceExpression.replace(elementFactory.createExpressionFromText(buf.toString(), referenceExpression));
+    /*
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)referenceExpression.replace(elementFactory.createExpressionFromText(buf.toString(), referenceExpression));
-    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpression.getOperand();
+
     LOG.assertTrue(lambdaExpression != null, buf.toString());
     if (RedundantCastUtil.isCastRedundant(typeCastExpression) || ignoreCast) {
       final PsiExpression operand = typeCastExpression.getOperand();
       LOG.assertTrue(operand != null);
       lambdaExpression = (PsiLambdaExpression)typeCastExpression.replace(operand);
     }
+    */
 
     if (simplifyToExpressionLambda) {
       simplifyToExpressionLambda(lambdaExpression);

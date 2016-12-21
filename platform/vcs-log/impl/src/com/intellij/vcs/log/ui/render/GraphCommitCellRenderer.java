@@ -100,9 +100,15 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return 0;
   }
 
+  private int getGraphWidth(int row) {
+    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    return myTemplateComponent.getGraphWidth(cell.getPrintElements());
+  }
+
   public int getTooltipXCoordinate(int row) {
     int referencesWidth = getReferencesWidth(row);
     if (referencesWidth != 0) {
+      if (myComponent.getReferencePainter().isLeftAligned()) return getGraphWidth(row) + referencesWidth / 2;
       return getColumnWidth() - referencesWidth / 2;
     }
     return getColumnWidth() / 2;
@@ -192,7 +198,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
-                                            0 /*left aligned painter does not use available width*/);
+                                            getAvailableWidth(column));
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
         appendText(cell, style);

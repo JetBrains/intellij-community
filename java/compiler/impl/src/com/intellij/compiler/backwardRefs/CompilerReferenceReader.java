@@ -30,7 +30,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
@@ -96,7 +96,7 @@ class CompilerReferenceReader {
   }
 
   @NotNull
-  ByteArrayEnumerator getNameEnumerator() {
+  NameEnumerator getNameEnumerator() {
     return myIndex.getByteSeqEum();
   }
 

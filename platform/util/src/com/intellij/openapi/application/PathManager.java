@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
@@ -384,6 +385,24 @@ public class PathManager {
           }
         }
       }
+    }
+  }
+
+  /**
+   * Provides a way to tweak system properties as early as possible.
+   */
+  public static void patchProperties() {
+    /* Setting swing.bufferPerWindow = false disables true double buffering (by definition),
+       by forcing BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF in RepaintManager's static initializer.
+
+       At the same time, https://youtrack.jetbrains.com/issue/IDEA-35883 seems to be now fixed.
+
+       This matters only if we use the default RepaintManager and don't invoke JComponent.getGraphics() directly.
+
+       True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+       frame buffer content without the usual repainting, even when the EDT is blocked. */
+    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
+      System.setProperty("swing.bufferPerWindow", "true");
     }
   }
 

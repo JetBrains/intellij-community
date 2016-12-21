@@ -38,6 +38,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
@@ -444,16 +445,6 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.addAll(GitHistoryUtils.LOG_ALL);
     }
 
-    if (filterCollection.getUserFilter() != null) {
-      List<String> authors = ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.BASIC_INSTANCE);
-      if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
-        filterParameters.add(prepareParameter("author", StringUtil.join(authors, "\\|")));
-      }
-      else {
-        filterParameters.addAll(authors.stream().map(a -> prepareParameter("author", a)).collect(Collectors.toList()));
-      }
-    }
-
     if (filterCollection.getDateFilter() != null) {
       // assuming there is only one date filter, until filter expressions are defined
       VcsLogDateFilter filter = filterCollection.getDateFilter();
@@ -465,12 +456,35 @@ public class GitLogProvider implements VcsLogProvider {
       }
     }
 
+    boolean regexp = true;
+    boolean caseSensitive = false;
     if (filterCollection.getTextFilter() != null) {
+      regexp = filterCollection.getTextFilter().isRegex();
+      caseSensitive = filterCollection.getTextFilter().matchesCase();
       String textFilter = filterCollection.getTextFilter().getText();
-      filterParameters.add(prepareParameter("grep", StringUtil.escapeChars(textFilter, '[', ']')));
+      filterParameters.add(prepareParameter("grep", textFilter));
+    }
+    filterParameters.add(regexp ? "--extended-regexp" : "--fixed-strings");
+    if (!caseSensitive) {
+      filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
     }
 
-    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
+    if (filterCollection.getUserFilter() != null) {
+      Collection<String> names = filterCollection.getUserFilter().getUserNames(root);
+      if (regexp) {
+        List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
+        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
+          filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
+        }
+        else {
+          filterParameters.addAll(authors.stream().map(a -> prepareParameter("author", a)).collect(Collectors.toList()));
+        }
+      }
+      else {
+        filterParameters.addAll(ContainerUtil.map(names, a -> prepareParameter("author", StringUtil.escapeBackSlashes(a))));
+      }
+    }
+
     if (maxCount > 0) {
       filterParameters.add(prepareParameter("max-count", String.valueOf(maxCount)));
     }

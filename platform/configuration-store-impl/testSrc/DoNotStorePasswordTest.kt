@@ -15,7 +15,6 @@ import org.junit.ClassRule
 import org.junit.Test
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.util.Collection
 
 class DoNotStorePasswordTest {
   companion object {

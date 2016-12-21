@@ -79,12 +79,16 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   public Value evaluate(final EvaluationContext evaluationContext) throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
 
-    ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(evaluationContext, process);
+    EvaluationContextImpl autoLoadContext = ((EvaluationContextImpl)evaluationContext).createEvaluationContext(evaluationContext.getThisObject());
+    autoLoadContext.setAutoLoadClasses(true);
+
+    ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
+    autoLoadContext.setClassLoader(classLoader);
 
     String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
     Collection<ClassObject> classes = compile(JdkVersionUtil.getVersion(version));
 
-    defineClasses(classes, evaluationContext, process, classLoader);
+    defineClasses(classes, autoLoadContext, process, classLoader);
 
     try {
       // invoke base evaluator on call code
@@ -99,8 +103,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
             return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject), position);
           }
         });
-      ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
-      return evaluator.evaluate(evaluationContext);
+      return evaluator.evaluate(autoLoadContext);
     }
     catch (Exception e) {
       throw new EvaluateException("Error during generated code invocation " + e, e);

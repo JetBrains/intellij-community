@@ -7,7 +7,7 @@ import java.util.Objects;
 public class Main {
   private static void test(List<String> names) {
       for (String name : names) {
-          if (Objects.nonNull(name)) {
+          if (name != null) {
               System.out.println(name);
           }
       }

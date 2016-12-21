@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -235,7 +234,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void openFiles() {
     if (mySplittersElement != null) {
-      initializeProgress();
       final JPanel comp = myUIBuilder.process(mySplittersElement, getTopPanel());
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         if (comp != null) {
@@ -252,13 +250,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           }
         }
       });
-    }
-  }
-
-  private static void initializeProgress() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText(IdeBundle.message("loading.editors"));
     }
   }
 

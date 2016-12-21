@@ -15,7 +15,7 @@ public class Main {
       super(false);
         boolean b = false;
         for (String s : Arrays.asList("a", "b", "c")) {
-            if (Objects.nonNull(s)) {
+            if (s != null) {
                 b = true;
                 break;
             }

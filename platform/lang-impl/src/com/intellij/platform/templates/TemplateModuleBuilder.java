@@ -365,11 +365,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     final File location = new File(FileUtil.toSystemDependentName(path));
     LOG.assertTrue(location.exists());
 
-    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
-      }
-    });
+    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(
+      (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
     if (baseDir == null) {
       LOG.error("Couldn't find path '" + path + "' in VFS");
       return null;
@@ -417,22 +414,20 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     myProjectMode = true;
     unzip(name, path, false, progressIndicator, false);
     Ref<Project> projectRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(()->{
-      projectRef.set(
-        ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
-        @Nullable
-        @Override
-        public Project compute() {
-          try {
-            return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-            return null;
-          }
+    ApplicationManager.getApplication().invokeAndWait(()-> projectRef.set(
+      ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
+      @Nullable
+      @Override
+      public Project compute() {
+        try {
+          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
         }
-      }));
-    }, ModalityState.defaultModalityState());
+        catch (IOException e) {
+          LOG.error(e);
+          return null;
+        }
+      }
+    })), ModalityState.defaultModalityState());
     return projectRef.get();
   }
 

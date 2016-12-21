@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ThrowableRunnable;
 
 import java.awt.event.InputEvent;
+import java.util.Arrays;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
@@ -271,6 +272,25 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     checkResultByText("one\n" +
                       "two<caret>\n" +
                       "three<caret>\n" +
+                      "four");
+  }
+
+  public void testPastingAtDifferentNumberOfCarets() throws Exception {
+    initText("<selection>one<caret></selection>\n" +
+             "<selection>two<caret></selection>\n" +
+             "<selection>three<caret></selection>\n" +
+             "<selection>four<caret></selection>");
+    copy();
+    myEditor.getCaretModel().setCaretsAndSelections(Arrays.asList(new CaretState(new LogicalPosition(0, 0),
+                                                                                 new LogicalPosition(0, 0),
+                                                                                 new LogicalPosition(0, 0)),
+                                                                  new CaretState(new LogicalPosition(1, 0),
+                                                                                 new LogicalPosition(1, 0),
+                                                                                 new LogicalPosition(1, 0))));
+    paste();
+    checkResultByText("oneone\n" +
+                      "twotwo\n" +
+                      "three\n" +
                       "four");
   }
 

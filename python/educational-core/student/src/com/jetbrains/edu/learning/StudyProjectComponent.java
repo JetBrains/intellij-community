@@ -148,7 +148,7 @@ public class StudyProjectComponent implements ProjectComponent {
     final Course course = EduStepicConnector.getCourse(myProject, info);
 
     if (course == null) return;
-    flushCourse(myProject, course);
+    flushCourse(course);
     course.initCourse(false);
 
     StudyLanguageManager manager = StudyUtils.getLanguageManager(course);

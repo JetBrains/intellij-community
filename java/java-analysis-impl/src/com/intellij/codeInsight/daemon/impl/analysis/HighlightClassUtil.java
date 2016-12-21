@@ -279,7 +279,7 @@ public class HighlightClassUtil {
       if (directory instanceof PsiDirectory) {
         String simpleName = aClass.getName();
         PsiDirectory subDirectory = ((PsiDirectory)directory).findSubdirectory(simpleName);
-        if (subDirectory != null && simpleName.equals(subDirectory.getName())) {
+        if (subDirectory != null && simpleName.equals(subDirectory.getName()) && PsiTreeUtil.findChildOfType(subDirectory, PsiJavaFile.class) != null) {
           String message = JavaErrorMessages.message("class.clashes.with.package", name);
           TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();

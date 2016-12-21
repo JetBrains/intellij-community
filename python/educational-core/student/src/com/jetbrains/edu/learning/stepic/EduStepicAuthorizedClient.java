@@ -5,11 +5,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
-import com.jetbrains.edu.learning.StudyTaskManager;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -47,24 +45,24 @@ public class EduStepicAuthorizedClient {
   }
 
   @NotNull
-  public static CloseableHttpClient getHttpClient(@NotNull final Project project) {
+  public static CloseableHttpClient getHttpClient() {
     if (ourClient != null) {
       return ourClient;
     }
-    final StepicUser stepicUser = StudyTaskManager.getInstance(project).getUser();
+    final StepicUser stepicUser = StepicUpdateSettings.getInstance().getUser();
     ourClient = initializeClient(stepicUser);
     if (ourClient == null) {
       final StepicUser user = login(stepicUser);
       if (user != null) {
-        StudyTaskManager.getInstance(project).setUser(user);
+        StepicUpdateSettings.getInstance().setUser(user);
         ourClient = initializeClient(stepicUser);
       }
     }
     return ourClient;
   }
 
-  public static <T> T getFromStepic(String link, final Class<T> container, @NotNull final Project project) throws IOException {
-    return EduStepicClient.getFromStepic(link, container, getHttpClient(project));
+  public static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
+    return EduStepicClient.getFromStepic(link, container, getHttpClient());
   }
 
   /*
@@ -80,8 +78,13 @@ public class EduStepicAuthorizedClient {
     if (ourClient == null) {
       final StepicUser user = login(stepicUser);
       if (user != null) {
+        StepicUpdateSettings.getInstance().setUser(user);
         ourClient = initializeClient(stepicUser);
       }
+
+    }
+    if (ourClient == null) {
+      ourClient = EduStepicClient.getHttpClient();
     }
     return ourClient;
   }
@@ -102,12 +105,6 @@ public class EduStepicAuthorizedClient {
       headers.add(new BasicHeader("Authorization", "Bearer " + accessToken));
       headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APP_JSON));
       return getBuilder().setDefaultHeaders(headers).build();
-    }
-    else {
-      final StepicUser authorizedUser = login(stepicUser);
-      if (authorizedUser != null) {
-        return initializeClient(authorizedUser);
-      }
     }
     return null;
   }
@@ -152,24 +149,15 @@ public class EduStepicAuthorizedClient {
   }
 
   private static StepicUser login(@NotNull final StepicUser user) {
-    final String login =  user.getEmail();
+    final String login = user.getEmail();
     final String refreshToken = user.getRefreshToken();
     if (StringUtil.isEmptyOrSpaces(login)) {
       return showLoginDialog();
     }
-    else {
-      if (StringUtil.isNotEmpty(refreshToken)) {
-        final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
-        if (tokenInfo != null) {
-          user.setupTokenInfo(tokenInfo);
-        }
-      }
-      else {
-        final StepicUser stepicUser = login(login, user.getPassword());
-        if (stepicUser == null) {
-          return showLoginDialog();
-        }
-        return stepicUser;
+    else if (StringUtil.isNotEmpty(refreshToken)) {
+      final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
+      if (tokenInfo != null) {
+        user.setupTokenInfo(tokenInfo);
       }
     }
     return null;
@@ -203,7 +191,7 @@ public class EduStepicAuthorizedClient {
         user.setId(currentUser.getId());
       }
     }
-    
+    ourClient = initializeClient(user);
     return user;
   }
 

@@ -51,8 +51,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   private fun addVfsChangesListener() {
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener.Adapter() {
       override fun after(events: MutableList<out VFileEvent>) {
-        eventLoop@
-        for (event in events) {
+        eventLoop@ for (event in events) {
           var storage: StateStorage?
           if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
             val oldPath = event.oldPath

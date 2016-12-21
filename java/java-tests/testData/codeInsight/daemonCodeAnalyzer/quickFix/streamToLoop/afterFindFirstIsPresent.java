@@ -7,7 +7,7 @@ import static java.util.Arrays.asList;
 public class Main {
   public static boolean test(List<List<String>> list) {
       for (List<String> strings : list) {
-          if (Objects.nonNull(strings)) {
+          if (strings != null) {
               for (String s : strings) {
                   return true;
               }

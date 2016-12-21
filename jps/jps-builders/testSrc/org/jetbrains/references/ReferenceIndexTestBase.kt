@@ -22,9 +22,8 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.PersistentStringEnumerator
-import com.sun.tools.javac.util.Convert
 import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
-import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator
+import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex
 import org.jetbrains.jps.backwardRefs.LightRef
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData
@@ -175,13 +174,13 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
   private fun getTestDataPath() = testDataRootPath + "/" + getTestName(true) + "/"
 
-  private fun Int.asName(byteArrayEnumerator: ByteArrayEnumerator): String = Convert.utf2string(byteArrayEnumerator.valueOf(this))
+  private fun Int.asName(nameEnumerator: NameEnumerator): String = nameEnumerator.getName(this)
 
-  private fun LightRef.asText(byteArrayEnumerator: ByteArrayEnumerator): String =
+  private fun LightRef.asText(nameEnumerator: NameEnumerator): String =
       when (this) {
-        is LightRef.JavaLightMethodRef -> "${this.owner.name.asName(byteArrayEnumerator)}.${this.name.asName(byteArrayEnumerator)}(${this.parameterCount})"
-        is LightRef.JavaLightFieldRef -> "${this.owner.name.asName(byteArrayEnumerator)}.${this.name.asName(byteArrayEnumerator)}"
-        is LightRef.JavaLightClassRef -> this.name.asName(byteArrayEnumerator)
+        is LightRef.JavaLightMethodRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}(${this.parameterCount})"
+        is LightRef.JavaLightFieldRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}"
+        is LightRef.JavaLightClassRef -> this.name.asName(nameEnumerator)
         is LightRef.JavaLightFunExprDef -> "fun_expr(id=${this.id})"
         else -> throw UnsupportedOperationException()
       }

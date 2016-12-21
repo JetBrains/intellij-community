@@ -49,7 +49,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
 
     def conventions = project.extensions as DefaultConvention
     conventions.extraProperties.properties.each { name, value ->
-      if(name == 'extraModelBuilder') return
+      if(name == 'extraModelBuilder' || name.contains('.')) return
       String typeFqn = getType(value)
       result.gradleProperties.add(new DefaultGradleProperty(
         name, typeFqn, value.toString()))

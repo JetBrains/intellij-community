@@ -15,9 +15,9 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
+import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -39,19 +39,14 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 
 abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleScheme> {
-  private final CodeStyleSchemesModel mySchemesModel;
 
   private final static String SHARED_IMPORT_SOURCE = ApplicationBundle.message("import.scheme.shared");
 
-  CodeStyleSchemesActions(@NotNull CodeStyleSchemesModel model) {
-    mySchemesModel = model;
-  }
 
   @Override
   protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {
@@ -69,7 +64,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
     @Override
     public void actionPerformed(AnActionEvent e) {
       CodeStyleScheme currentScheme = getCurrentScheme();
-      if (currentScheme != null && !mySchemesModel.isProjectScheme(currentScheme)) {
+      if (currentScheme != null && !getSchemesModel().isProjectScheme(currentScheme)) {
         copyToProject(currentScheme);
       }
     }
@@ -78,7 +73,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       CodeStyleScheme currentScheme = getCurrentScheme();
-      p.setEnabled(currentScheme != null && !mySchemesModel.isProjectScheme(currentScheme));
+      p.setEnabledAndVisible(currentScheme != null && !getSchemesModel().isProjectScheme(currentScheme));
     }
   }
   
@@ -92,7 +87,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
     @Override
     public void actionPerformed(AnActionEvent e) {
        CodeStyleScheme currentScheme = getCurrentScheme();
-      if (currentScheme != null && mySchemesModel.isProjectScheme(currentScheme)) {
+      if (currentScheme != null && getSchemesModel().isProjectScheme(currentScheme)) {
         exportProjectScheme();
       }
     }
@@ -101,7 +96,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       CodeStyleScheme currentScheme = getCurrentScheme();
-      p.setEnabled(currentScheme != null && mySchemesModel.isProjectScheme(currentScheme));
+      p.setEnabledAndVisible(currentScheme != null && getSchemesModel().isProjectScheme(currentScheme));
     }
   }
 
@@ -112,37 +107,37 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
                               ApplicationBundle.message("settings.code.style.reset.to.defaults.title"), Messages.getQuestionIcon()) ==
         Messages.OK) {
       scheme.resetToDefaults();
-      mySchemesModel.fireSchemeChanged(scheme);
+      getSchemesModel().fireSchemeChanged(scheme);
     }
   }
 
   @Override
   protected void doSaveAs(@NotNull CodeStyleScheme scheme) {
-    if (!mySchemesModel.isProjectScheme(scheme)) {
+    if (!getSchemesModel().isProjectScheme(scheme)) {
       String selectedName = scheme.getName();
       Collection<String> names = CodeStyleSchemesImpl.getSchemeManager().getAllSchemeNames();
       SaveSchemeDialog saveDialog =
         new SaveSchemeDialog(getParentComponent(), ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
       if (saveDialog.showAndGet()) {
-        CodeStyleScheme newScheme = mySchemesModel.createNewScheme(saveDialog.getSchemeName(), getCurrentScheme());
-        mySchemesModel.addScheme(newScheme, true);
+        CodeStyleScheme newScheme = getSchemesModel().createNewScheme(saveDialog.getSchemeName(), getCurrentScheme());
+        getSchemesModel().addScheme(newScheme, true);
       }
     }
   }
 
   @Override
   protected void doDelete(@NotNull CodeStyleScheme scheme) {
-    mySchemesModel.removeScheme(scheme);
+    getSchemesModel().removeScheme(scheme);
   }
 
   @Override
   protected boolean isDeleteAvailable(@NotNull CodeStyleScheme scheme) {
-    return !mySchemesModel.isProjectScheme(scheme) && !scheme.isDefault();
+    return !getSchemesModel().isProjectScheme(scheme) && !scheme.isDefault();
   }
 
   @Override
   protected boolean isCopyToAvailable(@NotNull CodeStyleScheme scheme) {
-    return !mySchemesModel.isProjectScheme(scheme);
+    return !getSchemesModel().isProjectScheme(scheme);
   }
 
   @Override
@@ -158,31 +153,28 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
                                            ApplicationBundle.message("settings.editor.scheme.copy.to.ide.title"),
                                            Messages.getQuestionIcon());
     if (name != null && !CodeStyleSchemesModel.PROJECT_SCHEME_NAME.equals(name)) {
-      CodeStyleScheme newScheme = mySchemesModel.exportProjectScheme(name);
+      CodeStyleScheme newScheme = getSchemesModel().exportProjectScheme(name);
       int switchToGlobal = Messages
         .showYesNoDialog("Project scheme was copied to global scheme list as '" + newScheme.getName() + "'.\n" +
                          "Switch to this created scheme?",
                          "Copy Project Scheme to Global List", Messages.getQuestionIcon());
       if (switchToGlobal == Messages.YES) {
-        mySchemesModel.setUsePerProjectSettings(false);
-        mySchemesModel.selectScheme(newScheme, null);
+        getSchemesModel().setUsePerProjectSettings(false);
+        getSchemesModel().selectScheme(newScheme, null);
       }
     }
   }
-
-  @NotNull
-  protected abstract JComponent getParentComponent();
-
+  
   private void chooseAndImport(@NotNull CodeStyleScheme currentScheme, @NotNull String importerName) {
     if (importerName.equals(SHARED_IMPORT_SOURCE)) {
       new SchemesToImportPopup<CodeStyleScheme>(getParentComponent()) {
         @Override
         protected void onSchemeSelected(CodeStyleScheme scheme) {
           if (scheme != null) {
-            mySchemesModel.addScheme(scheme, true);
+            getSchemesModel().addScheme(scheme, true);
           }
         }
-      }.show(mySchemesModel.getSchemes());
+      }.show(getSchemesModel().getSchemes());
     }
     else {
       final SchemeImporter<CodeStyleScheme> importer = SchemeImporterEP.getImporter(importerName, CodeStyleScheme.class);
@@ -218,13 +210,13 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
       final CodeStyleScheme
-        schemeImported = importer.importScheme(mySchemesModel.getProject(), selectedFile, currentScheme, schemeCreator);
+        schemeImported = importer.importScheme(getSchemesModel().getProject(), selectedFile, currentScheme, schemeCreator);
       if (schemeImported != null) {
         if (schemeCreator.isSchemeWasCreated()) {
-          mySchemesModel.fireSchemeListChanged();
+          getSchemesModel().fireSchemeListChanged();
         }
         else {
-          mySchemesModel.fireSchemeChanged(schemeImported);
+          getSchemesModel().fireSchemeChanged(schemeImported);
         }
         return schemeImported;
       }
@@ -239,8 +231,8 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
     public CodeStyleScheme createNewScheme(@Nullable String targetName) {
       mySchemeWasCreated = true;
       if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
-      CodeStyleScheme newScheme = mySchemesModel.createNewScheme(targetName, getCurrentScheme());
-      mySchemesModel.addScheme(newScheme, true);
+      CodeStyleScheme newScheme = getSchemesModel().createNewScheme(targetName, getCurrentScheme());
+      getSchemesModel().addScheme(newScheme, true);
       return newScheme;
     }
 
@@ -260,8 +252,8 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
                        ApplicationBundle.message("settings.editor.scheme.copy.to.project.title"), 
                        Messages.getQuestionIcon());
     if (copyToProjectConfirmation == Messages.YES) {
-      mySchemesModel.copyToProject(scheme);
-      mySchemesModel.setUsePerProjectSettings(true, true);
+      getSchemesModel().copyToProject(scheme);
+      getSchemesModel().setUsePerProjectSettings(true, true);
     }
   }
 
@@ -310,4 +302,6 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
       }
     }
   }
+  
+  protected abstract CodeStyleSchemesModel getSchemesModel();
 }

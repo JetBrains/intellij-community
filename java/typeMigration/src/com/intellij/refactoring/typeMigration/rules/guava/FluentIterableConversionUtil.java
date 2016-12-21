@@ -112,9 +112,8 @@ public class FluentIterableConversionUtil {
   }
 
   @Nullable
-  static TypeConversionDescriptor getFilterDescriptor(PsiMethod method) {
+  static TypeConversionDescriptor getFilterDescriptor(@NotNull PsiMethod method, @Nullable PsiExpression context) {
     LOG.assertTrue("filter".equals(method.getName()));
-
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 1) return null;
     final PsiParameter parameter = parameters[0];
@@ -123,10 +122,36 @@ public class FluentIterableConversionUtil {
     final PsiClass resolvedClass = ((PsiClassType)type).resolve();
     if (resolvedClass == null) return null;
     if (CommonClassNames.JAVA_LANG_CLASS.equals(resolvedClass.getQualifiedName())) {
-      return new GuavaFilterInstanceOfConversionDescriptor();
+      if (context == null) return null;
+      PsiMethodCallExpression methodCall = null;
+      if (context instanceof PsiMethodCallExpression) {
+        methodCall = (PsiMethodCallExpression)context;
+      }
+      else if (context.getParent() instanceof PsiMethodCallExpression) {
+        methodCall = (PsiMethodCallExpression)context.getParent();
+      }
+      if (methodCall == null) return null;
+      final PsiType filteredType = methodCall.getType();
+      if (!(filteredType instanceof PsiClassType)) return null;
+      final PsiType[] filterParameters = ((PsiClassType)filteredType).getParameters();
+      if (filterParameters.length != 1) return null;
+      final String filterClassName = getFilterClassText(filterParameters[0]);
+      if (filterClassName == null) return null;
+      return new GuavaFilterInstanceOfConversionDescriptor(filterClassName);
     }
     else if (GuavaLambda.PREDICATE.getClassQName().equals(resolvedClass.getQualifiedName())) {
       return new GuavaTypeConversionDescriptor("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getFilterClassText(PsiType type) {
+    final PsiClass filterClass = PsiUtil.resolveClassInType(type);
+    if (filterClass != null) return filterClass.getQualifiedName();
+    if (type instanceof PsiCapturedWildcardType) {
+      final PsiClass boundClass = PsiUtil.resolveClassInType(((PsiCapturedWildcardType)type).getUpperBound());
+      if (boundClass != null) return boundClass.getQualifiedName();
     }
     return null;
   }
@@ -230,16 +255,12 @@ public class FluentIterableConversionUtil {
   }
 
   private static class GuavaFilterInstanceOfConversionDescriptor extends TypeConversionDescriptor {
-    public GuavaFilterInstanceOfConversionDescriptor() {
-      super("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "($p$)");
+    public GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
+      super("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "(" + filterClassQName + ".class::isInstance)." + StreamApiConstants.MAP + "(" + filterClassQName + ".class::cast)");
     }
 
     @Override
     public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
-      final PsiExpression argument = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
-      final PsiExpression newArgument = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(" + argument.getText() + ")::isInstance", argument);
-      ParenthesesUtils.removeParentheses((PsiExpression)((PsiMethodReferenceExpression)newArgument).getQualifier(), false);
-      argument.replace(newArgument);
       return super.replace(expression, evaluator);
     }
   }

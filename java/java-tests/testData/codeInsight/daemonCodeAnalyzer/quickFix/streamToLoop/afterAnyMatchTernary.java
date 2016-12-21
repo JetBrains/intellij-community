@@ -6,7 +6,7 @@ import java.util.Objects;
 public class Main {
   String test(String[] strings) {
       for (String s : strings) {
-          if (Objects.nonNull(s)) {
+          if (s != null) {
               if (!s.startsWith("xyz")) {
                   return "s";
               }

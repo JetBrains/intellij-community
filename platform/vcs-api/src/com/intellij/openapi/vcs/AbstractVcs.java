@@ -21,7 +21,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -457,11 +456,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  @Nullable
-  public ChangeListEditHandler getEditHandler() {
-    return null;
-  }
-
   public boolean allowsNestedRoots() {
     return false;
   }
@@ -496,11 +490,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   public VcsType getType() {
     return VcsType.centralized;
-  }
-
-  // todo ?
-  public boolean checkImmediateParentsBeforeCommit() {
-    return false;
   }
 
   @Nullable

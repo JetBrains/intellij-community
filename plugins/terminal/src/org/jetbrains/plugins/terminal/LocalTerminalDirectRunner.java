@@ -216,6 +216,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
               if (fishConfig.exists()) {
                 envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
               }
+              envs.put("OLD_" + XDG_CONFIG_HOME, xdgConfig);
             }
 
             envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());

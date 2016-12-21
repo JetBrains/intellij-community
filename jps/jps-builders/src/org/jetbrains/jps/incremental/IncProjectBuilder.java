@@ -366,6 +366,14 @@ public class IncProjectBuilder {
       @Override
       public void filesDeleted(Collection<String> paths) {
       }
+
+      @Override
+      public void targetsBuildStarted(Collection<? extends BuildTarget<?>> targets) {
+      }
+
+      @Override
+      public void targetsBuildFinished(Collection<? extends BuildTarget<?>> targets) {
+      }
     });
 
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
@@ -1069,7 +1077,7 @@ public class IncProjectBuilder {
             final Collection<String> paths = entry.getValue();
             if (paths != null) {
               for (String path : paths) {
-                fsState.registerDeleted(target, new File(path), null);
+                fsState.registerDeleted(context, target, new File(path), null);
               }
             }
           }
@@ -1081,8 +1089,8 @@ public class IncProjectBuilder {
       }
       finally {
         Utils.REMOVED_SOURCES_KEY.set(context, null);
+        sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
       }
-      sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
     }
   }
 

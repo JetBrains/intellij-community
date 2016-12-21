@@ -314,9 +314,7 @@ public class ImageLoader implements Serializable {
   }
 
   private static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
-    float scaleFactor = allowFloatScaling ? scale : scale > 1.5f ? 2f : 1f;
-    assert scaleFactor >= 1.0f : "By design, only scale factors >= 1.0 are supported";
-    return scaleFactor;
+    return allowFloatScaling ? scale : scale > 1.5f ? 2f : 1f;
   }
 
   @NotNull

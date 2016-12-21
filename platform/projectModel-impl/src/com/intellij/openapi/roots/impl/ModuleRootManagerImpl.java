@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
+import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -28,7 +32,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
@@ -42,8 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
-public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent {
+public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -52,10 +55,10 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private RootModelImpl myRootModel;
   private boolean myIsDisposed = false;
   private boolean myLoaded = false;
-  private boolean isModuleAdded = false;
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
+  private volatile long myModificationCount;
 
   public ModuleRootManagerImpl(Module module,
                                ProjectRootManagerImpl projectRootManager,
@@ -81,17 +84,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "NewModuleRootManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myRootModel.dispose();
     myIsDisposed = true;
 
@@ -107,7 +100,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
     }
   }
-
 
   @Override
   @NotNull
@@ -140,7 +132,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   void makeRootsChange(@NotNull Runnable runnable) {
     ProjectRootManagerEx projectRootManagerEx = (ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject());
     // IMPORTANT: should be the first listener!
-    projectRootManagerEx.makeRootsChange(runnable, false, isModuleAdded);
+    projectRootManagerEx.makeRootsChange(runnable, false, myModule.isLoaded());
   }
 
   public RootModelImpl getRootModel() {
@@ -173,9 +165,15 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);
 
+    boolean changed = rootModel.isChanged();
+
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
     ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+
+    if (changed) {
+      myModificationCount++;
+    }
   }
 
   static void doCommit(RootModelImpl rootModel) {
@@ -318,20 +316,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getSourceRoots(rootTypes);
   }
 
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void moduleAdded() {
-    isModuleAdded = true;
-  }
-
-
   public void dropCaches() {
     myOrderRootsCache.clearCache();
   }
@@ -341,7 +325,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void loadState(ModuleRootManagerState object) {
-    loadState(object, myLoaded || isModuleAdded);
+    loadState(object, myLoaded || myModule.isLoaded());
     myLoaded = true;
   }
 
@@ -368,6 +352,15 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     }
   }
 
+  @Override
+  public long getModificationCount() {
+    long result = myModificationCount;
+    if (myModule instanceof ModuleEx) {
+      result += ((ModuleEx)myModule).getOptionsModificationCount();
+    }
+    return result;
+  }
+
   public static class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
     private Element myRootModelElement;
@@ -385,7 +378,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       myRootModel.writeExternal(element);
     }
 

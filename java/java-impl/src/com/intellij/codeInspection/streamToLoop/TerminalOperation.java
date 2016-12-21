@@ -17,18 +17,20 @@ package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -162,14 +164,15 @@ abstract class TerminalOperation extends Operation {
     switch (collectorName) {
       case "toList":
         if (collectorArgs.length != 0) return null;
-        return AccumulatedTerminalOperation.toList(resultType);
+        return ToCollectionTerminalOperation.toList(resultType);
       case "toSet":
         if (collectorArgs.length != 0) return null;
-        return AccumulatedTerminalOperation.toCollection(resultType, CommonClassNames.JAVA_UTIL_HASH_SET, "set");
+        return new ToCollectionTerminalOperation(resultType,
+                                                 FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_SET), "set");
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
-        return fn == null ? null : new ToCollectionTerminalOperation(fn);
+        return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
       case "toMap": {
         if (collectorArgs.length < 2 || collectorArgs.length > 4) return null;
         FunctionHelper key = FunctionHelper.create(collectorArgs[0], 1);
@@ -178,7 +181,7 @@ abstract class TerminalOperation extends Operation {
         PsiExpression merger = collectorArgs.length > 2 ? collectorArgs[2] : null;
         FunctionHelper supplier = collectorArgs.length == 4
                    ? FunctionHelper.create(collectorArgs[3], 0)
-                   : FunctionHelper.hashMapSupplier(resultType);
+                   : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
         if(supplier == null) return null;
         return new ToMapTerminalOperation(key, value, merger, supplier, resultType);
       }
@@ -241,7 +244,7 @@ abstract class TerminalOperation extends Operation {
         if (resultSubType == null) return null;
         CollectorOperation downstreamCollector;
         if (collectorArgs.length == 1) {
-          downstreamCollector = AccumulatedTerminalOperation.toList(resultSubType).asCollector();
+          downstreamCollector = ToCollectionTerminalOperation.toList(resultSubType).asCollector();
         }
         else {
           PsiExpression downstream = collectorArgs[collectorArgs.length - 1];
@@ -255,7 +258,7 @@ abstract class TerminalOperation extends Operation {
         }
         FunctionHelper supplier = collectorArgs.length == 3
                                   ? FunctionHelper.create(collectorArgs[1], 0)
-                                  : FunctionHelper.hashMapSupplier(resultType);
+                                  : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
         return new GroupByTerminalOperation(fn, supplier, resultType, downstreamCollector);
       }
       case "minBy":
@@ -279,6 +282,42 @@ abstract class TerminalOperation extends Operation {
         return null;
     }
     return null;
+  }
+
+  /**
+   * Eliminates &lt;? extends&gt; wildcards from type parameters which directly map to the supplied superclass
+   * type parameters and performs downstream correction steps if necessary.
+   *
+   * @param type type to process
+   * @param superClass superclass which type parameters should be corrected
+   * @param downstreamCorrectors Map which keys are superclass type parameter names and values are functions to perform additional
+   *                             superclass type parameter correction if necessary
+   * @return the corrected type.
+   */
+  @NotNull
+  static PsiType correctTypeParameters(PsiType type, String superClass, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if(aClass == null) return type;
+
+    PsiSubstitutor origSubstitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
+    PsiSubstitutor substitutor = origSubstitutor;
+    Project project = aClass.getProject();
+    PsiClass baseClass = JavaPsiFacade.getInstance(project).findClass(superClass, aClass.getResolveScope());
+    if(baseClass == null) return type;
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
+    for (PsiTypeParameter baseParameter : baseClass.getTypeParameters()) {
+      PsiClass substitution = PsiUtil.resolveClassInClassTypeOnly(superClassSubstitutor.substitute(baseParameter));
+      if(substitution instanceof PsiTypeParameter) {
+        PsiTypeParameter subClassParameter = (PsiTypeParameter)substitution;
+        PsiType origType = origSubstitutor.substitute(subClassParameter);
+        PsiType replacedType = GenericsUtil.eliminateWildcards(origType, false, true);
+        replacedType = downstreamCorrectors.getOrDefault(subClassParameter.getName(), Function.identity()).apply(replacedType);
+        if(replacedType != origType) {
+          substitutor = substitutor.put(subClassParameter, replacedType);
+        }
+      }
+    }
+    return substitutor == origSubstitutor ? type : JavaPsiFacade.getElementFactory(project).createType(aClass, substitutor);
   }
 
   static class ReduceTerminalOperation extends TerminalOperation {
@@ -511,6 +550,8 @@ abstract class TerminalOperation extends Operation {
     default void registerUsedNames(Consumer<String> usedNameConsumer) {}
     String getSupplier();
     String getAccumulator(String acc, String item);
+
+    default PsiType correctReturnType(PsiType type) {return type;}
   }
 
   abstract static class CollectorBasedTerminalOperation extends TerminalOperation implements CollectorOperation {
@@ -528,7 +569,8 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       transform(context, inVar.getName());
-      String acc = context.declareResult(myAccNameSupplier.apply(context), myType, getSupplier(), true);
+      PsiType resultType = correctReturnType(context.createType(myType));
+      String acc = context.declareResult(myAccNameSupplier.apply(context), resultType.getCanonicalText(), getSupplier(), true);
       return getAccumulator(acc, inVar.getName());
     }
 
@@ -604,17 +646,6 @@ abstract class TerminalOperation extends Operation {
     }
 
     @NotNull
-    static AccumulatedTerminalOperation toCollection(PsiType collectionType, String implementationType, String varName) {
-      return new AccumulatedTerminalOperation(varName, collectionType.getCanonicalText(), "new " + implementationType + "<>()",
-                                              "{acc}.add({item});");
-    }
-
-    @NotNull
-    private static AccumulatedTerminalOperation toList(@NotNull PsiType resultType) {
-      return toCollection(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST, "list");
-    }
-
-    @NotNull
     static AccumulatedTerminalOperation summing(PsiType type) {
       return new AccumulatedTerminalOperation("sum", type.getCanonicalText(), "0", "{acc}+={item};");
     }
@@ -627,13 +658,23 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ToCollectionTerminalOperation extends CollectorBasedTerminalOperation {
-    public ToCollectionTerminalOperation(FunctionHelper fn) {
-      super(fn.getResultType(), context -> fn.suggestFinalOutputNames(context, null, "collection").get(0), fn);
+    public ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
+      super(resultType.getCanonicalText(), context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
     }
 
     @Override
     public String getAccumulator(String acc, String item) {
       return acc+".add("+item+");\n";
+    }
+
+    @Override
+    public PsiType correctReturnType(PsiType type) {
+      return correctTypeParameters(type, CommonClassNames.JAVA_UTIL_COLLECTION, Collections.emptyMap());
+    }
+
+    @NotNull
+    private static ToCollectionTerminalOperation toList(@NotNull PsiType resultType) {
+      return new ToCollectionTerminalOperation(resultType, FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST), "list");
     }
   }
 
@@ -641,43 +682,39 @@ abstract class TerminalOperation extends Operation {
     private String myType;
     private String myTemplate;
     private String myComparatorType;
-    private @Nullable PsiExpression myComparator;
+    private @Nullable FunctionHelper myComparator;
 
-    public MinMaxTerminalOperation(String type, String template, @Nullable PsiExpression comparator) {
+    public MinMaxTerminalOperation(String type, String template, @Nullable FunctionHelper comparator) {
       myType = type;
       myTemplate = template;
       myComparator = comparator;
       if(comparator != null) {
-        PsiType comparatorType = comparator.getType();
-        if(comparatorType != null) {
-          myComparatorType = comparatorType.getCanonicalText();
-        } else {
-          myComparatorType = CommonClassNames.JAVA_UTIL_COMPARATOR+"<"+myType+">";
-        }
+        myComparatorType = CommonClassNames.JAVA_UTIL_COMPARATOR+"<"+myType+">";
       }
     }
 
     @Override
     public void registerUsedNames(Consumer<String> usedNameConsumer) {
       if(myComparator != null) {
-        FunctionHelper.processUsedNames(myComparator, usedNameConsumer);
+        myComparator.registerUsedNames(usedNameConsumer);
       }
     }
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String comparator = "";
-      if(myComparator != null) {
-        comparator = myComparator.getText();
-        if(!ExpressionUtils.isSimpleExpression(context.createExpression(comparator))) {
-          comparator = context.declare("comparator", myComparatorType, comparator);
-        }
-      }
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
-      String type = myType;
-      context.setFinisher(new ConditionalExpression.Optional(type, seen, best));
-      String comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName()).replace("{comparator}", comparator);
+      context.setFinisher(new ConditionalExpression.Optional(myType, seen, best));
+      String comparePredicate;
+      if(myComparator != null) {
+        myComparator.transform(context, inVar.getName(), best);
+        PsiExpression expression = myComparator.getExpression();
+        int expressionPrecedence = ParenthesesUtils.getPrecedence(expression);
+        String text = expressionPrecedence >= ParenthesesUtils.EQUALITY_PRECEDENCE ? "("+expression.getText()+")" : expression.getText();
+        comparePredicate = myTemplate.replace("{comparator}", text);
+      } else {
+        comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName());
+      }
       return "if(!" + seen + " || " + comparePredicate + ") {\n" +
              seen + "=true;\n" +
              best + "=" + inVar + ";\n}\n";
@@ -693,8 +730,12 @@ abstract class TerminalOperation extends Operation {
         if (PsiType.DOUBLE.equalsToText(elementType)) {
           return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null);
         }
-      } else if(InheritanceUtil.isInheritor(comparator.getType(), CommonClassNames.JAVA_UTIL_COMPARATOR)) {
-        return new MinMaxTerminalOperation(elementType, "{comparator}.compare({item},{best})" + sign + "0", comparator);
+      }
+      else {
+        FunctionHelper fn = FunctionHelper.create(comparator, 2);
+        if(fn != null) {
+          return new MinMaxTerminalOperation(elementType, "{comparator}"+sign+"0", fn);
+        }
       }
       return null;
     }
@@ -713,6 +754,11 @@ abstract class TerminalOperation extends Operation {
       myKeyExtractor = keyExtractor;
       myValueExtractor = valueExtractor;
       myMerger = merger;
+    }
+
+    @Override
+    public PsiType correctReturnType(PsiType type) {
+      return correctTypeParameters(type, CommonClassNames.JAVA_UTIL_MAP, Collections.emptyMap());
     }
 
     @Override
@@ -779,6 +825,11 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
+    public PsiType correctReturnType(PsiType type) {
+      return correctTypeParameters(type, CommonClassNames.JAVA_UTIL_MAP, Collections.singletonMap("V", myCollector::correctReturnType));
+    }
+
+    @Override
     public void registerUsedNames(Consumer<String> usedNameConsumer) {
       super.registerUsedNames(usedNameConsumer);
       myKeyExtractor.registerUsedNames(usedNameConsumer);
@@ -831,11 +882,14 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String map = context.declareResult("map", myResultType, "new java.util.HashMap<>()", true);
+      PsiType resultType = context.createType(myResultType);
+      resultType = correctTypeParameters(resultType, CommonClassNames.JAVA_UTIL_MAP,
+                                         Collections.singletonMap("V", myCollector::correctReturnType));
+      String map = context.declareResult("map", resultType.getCanonicalText(), "new java.util.HashMap<>()", true);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
-      context.addInitStep(map+".put(false, "+myCollector.getSupplier()+");");
-      context.addInitStep(map+".put(true, "+myCollector.getSupplier()+");");
+      context.addInitStep(map + ".put(false, " + myCollector.getSupplier() + ");");
+      context.addInitStep(map + ".put(true, " + myCollector.getSupplier() + ");");
       return myCollector.getAccumulator(map + ".get(" + myPredicate.getText() + ")", inVar.getName());
     }
   }
@@ -860,6 +914,11 @@ abstract class TerminalOperation extends Operation {
     @Override
     public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
       myMapper.suggestVariableName(inVar, 0);
+    }
+
+    @Override
+    public PsiType correctReturnType(PsiType type) {
+      return myDownstreamCollector.correctReturnType(type);
     }
 
     @Override

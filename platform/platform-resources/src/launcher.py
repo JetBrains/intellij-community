@@ -13,10 +13,6 @@ RUN_PATH = u'$RUN_PATH$'
 CONFIG_PATH = u'$CONFIG_PATH$'
 SYSTEM_PATH = u'$SYSTEM_PATH$'
 
-if sys.version_info[0] * 10 + sys.version_info[1] < 27:
-    print('error: Python 2.7 or newer is required')
-    exit(1)
-
 
 def print_usage(cmd):
     print(('Usage:\n' +
@@ -65,8 +61,9 @@ def try_activate_instance(args):
     if not (os.path.exists(port_path) and os.path.exists(token_path)):
         return False
 
-    with open(port_path) as pf, open(token_path) as tf:
+    with open(port_path) as pf:
         port = int(pf.read())
+    with open(token_path) as tf:
         token = tf.read()
 
     s = socket.socket()

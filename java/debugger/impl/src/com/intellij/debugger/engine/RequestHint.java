@@ -180,13 +180,6 @@ public class RequestHint {
     }
   }
 
-  private int reached(MethodFilter filter, SuspendContextImpl context) {
-    if (filter instanceof ActionMethodFilter) {
-      return ((ActionMethodFilter)filter).onReached(context, this);
-    }
-    return STOP;
-  }
-
   protected boolean isSteppedOut() {
     return mySteppedOut;
   }
@@ -203,7 +196,7 @@ public class RequestHint {
           !isTheSameFrame(context)
         ) {
         myTargetMethodMatched = true;
-        return reached(myMethodFilter, context);
+        return myMethodFilter.onReached(context, this);
       }
 
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {

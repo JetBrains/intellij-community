@@ -6,9 +6,9 @@ import java.util.List;
 
 public class Main {
   public static String test(List<String> strings, Comparator<CharSequence> comparator) {
-      Comparator<CharSequence> comparator1 = comparator.reversed();
       boolean seen = false;
       String best = null;
+      Comparator<CharSequence> comparator1 = comparator.reversed();
       for (String string : strings) {
           if (!seen || comparator1.compare(string, best) < 0) {
               seen = true;

@@ -45,9 +45,10 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
 
+import static com.intellij.util.SystemProperties.isTrueSmoothScrollingEnabled;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
-public class JBScrollPane extends JScrollPane {
+public class JBScrollPane extends SmoothScrollPane {
   /**
    * This key is used to specify which colors should use the scroll bars on the pane.
    * If a client property is set to {@code true} the bar's brightness
@@ -244,7 +245,7 @@ public class JBScrollPane extends JScrollPane {
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
 
-  private class MyScrollBar extends ScrollBar implements IdeGlassPane.TopComponent {
+  private class MyScrollBar extends SmoothScrollBar implements IdeGlassPane.TopComponent {
     public MyScrollBar(int orientation) {
       super(orientation);
     }
@@ -730,9 +731,19 @@ public class JBScrollPane extends JScrollPane {
    * @return {@code true} if the specified event is valid, {@code false} otherwise
    */
   public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
-    if (event.isConsumed()) return false; // event should not be consumed already
-    if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
-    return 0 == (SCROLL_MODIFIERS & event.getModifiers());
+    // event should not be consumed already
+    if (event.isConsumed()) return false;
+    // any rotation expected (forward or backward)
+    boolean ignore = event.getWheelRotation() == 0;
+    if (ignore && isPreciseRotationSupported()) {
+      double rotation = event.getPreciseWheelRotation();
+      ignore = rotation == 0 || !Double.isFinite(rotation);
+    }
+    return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
+  }
+
+  private static boolean isPreciseRotationSupported() {
+    return isTrueSmoothScrollingEnabled();
   }
 
   private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling

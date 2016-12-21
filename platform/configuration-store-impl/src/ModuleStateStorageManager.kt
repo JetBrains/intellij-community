@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
@@ -23,9 +22,8 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.PathUtilRt
 import org.jdom.Element
 
 class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
@@ -40,7 +38,7 @@ class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, 
       if (requestor == null || requestor !is StateStorage /* not renamed as result of explicit rename */) {
         val module = componentManager as ModuleEx
         val oldName = module.name
-        module.rename(StringUtil.trimEnd(PathUtilRt.getFileName(newPath), ModuleFileType.DOT_DEFAULT_EXTENSION))
+        module.rename(getModuleNameByFilePath(newPath), false)
         ModuleManagerImpl.getInstanceImpl(module.project).fireModuleRenamedByVfsEvent(module, oldName)
       }
     }

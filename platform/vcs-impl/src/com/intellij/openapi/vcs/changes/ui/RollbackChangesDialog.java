@@ -134,11 +134,10 @@ public class RollbackChangesDialog extends DialogWrapper {
         @NotNull
         @Override
         protected DefaultTreeModel buildTreeModel(List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
-          TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
           // Currently we do not explicitly utilize passed "changeNodeDecorator" instance (which is defined by
           // "ChangesBrowser.MyUseCase.LOCAL_CHANGES" parameter passed to "ChangesBrowser"). But correct node decorator will still be set
           // in "TreeModelBuilder.setChangeLists()".
-          return builder.setChangeLists(changeLists).build();
+          return TreeModelBuilder.buildFromChangeLists(myProject, showFlatten, changeLists);
         }
       };
     Disposer.register(getDisposable(), myBrowser);

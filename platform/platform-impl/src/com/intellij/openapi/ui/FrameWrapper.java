@@ -47,6 +47,7 @@ import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.FrameState;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -174,8 +175,9 @@ public class FrameWrapper implements Disposable, DataProvider {
     } else {
       ((JDialog)frame).setTitle(myTitle);
     }
-    if (myImageWasChanged) {
-      frame.setIconImage(myImage);
+    if (myImageWasChanged && myImage != null) {
+      // unwrap the image before setting as frame's icon
+      frame.setIconImage(ImageUtil.toBufferedImage(myImage));
     }
     else {
       AppUIUtil.updateWindowIcon(myFrame);

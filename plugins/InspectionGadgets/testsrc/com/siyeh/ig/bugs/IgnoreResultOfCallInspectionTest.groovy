@@ -182,4 +182,22 @@ class C {
 }
 """
   }
+
+  void testPureMethodInVoidFunctionalExpression() {
+    doTest """
+import org.jetbrains.annotations.Contract;
+
+class Util {
+  @Contract(pure=true)
+  static Object util() { return null; }
+}
+
+class C {
+  {
+    Runnable r = () -> Util./*Result of 'Util.util()' is ignored*/util/**/();
+    Runnable r1 = Util::/*Result of 'Util.util()' is ignored*/util/**/;
+  }
+}
+"""
+  }
 }

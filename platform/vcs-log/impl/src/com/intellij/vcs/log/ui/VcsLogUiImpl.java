@@ -45,7 +45,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final VcsLogFilterer myFilterer;
 
   @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
-  private final VisiblePackChangeListener myVisiblePackChangeListener;
+  @NotNull private final VisiblePackChangeListener myVisiblePackChangeListener;
+  @NotNull private final MyTextFilterSettings myTextFilterSettings;
 
   @NotNull private VisiblePack myVisiblePack;
 
@@ -63,6 +64,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myLog = new VcsLogImpl(logData, this);
     myVisiblePack = VisiblePack.EMPTY;
     myMainFrame = new MainFrame(logData, this, project, uiProperties, myLog, myVisiblePack);
+    myTextFilterSettings = new MyTextFilterSettings();
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -215,6 +217,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @NotNull
+  @Override
+  public TextFilterSettings getTextFilterSettings() {
+    return myTextFilterSettings;
+  }
+
+  @NotNull
   public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();
     jumpToCommit(commitHash, root, future);
@@ -355,5 +363,29 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myFilterer.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;
+  }
+
+  private class MyTextFilterSettings implements TextFilterSettings {
+    @Override
+    public boolean isFilterByRegexEnabled() {
+      return myUiProperties.getTextFilterSettings().isFilterByRegexEnabled();
+    }
+
+    @Override
+    public void setFilterByRegexEnabled(boolean enabled) {
+      myUiProperties.getTextFilterSettings().setFilterByRegexEnabled(enabled);
+      applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+    }
+
+    @Override
+    public boolean isMatchCaseEnabled() {
+      return myUiProperties.getTextFilterSettings().isMatchCaseEnabled();
+    }
+
+    @Override
+    public void setMatchCaseEnabled(boolean enabled) {
+      myUiProperties.getTextFilterSettings().setMatchCaseEnabled(enabled);
+      applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+    }
   }
 }
