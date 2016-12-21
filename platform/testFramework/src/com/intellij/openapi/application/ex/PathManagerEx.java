@@ -29,11 +29,9 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.module.impl.ModulePath;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
@@ -410,7 +408,7 @@ public class PathManagerEx {
       Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
       assert element != null;
       for (ModulePath file : ModuleManagerImpl.getPathsToModuleFiles(element)) {
-        ourCommunityModules.add(FileUtil.getNameWithoutExtension(PathUtil.getFileName(file.getPath())));
+        ourCommunityModules.add(file.getModuleName());
       }
       return ourCommunityModules;
     }

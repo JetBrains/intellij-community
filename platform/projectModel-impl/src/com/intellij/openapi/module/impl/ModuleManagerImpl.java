@@ -202,6 +202,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   @NotNull
+  // returns mutable linked hash set
   public static LinkedHashSet<ModulePath> getPathsToModuleFiles(@NotNull Element element) {
     final LinkedHashSet<ModulePath> paths = new LinkedHashSet<>();
     final Element modules = element.getChild(ELEMENT_MODULES);
@@ -209,15 +210,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       for (final Element moduleElement : modules.getChildren(ELEMENT_MODULE)) {
         final String fileUrlValue = moduleElement.getAttributeValue(ATTRIBUTE_FILEURL);
         final String filepath;
-        if (fileUrlValue != null) {
-          filepath = VirtualFileManager.extractPath(fileUrlValue).replace('/', File.separatorChar);
+        if (fileUrlValue == null) {
+          // support for older formats
+          filepath = moduleElement.getAttributeValue(ATTRIBUTE_FILEPATH);
         }
         else {
-          // [dsl] support for older formats
-          filepath = moduleElement.getAttributeValue(ATTRIBUTE_FILEPATH).replace('/', File.separatorChar);
+          filepath = VirtualFileManager.extractPath(fileUrlValue);
         }
-        final String group = moduleElement.getAttributeValue(ATTRIBUTE_GROUP);
-        paths.add(new ModulePath(filepath, group));
+        paths.add(new ModulePath(filepath.replace('/', File.separatorChar), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
       }
     }
     return paths;
@@ -243,7 +243,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.CORES_COUNT);
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
-    Set<String> paths = new java.util.HashSet<>();
+    Set<String> paths = new HashSet<>();
     boolean parallel = Registry.is("parallel.modules.loading");
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
@@ -316,8 +316,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   private void reportError(List<ModuleLoadingErrorDescription> errors, ModulePath modulePath, Exception e) {
-    errors.add(ModuleLoadingErrorDescription
-                 .create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
+    errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
   }
 
   public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }

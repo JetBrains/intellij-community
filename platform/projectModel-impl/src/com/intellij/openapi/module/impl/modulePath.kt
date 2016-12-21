@@ -15,4 +15,16 @@
  */
 package com.intellij.openapi.module.impl
 
-data class ModulePath(val path: String, val group: String?)
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.util.PathUtil
+
+data class ModulePath(val path: String, val group: String?) {
+  /**
+   * Module name (without file extension)
+   */
+  val moduleName: String = getModuleNameByFilePath(path)
+}
+
+fun getModuleNameByFilePath(path: String): String {
+  return PathUtil.getFileName(path).removeSuffix(ModuleFileType.DOT_DEFAULT_EXTENSION)
+}

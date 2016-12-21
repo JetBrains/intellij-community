@@ -33,11 +33,9 @@ import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashMap;
@@ -47,6 +45,8 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.module.impl.ModulePathKt.getModuleNameByFilePath;
 
 /**
  * @author max
@@ -62,14 +62,14 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private final ModuleScopeProvider myModuleScopeProvider;
 
   public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
-    super(project, "Module " + moduleNameByFileName(PathUtil.getFileName(filePath)));
+    super(project, "Module " + getModuleNameByFilePath(filePath));
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
-    myName = moduleNameByFileName(PathUtil.getFileName(filePath));
+    myName = getModuleNameByFilePath(filePath);
   }
 
   @Override
@@ -308,10 +308,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public String toString() {
     if (myName == null) return "Module (not initialized)";
     return "Module: '" + getName() + "'";
-  }
-
-  private static String moduleNameByFileName(@NotNull String fileName) {
-    return StringUtil.trimEnd(fileName, ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @NotNull
