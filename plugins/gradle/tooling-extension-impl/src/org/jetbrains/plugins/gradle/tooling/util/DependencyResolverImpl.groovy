@@ -136,7 +136,7 @@ class DependencyResolverImpl implements DependencyResolver {
         //noinspection GroovyAssignabilityCheck
         Set<ComponentArtifactsResult> componentResults = myProject.dependencies.createArtifactResolutionQuery()
           .forComponents(resolvedArtifacts
-                           .findAll { !isDependencySubstitutionsSupported || it.id.componentIdentifier instanceof ModuleComponentIdentifier }
+                           .findAll { !isProjectDependencyArtifact(it) }
                            .collect { toComponentIdentifier(it.moduleVersion.id) })
           .withArtifacts(jvmLibrary, artifactTypes)
           .execute()
@@ -909,7 +909,7 @@ class DependencyResolverImpl implements DependencyResolver {
                 def packaging = it.extension ?: 'jar'
                 def classifier = it.classifier
                 final dependency
-                if (isDependencySubstitutionsSupported && artifact.id.componentIdentifier instanceof ProjectComponentIdentifier) {
+                if (isProjectDependencyArtifact(artifact)) {
                   def artifactComponentIdentifier = artifact.id.componentIdentifier as ProjectComponentIdentifier
                   dependency = new DefaultExternalProjectDependency(
                     name: name,
@@ -978,6 +978,10 @@ class DependencyResolverImpl implements DependencyResolver {
 
       return dependencies
     }
+  }
+
+  private static boolean isProjectDependencyArtifact(ResolvedArtifact artifact) {
+    return isDependencySubstitutionsSupported && artifact.id.componentIdentifier instanceof ProjectComponentIdentifier
   }
 
   private static toMyModuleIdentifier(ModuleVersionIdentifier id) {
