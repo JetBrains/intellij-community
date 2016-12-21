@@ -55,10 +55,17 @@
     <stacktrace.fold substring="at org.junit.Assert.assert"/>
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
+    <stacktrace.fold substring="at com.intellij.junit5."/>
     <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
     <stacktrace.fold substring="at junit.framework.TestCase.run"/>
     <stacktrace.fold substring="at junit.framework.TestResult"/>
-
+    <stacktrace.fold substring="at org.junit.jupiter.api.AssertionUtils.fail("/>
+    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.failNotEqual("/>
+    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.assertEquals("/>
+    <stacktrace.fold substring="at org.junit.jupiter.api.Assertions.assertEquals("/>
+    <stacktrace.fold substring="at org.junit.platform."/>
+    <stacktrace.fold substring="at org.junit.jupiter."/>
+    <stacktrace.fold substring="at org.junit.vintage."/>
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
