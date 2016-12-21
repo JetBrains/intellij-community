@@ -185,13 +185,14 @@ public class ExceptionWorker {
       }
     }
 
-    int rParenIdx = line.lastIndexOf(')');
-    int i = rParenIdx;
-    while (i > 0) {
-      i = line.lastIndexOf(')', i - 1);
-      if (i > 0 && "1234567890".indexOf(line.charAt(i - 1)) != -1) {
-        rParenIdx = i;
+    int rParenIdx = -1;
+    int rParenCandidate = line.lastIndexOf(')');
+    //Looking for minimal position for ')' after a digit
+    while (rParenCandidate > 0) {
+      if (Character.isDigit(line.charAt(rParenCandidate - 1))) {
+        rParenIdx = rParenCandidate;
       }
+      rParenCandidate = line.lastIndexOf(')', rParenCandidate - 1);
     }
     if (rParenIdx < 0) return null;
 
