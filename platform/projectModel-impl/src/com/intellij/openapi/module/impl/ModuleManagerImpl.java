@@ -46,14 +46,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +68,12 @@ import java.util.concurrent.Future;
 public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element> {
   public static final String COMPONENT_NAME = "ProjectModuleManager";
 
+  public static final String ELEMENT_MODULES = "modules";
+  public static final String ELEMENT_MODULE = "module";
+  static final String ATTRIBUTE_FILEURL = "fileurl";
+  public static final String ATTRIBUTE_FILEPATH = "filepath";
+  static final String ATTRIBUTE_GROUP = "group";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   public static final String IML_EXTENSION = ".iml";
@@ -80,11 +84,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
-  @NonNls public static final String ELEMENT_MODULES = "modules";
-  @NonNls public static final String ELEMENT_MODULE = "module";
-  @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
-  @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
-  @NonNls private static final String ATTRIBUTE_GROUP = "group";
 
   protected final MessageBusConnection myMessageBusConnection;
 
@@ -355,7 +354,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     myModuleModel.myModulesCache = null;
     for (ModuleLoadingErrorDescription error : errors) {
-      final Module module = myModuleModel.getModuleByFilePath(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
+      final Module module = myModuleModel.getModuleByFilePath(error.getModulePath().getPath());
       if (module != null) {
         myModuleModel.myModules.remove(module.getName());
         ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
@@ -384,30 +383,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return new ModuleModelImpl(myModuleModel);
   }
 
-  private abstract static class SaveItem {
-    @NotNull
-    protected abstract String getModuleName();
-    protected abstract String getGroupPathString();
-    @NotNull
-    protected abstract String getModuleFilePath();
-
-    public final void writeExternal(@NotNull Element parentElement) {
-      Element moduleElement = new Element(ELEMENT_MODULE);
-      final String moduleFilePath = getModuleFilePath();
-      final String url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath);
-      moduleElement.setAttribute(ATTRIBUTE_FILEURL, url);
-      // [dsl] support for older builds
-      moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath);
-
-      final String groupPath = getGroupPathString();
-      if (groupPath != null) {
-        moduleElement.setAttribute(ATTRIBUTE_GROUP, groupPath);
-      }
-      parentElement.addContent(moduleElement);
-    }
-  }
-
-  private class ModuleSaveItem extends SaveItem{
+  private class ModuleSaveItem extends SaveItem {
     private final Module myModule;
 
     public ModuleSaveItem(@NotNull Module module) {
@@ -429,42 +405,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     @Override
     @NotNull
     protected String getModuleFilePath() {
-      return myModule.getModuleFilePath().replace(File.separatorChar, '/');
-    }
-  }
-
-  private static class ModulePathSaveItem extends SaveItem{
-    private final ModulePath myModulePath;
-    private final String myFilePath;
-    private final String myName;
-
-    private ModulePathSaveItem(@NotNull ModulePath modulePath) {
-      myModulePath = modulePath;
-      myFilePath = modulePath.getPath().replace(File.separatorChar, '/');
-
-      final int slashIndex = myFilePath.lastIndexOf('/');
-      final int startIndex = slashIndex >= 0 && slashIndex + 1 < myFilePath.length() ? slashIndex + 1 : 0;
-      final int endIndex = myFilePath.endsWith(IML_EXTENSION)
-                           ? myFilePath.length() - IML_EXTENSION.length()
-                           : myFilePath.length();
-      myName = myFilePath.substring(startIndex, endIndex);
-    }
-
-    @Override
-    @NotNull
-    protected String getModuleName() {
-      return myName;
-    }
-
-    @Override
-    protected String getGroupPathString() {
-      return myModulePath.getGroup();
-    }
-
-    @Override
-    @NotNull
-    protected String getModuleFilePath() {
-      return myFilePath;
+      return myModule.getModuleFilePath();
     }
   }
 
