@@ -643,14 +643,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       catch (AnalysisCanceledException ignored) {
         return null;
       }
-      int startOffset = tb.getStartOffset(controlFlow);
-      int endOffset = tb.getEndOffset(controlFlow);
-      if(startOffset < 0 || endOffset < 0) return null;
-      final Collection<PsiStatement> exitPoints = ControlFlowUtil
-        .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
-                                     PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
-      startOffset = controlFlow.getStartOffset(body);
-      endOffset = controlFlow.getEndOffset(body);
+      int startOffset = controlFlow.getStartOffset(body);
+      int endOffset = controlFlow.getEndOffset(body);
       if(startOffset < 0 || endOffset < 0) return null;
       PsiElement surrounder = PsiTreeUtil.getParentOfType(loop, PsiLambdaExpression.class, PsiClass.class);
       final List<PsiVariable> nonFinalVariables = StreamEx.of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
@@ -671,6 +665,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (isCollectMapCall(loop, tb) && nonFinalVariables.isEmpty() && (REPLACE_TRIVIAL_FOREACH || tb.hasOperations())) {
         return new CollectMigration("collect");
       }
+      Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
+      if (exitPoints == null) return null;
       // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
       if (SUGGEST_FOREACH && exitPoints.isEmpty() && nonFinalVariables.isEmpty() &&
           (tb.hasOperations() ||
@@ -1383,12 +1379,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       myPreviousOp = previousOp;
     }
 
-    int getStartOffset(ControlFlow cf) {
-      return cf.getStartOffset(myStatements[0]);
-    }
-
-    int getEndOffset(ControlFlow cf) {
-      return cf.getEndOffset(myStatements[myStatements.length-1]);
+    Collection<PsiStatement> findExitPoints(ControlFlow controlFlow) {
+      int startOffset = controlFlow.getStartOffset(myStatements[0]);
+      int endOffset = controlFlow.getEndOffset(myStatements[myStatements.length - 1]);
+      if (startOffset < 0 || endOffset < 0) return null;
+      return ControlFlowUtil
+        .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
+                                     PsiBreakStatement.class, PsiReturnStatement.class, PsiThrowStatement.class);
     }
 
     PsiStatement getSingleStatement() {

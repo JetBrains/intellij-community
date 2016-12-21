@@ -115,13 +115,6 @@ abstract class BaseStreamApiMigration {
     return buffer;
   }
 
-  static String getIteratedValueText(PsiExpression iteratedValue) {
-    return iteratedValue instanceof PsiCallExpression ||
-           iteratedValue instanceof PsiReferenceExpression ||
-           iteratedValue instanceof PsiQualifiedExpression ||
-           iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
-  }
-
   static void removeLoop(@NotNull PsiLoopStatement statement) {
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiLabeledStatement) {

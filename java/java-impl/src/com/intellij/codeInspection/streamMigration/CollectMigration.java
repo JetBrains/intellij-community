@@ -167,9 +167,9 @@ class CollectMigration extends BaseStreamApiMigration {
     if (iteratedValue == null) return null;
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
     String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
-    String collectionText =
-      iteratedValue.getType() instanceof PsiArrayType ? CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iteratedValue.getText() + ")" :
-      getIteratedValueText(iteratedValue);
+    String collectionText = iteratedValue.getType() instanceof PsiArrayType
+                            ? CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iteratedValue.getText() + ")"
+                            : iteratedValue.getText();
     String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + collectionText + ");");
     return loopStatement.replace(factory.createStatementFromText(callText, loopStatement));
   }
