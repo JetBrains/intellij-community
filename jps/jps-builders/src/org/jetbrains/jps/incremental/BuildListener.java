@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.jps.builders.BuildTarget;
 
 import java.util.Collection;
 import java.util.EventListener;
@@ -26,6 +27,10 @@ import java.util.EventListener;
  */
 public interface BuildListener extends EventListener{
 
+  void targetsBuildStarted(Collection<? extends BuildTarget<?>> targets);
+  
+  void targetsBuildFinished(Collection<? extends BuildTarget<?>> targets);
+  
   /**
    * Note: when parallel build is on, might be called from several simultaneously running threads
    * @param paths collection of pairs [output root->relative path to generated file]
