@@ -63,7 +63,6 @@ import java.util.*;
 public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
   private static final Logger LOG = Logger.getInstance(RunContentManagerImpl.class);
-  private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
 
   private final Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<>();
@@ -272,7 +271,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     content.setExecutionId(executionId);
     content.setComponent(descriptor.getComponent());
     content.setPreferredFocusedComponent(descriptor.getPreferredFocusComputable());
-    content.putUserData(DESCRIPTOR_KEY, descriptor);
+    content.putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor);
     final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
     final ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler != null) {
@@ -456,7 +455,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private Content createNewContent(final ContentManager contentManager, final RunContentDescriptor descriptor, Executor executor) {
     final String processDisplayName = descriptor.getDisplayName();
     final Content content = ContentFactory.SERVICE.getInstance().createContent(descriptor.getComponent(), processDisplayName, true);
-    content.putUserData(DESCRIPTOR_KEY, descriptor);
+    content.putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     contentManager.addContent(content);
     new CloseListener(content, executor);
@@ -471,7 +470,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   private static RunContentDescriptor getRunContentDescriptorByContent(@NotNull Content content) {
-    return content.getUserData(DESCRIPTOR_KEY);
+    return content.getUserData(RunContentDescriptor.DESCRIPTOR_KEY);
   }
 
   @Override
@@ -488,7 +487,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   private static Content getRunContentByDescriptor(@NotNull ContentManager contentManager, @NotNull RunContentDescriptor descriptor) {
     for (Content content : contentManager.getContents()) {
-      if (descriptor.equals(content.getUserData(DESCRIPTOR_KEY))) {
+      if (descriptor.equals(content.getUserData(RunContentDescriptor.DESCRIPTOR_KEY))) {
         return content;
       }
     }

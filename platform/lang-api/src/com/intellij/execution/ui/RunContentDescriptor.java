@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class RunContentDescriptor implements Disposable {
+  // Should be used in com.intellij.ui.content.Content
+  public static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
