@@ -191,6 +191,9 @@
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.AdjustArrayRangeAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
+      <action id="Debugger.ShowRelatedStack" class="com.intellij.debugger.actions.ShowRelatedStackAction"  text="Show related stack...">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
+      </action>
       <action id="Debugger.ShowTypes" class="com.intellij.debugger.actions.ShowTypesAction" text="Show types">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
