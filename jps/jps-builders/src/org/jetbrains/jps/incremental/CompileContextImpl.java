@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.TObjectLongHashMap;
@@ -27,7 +26,10 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.messages.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.util.*;
 
@@ -158,23 +160,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
     myDelegateMessageHandler.processMessage(msg);
     if (msg instanceof FileGeneratedEvent) {
-      final Collection<Pair<String, String>> paths = ((FileGeneratedEvent)msg).getPaths();
-      if (!paths.isEmpty()) {
-        myListeners.getMulticaster().filesGenerated(paths);
-      }
+      myListeners.getMulticaster().filesGenerated((FileGeneratedEvent)msg);
     }
     else if (msg instanceof FileDeletedEvent) {
-      Collection<String> paths = ((FileDeletedEvent)msg).getFilePaths();
-      myListeners.getMulticaster().filesDeleted(paths);
-    }
-    else if (msg instanceof BuildingTargetProgressMessage) {
-      final BuildingTargetProgressMessage _msg = (BuildingTargetProgressMessage)msg;
-      if (_msg.getEventType() == BuildingTargetProgressMessage.Event.STARTED) {
-        myListeners.getMulticaster().targetsBuildStarted(_msg.getTargets());
-      }
-      else if (_msg.getEventType() == BuildingTargetProgressMessage.Event.FINISHED) {
-        myListeners.getMulticaster().targetsBuildFinished(_msg.getTargets());
-      }
+      myListeners.getMulticaster().filesDeleted((FileDeletedEvent)msg);
     }
   }
 
