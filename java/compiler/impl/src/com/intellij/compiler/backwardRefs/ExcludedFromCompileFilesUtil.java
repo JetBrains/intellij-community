@@ -35,6 +35,7 @@ class ExcludedFromCompileFilesUtil {
                                                  @NotNull Set<FileType> fileTypes,
                                                  @NotNull Project project,
                                                  @NotNull ProjectFileIndex fileIndex) {
+    ManagingFS fs = ManagingFS.getInstance();
     final Collection<VirtualFile> excludedFiles = Stream.of(descriptions)
       .flatMap(description -> {
         final VirtualFile file = description.getVirtualFile();
@@ -44,14 +45,14 @@ class ExcludedFromCompileFilesUtil {
         }
         else if (description.isIncludeSubdirectories()) {
           final Stream.Builder<VirtualFile> builder = Stream.builder();
-          VfsUtilCore.iterateChildrenRecursively(file, null, f -> {
+          VfsUtilCore.iterateChildrenRecursively(file, f -> !f.isDirectory() || fs.areChildrenLoaded(f), f -> {
             builder.accept(f);
             return true;
           });
           return builder.build();
         }
         else {
-          return Stream.of(file.getChildren());
+          return fs.areChildrenLoaded(file) ? Stream.of(file.getChildren()) : Stream.empty();
         }
       })
       .filter(f -> !f.isDirectory() && fileTypes.contains(f.getFileType()) && fileIndex.isInSourceContent(f))
