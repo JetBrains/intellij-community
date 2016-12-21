@@ -337,6 +337,15 @@ public final class PyToxTest extends PyEnvTestCase {
     }
 
     @NotNull
+    private static String getTestTree(@NotNull final SMTestProxy root, final int level) {
+      final StringBuilder result = new StringBuilder();
+      result.append(StringUtil.repeat(".", level)).append(root.getPresentableName()).append('\n');
+      final Optional<String> children = root.getChildren().stream().map(o -> getTestTree(o, level + 1)).reduce((s, s2) -> s + s2);
+      children.ifPresent(result::append);
+      return result.toString();
+    }
+
+    @NotNull
     private static String getTestOutput(@NotNull final SMTestProxy test) {
       final MockPrinter p = new MockPrinter();
       test.printOn(p);
