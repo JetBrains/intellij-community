@@ -63,7 +63,7 @@ import java.util.*;
 public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
   private static final Logger LOG = Logger.getInstance(RunContentManagerImpl.class);
-  private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
+  public static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
 
   private final Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<>();
