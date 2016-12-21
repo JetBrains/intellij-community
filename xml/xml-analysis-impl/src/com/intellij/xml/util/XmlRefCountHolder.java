@@ -71,7 +71,7 @@ public class XmlRefCountHolder {
   private final Set<String> myUsedPrefixes = new HashSet<>();
   private final Set<String> myUsedNamespaces = new HashSet<>();
 
-  private static final Pattern PREFIX_PATTERN = Pattern.compile("\\w+:");
+  private static final Pattern PREFIX_PATTERN = Pattern.compile("[\\w_][\\w_.]*:");
 
   @Nullable
   public static XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
