@@ -24,20 +24,19 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author egor
  */
 public class StackCapturingLineBreakpoint extends RunToCursorBreakpoint {
   private final DebugProcessImpl myDebugProcess;
-  private static final Key<Map<Object, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
+  public static final Key<Map<ObjectReference, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
 
   public StackCapturingLineBreakpoint(Project project, DebugProcessImpl debugProcess, @NotNull SourcePosition pos) {
@@ -50,18 +49,30 @@ public class StackCapturingLineBreakpoint extends RunToCursorBreakpoint {
     try {
       SuspendContextImpl suspendContext = action.getSuspendContext();
       if (suspendContext != null) {
-        Map<Object, List<StackFrameItem>> stacks = myDebugProcess.getUserData(CAPTURED_STACKS);
+        Map<ObjectReference, List<StackFrameItem>> stacks = myDebugProcess.getUserData(CAPTURED_STACKS);
         if (stacks == null) {
-          stacks = new LinkedHashMap<Object, List<StackFrameItem>>() {
+          stacks = new LinkedHashMap<ObjectReference, List<StackFrameItem>>() {
             @Override
             protected boolean removeEldestEntry(Map.Entry eldest) {
-              return size() > MAX_STORED_STACKS;
+              if (size() > MAX_STORED_STACKS) {
+                // delete collected objects first
+                Optional<ObjectReference> toDelete = keySet().stream().filter(ObjectReference::isCollected).findFirst();
+                if (!toDelete.isPresent()) {
+                  return true;
+                }
+                else {
+                  remove(toDelete.get());
+                }
+              }
+              return false;
             }
           };
-          myDebugProcess.putUserData(CAPTURED_STACKS, stacks);
+          myDebugProcess.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
         }
         Value key = ContainerUtil.getFirstItem(suspendContext.getFrameProxy().getArgumentValues());
-        stacks.put(key, StackFrameItem.createFrames(suspendContext.getThread()));
+        if (key instanceof ObjectReference) {
+          stacks.put((ObjectReference)key, StackFrameItem.createFrames(suspendContext.getThread()));
+        }
       }
     }
     catch (EvaluateException ignored) {
