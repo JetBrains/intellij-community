@@ -132,7 +132,7 @@ public class EduStepicConnector {
       return false;
     }
     final StepicWrappers.CoursesContainer coursesContainer;
-    if (user != null) {
+    if (user != null && user.getAccessToken() != null) {
       coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
     }
     else {
