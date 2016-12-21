@@ -352,9 +352,9 @@ public class IncProjectBuilder {
     //Deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
-      public void filesGenerated(Collection<Pair<String, String>> paths) {
+      public void filesGenerated(FileGeneratedEvent event) {
         final Set<File> outputs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-        for (Pair<String, String> pair : paths) {
+        for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
         }
         for (File root : outputs) {
@@ -364,15 +364,7 @@ public class IncProjectBuilder {
       }
 
       @Override
-      public void filesDeleted(Collection<String> paths) {
-      }
-
-      @Override
-      public void targetsBuildStarted(Collection<? extends BuildTarget<?>> targets) {
-      }
-
-      @Override
-      public void targetsBuildFinished(Collection<? extends BuildTarget<?>> targets) {
+      public void filesDeleted(FileDeletedEvent event) {
       }
     });
 
