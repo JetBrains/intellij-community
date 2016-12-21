@@ -66,6 +66,7 @@ class InspectionSchemeTest {
     assertThat(schemeFile.readText()).isEqualTo(schemeData)
     profileManager.profiles
 
+    // test reload
     schemeManagerFactory.process {
       it.reload()
     }

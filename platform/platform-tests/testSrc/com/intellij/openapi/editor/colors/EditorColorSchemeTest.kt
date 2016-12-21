@@ -24,6 +24,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import org.assertj.core.api.Assertions
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -66,5 +67,13 @@ class EditorColorSchemeTest {
       <option name="EDITOR_FONT_NAME" value="${scheme.editorFontName}" />
     </scheme>""".trimIndent())
     assertThat(schemeFile.parent).hasChildren("Foo.icls")
+
+    // test reload
+    val sizeBeforeReload = manager.schemeManager.allSchemes.size
+    schemeManagerFactory.process {
+      it.reload()
+    }
+
+    Assertions.assertThat(manager.schemeManager.allSchemes).hasSize(sizeBeforeReload)
   }
 }
