@@ -18,8 +18,10 @@ package com.intellij.compiler.backwardRefs;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +33,8 @@ import java.util.stream.Stream;
 class ExcludedFromCompileFilesUtil {
   static GlobalSearchScope getExcludedFilesScope(@NotNull ExcludeEntryDescription[] descriptions,
                                                  @NotNull Set<FileType> fileTypes,
-                                                 @NotNull Project project) {
+                                                 @NotNull Project project,
+                                                 @NotNull ProjectFileIndex fileIndex) {
     final Collection<VirtualFile> excludedFiles = Stream.of(descriptions)
       .flatMap(description -> {
         final VirtualFile file = description.getVirtualFile();
@@ -51,7 +54,7 @@ class ExcludedFromCompileFilesUtil {
           return Stream.of(file.getChildren());
         }
       })
-      .filter(f -> !f.isDirectory() && fileTypes.contains(f.getFileType()))
+      .filter(f -> !f.isDirectory() && fileTypes.contains(f.getFileType()) && fileIndex.isInSourceContent(f))
       .collect(Collectors.toList());
 
     return GlobalSearchScope.filesWithoutLibrariesScope(project, excludedFiles);

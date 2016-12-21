@@ -93,7 +93,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       descriptions = myExcludedDescriptions.toArray(new ExcludeEntryDescription[myExcludedDescriptions.size()]);
       myExcludedDescriptions.clear();
     }
-    myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject());
+    myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
   }
 
   GlobalSearchScope getDirtyScope() {
