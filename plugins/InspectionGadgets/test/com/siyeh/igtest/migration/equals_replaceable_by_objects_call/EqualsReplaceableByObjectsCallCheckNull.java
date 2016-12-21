@@ -31,6 +31,13 @@ class EqualsReplaceableByObjectsCall {
     boolean j = x.s != y.copy().s && (<warning descr="'(x).s == null || !(x.s).equals(y.copy().s)' replaceable by 'Objects.equals()' expression">(x).s == null || !(x.s).equals(y.copy().s)</warning>);
   }
 
+  void arr(T[] a, T[] b, int i) {
+    boolean c = <warning descr="'a[i] != null && a[i].equals(b[i])' replaceable by 'Objects.equals()' expression">a[i] != null && a[i].equals(b[i])</warning>;
+    boolean d = <warning descr="'a[i] == null ? b[i] == null : a[i].equals(b[i])' replaceable by 'Objects.equals()' expression">a[i] == null ? b[i] == null : a[i].equals(b[i])</warning>;
+    boolean e = a[i++] != null && a[i++].equals(b[i++]);
+    boolean f = a[--i] != null && a[--i].equals(b[--i]);
+  }
+
   static class T {
     String s;
     T copy() { T t = new T(); t.s = s; return t; }

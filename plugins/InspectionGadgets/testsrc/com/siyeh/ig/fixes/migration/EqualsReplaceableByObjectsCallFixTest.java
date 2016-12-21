@@ -54,6 +54,9 @@ public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase 
   public void testStaticField() { doTest(); }
   public void testStaticField2() { doTest(); }
 
+  public void testArrayAccessEquals() { doTest(); }
+  public void testArrayAccessTernaryEquals() { doTest(); }
+
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath())
