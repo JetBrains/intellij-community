@@ -44,7 +44,7 @@ class ChainedTargetsBuildListener implements BuildListener {
     for (Pair<String, String> pair : paths) {
       String relativePath = pair.getSecond();
       File file = relativePath.equals(".") ? new File(pair.getFirst()) : new File(pair.getFirst(), relativePath);
-      Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, myContext);
+      Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, myContext);
       for (BuildRootDescriptor descriptor : descriptors) {
         try {
           fsState.markDirty(myContext, file, descriptor, myContext.getProjectDescriptor().timestamps.getStorage(), false);
@@ -63,7 +63,7 @@ class ChainedTargetsBuildListener implements BuildListener {
       File file = new File(FileUtil.toSystemDependentName(path));
       Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, myContext);
       for (BuildRootDescriptor descriptor : descriptors) {
-        state.registerDeleted(descriptor.getTarget(), file);
+        state.registerDeleted(myContext, descriptor.getTarget(), file);
       }
     }
   }
