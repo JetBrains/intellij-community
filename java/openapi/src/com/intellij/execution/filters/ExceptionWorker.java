@@ -202,7 +202,7 @@ public class ExceptionWorker {
     final int dotIdx = line.lastIndexOf('.', lParenIdx);
     if (dotIdx < 0 || dotIdx < startIdx) return null;
     int moduleIdx = line.indexOf('/');
-    int classNameIdx = moduleIdx > -1 && moduleIdx < lParenIdx ? moduleIdx + 1 : startIdx + 1 + (startIdx >= 0 ? AT.length() : 0);
+    int classNameIdx = moduleIdx > -1 && moduleIdx < lParenIdx && moduleIdx < dotIdx ? moduleIdx + 1 : startIdx + 1 + (startIdx >= 0 ? AT.length() : 0);
 
     // class, method, link
     return Trinity.create(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1)),
@@ -214,17 +214,6 @@ public class ExceptionWorker {
     int len = line.length();
     while (pos >= 0 && pos < len) {
       final char c = line.charAt(pos);
-      if (!Character.isSpaceChar(c)) break;
-    int i = rParenIdx;
-    while (i > 0) {
-      i = line.lastIndexOf(')', i - 1);
-      if (i > 0 && "1234567890".indexOf(line.charAt(i - 1)) != -1) {
-        rParenIdx = i;
-      }
-    return Trinity.create(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1)),
-                          new TextRange(handleSpaces(line, dotIdx + 1, 1), handleSpaces(line, lParenIdx, -1)),
-                          new TextRange(lParenIdx + 1, rParenIdx));
-  private static int handleSpaces(String line, int pos, int delta) {
       if (!Character.isSpaceChar(c)) break;
       pos += delta;
     }
