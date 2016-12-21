@@ -38,7 +38,7 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
         EditorModificationUtil.insertStringAtCaret(editor, " ");
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       }
-      else if (shouldMoveCaretIfCharAtSpace(editor)) {
+      else if (shouldOverwriteExistingSpace(editor)) {
         editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
       }
       if (myTriggerAutoPopup) {
@@ -47,7 +47,7 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
     }
   }
 
-  protected boolean shouldMoveCaretIfCharAtSpace(Editor editor) {
+  protected boolean shouldOverwriteExistingSpace(Editor editor) {
     return true;
   }
 
