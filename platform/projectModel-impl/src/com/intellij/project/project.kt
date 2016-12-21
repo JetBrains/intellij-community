@@ -107,7 +107,7 @@ fun Project.guessProjectDir() : VirtualFile {
   val module = if (modules.size == 1) modules.first() else modules.find { it.name == this.name }
   if (module != null) {
     val roots = ModuleRootManager.getInstance(module).contentRoots
-    roots.firstOrNull()?.canonicalFile?.let {
+    roots.firstOrNull()?.let {
       return it
     }
   }
