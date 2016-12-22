@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Dave Griffith
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,7 @@ public class GroovyGStringKeyInspection extends BaseInspection {
 
       if (!PUT_METHOD.equals(method.getName())) return false;
 
-      PsiClassType mapType = TypesUtil.createTypeByFQClassName(JAVA_UTIL_MAP, grMethodCall);
-      PsiClass mapClass = mapType.resolve();
+      PsiClass mapClass = JavaPsiFacade.getInstance(grMethodCall.getProject()).findClass(JAVA_UTIL_MAP, grMethodCall.getResolveScope());
       if (mapClass == null) return false;
       PsiMethod[] methods = mapClass.findMethodsByName(PUT_METHOD, false);
       for (PsiMethod superMethod : methods) {
