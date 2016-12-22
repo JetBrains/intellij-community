@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.ApplicationLoadListener
@@ -25,6 +26,7 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
@@ -48,7 +50,7 @@ val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
-class IcsManager(dir: Path) {
+class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
   val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")

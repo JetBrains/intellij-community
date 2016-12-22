@@ -78,7 +78,7 @@ public class CommitToIcsDialog extends DialogWrapper {
         // todo
       }
     }
-    icsManager.getRepositoryManager().commit(addToIcs);
+    //icsManager.getRepositoryManager().commit(addToIcs);
   }
 
   @Nullable

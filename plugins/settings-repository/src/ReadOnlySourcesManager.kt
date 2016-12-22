@@ -15,11 +15,15 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.SmartList
 import com.intellij.util.io.exists
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.settingsRepository.git.GitRepositoryClientImpl
+import org.jetbrains.settingsRepository.git.Pull
+import org.jetbrains.settingsRepository.git.upstream
 import java.nio.file.Path
 
 class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: Path) {
@@ -42,7 +46,7 @@ class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: Pat
                 r.add(FileRepositoryBuilder().setBare().setGitDir(dir.toFile()).build())
               }
               else {
-                LOG.warn("Skip read-only source ${source.url} because dir doesn't exists")
+                LOG.warn("Skip read-only source ${source.url} because dir doesn't exist")
               }
             }
             catch (e: Exception) {
@@ -60,5 +64,18 @@ class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: Pat
     _repositories = null
   }
 
-  @TestOnly fun sourceToDir(source: ReadonlySource) = rootDir.resolve(source.path!!)
+  fun update(indicator: ProgressIndicator? = null): Boolean {
+    var isChanged = false
+    for (repo in repositories) {
+      indicator?.checkCanceled()
+      LOG.debug { "Pull changes from read-only repo ${repo.upstream}" }
+
+      if (Pull(GitRepositoryClientImpl(repo, icsManager.credentialsStore), indicator).fetch() != null) {
+        isChanged = true
+      }
+    }
+    return isChanged
+  }
+
+  //@TestOnly fun sourceToDir(source: ReadonlySource) = rootDir.resolve(source.path!!)
 }

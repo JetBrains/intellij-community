@@ -23,13 +23,11 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.*
-import com.intellij.util.text.nullize
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.ignore.IgnoreNode
-import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.RepositoryState
@@ -42,8 +40,8 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.concurrent.write
 
-class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>, dir: Path) : BaseRepositoryManager(dir) {
-  val repository: Repository
+class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>, dir: Path) : BaseRepositoryManager(dir), GitRepositoryClient {
+  override val repository: Repository
     get() {
       var r = _repository
       if (r == null) {
@@ -59,7 +57,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   // we must recreate repository if dir changed because repository stores old state and cannot be reinitialized (so, old instance cannot be reused and we must instantiate new one)
   var _repository: Repository? = null
 
-  val credentialsProvider: CredentialsProvider by lazy {
+  override val credentialsProvider: CredentialsProvider by lazy {
     JGitCredentialsProvider(credentialsStore, repository)
   }
 
@@ -89,9 +87,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun getUpstream(): String? {
-    return repository.config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL).nullize()
-  }
+  override fun getUpstream() = repository.upstream
 
   override fun setUpstream(url: String?, branch: String?) {
     repository.setUpstream(url, branch ?: Constants.MASTER)
@@ -154,9 +150,6 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   }
 
   override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
-
-  override fun commit(paths: List<String>) {
-  }
 
   override fun push(indicator: ProgressIndicator?) {
     LOG.debug("Push")

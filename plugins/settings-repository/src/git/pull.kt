@@ -38,13 +38,26 @@ import org.eclipse.jgit.merge.ResolveMerger
 import org.eclipse.jgit.merge.SquashMessageFormatter
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevWalkUtils
+import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.jetbrains.settingsRepository.*
 import java.io.IOException
 import java.text.MessageFormat
 
-open internal class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
+interface GitRepositoryClient {
+  val repository: Repository
+
+  val credentialsProvider: CredentialsProvider
+}
+
+class GitRepositoryClientImpl(override val repository: Repository, private val credentialsStore: Lazy<IcsCredentialsStore>) : GitRepositoryClient {
+  override val credentialsProvider: CredentialsProvider by lazy {
+    JGitCredentialsProvider(credentialsStore, repository)
+  }
+}
+
+open internal class Pull(val manager: GitRepositoryClient, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
   val repository = manager.repository
 
   // we must use the same StoredConfig instance during the operation
@@ -67,14 +80,10 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
     val mergeStatus = mergeResult.status
     LOG.debug { mergeStatus.toString() }
 
-    if (mergeStatus == MergeStatus.CONFLICTING) {
-      return resolveConflicts(mergeResult, repository)
-    }
-    else if (!mergeStatus.isSuccessful) {
-      throw IllegalStateException(mergeResult.toString())
-    }
-    else {
-      return mergeResult.result
+    return when {
+      mergeStatus == MergeStatus.CONFLICTING -> resolveConflicts(mergeResult, repository)
+      !mergeStatus.isSuccessful -> throw IllegalStateException(mergeResult.toString())
+      else -> mergeResult.result
     }
   }
 

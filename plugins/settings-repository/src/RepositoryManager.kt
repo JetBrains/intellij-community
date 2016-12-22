@@ -61,8 +61,6 @@ interface RepositoryManager {
 
   fun getAheadCommitsCount(): Int
 
-  fun commit(paths: List<String>)
-
   fun push(indicator: ProgressIndicator? = null)
 
   fun fetch(indicator: ProgressIndicator? = null): Updater

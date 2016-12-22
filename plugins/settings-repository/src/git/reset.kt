@@ -25,7 +25,7 @@ import org.jetbrains.settingsRepository.UpdateResult
 
 internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
-    val message = if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local"
+    val message = if (toTheirs) "Overwrite local to ${manager.repository.upstream}" else "Overwrite remote ${manager.repository.upstream} to local"
     LOG.debug { message }
 
     val resetResult = repository.resetHard()
@@ -84,7 +84,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
 
       // must be performed only after initial pull, so, local changes will be relative to remote files
       localRepositoryInitializer()
-      manager.commit(indicator)
+      (manager as GitRepositoryManager).commit(indicator)
     }
     return result
   }

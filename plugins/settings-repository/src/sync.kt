@@ -21,7 +21,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
@@ -75,31 +74,42 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
           }
 
           try {
-            when (syncType) {
-              SyncType.MERGE -> {
-                updateResult = repositoryManager.pull(indicator)
-                var doPush = true
-                if (localRepositoryInitializer != null) {
-                  // must be performed only after initial pull, so, local changes will be relative to remote files
-                  localRepositoryInitializer()
-                  if (!repositoryManager.commit(indicator, syncType) || repositoryManager.getAheadCommitsCount() == 0) {
-                    // avoid error during findRemoteRefUpdatesFor on push - if localRepositoryInitializer specified and nothing to commit (failed or just no files to commit (empty local configuration - no files)),
-                    // so, nothing to push
-                    doPush = false
+            if (repositoryManager.hasUpstream()) {
+              when (syncType) {
+                SyncType.MERGE -> {
+                  updateResult = repositoryManager.pull(indicator)
+                  var doPush = true
+                  if (localRepositoryInitializer != null) {
+                    // must be performed only after initial pull, so, local changes will be relative to remote files
+                    localRepositoryInitializer()
+                    if (!repositoryManager.commit(indicator, syncType) || repositoryManager.getAheadCommitsCount() == 0) {
+                      // avoid error during findRemoteRefUpdatesFor on push - if localRepositoryInitializer specified and nothing to commit (failed or just no files to commit (empty local configuration - no files)),
+                      // so, nothing to push
+                      doPush = false
+                    }
+                  }
+                  if (doPush) {
+                    repositoryManager.push(indicator)
                   }
                 }
-                if (doPush) {
-                  repositoryManager.push(indicator)
+                SyncType.OVERWRITE_LOCAL -> {
+                  // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
+                  updateResult = repositoryManager.resetToTheirs(indicator)
+                }
+                SyncType.OVERWRITE_REMOTE -> {
+                  updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
+                  if (repositoryManager.getAheadCommitsCount() > 0) {
+                    repositoryManager.push(indicator)
+                  }
                 }
               }
-              SyncType.OVERWRITE_LOCAL -> {
-                // we don't push - probably, repository will be modified/removed (user can do something, like undo) before any other next push activities (so, we don't want to disturb remote)
-                updateResult = repositoryManager.resetToTheirs(indicator)
-              }
-              SyncType.OVERWRITE_REMOTE -> {
-                updateResult = repositoryManager.resetToMy(indicator, localRepositoryInitializer)
-                if (repositoryManager.getAheadCommitsCount() > 0) {
-                  repositoryManager.push(indicator)
+            }
+
+            if (icsManager.readOnlySourcesManager.update(indicator)) {
+              invokeAndWaitIfNeed {
+                icsManager.schemeManagerFactory.value.process {
+                  @Suppress("ConvertLambdaToReference")
+                  it.reload()
                 }
               }
             }
@@ -144,7 +154,7 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
-  (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+  icsManager.schemeManagerFactory.value.process {
     if (reloadAllSchemes) {
       schemeManagersToReload.add(it)
     }
