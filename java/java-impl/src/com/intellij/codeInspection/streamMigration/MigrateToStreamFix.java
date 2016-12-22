@@ -65,7 +65,7 @@ class MigrateToStreamFix implements LocalQuickFix {
       TerminalBlock tb = TerminalBlock.from(source, body);
       PsiElement result = myMigration.migrate(project, body, tb);
       if(result != null) {
-        source.cleanUpSource();
+        tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
         simplifyAndFormat(project, result);
       }
     }

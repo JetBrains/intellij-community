@@ -37,6 +37,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
+import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
+
 /**
  * This immutable class represents the code which should be performed
  * as a part of forEach operation of resulting stream possibly with
@@ -45,12 +47,12 @@ import java.util.Objects;
 class TerminalBlock {
   private static final Logger LOG = Logger.getInstance(TerminalBlock.class);
 
-  private final @NotNull StreamApiMigrationInspection.Operation myPreviousOp;
+  private final @NotNull Operation myPreviousOp;
   private final @NotNull PsiVariable myVariable;
   private final @NotNull PsiStatement[] myStatements;
 
   // At least one previous operation is present (stream source)
-  private TerminalBlock(@NotNull StreamApiMigrationInspection.Operation previousOp, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
+  private TerminalBlock(@NotNull Operation previousOp, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
     for(PsiStatement statement : statements) Objects.requireNonNull(statement);
     myVariable = variable;
     while(true) {
@@ -108,7 +110,7 @@ class TerminalBlock {
       if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         if(thenBranch != null) {
-          return new TerminalBlock(new StreamApiMigrationInspection.FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
+          return new TerminalBlock(new FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
         }
       }
     }
@@ -132,8 +134,7 @@ class TerminalBlock {
         } else {
           statements = Arrays.copyOfRange(myStatements, 1, myStatements.length);
         }
-        return new TerminalBlock(new StreamApiMigrationInspection.FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, true),
-                                 myVariable, statements);
+        return new TerminalBlock(new FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, true), myVariable, statements);
       }
     }
     return null;
@@ -146,20 +147,20 @@ class TerminalBlock {
    * @return extracted operation or null if extraction is not possible
    */
   @Nullable
-  TerminalBlock extractOperation() {
+  private TerminalBlock extractOperation() {
     TerminalBlock withFilter = extractFilter();
     if(withFilter != null) return withFilter;
     // extract flatMap
     if(getSingleStatement() instanceof PsiLoopStatement) {
       PsiLoopStatement loopStatement = (PsiLoopStatement)getSingleStatement();
-      StreamApiMigrationInspection.StreamSource source = StreamApiMigrationInspection.StreamSource.tryCreate(loopStatement);
+      StreamSource source = StreamSource.tryCreate(loopStatement);
       final PsiStatement body = loopStatement.getBody();
       if(source == null || body == null) return null;
       // flatMap from primitive to primitive is supported only if primitive types match
       // otherwise it would be necessary to create bogus step like
       // .mapToObj(var -> collection.stream()).flatMap(Function.identity())
       if(myVariable.getType() instanceof PsiPrimitiveType && !myVariable.getType().equals(source.getVariable().getType())) return null;
-      StreamApiMigrationInspection.FlatMapOp op = new StreamApiMigrationInspection.FlatMapOp(myPreviousOp, source, myVariable);
+      FlatMapOp op = new FlatMapOp(myPreviousOp, source, myVariable);
       TerminalBlock withFlatMap = new TerminalBlock(op, source.getVariable(), body);
       if(!VariableAccessUtils.variableIsUsed(myVariable, body)) {
         return withFlatMap;
@@ -174,7 +175,7 @@ class TerminalBlock {
           PsiStatement lastStatement = statements[statements.length-1];
           if (lastStatement instanceof PsiBreakStatement && op.breaksMe((PsiBreakStatement)lastStatement) &&
               ReferencesSearch.search(withFlatMapFilter.getVariable(), new LocalSearchScope(statements)).findFirst() == null) {
-            return new TerminalBlock(new StreamApiMigrationInspection.CompoundFilterOp((StreamApiMigrationInspection.FilterOp)withFlatMapFilter.getLastOperation(), op),
+            return new TerminalBlock(new CompoundFilterOp((FilterOp)withFlatMapFilter.getLastOperation(), op),
                                      myVariable, Arrays.copyOfRange(statements, 0, statements.length-1));
           }
         }
@@ -190,12 +191,11 @@ class TerminalBlock {
           PsiElement element = elements[0];
           if(element instanceof PsiLocalVariable) {
             PsiLocalVariable declaredVar = (PsiLocalVariable)element;
-            if(StreamApiMigrationInspection.isSupported(declaredVar.getType())) {
+            if (isSupported(declaredVar.getType())) {
               PsiExpression initializer = declaredVar.getInitializer();
               PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
               if (initializer != null && ReferencesSearch.search(myVariable, new LocalSearchScope(leftOver)).findFirst() == null) {
-                StreamApiMigrationInspection.MapOp
-                  op = new StreamApiMigrationInspection.MapOp(myPreviousOp, initializer, myVariable, declaredVar.getType());
+                MapOp op = new MapOp(myPreviousOp, initializer, myVariable, declaredVar.getType());
                 return new TerminalBlock(op, declaredVar, leftOver);
               }
             }
@@ -205,11 +205,12 @@ class TerminalBlock {
       PsiExpression rValue = ExpressionUtils.getAssignmentTo(first, myVariable);
       if(rValue != null) {
         PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
-        StreamApiMigrationInspection.MapOp op = new StreamApiMigrationInspection.MapOp(myPreviousOp, rValue, myVariable, myVariable.getType());
+        MapOp op = new MapOp(myPreviousOp, rValue, myVariable, myVariable.getType());
         return new TerminalBlock(op, myVariable, leftOver);
       }
     }
-    return null;
+    TerminalBlock withLimit = tryPeelLimit(true);
+    return withLimit == this ? null : withLimit;
   }
 
   /**
@@ -218,18 +219,24 @@ class TerminalBlock {
    * <p>It's not guaranteed that the peeled condition actually could be translated to the limit operation:
    * additional checks will be necessary</p>
    *
+   * @param dedicatedCounter whether peeled counter must be an increment statement for dedicated local variable
    * @return new terminal block with additional limit operation or self if peeling is failed.
    */
-  TerminalBlock tryPeelLimit() {
+  private TerminalBlock tryPeelLimit(boolean dedicatedCounter) {
     if(myStatements.length == 0) return this;
     TerminalBlock tb = this;
     PsiStatement[] statements = {};
     if(myStatements.length > 1) {
-      statements = new PsiStatement[]{myStatements[0]};
-      tb = new TerminalBlock(myPreviousOp, myVariable, Arrays.copyOfRange(myStatements, 1, myStatements.length)).extractFilter();
+      int count = myStatements.length - 1;
+      if (myStatements[count] instanceof PsiBreakStatement || myStatements[count] instanceof PsiReturnStatement) {
+        // to support conditions like if(...) continue; break; or if(...) continue; return ...;
+        count--;
+      }
+      statements = Arrays.copyOfRange(myStatements, 0, count);
+      tb = new TerminalBlock(myPreviousOp, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
     }
     if (tb == null || !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), getMainLoop())) return this;
-    StreamApiMigrationInspection.FilterOp filter = tb.getLastOperation(StreamApiMigrationInspection.FilterOp.class);
+    FilterOp filter = tb.getLastOperation(FilterOp.class);
     if(filter == null) return this;
     PsiExpression condition = PsiUtil.skipParenthesizedExprDown(filter.getExpression());
     if(!(condition instanceof PsiBinaryExpression)) return this;
@@ -258,6 +265,15 @@ class TerminalBlock {
     }
     PsiExpression countExpression = PsiUtil.skipParenthesizedExprDown(flipped ? binOp.getROperand() : binOp.getLOperand());
     if(countExpression == null || VariableAccessUtils.variableIsUsed(myVariable, countExpression)) return this;
+    PsiExpression incrementedValue = extractIncrementedLValue(countExpression);
+    PsiLocalVariable var = null;
+    if (dedicatedCounter) {
+      if (!(incrementedValue instanceof PsiReferenceExpression)) return this;
+      PsiElement element = ((PsiReferenceExpression)incrementedValue).resolve();
+      if (!(element instanceof PsiLocalVariable)) return this;
+      var = (PsiLocalVariable)element;
+      if (!ExpressionUtils.isZero(var.getInitializer()) || ReferencesSearch.search(var).findAll().size() != 1) return this;
+    }
     PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
     if(!ExpressionUtils.isSimpleExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
     PsiType type = limit.getType();
@@ -266,31 +282,39 @@ class TerminalBlock {
       delta++;
     }
 
-    StreamApiMigrationInspection.Operation prev = filter.getPreviousOp();
+    Operation prev = filter.getPreviousOp();
     LOG.assertTrue(prev != null);
     TerminalBlock block = new TerminalBlock(prev, myVariable, statements);
-    if(StreamApiMigrationInspection.extractIncrementedLValue(countExpression) == null) {
+    if (incrementedValue == null) {
       // when countExpression does not change the counter, we may try to continue extracting ops from the remaining statement
       // this is helpful to cover cases like for(...) { if(...) list.add(x); if(list.size == limit) break; }
       while (true) {
         TerminalBlock newBlock = block.extractOperation();
-        if (newBlock == null || newBlock.getLastOperation() instanceof StreamApiMigrationInspection.FlatMapOp) break;
+        if (newBlock == null || newBlock.getLastOperation() instanceof FlatMapOp) break;
         block = newBlock;
       }
     }
-    StreamApiMigrationInspection.LimitOp
-      limitOp = new StreamApiMigrationInspection.LimitOp(block.getLastOperation(), countExpression, limit, block.getVariable(), delta);
+    LimitOp limitOp = new LimitOp(block.getLastOperation(), block.getVariable(), countExpression, limit, var, delta);
     return new TerminalBlock(limitOp, block.getVariable(), block.getStatements());
   }
 
   @NotNull
-  public StreamApiMigrationInspection.Operation getLastOperation() {
+  Operation getLastOperation() {
     return myPreviousOp;
   }
 
   @Nullable
-  public <T extends StreamApiMigrationInspection.Operation> T getLastOperation(Class<T> clazz) {
+  <T extends Operation> T getLastOperation(Class<T> clazz) {
     return clazz.isInstance(myPreviousOp) ? clazz.cast(myPreviousOp) : null;
+  }
+
+  @Nullable
+  PsiExpression getCountExpression() {
+    LimitOp limitOp = getLastOperation(LimitOp.class);
+    if (limitOp != null && limitOp.getCounterVariable() == null) {
+      return limitOp.getCountExpression();
+    }
+    return null;
   }
 
   /**
@@ -303,50 +327,49 @@ class TerminalBlock {
   }
 
   @NotNull
-  public PsiVariable getVariable() {
+  PsiVariable getVariable() {
     return myVariable;
   }
 
-  public boolean hasOperations() {
-    return !(myPreviousOp instanceof StreamApiMigrationInspection.StreamSource);
+  boolean hasOperations() {
+    return !(myPreviousOp instanceof StreamSource);
   }
 
-  public boolean isEmpty() {
+  boolean isEmpty() {
     return myStatements.length == 0;
   }
 
   @NotNull
-  StreamEx<StreamApiMigrationInspection.Operation> operations() {
-    return StreamEx.iterate(myPreviousOp, Objects::nonNull, StreamApiMigrationInspection.Operation::getPreviousOp);
+  StreamEx<Operation> operations() {
+    return StreamEx.iterate(myPreviousOp, Objects::nonNull, Operation::getPreviousOp);
   }
 
-  public Collection<StreamApiMigrationInspection.Operation> getOperations() {
-    ArrayDeque<StreamApiMigrationInspection.Operation> ops = new ArrayDeque<>();
+  Collection<Operation> getOperations() {
+    ArrayDeque<Operation> ops = new ArrayDeque<>();
     operations().forEach(ops::addFirst);
     return ops;
   }
 
-  public StreamApiMigrationInspection.StreamSource getSource() {
-    return operations().select(StreamApiMigrationInspection.StreamSource.class).collect(MoreCollectors.onlyOne())
-      .orElseThrow(IllegalStateException::new);
+  StreamSource getSource() {
+    return operations().select(StreamSource.class).collect(MoreCollectors.onlyOne()).orElseThrow(IllegalStateException::new);
   }
 
-  public PsiLoopStatement getMainLoop() {
+  PsiLoopStatement getMainLoop() {
     return getSource().getLoop();
   }
 
   /**
    * @return stream of physical expressions used in intermediate operations in arbitrary order
    */
-  public StreamEx<PsiExpression> intermediateExpressions() {
-    return operations().remove(StreamApiMigrationInspection.StreamSource.class::isInstance).flatMap(StreamApiMigrationInspection.Operation::expressions);
+  StreamEx<PsiExpression> intermediateExpressions() {
+    return operations().remove(StreamSource.class::isInstance).flatMap(Operation::expressions);
   }
 
   /**
    * @return stream of physical expressions used in stream source and intermediate operations in arbitrary order
    */
-  public StreamEx<PsiExpression> intermediateAndSourceExpressions() {
-    return operations().flatMap(StreamApiMigrationInspection.Operation::expressions);
+  StreamEx<PsiExpression> intermediateAndSourceExpressions() {
+    return operations().flatMap(Operation::expressions);
   }
 
   /**
@@ -355,7 +378,7 @@ class TerminalBlock {
    * @param factory factory to use to create new element if necessary
    * @return the PsiElement
    */
-  public PsiElement convertToElement(PsiElementFactory factory) {
+  PsiElement convertToElement(PsiElementFactory factory) {
     if (myStatements.length == 1) {
       return myStatements[0];
     }
@@ -367,8 +390,8 @@ class TerminalBlock {
   }
 
   @NotNull
-  public static TerminalBlock from(StreamApiMigrationInspection.StreamSource source, @NotNull PsiStatement body) {
-    return new TerminalBlock(source, source.myVariable, body).extractOperations();
+  static TerminalBlock from(StreamSource source, @NotNull PsiStatement body) {
+    return new TerminalBlock(source, source.myVariable, body).extractOperations().tryPeelLimit(false);
   }
 
   boolean dependsOn(PsiExpression qualifier) {
