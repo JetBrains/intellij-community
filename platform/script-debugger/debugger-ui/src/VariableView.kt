@@ -379,6 +379,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     if (!watchableAsEvaluationExpression()) {
       return null
     }
+    if (context.variableName == null) return variable.name // top level watch expression, may be call etc.
 
     val list = SmartList<String>()
     addVarName(list, parent, variable.name)
