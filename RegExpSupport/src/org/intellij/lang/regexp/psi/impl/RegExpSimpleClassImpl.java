@@ -47,7 +47,9 @@ public class RegExpSimpleClassImpl extends RegExpElementImpl implements RegExpSi
             case "\\C": return Kind.NON_XML_NAME_PART;
             case "\\X": return Kind.UNICODE_GRAPHEME;
             case "\\R": return Kind.UNICODE_LINEBREAK;
-            default: assert false; return null;
+            default:
+                assert false : "unknown character class " + getUnescapedText();
+                return null;
         }
     }
 
