@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 class Collectors2 {
   static <T> Map<T, Integer> combine(Collection<Map<? extends T, Integer>> pMaps) {
     return pMaps.stream()
-      .map(integerMap -> integerMap.entrySet())
+      .map((Map<? extends T, Integer> integerMap) -> integerMap.entrySet())
       .flatMap(Collection::stream)
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                                 (pEntry1, pEntry2) -> pEntry1 + pEntry2,

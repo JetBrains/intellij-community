@@ -20,8 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -59,38 +58,11 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
 
   private static void doFix(@NotNull Project project, @NotNull PsiLambdaExpression lambdaExpression) {
     final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-    final String buf = getInferredTypes(functionalInterfaceType, lambdaExpression, true);
+    final String buf = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
     final PsiMethod methodFromText = JavaPsiFacade.getElementFactory(project).createMethodFromText("void foo" + buf, lambdaExpression);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(lambdaExpression.getParameterList().replace(methodFromText.getParameterList()));
   }
 
-  @Nullable
-  private static String getInferredTypes(PsiType functionalInterfaceType, final PsiLambdaExpression lambdaExpression, boolean useFQN) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    final StringBuilder buf = new StringBuilder();
-    buf.append("(");
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-    LOG.assertTrue(interfaceMethod != null);
-    final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-    final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
-    if (parameters.length != lambdaParameters.length) return null;
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      final PsiType psiType = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameter.getType());
-      if (!PsiTypesUtil.isDenotableType(psiType)) return null;
-      if (psiType != null) {
-        buf.append(useFQN ? psiType.getCanonicalText() : psiType.getPresentableText()).append(" ").append(lambdaParameters[i].getName());
-      }
-      else {
-        buf.append(lambdaParameters[i].getName());
-      }
-      if (i < parameters.length - 1) {
-        buf.append(", ");
-      }
-    }
-    buf.append(")");
-    return buf.toString();
-  }
 
   private static class InferLambdaParameterTypeVisitor extends BaseInspectionVisitor {
     @Override
@@ -107,7 +79,8 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
       if (functionalInterfaceType != null &&
           LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null &&
           LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType)) {
-        final String inferredTypesText = getInferredTypes(functionalInterfaceType, lambdaExpression, false);
+        final String inferredTypesText = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression,
+                                                                                                        true);
         if (inferredTypesText != null) {
           registerError(lambdaExpression, inferredTypesText);
         }

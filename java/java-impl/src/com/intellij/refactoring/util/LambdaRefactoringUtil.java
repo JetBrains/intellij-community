@@ -25,8 +25,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
@@ -54,8 +58,49 @@ public class LambdaRefactoringUtil {
   public static PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression,
                                                                    final boolean ignoreCast, 
                                                                    final boolean simplifyToExpressionLambda) {
-    final PsiElement resolve = referenceExpression.resolve();
+    PsiLambdaExpression lambdaExpression = convertToLambda(referenceExpression, ignoreCast);
+    if (lambdaExpression == null) return null;
+    lambdaExpression = (PsiLambdaExpression)referenceExpression.replace(lambdaExpression);
+
+    if (simplifyToExpressionLambda) {
+      simplifyToExpressionLambda(lambdaExpression);
+    }
+
+    return lambdaExpression;
+  }
+
+  public static boolean canConvertToLambda(PsiMethodReferenceExpression referenceExpression) {
+    return convertToLambda(referenceExpression, false) != null;
+  }
+
+  private static PsiLambdaExpression convertToLambda(PsiMethodReferenceExpression referenceExpression, boolean ignoreCast) {
+    String lambda = createLambdaWithoutFormalParameters(referenceExpression);
+    if (lambda == null) return null;
+
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(referenceExpression.getProject());
+    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)elementFactory.createExpressionFromText(lambda, referenceExpression);
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
+    boolean needToSpecifyFormalTypes = !ignoreCast && !isInferredSameTypeAfterConversion(lambdaExpression, referenceExpression, functionalInterfaceType);
+    if (needToSpecifyFormalTypes) {
+      String typedParamList = createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
+      if (typedParamList != null) {
+        PsiParameterList paramListWithFormalTypes = elementFactory.createMethodFromText("void foo" + typedParamList, lambdaExpression).getParameterList();
+        JavaCodeStyleManager.getInstance(lambdaExpression.getProject())
+          .shortenClassReferences(lambdaExpression.getParameterList().replace(paramListWithFormalTypes));
+      }
+      else {
+        return null;
+      }
+    }
+    return lambdaExpression;
+  }
+
+  private static String createLambdaWithoutFormalParameters(PsiMethodReferenceExpression referenceExpression) {
+    PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
+    final PsiElement resolve = referenceExpression.resolve();
+    if (resolve == null) {
+      return null;
+    }
     final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     if (interfaceMethod == null) {
@@ -76,7 +121,6 @@ public class LambdaRefactoringUtil {
     }
     final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
 
-    final StringBuilder buf = new StringBuilder();
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
 
@@ -119,6 +163,7 @@ public class LambdaRefactoringUtil {
       }
       return "";
     };
+    StringBuilder buf = new StringBuilder();
     if (parameters.length == 1) {
       buf.append(paramPresentationFunction.fun(parameters[0]));
     }
@@ -130,9 +175,9 @@ public class LambdaRefactoringUtil {
 
     final JavaResolveResult resolveResult = referenceExpression.advancedResolve(false);
     final PsiElement resolveElement = resolveResult.getElement();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(referenceExpression.getProject());
-    if (resolveElement instanceof PsiMember) {
 
+    if (resolveElement instanceof PsiMember) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(referenceExpression.getProject());
       buf.append("{");
 
       if (!PsiType.VOID.equals(interfaceMethod.getReturnType())) {
@@ -220,25 +265,68 @@ public class LambdaRefactoringUtil {
 
       buf.append(";}");
     }
+    return buf.toString();
+  }
 
-
-    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)referenceExpression.replace(elementFactory.createExpressionFromText(buf.toString(), referenceExpression));
-    /*
-    final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)referenceExpression.replace(elementFactory.createExpressionFromText(buf.toString(), referenceExpression));
-
-    LOG.assertTrue(lambdaExpression != null, buf.toString());
-    if (RedundantCastUtil.isCastRedundant(typeCastExpression) || ignoreCast) {
-      final PsiExpression operand = typeCastExpression.getOperand();
-      LOG.assertTrue(operand != null);
-      lambdaExpression = (PsiLambdaExpression)typeCastExpression.replace(operand);
+  private static boolean isInferredSameTypeAfterConversion(PsiLambdaExpression lambdaExpression,
+                                                           PsiMethodReferenceExpression methodReferenceExpression,
+                                                           PsiType functionalInterfaceType) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodReferenceExpression.getParent());
+    if (!(parent instanceof PsiExpressionList)) {
+      return true;
     }
-    */
-
-    if (simplifyToExpressionLambda) {
-      simplifyToExpressionLambda(lambdaExpression);
+    PsiElement gParent = parent.getParent();
+    if (gParent instanceof PsiCall) {
+      if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArguments().length > 0) {
+        return true;
+      }
+      JavaResolveResult result = ((PsiCall)gParent).resolveMethodGenerics();
+      if (result instanceof MethodCandidateInfo) {
+        PsiMethod method = ((MethodCandidateInfo)result).getElement();
+        if (!method.hasTypeParameters()) {
+          return true;
+        }
+        PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
+        int lambdaIdx = LambdaUtil.getLambdaIdx((PsiExpressionList)parent, methodReferenceExpression);
+        args[lambdaIdx] = lambdaExpression;
+        final PsiParameter[] methodParams = method.getParameterList().getParameters();
+        final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, args, true);
+        PsiType formalTargetType = substitutor.substitute(PsiTypesUtil.getParameterType(methodParams, lambdaIdx, ((MethodCandidateInfo)result).isVarargs()));
+        return functionalInterfaceType.equals(FunctionalInterfaceParameterizationUtil.getGroundTargetType(formalTargetType));
+      }
     }
+    return false;
+  }
 
-    return lambdaExpression;
+  @Nullable
+  public static String createLambdaParameterListWithFormalTypes(PsiType functionalInterfaceType,
+                                                                PsiLambdaExpression lambdaExpression,
+                                                                boolean checkApplicability) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    final StringBuilder buf = new StringBuilder();
+    buf.append("(");
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+    LOG.assertTrue(interfaceMethod != null);
+    final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+    final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
+    if (parameters.length != lambdaParameters.length) return null;
+    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
+    for (int i = 0; i < parameters.length; i++) {
+      PsiType psiType = substitutor.substitute(parameters[i].getType());
+      if (psiType == null) return null;
+      if (!PsiTypesUtil.isDenotableType(psiType)) {
+        return null;
+      }
+
+      buf.append(checkApplicability ? psiType.getPresentableText() : psiType.getCanonicalText())
+        .append(" ")
+        .append(lambdaParameters[i].getName());
+      if (i < parameters.length - 1) {
+        buf.append(", ");
+      }
+    }
+    buf.append(")");
+    return buf.toString();
   }
 
   public static void simplifyToExpressionLambda(@NotNull final PsiLambdaExpression lambdaExpression) {
@@ -287,7 +375,7 @@ public class LambdaRefactoringUtil {
    * @param methodReferenceExpression method reference to check
    * @return true if method reference can be converted to lambda
    */
-  public static boolean canConvertToLambda(PsiMethodReferenceExpression methodReferenceExpression) {
+  public static boolean canConvertToLambdaWithoutSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
     return qualifierExpression != null && !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
   }
