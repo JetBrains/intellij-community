@@ -89,6 +89,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testOverriddenViaMethodReference() { doTest(); }
   public void testOverridingExternalNotNull() { doTest(); }
 
   public void testIgnoreExternalNotNull() {
