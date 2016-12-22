@@ -846,6 +846,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
           module("designer")
           module("sdk-updates")
           module("wizard")
+          module("profilers-android")
         }
         resources("android")
         jar("adt-ui.jar") {
