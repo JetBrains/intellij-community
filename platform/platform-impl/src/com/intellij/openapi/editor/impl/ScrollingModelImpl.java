@@ -39,7 +39,7 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.components.TargetHolder;
+import com.intellij.ui.components.Interpolable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
@@ -185,6 +185,10 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     action.run();
   }
 
+  public boolean isAnimationEnabled() {
+    return !myAnimationDisabled;
+  }
+
   @Override
   public void disableAnimation() {
     myAnimationDisabled = true;
@@ -297,7 +301,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private static int getOffset(JScrollBar scrollBar) {
     return scrollBar == null ? 0 :
-           scrollBar instanceof TargetHolder ? ((TargetHolder)scrollBar).getTarget() : scrollBar.getValue();
+           scrollBar instanceof Interpolable ? ((Interpolable)scrollBar).getTargetValue() : scrollBar.getValue();
   }
 
   private static int getExtent(JScrollBar scrollBar) {

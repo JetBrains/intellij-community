@@ -16,13 +16,40 @@
 package com.intellij.ui.components;
 
 /**
- * An entity that has a target value.
+ * An entity with a value that is adjusted asynchronously.
+ * <p>
+ * Explicitly separates current / target values.
  */
-public interface TargetHolder {
+public interface Interpolable {
+  /**
+   * Gets the current value.
+   * <p>
+   * Technically, it's "getCurrentValue", but we need to match the name in Swing classes.
+   *
+   * @return the current value.
+   */
+  int getValue();
+
+  /**
+   * Sets the current value (synchronously).
+   *
+   * @param value the current value
+   */
+  void setCurrentValue(int value);
+
   /**
    * Gets the target value.
    *
    * @return the target value.
    */
-  int getTarget();
+  int getTargetValue();
+
+  /**
+   * Sets the target value.
+   * <p>
+   * Technically, it's "setTargetValue", but we need to match the name in Swing classes.
+   *
+   * @param value the target value
+   */
+  void setValue(int value);
 }

@@ -143,7 +143,7 @@ public class SmoothScrollPane extends JScrollPane {
     int blockIncrement = getBlockIncrement(viewport, scrollbar, direction);
     double adjustedDelta = limitDelta ? max(-(double)blockIncrement, min(delta, (double)blockIncrement)) : delta;
 
-    int value = scrollbar instanceof TargetHolder ? (((TargetHolder)scrollbar).getTarget()) : scrollbar.getValue();
+    int value = scrollbar instanceof Interpolable ? (((Interpolable)scrollbar).getTargetValue()) : scrollbar.getValue();
     int newValue = max(scrollbar.getMinimum(), min((int)round(value + adjustedDelta), scrollbar.getMaximum()));
 
     if (newValue != value) {
@@ -189,8 +189,8 @@ public class SmoothScrollPane extends JScrollPane {
     }
   }
 
-  protected class SmoothScrollBar extends ScrollBar implements TargetHolder {
-    private final Interpolator myInterpolator = new Interpolator(super::getValue, super::setValue);
+  protected class SmoothScrollBar extends ScrollBar implements Interpolable {
+    private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
 
     protected SmoothScrollBar(int orientation) {
       super(orientation);
@@ -210,7 +210,12 @@ public class SmoothScrollPane extends JScrollPane {
     }
 
     @Override
-    public int getTarget() {
+    public void setCurrentValue(int value) {
+      super.setValue(value);
+    }
+
+    @Override
+    public int getTargetValue() {
       return myInterpolator.getTarget();
     }
   }

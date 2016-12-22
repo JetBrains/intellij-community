@@ -2682,10 +2682,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, TargetHolder {
+  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, Interpolable {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
-    private final Interpolator myInterpolator = new Interpolator(super::getValue, super::setValue);
+    private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
@@ -2725,7 +2725,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
      */
     @Override
     public void setValue(int value) {
-      if (ComponentSettings.getInstance().isSmoothScrollingEligibleFor(myEditorComponent)) {
+      if (ComponentSettings.getInstance().isSmoothScrollingEligibleFor(myEditorComponent) && myScrollingModel.isAnimationEnabled()) {
         myInterpolator.setTarget(value, ((MyScrollPane)myScrollPane).getInitialDelay(getValueIsAdjusting()));
       }
       else {
@@ -2734,7 +2734,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public int getTarget() {
+    public void setCurrentValue(int value) {
+      super.setValue(value);
+    }
+
+    @Override
+    public int getTargetValue() {
       return myInterpolator.getTarget();
     }
 
