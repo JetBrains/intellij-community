@@ -1,66 +1,37 @@
-package com.intellij.configurationStore;
+package com.intellij.configurationStore
 
-import com.intellij.openapi.components.RoamingType;
-import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function3;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.RoamingType
 
-import java.io.InputStream;
+import java.io.InputStream
 
-/**
- * @author Alexander Lobas
- */
-public class StreamProviderWrapper implements StreamProvider {
-  private StreamProvider myStreamProvider;
+class StreamProviderWrapper : StreamProvider {
+  var streamProvider: StreamProvider? = null
 
-  @Nullable
-  public static StreamProvider getOriginalProvider(@Nullable StreamProvider provider) {
-    if (provider instanceof StreamProviderWrapper) {
-      return ((StreamProviderWrapper)provider).myStreamProvider;
-    }
-    return null;
+  override val enabled: Boolean
+    get() = streamProvider.let { it != null && it.enabled }
+
+  override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+    return enabled && streamProvider!!.isApplicable(fileSpec, roamingType)
   }
 
-  public StreamProvider getStreamProvider() {
-    return myStreamProvider;
+  override fun <R> read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> R): R {
+    return streamProvider!!.read(fileSpec, roamingType, consumer)
   }
 
-  public void setStreamProvider(@Nullable StreamProvider streamProvider) {
-    myStreamProvider = streamProvider;
+  override fun processChildren(path: String,
+                               roamingType: RoamingType,
+                               filter: Function1<String, Boolean>,
+                               processor: Function3<String, InputStream, Boolean, Boolean>) {
+    streamProvider!!.processChildren(path, roamingType, filter, processor)
   }
 
-  @Override
-  public boolean getEnabled() {
-    return myStreamProvider != null && myStreamProvider.getEnabled();
+  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+    streamProvider!!.write(fileSpec, content, size, roamingType)
   }
 
-  @Override
-  public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    return getEnabled() && myStreamProvider.isApplicable(fileSpec, roamingType);
-  }
-
-  @Nullable
-  @Override
-  public InputStream read(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    return myStreamProvider.read(fileSpec, roamingType);
-  }
-
-  @Override
-  public void processChildren(@NotNull String path,
-                              @NotNull RoamingType roamingType,
-                              @NotNull Function1<? super String, Boolean> filter,
-                              @NotNull Function3<? super String, ? super InputStream, ? super Boolean, Boolean> processor) {
-    myStreamProvider.processChildren(path, roamingType, filter, processor);
-  }
-
-  @Override
-  public void write(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType) {
-    myStreamProvider.write(fileSpec, content, size, roamingType);
-  }
-
-  @Override
-  public void delete(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    myStreamProvider.delete(fileSpec, roamingType);
+  override fun delete(fileSpec: String, roamingType: RoamingType) {
+    streamProvider!!.delete(fileSpec, roamingType)
   }
 }
+
+fun StreamProvider?.getOriginalProvider() = if (this is StreamProviderWrapper) streamProvider else null
