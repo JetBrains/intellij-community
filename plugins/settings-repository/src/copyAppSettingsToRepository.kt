@@ -29,7 +29,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl) {
-  val streamProvider = StreamProviderWrapper.getOriginalProvider(storageManager.streamProvider)!! as IcsManager.IcsStreamProvider
+  val streamProvider = storageManager.streamProvider.getOriginalProvider() as IcsManager.IcsStreamProvider
 
   val fileToItems = getExportableComponentsMap(true, false, storageManager)
   fileToItems.keys.forEachGuaranteed { file ->

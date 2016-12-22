@@ -68,7 +68,7 @@ abstract class XmlElementStorage protected constructor(protected val fileSpec: S
   protected open fun dataLoadedFromProvider(element: Element?) {
   }
 
-  private fun loadDataFromProvider() = provider!!.read(fileSpec, roamingType)?.let(::loadElement)
+  private fun loadDataFromProvider(): Element? = provider!!.read(fileSpec, roamingType) { it?.let(::loadElement) }
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)

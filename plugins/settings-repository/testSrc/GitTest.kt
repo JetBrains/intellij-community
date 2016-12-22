@@ -279,23 +279,46 @@ internal class GitTest : GitTestCase() {
     provider.write(".gitignore", "*.html")
     sync(SyncType.MERGE)
 
+    val workDir = repositoryManager.repository.workTree.toPath()
+
     val filePaths = listOf("bar.html", "i/am/a/long/path/to/file/foo.html")
     for (path in filePaths) {
       provider.write(path, path)
     }
 
-    val diff = repository.computeIndexDiff()
-    assertThat(diff.diff()).isFalse()
-    assertThat(diff.added).isEmpty()
-    assertThat(diff.changed).isEmpty()
-    assertThat(diff.removed).isEmpty()
-    assertThat(diff.modified).isEmpty()
-    assertThat(diff.untracked).isEmpty()
-    assertThat(diff.untrackedFolders).isEmpty()
+    fun assertThatFileExist() {
+      for (path in filePaths) {
+        assertThat(workDir.resolve(path)).isRegularFile()
+      }
+    }
+
+    assertThatFileExist()
+
+    fun assertStatus() {
+      val diff = repository.computeIndexDiff()
+      assertThat(diff.diff()).isFalse()
+      assertThat(diff.added).isEmpty()
+      assertThat(diff.changed).isEmpty()
+      assertThat(diff.removed).isEmpty()
+      assertThat(diff.modified).isEmpty()
+      assertThat(diff.untracked).isEmpty()
+      assertThat(diff.untrackedFolders).containsOnly("i")
+    }
+
+    assertStatus()
 
     for (path in filePaths) {
-      assertThat(provider.read(path)).isNull()
+      provider.read(path) {
+        assertThat(it).isNotNull()
+      }
     }
+
+    assertThatFileExist()
+
+    sync(SyncType.MERGE)
+
+    assertThatFileExist()
+    assertStatus()
   }
 
   @Test fun `initial copy to repository - no local files`() {

@@ -11,13 +11,13 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
     dir.resolve(fileSpec).write(content, 0, size)
   }
 
-  override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
+  override fun <R> read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> R): R {
     val file = dir.resolve(fileSpec)
     try {
-      return file.inputStream()
+      return file.inputStream().use(consumer)
     }
     catch (e: NoSuchFileException) {
-      return null
+      return consumer(null)
     }
   }
 

@@ -200,7 +200,7 @@ class IcsManager(dir: Path) {
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
 
-    override fun read(fileSpec: String, roamingType: RoamingType) = repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
+    override fun <R> read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> R): R = repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId), consumer)
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {
     }

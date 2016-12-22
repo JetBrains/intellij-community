@@ -27,9 +27,9 @@ import java.io.InputStream
 class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProvider {
   private val nameToData = ContainerUtil.newConcurrentMap<String, ByteArray>()
 
-  override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
+  override fun <R> read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> R): R {
     val name = PathUtilRt.getFileName(fileSpec)
-    return nameToData.get(name)?.let(ByteArray::inputStream)
+    return nameToData.get(name)?.let(ByteArray::inputStream).let { consumer(it) }
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType) {

@@ -341,9 +341,9 @@ internal class ApplicationStoreTest {
       return map
     }
 
-    override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
-      val data = getMap(roamingType)[fileSpec] ?: return null
-      return ByteArrayInputStream(data.toByteArray())
+    override fun <R> read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> R): R {
+      val data = getMap(roamingType).get(fileSpec)
+      return data?.let { ByteArrayInputStream(it.toByteArray()) }.let(consumer)
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType) {

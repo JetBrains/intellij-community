@@ -39,7 +39,7 @@ interface RepositoryManager {
    */
   fun setUpstream(url: String?, branch: String? = null)
 
-  fun read(path: String): InputStream?
+  fun <R> read(path: String, consumer: (InputStream?) -> R): R
 
   /**
    * Returns false if file is not written (for example, due to ignore rules).

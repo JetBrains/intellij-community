@@ -33,7 +33,7 @@ interface StreamProvider {
    */
   fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
 
-  fun read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): InputStream?
+  fun <R> read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT, consumer: (InputStream?) -> R): R
 
   fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean)
 

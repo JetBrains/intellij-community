@@ -77,22 +77,17 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
 
   protected open fun isPathIgnored(path: String): Boolean = false
 
-  override fun read(path: String): InputStream? {
-    if (isPathIgnored(path)) {
-      LOG.debug { "$path is ignored" }
-      return null
-    }
-
+  override fun <R> read(path: String, consumer: (InputStream?) -> R): R {
     var fileToDelete: Path? = null
     lock.read {
       val file = dir.resolve(path)
       when (file.sizeOrNull()) {
-        -1L -> return null
+        -1L -> return consumer(null)
         0L -> {
           // we ignore empty files as well - delete if corrupted
           fileToDelete = file
         }
-        else -> return file.inputStream()
+        else -> return file.inputStream().use(consumer)
       }
     }
 
@@ -102,22 +97,22 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
         delete(fileToDelete!!, path)
       }
     }
-    return null
+    return consumer(null)
   }
 
   override fun write(path: String, content: ByteArray, size: Int): Boolean {
-    if (isPathIgnored(path)) {
-      LOG.debug { "$path is ignored" }
-      return false
-    }
-
     LOG.debug { "Write $path" }
 
     try {
       lock.write {
         val file = dir.resolve(path)
         file.write(content, 0, size)
-        addToIndex(file, path, content, size)
+        if (isPathIgnored(path)) {
+          LOG.debug { "$path is ignored and will be not added to index" }
+        }
+        else {
+          addToIndex(file, path, content, size)
+        }
       }
     }
     catch (e: Exception) {

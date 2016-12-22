@@ -27,8 +27,9 @@ import org.junit.Rule
 import org.junit.Test
 
 internal class BareGitTest {
+  @Rule
+  @JvmField
   val tempDirManager = TemporaryDirectory()
-  @Rule fun getTemporaryFolder() = tempDirManager
 
   @Test fun `remote doesn't have commits`() {
     val repository = cloneBare(tempDirManager.createRepository("remote").workTree.absolutePath, tempDirManager.newPath("local"))
