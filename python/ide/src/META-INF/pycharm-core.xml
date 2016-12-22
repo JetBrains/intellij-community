@@ -135,5 +135,9 @@
     <action id="ReportProblem" class="com.jetbrains.python.ReportProblemAction" text="Report Problem...">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="TechnicalSupport"/>
     </action>
+
+    <action id="RenameProject" class="com.intellij.platform.renameProject.RenameProjectAction">
+      <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="RenameFile"/>
+    </action>
   </actions>
 </idea-plugin>
