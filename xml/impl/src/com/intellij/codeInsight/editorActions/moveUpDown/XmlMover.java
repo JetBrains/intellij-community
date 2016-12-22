@@ -62,11 +62,6 @@ class XmlMover extends LineMover {
 
     if (checkInjections(movedEndElement, movedStartElement)) return false;
 
-    XmlTag nearestTag = PsiTreeUtil.getParentOfType(movedStartElement, XmlTag.class);
-    if (nearestTag != null && HtmlUtil.isScriptTag(nearestTag)) {
-      return false;
-    }
-
     PsiNamedElement movedParent = null;
 
     if (namedParentAtEnd == namedParentAtStart) movedParent = namedParentAtEnd;
@@ -91,6 +86,12 @@ class XmlMover extends LineMover {
       }
       final TextRange valueRange = tag.getValue().getTextRange();
       final int valueStart = valueRange.getStartOffset();
+
+      if (HtmlUtil.isHtmlTag(tag) && (HtmlUtil.isScriptTag(tag) || HtmlUtil.STYLE_TAG_NAME.equals(tag.getName()))) {
+        info.toMove = new LineRange(tag);
+        int nextLine = down ? info.toMove.endLine : info.toMove.startLine - 1;
+        info.toMove2 = new LineRange(nextLine, nextLine + 1);
+      }
 
       if (movedLineStart < valueStart && valueStart + 1 < document.getTextLength()) {
         movedLineStart = updateMovedRegionEnd(document, movedLineStart, valueStart + 1, info, down);
