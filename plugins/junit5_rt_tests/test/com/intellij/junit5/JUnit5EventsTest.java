@@ -106,7 +106,7 @@ class JUnit5EventsTest {
                             "##teamcity[treeEnded]\n" +
                             "##teamcity[testSuiteStarted id='|[engine:engine1|]' name='brokenStream()']\n" +
                             "\n" +
-                            "##teamcity[testStarted name='Class Configuration']\n" +
+                            "##teamcity[testStarted name='Class Configuration' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
                             "\n" +
                             "##teamcity[testFailed name='Class Configuration' id='Class Configuration' details='TRACE' error='true' message='']\n" +
                             "\n" +

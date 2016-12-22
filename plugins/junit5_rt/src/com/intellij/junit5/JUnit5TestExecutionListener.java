@@ -160,7 +160,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       }
       if (messageName != null) {
         if (status == TestExecutionResult.Status.FAILED) {
-          myPrintStream.println("\n##teamcity[testStarted name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + "\']");
+          myPrintStream.println("\n##teamcity[testStarted name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + getLocationHint(testIdentifier) + "\']");
           testFailure(JUnit4TestListener.CLASS_CONFIGURATION, JUnit4TestListener.CLASS_CONFIGURATION, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("\n##teamcity[testFinished name=\'" + JUnit4TestListener.CLASS_CONFIGURATION + "\']");
         }
