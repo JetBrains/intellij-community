@@ -20,12 +20,14 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ThrowableRunnable;
 
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputEvent;
 import java.util.Arrays;
 
@@ -292,6 +294,15 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "twotwo\n" +
                       "three\n" +
                       "four");
+  }
+
+  public void testPastingLineWithBreakFromOutside() throws Exception {
+    initText("<caret>\n" +
+             "<caret>");
+    CopyPasteManager.getInstance().setContents(new StringSelection("abc\n"));
+    paste();
+    checkResultByText("abc<caret>\n" +
+                      "abc<caret>");
   }
 
   public void testEscapeAfterDragDown() throws Exception {
