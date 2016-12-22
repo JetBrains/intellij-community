@@ -19,8 +19,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +35,12 @@ public class HighlightersActionGroup extends ActionGroup {
     List<AnAction> actions = ContainerUtil.newArrayList();
 
     if (e != null) {
-      VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-      if (ui != null) {
+      VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+      if (properties != null) {
         actions.add(new Separator("Highlight"));
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
           if (factory.showMenuItem()) {
-            actions.add(new EnableHighlighterAction(ui, factory));
+            actions.add(new EnableHighlighterAction(properties, factory));
           }
         }
       }
@@ -51,22 +51,22 @@ public class HighlightersActionGroup extends ActionGroup {
 
   private static class EnableHighlighterAction extends ToggleAction implements DumbAware {
     @NotNull private final VcsLogHighlighterFactory myFactory;
-    @NotNull private final VcsLogUi myUi;
+    @NotNull private final VcsLogUiProperties myProperties;
 
-    private EnableHighlighterAction(@NotNull VcsLogUi ui, @NotNull VcsLogHighlighterFactory factory) {
+    private EnableHighlighterAction(@NotNull VcsLogUiProperties properties, @NotNull VcsLogHighlighterFactory factory) {
       super(factory.getTitle());
-      myUi = ui;
+      myProperties = properties;
       myFactory = factory;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myUi.isHighlighterEnabled(myFactory.getId());
+      return myProperties.isHighlighterEnabled(myFactory.getId());
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myUi.setHighlighterEnabled(myFactory.getId(), state);
+      myProperties.enableHighlighter(myFactory.getId(), state);
     }
   }
 }

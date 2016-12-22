@@ -33,12 +33,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogFiltererImpl;
-import com.intellij.vcs.log.data.VcsLogTabsProperties;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -121,8 +116,7 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName, @Nullable VcsLogFilter filter) {
     VcsLogUiProperties properties = myUiProperties.createProperties(logId);
-    VcsLogFiltererImpl filterer =
-      new VcsLogFiltererImpl(myProject, myLogData, PermanentGraph.SortType.values()[properties.getBekSortType()]);
+    VcsLogFiltererImpl filterer = new VcsLogFiltererImpl(myProject, myLogData, properties.getBekSortType());
     VcsLogUiImpl ui = new VcsLogUiImpl(myLogData, myProject, myColorManager, properties, filterer);
     if (filter != null) {
       ui.getFilterUi().setFilter(filter);

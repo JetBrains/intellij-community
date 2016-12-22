@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowRootsColumnAction extends ToggleAction implements DumbAware {
@@ -31,21 +33,22 @@ public class ShowRootsColumnAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(ui != null && ui.isMultipleRoots());
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    e.getPresentation().setEnabledAndVisible(ui != null && ui.isMultipleRoots() && properties != null);
     super.update(e);
   }
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    return ui != null && ui.isShowRootNames();
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    return properties != null && properties.isShowRootNames();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui != null) {
-      ui.setShowRootNames(state);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    if (properties != null) {
+      properties.setShowRootNames(state);
     }
   }
 }

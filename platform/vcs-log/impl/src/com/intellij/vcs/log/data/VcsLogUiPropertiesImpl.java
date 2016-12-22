@@ -18,6 +18,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ import java.util.*;
  */
 public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, VcsLogUiProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
+
+  private final Set<VcsLogUiPropertiesListener> myListeners = ContainerUtil.newLinkedHashSet();
 
   public static class State {
     public boolean SHOW_DETAILS_IN_CHANGES = true;
@@ -59,6 +62,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void setShowDetails(boolean showDetails) {
     getState().SHOW_DETAILS_IN_CHANGES = showDetails;
+    myListeners.forEach(VcsLogUiPropertiesListener::onShowDetailsChanged);
   }
 
   @Override
@@ -108,16 +112,18 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void setLongEdgesVisibility(boolean visible) {
     getState().LONG_EDGES_VISIBLE = visible;
+    myListeners.forEach(VcsLogUiPropertiesListener::onShowLongEdgesChanged);
   }
 
   @Override
-  public int getBekSortType() {
-    return getState().BEK_SORT_TYPE;
+  public PermanentGraph.SortType getBekSortType() {
+    return PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
   }
 
   @Override
-  public void setBek(int bekSortType) {
-    getState().BEK_SORT_TYPE = bekSortType;
+  public void setBek(PermanentGraph.SortType bekSortType) {
+    getState().BEK_SORT_TYPE = bekSortType.ordinal();
+    myListeners.forEach(VcsLogUiPropertiesListener::onBekChanged);
   }
 
   @Override
@@ -128,6 +134,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void setShowRootNames(boolean isShowRootNames) {
     getState().SHOW_ROOT_NAMES = isShowRootNames;
+    myListeners.forEach(VcsLogUiPropertiesListener::onShowRootNamesChanged);
   }
 
   @Override
@@ -139,6 +146,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void enableHighlighter(@NotNull String id, boolean value) {
     getState().HIGHLIGHTERS.put(id, value);
+    myListeners.forEach(VcsLogUiPropertiesListener::onHighlighterChanged);
   }
 
   @Override
@@ -165,6 +173,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void setCompactReferencesView(boolean compact) {
     getState().COMPACT_REFERENCES_VIEW = compact;
+    myListeners.forEach(VcsLogUiPropertiesListener::onCompactReferencesViewChanged);
   }
 
   @Override
@@ -175,12 +184,23 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void setShowTagNames(boolean showTags) {
     getState().SHOW_TAG_NAMES = showTags;
+    myListeners.forEach(VcsLogUiPropertiesListener::onShowTagNamesChanged);
+  }
+
+  @Override
+  public void addChangeListener(@NotNull VcsLogUiPropertiesListener listener) {
+    myListeners.add(listener);
+  }
+
+  @Override
+  public void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener) {
+    myListeners.remove(listener);
   }
 
   @NotNull
-  public TextFilterSettingsImpl getTextFilterSettings() {
+  public VcsLogUi.TextFilterSettings getTextFilterSettings() {
     if (getState().TEXT_FILTER_SETTINGS == null) getState().TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
-    return getState().TEXT_FILTER_SETTINGS;
+    return new DelegatingTextFilterSetting(getState().TEXT_FILTER_SETTINGS);
   }
 
   public static class UserGroup {
@@ -232,6 +252,37 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     @Override
     public void setMatchCaseEnabled(boolean enabled) {
       MATCH_CASE = enabled;
+    }
+  }
+
+  // I know that in some languages this class would be twice as short
+  private class DelegatingTextFilterSetting implements VcsLogUi.TextFilterSettings {
+    private final VcsLogUi.TextFilterSettings mySettings;
+
+    private DelegatingTextFilterSetting(@NotNull VcsLogUi.TextFilterSettings settings) {
+      mySettings = settings;
+    }
+
+    @Override
+    public boolean isFilterByRegexEnabled() {
+      return mySettings.isFilterByRegexEnabled();
+    }
+
+    @Override
+    public void setFilterByRegexEnabled(boolean enabled) {
+      mySettings.setFilterByRegexEnabled(enabled);
+      myListeners.forEach(VcsLogUiPropertiesListener::onTextFilterSettingsChanged);
+    }
+
+    @Override
+    public boolean isMatchCaseEnabled() {
+      return mySettings.isMatchCaseEnabled();
+    }
+
+    @Override
+    public void setMatchCaseEnabled(boolean enabled) {
+      mySettings.setMatchCaseEnabled(enabled);
+      myListeners.forEach(VcsLogUiPropertiesListener::onTextFilterSettingsChanged);
     }
   }
 }

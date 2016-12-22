@@ -24,6 +24,8 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -35,27 +37,28 @@ public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui == null) return false;
-    return ui.getTextFilterSettings().isMatchCaseEnabled();
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    if (properties == null) return false;
+    return properties.getTextFilterSettings().isMatchCaseEnabled();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui != null) {
-      ui.getTextFilterSettings().setMatchCaseEnabled(state);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    if (properties != null) {
+      properties.getTextFilterSettings().setMatchCaseEnabled(state);
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui == null) {
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    if (ui == null || properties == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      boolean regexEnabled = ui.getTextFilterSettings().isFilterByRegexEnabled();
+      boolean regexEnabled = properties.getTextFilterSettings().isFilterByRegexEnabled();
       if (!regexEnabled) {
         e.getPresentation().setEnabledAndVisible(true);
         e.getPresentation().setText(MATCH_CASE);

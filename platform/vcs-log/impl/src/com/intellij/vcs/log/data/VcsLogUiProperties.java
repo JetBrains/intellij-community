@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +41,9 @@ public interface VcsLogUiProperties {
 
   void setLongEdgesVisibility(boolean visible);
 
-  int getBekSortType();
+  PermanentGraph.SortType getBekSortType();
 
-  void setBek(int bekSortType);
+  void setBek(PermanentGraph.SortType bekSortType);
 
   boolean isShowRootNames();
 
@@ -67,4 +68,26 @@ public interface VcsLogUiProperties {
 
   @NotNull
   VcsLogUi.TextFilterSettings getTextFilterSettings();
+
+  void addChangeListener(@NotNull VcsLogUiPropertiesListener listener);
+
+  void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener);
+
+  interface VcsLogUiPropertiesListener {
+    void onShowDetailsChanged();
+
+    void onShowLongEdgesChanged();
+
+    void onBekChanged();
+
+    void onShowRootNamesChanged();
+
+    void onHighlighterChanged();
+
+    void onCompactReferencesViewChanged();
+
+    void onShowTagNamesChanged();
+
+    void onTextFilterSettingsChanged();
+  }
 }

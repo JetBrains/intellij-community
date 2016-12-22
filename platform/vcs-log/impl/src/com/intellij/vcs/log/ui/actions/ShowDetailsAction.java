@@ -22,6 +22,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowDetailsAction extends ToggleAction implements DumbAware {
@@ -32,18 +34,18 @@ public class ShowDetailsAction extends ToggleAction implements DumbAware {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
     Project project = e.getProject();
-    if (project == null || ui == null) return false;
-    return !project.isDisposed() && ui.isShowDetails();
+    if (project == null || properties == null) return false;
+    return !project.isDisposed() && properties.isShowDetails();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
     Project project = e.getProject();
-    if (project != null && !project.isDisposed() && ui != null) {
-      ui.setShowDetails(state);
+    if (project != null && !project.isDisposed() && properties != null) {
+      properties.setShowDetails(state);
     }
   }
 }

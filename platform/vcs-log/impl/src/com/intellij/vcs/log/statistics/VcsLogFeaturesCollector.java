@@ -46,27 +46,32 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
       VcsLogUiImpl ui = projectLog.getMainLogUi();
       if (ui != null) {
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", ui.isShowDetails()));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", ui.areLongEdgesVisible()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", ui.getProperties().isShowDetails()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", ui.getProperties().areLongEdgesVisible()));
 
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.linear.bek", ui.getBekType().equals(PermanentGraph.SortType.LinearBek)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", ui.getBekType().equals(PermanentGraph.SortType.Bek)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.normal", ui.getBekType().equals(PermanentGraph.SortType.Normal)));
+        usages.add(StatisticsUtilKt
+                     .getBooleanUsage("ui.sort.linear.bek", ui.getProperties().getBekSortType().equals(PermanentGraph.SortType.LinearBek)));
+        usages
+          .add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", ui.getProperties().getBekSortType().equals(PermanentGraph.SortType.Bek)));
+        usages.add(
+          StatisticsUtilKt.getBooleanUsage("ui.sort.normal", ui.getProperties().getBekSortType().equals(PermanentGraph.SortType.Normal)));
 
         if (ui.isMultipleRoots()) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", ui.isShowRootNames()));
+          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", ui.getProperties().isShowRootNames()));
         }
 
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", ui.isCompactReferencesView()));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", ui.isShowTagNames()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", ui.getProperties().isCompactReferencesView()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", ui.getProperties().isShowTagNames()));
 
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex", ui.getTextFilterSettings().isFilterByRegexEnabled()));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase", ui.getTextFilterSettings().isMatchCaseEnabled()));
+        usages.add(
+          StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex", ui.getProperties().getTextFilterSettings().isFilterByRegexEnabled()));
+        usages.add(
+          StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase", ui.getProperties().getTextFilterSettings().isMatchCaseEnabled()));
 
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {
             usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil
-              .ensureProperKey(factory.getId()), ui.isHighlighterEnabled(factory.getId())));
+              .ensureProperKey(factory.getId()), ui.getProperties().isHighlighterEnabled(factory.getId())));
           }
         }
 

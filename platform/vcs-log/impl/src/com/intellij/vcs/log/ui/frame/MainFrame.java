@@ -23,13 +23,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.util.BekUtil;
@@ -63,6 +63,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final RepositoryChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
   @NotNull private final SearchTextField myTextFilter;
+  @NotNull private final VcsLogUiProperties myUiProperties;
 
   @NotNull private Runnable myContainingBranchesListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
@@ -77,7 +78,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myLogData = logData;
     myUi = ui;
     myLog = log;
-    myFilterUi = new VcsLogClassicFilterUi(myUi, logData, uiProperties, initialDataPack);
+    myUiProperties = uiProperties;
+
+    myFilterUi = new VcsLogClassicFilterUi(myUi, logData, myUiProperties, initialDataPack);
 
     // initialize components
     myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
@@ -99,7 +102,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.details.splitter.proportion", 0.7f);
     myDetailsSplitter.setFirstComponent(myChangesLoadingPane);
-    setupDetailsSplitter(uiProperties.isShowDetails());
+    setupDetailsSplitter(myUiProperties.isShowDetails());
 
     myGraphTable.getSelectionModel().addListSelectionListener(new CommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
@@ -290,6 +293,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
+    }
+    else if (VcsLogDataKeysInternal.LOG_UI_PROPERTIES.is(dataId)) {
+      return myUiProperties;
     }
     return null;
   }

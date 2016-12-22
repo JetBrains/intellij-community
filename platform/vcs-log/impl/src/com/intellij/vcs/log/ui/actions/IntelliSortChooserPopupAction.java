@@ -25,7 +25,9 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,12 +40,12 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiProperties properties = e.getRequiredData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
 
-    ActionGroup settingsGroup =
-      new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(),
-                                               (Function<PermanentGraph.SortType, AnAction>)sortType -> new SelectIntelliSortTypeAction(
-                                                 logUI, sortType)));
+    ActionGroup settingsGroup = new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(),
+                                                                         (Function<PermanentGraph.SortType, AnAction>)sortType ->
+                                                                           new SelectIntelliSortTypeAction(logUI, properties, sortType)));
 
 
     ListPopup popup = JBPopupFactory.getInstance()
@@ -61,10 +63,10 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabled(logUI != null);
-    if (logUI != null) {
-      String description = "IntelliSort: " + logUI.getBekType().getName();
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    e.getPresentation().setEnabled(properties != null);
+    if (properties != null) {
+      String description = "IntelliSort: " + properties.getBekSortType().getName();
       e.getPresentation().setDescription(description);
       e.getPresentation().setText(description);
     }
@@ -73,10 +75,14 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   private static class SelectIntelliSortTypeAction extends ToggleAction implements DumbAware {
     private final PermanentGraph.SortType mySortType;
     private final VcsLogUi myUI;
+    private final VcsLogUiProperties myProperties;
 
-    public SelectIntelliSortTypeAction(VcsLogUi logUi, PermanentGraph.SortType sortType) {
+    public SelectIntelliSortTypeAction(@NotNull VcsLogUi ui,
+                                       @NotNull VcsLogUiProperties properties,
+                                       @NotNull PermanentGraph.SortType sortType) {
       super(sortType.getName(), sortType.getDescription() + ".", null);
-      myUI = logUi;
+      myUI = ui;
+      myProperties = properties;
       mySortType = sortType;
     }
 
@@ -88,13 +94,13 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myUI.getBekType().equals(mySortType);
+      return myProperties.getBekSortType().equals(mySortType);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
-        myUI.setBekType(mySortType);
+        myProperties.setBek(mySortType);
       }
     }
   }

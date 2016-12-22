@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,20 +32,21 @@ public class ShowLongEdgesAction extends ToggleAction implements DumbAware {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    return ui != null && ui.areLongEdgesVisible();
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    return properties != null && properties.areLongEdgesVisible();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui != null) ui.setLongEdgeVisibility(state);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    if (properties != null) properties.setLongEdgesVisibility(state);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabled(ui != null && ui.areGraphActionsEnabled());
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    e.getPresentation().setEnabled(ui != null && ui.areGraphActionsEnabled() && properties != null);
   }
 }

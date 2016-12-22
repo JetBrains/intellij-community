@@ -20,7 +20,9 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import com.intellij.vcs.log.util.BekUtil;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
@@ -35,14 +37,14 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    return logUI != null && !logUI.getBekType().equals(PermanentGraph.SortType.Normal);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    return properties != null && !properties.getBekSortType().equals(PermanentGraph.SortType.Normal);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    logUI.setBekType(state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    properties.setBek(state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
   }
 
   @Override
@@ -50,11 +52,12 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
     super.update(e);
 
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
     e.getPresentation().setVisible(BekUtil.isBekEnabled());
     e.getPresentation().setEnabled(BekUtil.isBekEnabled() && logUI != null);
 
-    if (logUI != null) {
-      boolean off = logUI.getBekType() == PermanentGraph.SortType.Normal;
+    if (properties != null) {
+      boolean off = properties.getBekSortType() == PermanentGraph.SortType.Normal;
       String description = "Turn IntelliSort " + (off ? "on" : "off") + ": " +
                            (off
                             ? PermanentGraph.SortType.Bek.getDescription().toLowerCase()

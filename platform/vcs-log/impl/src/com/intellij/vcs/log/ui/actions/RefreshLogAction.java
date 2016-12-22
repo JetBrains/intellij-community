@@ -23,7 +23,7 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogDataKeys;
+import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
 public class RefreshLogAction extends RefreshAction {
@@ -37,7 +37,7 @@ public class RefreshLogAction extends RefreshAction {
   public void actionPerformed(AnActionEvent e) {
     VcsLogUtil.triggerUsage(e);
 
-    VcsLogManager logManager = e.getRequiredData(VcsLogDataKeys.LOG_MANAGER);
+    VcsLogManager logManager = e.getRequiredData(VcsLogDataKeysInternal.LOG_MANAGER);
 
     // diagnostic for possible refresh problems
     VcsLogUi ui = e.getRequiredData(com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI);
@@ -59,7 +59,7 @@ public class RefreshLogAction extends RefreshAction {
 
   @Override
   public void update(AnActionEvent e) {
-    VcsLogManager logManager = e.getData(VcsLogDataKeys.LOG_MANAGER);
+    VcsLogManager logManager = e.getData(VcsLogDataKeysInternal.LOG_MANAGER);
     e.getPresentation().setEnabledAndVisible(logManager != null && e.getData(com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI) != null);
   }
 }
