@@ -34,7 +34,7 @@ public class EscapeHandler extends EditorActionHandler {
   public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null &&
-        HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY, true, false)) {
+        HintManager.getInstance().hideHints(HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY, true, false)) {
       return;
     }
     myOriginalHandler.execute(editor, caret, dataContext);
@@ -45,7 +45,7 @@ public class EscapeHandler extends EditorActionHandler {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project != null) {
-      HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+      HintManager hintManager = HintManager.getInstance();
       if (hintManager.isEscapeHandlerEnabled()) {
         return true;
       }

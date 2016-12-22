@@ -42,6 +42,8 @@ public abstract class HintManager {
 
   public abstract boolean isHint(Window window);
 
+  public abstract boolean isEscapeHandlerEnabled();
+
   @MagicConstant(intValues = {ABOVE, UNDER, LEFT, RIGHT, RIGHT_UNDER, DEFAULT})
   public @interface PositionFlags {}
 
