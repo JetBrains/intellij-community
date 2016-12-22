@@ -79,7 +79,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     };
 
     if (requestFocus) {
-      projectViewToolWindow.activate(runnable, false);
+      projectViewToolWindow.activate(runnable, true);
     }
     else {
       projectViewToolWindow.show(runnable);
