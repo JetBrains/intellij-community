@@ -294,11 +294,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   @NotNull
-  private DiffContent createBinaryImpl(@Nullable Project project,
-                                       @NotNull byte[] content,
-                                       @NotNull FileType type,
-                                       @NotNull String fileName,
-                                       @Nullable VirtualFile highlightFile) throws IOException {
+  private static DiffContent createBinaryImpl(@Nullable Project project,
+                                              @NotNull byte[] content,
+                                              @NotNull FileType type,
+                                              @NotNull String fileName,
+                                              @Nullable VirtualFile highlightFile) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
     boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.INSTANCE.forFileType(type) != null;
 
@@ -370,10 +370,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       malformedContent = true;
     }
 
-    LineSeparator separator = StringUtil.detectSeparators(text);
-    String correctedContent = StringUtil.convertLineSeparators(text);
-
-    DocumentContent documentContent = createImpl(project, correctedContent, fileType, fileName, highlightFile, charset, isBOM, true, true);
+    DocumentContent documentContent = createImpl(project, text, fileType, fileName, highlightFile, charset, isBOM, true, true);
 
     if (malformedContent) {
       String notificationText = "Content was decoded with errors (using " + "'" + charset.name() + "' charset)";
