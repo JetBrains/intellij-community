@@ -108,7 +108,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final ProfilesComboBox<InspectionProfileImpl> profiles = (ProfilesComboBox<InspectionProfileImpl>)panel.myBrowseProfilesCombo.getComboBox();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
     final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(project);
-    reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -137,8 +136,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         }
       }
     });
-    final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
-    dialog.setOKActionEnabled(profile != null && profile.isExecutable(project));
+    reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     return panel.myAdditionalPanel;
   }
 
