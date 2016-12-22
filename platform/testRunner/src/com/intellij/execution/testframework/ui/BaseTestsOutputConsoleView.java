@@ -107,7 +107,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void setHelpId(final String helpId) {
+  public void setHelpId(@NotNull final String helpId) {
     myConsole.setHelpId(helpId);
   }
 
