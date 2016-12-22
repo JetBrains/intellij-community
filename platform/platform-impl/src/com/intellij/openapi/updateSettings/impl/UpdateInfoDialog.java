@@ -154,19 +154,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
 
     List<ButtonInfo> buttons = myNewBuild.getButtons();
-    if (buttons.isEmpty()) {
-      actions.add(new AbstractAction(IdeBundle.message("updates.more.info.button")) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          openDownloadPage();
-        }
-      });
-    }
-    else {
-      for (ButtonInfo info : buttons) {
-        if (!info.isDownload() || myPatch == null) {
-          actions.add(new ButtonAction(info));
-        }
+    for (ButtonInfo info : buttons) {
+      if (!info.isDownload() || myPatch == null) {
+        actions.add(new ButtonAction(info));
       }
     }
 
@@ -233,8 +223,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void openDownloadPage() {
-    String url = myUpdatedChannel.getHomePageUrl();
-    assert url != null : "channel: " + myUpdatedChannel.getId();
+    String url = myNewBuild.getDownloadUrl();
+    assert !StringUtil.isEmptyOrSpaces(url) : "channel:" + myUpdatedChannel.getId() + " build:" + myNewBuild.getNumber();
     BrowserUtil.browse(augmentUrl(url));
   }
 
@@ -291,7 +281,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (StringUtil.isEmpty(message)) {
         message = IdeBundle.message("updates.new.version.available", fullProductName);
       }
-      final String homePageUrl = myUpdatedChannel.getHomePageUrl();
+      final String homePageUrl = myNewBuild.getDownloadUrl();
       if (!StringUtil.isEmptyOrSpaces(homePageUrl)) {
         final int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
