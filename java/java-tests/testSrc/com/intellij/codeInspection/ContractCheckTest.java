@@ -47,4 +47,5 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testCheckConstructorContracts() { doTest(); }
 
   public void testPassingVarargsToDelegate() { doTest(); }
+  public void testUnknownIfCondition() { doTest(); }
 }
