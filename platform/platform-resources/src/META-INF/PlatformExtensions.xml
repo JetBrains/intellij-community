@@ -362,6 +362,12 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.BuildNumberUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ScaleInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$ConfigImport"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SkipSteps"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SelectedLAF"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SelectedKeymap"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$DisabledPlugins"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>
