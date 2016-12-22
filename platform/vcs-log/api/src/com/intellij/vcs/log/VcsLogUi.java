@@ -34,14 +34,4 @@ public interface VcsLogUi {
   boolean isMultipleRoots();
 
   boolean isHighlighterEnabled(@NotNull String id);
-
-  interface TextFilterSettings {
-    boolean isFilterByRegexEnabled();
-
-    void setFilterByRegexEnabled(boolean enabled);
-
-    boolean isMatchCaseEnabled();
-
-    void setMatchCaseEnabled(boolean enabled);
-  }
 }

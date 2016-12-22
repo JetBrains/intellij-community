@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public interface VcsLogUiProperties {
   void setShowTagNames(boolean showTags);
 
   @NotNull
-  VcsLogUi.TextFilterSettings getTextFilterSettings();
+  TextFilterSettings getTextFilterSettings();
 
   void addChangeListener(@NotNull VcsLogUiPropertiesListener listener);
 
@@ -89,5 +88,15 @@ public interface VcsLogUiProperties {
     void onShowTagNamesChanged();
 
     void onTextFilterSettingsChanged();
+  }
+
+  interface TextFilterSettings {
+    boolean isFilterByRegexEnabled();
+
+    void setFilterByRegexEnabled(boolean enabled);
+
+    boolean isMatchCaseEnabled();
+
+    void setMatchCaseEnabled(boolean enabled);
   }
 }

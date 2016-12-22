@@ -17,7 +17,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +197,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   @NotNull
-  public VcsLogUi.TextFilterSettings getTextFilterSettings() {
+  public TextFilterSettings getTextFilterSettings() {
     if (getState().TEXT_FILTER_SETTINGS == null) getState().TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
     return new DelegatingTextFilterSetting(getState().TEXT_FILTER_SETTINGS);
   }
@@ -221,7 +220,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
   }
 
-  public static class TextFilterSettingsImpl implements VcsLogUi.TextFilterSettings {
+  public static class TextFilterSettingsImpl implements TextFilterSettings {
     public boolean REGEX = false;
     public boolean MATCH_CASE = false;
 
@@ -256,10 +255,10 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   // I know that in some languages this class would be twice as short
-  private class DelegatingTextFilterSetting implements VcsLogUi.TextFilterSettings {
-    private final VcsLogUi.TextFilterSettings mySettings;
+  private class DelegatingTextFilterSetting implements TextFilterSettings {
+    private final TextFilterSettings mySettings;
 
-    private DelegatingTextFilterSetting(@NotNull VcsLogUi.TextFilterSettings settings) {
+    private DelegatingTextFilterSetting(@NotNull TextFilterSettings settings) {
       mySettings = settings;
     }
 
