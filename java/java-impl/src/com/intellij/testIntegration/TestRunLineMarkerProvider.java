@@ -27,6 +27,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
       if (element instanceof PsiClass) {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
-          String url = "java:suite://" + ((PsiClass)element).getQualifiedName();
+          String url = "java:suite://" + ClassUtil.getJVMClassName((PsiClass)element);
           return getInfo(url, e.getProject(), true);
         }
       }
@@ -54,7 +55,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         if (psiClass != null) {
           TestFramework framework = TestFrameworks.detectFramework(psiClass);
           if (framework != null && framework.isTestMethod(element)) {
-            String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
+            String url = "java:test://" + ClassUtil.getJVMClassName(psiClass) + "." + ((PsiMethod)element).getName();
             return getInfo(url, e.getProject(), false);
           }
         }
