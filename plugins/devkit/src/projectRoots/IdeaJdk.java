@@ -379,6 +379,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
     boolean isUltimate = vfsManager.findFileByUrl(VfsUtilCore.pathToUrl(sdkHome + "/ultimate/ultimate-resources")) != null;
     Set<String> suppressedModules = ContainerUtil.newTroveSet("jps-plugin-system");
+    Set<String> ultimateModules = ContainerUtil.newTroveSet(
+      "platform-ultimate", "ultimate-resources", "ultimate-verifier",
+      "diagram-api", "diagram-impl", "uml-plugin");
     List<JpsModule> modules = JBIterable.from(model.getProject().getModules())
       .filter(o -> {
         if (suppressedModules.contains(o.getName())) return false;
@@ -386,7 +389,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         String contentUrl = ContainerUtil.getFirstItem(o.getContentRootsList().getUrls());
         if (contentUrl == null) return true;
         // add only community modules/plugins to avoid EP duplicates & minor IDE conflicts
-        return !isUltimate || contentUrl.contains("/community/");
+        return !isUltimate || contentUrl.contains("/community/") || ultimateModules.contains(o.getName());
       })
       .toList();
     indicator.setIndeterminate(false);
