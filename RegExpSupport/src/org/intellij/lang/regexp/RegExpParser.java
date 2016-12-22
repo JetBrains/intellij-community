@@ -368,7 +368,6 @@ public class RegExpParser implements PsiParser {
       }
     }
     else if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
-      builder.error("Illegal/unsupported escape sequence");
       builder.advanceLexer();
       marker.done(RegExpElementTypes.CHAR);
     }

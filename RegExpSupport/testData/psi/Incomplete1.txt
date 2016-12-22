@@ -8,6 +8,4 @@ REGEXP_FILE
       RegExpCharImpl: <c>
         PsiElement(CHARACTER)('c')
       RegExpCharImpl: <\>
-        PsiErrorElement:Illegal/unsupported escape sequence
-          <empty list>
         PsiElement(INVALID_CHARACTER_ESCAPE_TOKEN)('\')

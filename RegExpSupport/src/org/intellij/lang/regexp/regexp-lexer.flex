@@ -123,7 +123,7 @@ META2= {DOT} | "$" | "?" | "*" | "+" | "|" | {LBRACE} | {LPAREN} | {RPAREN}
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G"
 
-CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X" | "R"
+CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X"
 XML_CLASS="c" | "C" | "i" | "I"
 PROP="p" | "P"
 TRANSFORMATION= "l" | "L" | "U" | "E"
@@ -152,9 +152,9 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} "u" {HEX_CHAR}{1,3} { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 
 /* octal escapes */
-{ESCAPE} "0" [0-7][0-7]?     { return RegExpTT.OCT_CHAR; }
+{ESCAPE} "0" [0-7]{1,2}      { return RegExpTT.OCT_CHAR; }
 /* no more than decimal 255 */
-{ESCAPE} "0" [0-3][0-7][0-7] { if (allowOctalNoLeadingZero) yypushback(1); return RegExpTT.OCT_CHAR; }
+{ESCAPE} "0" [0-3][0-7]{2}   { if (allowOctalNoLeadingZero) yypushback(1); return RegExpTT.OCT_CHAR; }
 {ESCAPE} "0"                 { return (allowOctalNoLeadingZero ? RegExpTT.OCT_CHAR : RegExpTT.BAD_OCT_VALUE); }
 
 /* single character after "\c" */
@@ -212,28 +212,30 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {META2}             { return (yystate() == CLASS2) ? RegExpTT.REDUNDANT_ESCAPE : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CLASS}             { return RegExpTT.CHAR_CLASS;    }
-{ESCAPE}  "R"                 { return RegExpTT.CHAR_CLASS;    }
 {ESCAPE}  {PROP}              { yypushstate(PROP); return RegExpTT.PROPERTY;      }
-
-{ESCAPE}  {BOUNDARY}          { return yystate() != CLASS2 ? RegExpTT.BOUNDARY : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CONTROL}           { return RegExpTT.ESC_CTRL_CHARACTER; }
 
-{ESCAPE} [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
-{ESCAPE} "N"                  { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER; }
-{ESCAPE} "k<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF; }
-{ESCAPE} "k'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
-{ESCAPE} "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL; }
-{ESCAPE} "g'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL; }
-{ESCAPE} {TRANSFORMATION}     { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
-{ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE}  [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
+{ESCAPE}  "N"                  { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER; }
+{ESCAPE}  {TRANSFORMATION}     { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
 <CLASS2> {
-  {ESCAPE} {RBRACKET}         { return RegExpTT.ESC_CHARACTER; }
+  {ESCAPE}  {RBRACKET}        { return RegExpTT.ESC_CHARACTER; }
+  {ESCAPE}  "b"               { return RegExpTT.ESC_CTRL_CHARACTER; } /* = backspace inside character class under python, ruby, javascript */
 }
 
-{ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
+<YYINITIAL> {
+  {ESCAPE}  "k<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF; }
+  {ESCAPE}  "k'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
+  {ESCAPE}  "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL; }
+  {ESCAPE}  "g'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL; }
+  {ESCAPE}  "R"                  { return RegExpTT.CHAR_CLASS; }
+  {ESCAPE}  {BOUNDARY}          { return RegExpTT.BOUNDARY; }
+}
 
+{ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
 
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 

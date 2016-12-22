@@ -121,6 +121,22 @@
       <pattern><![CDATA[<weak_warning descr="Redundant character escape">\]</weak_warning><weak_warning descr="Redundant character escape">\}</weak_warning>]]></pattern>
       <expected>OK</expected>
     </test>
+    <test verify="false">
+      <pattern><![CDATA[<error descr="Illegal/unsupported escape sequence">\q</error>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false">
+      <pattern>a<![CDATA[<error descr="Illegal/unsupported escape sequence">\</error>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false">
+      <pattern><![CDATA[<error descr="Illegal/unsupported escape sequence">\E</error>]]]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\x08</pattern><!-- backspace character -->
+      <expected>OK</expected>
+    </test>
   </escapes>
 
   <namedchars>

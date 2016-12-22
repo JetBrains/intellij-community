@@ -4,6 +4,4 @@ REGEXP_FILE
       RegExpCharImpl: <a>
         PsiElement(CHARACTER)('a')
       RegExpCharImpl: <\>
-        PsiErrorElement:Illegal/unsupported escape sequence
-          <empty list>
         PsiElement(INVALID_CHARACTER_ESCAPE_TOKEN)('\')

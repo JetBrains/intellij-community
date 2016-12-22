@@ -345,6 +345,52 @@ public class RegExpLexerTest extends LexerTestCase {
                   "CLASS_END (']')", lexer);
   }
 
+  public void testBoundaries() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\b\\b{g}\\B\\A\\z\\Z\\G[\\b\\b{g}\\B\\A\\z\\Z\\G]", "BOUNDARY ('\\b')\n" +
+                                                                 "BOUNDARY ('\\b{g}')\n" +
+                                                                 "BOUNDARY ('\\B')\n" +
+                                                                 "BOUNDARY ('\\A')\n" +
+                                                                 "BOUNDARY ('\\z')\n" +
+                                                                 "BOUNDARY ('\\Z')\n" +
+                                                                 "BOUNDARY ('\\G')\n" +
+                                                                 "CLASS_BEGIN ('[')\n" +
+                                                                 "ESC_CTRL_CHARACTER ('\\b')\n" +
+                                                                 "ESC_CTRL_CHARACTER ('\\b')\n" +
+                                                                 "CHARACTER ('{')\n" +
+                                                                 "CHARACTER ('g')\n" +
+                                                                 "CHARACTER ('}')\n" +
+                                                                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\B')\n" +
+                                                                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\A')\n" +
+                                                                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\z')\n" +
+                                                                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\Z')\n" +
+                                                                 "INVALID_CHARACTER_ESCAPE_TOKEN ('\\G')\n" +
+                                                                 "CLASS_END (']')", lexer);
+  }
+
+  public void testEscapesInsideCharClass() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("[\\k<a> (?<t>t)\\g'q'\\R]", "CLASS_BEGIN ('[')\n" +
+                                        "INVALID_CHARACTER_ESCAPE_TOKEN ('\\k')\n" +
+                                        "CHARACTER ('<')\n" +
+                                        "CHARACTER ('a')\n" +
+                                        "CHARACTER ('>')\n" +
+                                        "CHARACTER (' ')\n" +
+                                        "CHARACTER ('(')\n" +
+                                        "CHARACTER ('?')\n" +
+                                        "CHARACTER ('<')\n" +
+                                        "CHARACTER ('t')\n" +
+                                        "CHARACTER ('>')\n" +
+                                        "CHARACTER ('t')\n" +
+                                        "CHARACTER (')')\n" +
+                                        "INVALID_CHARACTER_ESCAPE_TOKEN ('\\g')\n" +
+                                        "CHARACTER (''')\n" +
+                                        "CHARACTER ('q')\n" +
+                                        "CHARACTER (''')\n" +
+                                        "INVALID_CHARACTER_ESCAPE_TOKEN ('\\R')\n" +
+                                        "CLASS_END (']')", lexer);
+  }
+
   @Override
   protected Lexer createLexer() {
     return null;

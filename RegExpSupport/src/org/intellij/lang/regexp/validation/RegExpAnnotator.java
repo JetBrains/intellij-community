@@ -24,6 +24,8 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
@@ -181,40 +183,44 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpChar(final RegExpChar ch) {
-    final Character value = ch.getValue();
-    if (value == null || (value == '\b' && !myLanguageHosts.supportsLiteralBackspace(ch))) {
-      switch (ch.getType()) {
-        case CHAR:
-          myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
-          break;
-        case HEX:
-          myHolder.createErrorAnnotation(ch, "Illegal hexadecimal escape sequence");
-          break;
-        case OCT:
-          myHolder.createErrorAnnotation(ch, "Illegal octal escape sequence");
-          break;
-        case UNICODE:
-          myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
-          break;
-        case INVALID:
-          // produces a parser error. already handled by IDEA and possibly suppressed by IntelliLang
-          break;
+    final PsiElement child = ch.getFirstChild();
+    IElementType type = child.getNode().getElementType();
+    if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
+      myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
+      return;
+    }
+    else if (type == RegExpTT.BAD_HEX_VALUE) {
+      myHolder.createErrorAnnotation(ch, "Illegal hexadecimal escape sequence");
+      return;
+    }
+    else if (type == RegExpTT.BAD_OCT_VALUE) {
+      myHolder.createErrorAnnotation(ch, "Illegal octal escape sequence");
+      return;
+    }
+    else if (type == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN) {
+      myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
+      return;
+    }
+    final String text = ch.getUnescapedText();
+    if (type == RegExpTT.ESC_CTRL_CHARACTER && text.equals("\\b") && !myLanguageHosts.supportsLiteralBackspace(ch)) {
+      myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
+    }
+    if (text.startsWith("\\") && myLanguageHosts.isRedundantEscape(ch, text)) {
+      final ASTNode astNode = ch.getNode().getFirstChildNode();
+      if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
+        final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
+        registerFix(a, new RemoveRedundantEscapeAction(ch));
       }
     }
-    else {
-      final String text = ch.getUnescapedText();
-      if (text.startsWith("\\") && myLanguageHosts.isRedundantEscape(ch, text)) {
-        final ASTNode astNode = ch.getNode().getFirstChildNode();
-        if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
-          final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
-          registerFix(a, new RemoveRedundantEscapeAction(ch));
-        }
+    final RegExpChar.Type charType = ch.getType();
+    if (charType == RegExpChar.Type.HEX || charType == RegExpChar.Type.UNICODE) {
+      if (ch.getValue() == null) {
+        myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
+        return;
       }
-      if (ch.getType() == RegExpChar.Type.HEX) {
-        if (text.charAt(text.length() - 1) == '}') {
-          if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
-            myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
-          }
+      if (text.charAt(text.length() - 1) == '}') {
+        if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
+          myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
         }
       }
     }
