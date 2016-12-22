@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,12 @@ public class JetgroovyIcons {
   
   public static class Groovy {
     public static final Icon AbstractClass = load("/icons/groovy/abstractClass.png"); // 16x16
+    public static final Icon AbstractField = load("/icons/groovy/abstractField.png"); // 16x16
+    public static final Icon AbstractMethod = load("/icons/groovy/abstractMethod.png"); // 16x16
+    public static final Icon AbstractProperty = load("/icons/groovy/abstractProperty.png"); // 16x16
     public static final Icon AnnotationType = load("/icons/groovy/annotationType.png"); // 16x16
     public static final Icon Ant_task = load("/icons/groovy/ant_task.png"); // 16x16
     public static final Icon Class = load("/icons/groovy/class.png"); // 16x16
-    public static final Icon Def = load("/icons/groovy/def.png"); // 16x16
     public static final Icon DynamicProperty = load("/icons/groovy/dynamicProperty.png"); // 16x16
     public static final Icon DynamicProperty_13 = load("/icons/groovy/dynamicProperty_13.png"); // 13x13
     public static final Icon Enum = load("/icons/groovy/enum.png"); // 16x16
