@@ -655,6 +655,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
 
     ourProject = null;
+    assertTrue(ourModule.isDisposed());
+    ourModule = null;
+    assertTrue(ourPsiManager.isDisposed());
+    ourPsiManager = null;
     ourPathToKeep = null;
   }
 

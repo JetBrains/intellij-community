@@ -138,7 +138,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   public static int TEST_PROJECTS_CREATED;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = true;
-  private static final int MAX_LEAKY_PROJECTS = 42;
+  private static final int MAX_LEAKY_PROJECTS = 5;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Nullable
