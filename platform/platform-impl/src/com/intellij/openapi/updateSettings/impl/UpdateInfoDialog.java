@@ -277,16 +277,17 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 
       String message = myNewBuild.getMessage();
-      final String fullProductName = appNames.getFullProductName();
+      String fullProductName = appNames.getFullProductName();
       if (StringUtil.isEmpty(message)) {
         message = IdeBundle.message("updates.new.version.available", fullProductName);
       }
-      final String homePageUrl = myNewBuild.getDownloadUrl();
-      if (!StringUtil.isEmptyOrSpaces(homePageUrl)) {
-        final int idx = message.indexOf(fullProductName);
+      String url = myNewBuild.getDownloadUrl();
+      if (!StringUtil.isEmptyOrSpaces(url)) {
+        int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
           message = message.substring(0, idx) +
-                    "<a href=\'" + augmentUrl(homePageUrl) + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
+                    "<a href=\'" + augmentUrl(url) + "\'>" + fullProductName + "</a>" +
+                    message.substring(idx + fullProductName.length());
         }
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
