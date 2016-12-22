@@ -17,7 +17,8 @@ SYSTEM_PATH = u'$SYSTEM_PATH$'
 def print_usage(cmd):
     print(('Usage:\n' +
            '  {0} -h | -? | --help\n' +
-           '  {0} [-l|--line line] file[:line]\n' +
+           '  {0} [project_dir]\n' +
+           '  {0} [-l|--line line] [project_dir] file[:line]\n' +
            '  {0} diff <left> <right>\n' +
            '  {0} merge <local> <remote> [base] <merged>').format(cmd))
 
