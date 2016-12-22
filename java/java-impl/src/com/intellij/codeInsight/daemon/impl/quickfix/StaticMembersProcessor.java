@@ -16,12 +16,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -65,62 +65,9 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   }
 
   private PsiType getExpectedTypeInternal() {
-    if (myPlace == null) return null;
-    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(myPlace.getParent());
-
-    if (parent instanceof PsiVariable) {
-      if (myPlace.equals(PsiUtil.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
-        return ((PsiVariable)parent).getType();
-      }
-    }
-    else if (parent instanceof PsiAssignmentExpression) {
-      if (myPlace.equals(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
-        return ((PsiAssignmentExpression)parent).getLExpression().getType();
-      }
-    }
-    else if (parent instanceof PsiBinaryExpression && JavaTokenType.EQEQ.equals(((PsiBinaryExpression)parent).getOperationTokenType())) {
-      if (myPlace.equals(PsiUtil.skipParenthesizedExprDown(((PsiBinaryExpression)parent).getROperand()))) {
-        return ((PsiBinaryExpression)parent).getLOperand().getType();
-      }
-      if (myPlace.equals(PsiUtil.skipParenthesizedExprDown(((PsiBinaryExpression)parent).getLOperand()))) {
-        PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
-        if (rOperand != null) {
-          return rOperand.getType();
-        }
-      }
-    }
-    else if (parent instanceof PsiReturnStatement) {
-      return PsiTypesUtil.getMethodReturnType(parent);
-    }
-    else if (parent instanceof PsiExpressionList) {
-      final PsiElement pParent = parent.getParent();
-      if (pParent instanceof PsiCallExpression && parent.equals(((PsiCallExpression)pParent).getArgumentList())) {
-        final JavaResolveResult resolveResult = ((PsiCallExpression)pParent).resolveMethodGenerics();
-        final PsiElement psiElement = resolveResult.getElement();
-        if (psiElement instanceof PsiMethod) {
-          final PsiMethod psiMethod = (PsiMethod)psiElement;
-          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          final int idx = ArrayUtilRt.find(((PsiExpressionList)parent).getExpressions(), PsiUtil.skipParenthesizedExprUp(myPlace));
-          if (idx > -1 && parameters.length > 0) {
-            PsiType parameterType = parameters[Math.min(idx, parameters.length - 1)].getType();
-            if (idx >= parameters.length - 1) {
-              final PsiParameter lastParameter = parameters[parameters.length - 1];
-              if (lastParameter.isVarArgs()) {
-                parameterType = ((PsiEllipsisType)lastParameter.getType()).getComponentType();
-              }
-            }
-            return resolveResult.getSubstitutor().substitute(parameterType);
-          }
-          else {
-            return null;
-          }
-        }
-      }
-    }
-    else if (parent instanceof PsiLambdaExpression) {
-      return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
-    }
-    return null;
+    if (!(myPlace instanceof PsiExpression)) return null;
+    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes((PsiExpression)myPlace, false);
+    return types.length > 0 ? types[0].getType() : null;
   }
 
   @Override

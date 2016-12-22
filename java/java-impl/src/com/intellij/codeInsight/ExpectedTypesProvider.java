@@ -1049,7 +1049,7 @@ public class ExpectedTypesProvider {
                                                      @NotNull final Set<ExpectedTypeInfo> array) {
       LOG.assertTrue(substitutor.isValid());
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (!forCompletion && parameters.length != args.length) return;
+      if (!forCompletion && parameters.length != args.length && !method.isVarArgs()) return;
       if (parameters.length <= index && !method.isVarArgs()) return;
 
       for (int j = 0; j < index; j++) {
