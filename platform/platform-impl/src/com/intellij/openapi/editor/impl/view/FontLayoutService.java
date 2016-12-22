@@ -20,8 +20,7 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import sun.font.FontStrike;
-import sun.font.FontUtilities;
+import sun.font.FontDesignMetrics;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -65,12 +64,12 @@ public abstract class FontLayoutService {
     // this flag is supported by JetBrains Runtime
     private static final int LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT = 8;
 
-    private final Method getCodePointAdvanceMethod;
+    private final Method myHandleCharWidthMethod;
 
     private DefaultFontLayoutService() {
-      getCodePointAdvanceMethod = ReflectionUtil.getDeclaredMethod(FontStrike.class, "getCodePointAdvance", int.class);
-      if (getCodePointAdvanceMethod == null) {
-        LOG.warn("Couldn't access FontStrike.getCodePointAdvance method");
+      myHandleCharWidthMethod = ReflectionUtil.getDeclaredMethod(FontDesignMetrics.class, "handleCharWidth", int.class);
+      if (myHandleCharWidthMethod == null) {
+        LOG.warn("Couldn't access FontDesignMetrics.handleCharWidth method");
       }
     }
 
@@ -94,11 +93,9 @@ public abstract class FontLayoutService {
 
     @Override
     public float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint) {
-      if (getCodePointAdvanceMethod != null) {
-        Font font = fontMetrics.getFont();
-        FontStrike fs = FontUtilities.getFont2D(font).getStrike(font, fontMetrics.getFontRenderContext());
+      if (myHandleCharWidthMethod != null && fontMetrics instanceof FontDesignMetrics) {
         try {
-          return (float)getCodePointAdvanceMethod.invoke(fs, codePoint);
+          return (float)myHandleCharWidthMethod.invoke(fontMetrics, codePoint);
         }
         catch (Exception e) {
           LOG.debug(e);
