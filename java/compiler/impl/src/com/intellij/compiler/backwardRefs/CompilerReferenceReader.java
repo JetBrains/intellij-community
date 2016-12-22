@@ -157,7 +157,7 @@ class CompilerReferenceReader {
             //diagnostic
             String baseHierarchyElement = getNameEnumerator().getName(hierarchyElement.getName());
             String curHierarchyElement = getNameEnumerator().getName(curClass.getName());
-            LOG.error("Can't get definition files for :" + curHierarchyElement + " base class: " + baseHierarchyElement);
+            LOG.error("Can't get definition files for: " + curHierarchyElement + " base class: " + baseHierarchyElement);
           }
           if (count != DefCount.ONE) {
             return null;
