@@ -27,10 +27,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
 import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
@@ -200,6 +197,8 @@ class XmlMover extends LineMover {
     }
 
     LineRange targetRange = new LineRange(target);
+    targetRange = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(target.getNode()) == null ?
+                  new LineRange(targetRange.startLine, targetRange.endLine - 1) : targetRange;
     if (targetRange.contains(info.toMove2)) {
       // we are going to jump into sibling tag
       XmlElementDescriptor descriptor = moved.getDescriptor();
