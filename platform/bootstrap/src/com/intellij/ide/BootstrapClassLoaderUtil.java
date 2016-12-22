@@ -52,16 +52,19 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     PathManager.loadProperties();
 
     Collection<URL> classpath = new LinkedHashSet<URL>();
-    //addParentClasspath(classpath, false);
+    if (parent == null) {
+      addParentClasspath(classpath, false);
+    }
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
-    //addParentClasspath(classpath, true);
+    if (parent == null) {
+      addParentClasspath(classpath, true);
+    }
     for (String s : cp) {
       classpath.add(new File(s).toURI().toURL());
     }
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
-      .parent(new URLClassLoader(new URL[]{}))
       .fallback(parent)
       .urls(filterClassPath(new ArrayList<URL>(classpath)))
       .allowLock()
