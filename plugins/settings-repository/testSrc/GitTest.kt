@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
 import com.intellij.util.PathUtilRt
+import com.intellij.util.io.delete
 import com.intellij.util.io.writeChild
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
@@ -35,11 +36,8 @@ import org.junit.Test
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-// kotlin bug, cannot be val (.NoSuchMethodError: org.jetbrains.settingsRepository.SettingsRepositoryPackage.getMARKER_ACCEPT_MY()[B)
-internal object AM {
-  val MARKER_ACCEPT_MY: ByteArray = "__accept my__".toByteArray()
-  val MARKER_ACCEPT_THEIRS: ByteArray = "__accept theirs__".toByteArray()
-}
+val MARKER_ACCEPT_MY = "__accept my__".toByteArray()
+val MARKER_ACCEPT_THEIRS = "__accept theirs__".toByteArray()
 
 internal class GitTest : GitTestCase() {
   init {
@@ -47,13 +45,13 @@ internal class GitTest : GitTestCase() {
       val mergeSession = mergeProvider.createMergeSession(files)
       for (file in files) {
         val mergeData = mergeProvider.loadRevisions(file)
-        if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_THEIRS)) {
+        if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_THEIRS)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
         }
-        else if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
+        else if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
-        else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
+        else if (Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
           file.setBinaryContent(mergeData.LAST)
           mergeProvider.conflictResolvedForFile(file)
         }
@@ -193,7 +191,7 @@ internal class GitTest : GitTestCase() {
   @Test fun `merge - resolve conflicts to my`() {
     createLocalAndRemoteRepositories()
 
-    val data = AM.MARKER_ACCEPT_MY
+    val data = MARKER_ACCEPT_MY
     provider.write(SAMPLE_FILE_NAME, data)
 
     sync(SyncType.MERGE)
@@ -207,7 +205,7 @@ internal class GitTest : GitTestCase() {
 
     sync(SyncType.MERGE)
 
-    val data = AM.MARKER_ACCEPT_THEIRS
+    val data = MARKER_ACCEPT_THEIRS
     provider.write(SAMPLE_FILE_NAME, data)
     repositoryManager.commit()
 
@@ -227,7 +225,7 @@ internal class GitTest : GitTestCase() {
     provider.delete(SAMPLE_FILE_NAME)
     repositoryManager.commit()
 
-    remoteRepository.writePath(SAMPLE_FILE_NAME, AM.MARKER_ACCEPT_THEIRS)
+    remoteRepository.writePath(SAMPLE_FILE_NAME, MARKER_ACCEPT_THEIRS)
     remoteRepository.commit("")
 
     sync(SyncType.MERGE)
@@ -271,6 +269,36 @@ internal class GitTest : GitTestCase() {
 
   @Test fun `overwrite local - uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_LOCAL)
+  }
+
+  @Test fun `remove deleted files`() {
+    createLocalAndRemoteRepositories()
+
+    val workDir = repositoryManager.repository.workTree.toPath()
+    provider.write("foo.xml", SAMPLE_FILE_CONTENT)
+    sync(SyncType.MERGE)
+
+    var diff = repository.computeIndexDiff()
+    assertThat(diff.diff()).isFalse()
+
+    val file = workDir.resolve("foo.xml")
+    assertThat(file).isRegularFile()
+    file.delete()
+
+    diff = repository.computeIndexDiff()
+    assertThat(diff.diff()).isTrue()
+    assertThat(diff.added).isEmpty()
+    assertThat(diff.changed).isEmpty()
+    assertThat(diff.removed).isEmpty()
+    assertThat(diff.modified).isEmpty()
+    assertThat(diff.untracked).isEmpty()
+    assertThat(diff.untrackedFolders).isEmpty()
+    assertThat(diff.missing).containsOnly("foo.xml")
+
+    sync(SyncType.MERGE)
+
+    diff = repository.computeIndexDiff()
+    assertThat(diff.diff()).isFalse()
   }
 
   @Test fun gitignore() {
