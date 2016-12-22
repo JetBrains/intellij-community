@@ -68,7 +68,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }
 
-  val readOnlySourcesManager = ReadOnlySourcesManager(settings, dir)
+  val readOnlySourcesManager = ReadOnlySourceManager(settings, dir)
 
   val repositoryService: RepositoryService = GitRepositoryService()
 

@@ -26,7 +26,7 @@ import org.jetbrains.settingsRepository.git.Pull
 import org.jetbrains.settingsRepository.git.upstream
 import java.nio.file.Path
 
-class ReadOnlySourcesManager(private val settings: IcsSettings, val rootDir: Path) {
+class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path) {
   private var _repositories: List<Repository>? = null
 
   val repositories: List<Repository>
