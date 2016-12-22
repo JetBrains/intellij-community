@@ -104,13 +104,31 @@ public class GraphicsUtil {
     return config;
   }
 
-  /* Invoking getGraphics() on any component disables true double buffering
-     withing JRootPane, even if no subsequent drawing is actually performed.
-
-     This matters only if we use the default RepaintManager and swing.bufferPerWindow = true.
-
-     True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
-     frame buffer content without the usual repainting, even when the EDT is blocked. */
+  /**
+   * Invoking {@link Component#getGraphics()} disables true double buffering withing {@link JRootPane},
+   * even if no subsequent drawing is actually performed.
+   * <p>
+   * This matters only if we use the default {@link RepaintManager} and {@code swing.bufferPerWindow = true}.
+   * <p>
+   * True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+   * frame buffer content without the usual repainting, even when the EDT is blocked.
+   * <p>
+   * As a rule of thumb, you should never invoke neither {@link Component#getGraphics()}
+   * nor {@link GraphicsUtil#safelyGetGraphics(Component)} unless you really need to perform some drawing.
+   * <p>
+   * Under the hood, "getGraphics" is actually "createGraphics" - it creates a new object instance and allocates native resources,
+   * that should be subsequently released by calling {@link Graphics#dispose()} (called from {@link Graphics#finalize()},
+   * but there's no need to retain resources unnecessarily).
+   * <p>
+   * If you need {@link GraphicsConfiguration}, rely on {@link Component#getGraphicsConfiguration()},
+   * instead of {@link Graphics2D#getDeviceConfiguration()}.
+   * <p>
+   * If you absolutely have to acquire an instance of {@link Graphics}, do that via {@link GraphicsUtil#safelyGetGraphics(Component)}
+   * and don't forget to invoke {@link Graphics#dispose()} afterwards.
+   *
+   * @see JRootPane#disableTrueDoubleBuffering()
+   * @see JBViewport#isTrueDoubleBufferingAvailableFor(JComponent)
+   */
   public static Graphics safelyGetGraphics(Component c) {
     return SystemProperties.isTrueSmoothScrollingEnabled() && ourSafelyGetGraphicsMethod.isAvailable()
            ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c)
