@@ -18,6 +18,7 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,14 +38,12 @@ class ForEachMigration extends BaseStreamApiMigration {
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    StringBuilder buffer = generateStream(tb.getLastOperation(), true);
+    String stream = tb.generate(true)+"."+getReplacement()+"(";
     PsiElement block = tb.convertToElement(elementFactory);
-
-    buffer.append(".").append(getReplacement()).append("(");
 
     final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(block);
     PsiExpressionStatement callStatement = (PsiExpressionStatement)elementFactory
-      .createStatementFromText(buffer.toString() + functionalExpressionText + ");", loopStatement);
+      .createStatementFromText(stream + functionalExpressionText + ");", loopStatement);
     callStatement = (PsiExpressionStatement)loopStatement.replace(callStatement);
 
     final PsiExpressionList argumentList = ((PsiCallExpression)callStatement.getExpression()).getArgumentList();
@@ -56,11 +55,12 @@ class ForEachMigration extends BaseStreamApiMigration {
         ((PsiFunctionalExpression)expressions[0]).getFunctionalInterfaceType() == null) {
       callStatement =
         (PsiExpressionStatement)callStatement.replace(elementFactory.createStatementFromText(
-          buffer.toString() + "(" + tb.getVariable().getText() + ") -> " + wrapInBlock(block) + ");", callStatement));
+          stream + "(" + tb.getVariable().getText() + ") -> " + wrapInBlock(block) + ");", callStatement));
     }
     return callStatement;
   }
 
+  @Contract("null -> !null")
   private static String wrapInBlock(PsiElement block) {
     if (block instanceof PsiExpressionStatement) {
       return ((PsiExpressionStatement)block).getExpression().getText();

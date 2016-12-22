@@ -82,7 +82,7 @@ class CollectMigration extends BaseStreamApiMigration {
       }
     }
 
-    StringBuilder builder = generateStream(new MapOp(tb.getLastOperation(), itemToAdd, tb.getVariable(), addedType));
+    StringBuilder builder = new StringBuilder(tb.add(new MapOp(itemToAdd, tb.getVariable(), addedType)).generate());
 
     if (variable != null) {
       InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(variable, loopStatement);
@@ -143,7 +143,7 @@ class CollectMigration extends BaseStreamApiMigration {
       downstreamCollector = CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".mapping(" +
                             tb.getVariable().getName() + "->" + itemToAdd.getText() + "," + downstreamCollector + ")";
     }
-    StringBuilder builder = generateStream(tb.getLastOperation());
+    StringBuilder builder = new StringBuilder(tb.generate());
     builder.append(".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".groupingBy(")
       .append(LambdaUtil.createLambda(tb.getVariable(), computeArgs[0]));
     PsiExpression initializer = variable.getInitializer();
@@ -212,7 +212,7 @@ class CollectMigration extends BaseStreamApiMigration {
       collector.append(",()->").append(initializer.getText());
     }
     collector.append(")");
-    String callText = generateStream(tb.getLastOperation()).append(".collect(").append(collector).append(")").toString();
+    String callText = tb.generate() + ".collect(" + collector + ")";
     return replaceInitializer(loopStatement, variable, initializer, callText, status);
   }
 

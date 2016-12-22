@@ -48,8 +48,7 @@ class SumMigration extends BaseStreamApiMigration {
       addend = JavaPsiFacade.getElementFactory(project).createExpressionFromText(
         "(" + type.getCanonicalText() + ")" + ParenthesesUtils.getText(addend, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE), addend);
     }
-    StringBuilder builder = generateStream(new MapOp(tb.getLastOperation(), addend, tb.getVariable(), type));
-    builder.append(".sum()");
-    return replaceWithNumericAddition(tb.getMainLoop(), var, builder, type);
+    String stream = tb.add(new MapOp(addend, tb.getVariable(), type)).generate()+".sum()";
+    return replaceWithNumericAddition(tb.getMainLoop(), var, stream, type);
   }
 }

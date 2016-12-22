@@ -22,19 +22,17 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.IntArrayList;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
-import one.util.streamex.MoreCollectors;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
@@ -47,12 +45,14 @@ import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInsp
 class TerminalBlock {
   private static final Logger LOG = Logger.getInstance(TerminalBlock.class);
 
-  private final @NotNull Operation myPreviousOp;
   private final @NotNull PsiVariable myVariable;
+  private final @NotNull Operation[] myOperations;
   private final @NotNull PsiStatement[] myStatements;
 
-  // At least one previous operation is present (stream source)
-  private TerminalBlock(@NotNull Operation previousOp, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
+  private TerminalBlock(@NotNull Operation[] operations, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
+    // At least one operation is present (stream source)
+    LOG.assertTrue(operations.length > 0);
+    for(Operation operation : operations) Objects.requireNonNull(operation);
     for(PsiStatement statement : statements) Objects.requireNonNull(statement);
     myVariable = variable;
     while(true) {
@@ -63,7 +63,15 @@ class TerminalBlock {
       } else break;
     }
     myStatements = statements;
-    myPreviousOp = previousOp;
+    myOperations = operations;
+  }
+
+  private TerminalBlock(@Nullable TerminalBlock previousBlock,
+                        @NotNull Operation operation,
+                        @NotNull PsiVariable variable,
+                        @NotNull PsiStatement... statements) {
+    this(previousBlock == null ? new Operation[]{operation} : ArrayUtil.append(previousBlock.myOperations, operation), variable,
+         statements);
   }
 
   Collection<PsiStatement> findExitPoints(ControlFlow controlFlow) {
@@ -89,8 +97,7 @@ class TerminalBlock {
     PsiStatement statement = getSingleStatement();
     if(statement instanceof PsiExpressionStatement) {
       PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-      if(wantedType.isInstance(expression))
-        return wantedType.cast(expression);
+      return ObjectUtils.tryCast(expression, wantedType);
     }
     return null;
   }
@@ -110,7 +117,7 @@ class TerminalBlock {
       if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
         if(thenBranch != null) {
-          return new TerminalBlock(new FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
+          return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
         }
       }
     }
@@ -134,7 +141,7 @@ class TerminalBlock {
         } else {
           statements = Arrays.copyOfRange(myStatements, 1, myStatements.length);
         }
-        return new TerminalBlock(new FilterOp(myPreviousOp, ifStatement.getCondition(), myVariable, true), myVariable, statements);
+        return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, true), myVariable, statements);
       }
     }
     return null;
@@ -160,8 +167,8 @@ class TerminalBlock {
       // otherwise it would be necessary to create bogus step like
       // .mapToObj(var -> collection.stream()).flatMap(Function.identity())
       if(myVariable.getType() instanceof PsiPrimitiveType && !myVariable.getType().equals(source.getVariable().getType())) return null;
-      FlatMapOp op = new FlatMapOp(myPreviousOp, source, myVariable);
-      TerminalBlock withFlatMap = new TerminalBlock(op, source.getVariable(), body);
+      FlatMapOp op = new FlatMapOp(source, myVariable);
+      TerminalBlock withFlatMap = new TerminalBlock(this, op, source.getVariable(), body);
       if(!VariableAccessUtils.variableIsUsed(myVariable, body)) {
         return withFlatMap;
       } else {
@@ -175,7 +182,7 @@ class TerminalBlock {
           PsiStatement lastStatement = statements[statements.length-1];
           if (lastStatement instanceof PsiBreakStatement && op.breaksMe((PsiBreakStatement)lastStatement) &&
               ReferencesSearch.search(withFlatMapFilter.getVariable(), new LocalSearchScope(statements)).findFirst() == null) {
-            return new TerminalBlock(new CompoundFilterOp((FilterOp)withFlatMapFilter.getLastOperation(), op),
+            return new TerminalBlock(this, new CompoundFilterOp((FilterOp)withFlatMapFilter.getLastOperation(), op),
                                      myVariable, Arrays.copyOfRange(statements, 0, statements.length-1));
           }
         }
@@ -195,8 +202,8 @@ class TerminalBlock {
               PsiExpression initializer = declaredVar.getInitializer();
               PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
               if (initializer != null && ReferencesSearch.search(myVariable, new LocalSearchScope(leftOver)).findFirst() == null) {
-                MapOp op = new MapOp(myPreviousOp, initializer, myVariable, declaredVar.getType());
-                return new TerminalBlock(op, declaredVar, leftOver);
+                MapOp op = new MapOp(initializer, myVariable, declaredVar.getType());
+                return new TerminalBlock(this, op, declaredVar, leftOver);
               }
             }
           }
@@ -205,8 +212,8 @@ class TerminalBlock {
       PsiExpression rValue = ExpressionUtils.getAssignmentTo(first, myVariable);
       if(rValue != null) {
         PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
-        MapOp op = new MapOp(myPreviousOp, rValue, myVariable, myVariable.getType());
-        return new TerminalBlock(op, myVariable, leftOver);
+        MapOp op = new MapOp(rValue, myVariable, myVariable.getType());
+        return new TerminalBlock(this, op, myVariable, leftOver);
       }
     }
     TerminalBlock withLimit = tryPeelLimit(true);
@@ -233,7 +240,7 @@ class TerminalBlock {
         count--;
       }
       statements = Arrays.copyOfRange(myStatements, 0, count);
-      tb = new TerminalBlock(myPreviousOp, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
+      tb = new TerminalBlock(myOperations, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
     }
     if (tb == null || !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), getMainLoop())) return this;
     FilterOp filter = tb.getLastOperation(FilterOp.class);
@@ -282,9 +289,7 @@ class TerminalBlock {
       delta++;
     }
 
-    Operation prev = filter.getPreviousOp();
-    LOG.assertTrue(prev != null);
-    TerminalBlock block = new TerminalBlock(prev, myVariable, statements);
+    TerminalBlock block = new TerminalBlock(Arrays.copyOf(tb.myOperations, tb.myOperations.length-1), myVariable, statements);
     if (incrementedValue == null) {
       // when countExpression does not change the counter, we may try to continue extracting ops from the remaining statement
       // this is helpful to cover cases like for(...) { if(...) list.add(x); if(list.size == limit) break; }
@@ -294,18 +299,75 @@ class TerminalBlock {
         block = newBlock;
       }
     }
-    LimitOp limitOp = new LimitOp(block.getLastOperation(), block.getVariable(), countExpression, limit, var, delta);
-    return new TerminalBlock(limitOp, block.getVariable(), block.getStatements());
+    return block.add(new LimitOp(block.getVariable(), countExpression, limit, var, delta));
+  }
+
+  @Nullable
+  private PsiLocalVariable extractCollectionAdditionVariable() {
+    PsiMethodCallExpression call = getSingleMethodCall();
+    if (!isCallOf(call, CommonClassNames.JAVA_UTIL_COLLECTION, "add")) return null;
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    if (args.length != 1 || !ExpressionUtils.isReferenceTo(args[0], myVariable)) return null;
+    PsiLocalVariable collectionVariable = extractCollectionVariable(call.getMethodExpression().getQualifierExpression());
+    if (collectionVariable == null || getInitializerUsageStatus(collectionVariable, getMainLoop()) == InitializerUsageStatus.UNKNOWN) {
+      return null;
+    }
+    return collectionVariable;
+  }
+
+  @NotNull
+  private TerminalBlock replace(Operation orig, Operation replacement) {
+    int idx = ArrayUtil.indexOf(myOperations, orig);
+    if(idx == -1) {
+      throw new NoSuchElementException(orig.toString());
+    }
+    Operation[] ops = myOperations.clone();
+    ops[idx] = replacement;
+    return new TerminalBlock(ops, myVariable, myStatements);
+  }
+
+  TerminalBlock add(Operation op) {
+    return new TerminalBlock(this, op, myVariable, myStatements);
+  }
+
+  private TerminalBlock tryExtractDistinct() {
+    PsiLocalVariable collectionVariable = extractCollectionAdditionVariable();
+    if(collectionVariable == null) return this;
+    for(int idx = myOperations.length-1; idx > 0; idx--) {
+      Operation op = myOperations[idx];
+      if (op instanceof FilterOp) {
+        FilterOp filter = (FilterOp)op;
+        PsiExpression condition = filter.getExpression();
+        if (BoolUtils.isNegation(condition)) {
+          if (filter.isNegated()) continue;
+          condition = BoolUtils.getNegated(condition);
+        }
+        else if (!filter.isNegated()) continue;
+        if (!(condition instanceof PsiMethodCallExpression)) continue;
+        PsiMethodCallExpression conditionCall = (PsiMethodCallExpression)condition;
+        if (!ExpressionUtils.isReferenceTo(conditionCall.getMethodExpression().getQualifierExpression(), collectionVariable) ||
+            !isCallOf(conditionCall, CommonClassNames.JAVA_UTIL_COLLECTION, "contains")) {
+          continue;
+        }
+        PsiExpression[] conditionArgs = conditionCall.getArgumentList().getExpressions();
+        if (conditionArgs.length == 1 && ExpressionUtils.isReferenceTo(conditionArgs[0], myVariable)) {
+          return replace(op, new DistinctOp(myVariable));
+        }
+      } else if (!(op instanceof LimitOp)) {
+        break;
+      }
+    }
+    return this;
   }
 
   @NotNull
   Operation getLastOperation() {
-    return myPreviousOp;
+    return myOperations[myOperations.length-1];
   }
 
   @Nullable
   <T extends Operation> T getLastOperation(Class<T> clazz) {
-    return clazz.isInstance(myPreviousOp) ? clazz.cast(myPreviousOp) : null;
+    return ObjectUtils.tryCast(getLastOperation(), clazz);
   }
 
   @Nullable
@@ -332,7 +394,7 @@ class TerminalBlock {
   }
 
   boolean hasOperations() {
-    return !(myPreviousOp instanceof StreamSource);
+    return myOperations.length > 1;
   }
 
   boolean isEmpty() {
@@ -341,28 +403,18 @@ class TerminalBlock {
 
   @NotNull
   StreamEx<Operation> operations() {
-    return StreamEx.iterate(myPreviousOp, Objects::nonNull, Operation::getPreviousOp);
-  }
-
-  Collection<Operation> getOperations() {
-    ArrayDeque<Operation> ops = new ArrayDeque<>();
-    operations().forEach(ops::addFirst);
-    return ops;
-  }
-
-  StreamSource getSource() {
-    return operations().select(StreamSource.class).collect(MoreCollectors.onlyOne()).orElseThrow(IllegalStateException::new);
+    return StreamEx.ofReversed(myOperations);
   }
 
   PsiLoopStatement getMainLoop() {
-    return getSource().getLoop();
+    return ((StreamSource)myOperations[0]).getLoop();
   }
 
   /**
    * @return stream of physical expressions used in intermediate operations in arbitrary order
    */
   StreamEx<PsiExpression> intermediateExpressions() {
-    return operations().remove(StreamSource.class::isInstance).flatMap(Operation::expressions);
+    return StreamEx.of(myOperations, 1, myOperations.length).flatMap(Operation::expressions);
   }
 
   /**
@@ -389,9 +441,20 @@ class TerminalBlock {
     return block;
   }
 
+  String generate() {
+    return generate(false);
+  }
+
+  String generate(boolean noStreamForEmpty) {
+    if(noStreamForEmpty && myOperations.length == 1 && myOperations[0] instanceof CollectionStream) {
+      return myOperations[0].getExpression().getText();
+    }
+    return StreamEx.of(myOperations).map(Operation::createReplacement).joining();
+  }
+
   @NotNull
   static TerminalBlock from(StreamSource source, @NotNull PsiStatement body) {
-    return new TerminalBlock(source, source.myVariable, body).extractOperations().tryPeelLimit(false);
+    return new TerminalBlock(null, source, source.myVariable, body).extractOperations().tryPeelLimit(false).tryExtractDistinct();
   }
 
   boolean dependsOn(PsiExpression qualifier) {

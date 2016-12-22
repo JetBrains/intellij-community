@@ -39,7 +39,6 @@ class MatchMigration extends BaseStreamApiMigration {
   PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
     PsiLoopStatement loopStatement = tb.getMainLoop();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    StringBuilder builder = generateStream(tb.getLastOperation());
     if(tb.getSingleStatement() instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
@@ -50,7 +49,7 @@ class MatchMigration extends BaseStreamApiMigration {
           PsiExpression returnValue = nextReturnStatement.getReturnValue();
           if(returnValue == null) return null;
           String methodName = foundResult ? "anyMatch" : "noneMatch";
-          String streamText = addTerminalOperation(builder.toString(), methodName, loopStatement, tb);
+          String streamText = addTerminalOperation(methodName, loopStatement, tb);
           restoreComments(loopStatement, body);
           if (nextReturnStatement.getParent() == loopStatement.getParent()) {
             if(!ExpressionUtils.isLiteral(returnValue, !foundResult)) {
@@ -72,7 +71,7 @@ class MatchMigration extends BaseStreamApiMigration {
       return null;
     }
     restoreComments(loopStatement, body);
-    String streamText = addTerminalOperation(builder.toString(), "anyMatch", loopStatement, tb);
+    String streamText = addTerminalOperation("anyMatch", loopStatement, tb);
     PsiStatement statement = statements[0];
     PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statement);
     if(assignment != null) {
@@ -109,8 +108,8 @@ class MatchMigration extends BaseStreamApiMigration {
     return loopStatement.replace(elementFactory.createStatementFromText(replacement, loopStatement));
   }
 
-  private static String addTerminalOperation(String origStream, String methodName, @NotNull PsiElement contextElement,
-                                             @NotNull TerminalBlock tb) {
+  private static String addTerminalOperation(String methodName, @NotNull PsiElement contextElement, @NotNull TerminalBlock tb) {
+    String origStream = tb.generate();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(contextElement.getProject());
     PsiExpression stream = elementFactory.createExpressionFromText(origStream, contextElement);
     LOG.assertTrue(stream instanceof PsiMethodCallExpression);

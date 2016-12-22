@@ -624,7 +624,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
       if (SUGGEST_FOREACH && exitPoints.isEmpty() && nonFinalVariables.isEmpty() &&
           (tb.hasOperations() ||
-           (!(tb.getSource() instanceof ArrayStream) && (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, loop))))) {
+           (!(tb.getLastOperation() instanceof ArrayStream) && (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, loop))))) {
         return new ForEachMigration("forEach");
       }
       if (!tb.hasOperations() && !REPLACE_TRIVIAL_FOREACH) return null;
@@ -721,9 +721,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
       }
       if (!VariableAccessUtils.variableIsUsed(tb.getVariable(), value)) {
-        Operation lastOp = tb.getLastOperation();
-        if (!REPLACE_TRIVIAL_FOREACH && lastOp instanceof StreamSource ||
-            (lastOp instanceof FilterOp && lastOp.getPreviousOp() instanceof StreamSource)) {
+        if (!REPLACE_TRIVIAL_FOREACH && !tb.hasOperations() ||
+            (tb.getLastOperation() instanceof FilterOp && tb.operations().count() == 2)) {
           return null;
         }
         return new MatchMigration("anyMatch");
@@ -841,12 +840,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   static abstract class Operation {
     final PsiExpression myExpression;
     final PsiVariable myVariable;
-    final @Nullable Operation myPreviousOp;
 
-    protected Operation(@Nullable Operation previousOp, PsiExpression expression, PsiVariable variable) {
+    protected Operation(PsiExpression expression, PsiVariable variable) {
       myExpression = expression;
       myVariable = variable;
-      myPreviousOp = previousOp;
     }
 
     void cleanUp() {}
@@ -855,17 +852,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return myVariable;
     }
 
-    @Nullable
-    public Operation getPreviousOp() {
-      return myPreviousOp;
-    }
-
     PsiExpression getExpression() {
       return myExpression;
     }
 
     StreamEx<PsiExpression> expressions() {
-      return StreamEx.of(myExpression);
+      return StreamEx.ofNullable(myExpression);
     }
 
     abstract String createReplacement();
@@ -878,8 +870,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   static class FilterOp extends Operation {
     private final boolean myNegated;
 
-    FilterOp(@Nullable Operation previousOp, PsiExpression condition, PsiVariable variable, boolean negated) {
-      super(previousOp, condition, variable);
+    FilterOp(PsiExpression condition, PsiVariable variable, boolean negated) {
+      super(condition, variable);
       myNegated = negated;
     }
 
@@ -906,7 +898,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     private final PsiVariable myMatchVariable;
 
     CompoundFilterOp(FilterOp source, FlatMapOp flatMapOp) {
-      super(flatMapOp.myPreviousOp, source.getExpression(), flatMapOp.myVariable, source.myNegated);
+      super(source.getExpression(), flatMapOp.myVariable, source.myNegated);
       myMatchVariable = source.myVariable;
       myFlatMapOp = flatMapOp;
     }
@@ -931,8 +923,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   static class MapOp extends Operation {
     private final @Nullable PsiType myType;
 
-    MapOp(@Nullable Operation previousOp, PsiExpression expression, PsiVariable variable, @Nullable PsiType targetType) {
-      super(previousOp, expression, variable);
+    MapOp(PsiExpression expression, PsiVariable variable, @Nullable PsiType targetType) {
+      super(expression, variable);
       myType = targetType;
     }
 
@@ -980,8 +972,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   static class FlatMapOp extends Operation {
     private final StreamSource mySource;
 
-    FlatMapOp(@Nullable Operation previousOp, StreamSource source, PsiVariable variable) {
-      super(previousOp, source.getExpression(), variable);
+    FlatMapOp(StreamSource source, PsiVariable variable) {
+      super(source.getExpression(), variable);
       mySource = source;
     }
 
@@ -1021,13 +1013,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     private final PsiLocalVariable myCounterVariable;
     private final int myDelta;
 
-    LimitOp(@Nullable Operation previousOp,
-            PsiVariable variable,
+    LimitOp(PsiVariable variable,
             PsiExpression countExpression,
             PsiExpression limitExpression,
             PsiLocalVariable counterVariable,
             int delta) {
-      super(previousOp, limitExpression, variable);
+      super(limitExpression, variable);
       LOG.assertTrue(delta >= 0);
       myDelta = delta;
       myCounter = countExpression;
@@ -1073,11 +1064,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
+  static class DistinctOp extends Operation {
+    protected DistinctOp(PsiVariable variable) {
+      super(null, variable);
+    }
+
+    @Override
+    String createReplacement() {
+      return ".distinct()";
+    }
+  }
+
   abstract static class StreamSource extends Operation {
     private final PsiLoopStatement myLoop;
 
     protected StreamSource(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
-      super(null, expression, variable);
+      super(expression, variable);
       myLoop = loop;
     }
 

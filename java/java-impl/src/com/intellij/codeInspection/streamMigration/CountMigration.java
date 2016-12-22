@@ -37,7 +37,6 @@ class CountMigration extends BaseStreamApiMigration {
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable var = (PsiLocalVariable)element;
-    StringBuilder builder = generateStream(tb.getLastOperation()).append(".count()");
-    return replaceWithNumericAddition(tb.getMainLoop(), var, builder, PsiType.LONG);
+    return replaceWithNumericAddition(tb.getMainLoop(), var, tb.generate() + ".count()", PsiType.LONG);
   }
 }
