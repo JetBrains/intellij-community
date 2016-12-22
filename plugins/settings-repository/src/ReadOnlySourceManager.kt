@@ -17,7 +17,8 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.util.SmartList
+import com.intellij.openapi.util.AtomicClearableLazyValue
+import com.intellij.util.containers.mapSmartNotNull
 import com.intellij.util.io.exists
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -27,41 +28,38 @@ import org.jetbrains.settingsRepository.git.upstream
 import java.nio.file.Path
 
 class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path) {
-  private var _repositories: List<Repository>? = null
+  private val repositoryList = object : AtomicClearableLazyValue<List<Repository>>() {
+    override fun compute(): List<Repository> {
+      if (settings.readOnlySources.isEmpty()) {
+        return emptyList()
+      }
 
-  val repositories: List<Repository>
-    get() {
-      var r = _repositories
-      if (r == null) {
-        if (settings.readOnlySources.isEmpty()) {
-          r = emptyList()
-        }
-        else {
-          r = SmartList<Repository>()
-          for (source in settings.readOnlySources) {
-            try {
-              val path = source.path ?: continue
-              val dir = rootDir.resolve(path)
-              if (dir.exists()) {
-                r.add(FileRepositoryBuilder().setBare().setGitDir(dir.toFile()).build())
-              }
-              else {
-                LOG.warn("Skip read-only source ${source.url} because dir doesn't exist")
-              }
-            }
-            catch (e: Exception) {
-              LOG.error(e)
-            }
+      return settings.readOnlySources.mapSmartNotNull { source ->
+        try {
+          val path = source.path ?: return@mapSmartNotNull null
+          val dir = rootDir.resolve(path)
+          if (dir.exists()) {
+            return@mapSmartNotNull FileRepositoryBuilder().setBare().setGitDir(dir.toFile()).build()
+          }
+          else {
+            LOG.warn("Skip read-only source ${source.url} because dir doesn't exist")
           }
         }
-        _repositories = r
+        catch (e: Exception) {
+          LOG.error(e)
+        }
+
+        null
       }
-      return r
     }
+  }
+
+  val repositories: List<Repository>
+    get() = repositoryList.value
 
   fun setSources(sources: List<ReadonlySource>) {
     settings.readOnlySources = sources
-    _repositories = null
+    repositoryList.drop()
   }
 
   fun update(indicator: ProgressIndicator? = null): Boolean {
@@ -76,6 +74,4 @@ class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path
     }
     return isChanged
   }
-
-  //@TestOnly fun sourceToDir(source: ReadonlySource) = rootDir.resolve(source.path!!)
 }
