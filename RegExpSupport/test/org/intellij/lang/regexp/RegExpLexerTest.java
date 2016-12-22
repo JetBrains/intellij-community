@@ -391,6 +391,43 @@ public class RegExpLexerTest extends LexerTestCase {
                                         "CLASS_END (']')", lexer);
   }
 
+  public void testUnicode() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(EXTENDED_UNICODE_CHARACTER));
+    doTest("\\u{1F680}\\x{1F680}\\u{}\\u{1}\\u{FF}\\x{fff}\\u1234\\u123\\u", "UNICODE_CHAR ('\\u{1F680}')\n" +
+                                                                             "HEX_CHAR ('\\x{1F680}')\n" +
+                                                                             "INVALID_UNICODE_ESCAPE_TOKEN ('\\u{}')\n" +
+                                                                             "UNICODE_CHAR ('\\u{1}')\n" +
+                                                                             "UNICODE_CHAR ('\\u{FF}')\n" +
+                                                                             "HEX_CHAR ('\\x{fff}')\n" +
+                                                                             "UNICODE_CHAR ('\\u1234')\n" +
+                                                                             "INVALID_UNICODE_ESCAPE_TOKEN ('\\u')\n" +
+                                                                             "CHARACTER ('1')\n" +
+                                                                             "CHARACTER ('2')\n" +
+                                                                             "CHARACTER ('3')\n" +
+                                                                             "INVALID_UNICODE_ESCAPE_TOKEN ('\\u')", lexer);
+    final RegExpLexer lexer2 = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
+    doTest("\\u{1F680}", "INVALID_UNICODE_ESCAPE_TOKEN ('\\u')\n" +
+                         "CHARACTER ('{')\n" +
+                         "CHARACTER ('1')\n" +
+                         "CHARACTER ('F')\n" +
+                         "CHARACTER ('6')\n" +
+                         "CHARACTER ('8')\n" +
+                         "CHARACTER ('0')\n" +
+                         "CHARACTER ('}')", lexer2);
+  }
+
+  public void testHexChar() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(ONE_HEX_CHAR_ESCAPE));
+    doTest("\\x\\x1\\x01", "BAD_HEX_VALUE ('\\x')\n" +
+                           "HEX_CHAR ('\\x1')\n" +
+                           "HEX_CHAR ('\\x01')", lexer);
+    final RegExpLexer lexer2 = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\x\\x1\\x01", "BAD_HEX_VALUE ('\\x')\n" +
+                           "BAD_HEX_VALUE ('\\x')\n" +
+                           "CHARACTER ('1')\n" +
+                           "HEX_CHAR ('\\x01')", lexer2);
+  }
+
   @Override
   protected Lexer createLexer() {
     return null;

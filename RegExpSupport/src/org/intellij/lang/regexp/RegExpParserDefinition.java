@@ -37,7 +37,8 @@ public class RegExpParserDefinition implements ParserDefinition {
     private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
     private static final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
                                                                              RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
-                                                                             RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
+                                                                             RegExpCapability.UNICODE_CATEGORY_SHORTHAND,
+                                                                             RegExpCapability.EXTENDED_UNICODE_CHARACTER);
 
     @Override
     @NotNull

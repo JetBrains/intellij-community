@@ -95,4 +95,14 @@ public enum RegExpCapability {
    * At least 3 digits needed in octal escape outside character class to be valid (like regexp under python)
    */
   MIN_OCTAL_3_DIGITS,
+
+  /**
+   * \\u{1F680} or \\x{1F680}
+   */
+  EXTENDED_UNICODE_CHARACTER,
+
+  /**
+   * Allow \x9 in addition to \x09 (ruby)
+   */
+  ONE_HEX_CHAR_ESCAPE,
 }

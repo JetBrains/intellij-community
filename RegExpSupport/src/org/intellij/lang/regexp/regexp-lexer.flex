@@ -35,6 +35,8 @@ import java.util.EnumSet;
     private boolean allowHorizontalWhitespaceClass;
     private boolean allowPosixBracketExpressions;
     private boolean allowTransformationEscapes;
+    private boolean allowExtendedUnicodeCharacter;
+    private boolean allowOneHexCharEscape;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
 
@@ -63,6 +65,8 @@ import java.util.EnumSet;
       else if (capabilities.contains(RegExpCapability.MIN_OCTAL_3_DIGITS)) {
         minOctalDigits = 3;
       }
+      this.allowExtendedUnicodeCharacter = capabilities.contains(RegExpCapability.EXTENDED_UNICODE_CHARACTER);
+      this.allowOneHexCharEscape = capabilities.contains(RegExpCapability.ONE_HEX_CHAR_ESCAPE);
     }
 
     private void yypushstate(int state) {
@@ -103,6 +107,7 @@ import java.util.EnumSet;
 %xstate PY_NAMED_GROUP_REF
 %xstate PY_COND_REF
 %xstate BRACKET_EXPRESSION
+%xstate EMBRACED_HEX
 
 DOT="."
 LPAREN="("
@@ -143,13 +148,22 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} {ESCAPE}    { return RegExpTT.ESC_CHARACTER; }
 
 /* hex escapes */
-{ESCAPE} "x" ({HEX_CHAR}{2}|{LBRACE}{HEX_CHAR}{1,6}{RBRACE})  { return RegExpTT.HEX_CHAR; }
-{ESCAPE} "x" ({HEX_CHAR}?|{LBRACE}{HEX_CHAR}*{RBRACE}?)   { return RegExpTT.BAD_HEX_VALUE; }
+{ESCAPE} "x" {HEX_CHAR}{2}  {  return RegExpTT.HEX_CHAR; }
+{ESCAPE} "x" {HEX_CHAR}     {  if (allowOneHexCharEscape) { return RegExpTT.HEX_CHAR; } else { yypushback(1); return RegExpTT.BAD_HEX_VALUE; }}
+{ESCAPE} "x" / {LBRACE}     {  if (allowExtendedUnicodeCharacter) yypushstate(EMBRACED_HEX); else return RegExpTT.BAD_HEX_VALUE;  }
+{ESCAPE} "x"                {  return RegExpTT.BAD_HEX_VALUE;  }
 
 /* unicode escapes */
-{ESCAPE} "u" {HEX_CHAR}{4}   { return RegExpTT.UNICODE_CHAR; }
-{ESCAPE} "u" { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
-{ESCAPE} "u" {HEX_CHAR}{1,3} { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" ({HEX_CHAR}{4})  { return RegExpTT.UNICODE_CHAR; }
+{ESCAPE} "u" / {LBRACE}       {  if (allowExtendedUnicodeCharacter) yypushstate(EMBRACED_HEX); else return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;  }
+{ESCAPE} "u"                  { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" {HEX_CHAR}{1,3}  { yypushback(yylength() - 2); return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+
+<EMBRACED_HEX> {
+  {LBRACE}{HEX_CHAR}+{RBRACE}  {  yypopstate(); return (yycharat(-1) == 'u') ? RegExpTT.UNICODE_CHAR : RegExpTT.HEX_CHAR;  }
+  {LBRACE}{RBRACE}             {  yypopstate(); return (yycharat(-1) == 'u') ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : RegExpTT.BAD_HEX_VALUE;  }
+  {LBRACE}{HEX_CHAR}*          {  yypopstate(); return (yycharat(-1) == 'u') ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : RegExpTT.BAD_HEX_VALUE;  }
+}
 
 /* octal escapes */
 {ESCAPE} "0" [0-7]{1,2}      { return RegExpTT.OCT_CHAR; }

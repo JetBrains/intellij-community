@@ -184,7 +184,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
-    return hasAtLeastJdkVersion(regExpChar, JavaSdkVersion.JDK_1_7);
+    return regExpChar.getUnescapedText().charAt(1) == 'x' && hasAtLeastJdkVersion(regExpChar, JavaSdkVersion.JDK_1_7);
   }
 
   @Override

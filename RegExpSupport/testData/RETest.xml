@@ -137,6 +137,14 @@
       <pattern>\x08</pattern><!-- backspace character -->
       <expected>OK</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\x{100000}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false" host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern><![CDATA[<error descr="Illegal unicode escape sequence">\x{1000000}</error>]]></pattern>
+      <expected>OK</expected>
+    </test>
   </escapes>
 
   <namedchars>

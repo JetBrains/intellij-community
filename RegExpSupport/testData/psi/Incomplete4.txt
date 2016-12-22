@@ -7,5 +7,7 @@ REGEXP_FILE
         PsiElement(CHARACTER)('b')
       RegExpCharImpl: <c>
         PsiElement(CHARACTER)('c')
-      RegExpCharImpl: <\x1>
-        PsiElement(BAD_HEX_VALUE)('\x1')
+      RegExpCharImpl: <\x>
+        PsiElement(BAD_HEX_VALUE)('\x')
+      RegExpCharImpl: <1>
+        PsiElement(CHARACTER)('1')

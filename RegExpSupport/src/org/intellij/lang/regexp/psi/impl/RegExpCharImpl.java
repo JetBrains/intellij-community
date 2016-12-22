@@ -101,8 +101,15 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                         final char c = s.charAt(length - 1);
                         return (c != '}') ? null : parseNumber(idx + 1, s, 16, length - 4, true);
                       }
+                      if (length == 3) {
+                          return parseNumber(idx, s, 16, 1, true);
+                      }
                       return length == 4 ? parseNumber(idx, s, 16, 2, true) : null;
                     case 'u':
+                        if (s.charAt(idx + 1) == '{') {
+                            final char c = s.charAt(length - 1);
+                            return (c != '}') ? null : parseNumber(idx + 1, s, 16, length - 4, true);
+                        }
                         if (length != 6) {
                             return ch;
                         }
@@ -134,6 +141,9 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             for (i = start; i < end && i < s.length(); i++) {
                 sum *= radix;
                 sum += Integer.valueOf(s.substring(i, i + 1), radix);
+                if (sum > Character.MAX_CODE_POINT) {
+                    return null;
+                }
             }
             if (i-start == 0) return null;
             if (sum < Character.MIN_CODE_POINT || sum > Character.MAX_CODE_POINT) {
