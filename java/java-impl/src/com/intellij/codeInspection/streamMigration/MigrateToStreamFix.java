@@ -20,7 +20,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLoopStatement;
@@ -64,9 +63,9 @@ class MigrateToStreamFix implements LocalQuickFix {
       PsiStatement body = loopStatement.getBody();
       if(body == null || source == null) return;
       TerminalBlock tb = TerminalBlock.from(source, body);
-      PsiElement result = myMigration.migrate(project, loopStatement, body, tb);
+      PsiElement result = myMigration.migrate(project, body, tb);
       if(result != null) {
-        source.cleanUpSource();
+        tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
         simplifyAndFormat(project, result);
       }
     }

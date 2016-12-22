@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
@@ -923,6 +924,30 @@ public class EditorFixture {
     FileFixture file = getCurrentFileFixture();
     file.waitUntilErrorAnalysisFinishes();
     return this;
+  }
+
+  /**
+   * An Editor could load files async, sometimes we should wait a bit when the virtual
+   * file for a current editor will be set.
+   *
+   * @return FileFixture for loaded virtual file
+   */
+  @NotNull
+  public FileFixture waitUntilFileIsLoaded() {
+    Ref<VirtualFile> virtualFileReference = new Ref<>();
+    pause(new Condition("Wait when virtual file is created...") {
+      @Override
+      public boolean test() {
+        virtualFileReference.set(execute(new GuiQuery<VirtualFile>() {
+          @Override
+          protected VirtualFile executeInEDT() throws Throwable {
+            return getCurrentFile();
+          }
+        }));
+        return virtualFileReference.get() != null;
+      }
+    }, THIRTY_SEC_TIMEOUT);
+    return new FileFixture(myFrame.getProject(), virtualFileReference.get());
   }
 
   @NotNull

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.LimitOp;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -28,22 +27,17 @@ class CountMigration extends BaseStreamApiMigration {
   CountMigration() {super("count()");}
 
   @Override
-  PsiElement migrate(@NotNull Project project,
-                     @NotNull PsiLoopStatement loopStatement,
-                     @NotNull PsiStatement body,
-                     @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
-    tb = tb.tryPeelLimit(loopStatement);
+  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
     PsiExpression expression = tb.getSingleExpression(PsiExpression.class);
-    StreamApiMigrationInspection.Operation lastOperation = tb.getLastOperation();
-    if (expression == null && lastOperation instanceof LimitOp) {
-      expression = ((LimitOp)lastOperation).getCountExpression();
+    if (expression == null) {
+      expression = tb.getCountExpression();
     }
     PsiExpression operand = StreamApiMigrationInspection.extractIncrementedLValue(expression);
     if (!(operand instanceof PsiReferenceExpression)) return null;
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable var = (PsiLocalVariable)element;
-    StringBuilder builder = generateStream(lastOperation).append(".count()");
-    return replaceWithNumericAddition(project, loopStatement, var, builder, PsiType.LONG);
+    StringBuilder builder = generateStream(tb.getLastOperation()).append(".count()");
+    return replaceWithNumericAddition(tb.getMainLoop(), var, builder, PsiType.LONG);
   }
 }

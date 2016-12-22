@@ -195,6 +195,10 @@ public class EduStepicAuthorizedClient {
     return user;
   }
 
+  public static void invalidateClient() {
+    ourClient = null;
+  }
+
   private static StepicWrappers.TokenInfo login(@NotNull final String refreshToken) {
     final List<NameValuePair> parameters = new ArrayList<>();
 

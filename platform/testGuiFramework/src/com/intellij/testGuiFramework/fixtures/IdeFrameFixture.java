@@ -45,6 +45,7 @@ import org.fest.swing.core.matcher.JButtonMatcher;
 import org.fest.swing.core.matcher.JLabelMatcher;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
@@ -75,7 +76,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
+public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> implements ContainerFixture<IdeFrameImpl>{
   @NotNull private final File myProjectPath;
 
   private EditorFixture myEditor;

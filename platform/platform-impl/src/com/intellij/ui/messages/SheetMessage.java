@@ -241,6 +241,7 @@ public class SheetMessage {
           myParent.removeComponentListener(myPositionListener);
           myController.dispose();
           myWindow.dispose();
+          DialogWrapper.cleanupRootPane(myWindow.getRootPane());
         }
       }
     };

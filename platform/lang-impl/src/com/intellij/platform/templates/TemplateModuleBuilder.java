@@ -25,7 +25,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +32,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -44,7 +42,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -376,18 +376,21 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     boolean isSomehowOverwriting = children.length > 1 ||
                                    (children.length == 1 && !PathMacroUtil.DIRECTORY_STORE_NAME.equals(children[0].getName()));
 
-    Ref<Boolean> canceledRef = new Ref<>();
-    Ref<Project> projectRef = new Ref<>();
-    Task.Modal task = new Task.Modal(null, "Applying Template", true) {
+    Task.WithResult<Project, RuntimeException> task = new Task.WithResult<Project, RuntimeException>(null, "Applying Template", true) {
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+      public Project compute(@NotNull ProgressIndicator indicator) {
         try {
-          projectRef.set(createProject(name, path, indicator));
+          myProjectMode = true;
+          unzip(name, path, false, indicator, false);
+          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return null;
         }
         finally {
           cleanup();
           if(indicator.isCanceled()){
-            canceledRef.set(true);
             if (!isSomehowOverwriting) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 try {
@@ -402,33 +405,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         }
       }
     };
-    ProgressManager.getInstance().run(task);
-    if(canceledRef.get() == Boolean.TRUE){
-      throw new ProcessCanceledException();
-    }
-    return projectRef.get();
-  }
-
-  @Nullable
-  private Project createProject(String name, final String path, @Nullable ProgressIndicator  progressIndicator) {
-    myProjectMode = true;
-    unzip(name, path, false, progressIndicator, false);
-    Ref<Project> projectRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(()-> projectRef.set(
-      ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
-      @Nullable
-      @Override
-      public Project compute() {
-        try {
-          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          return null;
-        }
-      }
-    })), ModalityState.defaultModalityState());
-    return projectRef.get();
+    return ProgressManager.getInstance().run(task);
   }
 
   private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);

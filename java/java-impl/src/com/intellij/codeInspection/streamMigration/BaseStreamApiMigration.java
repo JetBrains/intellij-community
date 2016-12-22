@@ -18,7 +18,6 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CollectionStream;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -45,17 +44,13 @@ abstract class BaseStreamApiMigration {
     return myReplacement;
   }
 
-  abstract PsiElement migrate(@NotNull Project project,
-                              @NotNull PsiLoopStatement loopStatement,
-                              @NotNull PsiStatement body,
-                              @NotNull TerminalBlock tb);
+  abstract PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb);
 
-  static PsiElement replaceWithNumericAddition(@NotNull Project project,
-                                               PsiLoopStatement loopStatement,
+  static PsiElement replaceWithNumericAddition(PsiLoopStatement loopStatement,
                                                PsiVariable var,
                                                StringBuilder builder,
                                                PsiType expressionType) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
     restoreComments(loopStatement, loopStatement.getBody());
     InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
     if (status != InitializerUsageStatus.UNKNOWN) {
@@ -70,10 +65,10 @@ abstract class BaseStreamApiMigration {
   }
 
   static PsiElement replaceInitializer(PsiLoopStatement loopStatement,
-                                 PsiVariable var,
-                                 PsiExpression initializer,
-                                 String replacement,
-                                 InitializerUsageStatus status) {
+                                       PsiVariable var,
+                                       PsiExpression initializer,
+                                       String replacement,
+                                       InitializerUsageStatus status) {
     Project project = loopStatement.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if(status == InitializerUsageStatus.DECLARED_JUST_BEFORE) {

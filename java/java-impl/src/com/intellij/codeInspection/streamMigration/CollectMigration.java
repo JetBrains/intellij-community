@@ -17,7 +17,6 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +28,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,11 +53,8 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project,
-                     @NotNull PsiLoopStatement loopStatement,
-                     @NotNull PsiStatement body,
-                     @NotNull TerminalBlock tb) {
-    tb = tb.tryPeelLimit(loopStatement);
+  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+    PsiLoopStatement loopStatement = tb.getMainLoop();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = tb.getSingleMethodCall();
     if (call == null) return null;
@@ -100,7 +97,7 @@ class CollectMigration extends BaseStreamApiMigration {
           return toArrayConversion;
         }
         PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(loopStatement, PsiComment.class, PsiWhiteSpace.class);
-        String comparatorText = StreamApiMigrationInspection.tryExtractSortComparatorText(nextStatement, variable);
+        String comparatorText = tryExtractSortComparatorText(nextStatement, variable);
         if(comparatorText != null) {
           builder.append(".sorted(").append(comparatorText).append(")");
           nextStatement.delete();
@@ -280,5 +277,44 @@ class CollectMigration extends BaseStreamApiMigration {
     else {
       return "toCollection(() -> " + initializer.getText() + ")";
     }
+  }
+
+  /**
+   *
+   * @param element sort statement candidate (must be PsiExpressionStatement)
+   * @param list list which should be sorted
+   * @return comparator string representation, empty string if natural order is used or null if given statement is not sort statement
+   */
+  @Contract(value = "null, _ -> null")
+  private static String tryExtractSortComparatorText(PsiElement element, PsiVariable list) {
+    if(!(element instanceof PsiExpressionStatement)) return null;
+    PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
+    if(!(expression instanceof PsiMethodCallExpression)) return null;
+    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+    PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+    if(!"sort".equals(methodExpression.getReferenceName())) return null;
+    PsiMethod method = methodCall.resolveMethod();
+    if(method == null) return null;
+    PsiClass containingClass = method.getContainingClass();
+    if(containingClass == null) return null;
+    PsiExpression listExpression = null;
+    PsiExpression comparatorExpression = null;
+    if(CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName())) {
+      PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+      if(args.length == 1) {
+        listExpression = args[0];
+      } else if(args.length == 2) {
+        listExpression = args[0];
+        comparatorExpression = args[1];
+      } else return null;
+    } else if(InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_LIST)) {
+      listExpression = methodExpression.getQualifierExpression();
+      PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+      if(args.length != 1) return null;
+      comparatorExpression = args[0];
+    }
+    if(!(listExpression instanceof PsiReferenceExpression) || !((PsiReferenceExpression)listExpression).isReferenceTo(list)) return null;
+    if(comparatorExpression == null || ExpressionUtils.isNullLiteral(comparatorExpression)) return "";
+    return comparatorExpression.getText();
   }
 }

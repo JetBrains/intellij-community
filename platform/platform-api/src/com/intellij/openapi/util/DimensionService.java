@@ -96,13 +96,14 @@ public class DimensionService implements PersistentStateComponent<Element> {
     Pair<String, Float> pair = keyPair(key, project);
     Point point = myKey2Location.get(pair.first);
     if (point != null) {
+      point = (Point)point.clone();
       float scale = pair.second;
       point.setLocation(point.x / scale, point.y / scale);
     }
     if (point != null && !ScreenUtil.getScreenRectangle(point).contains(point)) {
       point = null;
     }
-    return point != null ? (Point)point.clone() : null;
+    return point;
   }
 
   /**
@@ -119,7 +120,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   public synchronized void setLocation(@NotNull String key, Point point, Project project) {
     Pair<String, Float> pair = keyPair(key, project);
-
     if (point != null) {
       point = (Point)point.clone();
       float scale = pair.second;
@@ -147,10 +147,11 @@ public class DimensionService implements PersistentStateComponent<Element> {
     Pair<String, Float> pair = keyPair(key, project);
     Dimension size = myKey2Size.get(pair.first);
     if (size != null) {
+      size = (Dimension)size.clone();
       float scale = pair.second;
       size.setSize(size.width / scale, size.height / scale);
     }
-    return size != null ? (Dimension)size.clone() : null;
+    return size;
   }
 
   /**
@@ -167,7 +168,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
     Pair<String, Float> pair = keyPair(key, project);
-
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;

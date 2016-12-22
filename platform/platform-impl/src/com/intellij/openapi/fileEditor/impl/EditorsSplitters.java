@@ -65,10 +65,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-
-/**
- * Author: msk
- */
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   private static final String PINNED = "pinned";
@@ -183,9 +179,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       res.setAttribute("split-orientation", splitter.getOrientation() ? "vertical" : "horizontal");
       res.setAttribute("split-proportion", Float.toString(splitter.getProportion()));
       final Element first = new Element("split-first");
-      first.addContent(writePanel(splitter.getFirstComponent()));
+      first.addContent(writePanel(splitter.getFirstComponent().getComponent(0)));
       final Element second = new Element("split-second");
-      second.addContent(writePanel(splitter.getSecondComponent()));
+      second.addContent(writePanel(splitter.getSecondComponent().getComponent(0)));
       res.addContent(first);
       res.addContent(second);
       return res;

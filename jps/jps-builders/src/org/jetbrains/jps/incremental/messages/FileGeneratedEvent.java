@@ -18,9 +18,12 @@ package org.jetbrains.jps.incremental.messages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildTarget;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
@@ -30,9 +33,16 @@ public class FileGeneratedEvent extends BuildMessage {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.messages.FileGeneratedEvent");
 
   private final Collection<Pair<String, String>> myPaths = new ArrayList<Pair<String, String>>();
+  private final BuildTarget<?> mySourceTarget;
 
-  public FileGeneratedEvent() {
+  public FileGeneratedEvent(@NotNull BuildTarget<?> sourceTarget) {
     super("", Kind.INFO);
+    mySourceTarget = sourceTarget;
+  }
+
+  @NotNull
+  public BuildTarget<?> getSourceTarget() {
+    return mySourceTarget;
   }
 
   public void add(String root, String relativePath) {
@@ -44,7 +54,8 @@ public class FileGeneratedEvent extends BuildMessage {
     }
   }
 
+  @NotNull
   public Collection<Pair<String, String>> getPaths() {
-    return myPaths;
+    return Collections.unmodifiableCollection(myPaths);
   }
 }

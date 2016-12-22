@@ -158,6 +158,14 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     }, 2, "Foo.java", "Bar.java");
   }
 
+  public void testOverloadedMethods() throws Exception {
+    configureByFiles(getName(), getName() + "/Foo.java", getName() + "/A.java", getName() + "/B.java");
+    PsiMethod[] methodsToSearch = findClass("Foo").findMethodsByName("bar", false);
+    Arrays.stream(methodsToSearch).forEach((m) -> assertSize(2, MethodReferencesSearch.search(m, false).findAll()));
+    myCompilerTester.rebuild();
+    Arrays.stream(methodsToSearch).forEach((m) -> assertSize(2, MethodReferencesSearch.search(m, false).findAll()));
+  }
+
   private void doTestRunnableFindUsagesWithExcludesConfiguration(@NotNull Consumer<ExcludesConfiguration> excludesConfigurationPatcher,
                                                                  int expectedUsagesCount,
                                                                  String... testFiles) {
@@ -165,7 +173,7 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     try {
       configureByFiles(getName(), Arrays.stream(testFiles).map(f -> getName() + "/" + f).toArray(String[]::new));
       excludesConfigurationPatcher.consume(excludesConfiguration);
-      //assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
+      assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
       myCompilerTester.rebuild();
       assertSize(expectedUsagesCount, FunctionalExpressionSearch.search(myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE)).findAll());
     } finally {

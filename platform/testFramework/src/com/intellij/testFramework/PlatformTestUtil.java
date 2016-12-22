@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -294,7 +295,8 @@ public class PlatformTestUtil {
                                  "; invokeLater passed=" + runnableInvoked.get() +
                                  "; app.disposed=" + app.isDisposed() +
                                  "; alarm.disposed=" + alarm.isDisposed() +
-                                 "; alarm.requests=" + alarm.getActiveRequestCount()
+                                 "; alarm.requests=" + alarm.getActiveRequestCount() +
+                                 "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
         );
       }
     }

@@ -150,6 +150,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   private static void removeCredentials() {
     StepicUpdateSettings.getInstance().setUser(new StepicUser());
+    EduStepicAuthorizedClient.invalidateClient();
   }
 
   @Nullable
