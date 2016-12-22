@@ -19,7 +19,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.testGuiFramework.framework.GuiTestBase;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.util.net.HttpConfigurable;
-import org.fest.swing.core.FastRobot;
+import org.fest.swing.core.SmartWaitRobot;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -64,7 +64,7 @@ public class GuiTestCase extends GuiTestBase {
     @Override
     public void setUp() throws Exception {
       super.setUp();
-      myRobot = new FastRobot();
+      myRobot = new SmartWaitRobot();
       GuiSettings.setUp();
     }
 

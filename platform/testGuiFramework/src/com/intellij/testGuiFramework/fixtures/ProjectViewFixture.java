@@ -20,11 +20,13 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -180,13 +182,13 @@ public class ProjectViewFixture extends ToolWindowFixture {
           final List<Object> treePath = new ArrayList();
           treePath.add(root);
 
-          for (String path : paths) {
+          for (String pathItem : paths) {
             Object[] childElements = treeStructure.getChildElements(root);
             Object newRoot = null;
             for (Object child : childElements) {
               if (child instanceof PsiDirectoryNode) {
                 PsiDirectory dir = ((PsiDirectoryNode)child).getValue();
-                if (dir != null && path.equals(dir.getName())) {
+                if (dir != null && pathItem.equals(dir.getName())) {
                   newRoot = child;
                   treePath.add(newRoot);
                   break;
@@ -194,7 +196,16 @@ public class ProjectViewFixture extends ToolWindowFixture {
               }
               if (child instanceof PsiFileNode) {
                 PsiFile file = ((PsiFileNode)child).getValue();
-                if (file != null && path.equals(file.getName())) {
+                if (file != null && pathItem.equals(file.getName())) {
+                  newRoot = child;
+                  treePath.add(newRoot);
+                  break;
+                }
+              }
+              if (child instanceof ClassTreeNode) {
+                ClassTreeNode ctn = (ClassTreeNode)child;
+                if (ctn.getPsiClass().getContainingFile().getName().equals(pathItem)) {
+
                   newRoot = child;
                   treePath.add(newRoot);
                   break;
@@ -212,8 +223,12 @@ public class ProjectViewFixture extends ToolWindowFixture {
             return null;
           }
 
+          VirtualFile vf2select = root instanceof ClassTreeNode
+                                  ? ((ClassTreeNode)root).getPsiClass().getContainingFile().getVirtualFile()
+                                  : ((BasePsiNode)root).getVirtualFile();
+
           myPane.expand(treePath.toArray(), true);
-          myPane.select(root, ((BasePsiNode)root).getVirtualFile(), true);
+          myPane.select(root, vf2select, true);
           return (BasePsiNode)root;
         }
       });
@@ -271,13 +286,15 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
 
     public Point getLocation() {
-      myPane.getTree();
-      final JTree tree = myPane.getTree();
-      final DefaultMutableTreeNode dmtn = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
-      final TreePath path = TreeUtil.getPathFromRoot(dmtn);
-      final Rectangle bounds = tree.getPathBounds(path);
-      assertNotNull(bounds);
-      return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      return ApplicationManager.getApplication().runReadAction((Computable<Point>)() -> {
+        myPane.getTree();
+        final JTree tree = myPane.getTree();
+        final DefaultMutableTreeNode dmtn = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
+        final TreePath path = TreeUtil.getPathFromRoot(dmtn);
+        final Rectangle bounds = tree.getPathBounds(path);
+        assertNotNull(bounds);
+        return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      });
     }
 
 

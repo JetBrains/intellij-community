@@ -41,9 +41,9 @@ public class SimpleGitTest extends GuiTestCase {
   public void testSimpleGit(){
     try {
       IdeFrameFixture ideFrameFixture = importSimpleApplication();
-      ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();
       ideFrameFixture.waitForBackgroundTasksToFinish();
 
+      ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();
       final String projectName = ideFrameFixture.getProject().getName();
       projectPane.selectByPath(projectName, "src");
 
@@ -52,7 +52,7 @@ public class SimpleGitTest extends GuiTestCase {
       //select first element (Java class)
       myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
 
-      DialogFixture.find(myRobot, IdeBundle.message("action.create.new.class"));
+      JDialogFixture.find(myRobot, IdeBundle.message("action.create.new.class"));
       myRobot.enterText("MyClass");
       myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
       EditorFixture editorFixture = new EditorFixture(myRobot, ideFrameFixture);
@@ -74,15 +74,15 @@ public class SimpleGitTest extends GuiTestCase {
 
       invokeAction(myRobot, "CheckinProject");
 
-      DialogFixture commitDialogFixture = DialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
+      JDialogFixture commitJDialogFixture = JDialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
       myRobot.enterText("initial commit");
-      findAndClickButton(commitDialogFixture, "Commit");
+      findAndClickButton(commitJDialogFixture, "Commit");
 
-      MessagesFixture messagesFixture = MessagesFixture.findAny(myRobot, commitDialogFixture.target());
+      MessagesFixture messagesFixture = MessagesFixture.findAny(myRobot, commitJDialogFixture.target());
       messagesFixture.click("Commit");
 
-      if (MessagesFixture.exists(myRobot, commitDialogFixture.target(), "Check TODO is not possible right now")) {
-        MessagesFixture.findByTitle(myRobot, commitDialogFixture.target(), "Check TODO is not possible right now").click("Commit");
+      if (MessagesFixture.exists(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now")) {
+        MessagesFixture.findByTitle(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now").click("Commit");
       }
       pause("Wait when file will be marked as not changed (committed)",
             () -> currentFileFixture.getVcsStatus().equals(FileStatus.NOT_CHANGED),

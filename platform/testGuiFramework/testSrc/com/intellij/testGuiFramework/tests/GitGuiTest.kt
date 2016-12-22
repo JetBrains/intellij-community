@@ -57,7 +57,7 @@ class GitGuiTest : GuiTestCase() {
       GuiTestUtil.findAndClickButton(this, DvcsBundle.getString("clone.button"))
     }
     MessagesFixture.findByTitle(myRobot, welcomeFrame.target(), VcsBundle.message("checkout.title")).clickYes()
-    val dialog1 = com.intellij.testGuiFramework.fixtures.DialogFixture.find(myRobot, "Import Project")
+    val dialog1 = JDialogFixture.find(myRobot, "Import Project")
     with (dialog1) {
       GuiTestUtil.findAndClickButton(this, "Next")
       val textField = GuiTestUtil.findTextField(myRobot, "Project name:").click()

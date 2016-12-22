@@ -29,18 +29,18 @@ import java.util.Collection;
 /**
  * @author Sergey Karashevich
  */
-public class DialogFixture implements ContainerFixture<JDialog> {
+public class JDialogFixture implements ContainerFixture<JDialog> {
 
   private JDialog myDialog;
   private Robot myRobot;
 
-  public DialogFixture(@NotNull Robot robot, JDialog selectSdkDialog) {
+  public JDialogFixture(@NotNull Robot robot, JDialog selectSdkDialog) {
     myRobot = robot;
     myDialog = selectSdkDialog;
   }
 
   @NotNull
-  public static DialogFixture find(@NotNull Robot robot, String title) {
+  public static JDialogFixture find(@NotNull Robot robot, String title) {
     GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
@@ -48,7 +48,7 @@ public class DialogFixture implements ContainerFixture<JDialog> {
       }
     };
 
-    Pause.pause(new Condition("Finding for DialogFixture with title \"" + title + "\"") {
+    Pause.pause(new Condition("Finding for JDialogFixture with title \"" + title + "\"") {
       @Override
       public boolean test() {
         Collection<JDialog> dialogs = robot.finder().findAll(matcher);
@@ -57,7 +57,7 @@ public class DialogFixture implements ContainerFixture<JDialog> {
     }, GuiTestUtil.SHORT_TIMEOUT);
 
     JDialog dialog = robot.finder().find(matcher);
-    return new DialogFixture(robot, dialog);
+    return new JDialogFixture(robot, dialog);
   }
 
   @Override

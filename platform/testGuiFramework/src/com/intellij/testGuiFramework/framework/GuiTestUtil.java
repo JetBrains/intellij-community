@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
+import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -100,7 +101,8 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public final class GuiTestUtil {
+public final class
+GuiTestUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil");
 
@@ -116,6 +118,7 @@ public final class GuiTestUtil {
    */
 
   public static final String JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS";
+  public static final String TEST_DATA_DIR = "GUI_TEST_DATA_DIR";
   private static final EventQueue SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().getSystemEventQueue();
   private static final File TMP_PROJECT_ROOT = createTempProjectCreationDir();
 
@@ -463,6 +466,9 @@ public final class GuiTestUtil {
 
   @NotNull
   public static File getTestProjectsRootDirPath() {
+
+    String testDataDirEnvVar = getSystemPropertyOrEnvironmentVariable(TEST_DATA_DIR);
+    if (testDataDirEnvVar != null) return new File(testDataDirEnvVar);
 
     String testDataPath = PathManager.getHomePath() + "/community/platform/testGuiFramework/testData";
     assertNotNull(testDataPath);
@@ -849,6 +855,18 @@ public final class GuiTestUtil {
   @NotNull
   public static JTextComponentFixture findTextField(@NotNull Robot robot, @NotNull final String labelText) {
     return new JTextComponentFixture(robot, robot.finder().findByLabel(labelText, JTextComponent.class));
+  }
+
+  @NotNull
+  public static JTreeFixture findJTreeFixture(@NotNull Robot robot, @NotNull Container container) {
+    JTree actionTree = robot.finder().findByType(container, JTree.class);
+    return new JTreeFixture(robot, actionTree);
+  }
+
+  @NotNull
+  public static JTreeFixture findJTreeFixtureByClassName(@NotNull Robot robot, @NotNull Container container, @NotNull String className) {
+    JTree actionTree = robot.finder().find(container, ClassNameMatcher.forClass(className, JTree.class, true));
+    return new JTreeFixture(robot, actionTree);
   }
 
   public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
