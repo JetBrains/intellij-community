@@ -16,12 +16,9 @@
 
 package com.intellij.ide.util.treeView.smartTree;
 
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
 
 /**
  * @author Maxim.Mossienko
@@ -30,18 +27,6 @@ public class TreeStructureUtil {
   public static final String PLACE = "StructureViewPopup";
 
   private TreeStructureUtil() {}
-
-  public static Object[] getChildElementsFromTreeStructure(AbstractTreeStructure treeStructure, Object element) {
-    final Object[] items = treeStructure.getChildElements(element);
-    HashSet<Object> viewedItems = new HashSet<>();
-
-    for (Object item : items) {
-      if (viewedItems.contains(item)) continue;
-      viewedItems.add(item);
-    }
-
-    return items;
-  }
 
   public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
     return PLACE.equals(model.getPlace());
