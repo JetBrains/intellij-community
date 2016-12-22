@@ -286,7 +286,7 @@ public class MethodCallUtils {
       return false;
     }
     final PsiMethod targetMethod = expression.resolveMethod();
-    return targetMethod != null && MethodSignatureUtil.areSignaturesEqual(targetMethod, method);
+    return targetMethod != null && MethodSignatureUtil.isSuperMethod(targetMethod, method);
   }
 
   public static boolean containsSuperMethodCall(@NotNull PsiMethod method) {

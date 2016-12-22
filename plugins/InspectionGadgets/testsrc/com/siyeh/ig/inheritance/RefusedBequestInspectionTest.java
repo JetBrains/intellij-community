@@ -10,6 +10,7 @@ public class RefusedBequestInspectionTest extends LightInspectionTestCase {
   public void testCloneCallsSuperClone() { doTest(); }
   public void testSetupCallsSuperSetup() { doTest(); }
   public void testFinalizeCallsSuperFinalize() { doTest(); }
+  public void testGenericsSignatures() { doTest(); }
 
   @Nullable
   @Override
