@@ -139,15 +139,20 @@ public class SmoothScrollPane extends JScrollPane {
     int unitIncrement = getUnitIncrement(viewport, scrollbar, direction);
     double delta = rotation * e.getScrollAmount() * unitIncrement;
 
-    boolean limitDelta = abs(rotation) < 1.0D + EPSILON;
+    boolean adjustDelta = abs(rotation) < 1.0D + EPSILON;
     int blockIncrement = getBlockIncrement(viewport, scrollbar, direction);
-    double adjustedDelta = limitDelta ? max(-(double)blockIncrement, min(delta, (double)blockIncrement)) : delta;
+    double adjustedDelta = adjustDelta ? max(-(double)blockIncrement, min(delta, (double)blockIncrement)) : delta;
 
     int value = scrollbar instanceof Interpolable ? (((Interpolable)scrollbar).getTargetValue()) : scrollbar.getValue();
-    int newValue = max(scrollbar.getMinimum(), min((int)round(value + adjustedDelta), scrollbar.getMaximum()));
+    double minDelta = (double)scrollbar.getMinimum() - value;
+    double maxDelta = (double)scrollbar.getMaximum() - scrollbar.getModel().getExtent() - value;
+    double boundedDelta = max(minDelta, min(adjustedDelta, maxDelta));
 
-    if (newValue != value) {
-      scrollbar.setValue(newValue);
+    if (scrollbar instanceof FinelyAdjustable) {
+      ((FinelyAdjustable)scrollbar).adjustValue(boundedDelta);
+    }
+    else {
+      scrollbar.setValue(value + (int)round(boundedDelta));
     }
   }
 
@@ -189,8 +194,9 @@ public class SmoothScrollPane extends JScrollPane {
     }
   }
 
-  protected class SmoothScrollBar extends ScrollBar implements Interpolable {
+  protected class SmoothScrollBar extends ScrollBar implements Interpolable, FinelyAdjustable {
     private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
+    private double myFractionalRemainder;
 
     protected SmoothScrollBar(int orientation) {
       super(orientation);
@@ -212,11 +218,24 @@ public class SmoothScrollPane extends JScrollPane {
     @Override
     public void setCurrentValue(int value) {
       super.setValue(value);
+
+      myFractionalRemainder = 0.0D;
     }
 
     @Override
     public int getTargetValue() {
       return myInterpolator.getTarget();
+    }
+
+    // Support subpixel deltas
+    @Override
+    public void adjustValue(double delta) {
+      double compoundDelta = myFractionalRemainder + delta;
+      int integralDelta = (int)round(compoundDelta);
+      myFractionalRemainder = compoundDelta - (double)integralDelta;
+      if (integralDelta != 0) {
+        setValue(getTargetValue() + integralDelta);
+      }
     }
   }
 }

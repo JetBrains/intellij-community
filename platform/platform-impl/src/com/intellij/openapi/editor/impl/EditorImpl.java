@@ -122,6 +122,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.Math.round;
+
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
@@ -2682,10 +2684,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, Interpolable {
+  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent, Interpolable, FinelyAdjustable {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
     private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
+    private double myFractionalRemainder;
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
@@ -2736,11 +2739,29 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setCurrentValue(int value) {
       super.setValue(value);
+
+      myFractionalRemainder = 0.0D;
     }
 
     @Override
     public int getTargetValue() {
       return myInterpolator.getTarget();
+    }
+
+    /**
+     * Because {@link MyScrollBar} doesn't extend {@link SmoothScrollPane.SmoothScrollBar}
+     * we need to add fractional delta support separately.
+     *
+     * @see SmoothScrollPane.SmoothScrollBar#adjustValue(double)
+     */
+    @Override
+    public void adjustValue(double delta) {
+      double compoundDelta = myFractionalRemainder + delta;
+      int integralDelta = (int)round(compoundDelta);
+      myFractionalRemainder = compoundDelta - (double)integralDelta;
+      if (integralDelta != 0) {
+        setValue(getTargetValue() + integralDelta);
+      }
     }
 
     /**
