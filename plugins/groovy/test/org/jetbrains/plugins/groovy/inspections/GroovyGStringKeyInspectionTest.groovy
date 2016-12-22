@@ -64,6 +64,14 @@ class GroovyGStringKeyInspectionTest extends GrHighlightingTestBase {
     ''')
   }
 
+  void testGStringPutCallSkipParentheses() {
+    testHighlighting('''
+      def key = 'foo'
+      def map = [:]
+      map.put <warning>"${key}"</warning>, 'bar'
+    ''')
+  }
+
   void testGStringOverloadedPutCall() {
     testHighlighting('''
       public class StrangeMap extends HashMap<String, String> {
