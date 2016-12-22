@@ -16,6 +16,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeModelEvent;
@@ -76,39 +77,41 @@ public final class MapBasedTree<K, N> {
     return null;
   }
 
-  public boolean updateRoot(N node) {
-    if (node == (root == null ? null : root.node)) return false;
+  public boolean updateRoot(Pair<N, Boolean> pair) {
+    N oldNode = root == null ? null : root.node;
+    N newNode = pair == null ? null : pair.first;
+    if (oldNode == newNode) return false;
 
     map.clear();
-    if (node == null) {
+    if (newNode == null) {
       root = null;
     }
     else {
-      root = new Entry<>(null, node);
-      K key = keyFunction.apply(node);
+      root = new Entry<>(null, newNode, pair.second);
+      K key = keyFunction.apply(newNode);
       if (key != null) map.put(key, root);
     }
     return true;
   }
 
-  public UpdateResult<N> update(@NotNull Entry<N> parent, List<N> children) {
+  public UpdateResult<N> update(@NotNull Entry<N> parent, List<Pair<N, Boolean>> children) {
     List<Entry<N>> newChildren = new ArrayList<>(children == null ? 0 : children.size());
     List<Entry<N>> oldChildren = parent.children;
     Map<Entry<N>, K> mapInserted = new IdentityHashMap<>();
     Map<Entry<N>, K> mapContained = new IdentityHashMap<>();
 
     if (children != null && !children.isEmpty()) {
-      children.forEach(node -> {
-        if (node == null) {
+      children.forEach(pair -> {
+        if (pair == null || pair.first == null) {
           LOG.warn("MapBasedTree: ignore null node");
           return;
         }
-        K key = getKey(node);
+        K key = getKey(pair.first);
         if (key == null) return;
 
         Entry<N> entry = findEntry(key);
         if (entry == null) {
-          entry = new Entry<>(parent, node);
+          entry = new Entry<>(parent, pair.first, pair.second);
           mapInserted.put(entry, key);
         }
         else if (parent != entry.getParentPath()) {
@@ -180,10 +183,12 @@ public final class MapBasedTree<K, N> {
     private volatile List<Entry<N>> children;
     private volatile N loading;
 
-    private Entry(Entry<N> parent, N node) {
+    private Entry(Entry<N> parent, N node, Boolean leaf) {
       super(parent, node);
       this.node = node;
       this.parent = parent;
+      this.leaf = Boolean.TRUE.equals(leaf);
+      if (this.leaf) children = emptyList();
     }
 
     public N getNode() {
@@ -209,7 +214,7 @@ public final class MapBasedTree<K, N> {
     void setLoadingChildren(N loading) {
       if (children != null) LOG.warn("MapBasedTree: rewrite loaded nodes");
       this.loading = loading;
-      children = loading == null ? emptyList() : singletonList(new Entry<>(this, loading));
+      children = loading == null ? emptyList() : singletonList(new Entry<>(this, loading, true));
     }
   }
 
