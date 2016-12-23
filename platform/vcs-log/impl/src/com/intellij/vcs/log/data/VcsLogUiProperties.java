@@ -17,6 +17,8 @@ package com.intellij.vcs.log.data;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public interface VcsLogUiProperties {
   @NotNull
   <T> T get(@NotNull VcsLogUiProperty<T> property);
@@ -26,5 +28,28 @@ public interface VcsLogUiProperties {
   <T> boolean exists(@NotNull VcsLogUiProperty<T> property);
 
   class VcsLogUiProperty<T> {
+    @NotNull private final String myName;
+
+    public VcsLogUiProperty(@NotNull String name) {
+      myName = name;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      VcsLogUiProperty<?> property = (VcsLogUiProperty<?>)o;
+      return Objects.equals(myName, property.myName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myName);
+    }
   }
 }

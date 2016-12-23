@@ -24,14 +24,14 @@ import java.util.List;
 
 public interface MainVcsLogUiProperties extends VcsLogUiProperties {
 
-  VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>();
-  VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>();
-  VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>();
-  VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>();
-  VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>();
-  VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>();
-  VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>();
-  VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>();
+  VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>("Window.ShowDetails");
+  VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>("Graph.ShowLongEdges");
+  VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>("Graph.BekSortType");
+  VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>("Table.ShowRootNames");
+  VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>("Table.CompactReferencesView");
+  VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>("Table.ShowTagNames");
+  VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>("TextFilter.MatchCase");
+  VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>("TextFilter.Regex");
 
   void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup);
 
