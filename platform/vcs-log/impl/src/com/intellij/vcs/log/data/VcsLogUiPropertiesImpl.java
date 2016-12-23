@@ -28,6 +28,14 @@ import java.util.*;
  */
 public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
+  private static final Set<VcsLogUiProperty> SUPPORTED_PROPERTIES = ContainerUtil.newHashSet(MainVcsLogUiProperties.SHOW_DETAILS,
+                                                                                             MainVcsLogUiProperties.SHOW_LONG_EDGES,
+                                                                                             MainVcsLogUiProperties.BEK_SORT_TYPE,
+                                                                                             MainVcsLogUiProperties.SHOW_ROOT_NAMES,
+                                                                                             MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW,
+                                                                                             MainVcsLogUiProperties.SHOW_TAG_NAMES,
+                                                                                             MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
+                                                                                             MainVcsLogUiProperties.TEXT_FILTER_REGEX);
   private final Set<VcsLogUiPropertiesListener> myListeners = ContainerUtil.newLinkedHashSet();
 
   public static class State {
@@ -52,28 +60,28 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (property == SHOW_DETAILS) {
+    if (SHOW_DETAILS.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_DETAILS_IN_CHANGES);
     }
-    else if (property == SHOW_LONG_EDGES) {
+    else if (SHOW_LONG_EDGES.equals(property)) {
       return (T)Boolean.valueOf(getState().LONG_EDGES_VISIBLE);
     }
-    else if (property == SHOW_ROOT_NAMES) {
+    else if (SHOW_ROOT_NAMES.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
     }
-    else if (property == COMPACT_REFERENCES_VIEW) {
+    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
       return (T)Boolean.valueOf(getState().COMPACT_REFERENCES_VIEW);
     }
-    else if (property == SHOW_TAG_NAMES) {
+    else if (SHOW_TAG_NAMES.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_TAG_NAMES);
     }
-    else if (property == BEK_SORT_TYPE) {
+    else if (BEK_SORT_TYPE.equals(property)) {
       return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
     }
-    else if (property == TEXT_FILTER_MATCH_CASE) {
+    else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
       return (T)Boolean.valueOf(getTextFilterSettings().isMatchCaseEnabled());
     }
-    else if (property == TEXT_FILTER_REGEX) {
+    else if (TEXT_FILTER_REGEX.equals(property)) {
       return (T)Boolean.valueOf(getTextFilterSettings().isFilterByRegexEnabled());
     }
     throw new UnsupportedOperationException("Property " + property + " does not exist");
@@ -81,28 +89,28 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
-    if (property == SHOW_DETAILS) {
+    if (SHOW_DETAILS.equals(property)) {
       getState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
     }
-    else if (property == SHOW_LONG_EDGES) {
+    else if (SHOW_LONG_EDGES.equals(property)) {
       getState().LONG_EDGES_VISIBLE = (Boolean)value;
     }
-    else if (property == SHOW_ROOT_NAMES) {
+    else if (SHOW_ROOT_NAMES.equals(property)) {
       getState().SHOW_ROOT_NAMES = (Boolean)value;
     }
-    else if (property == COMPACT_REFERENCES_VIEW) {
+    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
       getState().COMPACT_REFERENCES_VIEW = (Boolean)value;
     }
-    else if (property == SHOW_TAG_NAMES) {
+    else if (SHOW_TAG_NAMES.equals(property)) {
       getState().SHOW_TAG_NAMES = (Boolean)value;
     }
-    else if (property == BEK_SORT_TYPE) {
+    else if (BEK_SORT_TYPE.equals(property)) {
       getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
     }
-    else if (property == TEXT_FILTER_REGEX) {
+    else if (TEXT_FILTER_REGEX.equals(property)) {
       getTextFilterSettings().setFilterByRegexEnabled((Boolean)value);
     }
-    else if (property == TEXT_FILTER_MATCH_CASE) {
+    else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
       getTextFilterSettings().setMatchCaseEnabled((Boolean)value);
     }
     else {
@@ -113,14 +121,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    if (property == SHOW_DETAILS ||
-        property == SHOW_LONG_EDGES ||
-        property == SHOW_ROOT_NAMES ||
-        property == COMPACT_REFERENCES_VIEW ||
-        property == SHOW_TAG_NAMES ||
-        property == BEK_SORT_TYPE ||
-        property == TEXT_FILTER_MATCH_CASE ||
-        property == TEXT_FILTER_REGEX) {
+    if (SUPPORTED_PROPERTIES.contains(property)) {
       return true;
     }
     return false;
@@ -282,25 +283,25 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property) {
-      if (property == SHOW_DETAILS) {
+      if (SHOW_DETAILS.equals(property)) {
         onShowDetailsChanged();
       }
-      else if (property == SHOW_LONG_EDGES) {
+      else if (SHOW_LONG_EDGES.equals(property)) {
         onShowLongEdgesChanged();
       }
-      else if (property == SHOW_ROOT_NAMES) {
+      else if (SHOW_ROOT_NAMES.equals(property)) {
         onShowRootNamesChanged();
       }
-      else if (property == COMPACT_REFERENCES_VIEW) {
+      else if (COMPACT_REFERENCES_VIEW.equals(property)) {
         onCompactReferencesViewChanged();
       }
-      else if (property == SHOW_TAG_NAMES) {
+      else if (SHOW_TAG_NAMES.equals(property)) {
         onShowTagNamesChanged();
       }
-      else if (property == BEK_SORT_TYPE) {
+      else if (BEK_SORT_TYPE.equals(property)) {
         onBekChanged();
       }
-      else if (property == TEXT_FILTER_REGEX || property == TEXT_FILTER_MATCH_CASE) {
+      else if (TEXT_FILTER_REGEX.equals(property) || TEXT_FILTER_MATCH_CASE.equals(property)) {
         onTextFilterSettingsChanged();
       }
       else {
