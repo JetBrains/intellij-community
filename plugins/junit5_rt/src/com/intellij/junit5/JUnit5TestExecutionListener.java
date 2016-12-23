@@ -33,6 +33,7 @@ import org.opentest4j.ValueWrapper;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -118,7 +119,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private static String idAndName(TestIdentifier testIdentifier, String displayName) {
-    return " id=\'" + escapeName(testIdentifier.getUniqueId().toString()) + "\' name=\'" + escapeName(displayName);
+    return " id=\'" + escapeName(testIdentifier.getUniqueId()) + "\' name=\'" + escapeName(displayName);
   }
 
   @Override
@@ -196,7 +197,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                            long duration,
                            String reason,
                            boolean includeThrowable) {
-    testFailure(testIdentifier.getDisplayName(), testIdentifier.getUniqueId().toString(), messageName, ex, duration, reason, includeThrowable);
+    testFailure(testIdentifier.getDisplayName(), testIdentifier.getUniqueId(), messageName, ex, duration, reason, includeThrowable);
   }
 
   private void testFailure(String methodName,
@@ -264,18 +265,22 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     for (TestIdentifier root : myRoots) {
       assert root.isContainer();
       for (TestIdentifier testIdentifier : testPlan.getChildren(root)) {
-        sendTreeUnderRoot(testPlan, testIdentifier);
+        sendTreeUnderRoot(testPlan, testIdentifier, new HashSet<>());
       }
     }
     myPrintStream.println("##teamcity[treeEnded]");
   }
 
-  private void sendTreeUnderRoot(TestPlan testPlan, TestIdentifier root) {
+  private void sendTreeUnderRoot(TestPlan testPlan,
+                                 TestIdentifier root,
+                                 HashSet<TestIdentifier> visited) {
     final String idAndName = idAndName(root);
     if (root.isContainer()) {
       myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + getLocationHint(root) + "\']");
       for (TestIdentifier childIdentifier : testPlan.getChildren(root)) {
-        sendTreeUnderRoot(testPlan, childIdentifier);
+        if (visited.add(childIdentifier)) {
+          sendTreeUnderRoot(testPlan, childIdentifier, visited);
+        }
       }
       myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "\']");
     }
@@ -284,7 +289,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }
   }
 
-  private String getLocationHint(TestIdentifier root) {
+  private static String getLocationHint(TestIdentifier root) {
     final String className = getClassName(root);
     final String methodName = getMethodName(root);
     return "\' locationHint=\'java:" + (root.isTest() ? "test" : "suite") + "://" + escapeName(className + (methodName != null ? "." + methodName : ""));
