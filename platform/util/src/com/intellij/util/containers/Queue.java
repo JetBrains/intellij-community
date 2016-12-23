@@ -62,6 +62,15 @@ public class Queue<T> {
     return result;
   }
 
+  public T peekLast() {
+    int last = myLast;
+    if (last == 0) {
+      last = myArray.length;
+    }
+    @SuppressWarnings("unchecked") T result = (T)myArray[last-1];
+    return result;
+  }
+
 
   public boolean isEmpty() {
     return size() == 0;
@@ -173,16 +182,13 @@ public class Queue<T> {
   @Override
   public String toString() {
     if (isEmpty()) return "<empty>";
-    List<Object> list = Arrays.asList(myArray);
-    if (isWrapped) {
-      return "[[[ " + list.subList(0, myLast) + " ||| ... " +
-             list.subList(myLast, myFirst) + " ... ||| " +
-             list.subList(myFirst, myArray.length) + " ]]]";
-    }
-    else {
-      return "[[[ ... " + list.subList(0, myFirst) + " ... ||| " +
-                 list.subList(myFirst, myLast) + " ||| ... " +
-                 list.subList(myFirst, myArray.length) + " ... ]]]";
-    }
+
+    return isWrapped ?
+           "[ " + sub(myFirst, myArray.length) + " ||| " + sub(0, myLast) + " ]" :
+           "[ " + sub(myFirst, myLast) + " ]";
+  }
+  private Object sub(int start, int end) {
+    if (start == end) return "";
+    return Arrays.asList(myArray).subList(start, end);
   }
 }

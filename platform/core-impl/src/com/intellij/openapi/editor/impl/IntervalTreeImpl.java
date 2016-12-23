@@ -346,8 +346,10 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
         return left;
       }
       IntervalNode<E> parent = getParent();
+      IntervalNode<E> prev = this;
       while (parent != null) {
-        if (parent.getRight() == this) break;
+        if (parent.getRight() == prev) break;
+        prev = parent;
         parent = parent.getParent();
       }
       return parent;
@@ -363,8 +365,10 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
         return right;
       }
       IntervalNode<E> parent = getParent();
+      IntervalNode<E> prev = this;
       while (parent != null) {
-        if (parent.getLeft() == this) break;
+        if (parent.getLeft() == prev) break;
+        prev = parent;
         parent = parent.getParent();
       }
       return parent;
@@ -1426,5 +1430,66 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
         return choose().peek();
       }
     };
+  }
+
+  T findRangeMarkerAfter(@NotNull T marker) {
+    l.readLock().lock();
+    try {
+      IntervalNode<T> node = lookupNode(marker);
+
+      boolean foundMarker = false;
+      while (node != null) {
+        List<Getter<T>> intervals = node.intervals;
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < intervals.size(); i++) {
+          Getter<T> interval = intervals.get(i);
+          T m = interval.get();
+          if (m == null) continue;
+          if (m == marker) {
+            foundMarker = true;
+          }
+          else if (foundMarker) {
+            // found next to marker
+            return m;
+          }
+        }
+        node = node.next();
+        foundMarker = true; // protection against sudden removal of marker
+      }
+      return null;
+    }
+    finally {
+      l.readLock().unlock();
+    }
+  }
+
+  T findRangeMarkerBefore(@NotNull T marker) {
+    l.readLock().lock();
+    try {
+      IntervalNode<T> node = lookupNode(marker);
+
+      boolean foundMarker = false;
+      while (node != null) {
+        List<Getter<T>> intervals = node.intervals;
+        for (int i = intervals.size() - 1; i >= 0; i--) {
+          Getter<T> interval = intervals.get(i);
+          T m = interval.get();
+          if (m == null) continue;
+          if (m == marker) {
+            foundMarker = true;
+          }
+          else if (foundMarker) {
+            // found next to marker
+            return m;
+          }
+        }
+        node = node.previous();
+        foundMarker = true; // protection against sudden removal of marker
+      }
+      return null;
+    }
+    finally {
+      l.readLock().unlock();
+    }
   }
 }

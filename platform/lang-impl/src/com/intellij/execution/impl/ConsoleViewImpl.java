@@ -16,7 +16,6 @@
 
 package com.intellij.execution.impl;
 
-import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.execution.ConsoleFolding;
@@ -45,7 +44,6 @@ import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -54,6 +52,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -72,12 +71,15 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Queue;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,7 +87,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -96,9 +97,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
 
-  private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
-
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
+  private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
 
   private static boolean ourTypedHandlerInitialized;
 
@@ -110,7 +110,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ourTypedHandlerInitialized = true;
   }
 
-
   private final CommandLineFolding myCommandLineFolding = new CommandLineFolding();
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
@@ -121,14 +120,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private final Alarm mySpareTimeAlarm = new Alarm(this);
   @NotNull
-  private final Alarm myHeavyAlarm;
+  private final Alarm myHeavyAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile int myHeavyUpdateTicket;
 
   private final Collection<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
   private final List<AnAction> customActions = new ArrayList<>();
 
   /** the text from {@link #print(String, ConsoleViewContentType)} goes there and stays there until {@link #flushDeferredText()} is called */
-  private final ConsoleBuffer myDeferredBuffer = new ConsoleBuffer();
+  private final TokenBuffer myDeferredBuffer = new TokenBuffer(ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : Integer.MAX_VALUE);
+  // Range markers created for tokens returned from myDeferredBuffer.
+  // Each range marker contains ConsoleViewContentType in its user data CONTENT_TYPE
+  // Accessed in EDT only
+  private final Queue<RangeMarker> tokenRangeMarkers = new Queue<>(1000); // strong referenced range markers which store ConsoleViewContentType in their user data
 
   private boolean myUpdateFoldingsEnabled = true;
   private EditorHyperlinkSupport myHyperlinks;
@@ -138,12 +141,24 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myLastStickingToEnd;
   private boolean myCancelStickToEnd;
 
-  private boolean myInDocumentUpdate;
+  private final Set<FlushRunnable> myCurrentRequests = new THashSet<>();
+  private final Alarm myFlushAlarm = new Alarm(this);
 
-  // If true, then a document is being cleared right now.
-  // Should be accessed in EDT only.
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private boolean myDocumentClearing;
+  private final Project myProject;
+
+  private boolean myOutputPaused;
+
+  private EditorEx myEditor;
+
+  private final Object LOCK = new Object();
+
+  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<>();
+
+  private String myHelpId;
+
+  protected final CompositeFilter myFilters;
+
+  @Nullable private final InputFilter myInputMessageFilter;
 
   public Editor getEditor() {
     return myEditor;
@@ -163,7 +178,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myFlushAlarm.isEmpty()) {
       cancelAllFlushRequests();
-      new MyFlushRunnable().run();
+      flushDeferredText();
     }
 
     final FoldingModel model = myEditor.getFoldingModel();
@@ -176,73 +191,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     updateFoldings(0, myEditor.getDocument().getLineCount() - 1);
   }
-
-  static class TokenInfo {
-    @NotNull
-    final ConsoleViewContentType contentType;
-    int startOffset;
-    int endOffset;
-    private final HyperlinkInfo myHyperlinkInfo;
-
-    TokenInfo(@NotNull ConsoleViewContentType contentType,
-              int startOffset,
-              int endOffset,
-              @Nullable HyperlinkInfo hyperlinkInfo) {
-      this.contentType = contentType;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      myHyperlinkInfo = hyperlinkInfo;
-    }
-
-    public int getLength() {
-      return endOffset - startOffset;
-    }
-
-    @Override
-    public String toString() {
-      return contentType + "[" + startOffset + ";" + endOffset + "]";
-    }
-
-    public HyperlinkInfo getHyperlinkInfo() {
-      return myHyperlinkInfo;
-    }
-  }
-
-  private final Project myProject;
-
-  private boolean myOutputPaused;
-
-  private EditorEx myEditor;
-
-  private final Object LOCK = new Object();
-
-  /**
-   * Holds number of symbols managed by the current console.
-   * <p/>
-   * Total number is assembled as a sum of symbols that are already pushed to the document and number of deferred symbols that
-   * are awaiting to be pushed to the document.
-   */
-  private int myContentSize;
-
-  /**
-   * Holds information about lexical division by offsets of the text already pushed to document.
-   * <p/>
-   * Target offsets are anchored to the document here.
-   */
-  private final List<TokenInfo> myTokens = new ArrayList<>();
-
-  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<>();
-
-  private String myHelpId;
-
-  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private final Alarm myFlushAlarm = new Alarm(this);
-
-  private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<>();
-
-  protected final CompositeFilter myFilters;
-
-  @Nullable private final InputFilter myInputMessageFilter;
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -267,8 +215,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                             @NotNull GlobalSearchScope searchScope,
                             boolean viewer,
                             @NotNull final ConsoleState initialState,
-                            boolean usePredefinedMessageFilter)
-  {
+                            boolean usePredefinedMessageFilter) {
     super(new BorderLayout());
     initTypedHandler();
     myIsViewer = viewer;
@@ -278,8 +225,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     myFilters = new CompositeFilter(project, usePredefinedMessageFilter ? computeConsoleFilters(project, searchScope) : new SmartList<>());
     myFilters.setForceUseAllFilters(true);
-    myHeavyUpdateTicket = 0;
-    myHeavyAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
     ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
     if (inputFilters.length > 0) {
@@ -314,12 +259,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           DocumentEx document = myEditor.getDocument();
           if (myLastStamp != document.getModificationStamp()) {
             clearHyperlinkAndFoldings();
-            highlightHyperlinksAndFoldings(document.createRangeMarker(0, 0));
+            highlightHyperlinksAndFoldings(0);
           }
         });
       }
     });
-
   }
 
   @NotNull
@@ -342,7 +286,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public void attachToProcess(final ProcessHandler processHandler) {
+  public void attachToProcess(ProcessHandler processHandler) {
     myState = myState.attachTo(this, processHandler);
   }
 
@@ -351,20 +295,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (myEditor == null) return;
     synchronized (LOCK) {
       // real document content will be cleared on next flush;
-      myContentSize = 0;
       myDeferredBuffer.clear();
       myFolding.clear();
     }
-    if (myFlushAlarm.isDisposed()) return;
-    cancelAllFlushRequests();
-    addFlushRequest(new MyClearRunnable());
-    cancelHeavyAlarm();
+    if (!myFlushAlarm.isDisposed()) {
+      cancelAllFlushRequests();
+      addFlushRequest(CLEAR, 0);
+      cancelHeavyAlarm();
+    }
   }
 
   @Override
   public void scrollTo(final int offset) {
     if (myEditor == null) return;
-    class ScrollRunnable extends MyFlushRunnable {
+    class ScrollRunnable extends FlushRunnable {
       private final int myOffset = offset;
 
       @Override
@@ -372,7 +316,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         flushDeferredText();
         if (myEditor == null) return;
         int moveOffset = Math.min(offset, myEditor.getDocument().getTextLength());
-        if (myDeferredBuffer.isUseCyclicBuffer() && moveOffset >= myEditor.getDocument().getTextLength()) {
+        if (ConsoleBuffer.useCycleBuffer() && moveOffset >= myEditor.getDocument().getTextLength()) {
           moveOffset = 0;
         }
         myEditor.getCaretModel().moveToOffset(moveOffset);
@@ -384,7 +328,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         return super.equals(o) && myOffset == ((ScrollRunnable)o).myOffset;
       }
     }
-    addFlushRequest(new ScrollRunnable());
+    addFlushRequest(new ScrollRunnable(),0);
   }
 
   public void requestScrollingToEnd() {
@@ -392,24 +336,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
 
-    addFlushRequest(new MyFlushRunnable() {
+    addFlushRequest(new FlushRunnable() {
       @Override
       public void doRun() {
         flushDeferredText();
-        if (myEditor == null || myFlushAlarm.isDisposed()) {
-          return;
+        if (myEditor != null && !myFlushAlarm.isDisposed()) {
+          scrollToEnd();
         }
-
-        scrollToEnd();
       }
-    });
+    }, 0);
   }
 
-  private void addFlushRequest(@NotNull MyFlushRunnable scrollRunnable) {
-    addFlushRequest(scrollRunnable, 0);
-  }
-
-  private void addFlushRequest(@NotNull MyFlushRunnable flushRunnable, final int millis) {
+  private void addFlushRequest(@NotNull FlushRunnable flushRunnable, final int millis) {
     synchronized (myCurrentRequests) {
       if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
         myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
@@ -430,25 +368,26 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myOutputPaused;
   }
 
+  private boolean keepSlashR = true;
   public void setEmulateCarriageReturn(boolean emulate) {
-    myDeferredBuffer.setKeepSlashR(emulate);
+    keepSlashR = emulate;
   }
 
   @Override
   public boolean hasDeferredOutput() {
     synchronized (LOCK) {
-      return myDeferredBuffer.getLength() > 0;
+      return myDeferredBuffer.length() > 0;
     }
   }
 
   @Override
   public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
     //Q: implement in another way without timer?
-    if (!hasDeferredOutput()) {
-      runnable.run();
+    if (hasDeferredOutput()) {
+      performLaterWhenNoDeferredOutput(runnable);
     }
     else {
-      performLaterWhenNoDeferredOutput(runnable);
+      runnable.run();
     }
   }
 
@@ -568,14 +507,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void cancelAllFlushRequests() {
     synchronized (myCurrentRequests) {
-      for (MyFlushRunnable request : myCurrentRequests) {
-        request.invalidate();
-      }
       myCurrentRequests.clear();
       myFlushAlarm.cancelAllRequests();
     }
   }
 
+  @TestOnly
+  void waitAllRequests() {
+    myFlushAlarm.flush();
+  }
+  
   protected void disposeEditor() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       if (!myEditor.isDisposed()) {
@@ -587,53 +528,65 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @Override
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
     if (myInputMessageFilter == null) {
-      printHyperlink(text, contentType, null);
+      print(text, contentType, null);
       return;
     }
 
     List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, contentType);
     if (result == null) {
-      printHyperlink(text, contentType, null);
+      print(text, contentType, null);
     }
     else {
       for (Pair<String, ConsoleViewContentType> pair : result) {
         if (pair.first != null) {
-          printHyperlink(pair.first, pair.second == null ? contentType : pair.second, null);
+          print(pair.first, pair.second == null ? contentType : pair.second, null);
         }
       }
     }
   }
 
-  private void printHyperlink(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+  private void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+    // optimisation: most of the strings don't contain line separators
+    for (int i=0; i<text.length(); i++) {
+      char c = text.charAt(i);
+      if (c == '\n' || c == '\r') {
+        text = StringUtil.convertLineSeparators(text, keepSlashR);
+        break;
+      }
+    }
     synchronized (LOCK) {
-      Pair<String, Integer> pair = myDeferredBuffer.print(text, contentType, info);
-      text = pair.first;
-      myContentSize += text.length() - pair.second;
+      myDeferredBuffer.print(text, contentType, info);
 
-      if (contentType == ConsoleViewContentType.USER_INPUT && NEW_LINE_MATCHER.indexIn(text) >= 0) {
-        flushDeferredUserInput();
+      if (contentType == ConsoleViewContentType.USER_INPUT) {
+        flushDeferredText();
       }
       if (myEditor != null) {
-        final boolean shouldFlushNow = myDeferredBuffer.isUseCyclicBuffer() && myDeferredBuffer.getLength() >= myDeferredBuffer.getCyclicBufferSize();
-        addFlushRequest(new MyFlushRunnable(), shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY);
+        final boolean shouldFlushNow = myDeferredBuffer.length() >= myDeferredBuffer.getCycleBufferSize();
+        addFlushRequest(FLUSH, shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY);
       }
     }
   }
 
   private static ModalityState getStateForUpdate() {
-    return null;//myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
+    return null;
   }
 
   private void requestFlushImmediately() {
     if (myEditor != null) {
-      addFlushRequest(new MyFlushRunnable());
+      addFlushRequest(FLUSH, 0);
     }
   }
 
+  /**
+   * Holds number of symbols managed by the current console.
+   * <p/>
+   * Total number is assembled as a sum of symbols that are already pushed to the document and number of deferred symbols that
+   * are awaiting to be pushed to the document.
+   */
   @Override
   public int getContentSize() {
     synchronized (LOCK) {
-      return myContentSize;
+      return myEditor.getDocument().getTextLength() + myDeferredBuffer.length();
     }
   }
 
@@ -643,115 +596,131 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void flushDeferredText() {
-    flushDeferredText(false);
-  }
-
-  private void flushDeferredText(boolean clear) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myProject.isDisposed()) {
-      return;
-    }
-    EditorEx editor = myEditor;
-    if (editor == null) {
-      //already disposed
-      return;
-    }
-    final boolean shouldStickToEnd = clear || !myCancelStickToEnd && isStickingToEnd();
+    if (isDisposed()) return;
+    final boolean shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd();
     myCancelStickToEnd = false; // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
-    if (clear) {
-      final DocumentEx document = editor.getDocument();
-      synchronized (LOCK) {
-        myTokens.clear();
-        clearHyperlinkAndFoldings();
-      }
-      final int documentTextLength = document.getTextLength();
-      if (documentTextLength > 0) {
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          document.setInBulkUpdate(true);
-          try {
-            myInDocumentUpdate = true;
-            myDocumentClearing = true;
-            document.deleteString(0, documentTextLength);
-          }
-          finally {
-            document.setInBulkUpdate(false);
-            myDocumentClearing = false;
-            myInDocumentUpdate = false;
-          }
-        }, null, DocCommandGroupId.noneGroupId(document));
-      }
-      return;
-    }
 
+    final StringBuilder addedText;
+    List<TokenBuffer.TokenInfo> deferredTokens;
+    final Document document = myEditor.getDocument();
 
-    final String addedText;
-    final Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
-    int deferredTokensSize;
     synchronized (LOCK) {
       if (myOutputPaused) return;
-      if (myDeferredBuffer.getLength() == 0) return;
+      addedText = new StringBuilder(myDeferredBuffer.length());
 
-      addedText = myDeferredBuffer.getText().replace(LineSeparator.CRLF.getSeparatorString(), LineSeparator.LF.getSeparatorString());
-
-      List<TokenInfo> deferredTokens = myDeferredBuffer.getTokens();
-      for (TokenInfo deferredToken : deferredTokens) {
-        ConsoleUtil.addToken(deferredToken.getLength(), deferredToken.getHyperlinkInfo(), deferredToken.contentType, myTokens);
-        contentTypes.add(deferredToken.contentType);
-      }
-      deferredTokensSize = deferredTokens.size();
-      myDeferredBuffer.clear(false);
+      deferredTokens = myDeferredBuffer.drain();
+      if (deferredTokens.isEmpty()) return;
       cancelHeavyAlarm();
     }
-    final Document document = myEditor.getDocument();
+
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
+    final Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       if (!shouldStickToEnd) {
         myEditor.getScrollingModel().accumulateViewportChanges();
       }
       try {
-        myInDocumentUpdate = true;
-        String[] strings = addedText.split("\\r", -1); // limit must be any negative number to avoid discarding of trailing empty strings
-        for (int i = 0; i < strings.length - 1; i++) {
-          document.insertString(document.getTextLength(), strings[i]);
-          int lastLine = document.getLineCount() - 1;
-          if (lastLine >= 0) {
-            ConsoleUtil.updateTokensOnTextRemoval(myTokens, document.getTextLength(), document.getTextLength() + 1);
-            document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
+        // the text can contain one "\r" at the start meaning we should delete the last line
+        boolean startsWithCR = deferredTokens.get(0) == TokenBuffer.CR_TOKEN;
+        int startIndex = startsWithCR ? 1 : 0;
+        for (int i = startIndex; i < deferredTokens.size(); i++) {
+          TokenBuffer.TokenInfo deferredToken = deferredTokens.get(i);
+          addedText.append(deferredToken.getText());
+        }
+        if (startsWithCR) {
+          // remove last line if any
+          if (document.getLineCount() != 0) {
+            int lineStartOffset = document.getLineStartOffset(document.getLineCount() - 1);
+            document.deleteString(lineStartOffset, document.getTextLength());
           }
         }
-        if (strings.length > 0) {
-          document.insertString(document.getTextLength(), strings[strings.length - 1]);
-          myContentSize -= strings.length - 1;
+        document.insertString(document.getTextLength(), addedText);
+        // add token information as range markers
+        // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
+        int offset = document.getTextLength();
+        for (int i = deferredTokens.size() - 1; i >= startIndex; i--) {
+          TokenBuffer.TokenInfo token = deferredTokens.get(i);
+          contentTypes.add(token.contentType);
+          int tokenLength = token.length();
+          final HyperlinkInfo info = token.getHyperlinkInfo();
+          int start = Math.max(0, offset - tokenLength);
+          if (start == offset) break;
+          if (info != null) {
+            myHyperlinks.createHyperlink(start, offset, null, info);
+          }
+          createTokenRangeMarker(document, token.contentType, start, offset);
+          offset = start;
+        }
+        // remove invalid markers from tokenRangeMarkers
+        while (true) {
+          RangeMarker marker = tokenRangeMarkers.peekFirst();
+          if (marker == null) break;
+          if (!marker.isValid() || marker.getStartOffset() == marker.getEndOffset()) {
+            marker.dispose();
+            tokenRangeMarkers.pullFirst();
+          }
+          else {
+            break;
+          }
         }
       }
       finally {
-        myInDocumentUpdate = false;
         if (!shouldStickToEnd) {
           myEditor.getScrollingModel().flushViewportChanges();
         }
       }
-      if (!contentTypes.isEmpty()) {
-        for (ChangeListener each : myListeners) {
-          each.contentAdded(contentTypes);
-        }
-      }
     }, null, DocCommandGroupId.noneGroupId(document));
-    synchronized (LOCK) {
-      for (int i = myTokens.size() - 1; i >= 0 && deferredTokensSize > 0; i--, deferredTokensSize--) {
-        TokenInfo token = myTokens.get(i);
-        final HyperlinkInfo info = token.getHyperlinkInfo();
-        if (info != null) {
-          myHyperlinks.createHyperlink(token.startOffset, token.endOffset, null, info);
-        }
+    if (!contentTypes.isEmpty()) {
+      for (ChangeListener each : myListeners) {
+        each.contentAdded(contentTypes);
       }
     }
     myPsiDisposedCheck.performCheck();
 
-    highlightHyperlinksAndFoldings(lastProcessedOutput);
+    int startLine = lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
+    lastProcessedOutput.dispose();
+    highlightHyperlinksAndFoldings(startLine);
 
     if (shouldStickToEnd) {
       scrollToEnd();
+    }
+  }
+
+  private void createTokenRangeMarker(@NotNull Document document,
+                                      @NotNull ConsoleViewContentType contentType,
+                                      int startOffset,
+                                      int endOffset) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    RangeMarker tokenMarker = document.createRangeMarker(startOffset, endOffset);
+    tokenMarker.putUserData(CONTENT_TYPE, contentType);
+    tokenRangeMarkers.addLast(tokenMarker);
+  }
+
+  boolean isDisposed() {
+    return myProject.isDisposed() || myEditor == null;
+  }
+
+  private void doClear() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (isDisposed()) return;
+    final DocumentEx document = myEditor.getDocument();
+    synchronized (LOCK) {
+      clearHyperlinkAndFoldings();
+    }
+    final int documentTextLength = document.getTextLength();
+    if (documentTextLength > 0) {
+      CommandProcessor.getInstance().executeCommand(myProject, () -> {
+        document.setInBulkUpdate(true);
+        try {
+          document.deleteString(0, documentTextLength);
+        }
+        finally {
+          document.setInBulkUpdate(false);
+        }
+      }, null, DocCommandGroupId.noneGroupId(document));
     }
   }
 
@@ -777,23 +746,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myHeavyAlarm.cancelAllRequests();
       ++myHeavyUpdateTicket;
     }
-  }
-
-  private void flushDeferredUserInput() {
-    final String textToSend = myDeferredBuffer.cutFirstUserInputLine();
-    if (textToSend == null) {
-      return;
-    }
-    myFlushUserInputAlarm.addRequest(() -> {
-      if (myState.isRunning()) {
-        try {
-          // this may block forever, see IDEA-54340
-          myState.sendUserInput(textToSend);
-        }
-        catch (IOException ignored) {
-        }
-      }
-    }, 0);
   }
 
   @Override
@@ -824,7 +776,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public void setHelpId(final String helpId) {
+  public void setHelpId(@NotNull final String helpId) {
     myHelpId = helpId;
   }
 
@@ -838,8 +790,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public void printHyperlink(@NotNull final String hyperlinkText, final HyperlinkInfo info) {
-    printHyperlink(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
+  public void printHyperlink(@NotNull final String hyperlinkText, @Nullable HyperlinkInfo info) {
+    print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
   }
 
   @NotNull
@@ -854,14 +806,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           popupInvoked(event.getMouseEvent());
         }
       });
-      editor.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent event) {
-          onDocumentChanged(event);
-        }
-      }, this);
 
-      int bufferSize = myDeferredBuffer.isUseCyclicBuffer() ? myDeferredBuffer.getCyclicBufferSize() : 0;
+      int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : 0;
       editor.getDocument().setCyclicBufferSize(bufferSize);
 
       editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
@@ -873,49 +819,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     });
   }
 
-  private void onDocumentChanged(@NotNull DocumentEvent event) {
-    if (event.getNewLength() == 0) {
-      // string has been removed, adjust token ranges
-      synchronized (LOCK) {
-        ConsoleUtil.updateTokensOnTextRemoval(myTokens, event.getOffset(), event.getOffset() + event.getOldLength());
-        int toRemoveLen = event.getOldLength();
-        if (!myDocumentClearing) {
-          // If document is being cleared now, then this event has been occurred as a result of calling clear() method.
-          // At start clear() method sets 'myContentSize' to 0, so there is no need to perform update again.
-          // Moreover, performing update of 'myContentSize' breaks executing "console.print();" immediately after "console.clear();".
-          myContentSize -= Math.min(myContentSize, toRemoveLen);
-        }
-      }
-    }
-    else if (!myInDocumentUpdate) {
-      int newFragmentLength = event.getNewFragment().length();
-      // track external appends
-      if (event.getOldFragment().length() == 0 && newFragmentLength > 0) {
-        synchronized (LOCK) {
-          myContentSize += newFragmentLength;
-          ConsoleUtil.addToken(newFragmentLength, null, ConsoleViewContentType.NORMAL_OUTPUT, myTokens);
-        }
-      }
-      else {
-        if (ConsoleViewUtil.isReplaceActionEnabledForConsoleViewEditor(myEditor)) {
-          clearHyperlinkAndFoldings();
-          highlightHyperlinksAndFoldings(event.getDocument().createRangeMarker(0, 0));
-        }
-        else {
-          LOG.warn("unhandled external change: " + event);
-        }
-      }
-    }
-  }
-
   @NotNull
   protected EditorEx doCreateConsoleEditor() {
     return ConsoleViewUtil.setupConsoleEditor(myProject, true, false);
   }
 
   @NotNull
-  protected MyHighlighter createHighlighter() {
-    return new MyHighlighter();
+  private TokenHighlighter createHighlighter() {
+    return new TokenHighlighter();
   }
 
   private void registerConsoleEditorActions() {
@@ -966,26 +877,24 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
   }
 
-  private void highlightHyperlinksAndFoldings(@NotNull RangeMarker lastProcessedOutput) {
+  private void highlightHyperlinksAndFoldings(int startLine) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     boolean canHighlightHyperlinks = !myFilters.isEmpty();
 
     if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
       return;
     }
-    final int line1 = lastProcessedOutput.isValid() ? myEditor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
-    lastProcessedOutput.dispose();
     int endLine = myEditor.getDocument().getLineCount() - 1;
-    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (canHighlightHyperlinks) {
-      myHyperlinks.highlightHyperlinks(myFilters, line1, endLine);
+      myHyperlinks.highlightHyperlinks(myFilters, startLine, endLine);
     }
 
     if (myAllowHeavyFilters && myFilters.isAnyHeavy() && myFilters.shouldRunHeavy()) {
-      runHeavyFilters(line1, endLine);
+      runHeavyFilters(startLine, endLine);
     }
     if (myUpdateFoldingsEnabled) {
-      updateFoldings(line1, endLine);
+      updateFoldings(startLine, endLine);
     }
   }
 
@@ -1000,15 +909,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     myJLayeredPane.startUpdating();
     final int currentValue = myHeavyUpdateTicket;
-    myHeavyAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
+    myHeavyAlarm.addRequest(() -> {
         if (!myFilters.shouldRunHeavy()) return;
         try {
-          myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
-            @Override
-            public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
-              addFlushRequest(new MyFlushRunnable() {
+          myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
+              addFlushRequest(new FlushRunnable() {
                 @Override
                 public void doRun() {
                   if (myHeavyUpdateTicket != currentValue) return;
@@ -1024,18 +929,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
                 @Override
                 public boolean equals(Object o) {
-                  return this == o && super.equals(o);
+                  return this == o;
                 }
-              });
-            }
-          });
+              },0)
+          );
         }
         finally {
           if (myHeavyAlarm.isEmpty()) {
             SwingUtilities.invokeLater(() -> myJLayeredPane.finishUpdating());
           }
         }
-      }
     }, 0);
   }
 
@@ -1137,6 +1040,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public static class ClearAllAction extends DumbAwareAction {
     private final ConsoleView myConsoleView;
 
+    @SuppressWarnings("unused") // in LangActions.xml
     public ClearAllAction() {
       this(null);
     }
@@ -1168,30 +1072,47 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private class MyHighlighter extends DocumentAdapter implements EditorHighlighter {
+  private RangeMarker findTokenMarker(int offset) {
+    DocumentEx document = myEditor.getDocument();
+    RangeMarker[] marker = new RangeMarker[1];
+    document.processRangeMarkersOverlappingWith(offset, offset, m->{
+      if (getTokenType(m) == null) return true;
+      marker[0] = m;
+      return false;
+    });
+
+    return marker[0];
+  }
+
+  private static ConsoleViewContentType getTokenType(RangeMarker m) {
+    return m == null ? null : m.getUserData(CONTENT_TYPE);
+  }
+
+  private class TokenHighlighter extends DocumentAdapter implements EditorHighlighter {
     private HighlighterClient myEditor;
 
     @NotNull
     @Override
     public HighlighterIterator createIterator(final int startOffset) {
-      final int startIndex = ConsoleUtil.findTokenInfoIndexByOffset(myTokens, startOffset);
+      // iterate all range markers searching for ones with CONTENT_TYPE user data
+      RangeMarker marker = findTokenMarker(startOffset);
 
       return new HighlighterIterator() {
-        private int myIndex = startIndex;
+        private RangeMarker myCursor = marker;
 
         @Override
         public TextAttributes getTextAttributes() {
-          return atEnd() ? null : getTokenInfo().contentType.getAttributes();
+          return atEnd() ? null : ConsoleViewImpl.getTokenType(myCursor).getAttributes();
         }
 
         @Override
         public int getStart() {
-          return atEnd() ? 0 : getTokenInfo().startOffset;
+          return atEnd() ? 0 : myCursor.getStartOffset();
         }
 
         @Override
         public int getEnd() {
-          return atEnd() ? 0 : getTokenInfo().endOffset;
+          return atEnd() ? 0 : myCursor.getEndOffset();
         }
 
         @Override
@@ -1201,26 +1122,28 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
         @Override
         public void advance() {
-          myIndex++;
+          while (true) {
+            myCursor = ((RangeMarkerImpl)myCursor).findRangeMarkerAfter();
+            if (myCursor == null || ConsoleViewImpl.getTokenType(myCursor) != null) break;
+          }
         }
 
         @Override
         public void retreat() {
-          myIndex--;
+          while (true) {
+            myCursor = ((RangeMarkerImpl)myCursor).findRangeMarkerBefore();
+            if (myCursor == null || ConsoleViewImpl.getTokenType(myCursor) != null) break;
+          }
         }
 
         @Override
         public boolean atEnd() {
-          return myIndex < 0 || myIndex >= myTokens.size();
+          return myCursor == null;
         }
 
         @Override
         public Document getDocument() {
           return myEditor.getDocument();
-        }
-
-        private TokenInfo getTokenInfo() {
-          return myTokens.get(myIndex);
         }
       };
     }
@@ -1241,7 +1164,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private static class MyTypedHandler extends TypedActionHandlerBase {
-
     private MyTypedHandler(final TypedActionHandler originalAction) {
       super(originalAction);
     }
@@ -1250,30 +1172,49 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
       final ConsoleViewImpl consoleView = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
       if (consoleView == null || !consoleView.myState.isRunning() || consoleView.myIsViewer) {
-        if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
-      }
-      else {
-        final String text = String.valueOf(charTyped);
-        SelectionModel selectionModel = editor.getSelectionModel();
-        if (selectionModel.hasSelection()) {
-          consoleView.replaceUserText(text, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(editor, charTyped, dataContext);
         }
-        else {
-          consoleView.insertUserText(text, editor.getCaretModel().getOffset());
-        }
+        return;
       }
+      final String text = String.valueOf(charTyped);
+      consoleView.type(editor, text);
+    }
+  }
+
+  private void type(@NotNull Editor editor, @NotNull String text) {
+    flushDeferredText();
+    SelectionModel selectionModel = editor.getSelectionModel();
+
+    int start = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
+    RangeMarker marker = findTokenMarker(start);
+    if (getTokenType(marker) != ConsoleViewContentType.USER_INPUT) {
+      print(text, ConsoleViewContentType.USER_INPUT);
+      moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
+      return;
+    }
+
+    String textToUse = StringUtil.convertLineSeparators(text);
+    if (selectionModel.hasSelection()) {
+      replaceUserText(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), textToUse);
+    }
+    else {
+      insertUserText(start, textToUse);
     }
   }
 
   private abstract static class ConsoleAction extends AnAction implements DumbAware {
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final DataContext context = e.getDataContext();
-      final ConsoleViewImpl console = getRunningConsole(context);
-      execute(console, context);
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      DataContext context = e.getDataContext();
+      ConsoleViewImpl console = getRunningConsole(context);
+      if (console != null) {
+        execute(console, context);
+      }
     }
 
-    protected abstract void execute(ConsoleViewImpl console, final DataContext context);
+    protected abstract void execute(@NotNull ConsoleViewImpl console, @NotNull DataContext context);
 
     @Override
     public void update(final AnActionEvent e) {
@@ -1282,7 +1223,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     @Nullable
-    private static ConsoleViewImpl getRunningConsole(final DataContext context) {
+    private static ConsoleViewImpl getRunningConsole(@NotNull DataContext context) {
       final Editor editor = CommonDataKeys.EDITOR.getData(context);
       if (editor != null) {
         final ConsoleViewImpl console = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
@@ -1296,36 +1237,27 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static class EnterHandler extends ConsoleAction {
     @Override
-    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
+    public void execute(@NotNull final ConsoleViewImpl consoleView, @NotNull final DataContext context) {
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
       consoleView.flushDeferredText();
-      final Editor editor = consoleView.myEditor;
-      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      Editor editor = consoleView.myEditor;
+      moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
     }
   }
 
   private static class PasteHandler extends ConsoleAction {
     @Override
-    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
+    public void execute(@NotNull final ConsoleViewImpl consoleView, @NotNull final DataContext context) {
       String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       if (text == null) return;
-      text = StringUtil.convertLineSeparators(text);
-      ApplicationManager.getApplication().assertIsDispatchThread();
       Editor editor = consoleView.myEditor;
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasSelection()) {
-        consoleView.replaceUserText(text, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-      }
-      else {
-        consoleView.insertUserText(text, editor.getCaretModel().getOffset());
-      }
+      consoleView.type(editor, text);
     }
   }
 
   private static class BackSpaceHandler extends ConsoleAction {
     @Override
-    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
+    public void execute(@NotNull final ConsoleViewImpl consoleView, @NotNull final DataContext context) {
       final Editor editor = consoleView.myEditor;
 
       if (IncrementalSearchHandler.isHintVisible(editor)) {
@@ -1338,8 +1270,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (length == 0) {
         return;
       }
-
-      ApplicationManager.getApplication().assertIsDispatchThread();
 
       SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasSelection()) {
@@ -1358,7 +1288,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static class DeleteHandler extends ConsoleAction {
     @Override
-    public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
+    public void execute(@NotNull final ConsoleViewImpl consoleView, @NotNull final DataContext context) {
       final Editor editor = consoleView.myEditor;
 
       if (IncrementalSearchHandler.isHintVisible(editor)) {
@@ -1366,13 +1296,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         return;
       }
 
+      consoleView.flushDeferredText();
       final Document document = editor.getDocument();
       final int length = document.getTextLength();
       if (length == 0) {
         return;
       }
 
-      ApplicationManager.getApplication().assertIsDispatchThread();
       SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasSelection()) {
         consoleView.deleteUserText(selectionModel.getSelectionStart(),
@@ -1414,8 +1344,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Nullable
   protected OccurenceInfo calcNextOccurrence(final int delta) {
-    final EditorHyperlinkSupport hyperlinks = myHyperlinks;
-    if (hyperlinks == null) {
+    if (myHyperlinks == null) {
       return null;
     }
 
@@ -1528,199 +1457,50 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     Disposer.register(parent, () -> myListeners.remove(listener));
   }
 
-  /**
-   * insert text to document
-   *
-   * @param s      inserted text
-   * @param offset relatively to all document text
-   */
-  private void insertUserText(final String s, int offset) {
+  private void insertUserText(int offset, @NotNull String text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final ConsoleBuffer buffer = myDeferredBuffer;
     final Editor editor = myEditor;
     final Document document = editor.getDocument();
-    final int startOffset;
+    int oldDocLength = document.getTextLength();
+    document.insertString(offset, text);
+    int newStartOffset = Math.max(0,document.getTextLength() - oldDocLength + offset - text.length()); // take care of trim document
+    int newEndOffset = document.getTextLength() - oldDocLength + offset; // take care of trim document
 
-    String textToUse = StringUtil.convertLineSeparators(s);
-    synchronized (LOCK) {
-      if (myTokens.isEmpty()) {
-        ConsoleUtil.addToken(0, null, ConsoleViewContentType.SYSTEM_OUTPUT, myTokens);
-      }
-      final TokenInfo info = myTokens.get(myTokens.size() - 1);
-      if (info.contentType != ConsoleViewContentType.USER_INPUT && !StringUtil.containsChar(textToUse, '\n')) {
-        print(textToUse, ConsoleViewContentType.USER_INPUT);
-        flushDeferredText();
-        editor.getCaretModel().moveToOffset(document.getTextLength());
-        editor.getSelectionModel().removeSelection();
-        return;
-      }
-      if (info.contentType != ConsoleViewContentType.USER_INPUT) {
-        insertUserText("temp", offset);
-        final TokenInfo newInfo = myTokens.get(myTokens.size() - 1);
-        replaceUserText(textToUse, newInfo.startOffset, newInfo.endOffset);
-        return;
-      }
-
-      final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
-      startOffset = offset > info.endOffset ? info.endOffset : Math.max(deferredOffset, Math.max(info.startOffset, offset));
-
-      buffer.addUserText(startOffset - deferredOffset, textToUse);
-
-      int charCountToAdd = textToUse.length();
-      info.endOffset += charCountToAdd;
-      myContentSize += charCountToAdd;
+    if (findTokenMarker(newEndOffset) == null) {
+      createTokenRangeMarker(document, ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset);
     }
 
-    try {
-      myInDocumentUpdate = true;
-      document.insertString(startOffset, textToUse);
-    }
-    finally {
-      myInDocumentUpdate = false;
-    }
-    // Math.max is needed when cyclic buffer is used
-    editor.getCaretModel().moveToOffset(Math.min(startOffset + textToUse.length(), document.getTextLength()));
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    moveScrollRemoveSelection(editor, newEndOffset);
   }
 
-  /**
-   * replace text
-   *
-   * @param text     text for replace
-   * @param start relatively to all document text
-   * @param end   relatively to all document text
-   */
-  private void replaceUserText(@NotNull String text, int start, int end) {
-    if (start == end) {
-      insertUserText(text, start);
-      return;
-    }
-    final ConsoleBuffer buffer = myDeferredBuffer;
+  private void replaceUserText(int start, int end, @NotNull String text) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Editor editor = myEditor;
     final Document document = editor.getDocument();
-    final int startOffset;
-    final int endOffset;
 
-    synchronized (LOCK) {
-      if (myTokens.isEmpty()) return;
-      final TokenInfo info = myTokens.get(myTokens.size() - 1);
-      if (info.contentType != ConsoleViewContentType.USER_INPUT) {
-        print(text, ConsoleViewContentType.USER_INPUT);
-        flushDeferredText();
-        editor.getCaretModel().moveToOffset(document.getTextLength());
-        editor.getSelectionModel().removeSelection();
-        return;
-      }
-      if (buffer.getUserInputLength() <= 0) return;
+    document.replaceString(start, end, text);
+    int offset = start + text.length();
+    moveScrollRemoveSelection(editor, offset);
+  }
 
-      final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
-
-      startOffset = getStartOffset(start, info, deferredOffset);
-      endOffset = getEndOffset(end, info);
-
-      if (startOffset == -1 ||
-          endOffset == -1 ||
-          endOffset <= startOffset) {
-        editor.getSelectionModel().removeSelection();
-        editor.getCaretModel().moveToOffset(start);
-        return;
-      }
-
-      buffer.replaceUserText(startOffset - deferredOffset, endOffset - deferredOffset, text);
-
-      int charCountToReplace = text.length() - endOffset + startOffset;
-      info.endOffset += charCountToReplace;
-      if (info.startOffset == info.endOffset) {
-        myTokens.remove(myTokens.size() - 1);
-      }
-      myContentSize += charCountToReplace;
-    }
-
-    try {
-      myInDocumentUpdate = true;
-      document.replaceString(startOffset, endOffset, text);
-    }
-    finally {
-      myInDocumentUpdate = false;
-    }
-    editor.getCaretModel().moveToOffset(startOffset + text.length());
+  private static void moveScrollRemoveSelection(@NotNull Editor editor, int offset) {
+    editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
   }
 
-  /**
-   * delete text
-   *
-   * @param offset relatively to all document text
-   * @param length length of deleted text
-   */
-  private void deleteUserText(int offset, int length) {
-    ConsoleBuffer buffer = myDeferredBuffer;
+  private void deleteUserText(int startOffset, int length) {
     final Editor editor = myEditor;
     final Document document = editor.getDocument();
-    final int startOffset;
-    final int endOffset;
 
-    synchronized (LOCK) {
-      if (myTokens.isEmpty()) return;
-      final TokenInfo info = myTokens.get(myTokens.size() - 1);
-      if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
-      if (myDeferredBuffer.getUserInputLength() == 0) return;
+    RangeMarker marker = findTokenMarker(startOffset);
+    if (getTokenType(marker) != ConsoleViewContentType.USER_INPUT) return;
 
-      final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
-      startOffset = getStartOffset(offset, info, deferredOffset);
-      endOffset = getEndOffset(offset + length, info);
-      if (startOffset == -1 ||
-          endOffset == -1 ||
-          endOffset <= startOffset ||
-          startOffset < deferredOffset) {
-        editor.getSelectionModel().removeSelection();
-        editor.getCaretModel().moveToOffset(offset);
-        return;
-      }
-
-      buffer.removeUserText(startOffset - deferredOffset, endOffset - deferredOffset);
-    }
-
-    try {
-      myInDocumentUpdate = true;
+    int endOffset = startOffset + length;
+    if (startOffset >= 0 && endOffset >= 0 && endOffset > startOffset) {
       document.deleteString(startOffset, endOffset);
     }
-    finally {
-      myInDocumentUpdate = false;
-    }
-    editor.getCaretModel().moveToOffset(startOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().removeSelection();
-  }
-
-  //util methods for add, replace, delete methods
-  private static int getStartOffset(int offset, TokenInfo info, int deferredOffset) {
-    int startOffset;
-    if (offset >= info.startOffset && offset < info.endOffset) {
-      startOffset = Math.max(offset, deferredOffset);
-    }
-    else if (offset < info.startOffset) {
-      startOffset = Math.max(info.startOffset, deferredOffset);
-    }
-    else {
-      startOffset = -1;
-    }
-    return startOffset;
-  }
-
-  private static int getEndOffset(int offset, TokenInfo info) {
-    int endOffset;
-    if (offset > info.endOffset) {
-      endOffset = info.endOffset;
-    }
-    else if (offset <= info.startOffset) {
-      endOffset = -1;
-    }
-    else {
-      endOffset = offset;
-    }
-    return endOffset;
+    moveScrollRemoveSelection(editor, startOffset);
   }
 
   public boolean isRunning() {
@@ -1735,7 +1515,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    * Our point is to fold such long command line and represent it as a single visual line by default.
    */
   private class CommandLineFolding extends ConsoleFolding {
-
     /**
      * Checks if target line should be folded and returns its placeholder if the examination succeeds.
      *
@@ -1785,38 +1564,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private class MyFlushRunnable implements Runnable {
-    private volatile boolean myValid = true;
+  private class FlushRunnable implements Runnable {
     @Override
     public final void run() {
       synchronized (myCurrentRequests) {
         myCurrentRequests.remove(this);
       }
-      if (myValid) {
-        doRun();
-      }
+      doRun();
     }
 
     protected void doRun() {
       flushDeferredText();
     }
 
-    public void invalidate() {
-      myValid = false;
-    }
-
-    public boolean isValid() {
-      return myValid;
-    }
-
+    // by default all instances of the same class are treated equal
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MyFlushRunnable runnable = (MyFlushRunnable)o;
-
-      return myValid == runnable.myValid;
+      return this == o || o != null && getClass() == o.getClass();
     }
 
     @Override
@@ -1824,13 +1588,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return getClass().hashCode();
     }
   }
+  private final FlushRunnable FLUSH = new FlushRunnable();
 
-  private final class MyClearRunnable extends MyFlushRunnable {
+  private final class ClearRunnable extends FlushRunnable {
     @Override
     public void doRun() {
-      flushDeferredText(true);
+      doClear();
     }
   }
+  private final ClearRunnable CLEAR = new ClearRunnable();
 
   @NotNull
   public Project getProject() {
