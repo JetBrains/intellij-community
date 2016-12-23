@@ -30,10 +30,6 @@ public class CommandLineApplication {
 
   protected static CommandLineApplication ourInstance = null;
 
-  static {
-    System.setProperty("idea.filewatcher.disabled", "true");
-  }
-
   protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isServer) {
     this(isInternal, isUnitTestMode, isHeadless, ApplicationManagerEx.IDEA_APPLICATION, isServer);
   }
@@ -46,6 +42,7 @@ public class CommandLineApplication {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
+    System.setProperty("idea.filewatcher.disabled", "" + !isServer);
     ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName, null, isServer);
   }
 
