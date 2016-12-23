@@ -25,6 +25,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
@@ -141,7 +142,7 @@ public class GraphTableController {
   @NotNull
   private Point calcPoint4Graph(@NotNull Point clickPoint) {
     TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
-    return new Point(clickPoint.x - (myLogData.isMultiRoot() ? rootColumn.getWidth() : 0),
+    return new Point(clickPoint.x - (myUi.isMultipleRoots() ? rootColumn.getWidth() : 0),
                      PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
   }
 
@@ -213,9 +214,10 @@ public class GraphTableController {
   }
 
   private void performRootColumnAction() {
-    if (myLogData.isMultiRoot()) {
+    MainVcsLogUiProperties properties = myUi.getProperties();
+    if (myUi.isMultipleRoots() && properties.exists(MainVcsLogUiProperties.SHOW_ROOT_NAMES)) {
       VcsLogUtil.triggerUsage("RootColumnClick");
-      myUi.setShowRootNames(!myUi.isShowRootNames());
+      properties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, !properties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES));
     }
   }
 

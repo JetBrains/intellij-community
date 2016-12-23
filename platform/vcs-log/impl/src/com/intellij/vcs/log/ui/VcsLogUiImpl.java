@@ -143,11 +143,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
                        : "linear branches..."));
   }
 
-  public void setShowRootNames(boolean isShowRootNames) {
-    myUiProperties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, isShowRootNames);
-    myMainFrame.getGraphTable().rootColumnUpdated();
-  }
-
   public boolean isShowRootNames() {
     return myUiProperties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES);
   }
