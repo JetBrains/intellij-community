@@ -88,7 +88,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   @Volatile var repositoryActive = false
 
   internal val autoSyncManager = AutoSyncManager(this)
-  private val syncManager = SyncManager(this, autoSyncManager)
+  internal val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode) {

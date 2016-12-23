@@ -800,7 +800,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
 
       saveSettings();
-      lifecycleListener.appWillBeClosed();
+      lifecycleListener.appWillBeClosed(restart);
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {

@@ -35,12 +35,15 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
   @Volatile var writeAndDeleteProhibited = false
     private set
 
-  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult? {
+  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null, onAppExit: Boolean = false): UpdateResult? {
     var exception: Throwable? = null
     var restartApplication = false
     var updateResult: UpdateResult? = null
     icsManager.runInAutoCommitDisabledMode {
-      ApplicationManager.getApplication()!!.saveSettings()
+      if (!onAppExit) {
+        ApplicationManager.getApplication()!!.saveSettings()
+      }
+
       try {
         writeAndDeleteProhibited = true
         runModalTask(icsMessage("task.sync.title"), project) { indicator ->
@@ -133,7 +136,9 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
       }
     }
 
-    if (restartApplication) {
+    if (!onAppExit && restartApplication) {
+      // disable auto sync on exit
+      autoSyncManager.enabled = false
       // force to avoid saveAll & confirmation
       (ApplicationManager.getApplication() as ApplicationImpl).exit(true, true, true)
     }
@@ -231,4 +236,4 @@ enum class SyncType {
 
 class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.message, cause)
 
-class CannotResolveConflictInTestMode() : RuntimeException()
+class CannotResolveConflictInTestMode : RuntimeException()
