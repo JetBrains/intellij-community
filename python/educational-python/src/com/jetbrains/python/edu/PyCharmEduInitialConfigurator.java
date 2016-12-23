@@ -187,7 +187,7 @@ public class PyCharmEduInitialConfigurator {
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
 
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void welcomeScreenDisplayed() {
 

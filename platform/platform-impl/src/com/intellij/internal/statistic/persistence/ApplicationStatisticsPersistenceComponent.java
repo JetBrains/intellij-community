@@ -165,7 +165,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   @Override
   public void initComponent() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         persistOpenedProjects();

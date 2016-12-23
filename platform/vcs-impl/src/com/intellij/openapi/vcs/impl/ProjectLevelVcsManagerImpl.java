@@ -71,7 +71,6 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -151,7 +150,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (project.isDefault()) {
       // default project is disposed in write action, so treat it differently
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void appClosing() {
           Disposer.dispose(myInitialization);
