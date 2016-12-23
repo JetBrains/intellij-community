@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-import static com.intellij.vcs.log.data.MainVcsLogUiProperties.VcsLogHighlighterProperty;
+import static com.intellij.vcs.log.data.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 
 public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector {
@@ -47,41 +47,32 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
     if (projectLog != null) {
       VcsLogUiImpl ui = projectLog.getMainLogUi();
       if (ui != null) {
-        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", ui.getProperties().get(MainVcsLogUiProperties.SHOW_DETAILS)));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", ui.getProperties().get(MainVcsLogUiProperties.SHOW_LONG_EDGES)));
+        MainVcsLogUiProperties properties = ui.getProperties();
 
-        usages.add(StatisticsUtilKt
-                     .getBooleanUsage("ui.sort.linear.bek", ui.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE)
-                       .equals(PermanentGraph.SortType.LinearBek)));
-        usages
-          .add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", ui.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE)
-            .equals(PermanentGraph.SortType.Bek)));
-        usages.add(
-          StatisticsUtilKt.getBooleanUsage("ui.sort.normal", ui.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE)
-            .equals(PermanentGraph.SortType.Normal)));
+        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", properties.get(SHOW_DETAILS)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", properties.get(SHOW_LONG_EDGES)));
+
+        PermanentGraph.SortType sortType = properties.get(BEK_SORT_TYPE);
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.linear.bek", sortType.equals(PermanentGraph.SortType.LinearBek)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", sortType.equals(PermanentGraph.SortType.Bek)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.sort.normal", sortType.equals(PermanentGraph.SortType.Normal)));
 
         if (ui.isMultipleRoots()) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", ui.getProperties().get(MainVcsLogUiProperties.SHOW_ROOT_NAMES)));
+          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", properties.get(SHOW_ROOT_NAMES)));
         }
 
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact",
-                                                    ui.getProperties().get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW)));
-        usages
-          .add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", ui.getProperties().get(MainVcsLogUiProperties.SHOW_TAG_NAMES)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", properties.get(COMPACT_REFERENCES_VIEW)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", properties.get(SHOW_TAG_NAMES)));
 
-        usages.add(
-          StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex",
-                                           ui.getProperties().get(MainVcsLogUiProperties.TEXT_FILTER_REGEX)));
-        usages.add(
-          StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase",
-                                           ui.getProperties().get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex", properties.get(TEXT_FILTER_REGEX)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase", properties.get(TEXT_FILTER_MATCH_CASE)));
 
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {
             VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(factory.getId());
             usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil.ensureProperKey(factory.getId()),
-                                                        ui.getProperties().exists(property) && ui.getProperties().get(property)));
+                                                        properties.exists(property) && properties.get(property)));
           }
         }
 
