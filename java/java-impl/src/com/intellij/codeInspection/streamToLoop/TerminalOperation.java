@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamToLoop;
 
+import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.ResultKind;
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -339,7 +340,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String accumulator = context.declareResult("acc", myType, myIdentity.getText(), false);
+      String accumulator = context.declareResult("acc", myType, myIdentity.getText(), ResultKind.NON_FINAL);
       myUpdater.transform(context, accumulator, inVar.getName());
       return accumulator + "=" + myUpdater.getText() + ";";
     }
@@ -362,7 +363,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String seen = context.declare("seen", "boolean", "false");
-      String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
+      String accumulator = context.declareResult("acc", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", ResultKind.UNKNOWN);
       myUpdater.transform(context, accumulator, inVar.getName());
       context.setFinisher(new ConditionalExpression.Optional(myType, seen, accumulator));
       String ifClause = "if(!" + seen + ") {\n" +
@@ -410,7 +411,7 @@ abstract class TerminalOperation extends Operation {
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       mySupplier.transform(context);
       String candidate = mySupplier.suggestFinalOutputNames(context, myAccumulator.getParameterName(0), "acc").get(0);
-      String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText(), true);
+      String acc = context.declareResult(candidate, mySupplier.getResultType(), mySupplier.getText(), ResultKind.FINAL);
       myAccumulator.transform(context, acc, inVar.getName());
       return myAccumulator.getText()+";\n";
     }
@@ -427,7 +428,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String sum = context.declareResult("sum", myDoubleAccumulator ? "double" : "long", "0", false);
+      String sum = context.declareResult("sum", myDoubleAccumulator ? "double" : "long", "0", ResultKind.UNKNOWN);
       String count = context.declare("count", "long", "0");
       String seenCheck = count + ">0";
       String result = (myDoubleAccumulator ? "" : "(double)") + sum + "/" + count;
@@ -448,7 +449,7 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String arr = context.declareResult("arr", myType + "[]", "new " + myType + "[10]", false);
+      String arr = context.declareResult("arr", myType + "[]", "new " + myType + "[10]", ResultKind.UNKNOWN);
       String count = context.declare("count", "int", "0");
       context.setFinisher("java.util.Arrays.copyOfRange("+arr+",0,"+count+")");
       return "if(" + arr + ".length==" + count + ") " + arr + "=java.util.Arrays.copyOf(" + arr + "," + count + "*2);\n" +
@@ -468,7 +469,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String list = context.declareResult("list", CommonClassNames.JAVA_UTIL_LIST + "<" + myType + ">",
-                                          "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>()", false);
+                                          "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>()", ResultKind.UNKNOWN);
       String toArrayArg = "";
       if(mySupplier != null) {
         mySupplier.transform(context, "0");
@@ -570,7 +571,7 @@ abstract class TerminalOperation extends Operation {
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       transform(context, inVar.getName());
       PsiType resultType = correctReturnType(context.createType(myType));
-      String acc = context.declareResult(myAccNameSupplier.apply(context), resultType.getCanonicalText(), getSupplier(), true);
+      String acc = context.declareResult(myAccNameSupplier.apply(context), resultType.getCanonicalText(), getSupplier(), ResultKind.FINAL);
       return getAccumulator(acc, inVar.getName());
     }
 
@@ -625,7 +626,9 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     public String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String varName = context.declareResult(myAccName, myAccType, myAccInitializer, asCollector() != null);
+      ResultKind kind = myFinisherTemplate.equals("{acc}") ?
+                        TypeConversionUtil.isPrimitive(myAccType) ? ResultKind.NON_FINAL : ResultKind.FINAL : ResultKind.UNKNOWN;
+      String varName = context.declareResult(myAccName, myAccType, myAccInitializer, kind);
       context.setFinisher(myFinisherTemplate.replace("{acc}", varName));
       return myUpdateTemplate.replace("{item}", inVar.getName()).replace("{acc}", varName);
     }
@@ -681,16 +684,12 @@ abstract class TerminalOperation extends Operation {
   static class MinMaxTerminalOperation extends TerminalOperation {
     private String myType;
     private String myTemplate;
-    private String myComparatorType;
     private @Nullable FunctionHelper myComparator;
 
     public MinMaxTerminalOperation(String type, String template, @Nullable FunctionHelper comparator) {
       myType = type;
       myTemplate = template;
       myComparator = comparator;
-      if(comparator != null) {
-        myComparatorType = CommonClassNames.JAVA_UTIL_COMPARATOR+"<"+myType+">";
-      }
     }
 
     @Override
@@ -703,7 +702,7 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String seen = context.declare("seen", "boolean", "false");
-      String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", false);
+      String best = context.declareResult("best", myType, TypeConversionUtil.isPrimitive(myType) ? "0" : "null", ResultKind.UNKNOWN);
       context.setFinisher(new ConditionalExpression.Optional(myType, seen, best));
       String comparePredicate;
       if(myComparator != null) {
@@ -885,7 +884,7 @@ abstract class TerminalOperation extends Operation {
       PsiType resultType = context.createType(myResultType);
       resultType = correctTypeParameters(resultType, CommonClassNames.JAVA_UTIL_MAP,
                                          Collections.singletonMap("V", myCollector::correctReturnType));
-      String map = context.declareResult("map", resultType.getCanonicalText(), "new java.util.HashMap<>()", true);
+      String map = context.declareResult("map", resultType.getCanonicalText(), "new java.util.HashMap<>()", ResultKind.FINAL);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
       context.addInitStep(map + ".put(false, " + myCollector.getSupplier() + ");");

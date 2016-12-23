@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -337,6 +338,23 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
+  enum ResultKind {
+    /**
+     * Result variable is used as complete stream result and not modified after declaration
+     * E.g. {@code Collectors.toList()} creates such result.
+     */
+    FINAL,
+    /**
+     * Result variable is used as complete stream result, but could be modified in loop
+     * E.g. {@code Stream.count()} creates such result.
+     */
+    NON_FINAL,
+    /**
+     * Result variable is not directly used as stream result: additional transformations are possible.
+     */
+    UNKNOWN
+  }
+
   static class StreamToLoopReplacementContext {
     private final boolean myHasNestedLoops;
     private final String mySuffix;
@@ -430,10 +448,11 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       myDeclarations.add(initStatement);
     }
 
-    public String declareResult(String desiredName, String type, String initializer, boolean finalResult) {
-      if(finalResult && myPlaceholder.getParent() instanceof PsiVariable) {
+    public String declareResult(String desiredName, String type, String initializer, @NotNull ResultKind kind) {
+      if (kind != ResultKind.UNKNOWN && myPlaceholder.getParent() instanceof PsiVariable) {
         PsiVariable var = (PsiVariable)myPlaceholder.getParent();
-        if(var.getType().equalsToText(type) && var.getParent() instanceof PsiDeclarationStatement) {
+        if(var.getType().equalsToText(type) && var.getParent() instanceof PsiDeclarationStatement
+          && (kind == ResultKind.FINAL || canUseAsNonFinal(var))) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)var.getParent();
           if(declaration.getDeclaredElements().length == 1) {
             myPlaceholder = declaration;
@@ -453,6 +472,18 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       }
       setFinisher(name);
       return name;
+    }
+
+    @Contract("null -> false")
+    private static boolean canUseAsNonFinal(PsiVariable var) {
+      if(!(var instanceof PsiLocalVariable) || var.hasModifierProperty(PsiModifier.FINAL)) {
+        return false;
+      }
+      PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
+      return block != null && ReferencesSearch.search(var).forEach(ref -> {
+        PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
+        return context == null || PsiTreeUtil.isAncestor(context, block, false);
+      });
     }
 
     public PsiElement makeFinalReplacement() {
@@ -524,7 +555,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         }
       }
       String found =
-        declareResult(conditionalExpression.getCondition(), conditionalExpression.getType(), conditionalExpression.getFalseBranch(), false);
+        declareResult(conditionalExpression.getCondition(), conditionalExpression.getType(), conditionalExpression.getFalseBranch(),
+                      ResultKind.NON_FINAL);
       return found + " = " + conditionalExpression.getTrueBranch() + ";\n" + getBreakStatement();
     }
 

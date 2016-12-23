@@ -6,11 +6,10 @@ import java.util.stream.Stream;
 
 public class Main<T> {
   void test() {
-      Integer acc = 0;
+      Integer totalLength = 0;
       for (String s : Arrays.asList("a", "bb", "ccc")) {
           Integer length = s.length();
-          acc = acc + length;
+          totalLength = totalLength + length;
       }
-      Integer totalLength = acc;
   }
 }
