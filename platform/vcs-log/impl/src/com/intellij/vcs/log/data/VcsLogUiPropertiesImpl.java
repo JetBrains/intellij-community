@@ -265,7 +265,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
   }
 
-  public abstract static class VcsLogUiPropertiesImplListener implements VcsLogUiPropertiesListener {
+  public abstract static class MainVcsLogUiPropertiesListener implements VcsLogUiPropertiesListener {
     public abstract void onShowDetailsChanged();
 
     public abstract void onShowLongEdgesChanged();

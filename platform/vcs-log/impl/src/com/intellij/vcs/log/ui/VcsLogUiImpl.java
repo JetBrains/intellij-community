@@ -46,7 +46,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
   @NotNull private final VisiblePackChangeListener myVisiblePackChangeListener;
-  @NotNull private final VcsLogUiPropertiesImpl.VcsLogUiPropertiesImplListener myPropertiesListener;
+  @NotNull private final VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener myPropertiesListener;
 
   @NotNull private VisiblePack myVisiblePack;
 
@@ -318,7 +318,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myUiProperties;
   }
 
-  private class MyVcsLogUiPropertiesListener extends VcsLogUiPropertiesImpl.VcsLogUiPropertiesImplListener {
+  private class MyVcsLogUiPropertiesListener extends VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener {
     @Override
     public void onShowDetailsChanged() {
       myMainFrame.showDetails(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
