@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
@@ -40,8 +39,7 @@ public class HighlightersActionGroup extends ActionGroup {
     List<AnAction> actions = ContainerUtil.newArrayList();
 
     if (e != null) {
-      VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-      if (properties != null && properties instanceof MainVcsLogUiProperties) {
+      if (e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES) != null) {
         actions.add(new Separator("Highlight"));
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
           if (factory.showMenuItem()) {
