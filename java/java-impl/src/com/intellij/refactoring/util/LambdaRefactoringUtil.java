@@ -82,13 +82,8 @@ public class LambdaRefactoringUtil {
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
     boolean needToSpecifyFormalTypes = !ignoreCast && !isInferredSameTypeAfterConversion(lambdaExpression, referenceExpression, functionalInterfaceType);
     if (needToSpecifyFormalTypes) {
-      String typedParamList = createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
-      if (typedParamList != null) {
-        PsiParameterList paramListWithFormalTypes = elementFactory.createMethodFromText("void foo" + typedParamList, lambdaExpression).getParameterList();
-        JavaCodeStyleManager.getInstance(lambdaExpression.getProject())
-          .shortenClassReferences(lambdaExpression.getParameterList().replace(paramListWithFormalTypes));
-      }
-      else {
+      PsiParameterList typedParamList = specifyLambdaParameterTypes(functionalInterfaceType, lambdaExpression);
+      if (typedParamList == null) {
         return null;
       }
     }
@@ -327,6 +322,24 @@ public class LambdaRefactoringUtil {
     }
     buf.append(")");
     return buf.toString();
+  }
+
+  @Nullable
+  public static PsiParameterList specifyLambdaParameterTypes(PsiLambdaExpression lambdaExpression) {
+    return specifyLambdaParameterTypes(lambdaExpression.getFunctionalInterfaceType(), lambdaExpression);
+  }
+
+    @Nullable
+  public static PsiParameterList specifyLambdaParameterTypes(PsiType functionalInterfaceType,
+                                                             PsiLambdaExpression lambdaExpression) {
+    String typedParamList = createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
+    if (typedParamList != null) {
+      PsiParameterList paramListWithFormalTypes = JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
+        .createMethodFromText("void foo" + typedParamList, lambdaExpression).getParameterList();
+      return (PsiParameterList)JavaCodeStyleManager.getInstance(lambdaExpression.getProject())
+        .shortenClassReferences(lambdaExpression.getParameterList().replace(paramListWithFormalTypes));
+    }
+    return null;
   }
 
   public static void simplifyToExpressionLambda(@NotNull final PsiLambdaExpression lambdaExpression) {

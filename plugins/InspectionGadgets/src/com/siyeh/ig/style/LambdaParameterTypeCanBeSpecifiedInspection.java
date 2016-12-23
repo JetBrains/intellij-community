@@ -16,10 +16,8 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance("#" + LambdaParameterTypeCanBeSpecifiedInspection.class.getName());
 
   @Nls
   @NotNull
@@ -54,13 +51,6 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new InferLambdaParameterTypeFix(infos);
-  }
-
-  private static void doFix(@NotNull Project project, @NotNull PsiLambdaExpression lambdaExpression) {
-    final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-    final String buf = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false);
-    final PsiMethod methodFromText = JavaPsiFacade.getElementFactory(project).createMethodFromText("void foo" + buf, lambdaExpression);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(lambdaExpression.getParameterList().replace(methodFromText.getParameterList()));
   }
 
 
@@ -113,7 +103,7 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        LambdaParameterTypeCanBeSpecifiedInspection.doFix(project, (PsiLambdaExpression)element);
+        LambdaRefactoringUtil.specifyLambdaParameterTypes((PsiLambdaExpression)element);
       }
     }
   }
