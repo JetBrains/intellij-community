@@ -53,6 +53,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 public class IdeaApplication {
@@ -149,7 +150,7 @@ public class IdeaApplication {
     System.setProperty("sun.awt.noerasebackground", "true");
 
     IdeEventQueue.getInstance(); // replace system event queue
-    
+
     if (headless) return;
 
     /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
@@ -301,7 +302,8 @@ public class IdeaApplication {
                 LOG.error("Wrong line number:" + args[2]);
               }
             }
-            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+            EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
           }
         }
         throw new IncorrectOperationException("Can't find file:" + file);

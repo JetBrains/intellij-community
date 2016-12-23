@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.EnumSet;
 import java.util.List;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
@@ -219,7 +220,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
         }
       };
     }
-    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, false, -1, callback, false);
+    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+    return PlatformProjectOpenProcessor.doOpenProject(baseDir, null, -1, callback, options);
   }
-
 }

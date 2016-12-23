@@ -102,7 +102,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
   }
 
-  @Nullable
+  /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       Project projectToClose,
                                       boolean forceOpenInNewFrame,
