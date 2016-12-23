@@ -329,11 +329,8 @@ Function ConfirmDesktopShortcut
   ${If} $R1 != ""
     ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
     ${If} $R0 == ${PRODUCT_EXE_FILE}
-      call searchJava64
-      ${If} $3 != ""
-        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
-      ${EndIf}
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
       ${If} ${RunningX64}
         ; if jre x86 for the build is available then add checkbox to Installation Options dialog
         StrCmp "${LINK_TO_JRE}" "null" customPreActions 0
