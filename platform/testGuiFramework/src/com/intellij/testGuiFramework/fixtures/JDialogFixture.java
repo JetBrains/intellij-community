@@ -34,9 +34,9 @@ public class JDialogFixture implements ContainerFixture<JDialog> {
   private JDialog myDialog;
   private Robot myRobot;
 
-  public JDialogFixture(@NotNull Robot robot, JDialog selectSdkDialog) {
+  public JDialogFixture(@NotNull Robot robot, JDialog jDialog) {
     myRobot = robot;
-    myDialog = selectSdkDialog;
+    myDialog = jDialog;
   }
 
   @NotNull

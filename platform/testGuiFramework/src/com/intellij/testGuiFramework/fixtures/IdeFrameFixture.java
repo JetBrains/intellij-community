@@ -76,7 +76,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> implements ContainerFixture<IdeFrameImpl>{
+public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl>{
   @NotNull private final File myProjectPath;
 
   private EditorFixture myEditor;
