@@ -61,6 +61,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -74,6 +75,7 @@ import java.util.*;
 
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
+  private static boolean PREVIEW_IN_TESTS = true;
 
   @NotNull
   protected final Project myProject;
@@ -226,8 +228,20 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  @TestOnly
+  public static <T extends Throwable> void runWithDisabledPreview(ThrowableRunnable<T> runnable) throws T {
+    PREVIEW_IN_TESTS = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      PREVIEW_IN_TESTS = true;
+    }
+  }
+
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;

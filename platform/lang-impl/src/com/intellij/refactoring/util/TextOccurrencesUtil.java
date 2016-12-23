@@ -76,7 +76,7 @@ public class TextOccurrencesUtil {
                                                           @NotNull final PairProcessor<PsiElement, TextRange> processor) {
     PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
     SearchScope scope = helper.getUseScope(element);
-    scope = GlobalSearchScope.projectScope(element.getProject()).intersectWith(scope);
+    scope = scope.intersectWith(GlobalSearchScope.projectScope(element.getProject()));
     Processor<PsiElement> commentOrLiteralProcessor = literal -> processTextIn(literal, stringToSearch, ignoreReferences, processor);
     return processStringLiteralsContainingIdentifier(stringToSearch, scope, helper, commentOrLiteralProcessor) &&
            helper.processCommentsContainingIdentifier(stringToSearch, scope, commentOrLiteralProcessor);
