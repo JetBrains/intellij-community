@@ -9,16 +9,14 @@ import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author vlan
@@ -33,11 +31,13 @@ public class IpnbConnection {
   protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
                                               "\"channel\":\"shell\" }";
   public static final String HTTP_DELETE = "DELETE";
+  public static final String AUTHENTICATION_NEEDED = "Authentication needed";
 
   @NotNull protected final URI myURI;
   @NotNull protected final String myKernelId;
   @NotNull protected final String mySessionId;
   @NotNull protected final IpnbConnectionListener myListener;
+  @Nullable private final String myToken;
   private WebSocketClient myShellClient;
   private WebSocketClient myIOPubClient;
   private Thread myShellThread;
@@ -51,9 +51,11 @@ public class IpnbConnection {
   private int myExecCount;
 
 
-  public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
+  public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
+                        @Nullable final String token) throws IOException, URISyntaxException {
     myURI = new URI(uri);
     myListener = listener;
+    myToken = token;
     mySessionId = UUID.randomUUID().toString();
     myKernelId = startKernel();
 
@@ -161,12 +163,18 @@ public class IpnbConnection {
   }
 
   @NotNull
-  private static String httpRequest(@NotNull String url, @NotNull String method) throws IOException {
+  private String httpRequest(@NotNull String url, @NotNull String method) throws IOException {
     final URLConnection urlConnection = new URL(url).openConnection();
     if (urlConnection instanceof HttpURLConnection) {
       final HttpURLConnection connection = (HttpURLConnection)urlConnection;
       connection.setRequestMethod(method);
       connection.setReadTimeout(60000);
+      if (myToken != null) {
+        connection.setRequestProperty("Authorization", "token " + myToken);
+      }
+      if (connection.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+        throw new IOException(AUTHENTICATION_NEEDED);
+      }
       final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
       try {
         final StringBuilder builder = new StringBuilder();
@@ -441,7 +449,8 @@ public class IpnbConnection {
 
   protected class IpnbWebSocketClient extends WebSocketClient {
     protected IpnbWebSocketClient(@NotNull final URI serverUri, @NotNull final Draft draft) {
-      super(serverUri, draft);
+      super(serverUri, draft, myToken != null ? Collections.singletonMap("Authorization", "token " + myToken) :
+                                                Collections.emptyMap(), 5000);
     }
 
     @Override
@@ -491,6 +500,8 @@ public class IpnbConnection {
         if (executionCount != null) {
           myExecCount = executionCount.getAsInt();
         }
+        myOutput = null;
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
     }
 
