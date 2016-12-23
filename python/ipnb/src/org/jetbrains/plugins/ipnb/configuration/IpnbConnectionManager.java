@@ -396,7 +396,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
           if (text.toLowerCase().contains("active kernels")) {
             serverStarted[0] = true;
           }
-          final String token = "token=";
+          final String token = "?token=";
           if (text.toLowerCase().contains(token)) {
             myToken = text.substring(text.indexOf(token) + token.length()).trim();
           }

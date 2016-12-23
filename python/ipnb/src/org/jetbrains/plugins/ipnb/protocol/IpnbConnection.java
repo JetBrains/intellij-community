@@ -49,6 +49,7 @@ public class IpnbConnection {
 
   private IpnbOutputCell myOutput;
   private int myExecCount;
+  private String myXsrf;
 
 
   public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
@@ -57,9 +58,27 @@ public class IpnbConnection {
     myListener = listener;
     myToken = token;
     mySessionId = UUID.randomUUID().toString();
+    initXSRF();
     myKernelId = startKernel();
 
     initializeClients();
+  }
+
+  private void initXSRF() {
+    try {
+      CookieManager cookieManager = new CookieManager();
+      CookieHandler.setDefault(cookieManager);
+      final URLConnection connection = new URL(myURI.toString()).openConnection();
+      connection.getHeaderFields();
+      final List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
+      for (HttpCookie cookie : cookies) {
+        if ("_xsrf".equals(cookie.getName())) {
+          myXsrf = cookie.getValue();
+        }
+      }
+    }
+    catch (IOException ignored) {
+    }
   }
 
   protected void initializeClients() throws URISyntaxException {
@@ -169,8 +188,11 @@ public class IpnbConnection {
       final HttpURLConnection connection = (HttpURLConnection)urlConnection;
       connection.setRequestMethod(method);
       connection.setReadTimeout(60000);
-      if (myToken != null) {
+      if (!StringUtil.isEmptyOrSpaces(myToken)) {
         connection.setRequestProperty("Authorization", "token " + myToken);
+      }
+      else if (!StringUtil.isEmptyOrSpaces(myXsrf)) {
+        connection.setRequestProperty("X-XSRFToken", myXsrf);
       }
       if (connection.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
         throw new IOException(AUTHENTICATION_NEEDED);
