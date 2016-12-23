@@ -133,7 +133,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
           if (!acceptLocation(debugProcess, classType, loc)) {
             continue;
           }
-          createLocationBreakpointRequest(loc, debugProcess);
+          createLocationBreakpointRequest(this, loc, debugProcess);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());
           }

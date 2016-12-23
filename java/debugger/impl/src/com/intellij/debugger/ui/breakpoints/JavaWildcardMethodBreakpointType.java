@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -103,14 +104,12 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
     if (!dialog.showAndGet()) {
       return null;
     }
-    return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<JavaMethodBreakpointProperties>>() {
-      @Override
-      public XBreakpoint<JavaMethodBreakpointProperties> compute() {
-        return XDebuggerManager.getInstance(project).getBreakpointManager()
-          .addBreakpoint(JavaWildcardMethodBreakpointType.this, new JavaMethodBreakpointProperties(
-            dialog.getClassPattern(),
-            dialog.getMethodName()));
+    return ApplicationManager.getApplication().runWriteAction((Computable<XBreakpoint<JavaMethodBreakpointProperties>>)() -> {
+      JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties(dialog.getClassPattern(), dialog.getMethodName());
+      if (Registry.is("debugger.emulate.method.breakpoints")) {
+        properties.EMULATED = true; // create all new emulated
       }
+      return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(this, properties);
     });
   }
 

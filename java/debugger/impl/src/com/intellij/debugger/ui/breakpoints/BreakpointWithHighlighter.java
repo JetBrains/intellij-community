@@ -259,10 +259,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return null;
   }
 
-  protected void createLocationBreakpointRequest(@Nullable Location location, @NotNull DebugProcessImpl debugProcess) {
+  static void createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
+                                              @Nullable Location location,
+                                              @NotNull DebugProcessImpl debugProcess) {
     if (location != null) {
       RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-      requestsManager.enableRequest(requestsManager.createBreakpointRequest(this, location));
+      requestsManager.enableRequest(requestsManager.createBreakpointRequest(requestor, location));
     }
   }
 

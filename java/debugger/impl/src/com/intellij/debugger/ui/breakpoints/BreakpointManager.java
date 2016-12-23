@@ -69,6 +69,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
@@ -114,12 +115,8 @@ public class BreakpointManager {
   }
 
   private static boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
-    if (breakpoint.isEnabled() &&
-        (breakpoint.getType() instanceof JavaMethodBreakpointType || breakpoint.getType() instanceof JavaWildcardMethodBreakpointType)) {
-      Breakpoint bpt = getJavaBreakpoint(breakpoint);
-      if (bpt instanceof MethodBreakpoint && ((MethodBreakpoint)bpt).isEmulated()) {
-        return false;
-      }
+    XBreakpointProperties properties = breakpoint.getProperties();
+    if (breakpoint.isEnabled() && properties instanceof JavaMethodBreakpointProperties && !((JavaMethodBreakpointProperties)properties).EMULATED) {
       XDebugSessionImpl.NOTIFICATION_GROUP
         .createNotification(DebuggerBundle.message("method.breakpoints.slowness.warning"), MessageType.WARNING)
         .notify(((XBreakpointBase)breakpoint).getProject());
