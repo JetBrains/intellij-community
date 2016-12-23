@@ -558,7 +558,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myDeferredBuffer.print(text, contentType, info);
 
       if (contentType == ConsoleViewContentType.USER_INPUT) {
-        flushDeferredText();
+        requestFlushImmediately();
       }
       if (myEditor != null) {
         final boolean shouldFlushNow = myDeferredBuffer.length() >= myDeferredBuffer.getCycleBufferSize();

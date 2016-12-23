@@ -41,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -273,5 +275,16 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         console.print("---- "+i+"----", ConsoleViewContentType.NORMAL_OUTPUT);
       }
     });
+  }
+
+  public void testCanPrintUserInputFromBackground() throws ExecutionException, InterruptedException {
+    Future<?> future = JobScheduler.getScheduler().submit(() -> {
+      myConsole.print("input", ConsoleViewContentType.USER_INPUT);
+    });
+
+    while (!future.isDone()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    future.get();
   }
 }
