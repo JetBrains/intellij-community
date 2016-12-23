@@ -15,9 +15,11 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
@@ -28,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.vcs.log.data.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 
 public class HighlightersActionGroup extends ActionGroup {
   @NotNull
@@ -41,7 +45,7 @@ public class HighlightersActionGroup extends ActionGroup {
         actions.add(new Separator("Highlight"));
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
           if (factory.showMenuItem()) {
-            actions.add(new EnableHighlighterAction((MainVcsLogUiProperties)properties, factory));
+            actions.add(new EnableHighlighterAction(factory));
           }
         }
       }
@@ -50,24 +54,17 @@ public class HighlightersActionGroup extends ActionGroup {
     return actions.toArray(new AnAction[actions.size()]);
   }
 
-  private static class EnableHighlighterAction extends ToggleAction implements DumbAware {
+  private static class EnableHighlighterAction extends BooleanPropertyToggleAction {
     @NotNull private final VcsLogHighlighterFactory myFactory;
-    @NotNull private final MainVcsLogUiProperties myProperties;
 
-    private EnableHighlighterAction(@NotNull MainVcsLogUiProperties properties, @NotNull VcsLogHighlighterFactory factory) {
+    private EnableHighlighterAction(@NotNull VcsLogHighlighterFactory factory) {
       super(factory.getTitle());
-      myProperties = properties;
       myFactory = factory;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myProperties.isHighlighterEnabled(myFactory.getId());
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myProperties.enableHighlighter(myFactory.getId(), state);
+    protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+      return VcsLogHighlighterProperty.get(myFactory.getId());
     }
   }
 }

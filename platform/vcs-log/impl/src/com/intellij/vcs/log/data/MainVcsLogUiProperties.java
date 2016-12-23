@@ -15,12 +15,14 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface MainVcsLogUiProperties extends VcsLogUiProperties {
 
@@ -43,10 +45,6 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
   @NotNull
   List<List<String>> getRecentlyFilteredBranchGroups();
 
-  boolean isHighlighterEnabled(@NotNull String id);
-
-  void enableHighlighter(@NotNull String id, boolean value);
-
   void saveFilterValues(@NotNull String filterName, @Nullable List<String> values);
 
   @Nullable
@@ -58,10 +56,33 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
   @CalledInAwt
   void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener);
 
+  class VcsLogHighlighterProperty extends VcsLogUiProperty<Boolean> {
+    private static final Map<String, VcsLogHighlighterProperty> ourProperties = ContainerUtil.newHashMap();
+    @NotNull private final String myId;
+
+    public VcsLogHighlighterProperty(@NotNull String name) {
+      super("Highlighter." + name);
+      myId = name;
+    }
+
+    @NotNull
+    public String getId() {
+      return myId;
+    }
+
+    @NotNull
+    public static VcsLogHighlighterProperty get(@NotNull String id) {
+      VcsLogHighlighterProperty property = ourProperties.get(id);
+      if (property == null) {
+        property = new VcsLogHighlighterProperty(id);
+        ourProperties.put(id, property);
+      }
+      return property;
+    }
+  }
+
   interface VcsLogUiPropertiesListener {
     <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
-
-    void onHighlighterChanged();
   }
 
   interface TextFilterSettings {

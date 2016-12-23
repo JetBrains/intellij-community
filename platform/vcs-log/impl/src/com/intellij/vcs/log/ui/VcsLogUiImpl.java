@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
@@ -149,7 +150,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
-    return myUiProperties.isHighlighterEnabled(id);
+    VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(id);
+    return myUiProperties.exists(property) && myUiProperties.get(property);
   }
 
   @Override

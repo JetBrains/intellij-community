@@ -84,6 +84,11 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (TEXT_FILTER_REGEX.equals(property)) {
       return (T)Boolean.valueOf(getTextFilterSettings().isFilterByRegexEnabled());
     }
+    else if (property instanceof VcsLogHighlighterProperty) {
+      Boolean result = getState().HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
+      if (result == null) return (T)Boolean.TRUE;
+      return (T)result;
+    }
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
 
@@ -113,6 +118,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
       getTextFilterSettings().setMatchCaseEnabled((Boolean)value);
     }
+    else if (property instanceof VcsLogHighlighterProperty) {
+      getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
+    }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
@@ -121,7 +129,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    if (SUPPORTED_PROPERTIES.contains(property)) {
+    if (SUPPORTED_PROPERTIES.contains(property) || property instanceof VcsLogHighlighterProperty) {
       return true;
     }
     return false;
@@ -174,18 +182,6 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @NotNull
   private static List<List<String>> getRecentGroup(Deque<UserGroup> stateField) {
     return ContainerUtil.map2List(stateField, group -> group.users);
-  }
-
-  @Override
-  public boolean isHighlighterEnabled(@NotNull String id) {
-    Boolean result = getState().HIGHLIGHTERS.get(id);
-    return result != null ? result : true; // new highlighters get enabled by default
-  }
-
-  @Override
-  public void enableHighlighter(@NotNull String id, boolean value) {
-    getState().HIGHLIGHTERS.put(id, value);
-    myListeners.forEach(VcsLogUiPropertiesListener::onHighlighterChanged);
   }
 
   @Override
@@ -281,6 +277,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     public abstract void onTextFilterSettingsChanged();
 
+    public abstract void onHighlighterChanged();
+
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property) {
       if (SHOW_DETAILS.equals(property)) {
@@ -303,6 +301,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       }
       else if (TEXT_FILTER_REGEX.equals(property) || TEXT_FILTER_MATCH_CASE.equals(property)) {
         onTextFilterSettingsChanged();
+      }
+      else if (property instanceof VcsLogHighlighterProperty) {
+        onHighlighterChanged();
       }
       else {
         throw new UnsupportedOperationException("Property " + property + " does not exist");

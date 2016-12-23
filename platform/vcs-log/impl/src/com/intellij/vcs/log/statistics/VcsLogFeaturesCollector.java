@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.intellij.vcs.log.data.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 
 public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector {
@@ -78,8 +79,9 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
 
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {
-            usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil
-              .ensureProperKey(factory.getId()), ui.getProperties().isHighlighterEnabled(factory.getId())));
+            VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(factory.getId());
+            usages.add(StatisticsUtilKt.getBooleanUsage("ui.highlighter." + ConvertUsagesUtil.ensureProperKey(factory.getId()),
+                                                        ui.getProperties().exists(property) && ui.getProperties().get(property)));
           }
         }
 
