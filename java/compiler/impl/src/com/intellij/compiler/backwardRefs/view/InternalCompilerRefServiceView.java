@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFunctionalExpression;
@@ -91,6 +92,9 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
         final Object usrObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
         if (usrObject instanceof VirtualFile) {
           return new OpenFileDescriptor(myProject, (VirtualFile)usrObject);
+        }
+        else if (usrObject instanceof NavigatablePsiElement) {
+          return usrObject;
         }
       }
     }
