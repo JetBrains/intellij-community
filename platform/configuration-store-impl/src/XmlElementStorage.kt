@@ -29,7 +29,7 @@ import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
 
-abstract class XmlElementStorage protected constructor(protected val fileSpec: String,
+abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
                                                        protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
