@@ -464,11 +464,14 @@ public class VfsUtil extends VfsUtilCore {
    * @return descendants
    */
   @NotNull
-  public static List<VirtualFile> collectChildrenRecursively(@NotNull final VirtualFile root) {
-    final List<VirtualFile> result = new ArrayList<>();
-    processFilesRecursively(root, t -> {
-      result.add(t);
-      return true;
+  public static List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
+    List<VirtualFile> result = new ArrayList<>();
+    visitChildrenRecursively(root, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        result.add(file);
+        return true;
+      }
     });
     return result;
   }
