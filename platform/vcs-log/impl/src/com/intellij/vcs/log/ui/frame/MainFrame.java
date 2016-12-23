@@ -60,7 +60,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final RepositoryChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
   @NotNull private final SearchTextField myTextFilter;
-  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final MainVcsLogUiProperties myUiProperties;
 
   @NotNull private Runnable myContainingBranchesListener;
   @NotNull private Runnable myMiniDetailsLoadedListener;
@@ -68,7 +68,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
                    @NotNull Project project,
-                   @NotNull VcsLogUiProperties uiProperties,
+                   @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
                    @NotNull VisiblePack initialDataPack) {
     // collect info

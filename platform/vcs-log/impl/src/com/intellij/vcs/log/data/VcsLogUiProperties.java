@@ -16,12 +16,8 @@
 package com.intellij.vcs.log.data;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public interface VcsLogUiProperties {
-
   @NotNull
   <T> T get(@NotNull VcsLogUiProperty<T> property);
 
@@ -29,45 +25,6 @@ public interface VcsLogUiProperties {
 
   <T> boolean exists(@NotNull VcsLogUiProperty<T> property);
 
-  void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup);
-
-  void addRecentlyFilteredBranchGroup(@NotNull List<String> valuesInGroup);
-
-  @NotNull
-  List<List<String>> getRecentlyFilteredUserGroups();
-
-  @NotNull
-  List<List<String>> getRecentlyFilteredBranchGroups();
-
-  boolean isHighlighterEnabled(@NotNull String id);
-
-  void enableHighlighter(@NotNull String id, boolean value);
-
-  void saveFilterValues(@NotNull String filterName, @Nullable List<String> values);
-
-  @Nullable
-  List<String> getFilterValues(@NotNull String filterName);
-
-  void addChangeListener(@NotNull VcsLogUiPropertiesListener listener);
-
-  void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener);
-
   class VcsLogUiProperty<T> {
-  }
-
-  interface VcsLogUiPropertiesListener {
-    <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
-
-    void onHighlighterChanged();
-  }
-
-  interface TextFilterSettings {
-    boolean isFilterByRegexEnabled();
-
-    void setFilterByRegexEnabled(boolean enabled);
-
-    boolean isMatchCaseEnabled();
-
-    void setMatchCaseEnabled(boolean enabled);
   }
 }

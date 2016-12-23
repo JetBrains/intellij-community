@@ -41,7 +41,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final Project myProject;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLog myLog;
-  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
 
   @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
@@ -53,7 +53,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public VcsLogUiImpl(@NotNull VcsLogData logData,
                       @NotNull Project project,
                       @NotNull VcsLogColorManager manager,
-                      @NotNull VcsLogUiProperties uiProperties,
+                      @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VcsLogFilterer filterer) {
     myProject = project;
     myColorManager = manager;
@@ -314,7 +314,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myVisiblePack = VisiblePack.EMPTY;
   }
 
-  public VcsLogUiProperties getProperties() {
+  public MainVcsLogUiProperties getProperties() {
     return myUiProperties;
   }
 

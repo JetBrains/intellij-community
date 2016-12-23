@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
@@ -36,11 +37,11 @@ public class HighlightersActionGroup extends ActionGroup {
 
     if (e != null) {
       VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-      if (properties != null) {
+      if (properties != null && properties instanceof MainVcsLogUiProperties) {
         actions.add(new Separator("Highlight"));
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
           if (factory.showMenuItem()) {
-            actions.add(new EnableHighlighterAction(properties, factory));
+            actions.add(new EnableHighlighterAction((MainVcsLogUiProperties)properties, factory));
           }
         }
       }
@@ -51,9 +52,9 @@ public class HighlightersActionGroup extends ActionGroup {
 
   private static class EnableHighlighterAction extends ToggleAction implements DumbAware {
     @NotNull private final VcsLogHighlighterFactory myFactory;
-    @NotNull private final VcsLogUiProperties myProperties;
+    @NotNull private final MainVcsLogUiProperties myProperties;
 
-    private EnableHighlighterAction(@NotNull VcsLogUiProperties properties, @NotNull VcsLogHighlighterFactory factory) {
+    private EnableHighlighterAction(@NotNull MainVcsLogUiProperties properties, @NotNull VcsLogHighlighterFactory factory) {
       super(factory.getTitle());
       myProperties = properties;
       myFactory = factory;

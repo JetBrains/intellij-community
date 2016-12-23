@@ -115,7 +115,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName, @Nullable VcsLogFilter filter) {
-    VcsLogUiProperties properties = myUiProperties.createProperties(logId);
+    MainVcsLogUiProperties properties = myUiProperties.createProperties(logId);
     VcsLogFiltererImpl filterer = new VcsLogFiltererImpl(myProject, myLogData, properties.get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE));
     VcsLogUiImpl ui = new VcsLogUiImpl(myLogData, myProject, myColorManager, properties, filterer);
     if (filter != null) {

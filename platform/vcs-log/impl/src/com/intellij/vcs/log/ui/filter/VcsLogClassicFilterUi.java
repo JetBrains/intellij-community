@@ -62,7 +62,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @NotNull private final VcsLogUiImpl myUi;
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final MainVcsLogUiProperties myUiProperties;
 
   @NotNull private VcsLogDataPack myDataPack;
 
@@ -74,7 +74,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUiImpl ui,
                                @NotNull VcsLogData logData,
-                               @NotNull VcsLogUiProperties uiProperties,
+                               @NotNull MainVcsLogUiProperties uiProperties,
                                @NotNull VcsLogDataPack initialDataPack) {
     myUi = ui;
     myLogData = logData;
@@ -217,7 +217,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Nullable
     private Collection<VirtualFile> myVisibleRoots;
 
-    BranchFilterModel(@NotNull Computable<VcsLogDataPack> provider, @NotNull VcsLogUiProperties properties) {
+    BranchFilterModel(@NotNull Computable<VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties properties) {
       super("branch", provider, properties);
     }
 
@@ -252,7 +252,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static class TextFilterModel extends FilterModel<VcsLogTextFilter> {
     @Nullable private String myText;
 
-    public TextFilterModel(NotNullComputable<VcsLogDataPack> dataPackProvider, @NotNull VcsLogUiProperties properties) {
+    public TextFilterModel(NotNullComputable<VcsLogDataPack> dataPackProvider, @NotNull MainVcsLogUiProperties properties) {
       super("text", dataPackProvider, properties);
     }
 
@@ -306,7 +306,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     public FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter,
                            @NotNull Set<VirtualFile> roots,
-                           VcsLogUiProperties uiProperties) {
+                           MainVcsLogUiProperties uiProperties) {
       super("file", dataPackGetter, uiProperties);
       myRoots = roots;
     }
@@ -389,7 +389,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private static class DateFilterModel extends FilterModel<VcsLogDateFilter> {
-    public DateFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, VcsLogUiProperties uiProperties) {
+    public DateFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
       super("date", dataPackGetter, uiProperties);
     }
 
@@ -423,7 +423,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   private class UserFilterModel extends FilterModel<VcsLogUserFilter> {
-    public UserFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, VcsLogUiProperties uiProperties) {
+    public UserFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, MainVcsLogUiProperties uiProperties) {
       super("user", dataPackGetter, uiProperties);
     }
 

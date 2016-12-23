@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogManager;
 

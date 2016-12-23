@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * Stores UI configuration based on user activity and preferences.
  */
-public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, VcsLogUiProperties {
+public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
   public static final VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>();
   public static final VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>();
   public static final VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>();
