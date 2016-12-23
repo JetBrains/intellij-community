@@ -18,9 +18,8 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
@@ -31,7 +30,7 @@ public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return VcsLogUiPropertiesImpl.SHOW_ROOT_NAMES;
+    return MainVcsLogUiProperties.SHOW_ROOT_NAMES;
   }
 
   @Override

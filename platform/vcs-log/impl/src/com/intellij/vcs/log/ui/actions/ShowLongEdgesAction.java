@@ -18,8 +18,8 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return VcsLogUiPropertiesImpl.SHOW_LONG_EDGES;
+    return MainVcsLogUiProperties.SHOW_LONG_EDGES;
   }
 
   @Override

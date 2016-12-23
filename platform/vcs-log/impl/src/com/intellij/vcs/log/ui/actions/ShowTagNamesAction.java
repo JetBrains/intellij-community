@@ -31,8 +31,8 @@ package com.intellij.vcs.log.ui.actions;
  * limitations under the License.
  */
 
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 
 public class ShowTagNamesAction extends BooleanPropertyToggleAction {
 
@@ -42,7 +42,7 @@ public class ShowTagNamesAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return VcsLogUiPropertiesImpl.SHOW_TAG_NAMES;
+    return MainVcsLogUiProperties.SHOW_TAG_NAMES;
   }
 }
 

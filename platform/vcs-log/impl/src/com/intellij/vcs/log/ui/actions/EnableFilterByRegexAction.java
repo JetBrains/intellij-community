@@ -15,13 +15,13 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 
 public class EnableFilterByRegexAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return VcsLogUiPropertiesImpl.TEXT_FILTER_REGEX;
+    return MainVcsLogUiProperties.TEXT_FILTER_REGEX;
   }
 }

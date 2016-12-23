@@ -31,8 +31,8 @@ package com.intellij.vcs.log.ui.actions;
  * limitations under the License.
  */
 
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 
 public class CompactReferencesViewAction extends BooleanPropertyToggleAction {
 
@@ -42,7 +42,7 @@ public class CompactReferencesViewAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return VcsLogUiPropertiesImpl.COMPACT_REFERENCES_VIEW;
+    return MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW;
   }
 }
 

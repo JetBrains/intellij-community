@@ -130,7 +130,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void expandAll() {
     performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND),
                       "Expanding " +
-                      (myUiProperties.get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
+                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
                        ? "merges..."
                        : "linear branches..."));
   }
@@ -138,18 +138,18 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   public void collapseAll() {
     performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE),
                       "Collapsing " +
-                      (myUiProperties.get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
+                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
                        ? "merges..."
                        : "linear branches..."));
   }
 
   public void setShowRootNames(boolean isShowRootNames) {
-    myUiProperties.set(VcsLogUiPropertiesImpl.SHOW_ROOT_NAMES, isShowRootNames);
+    myUiProperties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, isShowRootNames);
     myMainFrame.getGraphTable().rootColumnUpdated();
   }
 
   public boolean isShowRootNames() {
-    return myUiProperties.get(VcsLogUiPropertiesImpl.SHOW_ROOT_NAMES);
+    return myUiProperties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES);
   }
 
   @Override
@@ -163,11 +163,11 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   public boolean isCompactReferencesView() {
-    return myUiProperties.get(VcsLogUiPropertiesImpl.COMPACT_REFERENCES_VIEW);
+    return myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW);
   }
 
   public boolean isShowTagNames() {
-    return myUiProperties.get(VcsLogUiPropertiesImpl.SHOW_TAG_NAMES);
+    return myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES);
   }
 
   @NotNull
@@ -321,17 +321,17 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   private class MyVcsLogUiPropertiesListener extends VcsLogUiPropertiesImpl.VcsLogUiPropertiesImplListener {
     @Override
     public void onShowDetailsChanged() {
-      myMainFrame.showDetails(myUiProperties.get(VcsLogUiPropertiesImpl.SHOW_DETAILS));
+      myMainFrame.showDetails(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
     }
 
     @Override
     public void onShowLongEdgesChanged() {
-      myVisiblePack.getVisibleGraph().getActionController().setLongEdgesHidden(!myUiProperties.get(VcsLogUiPropertiesImpl.SHOW_LONG_EDGES));
+      myVisiblePack.getVisibleGraph().getActionController().setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
 
     @Override
     public void onBekChanged() {
-      myFilterer.onSortTypeChange(myUiProperties.get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE));
+      myFilterer.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
     }
 
     @Override
@@ -346,12 +346,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
     @Override
     public void onCompactReferencesViewChanged() {
-      myMainFrame.getGraphTable().setCompactReferencesView(myUiProperties.get(VcsLogUiPropertiesImpl.COMPACT_REFERENCES_VIEW));
+      myMainFrame.getGraphTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     }
 
     @Override
     public void onShowTagNamesChanged() {
-      myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(VcsLogUiPropertiesImpl.SHOW_TAG_NAMES));
+      myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     }
 
     @Override

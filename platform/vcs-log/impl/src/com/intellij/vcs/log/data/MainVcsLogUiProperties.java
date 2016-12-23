@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface MainVcsLogUiProperties extends VcsLogUiProperties {
+
+  VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>();
+  VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>();
+  VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>();
+  VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>();
+  VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>();
+  VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>();
+  VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>();
+  VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>();
 
   void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup);
 

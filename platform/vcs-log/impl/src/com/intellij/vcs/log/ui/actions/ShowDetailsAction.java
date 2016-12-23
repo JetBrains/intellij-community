@@ -16,8 +16,8 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
@@ -27,6 +27,6 @@ public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return VcsLogUiPropertiesImpl.SHOW_DETAILS;
+    return MainVcsLogUiProperties.SHOW_DETAILS;
   }
 }

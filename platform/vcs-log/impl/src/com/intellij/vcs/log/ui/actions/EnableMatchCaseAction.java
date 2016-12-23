@@ -22,8 +22,8 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return VcsLogUiPropertiesImpl.TEXT_FILTER_MATCH_CASE;
+    return MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE;
   }
 
   @Override
@@ -45,9 +45,9 @@ public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
 
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (ui != null && properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_MATCH_CASE)) {
+    if (ui != null && properties != null && properties.exists(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE)) {
       boolean regexEnabled =
-        properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_REGEX) && properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_REGEX);
+        properties.exists(MainVcsLogUiProperties.TEXT_FILTER_REGEX) && properties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX);
       if (!regexEnabled) {
         e.getPresentation().setText(MATCH_CASE);
       }

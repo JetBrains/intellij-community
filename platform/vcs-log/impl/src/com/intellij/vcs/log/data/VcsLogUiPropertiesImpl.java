@@ -27,16 +27,7 @@ import java.util.*;
  * Stores UI configuration based on user activity and preferences.
  */
 public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
-  public static final VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>();
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
-
   private final Set<VcsLogUiPropertiesListener> myListeners = ContainerUtil.newLinkedHashSet();
 
   public static class State {
