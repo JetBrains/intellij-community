@@ -42,16 +42,14 @@ def process_args(argv):
             args.append(arg)
             skip_next = False
         else:
+            path = arg
             if ':' in arg:
                 file_path, line_number = arg.rsplit(':', 1)
                 if line_number.isdigit():
                     args.append('-l')
                     args.append(line_number)
-                    args.append(os.path.abspath(file_path))
-                else:
-                    args.append(os.path.abspath(arg))
-            else:
-                args.append(os.path.abspath(arg))
+                    path = file_path
+            args.append(os.path.abspath(path))
 
     return args
 
