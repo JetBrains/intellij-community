@@ -302,6 +302,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         application.runReadAction(() -> {
           final JComponent panel = createViewPanel();
           myViewPanel.add(panel);
+          String prompt = IpnbEditorUtil.prompt(-1, IpnbEditorUtil.PromptType.In);
+          myPromptLabel.setText(prompt);
         });
       }
 
