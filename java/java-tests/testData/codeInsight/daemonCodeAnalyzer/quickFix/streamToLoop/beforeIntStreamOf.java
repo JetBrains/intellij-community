@@ -5,7 +5,7 @@ import java.util.stream.IntStream;
 
 public class Main {
   private static IntSummaryStatistics test() {
-    return IntStream.of(1,2,3).summaryStatist<caret>ics();
+    return IntStream.of(1,/*two*/2,/*three*/3).summaryStatist<caret>ics();
   }
 
   public static void main(String[] args) {

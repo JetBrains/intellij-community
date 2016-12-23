@@ -97,7 +97,7 @@ abstract class FunctionHelper {
    */
   void rename(String oldName, String newName, StreamToLoopReplacementContext context) {}
 
-  void registerUsedNames(Consumer<String> consumer) {}
+  void registerReusedElements(Consumer<PsiElement> consumer) {}
 
   @Nullable
   String getParameterName(int index) {
@@ -276,16 +276,6 @@ abstract class FunctionHelper {
     return (PsiExpression)lambda.getBody();
   }
 
-  static void processUsedNames(PsiElement start, Consumer<String> action) {
-    start.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitVariable(PsiVariable variable) {
-        super.visitVariable(variable);
-        action.accept(variable.getName());
-      }
-    });
-  }
-
   private static class MethodReferenceFunctionHelper extends FunctionHelper {
     private final String myType;
     private final String myQualifierType;
@@ -334,8 +324,8 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> consumer) {
-      processUsedNames(myMethodRef, consumer);
+    void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myMethodRef);
     }
 
     @Override
@@ -452,8 +442,8 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> consumer) {
-      processUsedNames(myExpression, consumer);
+    void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myExpression);
     }
 
     @Override
@@ -491,8 +481,8 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> consumer) {
-      processUsedNames(myReference, consumer);
+    void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myReference);
     }
   }
 
@@ -563,8 +553,8 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerUsedNames(Consumer<String> consumer) {
-      processUsedNames(myBody, consumer);
+    void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myBody);
     }
 
     String getParameterName(int index) {

@@ -8,6 +8,7 @@ public class Main {
 
   private static long test(Map<String, List<String>> strings) {
     return strings.entrySet().stream().filter(s -> !s.getKey().isEmpty()).mapToLong(e -> e.getValue().stream().filter(new Predicate<String>() {
+      // we're inside anonymous class
       @Override
       public boolean test(String s) {
         return e.getKey().equals(s);

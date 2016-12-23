@@ -333,9 +333,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      FunctionHelper.processUsedNames(myIdentity, usedNameConsumer);
-      myUpdater.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myIdentity);
+      myUpdater.registerReusedElements(consumer);
     }
 
     @Override
@@ -356,8 +356,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myUpdater.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myUpdater.registerReusedElements(consumer);
     }
 
     @Override
@@ -397,9 +397,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      mySupplier.registerUsedNames(usedNameConsumer);
-      myAccumulator.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      mySupplier.registerReusedElements(consumer);
+      myAccumulator.registerReusedElements(consumer);
     }
 
     @Override
@@ -518,8 +518,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myFn.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myFn.registerReusedElements(consumer);
     }
 
     @Override
@@ -548,7 +548,7 @@ abstract class TerminalOperation extends Operation {
     // Non-trivial finishers are not supported
     default void transform(StreamToLoopReplacementContext context, String item) {}
     default void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
-    default void registerUsedNames(Consumer<String> usedNameConsumer) {}
+    default void registerReusedElements(Consumer<PsiElement> consumer) {}
     String getSupplier();
     String getAccumulator(String acc, String item);
 
@@ -581,8 +581,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      mySupplier.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      mySupplier.registerReusedElements(consumer);
     }
 
     @Override
@@ -693,9 +693,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
       if(myComparator != null) {
-        myComparator.registerUsedNames(usedNameConsumer);
+        myComparator.registerReusedElements(consumer);
       }
     }
 
@@ -761,11 +761,11 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      super.registerUsedNames(usedNameConsumer);
-      myKeyExtractor.registerUsedNames(usedNameConsumer);
-      myValueExtractor.registerUsedNames(usedNameConsumer);
-      if(myMerger != null) FunctionHelper.processUsedNames(myMerger, usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      super.registerReusedElements(consumer);
+      myKeyExtractor.registerReusedElements(consumer);
+      myValueExtractor.registerReusedElements(consumer);
+      if(myMerger != null) consumer.accept(myMerger);
     }
 
     @Override
@@ -829,10 +829,10 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      super.registerUsedNames(usedNameConsumer);
-      myKeyExtractor.registerUsedNames(usedNameConsumer);
-      myCollector.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      super.registerReusedElements(consumer);
+      myKeyExtractor.registerReusedElements(consumer);
+      myCollector.registerReusedElements(consumer);
     }
 
     @Override
@@ -868,9 +868,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myPredicate.registerUsedNames(usedNameConsumer);
-      myCollector.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myPredicate.registerReusedElements(consumer);
+      myCollector.registerReusedElements(consumer);
     }
 
     @Override
@@ -905,9 +905,9 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myMapper.registerUsedNames(usedNameConsumer);
-      myDownstream.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myMapper.registerReusedElements(consumer);
+      myDownstream.registerReusedElements(consumer);
     }
 
     @Override
@@ -1002,8 +1002,8 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myFn.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myFn.registerReusedElements(consumer);
     }
 
     @Override

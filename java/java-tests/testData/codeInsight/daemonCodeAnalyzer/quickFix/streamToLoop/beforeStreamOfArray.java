@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 
 public class Main {
   private static IntSummaryStatistics test() {
-    return Stream.of(new Integer[] {1,2,3}).mapToInt(i -> i).summaryStatisti<caret>cs();
+    return Stream.of(new Integer[] /*create array*/{1,2,3}).mapToInt(i -> i).summaryStatisti<caret>cs();
   }
 
   public static void main(String[] args) {

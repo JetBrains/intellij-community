@@ -205,9 +205,10 @@ public class CommentTracker {
       PsiElement parent = anchor.getParent();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
       for(PsiComment comment : comments) {
+        if (shouldIgnore(comment)) continue;
         PsiElement added = parent.addBefore(factory.createCommentFromText(comment.getText(), anchor), anchor);
         PsiElement prevSibling = added.getPrevSibling();
-        if(prevSibling instanceof PsiWhiteSpace) {
+        if (prevSibling instanceof PsiWhiteSpace) {
           PsiWhiteSpace whiteSpaceBefore = (PsiWhiteSpace)prevSibling;
           PsiElement prev = anchor.getPrevSibling();
           if (prev instanceof PsiWhiteSpace) {
@@ -222,10 +223,14 @@ public class CommentTracker {
     comments = null;
   }
 
+  private boolean shouldIgnore(PsiComment comment) {
+    return ignoredParents.stream().anyMatch(p -> PsiTreeUtil.isAncestor(p, comment, false));
+  }
+
   private void grabComments(PsiElement element) {
     checkState();
     for(PsiComment comment : PsiTreeUtil.collectElementsOfType(element, PsiComment.class)) {
-      if(ignoredParents.stream().noneMatch(parent -> PsiTreeUtil.isAncestor(parent, comment, false))) {
+      if (!shouldIgnore(comment)) {
         comments.add(comment);
       }
     }

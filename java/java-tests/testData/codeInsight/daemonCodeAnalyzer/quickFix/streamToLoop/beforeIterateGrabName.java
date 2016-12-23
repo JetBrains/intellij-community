@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Main {
   public static List<String> test() {
-    return Stream.iterate("", x -> x + "a").limit(20).co<caret>llect(Collectors.toList());
+    return Stream.iterate("", x -> x /* add "a" */ + "a").limit(/*limit*/20).co<caret>llect(Collectors.toList());
   }
 
   public static void main(String[] args) {

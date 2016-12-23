@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
@@ -50,7 +51,7 @@ abstract class Operation {
     return null;
   }
 
-  public void registerUsedNames(Consumer<String> usedNameConsumer) {}
+  public void registerReusedElements(Consumer<PsiElement> consumer) {}
 
   public void suggestNames(StreamVariable inVar, StreamVariable outVar) {}
 
@@ -100,8 +101,8 @@ abstract class Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myFn.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myFn.registerReusedElements(consumer);
     }
 
     @Override
@@ -209,8 +210,8 @@ abstract class Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myRecords.forEach(or -> or.myOperation.registerUsedNames(usedNameConsumer));
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myRecords.forEach(or -> or.myOperation.registerReusedElements(consumer));
     }
 
     @Override
@@ -268,8 +269,8 @@ abstract class Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      FunctionHelper.processUsedNames(myExpression, usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myExpression);
     }
 
     @Override
@@ -292,8 +293,8 @@ abstract class Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      FunctionHelper.processUsedNames(myLimit, usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myLimit);
     }
 
     @Override

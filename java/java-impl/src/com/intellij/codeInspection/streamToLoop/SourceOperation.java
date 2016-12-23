@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInspection.streamToLoop.FunctionHelper.processUsedNames;
 import static com.intellij.codeInspection.streamToLoop.FunctionHelper.replaceVarReference;
 
 /**
@@ -77,7 +76,7 @@ abstract class SourceOperation extends Operation {
           }
         }
       }
-      return new ExplicitSource(args);
+      return new ExplicitSource(call);
     }
     if (name.equals("generate") && args.length == 1 && method.getModifierList().hasExplicitModifier(
       PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
@@ -113,8 +112,8 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      processUsedNames(myQualifier, usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myQualifier);
     }
 
     @Override
@@ -138,31 +137,34 @@ abstract class SourceOperation extends Operation {
   }
 
   static class ExplicitSource extends SourceOperation {
-    private PsiExpression[] myArgList;
+    private PsiMethodCallExpression myCall;
 
-    ExplicitSource(PsiExpression[] argList) {
-      myArgList = argList;
+    ExplicitSource(PsiMethodCallExpression call) {
+      myCall = call;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      Arrays.asList(myArgList).replaceAll(arg -> replaceVarReference(arg, oldName, newName, context));
+      myCall = (PsiMethodCallExpression)replaceVarReference(myCall, oldName, newName, context);
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      for(PsiExpression arg : myArgList) {
-        processUsedNames(arg, usedNameConsumer);
-      }
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myCall.getArgumentList());
     }
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String type = outVar.getType();
-      String args = StreamEx.of(myArgList).map(PsiExpression::getText).joining(", ");
-      // TODO: remove type argument if redundant
-      String collection =
-        TypeConversionUtil.isPrimitive(type) ? "new " + type + "[] {" + args + "}" : "java.util.Arrays.<" + type + ">asList(" + args + ")";
+      String collection;
+      PsiExpressionList argList = myCall.getArgumentList();
+      if (TypeConversionUtil.isPrimitive(type)) {
+        collection = StreamEx.of(argList.getChildren()).remove(child -> child.textMatches("(") || child.textMatches(")"))
+          .map(PsiElement::getText).joining("", "new " + type + "[] {", "}");
+      }
+      else {
+        collection = "java.util.Arrays.<" + type + ">asList" + argList.getText();
+      }
       return context.getLoopLabel() +
              "for(" + outVar.getDeclaration() + ": " + collection + ") {" + code + "}\n";
     }
@@ -194,10 +196,10 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myFn.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myFn.registerReusedElements(consumer);
       if(myLimit != null) {
-        processUsedNames(myLimit, usedNameConsumer);
+        consumer.accept(myLimit);
       }
     }
 
@@ -232,9 +234,9 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      processUsedNames(myInitializer, usedNameConsumer);
-      myFn.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myInitializer);
+      myFn.registerReusedElements(consumer);
     }
 
     @Override
@@ -269,9 +271,9 @@ abstract class SourceOperation extends Operation {
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      processUsedNames(myOrigin, usedNameConsumer);
-      processUsedNames(myBound, usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myOrigin);
+      consumer.accept(myBound);
     }
 
     @Override

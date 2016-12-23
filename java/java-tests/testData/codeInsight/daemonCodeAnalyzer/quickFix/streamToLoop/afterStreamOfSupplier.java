@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 public class Main {
   private static IntSummaryStatistics test() {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      for (Supplier<Integer> sup : Arrays.<Supplier<Integer>>asList(() -> 1, () -> 2, () -> 3)) {
+      for (Supplier<Integer> sup : Arrays.<Supplier<Integer>>asList(() -> 1, /*between*/ () /*supply 2*/ -> 2, () -> 3)) {
           int i = sup.get();
           stat.accept(i);
       }
