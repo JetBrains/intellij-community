@@ -33,6 +33,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -73,6 +74,8 @@ import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
@@ -882,7 +885,21 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         PopupUtil.setPopupType(myDelegate, popupType);
       }
 
-      final Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+      Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+      Window window = UIUtil.getWindow(contents);
+      String cleanupKey = "LafManagerImpl.rootPaneCleanup";
+      if (window instanceof RootPaneContainer && window != UIUtil.getWindow(owner) &&
+          ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
+        ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
+        window.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            window.removeWindowListener(this);
+            DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
+            DialogWrapper.cleanupWindowListeners(window);
+          }
+        });
+      }
       fixPopupSize(popup, contents);
       return popup;
     }
