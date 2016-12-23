@@ -274,11 +274,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final Application application = ApplicationManager.getApplication();
     application.invokeAndWait(() -> {
       myCell.setPromptNumber(-1);
-      myCell.removeCellOutputs();
-      myViewPanel.removeAll();
-
-      final JComponent panel = createViewPanel();
-      myViewPanel.add(panel);
+      final String promptText = IpnbEditorUtil.prompt(myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In);
+      myPromptLabel.setText(promptText);
     }, ModalityState.stateForComponent(this));
   }
 
@@ -299,6 +296,15 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public void updatePanel(@Nullable final String replacementContent, @Nullable final IpnbOutputCell outputContent) {
     final Application application = ApplicationManager.getApplication();
     application.invokeAndWait(() -> {
+      if (replacementContent == null && outputContent == null) {
+        myCell.removeCellOutputs();
+        myViewPanel.removeAll();
+        application.runReadAction(() -> {
+          final JComponent panel = createViewPanel();
+          myViewPanel.add(panel);
+        });
+      }
+
       if (replacementContent != null) {
         myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
         String prompt = IpnbEditorUtil.prompt(null, IpnbEditorUtil.PromptType.In);
