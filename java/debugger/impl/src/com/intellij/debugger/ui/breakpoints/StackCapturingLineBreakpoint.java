@@ -21,7 +21,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectReference;
@@ -30,7 +29,10 @@ import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author egor
@@ -42,8 +44,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
 
-  public StackCapturingLineBreakpoint(Project project, DebugProcessImpl debugProcess, String className, String methodName) {
-    super(project, null);
+  public StackCapturingLineBreakpoint(DebugProcessImpl debugProcess, String className, String methodName) {
+    super(debugProcess.getProject(), null);
     myDebugProcess = debugProcess;
     myProperties.EMULATED = true;
     myProperties.WATCH_EXIT = false;
@@ -86,5 +88,10 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     catch (EvaluateException ignored) {
     }
     return false;
+  }
+
+  public static void track(DebugProcessImpl debugProcess, String classFqn, String methodName) {
+    StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess, classFqn, methodName);
+    breakpoint.createRequest(debugProcess);
   }
 }
