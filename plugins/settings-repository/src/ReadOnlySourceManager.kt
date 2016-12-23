@@ -20,11 +20,16 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.AtomicClearableLazyValue
 import com.intellij.util.containers.mapSmartNotNull
 import com.intellij.util.io.exists
+import gnu.trove.THashSet
+import org.eclipse.jgit.diff.DiffEntry
+import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.util.io.DisabledOutputStream
 import org.jetbrains.settingsRepository.git.GitRepositoryClientImpl
 import org.jetbrains.settingsRepository.git.Pull
 import org.jetbrains.settingsRepository.git.upstream
+import org.jetbrains.settingsRepository.git.use
 import java.nio.file.Path
 
 class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path) {
@@ -62,16 +67,50 @@ class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path
     repositoryList.drop()
   }
 
-  fun update(indicator: ProgressIndicator? = null): Boolean {
-    var isChanged = false
+  fun update(indicator: ProgressIndicator? = null): Set<String>? {
+    var changedRootDirs: MutableSet<String>? = null
+
+    fun addChangedPath(path: String?) {
+      if (path == null || path == DiffEntry.DEV_NULL) {
+        return
+      }
+
+      var firstSlash = path.indexOf('/')
+      if (firstSlash < 0) {
+        // path must use only /, but who knows
+        firstSlash = path.indexOf('\\')
+      }
+
+      if (firstSlash > 0) {
+        if (changedRootDirs == null) {
+          changedRootDirs = THashSet()
+        }
+
+        changedRootDirs!!.add(path.substring(0, firstSlash))
+      }
+    }
+
     for (repo in repositories) {
       indicator?.checkCanceled()
       LOG.debug { "Pull changes from read-only repo ${repo.upstream}" }
 
-      if (Pull(GitRepositoryClientImpl(repo, icsManager.credentialsStore), indicator).fetch() != null) {
-        isChanged = true
-      }
+      Pull(GitRepositoryClientImpl(repo, icsManager.credentialsStore), indicator).fetch(refUpdateProcessor = { refUpdate ->
+        val diffFormatter = DiffFormatter(DisabledOutputStream.INSTANCE)
+        diffFormatter.setRepository(repo)
+        diffFormatter.use {
+          val result = diffFormatter.scan(refUpdate.oldObjectId, refUpdate.newObjectId)
+          for (e in result) {
+            if (e.changeType == DiffEntry.ChangeType.DELETE) {
+              addChangedPath(e.oldPath)
+            }
+            else {
+              addChangedPath(e.oldPath)
+              addChangedPath(e.newPath)
+            }
+          }
+        }
+      })
     }
-    return isChanged
+    return changedRootDirs
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
@@ -105,14 +106,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
               }
             }
 
-            if (icsManager.readOnlySourcesManager.update(indicator)) {
-              invokeAndWaitIfNeed {
-                icsManager.schemeManagerFactory.value.process {
-                  @Suppress("ConvertLambdaToReference")
-                  it.reload()
-                }
-              }
-            }
+            updateCloudSchemes(indicator)
           }
           catch (e: ProcessCanceledException) {
             LOG.debug("Canceled")
@@ -147,6 +141,25 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
       throw exception!!
     }
     return updateResult
+  }
+
+  private fun updateCloudSchemes(indicator: ProgressIndicator) {
+    val changedRootDirs = icsManager.readOnlySourcesManager.update(indicator) ?: return
+    val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
+    icsManager.schemeManagerFactory.value.process {
+      val fileSpec = toRepositoryPath(it.fileSpec, it.roamingType)
+      if (changedRootDirs.contains(fileSpec)) {
+        schemeManagersToReload.add(it)
+      }
+    }
+
+    if (schemeManagersToReload.isNotEmpty()) {
+      invokeAndWaitIfNeed {
+        for (schemeManager in schemeManagersToReload) {
+          schemeManager.reload()
+        }
+      }
+    }
   }
 }
 

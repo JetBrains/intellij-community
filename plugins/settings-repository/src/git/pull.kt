@@ -40,6 +40,7 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevWalkUtils
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.RemoteConfig
+import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.jetbrains.settingsRepository.*
 import java.io.IOException
@@ -87,7 +88,7 @@ open internal class Pull(val manager: GitRepositoryClient, val indicator: Progre
     }
   }
 
-  fun fetch(prevRefUpdateResult: RefUpdate.Result? = null): Ref? {
+  fun fetch(prevRefUpdateResult: RefUpdate.Result? = null, refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null): Ref? {
     indicator?.checkCanceled()
 
     val fetchResult = repository.fetch(remoteConfig, manager.credentialsProvider, indicator.asProgressMonitor()) ?: return null
@@ -128,6 +129,8 @@ open internal class Pull(val manager: GitRepositoryClient, val indicator: Progre
       if (!hasChanges) {
         hasChanges = refUpdateResult != RefUpdate.Result.NO_CHANGE
       }
+
+      refUpdateProcessor?.invoke(refUpdate)
     }
 
     if (!hasChanges) {
