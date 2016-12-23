@@ -51,7 +51,6 @@ import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -95,21 +94,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   @NotNull
   public Key<MethodBreakpoint> getCategory() {
     return CATEGORY;
-  }
-
-  @Nullable
-  public PsiMethod getPsiMethod() {
-    Document document = getDocument();
-    if(document == null) {
-      return null;
-    }
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if(psiFile instanceof PsiJavaFile) {
-      int line = getLineIndex();
-      final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), document.getLineStartOffset(line), " \t");
-      return DebuggerUtilsEx.findPsiMethod(psiFile, offset);
-    }
-    return null;
   }
 
   public boolean isValid() {
@@ -301,7 +285,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   public String getEventMessage(@NotNull LocatableEvent event) {
     final Location location = event.location();
     final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName = "";
+    String locationFileName;
     try {
       locationFileName = location.sourceName();
     }
@@ -483,16 +467,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
     } catch (Exception ignored) {
     }
-  }
-
-  public boolean isBodyAt(@NotNull Document document, int offset) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if(psiFile instanceof PsiJavaFile) {
-      PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiFile, offset);
-      return method == getPsiMethod();
-    }
-
-    return false;
   }
 
   public boolean isEmulated() {
