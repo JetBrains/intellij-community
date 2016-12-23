@@ -18,6 +18,7 @@ package org.jetbrains.settingsRepository
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -74,11 +75,8 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   private val commitAlarm = SingleAlarm(Runnable {
     runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
-      try {
+      LOG.catchAndLog {
         repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
       }
     }
   }, settings.commitDelay)
@@ -87,8 +85,11 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   @Volatile var repositoryActive = false
 
+  val active: Boolean
+    get() = repositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
+
   internal val autoSyncManager = AutoSyncManager(this)
-  private val syncManager = SyncManager(this, autoSyncManager)
+  internal val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode) {
@@ -153,15 +154,18 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       storage.streamProvider = ApplicationLevelProvider()
     }
 
-    autoSyncManager.registerListeners(application)
-
-    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+    val messageBusConnection = application.messageBus.connect()
+    messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appWillBeClosed(isRestart: Boolean) {
+        autoSyncManager.autoSync(true)
+      }
+    })
+    messageBusConnection.subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun beforeProjectLoaded(project: Project) {
         if (project.isDefault) {
           return
         }
 
-        //registerProjectLevelProviders(project)
         autoSyncManager.registerListeners(project)
       }
 
@@ -173,7 +177,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
     override val enabled: Boolean
-      get() = repositoryActive
+      get() = this@IcsManager.active
 
     override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = enabled
 

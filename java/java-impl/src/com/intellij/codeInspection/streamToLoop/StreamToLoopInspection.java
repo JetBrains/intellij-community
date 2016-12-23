@@ -235,28 +235,29 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       if(!(element instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)element;
       if(!isSupportedCodeLocation(terminalCall)) return;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      terminalCall = ensureCodeBlock(terminalCall, factory);
+      if (terminalCall == null) return;
       PsiType resultType = terminalCall.getType();
       if (resultType == null) return;
       List<OperationRecord> operations = extractOperations(StreamVariable.STUB, terminalCall);
       TerminalOperation terminal = getTerminal(operations);
       if (terminal == null) return;
       allOperations(operations).forEach(or -> or.myOperation.suggestNames(or.myInVar, or.myOutVar));
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      terminalCall = ensureCodeBlock(terminalCall, factory);
-      if(terminalCall == null) return;
       PsiStatement statement = PsiTreeUtil.getParentOfType(terminalCall, PsiStatement.class);
       LOG.assertTrue(statement != null);
+      CommentTracker ct = new CommentTracker();
       PsiExpression temporaryStreamPlaceholder =
-        (PsiExpression)terminalCall
-          .replace(factory.createExpressionFromText("((" + resultType.getCanonicalText() + ")$streamReplacement$)", terminalCall));
+        (PsiExpression)ct.replace(terminalCall, "((" + resultType.getCanonicalText() + ")$streamReplacement$)");
       try {
         StreamToLoopReplacementContext context =
-          new StreamToLoopReplacementContext(statement, operations, temporaryStreamPlaceholder);
+          new StreamToLoopReplacementContext(statement, operations, temporaryStreamPlaceholder, ct);
         registerVariables(operations, context);
         String replacement = "";
         for (OperationRecord or : StreamEx.ofReversed(operations)) {
           replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, context);
         }
+        ct.insertCommentsBefore(statement);
         for (String declaration : context.getDeclarations()) {
           addStatement(project, statement, factory.createStatementFromText(declaration, statement));
         }
@@ -264,7 +265,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           .getCodeBlock().getStatements()) {
           addStatement(project, statement, addedStatement);
         }
-
         PsiElement result = context.makeFinalReplacement();
         if(result != null) {
           normalize(project, result);
@@ -333,7 +333,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     private static void registerVariables(List<OperationRecord> operations, StreamToLoopReplacementContext context) {
-      allOperations(operations).map(or -> or.myOperation).forEach(op -> op.registerUsedNames(context::addUsedVar));
+      allOperations(operations).map(or -> or.myOperation).forEach(op -> op.registerReusedElements(context::registerReusedElement));
       allOperations(operations).map(or -> or.myInVar).distinct().forEach(var -> var.register(context));
     }
   }
@@ -362,17 +362,22 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     private final Set<String> myUsedNames;
     private final Set<String> myUsedLabels;
     private final List<String> myDeclarations = new ArrayList<>();
+    private final CommentTracker myCommentTracker;
     private PsiElement myPlaceholder;
     private final PsiElementFactory myFactory;
     private String myLabel;
     private String myFinisher;
 
-    StreamToLoopReplacementContext(PsiStatement statement, List<OperationRecord> records, @NotNull PsiExpression placeholder) {
+    StreamToLoopReplacementContext(PsiStatement statement,
+                                   List<OperationRecord> records,
+                                   @NotNull PsiExpression placeholder,
+                                   CommentTracker ct) {
       myStatement = statement;
       myFactory = JavaPsiFacade.getElementFactory(myStatement.getProject());
       myHasNestedLoops = records.stream().anyMatch(or -> or.myOperation instanceof FlatMapOperation);
       myPlaceholder = placeholder;
       mySuffix = myHasNestedLoops ? "Outer" : "";
+      myCommentTracker = ct;
       myUsedNames = new HashSet<>();
       myUsedLabels = StreamEx.iterate(statement, Objects::nonNull, PsiElement::getParent).select(PsiLabeledStatement.class)
         .map(PsiLabeledStatement::getName).toSet();
@@ -384,12 +389,20 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       myPlaceholder = null;
       myStatement = parentContext.myStatement;
       myFactory = parentContext.myFactory;
+      myCommentTracker = parentContext.myCommentTracker;
       myHasNestedLoops = records.stream().anyMatch(or -> or.myOperation instanceof FlatMapOperation);
       mySuffix = "Inner";
     }
 
-    public void addUsedVar(String name) {
-      myUsedNames.add(name);
+    public void registerReusedElement(PsiElement element) {
+      element.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitVariable(PsiVariable variable) {
+          super.visitVariable(variable);
+          myUsedNames.add(variable.getName());
+        }
+      });
+      myCommentTracker.markUnchanged(element);
     }
 
     @Nullable

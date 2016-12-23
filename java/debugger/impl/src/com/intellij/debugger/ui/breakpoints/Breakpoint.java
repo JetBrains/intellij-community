@@ -31,6 +31,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -105,17 +106,21 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   public abstract void createRequest(DebugProcessImpl debugProcess);
 
-  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess, boolean forPreparedClass) {
+  static boolean shouldCreateRequest(Requestor requestor, XBreakpoint xBreakpoint, DebugProcessImpl debugProcess, boolean forPreparedClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
       JavaDebugProcess process = debugProcess.getXdebugProcess();
       return process != null
              && debugProcess.isAttached()
-             && ((XDebugSessionImpl)process.getSession()).isBreakpointActive(myXBreakpoint)
-             && (forPreparedClass || debugProcess.getRequestsManager().findRequests(this).isEmpty());
+             && (xBreakpoint == null || ((XDebugSessionImpl)process.getSession()).isBreakpointActive(xBreakpoint))
+             && (forPreparedClass || debugProcess.getRequestsManager().findRequests(requestor).isEmpty());
     });
   }
 
-  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
+  protected final boolean shouldCreateRequest(DebugProcessImpl debugProcess, boolean forPreparedClass) {
+    return shouldCreateRequest(this, getXBreakpoint(), debugProcess, forPreparedClass);
+  }
+
+  protected final boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
     return shouldCreateRequest(debugProcess, false);
   }
 

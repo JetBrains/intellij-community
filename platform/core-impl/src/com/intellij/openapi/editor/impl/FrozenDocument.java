@@ -157,12 +157,12 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
+  public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
     return true;
   }
 
   @Override
-  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     return true;
   }
 

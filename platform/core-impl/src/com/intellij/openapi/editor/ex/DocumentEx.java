@@ -87,13 +87,13 @@ public interface DocumentEx extends Document {
    * Get all range markers
    * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
    */
-  boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor);
+  boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor);
 
   /**
    * Get range markers which {@link com.intellij.openapi.util.TextRange#intersects(int, int)} the specified range
    * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
    */
-  boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor);
+  boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor);
 
   /**
    * @return modification stamp. Guaranteed to be strictly increasing on each change unlike the {@link #getModificationStamp()} which can change arbitrarily.

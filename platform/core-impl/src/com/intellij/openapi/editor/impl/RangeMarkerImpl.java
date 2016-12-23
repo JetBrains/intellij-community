@@ -16,14 +16,12 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -310,5 +308,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return -1;
     }
     return node.intervalEnd();
+  }
+
+  public RangeMarker findRangeMarkerAfter() {
+    return myNode.getTree().findRangeMarkerAfter(this);
+  }
+
+  public RangeMarker findRangeMarkerBefore() {
+    return myNode.getTree().findRangeMarkerBefore(this);
   }
 }

@@ -89,7 +89,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             }
           }
         }
-        createLocationBreakpointRequest(location, debugProcess);
+        createLocationBreakpointRequest(this, location, debugProcess);
       }
     }
     catch (ClassNotPreparedException ex) {

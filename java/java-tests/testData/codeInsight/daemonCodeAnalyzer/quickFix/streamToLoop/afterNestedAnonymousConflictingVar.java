@@ -11,6 +11,7 @@ public class Main {
       for (Map.Entry<String, List<String>> e : strings.entrySet()) {
           if (!e.getKey().isEmpty()) {
               long count = e.getValue().stream().filter(new Predicate<String>() {
+                  // we're inside anonymous class
                   @Override
                   public boolean test(String s) {
                       return e.getKey().equals(s);

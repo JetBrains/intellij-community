@@ -19,8 +19,6 @@ import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsAdapter
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -58,18 +56,10 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
   }
 
-  fun registerListeners(application: Application) {
-    application.addApplicationListener(object : ApplicationAdapter() {
-      override fun applicationExiting() {
-        autoSync(true)
-      }
-    })
-  }
-
   fun registerListeners(project: Project) {
     project.messageBus.connect().subscribe(Notifications.TOPIC, object : NotificationsAdapter() {
       override fun notify(notification: Notification) {
-        if (!icsManager.repositoryActive || project.isDisposed) {
+        if (!icsManager.active) {
           return
         }
 
@@ -92,7 +82,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 
   fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
-    if (!enabled || !icsManager.repositoryActive || (!force && !icsManager.settings.autoSync)) {
+    if (!enabled || !icsManager.active || (!force && !icsManager.settings.autoSync)) {
       return
     }
 
@@ -129,36 +119,48 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   private fun sync(app: ApplicationImpl, onAppExit: Boolean) {
     catchAndLog {
       icsManager.runInAutoCommitDisabledMode {
-        val repositoryManager = icsManager.repositoryManager
-        if (!repositoryManager.canCommit()) {
-          LOG.warn("Auto sync skipped: repository is not committable")
-          return@runInAutoCommitDisabledMode
-        }
-
-        // on app exit fetch and push only if there are commits to push
-        if (onAppExit && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0) {
-          return@runInAutoCommitDisabledMode
-        }
-
-        val updater = repositoryManager.fetch()
-        // we merge in EDT non-modal to ensure that new settings will be properly applied
-        app.invokeAndWait({
-          catchAndLog {
-            val updateResult = updater.merge()
-            if (!onAppExit &&
-                !app.isDisposeInProgress &&
-                updateResult != null &&
-                updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
-              // force to avoid saveAll & confirmation
-              app.exit(true, true, true)
-            }
-          }
-        }, ModalityState.NON_MODAL)
-
-        if (!updater.definitelySkipPush) {
-          repositoryManager.push()
-        }
+        doSync(app, onAppExit)
       }
+    }
+  }
+
+  private fun doSync(app: ApplicationImpl, onAppExit: Boolean) {
+    val repositoryManager = icsManager.repositoryManager
+    val hasUpstream = repositoryManager.hasUpstream()
+    if (hasUpstream && !repositoryManager.canCommit()) {
+      LOG.warn("Auto sync skipped: repository is not committable")
+      return
+    }
+
+    // on app exit fetch and push only if there are commits to push
+    if (onAppExit) {
+      // if no upstream - just update cloud schemes
+      if (hasUpstream && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0 && icsManager.readOnlySourcesManager.repositories.isEmpty()) {
+        return
+      }
+
+      // use explicit progress task to sync on app exit to make it clear why app is not exited immediately
+      icsManager.syncManager.sync(SyncType.MERGE, onAppExit = true)
+      return
+    }
+
+    val updater = repositoryManager.fetch()
+    // we merge in EDT non-modal to ensure that new settings will be properly applied
+    app.invokeAndWait({
+                        catchAndLog {
+                          val updateResult = updater.merge()
+                          if (!onAppExit &&
+                              !app.isDisposeInProgress &&
+                              updateResult != null &&
+                              updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
+                            // force to avoid saveAll & confirmation
+                            app.exit(true, true, true)
+                          }
+                        }
+                      }, ModalityState.NON_MODAL)
+
+    if (!updater.definitelySkipPush) {
+      repositoryManager.push()
     }
   }
 }

@@ -635,7 +635,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myState.groups.remove(group);
   }
 
-  private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
+  private class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
       if (willReopenProjectOnStart()) {

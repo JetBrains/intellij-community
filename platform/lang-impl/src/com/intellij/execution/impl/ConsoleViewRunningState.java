@@ -44,7 +44,8 @@ public class ConsoleViewRunningState extends ConsoleState {
     }
   };
 
-  public ConsoleViewRunningState(final ConsoleViewImpl console, final ProcessHandler processHandler,
+  public ConsoleViewRunningState(final ConsoleViewImpl console,
+                                 final ProcessHandler processHandler,
                                  final ConsoleState finishedStated,
                                  final boolean attachToStdOut,
                                  final boolean attachToStdIn) {

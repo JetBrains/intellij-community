@@ -405,8 +405,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override public boolean isInBulkUpdate() { return false; }
     @Override public void setInBulkUpdate(boolean value) { }
     @NotNull @Override public List<RangeMarker> getGuardedBlocks() { return Collections.emptyList(); }
-    @Override public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) { return myRangeMarkers.process(processor); }
-    @Override public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) { return myRangeMarkers.processOverlappingWith(start, end, processor); }
+    @Override public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.process(processor); }
+    @Override public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.processOverlappingWith(start, end, processor); }
     @NotNull
     @Override public String getText() { return myString; }
     @NotNull @Override public String getText(@NotNull TextRange range) { return range.substring(getText()); }

@@ -107,7 +107,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     final String message = IdeBundle.message(key) + IdeBundle.message("sys.health.acknowledge.link");
 
     final Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         app.invokeLater(() -> {

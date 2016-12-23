@@ -46,8 +46,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.PotemkinProgress;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -790,7 +790,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         return;
       }
 
-      getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
+      AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
+      lifecycleListener.appClosing();
 
       myDisposeInProgress = true;
 
@@ -799,15 +800,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
 
       saveSettings();
-
+      lifecycleListener.appWillBeClosed(restart);
 
       boolean success = disposeSelf(!force);
-    if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
-      if (Boolean.getBoolean("idea.test.guimode")) {
-        IdeaApplication.getInstance().shutdown();
+      if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
+        if (Boolean.getBoolean("idea.test.guimode")) {
+          IdeaApplication.getInstance().shutdown();
+        }
+        return;
       }
-      return;
-    }
 
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {

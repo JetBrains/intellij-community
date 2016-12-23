@@ -42,10 +42,6 @@ public class MockDocument implements DocumentEx {
   public MockDocument() {
   }
 
-  public MockDocument(String text) {
-    myText.append(text);
-  }
-
   @NotNull
   @Override
   public String getText() {
@@ -163,13 +159,13 @@ public class MockDocument implements DocumentEx {
   @Override
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   @NotNull
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -181,13 +177,13 @@ public class MockDocument implements DocumentEx {
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <T> T getUserData(@NotNull Key<T> key) {
     return (T)myUserData.get(key);
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public <T> void putUserData(@NotNull Key<T> key, T value) {
     myUserData.put(key, value);
   }
@@ -204,7 +200,7 @@ public class MockDocument implements DocumentEx {
   @Override
   @NotNull
   public LineIterator createLineIterator() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -232,7 +228,7 @@ public class MockDocument implements DocumentEx {
   @Override
   @NotNull
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -315,12 +311,12 @@ public class MockDocument implements DocumentEx {
   }
 
   @Override
-  public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
+  public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
     return false;
   }
 
   @Override
-  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     return false;
   }
 
