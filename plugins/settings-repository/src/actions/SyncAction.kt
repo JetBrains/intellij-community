@@ -63,7 +63,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    if (icsManager.repositoryActive) {
+    if (icsManager.active) {
       e.presentation.isEnabledAndVisible = true
     }
     else {

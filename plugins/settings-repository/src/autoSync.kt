@@ -16,11 +16,9 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.ide.AppLifecycleListener
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsAdapter
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -58,18 +56,10 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
   }
 
-  fun registerListeners(application: Application) {
-    application.messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-      override fun appWillBeClosed(isRestart: Boolean) {
-        autoSync(true)
-      }
-    })
-  }
-
   fun registerListeners(project: Project) {
     project.messageBus.connect().subscribe(Notifications.TOPIC, object : NotificationsAdapter() {
       override fun notify(notification: Notification) {
-        if (!icsManager.repositoryActive || project.isDisposed) {
+        if (!icsManager.active) {
           return
         }
 
@@ -92,7 +82,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
   }
 
   fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
-    if (!enabled || !icsManager.repositoryActive || (!force && !icsManager.settings.autoSync)) {
+    if (!enabled || !icsManager.active || (!force && !icsManager.settings.autoSync)) {
       return
     }
 
@@ -145,7 +135,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     // on app exit fetch and push only if there are commits to push
     if (onAppExit) {
       // if no upstream - just update cloud schemes
-      if (hasUpstream && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0) {
+      if (hasUpstream && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0 && icsManager.readOnlySourcesManager.repositories.isEmpty()) {
         return
       }
 
