@@ -32,8 +32,10 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,8 +73,15 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           quickFixTestCase.afterActionCompleted(testName, contents);
         }
       }
+      catch (FileComparisonFailure e){
+        throw e;
+      }
+      catch (ComparisonFailure e) {
+        throw e;
+      }
       catch (Throwable e) {
-        throw new RuntimeException(String.format("Test for %s failed", testName), e);
+        e.printStackTrace();
+        Assert.fail(testName + " failed");
       }
     }, "", "");
   }
