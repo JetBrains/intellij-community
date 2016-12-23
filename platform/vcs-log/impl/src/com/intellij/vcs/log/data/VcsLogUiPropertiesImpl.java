@@ -49,7 +49,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
-    public TextFilterSettingsImpl TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
+    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
   }
 
   @NotNull
@@ -79,10 +79,10 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
     }
     else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
-      return (T)Boolean.valueOf(getTextFilterSettings().isMatchCaseEnabled());
+      return (T)Boolean.valueOf(getTextFilterSettings().MATCH_CASE);
     }
     else if (TEXT_FILTER_REGEX.equals(property)) {
-      return (T)Boolean.valueOf(getTextFilterSettings().isFilterByRegexEnabled());
+      return (T)Boolean.valueOf(getTextFilterSettings().REGEX);
     }
     else if (property instanceof VcsLogHighlighterProperty) {
       Boolean result = getState().HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
@@ -113,10 +113,10 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
     }
     else if (TEXT_FILTER_REGEX.equals(property)) {
-      getTextFilterSettings().setFilterByRegexEnabled((Boolean)value);
+      getTextFilterSettings().REGEX = (boolean)(Boolean)value;
     }
     else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
-      getTextFilterSettings().setMatchCaseEnabled((Boolean)value);
+      getTextFilterSettings().MATCH_CASE = (boolean)(Boolean)value;
     }
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
@@ -136,10 +136,10 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   @NotNull
-  private TextFilterSettingsImpl getTextFilterSettings() {
-    TextFilterSettingsImpl settings = getState().TEXT_FILTER_SETTINGS;
+  private TextFilterSettings getTextFilterSettings() {
+    TextFilterSettings settings = getState().TEXT_FILTER_SETTINGS;
     if (settings == null) {
-      settings = new TextFilterSettingsImpl();
+      settings = new TextFilterSettings();
       getState().TEXT_FILTER_SETTINGS = settings;
     }
     return settings;
@@ -228,38 +228,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
   }
 
-  public static class TextFilterSettingsImpl implements TextFilterSettings {
+  private static class TextFilterSettings {
     public boolean REGEX = false;
     public boolean MATCH_CASE = false;
-
-    public TextFilterSettingsImpl(boolean isFilterByRegexEnabled, boolean isMatchCaseEnabled) {
-      REGEX = isFilterByRegexEnabled;
-      MATCH_CASE = isMatchCaseEnabled;
-    }
-
-    public TextFilterSettingsImpl() {
-      this(false, false);
-    }
-
-    @Override
-    public boolean isFilterByRegexEnabled() {
-      return REGEX;
-    }
-
-    @Override
-    public void setFilterByRegexEnabled(boolean enabled) {
-      REGEX = enabled;
-    }
-
-    @Override
-    public boolean isMatchCaseEnabled() {
-      return MATCH_CASE;
-    }
-
-    @Override
-    public void setMatchCaseEnabled(boolean enabled) {
-      MATCH_CASE = enabled;
-    }
   }
 
   public abstract static class MainVcsLogUiPropertiesListener implements VcsLogUiPropertiesListener {

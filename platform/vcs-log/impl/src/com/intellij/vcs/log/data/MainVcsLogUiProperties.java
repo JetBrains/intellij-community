@@ -84,14 +84,4 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
   interface VcsLogUiPropertiesListener {
     <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
   }
-
-  interface TextFilterSettings {
-    boolean isFilterByRegexEnabled();
-
-    void setFilterByRegexEnabled(boolean enabled);
-
-    boolean isMatchCaseEnabled();
-
-    void setMatchCaseEnabled(boolean enabled);
-  }
 }
