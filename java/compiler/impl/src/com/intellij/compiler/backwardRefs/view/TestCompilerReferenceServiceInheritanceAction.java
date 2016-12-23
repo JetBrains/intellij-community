@@ -27,8 +27,8 @@ import com.intellij.psi.search.GlobalSearchScopeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class TestCompilerReferenceServiceInheritanceAction extends TestCompilerReferenceServiceAction {
-  public TestCompilerReferenceServiceInheritanceAction(String text) {
-    super(text);
+  public TestCompilerReferenceServiceInheritanceAction() {
+    super("Compiler Reference Direct Inheritor Search");
   }
 
   @Override
@@ -41,6 +41,7 @@ public class TestCompilerReferenceServiceInheritanceAction extends TestCompilerR
         (PsiNamedElement)element,
         scope,
         StdFileTypes.JAVA);
+      InternalCompilerRefServiceView.showHierarchyInfo(hierarchyInfo, element);
     }
   }
 }

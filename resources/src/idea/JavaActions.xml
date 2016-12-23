@@ -447,6 +447,8 @@
       <add-to-group group-id="FileChooserToolbar" anchor="last"/>
     </action>
     
-    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerReferenceServiceFindUsagesAction" id="TestCompilerReferenceServiceFindUsages"/>
+    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerReferenceServiceFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
+    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerReferenceServiceFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
+    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerReferenceServiceInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>
   </actions>
 </idea-plugin>

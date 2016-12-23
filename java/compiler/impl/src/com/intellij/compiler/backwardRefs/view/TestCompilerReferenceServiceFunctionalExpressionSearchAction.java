@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestCompilerReferenceServiceFunctionalExpressionSearchAction extends TestCompilerReferenceServiceAction {
 
-  public TestCompilerReferenceServiceFunctionalExpressionSearchAction(String text) {
-    super(text);
+  public TestCompilerReferenceServiceFunctionalExpressionSearchAction() {
+    super("Compiler Reference Functional Expression Search");
   }
 
   @Override
@@ -40,7 +40,9 @@ public class TestCompilerReferenceServiceFunctionalExpressionSearchAction extend
       final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(
         project);
       final GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(element.getUseScope(), project);
-      compilerReferenceService.getTestFunExpressions((PsiNamedElement)element, scope, StdFileTypes.JAVA);
+      final CompilerReferenceHierarchyTestInfo hierarchyTestInfo =
+        compilerReferenceService.getTestFunExpressions((PsiNamedElement)element, scope, StdFileTypes.JAVA);
+      InternalCompilerRefServiceView.showHierarchyInfo(hierarchyTestInfo, element);
     }
   }
 }

@@ -65,9 +65,7 @@ public class CompilerReferenceHierarchyTestInfo {
     if (isEnabled()) {
       final DefaultMutableTreeNode knownOccurrences = new DefaultMutableTreeNode("Known hierarchy direct children");
       node.add(knownOccurrences);
-      getHierarchyChildren().forEach(e -> {
-        knownOccurrences.add(new DefaultMutableTreeNode(e));
-      });
+      getHierarchyChildren().forEach(e -> knownOccurrences.add(new DefaultMutableTreeNode(e)));
 
       final DefaultMutableTreeNode dirtyModules = new DefaultMutableTreeNode("Dirty modules");
       node.add(dirtyModules);

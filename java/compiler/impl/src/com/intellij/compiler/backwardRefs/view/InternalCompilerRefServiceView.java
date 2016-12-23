@@ -23,7 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -66,6 +69,10 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
           append(((VirtualFile)userObject).getName());
           append(" in ");
           append(((VirtualFile)userObject).getParent().getPath(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        } else if (userObject instanceof PsiFunctionalExpression) {
+          append(ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)userObject, true));
+        } else if (userObject instanceof PsiClass) {
+          append(ClassPresentationUtil.getNameForClass((PsiClass)userObject, true));
         } else {
           append(userObject.toString());
         }
@@ -91,6 +98,13 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
   }
 
   public static void showFindUsages(CompilerReferenceFindUsagesTestInfo info, PsiElement element) {
+    final InternalCompilerRefServiceView view = getView(element);
+    final DefaultMutableTreeNode node = info.asTree();
+    node.setUserObject(element);
+    ((DefaultTreeModel)view.myTree.getModel()).setRoot(node);
+  }
+
+  public static void showHierarchyInfo(CompilerReferenceHierarchyTestInfo info, PsiElement element) {
     final InternalCompilerRefServiceView view = getView(element);
     final DefaultMutableTreeNode node = info.asTree();
     node.setUserObject(element);
