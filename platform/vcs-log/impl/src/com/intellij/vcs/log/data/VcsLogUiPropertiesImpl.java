@@ -33,7 +33,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   public static final VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>();
   public static final VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>();
   public static final VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>();
-  public static final VcsLogUiProperty<TextFilterSettings> TEXT_FILTER_SETTINGS = new VcsLogUiProperty<>();
+  public static final VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>();
+  public static final VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>();
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
 
   private final Set<VcsLogUiPropertiesListener> myListeners = ContainerUtil.newLinkedHashSet();
@@ -78,9 +79,11 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (property == BEK_SORT_TYPE) {
       return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
     }
-    else if (property == TEXT_FILTER_SETTINGS) {
-      if (getState().TEXT_FILTER_SETTINGS == null) getState().TEXT_FILTER_SETTINGS = new TextFilterSettingsImpl();
-      return (T)new DelegatingTextFilterSetting(getState().TEXT_FILTER_SETTINGS);
+    else if (property == TEXT_FILTER_MATCH_CASE) {
+      return (T)Boolean.valueOf(getTextFilterSettings().isMatchCaseEnabled());
+    }
+    else if (property == TEXT_FILTER_REGEX) {
+      return (T)Boolean.valueOf(getTextFilterSettings().isFilterByRegexEnabled());
     }
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
@@ -105,6 +108,12 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (property == BEK_SORT_TYPE) {
       getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
     }
+    else if (property == TEXT_FILTER_REGEX) {
+      getTextFilterSettings().setFilterByRegexEnabled((Boolean)value);
+    }
+    else if (property == TEXT_FILTER_MATCH_CASE) {
+      getTextFilterSettings().setMatchCaseEnabled((Boolean)value);
+    }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
@@ -119,10 +128,21 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
         property == COMPACT_REFERENCES_VIEW ||
         property == SHOW_TAG_NAMES ||
         property == BEK_SORT_TYPE ||
-        property == TEXT_FILTER_SETTINGS) {
+        property == TEXT_FILTER_MATCH_CASE ||
+        property == TEXT_FILTER_REGEX) {
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  private TextFilterSettingsImpl getTextFilterSettings() {
+    TextFilterSettingsImpl settings = getState().TEXT_FILTER_SETTINGS;
+    if (settings == null) {
+      settings = new TextFilterSettingsImpl();
+      getState().TEXT_FILTER_SETTINGS = settings;
+    }
+    return settings;
   }
 
   @Override
@@ -254,37 +274,6 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
   }
 
-  // I know that in some languages this class would be twice as short
-  private class DelegatingTextFilterSetting implements TextFilterSettings {
-    private final TextFilterSettings mySettings;
-
-    private DelegatingTextFilterSetting(@NotNull TextFilterSettings settings) {
-      mySettings = settings;
-    }
-
-    @Override
-    public boolean isFilterByRegexEnabled() {
-      return mySettings.isFilterByRegexEnabled();
-    }
-
-    @Override
-    public void setFilterByRegexEnabled(boolean enabled) {
-      mySettings.setFilterByRegexEnabled(enabled);
-      myListeners.forEach(l -> l.onPropertyChanged(TEXT_FILTER_SETTINGS));
-    }
-
-    @Override
-    public boolean isMatchCaseEnabled() {
-      return mySettings.isMatchCaseEnabled();
-    }
-
-    @Override
-    public void setMatchCaseEnabled(boolean enabled) {
-      mySettings.setMatchCaseEnabled(enabled);
-      myListeners.forEach(l -> l.onPropertyChanged(TEXT_FILTER_SETTINGS));
-    }
-  }
-
   public abstract static class VcsLogUiPropertiesImplListener implements VcsLogUiPropertiesListener {
     public abstract void onShowDetailsChanged();
 
@@ -320,7 +309,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       else if (property == BEK_SORT_TYPE) {
         onBekChanged();
       }
-      else if (property == TEXT_FILTER_SETTINGS) {
+      else if (property == TEXT_FILTER_REGEX || property == TEXT_FILTER_MATCH_CASE) {
         onTextFilterSettingsChanged();
       }
       else {

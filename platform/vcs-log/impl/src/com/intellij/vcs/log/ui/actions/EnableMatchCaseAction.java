@@ -16,8 +16,6 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -32,36 +30,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
+public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
   @NotNull
   private static final String MATCH_CASE = "Match Case";
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties == null || !properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) return false;
-    return properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isMatchCaseEnabled();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) {
-      properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).setMatchCaseEnabled(state);
-    }
+  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+    return VcsLogUiPropertiesImpl.TEXT_FILTER_MATCH_CASE;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (ui == null || properties == null || !properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      boolean regexEnabled = properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isFilterByRegexEnabled();
+    if (ui != null && properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_MATCH_CASE)) {
+      boolean regexEnabled =
+        properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_REGEX) && properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_REGEX);
       if (!regexEnabled) {
-        e.getPresentation().setEnabledAndVisible(true);
         e.getPresentation().setText(MATCH_CASE);
       }
       else {
@@ -79,7 +66,5 @@ public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
         }
       }
     }
-
-    super.update(e);
   }
 }

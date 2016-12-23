@@ -15,36 +15,13 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
-import org.jetbrains.annotations.NotNull;
 
-public class EnableFilterByRegexAction extends ToggleAction implements DumbAware {
+public class EnableFilterByRegexAction extends BooleanPropertyToggleAction {
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties == null || !properties.exists(VcsLogUiPropertiesImpl.COMPACT_REFERENCES_VIEW)) return false;
-    return properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isFilterByRegexEnabled();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) {
-      properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).setFilterByRegexEnabled(state);
-    }
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    e.getPresentation().setEnabledAndVisible(properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS));
-
-    super.update(e);
+  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+    return VcsLogUiPropertiesImpl.TEXT_FILTER_REGEX;
   }
 }

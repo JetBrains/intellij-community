@@ -71,10 +71,10 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
 
         usages.add(
           StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex",
-                                           ui.getProperties().get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isFilterByRegexEnabled()));
+                                           ui.getProperties().get(VcsLogUiPropertiesImpl.TEXT_FILTER_REGEX)));
         usages.add(
           StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase",
-                                           ui.getProperties().get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isMatchCaseEnabled()));
+                                           ui.getProperties().get(VcsLogUiPropertiesImpl.TEXT_FILTER_MATCH_CASE)));
 
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {
