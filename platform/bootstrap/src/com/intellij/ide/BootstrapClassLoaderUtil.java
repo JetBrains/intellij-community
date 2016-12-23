@@ -65,6 +65,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
+      .parent(parent == null ? null : new URLClassLoader(new URL[]{}))
       .fallback(parent)
       .urls(filterClassPath(new ArrayList<URL>(classpath)))
       .allowLock()
