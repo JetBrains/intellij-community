@@ -73,9 +73,6 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           quickFixTestCase.afterActionCompleted(testName, contents);
         }
       }
-      catch (FileComparisonFailure e){
-        throw e;
-      }
       catch (ComparisonFailure e) {
         throw e;
       }
