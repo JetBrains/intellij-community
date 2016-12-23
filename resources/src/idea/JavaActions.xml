@@ -446,5 +446,7 @@
     <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
       <add-to-group group-id="FileChooserToolbar" anchor="last"/>
     </action>
+    
+    <action class="com.intellij.compiler.backwardRefs.view.TestCompilerReferenceServiceFindUsagesAction" id="TestCompilerReferenceServiceFindUsages"/>
   </actions>
 </idea-plugin>
