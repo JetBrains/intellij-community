@@ -3272,5 +3272,26 @@ public void testSCR260() throws Exception {
       "package com.example;"
     );
   }
+
+  public void testFinal_OnTheEndOfLine() {
+    doMethodTest(
+      "@SuppressWarnings(\"unchecked\") final\n" +
+      "List<String> list = new ArrayList<String>();\n" +
+      "new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        list.clear();\n" +
+      "    }\n" +
+      "};",
+      "@SuppressWarnings(\"unchecked\")\n" +
+      "final List<String> list = new ArrayList<String>();\n" +
+      "new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "        list.clear();\n" +
+      "    }\n" +
+      "};"
+    );
+  }
   
 }
