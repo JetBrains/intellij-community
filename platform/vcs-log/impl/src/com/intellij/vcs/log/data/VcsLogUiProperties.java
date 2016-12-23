@@ -15,16 +15,19 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface VcsLogUiProperties {
-  boolean isShowDetails();
 
-  void setShowDetails(boolean showDetails);
+  @NotNull
+  <T> T get(@NotNull VcsLogUiProperty<T> property);
+
+  <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value);
+
+  <T> boolean exists(@NotNull VcsLogUiProperty<T> property);
 
   void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup);
 
@@ -36,18 +39,6 @@ public interface VcsLogUiProperties {
   @NotNull
   List<List<String>> getRecentlyFilteredBranchGroups();
 
-  boolean areLongEdgesVisible();
-
-  void setLongEdgesVisibility(boolean visible);
-
-  PermanentGraph.SortType getBekSortType();
-
-  void setBek(PermanentGraph.SortType bekSortType);
-
-  boolean isShowRootNames();
-
-  void setShowRootNames(boolean isShowRootNames);
-
   boolean isHighlighterEnabled(@NotNull String id);
 
   void enableHighlighter(@NotNull String id, boolean value);
@@ -57,37 +48,17 @@ public interface VcsLogUiProperties {
   @Nullable
   List<String> getFilterValues(@NotNull String filterName);
 
-  boolean isCompactReferencesView();
-
-  void setCompactReferencesView(boolean compact);
-
-  boolean isShowTagNames();
-
-  void setShowTagNames(boolean showTags);
-
-  @NotNull
-  TextFilterSettings getTextFilterSettings();
-
   void addChangeListener(@NotNull VcsLogUiPropertiesListener listener);
 
   void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener);
 
+  class VcsLogUiProperty<T> {
+  }
+
   interface VcsLogUiPropertiesListener {
-    void onShowDetailsChanged();
-
-    void onShowLongEdgesChanged();
-
-    void onBekChanged();
-
-    void onShowRootNamesChanged();
+    <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
 
     void onHighlighterChanged();
-
-    void onCompactReferencesViewChanged();
-
-    void onShowTagNamesChanged();
-
-    void onTextFilterSettingsChanged();
   }
 
   interface TextFilterSettings {

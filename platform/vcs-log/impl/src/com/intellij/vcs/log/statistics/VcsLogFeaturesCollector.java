@@ -24,6 +24,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
@@ -46,27 +47,34 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
       VcsLogUiImpl ui = projectLog.getMainLogUi();
       if (ui != null) {
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", ui.getProperties().isShowDetails()));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", ui.getProperties().areLongEdgesVisible()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", ui.getProperties().get(VcsLogUiPropertiesImpl.SHOW_DETAILS)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", ui.getProperties().get(VcsLogUiPropertiesImpl.SHOW_LONG_EDGES)));
 
         usages.add(StatisticsUtilKt
-                     .getBooleanUsage("ui.sort.linear.bek", ui.getProperties().getBekSortType().equals(PermanentGraph.SortType.LinearBek)));
+                     .getBooleanUsage("ui.sort.linear.bek", ui.getProperties().get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE)
+                       .equals(PermanentGraph.SortType.LinearBek)));
         usages
-          .add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", ui.getProperties().getBekSortType().equals(PermanentGraph.SortType.Bek)));
+          .add(StatisticsUtilKt.getBooleanUsage("ui.sort.bek", ui.getProperties().get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE)
+            .equals(PermanentGraph.SortType.Bek)));
         usages.add(
-          StatisticsUtilKt.getBooleanUsage("ui.sort.normal", ui.getProperties().getBekSortType().equals(PermanentGraph.SortType.Normal)));
+          StatisticsUtilKt.getBooleanUsage("ui.sort.normal", ui.getProperties().get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE)
+            .equals(PermanentGraph.SortType.Normal)));
 
         if (ui.isMultipleRoots()) {
-          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", ui.getProperties().isShowRootNames()));
+          usages.add(StatisticsUtilKt.getBooleanUsage("ui.roots", ui.getProperties().get(VcsLogUiPropertiesImpl.SHOW_ROOT_NAMES)));
         }
 
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact", ui.getProperties().isCompactReferencesView()));
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", ui.getProperties().isShowTagNames()));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.labels.compact",
+                                                    ui.getProperties().get(VcsLogUiPropertiesImpl.COMPACT_REFERENCES_VIEW)));
+        usages
+          .add(StatisticsUtilKt.getBooleanUsage("ui.labels.showTagNames", ui.getProperties().get(VcsLogUiPropertiesImpl.SHOW_TAG_NAMES)));
 
         usages.add(
-          StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex", ui.getProperties().getTextFilterSettings().isFilterByRegexEnabled()));
+          StatisticsUtilKt.getBooleanUsage("ui.textFilter.regex",
+                                           ui.getProperties().get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isFilterByRegexEnabled()));
         usages.add(
-          StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase", ui.getProperties().getTextFilterSettings().isMatchCaseEnabled()));
+          StatisticsUtilKt.getBooleanUsage("ui.textFilter.matchCase",
+                                           ui.getProperties().get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isMatchCaseEnabled()));
 
         for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, project)) {
           if (factory.showMenuItem()) {

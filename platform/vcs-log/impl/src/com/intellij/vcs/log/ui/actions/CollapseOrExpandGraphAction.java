@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
@@ -52,13 +53,13 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
 
-    if (ui != null && ui.areGraphActionsEnabled() && properties != null) {
+    if (ui != null && ui.areGraphActionsEnabled() && properties != null && !properties.exists(VcsLogUiPropertiesImpl.BEK_SORT_TYPE)) {
       e.getPresentation().setEnabled(true);
       if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
         e.getPresentation().setEnabled(false);
       }
 
-      if (properties.getBekSortType() == PermanentGraph.SortType.LinearBek) {
+      if (properties.get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
         e.getPresentation().setText(getPrefix() + MERGES);
         e.getPresentation().setDescription(getPrefix() + MERGES_DESCRIPTION);
       }
@@ -77,9 +78,10 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
       e.getPresentation().setIcon(null);
     }
     else {
-      e.getPresentation()
-        .setIcon(
-          properties != null && properties.getBekSortType() == PermanentGraph.SortType.LinearBek ? getMergesIcon() : getBranchesIcon());
+      e.getPresentation().setIcon(
+        properties != null &&
+        properties.exists(VcsLogUiPropertiesImpl.BEK_SORT_TYPE) &&
+        properties.get(VcsLogUiPropertiesImpl.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek ? getMergesIcon() : getBranchesIcon());
     }
   }
 

@@ -16,37 +16,27 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
+import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowLongEdgesAction extends ToggleAction implements DumbAware {
+public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
   public ShowLongEdgesAction() {
     super("Show Long Edges", "Show long branch edges even if commits are invisible in the current view.", VcsLogIcons.ShowHideLongEdges);
   }
 
   @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    return properties != null && properties.areLongEdgesVisible();
-  }
-
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties != null) properties.setLongEdgesVisibility(state);
+  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+    return VcsLogUiPropertiesImpl.SHOW_LONG_EDGES;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    e.getPresentation().setEnabled(ui != null && ui.areGraphActionsEnabled() && properties != null);
+    if (ui != null && !ui.areGraphActionsEnabled()) e.getPresentation().setEnabled(false);
   }
 }

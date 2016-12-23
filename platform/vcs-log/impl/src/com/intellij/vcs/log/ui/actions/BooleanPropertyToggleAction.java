@@ -19,31 +19,47 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class EnableFilterByRegexAction extends ToggleAction implements DumbAware {
+import javax.swing.*;
+
+public abstract class BooleanPropertyToggleAction extends ToggleAction implements DumbAware {
+  public BooleanPropertyToggleAction() {
+  }
+
+  public BooleanPropertyToggleAction(@Nullable String text) {
+    super(text);
+  }
+
+  public BooleanPropertyToggleAction(@Nullable String text,
+                                     @Nullable String description,
+                                     @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
+  protected abstract VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty();
 
   @Override
   public boolean isSelected(AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties == null || !properties.exists(VcsLogUiPropertiesImpl.COMPACT_REFERENCES_VIEW)) return false;
-    return properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isFilterByRegexEnabled();
+    if (properties == null || !properties.exists(getProperty())) return false;
+    return properties.get(getProperty());
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) {
-      properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).setFilterByRegexEnabled(state);
+    if (properties != null && properties.exists(getProperty())) {
+      properties.set(getProperty(), state);
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    e.getPresentation().setEnabledAndVisible(properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS));
+    e.getPresentation().setEnabledAndVisible(properties != null && properties.exists(getProperty()));
 
     super.update(e);
   }

@@ -25,6 +25,7 @@ import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,15 +39,15 @@ public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties == null) return false;
-    return properties.getTextFilterSettings().isMatchCaseEnabled();
+    if (properties == null || !properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) return false;
+    return properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isMatchCaseEnabled();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties != null) {
-      properties.getTextFilterSettings().setMatchCaseEnabled(state);
+    if (properties != null && properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) {
+      properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).setMatchCaseEnabled(state);
     }
   }
 
@@ -54,11 +55,11 @@ public class EnableMatchCaseAction extends ToggleAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (ui == null || properties == null) {
+    if (ui == null || properties == null || !properties.exists(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      boolean regexEnabled = properties.getTextFilterSettings().isFilterByRegexEnabled();
+      boolean regexEnabled = properties.get(VcsLogUiPropertiesImpl.TEXT_FILTER_SETTINGS).isFilterByRegexEnabled();
       if (!regexEnabled) {
         e.getPresentation().setEnabledAndVisible(true);
         e.getPresentation().setText(MATCH_CASE);

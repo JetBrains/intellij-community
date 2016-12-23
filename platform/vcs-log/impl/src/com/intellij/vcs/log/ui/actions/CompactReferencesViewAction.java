@@ -31,41 +31,18 @@ package com.intellij.vcs.log.ui.actions;
  * limitations under the License.
  */
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 
-public class CompactReferencesViewAction extends ToggleAction implements DumbAware {
+public class CompactReferencesViewAction extends BooleanPropertyToggleAction {
 
   public CompactReferencesViewAction() {
     super("Compact References View", "Show Only First Reference for a Commit in the Table", null);
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties == null) return false;
-    return properties.isCompactReferencesView();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties != null) {
-      properties.setCompactReferencesView(state);
-    }
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES) != null);
-
-    super.update(e);
+  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+    return VcsLogUiPropertiesImpl.COMPACT_REFERENCES_VIEW;
   }
 }
 

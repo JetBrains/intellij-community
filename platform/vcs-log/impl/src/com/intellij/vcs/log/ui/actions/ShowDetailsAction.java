@@ -16,36 +16,17 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 
-public class ShowDetailsAction extends ToggleAction implements DumbAware {
+public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
     super("Show Details", "Display details panel", AllIcons.Actions.Preview);
   }
 
   @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    Project project = e.getProject();
-    if (project == null || properties == null) return false;
-    return !project.isDisposed() && properties.isShowDetails();
-  }
-
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    Project project = e.getProject();
-    if (project != null && !project.isDisposed() && properties != null) {
-      properties.setShowDetails(state);
-    }
+  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+    return VcsLogUiPropertiesImpl.SHOW_DETAILS;
   }
 }

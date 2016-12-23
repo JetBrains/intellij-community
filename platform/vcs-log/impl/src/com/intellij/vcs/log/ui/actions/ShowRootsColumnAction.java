@@ -16,39 +16,28 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowRootsColumnAction extends ToggleAction implements DumbAware {
+public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
 
   public ShowRootsColumnAction() {
     super("Show Root Names");
   }
 
   @Override
+  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+    return VcsLogUiPropertiesImpl.SHOW_ROOT_NAMES;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    e.getPresentation().setEnabledAndVisible(ui != null && ui.isMultipleRoots() && properties != null);
     super.update(e);
-  }
-
-  @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    return properties != null && properties.isShowRootNames();
-  }
-
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
-    if (properties != null) {
-      properties.setShowRootNames(state);
-    }
+    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (ui == null || !ui.isMultipleRoots()) e.getPresentation().setEnabledAndVisible(false);
   }
 }
