@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.AtomicClearableLazyValue
@@ -40,7 +41,11 @@ class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path
       }
 
       return settings.readOnlySources.mapSmartNotNull { source ->
-        try {
+        LOG.catchAndLog {
+          if (!source.active) {
+            return@mapSmartNotNull null
+          }
+
           val path = source.path ?: return@mapSmartNotNull null
           val dir = rootDir.resolve(path)
           if (dir.exists()) {
@@ -49,12 +54,8 @@ class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path
           else {
             LOG.warn("Skip read-only source ${source.url} because dir doesn't exist")
           }
+          null
         }
-        catch (e: Exception) {
-          LOG.error(e)
-        }
-
-        null
       }
     }
   }

@@ -54,8 +54,13 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
 
     override fun getComponent() = panel {
       row("Repository:") {
-        editor.comboBox()
-        deleteButton()
+        if (editor.model.isEmpty) {
+          hint("Use File -> Settings Repository... to configure")
+        }
+        else {
+          editor.comboBox()
+          deleteButton()
+        }
       }
     }
 
@@ -69,7 +74,7 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
 
     override fun reset(settings: IcsSettings) {
       val list = ArrayList<RepositoryItem>()
-      val upstream = icsManager.repositoryManager.getUpstream()?.let { RepositoryItem(it) }
+      val upstream = icsManager.repositoryManager.getUpstream()?.let(::RepositoryItem)
       upstream?.let {
         list.add(it)
       }

@@ -49,7 +49,11 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   override fun apply(settings: IcsSettings) {
     settings.autoSync = autoSync.isSelected
 
-    editors.forEach { it.apply(settings) }
+    editors.forEach {
+      if (it.isModified(settings)) {
+        it.apply(settings)
+      }
+    }
 
     saveSettings(settings, icsManager.settingsFile)
   }
