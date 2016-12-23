@@ -87,6 +87,10 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
 
   override fun dataLoadedFromProvider(storage: FileBasedStorage, element: Element?) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
+    if (storage.fileSpec != "path.macros.xml") {
+      return
+    }
+
     LOG.catchAndLog {
       if (element == null) {
         storage.file.delete()
