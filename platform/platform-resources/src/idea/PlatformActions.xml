@@ -481,6 +481,11 @@
           <action id="AddNewTabToTheEndMode" class="com.intellij.ide.actions.TabsAddedToTheEndSwitcher"/>
         </group>
 
+        <group id="Notifications" popup="true">
+          <action class="com.intellij.ui.CloseFirstNotificationAction" id="CloseFirstNotification"/>
+          <action class="com.intellij.ui.CloseAllNotificationsAction" id="CloseAllNotifications"/>
+        </group>
+
         <group id="BackgroundTasks" popup="true">
           <action id="ShowProcessWindow" class="com.intellij.openapi.wm.impl.status.ShowProcessWindowAction"/>
           <action id="AutoShowProcessWindow" class="com.intellij.openapi.wm.impl.status.AutoShowProcessPopupAction"/>

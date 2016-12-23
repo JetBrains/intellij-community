@@ -253,6 +253,20 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
   }
 
+  public void closeAll() {
+    myCloseAll.run();
+  }
+
+  public void closeFirst() {
+    if (!myBalloons.isEmpty()) {
+      remove(myBalloons.get(0), true);
+    }
+  }
+
+  public int getBalloonCount() {
+    return myBalloons.size();
+  }
+
   private static int getVisibleCount() {
     return Registry.intValue("ide.notification.visible.count", 2);
   }
