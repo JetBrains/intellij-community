@@ -91,6 +91,8 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   }
 
   public void createToolWindow(String displayName, boolean defaultFileProvider) {
+    closeView(displayName);
+
     final CoverageView coverageView = new CoverageView(myProject, myDataManager, myStateBean);
     myViews.put(displayName, coverageView);
     Content content = myContentManager.getFactory().createContent(coverageView, displayName, true);
