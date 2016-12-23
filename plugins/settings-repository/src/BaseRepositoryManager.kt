@@ -139,8 +139,10 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
       return false
     }
 
-    lock.write {
-      deleteFromIndex(path, isFile)
+    if (!isPathIgnored(path)) {
+      lock.write {
+        deleteFromIndex(path, isFile)
+      }
     }
     return true
   }
