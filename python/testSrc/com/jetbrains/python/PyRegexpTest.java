@@ -30,6 +30,7 @@ import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -157,6 +158,20 @@ public class PyRegexpTest extends PyTestCase {
                        "def f(**kwargs):" +
                        "    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')\n",
                        "(foomissing_valuebaz$)");
+  }
+
+  // PY-21493
+  public void testRegexpInsideFStringFragmentFirst() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () ->
+      doTestInjectedText("import re\n" +
+                         "re.search(rf'{x}.<caret>..{y:{z}}...')", "missing_value...missing_value..."));
+  }
+  
+  // PY-21493
+  public void testRegexpInsideFStringFragmentSecond() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () ->
+      doTestInjectedText("import re\n" +
+                         "re.search(rf'...{x}.<caret>..{y:{z}}')", "...missing_value...missing_value"));
   }
 
   // PY-18881

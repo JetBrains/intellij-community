@@ -15,12 +15,16 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.fstrings.FStringParser;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +38,8 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
  * @author vlan
  */
 public class PyInjectionUtil {
+
+  private static final String PLACEHOLDER = "missing_value";
 
   public static class InjectionResult {
     public static InjectionResult EMPTY = new InjectionResult(false, true);
@@ -134,52 +140,83 @@ public class PyInjectionUtil {
   @NotNull
   private static InjectionResult processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar,
                                                       @NotNull String prefix, @NotNull String suffix, @NotNull Formatting formatting) {
-    final String missingValue = "missing_value";
     if (element instanceof PyStringLiteralExpression) {
       boolean injected = false;
       boolean strict = true;
+      
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
-      final List<TextRange> ranges = expr.getStringValueTextRanges();
-      final String text = expr.getText();
-      for (TextRange range : ranges) {
-        if (formatting != Formatting.NONE) {
-          final String part = range.substring(text);
-          final List<FormatStringChunk> chunks = formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(part) : parsePercentFormat(part);
-          if (!filterSubstitutions(chunks).isEmpty()) {
-            strict = false;
-          }
-          for (int i = 0; i < chunks.size(); i++) {
-            final FormatStringChunk chunk = chunks.get(i);
-            if (chunk instanceof ConstantChunk) {
-              final int nextIndex = i + 1;
-              final String chunkPrefix;
-              if (i == 1 && chunks.get(0) instanceof SubstitutionChunk) {
-                chunkPrefix = missingValue;
-              }
-              else if (i == 0) {
-                chunkPrefix = prefix;
-              } else {
-                chunkPrefix = "";
-              }
-              final String chunkSuffix;
-              if (nextIndex < chunks.size() && chunks.get(nextIndex) instanceof SubstitutionChunk) {
-                chunkSuffix = missingValue;
-              }
-              else if (nextIndex == chunks.size()) {
-                chunkSuffix = suffix;
-              }
-              else {
-                chunkSuffix = "";
-              }
-              final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
-              registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
-              injected = true;
+      for (ASTNode node : expr.getStringNodes()) {
+        final StringNodeInfo nodeInfo = new StringNodeInfo(node);
+        final int nodeOffsetInLiteral = node.getTextRange().getStartOffset() - expr.getTextRange().getStartOffset();
+        final int contentEnd = nodeInfo.getContentRange().getEndOffset();
+        final int contentStart = nodeInfo.getContentRange().getStartOffset();
+        final List<TextRange> subsChunkRanges;
+        if (nodeInfo.isFormatted()) {
+          // TODO unify interfaces of FStringParser and PyStringFormatParser so they could be used more or the less interchangeably
+          final List<FStringParser.Fragment> fragments = FStringParser.parse(node.getText()).getFragments();
+          subsChunkRanges = ContainerUtil.mapNotNull(fragments, t -> {
+            if (t.getDepth() == 1) {
+              final int rightOffset = t.getRightBraceOffset();
+              // For FStringParser offsets already take into account prefix and opening quotes
+              return TextRange.create(t.getLeftBraceOffset(), rightOffset < 0 ? contentEnd : rightOffset + 1).shiftRight(nodeOffsetInLiteral);
             }
-          }
+            return null;
+          });
+        }
+        else if (formatting == Formatting.NONE) {
+          // No formatting at all: inject in the whole string literal between quotes
+          registrar.addPlace(prefix, suffix, expr, nodeInfo.getContentRange().shiftRight(nodeOffsetInLiteral));
+          injected = true;
+          continue;
         }
         else {
-          registrar.addPlace(prefix, suffix, expr, range);
-          injected = true;
+          final String content = nodeInfo.getContent();
+          final List<FormatStringChunk> allChunks;
+          if (formatting == Formatting.NEW_STYLE) {
+            allChunks = parseNewStyleFormat(content);
+          }
+          else {
+            allChunks = parsePercentFormat(content);
+          }
+          subsChunkRanges = ContainerUtil.mapNotNull(allChunks, chunk -> {
+            return chunk instanceof SubstitutionChunk ? chunk.getTextRange().shiftRight(nodeOffsetInLiteral + contentStart) : null;
+          });
+        }
+        
+        if (!subsChunkRanges.isEmpty()) {
+          strict = false;
+        }
+
+        int literalChunkStart = nodeInfo.getContentRange().getStartOffset();
+        int literalChunkEnd;
+        final TextRange endSentinel = TextRange.from(contentEnd, 0);
+        for (final TextRange subsChunkRange : ContainerUtil.append(subsChunkRanges, endSentinel)) {
+          literalChunkEnd = subsChunkRange.getStartOffset();
+
+          if (literalChunkStart < literalChunkEnd) {
+            final String chunkPrefix;
+            final TextRange beforeChunkRange = TextRange.create(contentStart, literalChunkStart);
+            if (literalChunkStart == contentStart) {
+              chunkPrefix = prefix;
+            }
+            else if (subsChunkRanges.get(0).equals(beforeChunkRange)) {
+              chunkPrefix = PLACEHOLDER;
+            }
+            else {
+              chunkPrefix = "";
+            }
+
+            final String chunkSuffix;
+            if (subsChunkRange == endSentinel) {
+              chunkSuffix = suffix;
+            }
+            else {
+              chunkSuffix = PLACEHOLDER;
+            }
+            registrar.addPlace(chunkPrefix, chunkSuffix, expr, TextRange.create(literalChunkStart, literalChunkEnd));
+            injected = true;
+          }
+          literalChunkStart = subsChunkRange.getEndOffset();
         }
       }
       return new InjectionResult(injected, strict);
@@ -199,10 +236,10 @@ public class PyInjectionUtil {
         final boolean isRightString = right != null && isStringLiteralPart(right, null);
         InjectionResult result = InjectionResult.EMPTY;
         if (isLeftString) {
-          result = result.append(processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue, formatting));
+          result = result.append(processStringLiteral(left, registrar, prefix, isRightString ? "" : PLACEHOLDER, formatting));
         }
         if (isRightString) {
-          result = result.append(processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix, formatting));
+          result = result.append(processStringLiteral(right, registrar, isLeftString ? "" : PLACEHOLDER, suffix, formatting));
         }
         return result;
       }
