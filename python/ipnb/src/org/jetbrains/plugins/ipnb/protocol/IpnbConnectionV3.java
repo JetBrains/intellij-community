@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,8 +15,8 @@ public class IpnbConnectionV3 extends IpnbConnection {
   private WebSocketClient myChannelsClient;
   private Thread myChannelsThread;
 
-  public IpnbConnectionV3(@NotNull String uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
-    super(uri, listener);
+  public IpnbConnectionV3(@NotNull String uri, @NotNull IpnbConnectionListener listener, @Nullable final String token) throws IOException, URISyntaxException {
+    super(uri, listener, token);
   }
 
   @Override
