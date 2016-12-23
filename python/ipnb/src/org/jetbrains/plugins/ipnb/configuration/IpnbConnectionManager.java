@@ -211,7 +211,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                              @NotNull String parentMessageId) {
           if (!myUpdateMap.containsKey(parentMessageId)) return;
           final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
-          //noinspection unchecked
+          cell.getCell().setPromptNumber(connection.getExecCount());
           cell.updatePanel(null, connection.getOutput());
         }
 
