@@ -21,6 +21,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -35,7 +36,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
   fun resolveReferenceExpression(): Boolean {
-    val processNonCode = PsiTreeUtil.skipParentsOfType(place, GrReferenceExpression::class.java) !is GrAnnotationNameValuePair
+    val processNonCode = PsiTreeUtil.skipParentsOfType(
+      place, GrReferenceExpression::class.java, GrAnnotationArrayInitializer::class.java
+    ) !is GrAnnotationNameValuePair
     val initialState = initialState(processNonCode)
     val qualifier = place.qualifier
     if (qualifier == null) {

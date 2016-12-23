@@ -19,26 +19,32 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
 
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP
+import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil
 
 private val explicitVisibilityModifiers = PUBLIC_MASK or PRIVATE_MASK or PROTECTED_MASK
+private val packageScopeAnno = "groovy.transform.PackageScope"
+private val packageScopeTarget = "groovy.transform.PackageScopeTarget"
 
 fun Int.hasMaskModifier(@GrModifierConstant @NonNls name: String): Boolean {
   return and(NAME_TO_MODIFIER_FLAG_MAP[name]) != 0
@@ -66,11 +72,9 @@ private fun GrModifierList.doGetModifierFlags(): Int {
       doGetTypeDefinitionFlags(owner, this)
     }
     else {
-      val parent = PsiTreeUtil.getStubOrPsiParent(owner) as? GrTypeDefinitionBody
-      val containingClass = parent?.parent as? GrTypeDefinition
       when (owner) {
-        is GrMethod -> doGetMethodFlags(containingClass, this)
-        is GrVariableDeclaration -> doGetVariableModifierMask(containingClass, this)
+        is GrMethod -> doGetMethodFlags(owner, this)
+        is GrVariableDeclaration -> doGetVariableModifierMask(owner, this)
         else -> 0
       }
     }
@@ -94,47 +98,93 @@ private fun doGetTypeDefinitionFlags(clazz: GrTypeDefinition, modifierList: GrMo
     }
   }
 
-  val containingClass = clazz.containingClass
+  val containingClass = clazz.containingClass as? GrTypeDefinition
   if (GrTraitUtil.isInterface(containingClass)) {
     flags = flags or STATIC_MASK
   }
 
   if (!modifierList.hasExplicitVisibilityModifiers()) {
-    flags = flags or PUBLIC_MASK
+    flags = if (modifierList.hasPackageScope(clazz, "CLASS")) {
+      flags or PACKAGE_LOCAL_MASK
+    }
+    else {
+      flags or PUBLIC_MASK
+    }
   }
 
   return flags
 }
 
-private fun doGetMethodFlags(clazz: GrTypeDefinition?, modifierList: GrModifierList): Int {
+private fun doGetMethodFlags(method: GrMethod, modifierList: GrModifierList): Int {
   var flags = 0
 
-  if (clazz != null) {
-    if (clazz.isInterface) flags = flags or ABSTRACT_MASK // groovy interface or trait
-    if (GrTraitUtil.isInterface(clazz)) flags = flags or PUBLIC_MASK // groovy interface
+  val containingClass = method.containingClass as? GrTypeDefinition
+  if (containingClass != null) {
+    if (containingClass.isInterface) flags = flags or ABSTRACT_MASK // groovy interface or trait
+    if (GrTraitUtil.isInterface(containingClass)) flags = flags or PUBLIC_MASK // groovy interface
   }
 
   if (!modifierList.hasExplicitVisibilityModifiers()) {
-    flags = flags or PUBLIC_MASK
+    val targetName = if (method.isConstructor) "CONSTRUCTORS" else "METHODS"
+    flags = if (modifierList.hasPackageScope(containingClass, targetName)) {
+      flags or PACKAGE_LOCAL_MASK
+    }
+    else {
+      flags or PUBLIC_MASK
+    }
   }
 
   return flags
 }
 
-private fun doGetVariableModifierMask(clazz: GrTypeDefinition?, modifierList: GrModifierList): Int {
+private fun doGetVariableModifierMask(variableDeclaration: GrVariableDeclaration, modifierList: GrModifierList): Int {
   var flags = 0
 
-  if (clazz != null) {
-    if (GrTraitUtil.isInterface(clazz)) {
+  val containingClass = (variableDeclaration.parent as? GrTypeDefinitionBody)?.parent as? GrTypeDefinition
+
+  if (containingClass != null) {
+    if (GrTraitUtil.isInterface(containingClass)) {
       flags = flags or STATIC_MASK or FINAL_MASK or PUBLIC_MASK
     }
     else if (!modifierList.hasExplicitVisibilityModifiers()) {
-      flags = flags or PRIVATE_MASK
-      if (clazz.modifierList?.let { PsiImplUtil.hasImmutableAnnotation(it) } == true) {
+      flags = if (modifierList.hasPackageScope(containingClass, "FIELDS")) {
+        flags or PACKAGE_LOCAL_MASK
+      }
+      else {
+        flags or PRIVATE_MASK
+      }
+
+      if (containingClass.modifierList?.let { PsiImplUtil.hasImmutableAnnotation(it) } == true) {
         flags = flags or FINAL_MASK
       }
     }
   }
 
   return flags
+}
+
+private fun GrModifierList.hasPackageScope(clazz: GrTypeDefinition?, targetName: String): Boolean {
+  if (hasOwnEmptyPackageScopeAnnotation()) return true
+
+  val annotation = clazz?.modifierList?.findAnnotation(packageScopeAnno) as? GrAnnotation ?: return false
+  val value = annotation.findDeclaredDetachedValue(null) ?: return false // annotation without value
+
+  val scopeTargetEnum = JavaPsiFacade.getInstance(project).findClass(packageScopeTarget, resolveScope) ?: return false
+  val scopeTarget = scopeTargetEnum.findFieldByName(targetName, false) ?: return false
+
+  val resolved = when (value) {
+    is GrReferenceExpression -> value.resolve()?.let { listOf(it) } ?: emptyList()
+    is GrAnnotationArrayInitializer -> value.initializers.mapNotNull {
+      (it as? GrReferenceExpression)?.resolve()
+    }
+    else -> emptyList()
+  }
+
+  return scopeTarget in resolved
+}
+
+private fun GrModifierList.hasOwnEmptyPackageScopeAnnotation(): Boolean {
+  val annotation = findAnnotation(packageScopeAnno) ?: return false
+  val value = annotation.findDeclaredDetachedValue(null) ?: return true
+  return value is GrAnnotationArrayInitializer && value.initializers.isEmpty()
 }
