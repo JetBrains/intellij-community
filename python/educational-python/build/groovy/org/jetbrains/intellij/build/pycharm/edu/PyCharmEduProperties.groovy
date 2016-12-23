@@ -68,6 +68,9 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         context.ant.copy(file: "$context.paths.projectHome/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help",
                          failonerror: false, quiet: true)
       }
+
+      @Override
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/python" }
     }
   }
 
