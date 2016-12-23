@@ -51,10 +51,11 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
     }
   }
 
-  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null, onAppExit: Boolean = false): UpdateResult? {
+  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null, onAppExit: Boolean = false): Boolean {
     var exception: Throwable? = null
     var restartApplication = false
     var updateResult: UpdateResult? = null
+    var isReadOnlySourcesChanged = false
     runSyncTask(onAppExit, project) { indicator ->
       indicator.isIndeterminate = true
 
@@ -125,7 +126,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
           updateRepository()
         }
 
-        updateCloudSchemes(indicator)
+        isReadOnlySourcesChanged = updateCloudSchemes(indicator)
       }
       catch (e: ProcessCanceledException) {
         LOG.debug("Canceled")
@@ -155,27 +156,29 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
     else if (exception != null) {
       throw exception!!
     }
-    return updateResult
+    return updateResult != null || isReadOnlySourcesChanged
   }
+}
 
-  private fun updateCloudSchemes(indicator: ProgressIndicator) {
-    val changedRootDirs = icsManager.readOnlySourcesManager.update(indicator) ?: return
-    val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
-    icsManager.schemeManagerFactory.value.process {
-      val fileSpec = toRepositoryPath(it.fileSpec, it.roamingType)
-      if (changedRootDirs.contains(fileSpec)) {
-        schemeManagersToReload.add(it)
-      }
-    }
-
-    if (schemeManagersToReload.isNotEmpty()) {
-      invokeAndWaitIfNeed {
-        for (schemeManager in schemeManagersToReload) {
-          schemeManager.reload()
-        }
-      }
+private fun updateCloudSchemes(indicator: ProgressIndicator): Boolean {
+  val changedRootDirs = icsManager.readOnlySourcesManager.update(indicator) ?: return false
+  val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
+  icsManager.schemeManagerFactory.value.process {
+    val fileSpec = toRepositoryPath(it.fileSpec, it.roamingType)
+    if (changedRootDirs.contains(fileSpec)) {
+      schemeManagersToReload.add(it)
     }
   }
+
+  if (schemeManagersToReload.isNotEmpty()) {
+    invokeAndWaitIfNeed {
+      for (schemeManager in schemeManagersToReload) {
+        schemeManager.reload()
+      }
+    }
+  }
+
+  return schemeManagersToReload.isNotEmpty()
 }
 
 internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {

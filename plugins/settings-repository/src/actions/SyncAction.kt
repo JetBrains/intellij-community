@@ -40,7 +40,7 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
 
 fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boolean = true) {
   try {
-    if (icsManager.sync(syncType, project) == null && !notifyIfUpToDate) {
+    if (!icsManager.syncManager.sync(syncType, project) && !notifyIfUpToDate) {
       return
     }
     NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
