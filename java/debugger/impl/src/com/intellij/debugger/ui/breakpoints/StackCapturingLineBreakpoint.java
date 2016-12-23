@@ -15,12 +15,12 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,20 +28,38 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import java.util.*;
 
 /**
  * @author egor
  */
-public class StackCapturingLineBreakpoint extends RunToCursorBreakpoint {
+public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private final DebugProcessImpl myDebugProcess;
   public static final Key<Map<ObjectReference, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
 
-  public StackCapturingLineBreakpoint(Project project, DebugProcessImpl debugProcess, @NotNull SourcePosition pos) {
-    super(project, pos, false);
+  private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
+
+  public StackCapturingLineBreakpoint(Project project, DebugProcessImpl debugProcess, String className, String methodName) {
+    super(project, null);
     myDebugProcess = debugProcess;
+    myProperties.EMULATED = true;
+    myProperties.WATCH_EXIT = false;
+    myProperties.myClassPattern = className;
+    myProperties.myMethodName = methodName;
+  }
+
+  @NotNull
+  @Override
+  protected JavaMethodBreakpointProperties getProperties() {
+    return myProperties;
+  }
+
+  @Override
+  public String getSuspendPolicy() {
+    return DebuggerSettings.SUSPEND_THREAD;
   }
 
   @Override
@@ -54,17 +72,7 @@ public class StackCapturingLineBreakpoint extends RunToCursorBreakpoint {
           stacks = new LinkedHashMap<ObjectReference, List<StackFrameItem>>() {
             @Override
             protected boolean removeEldestEntry(Map.Entry eldest) {
-              if (size() > MAX_STORED_STACKS) {
-                // delete collected objects first
-                Optional<ObjectReference> toDelete = keySet().stream().filter(ObjectReference::isCollected).findFirst();
-                if (!toDelete.isPresent()) {
-                  return true;
-                }
-                else {
-                  remove(toDelete.get());
-                }
-              }
-              return false;
+              return size() > MAX_STORED_STACKS;
             }
           };
           myDebugProcess.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
