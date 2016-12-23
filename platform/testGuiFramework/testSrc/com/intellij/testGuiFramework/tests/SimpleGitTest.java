@@ -40,7 +40,7 @@ public class SimpleGitTest extends GuiTestCase {
   @Test
   public void testSimpleGit(){
     try {
-      IdeFrameFixture ideFrameFixture = importSimpleApplication();
+      IdeFrameFixture ideFrameFixture = importSimpleProject();
       ideFrameFixture.waitForBackgroundTasksToFinish();
 
       ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();

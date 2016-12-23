@@ -195,8 +195,8 @@ public abstract class GuiTestBase {
   }
 
   @NotNull
-  protected IdeFrameFixture importSimpleApplication() throws IOException {
-    return importProjectAndWaitForProjectSyncToFinish("SimpleApplication");
+  protected IdeFrameFixture importSimpleProject() throws IOException {
+    return importProjectAndWaitForProjectSyncToFinish("SimpleProject");
   }
 
   @NotNull

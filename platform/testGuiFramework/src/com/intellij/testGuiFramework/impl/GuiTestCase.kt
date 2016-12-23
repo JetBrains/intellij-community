@@ -16,11 +16,11 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.framework.GuiTestBase
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
-import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.net.HttpConfigurable
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.SmartWaitRobot
@@ -31,9 +31,7 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import java.awt.Component
 import java.awt.Container
-
 import java.lang.reflect.InvocationTargetException
-import javax.annotation.Nonnull
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
@@ -244,6 +242,10 @@ open class GuiTestCase : GuiTestBase() {
         }
       })
     }
+    if (myTree.javaClass.name == "com.intellij.openapi.options.newEditor.SettingsTreeView\$MyTree") {
+     //replace cellreader
+      return JTreeFixture(myRobot, myTree).replaceCellReader(SettingsTreeCellReader())
+    } else
     return JTreeFixture(myRobot, myTree)
   }
 

@@ -104,7 +104,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
     return new PaneFixture(projectView.getProjectViewPaneById(id));
   }
 
-  public static class PaneFixture {
+  public class PaneFixture {
     @NotNull private final AbstractProjectViewPane myPane;
 
     PaneFixture(@NotNull AbstractProjectViewPane pane) {
@@ -258,7 +258,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
   }
 
-  public static class NodeFixture {
+  public class NodeFixture {
     @NotNull private final ProjectViewNode<?> myNode;
     @NotNull private final AbstractTreeStructure myTreeStructure;
     @NotNull private final AbstractProjectViewPane myPane;
@@ -304,20 +304,20 @@ public class ProjectViewFixture extends ToolWindowFixture {
       return new Point(locationOnScreen.x + location.x, locationOnScreen.y + location.y);
     }
 
-    public void click(Robot robot) {
-      robot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 1);
+    public void click() {
+      myRobot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 1);
     }
 
-    public void doubleClick(Robot robot) {
-      robot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 2);
+    public void doubleClick() {
+      myRobot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 2);
     }
 
-    public void rightClick(Robot robot) {
-      invokeContextMenu(robot);
+    public void rightClick() {
+      invokeContextMenu();
     }
 
-    public void invokeContextMenu(Robot robot) {
-      robot.click(getLocationOnScreen(), MouseButton.RIGHT_BUTTON, 1);
+    public void invokeContextMenu() {
+      myRobot.click(getLocationOnScreen(), MouseButton.RIGHT_BUTTON, 1);
     }
 
     public boolean isJdk() {

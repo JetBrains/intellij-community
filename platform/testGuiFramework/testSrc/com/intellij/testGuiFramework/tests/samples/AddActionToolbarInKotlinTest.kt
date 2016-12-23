@@ -16,9 +16,7 @@
 package com.intellij.testGuiFramework.tests.samples
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import org.junit.Ignore
 import org.junit.Test
 
 
@@ -30,24 +28,27 @@ class AddActionToolbarInKotlinTestTest : GuiTestCase() {
   fun testAddActionToolbar() {
 
     //import project
-    with(importSimpleApplication()) {
+    with(importSimpleProject()) {
 
       waitForBackgroundTasksToFinish()
       if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) invokeMenuPath("View", "Toolbar")
       invokeAction("meta comma")
 
       with(dialog("Preferences")) {
-        SettingsTreeFixture.find(myRobot).select("Appearance & Behavior/Menus and Toolbars")
+        jTree("Appearance & Behavior/Menus and Toolbars").clickPath("Appearance & Behavior/Menus and Toolbars")
         jTree("Main Toolbar/Help").clickPath("Main Toolbar/Help")
         button("Add After...").click()
 
         with(dialog("Choose Actions To Add")) {
-          jTree("All Actions/Main menu/File/Print...").clickPath("All Actions/Main menu/File/Print...")
+          jTree().clickPath("All Actions/Main menu/File/Print...")
           button("OK").click()
         }
         button("OK").click()
       }
-      projectView.selectProjectPane().selectByPath(project.name, "src", "Main.java").click(myRobot)
+
+      with(projectView) {
+        selectProjectPane().selectByPath(project.name, "src", "Main.java").click()
+      }
       actionButton("Print").waitUntilEnabledAndShowing().click()
 
       with(dialog("Print")) {
