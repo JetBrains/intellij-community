@@ -102,6 +102,9 @@
       <separator/>
       <reference ref="Vcs.Log.GoToRef"/>
       <reference ref="Vcs.Log.FocusTextFilter"/>
+      <reference ref="Vcs.Log.QuickTextFilterSettings"/>
+      <reference ref="Vcs.Log.EnableFilterByRegexAction"/>
+      <reference ref="Vcs.Log.MatchCaseAction"/>
       <separator/>
       <reference ref="Vcs.Log.IntelliSortChooser"/>
       <reference ref="Vcs.Log.CollapseAll"/>
@@ -113,10 +116,6 @@
       <reference ref="Vcs.Log.ShowTagNames"/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
-      <separator/>
-      <reference ref="Vcs.Log.TextFilterSettings"/>
-      <reference ref="Vcs.Log.EnableFilterByRegexAction"/>
-      <reference ref="Vcs.Log.MatchCaseAction"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
