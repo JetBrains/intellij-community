@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,62 +18,40 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.Convertor;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class FindAllRootsHelper {
-  private FindAllRootsHelper() {
-  }
+  private FindAllRootsHelper() { }
 
   public static List<VirtualFile> findVersionedUnder(final List<VirtualFile> coll) {
     final List<FilePath> pathList = ObjectsConvertor.vf2fp(coll);
-    return impl(pathList.iterator());
-  }
+    final MyVisitor visitor = new MyVisitor();
 
-  public static FilePath[] findVersionedUnder(final FilePath[] roots) {
-    final List<VirtualFile> found = impl(Arrays.asList(roots).iterator());
-    return ObjectsConvertor.vf2fp(found).toArray(new FilePath[found.size()]);
-  }
-
-  private static List<VirtualFile> impl(final Iterator<FilePath> iterator) {
-    final MyProcessor processor = new MyProcessor();
-
-    for (; iterator.hasNext();) {
-      final FilePath root = iterator.next();
+    for (FilePath root : pathList) {
       final VirtualFile vf = root.getVirtualFile();
       if (vf == null) continue;
-      VfsUtil.processFilesRecursively(vf, processor, processor);
+      VfsUtilCore.visitChildrenRecursively(vf, visitor);
     }
-    return processor.getFound();
+
+    return visitor.found;
   }
 
-  private static class MyProcessor implements Processor<VirtualFile>, Convertor<VirtualFile, Boolean> {
-    private final List<VirtualFile> myFound;
+  private static class MyVisitor extends VirtualFileVisitor {
+    private final List<VirtualFile> found = new LinkedList<>();
 
-    private MyProcessor() {
-      myFound = new LinkedList<>();
-    }
-
-    public Boolean convert(VirtualFile o) {
-      return ! myFound.contains(o);
-    }
-
-    public boolean process(VirtualFile file) {
+    @NotNull
+    @Override
+    public Result visitFileEx(@NotNull VirtualFile file) {
       if (CvsUtil.fileIsUnderCvsMaybeWithVfs(file)) {
-        myFound.add(file);
+        found.add(file);
       }
-      return true;
-    }
-
-    public List<VirtualFile> getFound() {
-      return myFound;
+      return file.isDirectory() && found.contains(file) ? SKIP_CHILDREN : CONTINUE;
     }
   }
 }

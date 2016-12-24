@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -451,11 +450,14 @@ public class VfsUtil extends VfsUtilCore {
     return result;
   }
 
-  public static void processFileRecursivelyWithoutIgnored(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
-    final FileTypeManager ftm = FileTypeManager.getInstance();
-    processFilesRecursively(root, processor, new Convertor<VirtualFile, Boolean>() {
-      public Boolean convert(final VirtualFile vf) {
-        return ! ftm.isFileIgnored(vf);
+  public static void processFileRecursivelyWithoutIgnored(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
+    FileTypeManager ftm = FileTypeManager.getInstance();
+    visitChildrenRecursively(root, new VirtualFileVisitor() {
+      @NotNull
+      @Override
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        if (!processor.process(file)) return skipTo(root);
+        return file.isDirectory() && ftm.isFileIgnored(file) ? SKIP_CHILDREN : CONTINUE;
       }
     });
   }
