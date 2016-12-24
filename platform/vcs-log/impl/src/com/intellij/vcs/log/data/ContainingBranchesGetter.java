@@ -81,7 +81,7 @@ public class ContainingBranchesGetter {
       c.dispose();
     }
     // re-request containing branches information for the commit user (possibly) currently stays on
-    ApplicationManager.getApplication().invokeLater(() -> notifyListeners());
+    ApplicationManager.getApplication().invokeLater(this::notifyListeners);
   }
 
   /**
