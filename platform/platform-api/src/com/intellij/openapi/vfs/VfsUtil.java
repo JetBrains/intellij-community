@@ -87,26 +87,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * Copies content of resource to the given file
-   *
-   * @param file to copy to
-   * @param resourceUrl url of the resource to be copied
-   * @throws IOException if resource not found or copying failed
-   */
-  public static void copyFromResource(@NotNull VirtualFile file, @NonNls @NotNull String resourceUrl) throws IOException {
-    InputStream out = VfsUtil.class.getResourceAsStream(resourceUrl);
-    if (out == null) {
-      throw new FileNotFoundException(resourceUrl);
-    }
-    try {
-      byte[] bytes = FileUtil.adaptiveLoadBytes(out);
-      file.setBinaryContent(bytes);
-    } finally {
-      out.close();
-    }
-  }
-
-  /**
    * Makes a copy of the <code>file</code> in the <code>toDir</code> folder and returns it.
    * Handles both files and directories.
    *
@@ -253,11 +233,6 @@ public class VfsUtil extends VfsUtilCore {
         return copyFile(requestor, file, curDir, token);
       }
     }
-  }
-
-  @NotNull
-  public static String toIdeaUrl(@NotNull String url) {
-    return toIdeaUrl(url, true);
   }
 
   /**
@@ -476,7 +451,6 @@ public class VfsUtil extends VfsUtilCore {
     return result;
   }
 
-
   public static void processFileRecursivelyWithoutIgnored(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
     final FileTypeManager ftm = FileTypeManager.getInstance();
     processFilesRecursively(root, processor, new Convertor<VirtualFile, Boolean>() {
@@ -484,29 +458,6 @@ public class VfsUtil extends VfsUtilCore {
         return ! ftm.isFileIgnored(vf);
       }
     });
-  }
-
-  @Nullable
-  public static <T> T processInputStream(@NotNull final VirtualFile file, @NotNull Function<InputStream, T> function) {
-    InputStream stream = null;
-    try {
-      stream = file.getInputStream();
-      return function.fun(stream);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        if (stream != null) {
-          stream.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -542,7 +493,7 @@ public class VfsUtil extends VfsUtilCore {
         result.add(child);
       }
     }
-    return result != null ? result : ContainerUtil.<VirtualFile>emptyList();
+    return result != null ? result : ContainerUtil.emptyList();
   }
 
   /**
@@ -623,4 +574,49 @@ public class VfsUtil extends VfsUtilCore {
     }
     return file;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated to be removed in IDEA 2018 */
+  public static void copyFromResource(@NotNull VirtualFile file, @NonNls @NotNull String resourceUrl) throws IOException {
+    InputStream out = VfsUtil.class.getResourceAsStream(resourceUrl);
+    if (out == null) {
+      throw new FileNotFoundException(resourceUrl);
+    }
+    try {
+      byte[] bytes = FileUtil.adaptiveLoadBytes(out);
+      file.setBinaryContent(bytes);
+    } finally {
+      out.close();
+    }
+  }
+
+  /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  public static String toIdeaUrl(@NotNull String url) {
+    return toIdeaUrl(url, true);
+  }
+
+  /** @deprecated to be removed in IDEA 2018 */
+  public static <T> T processInputStream(@NotNull final VirtualFile file, @NotNull Function<InputStream, T> function) {
+    InputStream stream = null;
+    try {
+      stream = file.getInputStream();
+      return function.fun(stream);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    finally {
+      try {
+        if (stream != null) {
+          stream.close();
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    return null;
+  }
+  //</editor-fold>
 }
