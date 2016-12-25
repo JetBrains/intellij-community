@@ -15,10 +15,12 @@
  */
 package git4idea.commands;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,22 +28,22 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * The listener of {@link git4idea.commands.GitLineHandler} which watches Git output and detects some message in console,
+ * The listener of {@link GitLineHandler} which watches Git output and detects some message in console,
  * captures the following list of files and stops saving them when another message occurs.
  *
  * For example, the situation, when local changes would be overwritten by checkout.
  *
  * @see GitSimpleEventDetector
- * @author Kirill Likhodedov
  */
 public class GitMessageWithFilesDetector implements GitLineHandlerListener {
+  private static final Logger LOG = Logger.getInstance(GitMessageWithFilesDetector.class);
 
-  private final Event myEvent;
-  private final VirtualFile myRoot;
+  @NotNull private final Event myEvent;
+  @NotNull private final VirtualFile myRoot;
 
-  protected final Set<String> myAffectedFiles = new HashSet<>();
-  protected boolean myMessageDetected;
-  private boolean myFilesAreDisplayed;
+  @NotNull protected final Set<String> myAffectedFiles = new HashSet<>();
+  protected volatile boolean myMessageDetected;
+  @Nullable private volatile Key myMessageOutputType;
 
   public GitMessageWithFilesDetector(@NotNull Event event, @NotNull VirtualFile root) {
     myEvent = event;
@@ -51,14 +53,20 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   @Override
   public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
     if (line.contains(myEvent.getMessageStartMarker())) {
+      LOG.debug("|" + myEvent.name + "| message start marker detected in [" + line + "]" + "of type " + outputType);
       myMessageDetected = true;
-      myFilesAreDisplayed = true;
+      myMessageOutputType = outputType;
     }
     else if (line.contains(myEvent.getMessageEndMarker())) {
-      myFilesAreDisplayed = false;
+      LOG.debug("|" + myEvent.name + "| message end marker detected in [" + line + "]" + "of type " + outputType);
+      myMessageOutputType = null;
     }
-    else if (myFilesAreDisplayed) {
+    else if (outputType.equals(myMessageOutputType)) {
+      LOG.debug("|" + myEvent.name + "| Treating as a file: [" + line + "]" + "of type " + outputType);
       myAffectedFiles.add(line.trim());
+    }
+    else {
+      LOG.debug("|" + myEvent.name + "| Plain message: [" + line + "]" + "of type " + outputType);
     }
   }
 
@@ -98,21 +106,24 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   }
 
   public static class Event {
-    private final String myMessageStartMarker;
-    private final String myMessageEndMarker;
+    @NotNull private final String name;
+    @NotNull private final String myMessageStartMarker;
+    @NotNull private final String myMessageEndMarker;
 
-    Event(String messageStartMarker, String messageEndMarker) {
+    Event(@NotNull String eventName, @NotNull String messageStartMarker, @NotNull String messageEndMarker) {
+      name = eventName;
       myMessageStartMarker = messageStartMarker;
       myMessageEndMarker = messageEndMarker;
     }
 
+    @NotNull
     public String getMessageStartMarker() {
       return myMessageStartMarker;
     }
 
+    @NotNull
     public String getMessageEndMarker() {
       return myMessageEndMarker;
     }
   }
-
 }

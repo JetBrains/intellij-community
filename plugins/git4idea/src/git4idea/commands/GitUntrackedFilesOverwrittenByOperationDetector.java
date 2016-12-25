@@ -37,6 +37,7 @@ public class GitUntrackedFilesOverwrittenByOperationDetector extends GitMessageW
   );
 
   private static final Event NEW_UNTRACKED_FILES_OVERWRITTEN_BY = new Event(
+    "UntrackedFileDetector",
     "The following untracked working tree files would be overwritten by",
     "Please move or remove them before"
   );
