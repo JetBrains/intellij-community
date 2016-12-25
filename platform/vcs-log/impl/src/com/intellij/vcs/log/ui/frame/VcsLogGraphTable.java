@@ -110,7 +110,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.getRowHeight();
       }
     };
-    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this, ui.isCompactReferencesView(), ui.isShowTagNames());
+    myGraphCommitCellRenderer =
+      new GraphCommitCellRenderer(logData, graphCellPainter, this, ui.isCompactReferencesView(), ui.isShowTagNames());
     myStringCellRenderer = new StringCellRenderer();
 
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
@@ -153,7 +154,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     initColumnSize();
   }
 
-  boolean initColumnSize() {
+  void initColumnSize() {
     if (!myColumnsSizeInitialized && getModel().getRowCount() > 0) {
       myColumnsSizeInitialized = setColumnPreferredSize();
       if (myColumnsSizeInitialized) {
@@ -162,9 +163,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           getColumnModel().getColumn(column).setResizable(column != GraphTableModel.ROOT_COLUMN);
         }
       }
-      return myColumnsSizeInitialized;
     }
-    return false;
   }
 
   private boolean setColumnPreferredSize() {
