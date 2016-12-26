@@ -45,6 +45,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     presentation.setDescription(projectPath);
   }
 
+  public Boolean IsRemoved = false;
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -61,6 +62,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
       if (Messages.showDialog(project, "The path " + FileUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
                                        "If it is on a removable or network drive, please make sure that the drive is connected.",
                                        "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
+        IsRemoved = true;
         RecentProjectsManager.getInstance().removePath(myProjectPath);
       }
       return;
