@@ -50,7 +50,9 @@ public class ClipboardUtil {
     try {
       return supplier.get();
     } finally {
-      System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, originalValue);
+      if (originalValue != null) {
+        System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, originalValue);
+      }
     }
   }
 
