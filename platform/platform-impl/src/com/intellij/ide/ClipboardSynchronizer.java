@@ -194,7 +194,21 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     @Nullable
     public Transferable getContents() {
       Clipboard clipboard = getClipboard();
-      return clipboard == null ? null: clipboard.getContents(this);
+      if (clipboard == null) return null;
+
+      String propertyName = "java.util.Arrays.useLegacyMergeSort";
+      String originalValue = System.getProperty(propertyName);
+      if (originalValue == null || originalValue.isEmpty()) {
+        originalValue = "false";
+      }
+
+      System.setProperty(propertyName, "true");
+      try {
+        return clipboard.getContents(this);
+      }
+      finally {
+        System.setProperty(propertyName, originalValue);
+      }
     }
 
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
