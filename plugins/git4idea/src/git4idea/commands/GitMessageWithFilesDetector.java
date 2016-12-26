@@ -52,12 +52,12 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
 
   @Override
   public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
-    if (line.contains(myEvent.getMessageStartMarker())) {
+    if (line.contains(myEvent.messageStartMarker)) {
       LOG.debug("|" + myEvent.name + "| message start marker detected in [" + line + "]" + "of type " + outputType);
       myMessageDetected = true;
       myMessageOutputType = outputType;
     }
-    else if (line.contains(myEvent.getMessageEndMarker())) {
+    else if (line.contains(myEvent.messageEndMarker)) {
       LOG.debug("|" + myEvent.name + "| message end marker detected in [" + line + "]" + "of type " + outputType);
       myMessageOutputType = null;
     }
@@ -107,23 +107,13 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
 
   public static class Event {
     @NotNull private final String name;
-    @NotNull private final String myMessageStartMarker;
-    @NotNull private final String myMessageEndMarker;
+    @NotNull private final String messageStartMarker;
+    @NotNull private final String messageEndMarker;
 
     Event(@NotNull String eventName, @NotNull String messageStartMarker, @NotNull String messageEndMarker) {
       name = eventName;
-      myMessageStartMarker = messageStartMarker;
-      myMessageEndMarker = messageEndMarker;
-    }
-
-    @NotNull
-    public String getMessageStartMarker() {
-      return myMessageStartMarker;
-    }
-
-    @NotNull
-    public String getMessageEndMarker() {
-      return myMessageEndMarker;
+      this.messageStartMarker = messageStartMarker;
+      this.messageEndMarker = messageEndMarker;
     }
   }
 }
