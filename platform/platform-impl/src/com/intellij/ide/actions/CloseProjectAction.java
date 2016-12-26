@@ -27,6 +27,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 
 public class CloseProjectAction extends AnAction implements DumbAware {
+  public static String defaultActionText = "Close Pro_ject";
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
@@ -45,7 +47,7 @@ public class CloseProjectAction extends AnAction implements DumbAware {
       presentation.setText("Close Pro_jects in Current Window");
     }
     else {
-      presentation.setText("Close Pro_ject");
+      presentation.setText(defaultActionText);
     }
   }
 }
