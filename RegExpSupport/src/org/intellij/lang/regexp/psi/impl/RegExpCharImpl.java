@@ -64,7 +64,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     }
 
     @Nullable
-    static Character unescapeChar(String s) {
+    private static Character unescapeChar(String s) {
         final int length = s.length();
         assert length > 0;
 
@@ -99,22 +99,22 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                       if (length <= idx + 1) return null;
                       if (s.charAt(idx + 1) == '{') {
                         final char c = s.charAt(length - 1);
-                        return (c != '}') ? null : parseNumber(idx + 1, s, 16, length - 4, true);
+                        return (c != '}') ? null : parseNumber(s, idx + 2, 16);
                       }
                       if (length == 3) {
-                          return parseNumber(idx, s, 16, 1, true);
+                          return parseNumber(s, idx + 1, 16);
                       }
-                      return length == 4 ? parseNumber(idx, s, 16, 2, true) : null;
+                      return length == 4 ? parseNumber(s, idx + 1, 16) : null;
                     case 'u':
                         if (length <= idx + 1) return null;
-                        if (s.charAt(idx + 1) == '{') {
+                        if (length > idx + 1 && s.charAt(idx + 1) == '{') {
                             final char c = s.charAt(length - 1);
-                            return (c != '}') ? null : parseNumber(idx + 1, s, 16, length - 4, true);
+                            return (c != '}') ? null : parseNumber(s, idx + 2, 16);
                         }
                         if (length != 6) {
                             return ch;
                         }
-                        return parseNumber(idx, s, 16, 4, true);
+                        return parseNumber(s, idx + 1, 16);
                     case '0':
                     case '1':
                     case '2':
@@ -123,7 +123,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                     case '5':
                     case '6':
                     case '7':
-                        return parseNumber(idx - 1, s, 8, length - idx, false);
+                        return parseNumber(s, idx, 8);
                     default:
                         return ch;
                 }
@@ -133,29 +133,24 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         return null;
     }
 
-    static Character parseNumber(int idx, String s, int radix, int len, boolean strict) {
-        final int start = idx + 1;
-        final int end = start + len;
-        try {
-            int sum = 0;
-            int i;
-            for (i = start; i < end && i < s.length(); i++) {
-                sum *= radix;
-                sum += Integer.valueOf(s.substring(i, i + 1), radix);
-                if (sum > Character.MAX_CODE_POINT) {
-                    return null;
-                }
+    private static Character parseNumber(String s, int offset, int radix) {
+        int sum = 0;
+        int i = offset;
+        for (; i < s.length(); i++) {
+            final int digit = Character.digit(s.charAt(i), radix);
+            if (digit < 0) { // '}' encountered
+                break;
             }
-            if (i-start == 0) return null;
-            if (sum < Character.MIN_CODE_POINT || sum > Character.MAX_CODE_POINT) {
+            sum = sum * radix + digit;
+            if (sum > Character.MAX_CODE_POINT) {
                 return null;
             }
-            return i-start < len && strict ? null : (char)sum;
-        } catch (NumberFormatException e1) {
-            return null;
         }
+        if (i - offset <= 0) return null; // no digits found
+        return (char)sum;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpChar(this);
     }
