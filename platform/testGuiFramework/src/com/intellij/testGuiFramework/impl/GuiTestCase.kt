@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.ide.GeneralSettings
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.fixtures.*
+import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestBase
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
@@ -89,56 +90,55 @@ open class GuiTestCase : GuiTestBase() {
     val IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
   }
 
-  //*********FIXTURES METHODS WITHOUT ROBOT and TARGET; KOTLIN ONLY
-  fun <C : Container> ContainerFixture<C>.jList(containingItem: String? = null): JListFixture = jList(target(), containingItem)
+  //*********CONTEXT FUNCTIONS ON LAMBDA RECEIVERS
+  fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {func.invoke(welcomeFrame())}
+  fun ideaFrame(func: IdeFrameFixture.() -> Unit) { func.invoke(findIdeFrame())}
+  fun dialog(title: String? = null, func: JDialogFixture.() -> Unit) {func.invoke(dialog(title))}
+  fun simpleProject(func: IdeFrameFixture.() -> Unit) {func.invoke(importSimpleProject())}
+  fun projectWizard(func: NewProjectWizardFixture.() -> Unit) {func.invoke(findNewProjectWizard())}
 
+  fun IdeFrameFixture.projectView(func: ProjectViewFixture.() -> Unit) {func.invoke(this.projectView)}
+
+  //*********FIXTURES METHODS WITHOUT ROBOT and TARGET; KOTLIN ONLY
   fun <S, C : Component> ComponentFixture<S, C>.jList(containingItem: String? = null): JListFixture = if (target() is Container) jList(
     target() as Container, containingItem)
   else throw UnsupportedOperationException("Sorry, unable to find JList component with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.button(name: String): JButtonFixture = button(target(), name)
   fun <S, C : Component> ComponentFixture<S, C>.button(name: String): JButtonFixture = if (target() is Container) button(
     target() as Container, name)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JButton component named by \"${name}\" with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.combobox(labelText: String): JComboBoxFixture = combobox(target(), labelText)
   fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String): JComboBoxFixture = if (target() is Container) combobox(
     target() as Container, labelText)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JComboBox component near label by \"${labelText}\" with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.checkbox(labelText: String): CheckBoxFixture = checkbox(target(), labelText)
   fun <S, C : Component> ComponentFixture<S, C>.checkbox(labelText: String): CheckBoxFixture = if (target() is Container) checkbox(
     target() as Container, labelText)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JCheckBox component near label by \"${labelText}\" with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.actionLink(name: String): ActionLinkFixture = actionLink(target(), name)
   fun <S, C : Component> ComponentFixture<S, C>.actionLink(name: String): ActionLinkFixture = if (target() is Container) actionLink(
     target() as Container, name)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ActionLink component by name \"${name}\" with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.actionButton(actionName: String): ActionButtonFixture = actionButton(target(), actionName)
   fun <S, C : Component> ComponentFixture<S, C>.actionButton(actionName: String): ActionButtonFixture = if (target() is Container) actionButton(
     target() as Container, actionName)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ActionButton component by action name \"${actionName}\" with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.radioButton(textLabel: String): JRadioButtonFixture = radioButton(target(), textLabel)
   fun <S, C : Component> ComponentFixture<S, C>.radioButton(textLabel: String): JRadioButtonFixture = if (target() is Container) radioButton(
     target() as Container, textLabel)
   else throw UnsupportedOperationException(
     "Sorry, unable to find RadioButton component by label \"${textLabel}\" with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.textfield(textLabel: String): JTextComponentFixture = textfield(target(), textLabel)
   fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String): JTextComponentFixture = if (target() is Container) textfield(
     target() as Container, textLabel)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JTextComponent (JTextField) component by label \"${textLabel}\" with ${target().toString()} as a Container")
 
-  fun <C : Container> ContainerFixture<C>.jTree(path: String? = null): JTreeFixture = jTree(target(), path)
   fun <S, C : Component> ComponentFixture<S, C>.jTree(path: String? = null): JTreeFixture = if (target() is Container) jTree(
     target() as Container, path)
   else throw UnsupportedOperationException(
@@ -147,10 +147,10 @@ open class GuiTestCase : GuiTestBase() {
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
-
   fun invokeAction(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
 
-  fun ideFrame() = findIdeFrame()
+
+  fun ideFrame() = findIdeFrame()!!
   fun welcomeFrame() = findWelcomeFrame()
   fun dialog(title: String? = null): JDialogFixture {
     if (title == null) {
@@ -203,8 +203,8 @@ open class GuiTestCase : GuiTestBase() {
 
   private fun checkbox(container: Container, labelText: String): CheckBoxFixture {
     //wait until label has appeared
-    GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-      override fun isMatching(jLabel: JLabel): Boolean = (jLabel.text == labelText)
+    GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JCheckBox>(JCheckBox::class.java) {
+      override fun isMatching(checkBox: JCheckBox): Boolean = (checkBox.text == labelText)
     })
 
     return CheckBoxFixture.findByText(labelText, container, myRobot, false)

@@ -24,34 +24,32 @@ class AddActionToolbarInKotlinTestTest : GuiTestCase() {
 
   @Test
   @Throws(Exception::class)
-    //Mac only test
   fun testAddActionToolbar() {
 
-    //import project
-    with(importSimpleProject()) {
+    simpleProject {
 
       waitForBackgroundTasksToFinish()
       if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) invokeMenuPath("View", "Toolbar")
-      invokeAction("meta comma")
+      invokeAction(keyStroke = "meta comma")
 
-      with(dialog("Preferences")) {
-        jTree("Appearance & Behavior/Menus and Toolbars").clickPath("Appearance & Behavior/Menus and Toolbars")
-        jTree("Main Toolbar/Help").clickPath("Main Toolbar/Help")
+      dialog("Preferences") {
+        jTree("Appearance & Behavior").clickPath("Appearance & Behavior/Menus and Toolbars")
+        jTree("Main Toolbar").clickPath("Main Toolbar/Help")
         button("Add After...").click()
 
-        with(dialog("Choose Actions To Add")) {
+        dialog("Choose Actions To Add") {
           jTree().clickPath("All Actions/Main menu/File/Print...")
           button("OK").click()
         }
         button("OK").click()
       }
 
-      with(projectView) {
+      projectView {
         selectProjectPane().selectByPath(project.name, "src", "Main.java").click()
       }
       actionButton("Print").waitUntilEnabledAndShowing().click()
 
-      with(dialog("Print")) {
+      dialog("Print") {
         button("Cancel").click()
       }
     }

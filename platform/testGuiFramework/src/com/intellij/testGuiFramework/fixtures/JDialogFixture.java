@@ -26,17 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Collection;
 
-/**
- * @author Sergey Karashevich
- */
-public class JDialogFixture implements ContainerFixture<JDialog> {
+public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> implements ContainerFixture<JDialog> {
 
-  private JDialog myDialog;
-  private Robot myRobot;
 
   public JDialogFixture(@NotNull Robot robot, JDialog jDialog) {
-    myRobot = robot;
-    myDialog = jDialog;
+    super(JDialogFixture.class, robot, jDialog);
   }
 
   @NotNull
@@ -60,13 +54,5 @@ public class JDialogFixture implements ContainerFixture<JDialog> {
     return new JDialogFixture(robot, dialog);
   }
 
-  @Override
-  public JDialog target() {
-    return myDialog;
-  }
 
-  @Override
-  public Robot robot() {
-    return myRobot;
-  }
 }
