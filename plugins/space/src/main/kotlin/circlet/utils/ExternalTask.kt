@@ -3,6 +3,7 @@ package circlet.utils
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import klogging.*
+import runtime.*
 import runtime.lifetimes.*
 
 private val log = KLoggers.logger("plugin/ExternalTask.kt")
@@ -23,7 +24,7 @@ fun externalTask(project : Project, cancelable : Boolean, task : IExternalTask):
 
     val lock = Object()
     task.lifetime.add {
-        synchronized(lock) {
+        Sync.exec(lock) {
             lock.notify()
         }
     }
@@ -45,7 +46,7 @@ fun externalTask(project : Project, cancelable : Boolean, task : IExternalTask):
                         canceled = true
                     }
 
-                    synchronized(lock) {
+                    Sync.exec(lock) {
                         lock.wait(50)
                     }
                 }
