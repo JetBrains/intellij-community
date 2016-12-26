@@ -27,16 +27,30 @@ public class ClipboardUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
 
-  public static <E> E handleClipboardSafely(Supplier<E> supplier, Supplier<E> onFail) {
+  public static <E> E handleClipboardSafely(final Supplier<E> supplier, final Supplier<E> onFail) {
+      try {
+        return useLegacyMergeSort(supplier);
+      }
+      catch (IllegalStateException e) {
+        if (SystemInfo.isWindows) {
+          LOG.debug("Clipboard is busy");
+        }
+        else {
+          LOG.warn(e);
+        }
+        return onFail.get();
+      }
+  }
+
+  private static final String USE_LEGACY_MERGE_SORT_PROPERTY_NAME = "java.util.Arrays.useLegacyMergeSort";
+
+  public static <T> T useLegacyMergeSort(Supplier<T> supplier) {
+    String originalValue = System.getProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME);
+    System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, "true");
     try {
       return supplier.get();
-    }catch (IllegalStateException e) {
-      if (SystemInfo.isWindows) {
-        LOG.debug("Clipboard is busy");
-      } else {
-        LOG.warn(e);
-      }
-      return onFail.get();
+    } finally {
+      System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, originalValue);
     }
   }
 
