@@ -165,16 +165,15 @@ public class GroovyStaticImportMethodFix extends Intention {
   private void doImport(final PsiMethod toImport) {
     CommandProcessor.getInstance().executeCommand(toImport.getProject(), () -> WriteAction.run(() -> {
       try {
-        GrMethodCall element = myMethodCall.getElement();
-        if (element != null) {
-          getMethodExpression(element).bindToElementViaStaticImport(toImport);
+        GrReferenceExpression expression = getMethodExpression();
+        if (expression != null) {
+          expression.bindToElementViaStaticImport(toImport);
         }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
     }), getText(), this);
-
   }
 
   private void chooseAndImport(Editor editor) {
