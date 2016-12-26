@@ -244,8 +244,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project loadProject(@NotNull String filePath) throws IOException {
+    return loadProject(filePath, null);
+  }
+
+  @Override
+  @Nullable
+  public Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException {
     try {
-      ProjectImpl project = createProject(null, new File(filePath).getAbsolutePath(), false);
+      ProjectImpl project = createProject(projectName, new File(filePath).getAbsolutePath(), false);
       initProject(project, null);
       return project;
     }

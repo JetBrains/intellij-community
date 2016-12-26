@@ -40,6 +40,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;
 
+  @Nullable
+  public abstract Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException;
+
   public abstract boolean openProject(@NotNull Project project);
 
   public abstract boolean isProjectOpened(Project project);
