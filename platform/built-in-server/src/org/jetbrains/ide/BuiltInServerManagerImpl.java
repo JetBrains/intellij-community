@@ -64,9 +64,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       try {
         serverStartFuture.get();
       }
-      catch (InterruptedException ignored) {
-      }
-      catch (ExecutionException ignored) {
+      catch (InterruptedException | ExecutionException ignored) {
       }
     }
     return this;

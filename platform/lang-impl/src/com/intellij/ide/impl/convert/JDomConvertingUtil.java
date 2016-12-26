@@ -46,10 +46,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
     try {
       return JDOMUtil.loadDocument(file);
     }
-    catch (JDOMException e) {
-      throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       throw new CannotConvertException(file.getAbsolutePath() + ": " + e.getMessage(), e);
     }
   }

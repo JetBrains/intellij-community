@@ -96,10 +96,7 @@ public class ConfigureGroovyLibraryNotificationProvider extends EditorNotificati
         }
       }
     }
-    catch (ProcessCanceledException ignored) {
-
-    }
-    catch (IndexNotReadyException ignored) {
+    catch (ProcessCanceledException | IndexNotReadyException ignored) {
 
     }
 

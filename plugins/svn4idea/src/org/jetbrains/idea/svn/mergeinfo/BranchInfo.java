@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,11 +163,7 @@ public class BranchInfo {
         try {
           mergeCheckResult = checkPathGoingUp(list.getNumber(), -1, branchPath, localPathInBranch, path, true);
         }
-        catch (VcsException e) {
-          LOG.info(e);
-          mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-        }
-        catch (SVNException e) {
+        catch (VcsException | SVNException e) {
           LOG.info(e);
           mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
         }

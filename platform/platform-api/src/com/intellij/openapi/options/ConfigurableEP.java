@@ -252,14 +252,8 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
           }
           throw new RuntimeException("configurable class name is not set");
         }
-        catch (AssertionError error) {
+        catch (AssertionError | Exception | LinkageError error) {
           LOG.error(error);
-        }
-        catch (LinkageError error) {
-          LOG.error(error);
-        }
-        catch (Exception exception) {
-          LOG.error(exception);
         }
         return new ObjectProducer();
       }

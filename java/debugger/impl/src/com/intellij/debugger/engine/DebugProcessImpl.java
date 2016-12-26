@@ -494,10 +494,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             try {
               connector.stopListening(myArguments);
             }
-            catch (IllegalArgumentException ignored) {
-              // ignored
-            }
-            catch (IllegalConnectorArgumentsException ignored) {
+            catch (IllegalArgumentException | IllegalConnectorArgumentsException ignored) {
               // ignored
             }
           }
@@ -983,22 +980,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         return invokeMethodAndFork(suspendContext);
       }
-      catch (InvocationException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (IncompatibleThreadStateException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InvalidTypeException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (ObjectCollectedException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (UnsupportedOperationException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InternalException e) {
+      catch (InvocationException | InternalException | UnsupportedOperationException | ObjectCollectedException |
+        InvalidTypeException | IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
@@ -1330,16 +1313,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       return result;
     }
-    catch (InvocationException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
-    catch (ClassNotLoadedException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
-    catch (IncompatibleThreadStateException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
-    catch (InvalidTypeException e) {
+    catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
   }

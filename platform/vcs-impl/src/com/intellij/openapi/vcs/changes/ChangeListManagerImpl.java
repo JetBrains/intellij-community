@@ -438,10 +438,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    catch (AssertionError ex) {
+    catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
     for (VirtualFile file : refreshFiles) {
@@ -539,16 +536,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       myChangesViewManager.scheduleRefresh();
     }
-    catch (DisposedException e) {
+    catch (DisposedException | ProcessCanceledException e) {
       // OK, we're finishing all the stuff now.
     }
-    catch (ProcessCanceledException e) {
-      // OK, we're finishing all the stuff now.
-    }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    catch (AssertionError ex) {
+    catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
     finally {
@@ -1577,10 +1568,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         future.get(10, TimeUnit.MILLISECONDS);
         break;
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException e) {
         LOG.error(e);
       }
       catch (TimeoutException ignore) {

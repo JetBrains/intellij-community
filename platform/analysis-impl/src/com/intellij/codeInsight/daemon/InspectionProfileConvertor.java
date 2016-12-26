@@ -110,10 +110,7 @@ public class InspectionProfileConvertor {
         FileUtil.delete(files[0]);
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       LOG.error(e);
     }
   }

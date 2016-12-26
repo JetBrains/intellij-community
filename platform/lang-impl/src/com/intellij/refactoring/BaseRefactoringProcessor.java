@@ -541,10 +541,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       try {
         GuiUtils.runOrInvokeAndWait(myPrepareSuccessfulSwingThreadCallback);
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
+      catch (InterruptedException | InvocationTargetException e) {
         LOG.error(e);
       }
     }

@@ -416,8 +416,7 @@ public class JdkUtil {
         Charset charset = Charset.forName(encoding);
         commandLine.withCharset(charset);
       }
-      catch (UnsupportedCharsetException ignore) { }
-      catch (IllegalCharsetNameException ignore) { }
+      catch (UnsupportedCharsetException | IllegalCharsetNameException ignore) { }
     }
   }
 

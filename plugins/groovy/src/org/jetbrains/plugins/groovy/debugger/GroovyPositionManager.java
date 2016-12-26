@@ -279,10 +279,7 @@ public class GroovyPositionManager implements PositionManager {
       PsiClass clazz = classes.get(0);
       if (clazz != null) return clazz.getContainingFile();
     }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-    catch (IndexNotReadyException e) {
+    catch (ProcessCanceledException | IndexNotReadyException e) {
       return null;
     }
 

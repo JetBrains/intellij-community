@@ -153,10 +153,7 @@ public class LookupCellRenderer implements ListCellRenderer {
           presentation.setItemTextForeground(JBColor.RED);
           presentation.setItemText("Error occurred, see the log in Help | Show Log");
         }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        catch (Error e) {
+        catch (Exception | Error e) {
           LOG.error(e);
         }
       } else {

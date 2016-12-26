@@ -121,10 +121,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
             }
           }
         }
-        catch (ProcessCanceledException ex) {
-          // index corruption detected, ignore
-        }
-        catch (IndexNotReadyException ex) {
+        catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
         catch (Exception ex) {

@@ -785,8 +785,7 @@ public class JavaDocInfoGenerator {
         htmlText = subTag.getValue();
       }
     }
-    catch (JDOMException ignore) {}
-    catch (IOException ignore) {}
+    catch (JDOMException | IOException ignore) {}
 
     htmlText = StringUtil.replace(htmlText, "*/", "&#42;&#47;");
 

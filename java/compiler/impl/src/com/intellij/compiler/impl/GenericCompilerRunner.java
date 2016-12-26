@@ -76,10 +76,7 @@ public class GenericCompilerRunner {
       myContext.requestRebuildNextTime(e.getMessage());
       throw new ExitException(ExitStatus.ERRORS);
     }
-    catch (ExitException e) {
-      throw e;
-    }
-    catch (ProcessCanceledException e) {
+    catch (ExitException | ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {

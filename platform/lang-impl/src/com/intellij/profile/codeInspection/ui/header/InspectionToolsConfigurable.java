@@ -412,13 +412,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               addProfile(model);
               selectProfile(model);
             }
-            catch (JDOMException e) {
-              LOG.error(e);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-            catch (InvalidDataException e) {
+            catch (JDOMException | InvalidDataException | IOException e) {
               LOG.error(e);
             }
           }

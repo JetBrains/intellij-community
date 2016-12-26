@@ -299,9 +299,7 @@ public class ITNProxy {
           }
         }
       }
-      catch (SSLPeerUnverifiedException ignored) { }
-      catch (NoSuchAlgorithmException ignored) { }
-      catch (CertificateEncodingException ignored) { }
+      catch (SSLPeerUnverifiedException | CertificateEncodingException | NoSuchAlgorithmException ignored) { }
 
       return false;
     }

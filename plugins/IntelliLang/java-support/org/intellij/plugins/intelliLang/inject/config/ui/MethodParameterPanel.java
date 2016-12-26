@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -33,7 +32,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -55,7 +53,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 
 public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
 
@@ -160,10 +161,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     try {
       return ((PsiTypeCodeFragment)psiFile).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e1) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e1) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e1) {
       return null;
     }
   }

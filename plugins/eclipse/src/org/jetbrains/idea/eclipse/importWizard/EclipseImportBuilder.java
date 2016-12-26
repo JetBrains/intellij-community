@@ -195,10 +195,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           collectUnknownNatures(path, naturesNames, separator);
         }
       }
-      catch (IOException e) {
-        refEx.set(e);
-      }
-      catch (JDOMException e) {
+      catch (IOException | JDOMException e) {
         refEx.set(e);
       }
     }, EclipseBundle.message("eclipse.import.converting"), false, currentProject);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,11 +135,7 @@ public class ConvertProjectDialog extends DialogWrapper {
       myConverted = true;
       super.doOKAction();
     }
-    catch (CannotConvertException e) {
-      LOG.info(e);
-      showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
-    }
-    catch (IOException e) {
+    catch (CannotConvertException | IOException e) {
       LOG.info(e);
       showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
     }

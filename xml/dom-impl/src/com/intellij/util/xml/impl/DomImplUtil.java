@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -132,10 +131,7 @@ public class DomImplUtil {
       try {
         return (DomNameStrategy)aClass.newInstance();
       }
-      catch (InstantiationException e) {
-        LOG.error(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (InstantiationException | IllegalAccessException e) {
         LOG.error(e);
       }
     }

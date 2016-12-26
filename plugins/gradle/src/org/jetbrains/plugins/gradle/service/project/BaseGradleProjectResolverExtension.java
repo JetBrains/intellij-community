@@ -791,10 +791,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           LOG.debug(String.format("delegate m: %s", m));
         }
       }
-      catch (NoSuchFieldException e) {
-        LOG.debug(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (NoSuchFieldException | IllegalAccessException e) {
         LOG.debug(e);
       }
     }

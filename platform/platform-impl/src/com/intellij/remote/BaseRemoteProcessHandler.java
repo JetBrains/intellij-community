@@ -23,7 +23,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -221,9 +220,6 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
         }
       }
       catch (InterruptedException ignore) {
-      }
-      catch (IOException e) {
-        LOG.warn(e);
       }
       catch (Exception e) {
         LOG.warn(e);

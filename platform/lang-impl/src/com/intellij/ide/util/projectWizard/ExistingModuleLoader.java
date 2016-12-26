@@ -109,11 +109,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
           }
         }
       }
-      catch (JDOMException e) {
-        Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
-        return false;
-      }
-      catch (IOException e) {
+      catch (JDOMException | IOException e) {
         Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
         return false;
       }

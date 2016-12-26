@@ -100,10 +100,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
         try {
           return paramTypeCodeFragment.getType() instanceof PsiEllipsisType;
         }
-        catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-          return false;
-        }
-        catch (PsiTypeCodeFragment.NoTypeException e) {
+        catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
           return false;
         }
       }
@@ -135,10 +132,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     try {
       return ((PsiTypeCodeFragment)((JavaParameterTableModel)table.getModel()).getItems().get(row).typeCodeFragment).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
       return null;
     }
   }

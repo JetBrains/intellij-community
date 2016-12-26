@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -42,8 +44,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
@@ -216,9 +220,7 @@ public class SearchResults implements DocumentListener {
           starts = startsRef.get();
           ends = endsRef.get();
         }
-        catch (InterruptedException ignore) {
-        }
-        catch (ExecutionException ignore) {
+        catch (InterruptedException | ExecutionException ignore) {
         }
 
         if (starts.length == 0 || findModel.isGlobal()) {
@@ -266,9 +268,7 @@ public class SearchResults implements DocumentListener {
           ends.set(selection.getBlockSelectionEnds());
         });
       }
-      catch (InterruptedException ignore) {
-      }
-      catch (InvocationTargetException ignore) {
+      catch (InterruptedException | InvocationTargetException ignore) {
       }
     }
   }
@@ -287,9 +287,7 @@ public class SearchResults implements DocumentListener {
       try {
         CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
-      } catch(PatternSyntaxException e) {
-        result = null;
-      } catch (ProcessCanceledException e) {
+      } catch(PatternSyntaxException | ProcessCanceledException e) {
         result = null;
       }
       if (result == null || !result.isStringFound()) break;

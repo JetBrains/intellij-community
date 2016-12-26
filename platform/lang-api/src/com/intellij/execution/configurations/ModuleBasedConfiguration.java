@@ -101,11 +101,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       configuration.readExternal(element);
       return (ModuleBasedConfiguration)configuration;
     }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-      return null;
-    }
-    catch (WriteExternalException e) {
+    catch (InvalidDataException | WriteExternalException e) {
       LOG.error(e);
       return null;
     }

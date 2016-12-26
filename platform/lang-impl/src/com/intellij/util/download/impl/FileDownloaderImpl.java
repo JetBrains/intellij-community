@@ -227,11 +227,7 @@ public class FileDownloaderImpl implements FileDownloader {
       localFiles.addAll(existingFiles);
       return localFiles;
     }
-    catch (ProcessCanceledException e) {
-      deleteFiles(downloadedFiles);
-      throw e;
-    }
-    catch (IOException e) {
+    catch (ProcessCanceledException | IOException e) {
       deleteFiles(downloadedFiles);
       throw e;
     }

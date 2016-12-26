@@ -83,11 +83,7 @@ public class MethodReturnValueWatcher  {
           myLastMethodReturnValue = retVal;
         }
       }
-      catch (NoSuchMethodException ignored) {
-      }
-      catch (IllegalAccessException ignored) {
-      }
-      catch (InvocationTargetException ignored) {
+      catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
       }
     }
     catch (UnsupportedOperationException ex) {

@@ -192,12 +192,7 @@ public class ProjectUtil {
       Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
                                  IdeBundle.message("title.cannot.load.project"), Messages.getErrorIcon());
     }
-    catch (JDOMException e) {
-      LOG.info(e);
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"),
-                                 Messages.getErrorIcon());
-    }
-    catch (InvalidDataException e) {
+    catch (JDOMException | InvalidDataException e) {
       LOG.info(e);
       Messages.showMessageDialog(IdeBundle.message("error.project.file.is.corrupted"), IdeBundle.message("title.cannot.load.project"),
                                  Messages.getErrorIcon());

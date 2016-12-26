@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,13 +156,7 @@ public class SheetMessage {
       Method setOpacityMethod = myWindow.getClass().getMethod("setOpacity", Float.TYPE);
       setOpacityMethod.invoke(myWindow, opacity);
     }
-    catch (NoSuchMethodException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       LOG.error(e);
     }
   }

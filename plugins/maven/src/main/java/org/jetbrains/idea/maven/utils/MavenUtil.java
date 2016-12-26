@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -424,10 +424,7 @@ public class MavenUtil {
         try {
           task.run(new MavenProgressIndicator(i));
         }
-        catch (MavenProcessCanceledException e) {
-          canceledEx[0] = e;
-        }
-        catch (ProcessCanceledException e) {
+        catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
         }
         catch (RuntimeException e) {
@@ -457,10 +454,7 @@ public class MavenUtil {
       try {
         task.run(indicator);
       }
-      catch (MavenProcessCanceledException ignore) {
-        indicator.cancel();
-      }
-      catch (ProcessCanceledException ignore) {
+      catch (MavenProcessCanceledException | ProcessCanceledException ignore) {
         indicator.cancel();
       }
     };
@@ -479,10 +473,7 @@ public class MavenUtil {
           try {
             future.get();
           }
-          catch (InterruptedException e) {
-            MavenLog.LOG.error(e);
-          }
-          catch (ExecutionException e) {
+          catch (InterruptedException | ExecutionException e) {
             MavenLog.LOG.error(e);
           }
         }

@@ -255,13 +255,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           catch (InternalException e) {
             LOG.debug(e);
           }
-          catch (InterruptedException e) {
-            throw e;
-          }
-          catch (VMDisconnectedException e) {
-            throw e;
-          }
-          catch (ProcessCanceledException e) {
+          catch (InterruptedException | ProcessCanceledException | VMDisconnectedException e) {
             throw e;
           }
           catch (Throwable e) {
@@ -269,10 +263,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
       }
-      catch (InterruptedException e) {
-        invokeVMDeathEvent();
-      }
-      catch (VMDisconnectedException e) {
+      catch (InterruptedException | VMDisconnectedException e) {
         invokeVMDeathEvent();
       }
       finally {

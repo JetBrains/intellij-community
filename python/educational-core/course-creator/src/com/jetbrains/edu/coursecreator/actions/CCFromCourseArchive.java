@@ -103,13 +103,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
       }
       course.initCourse(true);
     }
-    catch (FileNotFoundException e) {
-      LOG.error(e.getMessage());
-    }
-    catch (IOException e) {
-      LOG.error(e.getMessage());
-    }
-    catch (JsonSyntaxException e) {
+    catch (JsonSyntaxException | IOException e) {
       LOG.error(e.getMessage());
     }
     finally {

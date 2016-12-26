@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,15 +128,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     catch (SvnExceptionWrapper e) {
       LOG.info("info output " + result);
       throw new SvnBindException(e.getCause());
-    } catch (IOException e) {
-      LOG.info("info output " + result);
-      throw new SvnBindException(e);
-    }
-    catch (ParserConfigurationException e) {
-      LOG.info("info output " + result);
-      throw new SvnBindException(e);
-    }
-    catch (SAXException e) {
+    } catch (IOException | SAXException | ParserConfigurationException e) {
       LOG.info("info output " + result);
       throw new SvnBindException(e);
     }

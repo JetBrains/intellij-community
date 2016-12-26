@@ -546,10 +546,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       }
       catch (NoSuchMethodException ignored) {
       }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
+      catch (IllegalAccessException | InvocationTargetException e) {
         LOG.error(e);
       }
       return false;
@@ -591,11 +588,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
           final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
           return rv.booleanValue();
         }
-        catch (NoSuchMethodException ignored) {
-        }
-        catch (IllegalAccessException ignored) {
-        }
-        catch (InvocationTargetException ignored) {
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
         }
       }
       return false;

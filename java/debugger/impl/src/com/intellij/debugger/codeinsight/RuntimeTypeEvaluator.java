@@ -54,9 +54,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
     try {
       type = evaluate();
     }
-    catch (ProcessCanceledException ignored) {
-    }
-    catch (EvaluateException ignored) {
+    catch (ProcessCanceledException | EvaluateException ignored) {
     }
     finally {
       typeCalculationFinished(type);

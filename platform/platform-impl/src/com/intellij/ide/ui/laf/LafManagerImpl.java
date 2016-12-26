@@ -434,10 +434,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         }
         return null;
       }
-      catch (InvocationTargetException e1) {
-        return null;
-      }
-      catch (IllegalAccessException e1) {
+      catch (InvocationTargetException | IllegalAccessException e1) {
         return null;
       }
     }

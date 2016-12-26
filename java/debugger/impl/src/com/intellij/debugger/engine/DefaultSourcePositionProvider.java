@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,9 +124,7 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
               aClass = JVMNameUtil.getClassAt(position);
             }
           }
-          catch (AbsentInformationException ignored) {
-          }
-          catch (ClassNotPreparedException ignored) {
+          catch (AbsentInformationException | ClassNotPreparedException ignored) {
           }
         }
       }

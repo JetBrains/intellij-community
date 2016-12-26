@@ -500,10 +500,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
             ((JDOMExternalizable)templateSettings).writeExternal(temp);
             ((JDOMExternalizable)data).readExternal(temp);
           }
-          catch (WriteExternalException e) {
-            LOG.error(e);
-          }
-          catch (InvalidDataException e) {
+          catch (WriteExternalException | InvalidDataException e) {
             LOG.error(e);
           }
         }

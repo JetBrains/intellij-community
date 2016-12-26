@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -36,7 +35,6 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.text.MessageFormat;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
 
@@ -203,9 +201,6 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
         outputStream.close();
       }
 
-    }
-    catch (UnsupportedEncodingException e) {
-      LOG.error(e);
     }
     catch (IOException e) {
       LOG.error(e);

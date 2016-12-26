@@ -291,10 +291,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
           clearCaches();
         }
       }
-      catch (InvalidStackFrameException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (AbsentInformationException e) {
+      catch (InvalidStackFrameException | AbsentInformationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
     }

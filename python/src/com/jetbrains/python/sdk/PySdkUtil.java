@@ -140,10 +140,7 @@ public class PySdkUtil {
       }
       return processHandler.runProcess(timeout);
     }
-    catch (ExecutionException e) {
-      return getOutputForException(e);
-    }
-    catch (IOException e) {
+    catch (ExecutionException | IOException e) {
       return getOutputForException(e);
     }
   }

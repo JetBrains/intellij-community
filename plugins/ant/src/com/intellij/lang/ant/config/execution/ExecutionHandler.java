@@ -76,10 +76,7 @@ public final class ExecutionHandler {
       try {
         return result.get();
       }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-      }
-      catch (java.util.concurrent.ExecutionException e) {
+      catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         LOG.warn(e);
       }
     }

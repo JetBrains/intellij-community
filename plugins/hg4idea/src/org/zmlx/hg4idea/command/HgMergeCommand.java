@@ -81,10 +81,7 @@ public class HgMergeCommand {
     try {
       HgUtil.markDirectoryDirty(project, repo.getRoot());
     }
-    catch (InvocationTargetException e) {
-      throwException(e);
-    }
-    catch (InterruptedException e) {
+    catch (InvocationTargetException | InterruptedException e) {
       throwException(e);
     }
 

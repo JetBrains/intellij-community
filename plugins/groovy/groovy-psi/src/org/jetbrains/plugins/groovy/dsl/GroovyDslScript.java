@@ -102,10 +102,7 @@ public class GroovyDslScript {
       }
       handleDslError(e);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (OutOfMemoryError e) {
+    catch (ProcessCanceledException | OutOfMemoryError e) {
       throw e;
     }
     catch (Throwable e) { // To handle exceptions in definition script

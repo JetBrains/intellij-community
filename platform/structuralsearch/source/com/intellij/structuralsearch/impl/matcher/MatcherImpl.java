@@ -202,8 +202,7 @@ public class MatcherImpl {
           matchContext.setPattern(compiledPattern);
           out.put(configuration, matchContext);
         }
-        catch (UnsupportedPatternException ignored) {}
-        catch (MalformedPatternException ignored) {}
+        catch (UnsupportedPatternException | MalformedPatternException ignored) {}
       });
     }
   }
@@ -455,12 +454,7 @@ public class MatcherImpl {
         try {
           task.run();
         }
-        catch (ProcessCanceledException e) {
-          ended = true;
-          clearSchedule();
-          throw e;
-        }
-        catch (StructuralSearchException e) {
+        catch (ProcessCanceledException | StructuralSearchException e) {
           ended = true;
           clearSchedule();
           throw e;

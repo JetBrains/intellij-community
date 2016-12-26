@@ -379,11 +379,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       // start svnkit authentication cycle
       SvnVcs.getInstance(project).getSvnKitManager().createWCClient(manager).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
       //SvnVcs.getInstance(project).getInfo(url, SVNRevision.HEAD, manager);
-    } catch (SVNAuthenticationException e) {
+    } catch (SVNAuthenticationException | SVNCancelException e) {
       log(e);
-      return false;
-    } catch (SVNCancelException e) {
-      log(e); // auth canceled
       return false;
     } catch (final SVNException e) {
       if (e.getErrorMessage().getErrorCode().isAuthentication()) {

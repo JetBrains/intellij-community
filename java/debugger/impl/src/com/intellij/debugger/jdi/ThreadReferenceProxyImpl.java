@@ -146,10 +146,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       return getThreadReference().status();
     }
-    catch (IllegalThreadStateException e) {
-      return ThreadReference.THREAD_STATUS_ZOMBIE;
-    }
-    catch (ObjectCollectedException ignored) {
+    catch (IllegalThreadStateException | ObjectCollectedException e) {
       return ThreadReference.THREAD_STATUS_ZOMBIE;
     }
   }
@@ -236,10 +233,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       try {
         frames = threadRef.frames(0, frameCount - myFramesFromBottom.size());
       }
-      catch (IncompatibleThreadStateException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InternalException e) {
+      catch (IncompatibleThreadStateException | InternalException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
 
@@ -271,10 +265,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       }
       return myFramesFromBottom.get(frameCount - i  - 1);
     }
-    catch (ObjectCollectedException ignored) {
-      return null;
-    }
-    catch (IllegalThreadStateException ignored) {
+    catch (ObjectCollectedException | IllegalThreadStateException ignored) {
       return null;
     }
   }
@@ -284,9 +275,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       getThreadReference().popFrames(stackFrame.getStackFrame());
     }
-    catch (InvalidStackFrameException ignored) {
-    }
-    catch (ObjectCollectedException ignored) {
+    catch (InvalidStackFrameException | ObjectCollectedException ignored) {
     }
     catch (InternalException e) {
       if (e.errorCode() == 32) {

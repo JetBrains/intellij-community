@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,10 +239,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         try {
           textFilePatches = ShelveChangesManager.loadPatches(myProject, shelvedChange.getPatchPath(), commitContext);
         }
-        catch (IOException e) {
-          throw new VcsException(e);
-        }
-        catch (PatchSyntaxException e) {
+        catch (IOException | PatchSyntaxException e) {
           throw new VcsException(e);
         }
         myFilePatchesMap.put(shelvedChange.getPatchPath(), textFilePatches);

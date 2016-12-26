@@ -235,11 +235,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           return history;
         }
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        LOG.info(e);
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         LOG.info(e);
         return null;
       }
@@ -268,11 +264,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       try {
         return myTypeCodeFragment.getType();
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        LOG.info(e);
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         LOG.info(e);
         return null;
       }

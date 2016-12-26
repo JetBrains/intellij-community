@@ -150,9 +150,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
         tw.getTool().readSettings(element);
       }
     }
-    catch (WriteExternalException ignored) {
-    }
-    catch (InvalidDataException ignored) {
+    catch (WriteExternalException | InvalidDataException ignored) {
     }
     model.setSingleTool(toolWrapper.getShortName());
     return model;

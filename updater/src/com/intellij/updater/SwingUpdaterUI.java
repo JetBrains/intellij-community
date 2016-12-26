@@ -30,6 +30,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -301,10 +302,7 @@ public class SwingUpdaterUI implements UpdaterUI {
         result.putAll(model.getResult());
       });
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (InterruptedException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
     checkCancelled();

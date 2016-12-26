@@ -156,8 +156,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       addToTheTopOfTheStack(content);
     }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
+    catch (UnsupportedFlavorException | IOException ignore) { }
     return content;
   }
 
@@ -220,8 +219,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     try {
       return (String)content.getTransferData(DataFlavor.stringFlavor);
     }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
+    catch (UnsupportedFlavorException | IOException ignore) { }
     return null;
   }
 
@@ -248,8 +246,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
           return data;
         }
       }
-      catch (UnsupportedFlavorException ignore) { }
-      catch (IOException ignore) { }
+      catch (UnsupportedFlavorException | IOException ignore) { }
     }
 
     return null;

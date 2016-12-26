@@ -37,7 +37,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
@@ -81,9 +84,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
           referenceData = (ReferenceTransferableData)content.getTransferData(flavor);
         }
       }
-      catch (UnsupportedFlavorException ignored) {
-      }
-      catch (IOException ignored) {
+      catch (UnsupportedFlavorException | IOException ignored) {
       }
     }
 

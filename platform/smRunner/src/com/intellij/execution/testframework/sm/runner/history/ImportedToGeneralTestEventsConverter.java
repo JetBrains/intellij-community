@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,10 +71,7 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new InputSource(reader), new ImportedTestContentHandler(processor));
     }
-    catch (ParserConfigurationException e) {
-      throw new IOException(e);
-    }
-    catch (SAXException e) {
+    catch (ParserConfigurationException | SAXException e) {
       throw new IOException(e);
     }
     finally {

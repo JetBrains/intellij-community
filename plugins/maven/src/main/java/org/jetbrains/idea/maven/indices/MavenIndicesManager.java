@@ -364,10 +364,7 @@ public class MavenIndicesManager implements Disposable {
 
       myUserArchetypes = listResult;
     }
-    catch (IOException e) {
-      MavenLog.LOG.warn(e);
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       MavenLog.LOG.warn(e);
     }
   }

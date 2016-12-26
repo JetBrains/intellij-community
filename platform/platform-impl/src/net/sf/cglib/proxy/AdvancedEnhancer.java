@@ -600,9 +600,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       setter.invoke(null, (Object)callbacks);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(type + " is not an enhanced class");
-    } catch (IllegalAccessException e) {
-      throw new CodeGenerationException(e);
-    } catch (InvocationTargetException e) {
+    } catch (IllegalAccessException | InvocationTargetException e) {
       throw new CodeGenerationException(e);
     }
   }

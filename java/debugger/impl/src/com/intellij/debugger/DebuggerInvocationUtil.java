@@ -66,11 +66,8 @@ public class DebuggerInvocationUtil {
       try {
         return computable.compute();
       }
-      catch (RuntimeException e) {
+      catch (RuntimeException | EvaluateException e) {
         ex[0] = e;
-      }
-      catch (Exception th) {
-        ex[0] = th;
       }
 
       return null;

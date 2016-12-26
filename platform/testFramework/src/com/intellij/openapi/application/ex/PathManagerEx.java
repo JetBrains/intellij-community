@@ -332,10 +332,7 @@ public class PathManagerEx {
     try {
       return Class.forName(className, true, classLoader);
     }
-    catch (NoClassDefFoundError e) {
-      return null;
-    }
-    catch (ClassNotFoundException e) {
+    catch (NoClassDefFoundError | ClassNotFoundException e) {
       return null;
     }
   }
@@ -412,10 +409,7 @@ public class PathManagerEx {
       }
       return ourCommunityModules;
     }
-    catch (JDOMException e) {
-      throw new RuntimeException("Cannot read modules from " + modulesXml.getAbsolutePath(), e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       throw new RuntimeException("Cannot read modules from " + modulesXml.getAbsolutePath(), e);
     }
   }

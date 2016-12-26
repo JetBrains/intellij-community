@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,10 +208,7 @@ public class PendingEventDispatcher <T extends EventListener> {
     catch(AbstractMethodError e) {
       //Do nothing. This listener just does not implement something newly added yet.
     }
-    catch (InvocationTargetException e) {
-      LOG.error(e.getCause());
-    }
-    catch (IllegalAccessException e) {
+    catch (InvocationTargetException | IllegalAccessException e) {
       LOG.error(e.getCause());
     }
     finally {

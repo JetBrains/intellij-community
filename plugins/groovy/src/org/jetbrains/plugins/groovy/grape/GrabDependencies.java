@@ -330,10 +330,7 @@ public class GrabDependencies implements IntentionAction {
                 ContainerUtil.addIfNotNull(jars, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libFile));
               }
             }
-            catch (MalformedURLException e) {
-              LOG.error(e);
-            }
-            catch (URISyntaxException e) {
+            catch (MalformedURLException | URISyntaxException e) {
               LOG.error(e);
             }
           }

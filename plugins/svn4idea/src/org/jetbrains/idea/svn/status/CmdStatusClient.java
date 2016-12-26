@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,10 +121,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     }
     catch (SvnExceptionWrapper e) {
       throw new SvnBindException(e.getCause());
-    } catch (IOException e) {
-      throw new SvnBindException(e);
-    }
-    catch (ParserConfigurationException e) {
+    } catch (IOException | ParserConfigurationException e) {
       throw new SvnBindException(e);
     }
     catch (SAXException e) {

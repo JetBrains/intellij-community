@@ -636,10 +636,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     try {
       forward = calcForwardRefs(file, indicator);
     }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-    catch (ApplicationUtil.CannotRunReadActionException e) {
+    catch (IndexNotReadyException | ApplicationUtil.CannotRunReadActionException e) {
       return null;
     }
     catch (ProcessCanceledException e) {
