@@ -40,6 +40,7 @@ public class SmoothScrollPane extends JScrollPane {
   // We may enhance the value derivation (make it distance-dependent, etc),
   // additionally, we may add these values to the Registry.
   private static final int THUMB_DELAY = 50; // ms
+  private static final int PRECISION_TOUCHPAD_DELAY = 40; // ms
   private static final int WHEEL_MIN_DELAY = 60; // ms
   private static final int WHEEL_MAX_DELAY = 140; // ms
   private static final int DEFAULT_DELAY = 120; // ms
@@ -52,6 +53,7 @@ public class SmoothScrollPane extends JScrollPane {
 
   private InputSource myInputSource = InputSource.UNKNOWN;
   private double myWheelRotation;
+  private double myScrollingDelta;
 
   public SmoothScrollPane() {
   }
@@ -72,6 +74,7 @@ public class SmoothScrollPane extends JScrollPane {
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     myInputSource = InputSource.MOUSE_WHEEL;
     myWheelRotation = e.getPreciseWheelRotation();
+    myScrollingDelta = MouseWheelEventEx.getScrollingDelta(e);
     super.processMouseWheelEvent(e);
     myInputSource = InputSource.UNKNOWN;
   }
@@ -124,14 +127,39 @@ public class SmoothScrollPane extends JScrollPane {
   }
 
   /**
-   * Although Java 7 introduced {@link MouseWheelEvent#getPreciseWheelRotation()} method,
-   * {@link JScrollPane} doesn't use it so far.
+   * Although Java 7 introduced {@link MouseWheelEvent#getPreciseWheelRotation} method,
+   * {@link JScrollPane} doesn't use it so far. This methods handles the precise wheel rotation events.
+   * <p>
+   * Additionally, to support pixel-perfect deltas, the handler can be paired up with our custom JRE which
+   * <a href="https://github.com/JetBrains/jdk8u_jdk/commit/568f2dae82b0fe27b79ce6943071d89463758610">enhances MouseWheelEvent</a>
+   * and <a href="https://github.com/JetBrains/jdk8u_jdk/commit/a3cb8807b148879e9c70a74a8a16c30a28991581">implements</a>
+   * those events in Mac OS X.
    *
    * @see BasicScrollPaneUI.Handler#mouseWheelMoved(MouseWheelEvent)
    * @see javax.swing.plaf.basic.BasicScrollBarUI#scrollByUnits
    */
   private void mouseWheelMoved(MouseWheelEvent e) {
     JScrollBar scrollbar = e.isShiftDown() ? getHorizontalScrollBar() : getVerticalScrollBar();
+
+    double delta = MouseWheelEventEx.getScrollingDelta(e);
+    if (delta == 0.0D) {
+      delta = getRelativeDelta(e, scrollbar);
+    }
+
+    int value = scrollbar instanceof Interpolable ? (((Interpolable)scrollbar).getTargetValue()) : scrollbar.getValue();
+    double minDelta = (double)scrollbar.getMinimum() - value;
+    double maxDelta = (double)scrollbar.getMaximum() - scrollbar.getModel().getExtent() - value;
+    double boundedDelta = max(minDelta, min(delta, maxDelta));
+
+    if (scrollbar instanceof FinelyAdjustable) {
+      ((FinelyAdjustable)scrollbar).adjustValue(boundedDelta);
+    }
+    else {
+      scrollbar.setValue(value + (int)round(boundedDelta));
+    }
+  }
+
+  private double getRelativeDelta(MouseWheelEvent e, JScrollBar scrollbar) {
     JViewport viewport = getViewport();
 
     double rotation = e.getPreciseWheelRotation();
@@ -141,19 +169,7 @@ public class SmoothScrollPane extends JScrollPane {
 
     boolean adjustDelta = abs(rotation) < 1.0D + EPSILON;
     int blockIncrement = getBlockIncrement(viewport, scrollbar, direction);
-    double adjustedDelta = adjustDelta ? max(-(double)blockIncrement, min(delta, (double)blockIncrement)) : delta;
-
-    int value = scrollbar instanceof Interpolable ? (((Interpolable)scrollbar).getTargetValue()) : scrollbar.getValue();
-    double minDelta = (double)scrollbar.getMinimum() - value;
-    double maxDelta = (double)scrollbar.getMaximum() - scrollbar.getModel().getExtent() - value;
-    double boundedDelta = max(minDelta, min(adjustedDelta, maxDelta));
-
-    if (scrollbar instanceof FinelyAdjustable) {
-      ((FinelyAdjustable)scrollbar).adjustValue(boundedDelta);
-    }
-    else {
-      scrollbar.setValue(value + (int)round(boundedDelta));
-    }
+    return adjustDelta ? max(-(double)blockIncrement, min(delta, (double)blockIncrement)) : delta;
   }
 
   private static int getUnitIncrement(JViewport viewport, JScrollBar scrollbar, int direction) {
@@ -188,6 +204,7 @@ public class SmoothScrollPane extends JScrollPane {
       case SCROLLBAR_THUMB:
         return THUMB_DELAY;
       case MOUSE_WHEEL:
+        if (myScrollingDelta != 0.0D) return PRECISION_TOUCHPAD_DELAY;
         return max(WHEEL_MIN_DELAY, min((int)round(abs(myWheelRotation) * WHEEL_MAX_DELAY), WHEEL_MAX_DELAY));
       default:
         return DEFAULT_DELAY;
