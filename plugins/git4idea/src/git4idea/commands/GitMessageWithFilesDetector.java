@@ -42,8 +42,8 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   @NotNull private final VirtualFile myRoot;
 
   @NotNull protected final Set<String> myAffectedFiles = new HashSet<>();
-  protected volatile boolean myMessageDetected;
-  @Nullable private volatile Key myMessageOutputType;
+  protected boolean myMessageDetected;
+  @Nullable private Key myMessageOutputType;
 
   public GitMessageWithFilesDetector(@NotNull Event event, @NotNull VirtualFile root) {
     myEvent = event;
