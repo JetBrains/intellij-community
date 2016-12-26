@@ -49,7 +49,8 @@ public final class TimedDeadzone {
   }
 
   public boolean isWithin() {
-    return myMouseWithin && System.currentTimeMillis() - myTimeEntered < getLength();
+    long now = System.currentTimeMillis();
+    return myMouseWithin && now > myTimeEntered && now - myTimeEntered < getLength();
   }
 
   public void setLength(@NotNull final Length deadZone) {
