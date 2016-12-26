@@ -31,8 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.stream.Stream;
-
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 
@@ -43,7 +41,6 @@ public class GroovyGStringKeyInspection extends BaseInspection {
   @Nullable
   protected String buildErrorString(Object... args) {
     return "GString is used as map's key #loc";
-
   }
 
   @NotNull
@@ -55,12 +52,17 @@ public class GroovyGStringKeyInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor
   {
     @Override
-    public void visitListOrMap(@NotNull GrListOrMap expression) {
-      if (!expression.isMap()) {
-        return;
-      }
+    public void visitNamedArgument(@NotNull GrNamedArgument namedArgument) {
+      PsiElement parent = namedArgument.getParent();
+      if (parent == null || ! (parent instanceof  GrListOrMap) || !((GrListOrMap)parent).isMap()) return;
 
-      Stream.of(expression.getNamedArguments()).forEach(this::checkArgument);
+      final GrArgumentLabel argumentLabel = namedArgument.getLabel();
+      if (argumentLabel == null) return;
+      final GrExpression labelExpression = argumentLabel.getExpression();
+      if (labelExpression == null) return;
+      if (isGStringType(labelExpression)) {
+        registerError(argumentLabel);
+      }
     }
 
     @Override
@@ -90,8 +92,6 @@ public class GroovyGStringKeyInspection extends BaseInspection {
       registerError(firstArgument);
     }
 
-
-
     boolean isMapPutMethod(@NotNull GrMethodCall grMethodCall) {
       final PsiMethod method = grMethodCall.resolveMethod();
       if (method == null) return false;
@@ -102,21 +102,10 @@ public class GroovyGStringKeyInspection extends BaseInspection {
       if (mapClass == null) return false;
       PsiMethod[] methods = mapClass.findMethodsByName(PUT_METHOD, false);
       for (PsiMethod superMethod : methods) {
-
         if (superMethod.equals(method) || PsiSuperMethodUtil.isSuperMethod(method, superMethod))
           return true;
       }
       return false;
-    }
-
-    private void checkArgument(@NotNull GrNamedArgument argument) {
-      final GrArgumentLabel argumentLabel = argument.getLabel();
-      if (argumentLabel == null) return;
-      final GrExpression labelExpression = argumentLabel.getExpression();
-      if (labelExpression == null) return;
-      if (isGStringType(labelExpression)) {
-        registerError(argumentLabel);
-      }
     }
 
     private static boolean isGStringType(@NotNull GrExpression expression) {
