@@ -17,35 +17,41 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.ui.ComboBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collection;
 
-public abstract class AbstractSchemesPanel<T extends Scheme> {
+public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   
-  private ComboBox mySchemesCombo;
-  private JPanel myPanel;
-  private JPanel myToolbarPanel;
+  private SchemesCombo<T> mySchemesCombo;
+  private DefaultSchemeActions<T> myActions;
+  private JComponent myToolbar;
 
   public AbstractSchemesPanel() {
-    myToolbarPanel.add(createToolbar());
+    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+    createUIComponents();
   }
-
-  public JPanel getRootPanel() {
-    return myPanel;
-  }
-
-  public JPanel getToolbarPanel() {
-    return myToolbarPanel;
-  }
-
+  
   private void createUIComponents() {
-    mySchemesCombo = createSchemesCombo();
+    JPanel controlsPanel = new JPanel();
+    controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
+    controlsPanel.add(new JLabel(ApplicationBundle.message("editbox.scheme.name")));
+    controlsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+    myActions = createSchemeActions();
+    mySchemesCombo = new SchemesCombo<>(myActions);
+    controlsPanel.add(mySchemesCombo.getComboBox());
+    myToolbar = createToolbar();
+    controlsPanel.add(myToolbar);
+    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComboBox().getPreferredSize().height));
+    add(controlsPanel);
+    add(Box.createVerticalGlue());
+    add(Box.createRigidArea(new Dimension(0, 10)));
   }
   
   private JComponent createToolbar() {
@@ -64,7 +70,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme> {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      Collection<AnAction> actions = createSchemeActions().getActions();
+      Collection<AnAction> actions = myActions.getActions();
       return actions.toArray(new AnAction[actions.size()]);
     }
 
@@ -74,16 +80,26 @@ public abstract class AbstractSchemesPanel<T extends Scheme> {
       p.setIcon(AllIcons.General.GearPlain);
     }
   }
-  
-  protected abstract ComboBox createSchemesCombo();
-  
-  protected abstract DefaultSchemeActions<T> createSchemeActions();
 
-  public ComboBox getSchemesCombo() {
-    return mySchemesCombo;
+  public JComponent getToolbar() {
+    return myToolbar;
+  }
+
+  protected abstract DefaultSchemeActions<T> createSchemeActions();
+  
+  public T getSelectedScheme() {
+    return mySchemesCombo.getSelectedScheme();
+  }
+  
+  public void selectScheme(@Nullable T scheme) {
+    mySchemesCombo.selectScheme(scheme);
+  }
+  
+  public void resetSchemes(@NotNull Collection<T> schemes) {
+    mySchemesCombo.resetSchemes(schemes);
   }
   
   public void disposeUIResources() {
-    myPanel.removeAll();
+    removeAll();
   }
 }

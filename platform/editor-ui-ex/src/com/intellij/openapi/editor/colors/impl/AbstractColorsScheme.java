@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
-import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.*;
 import com.intellij.util.JdomKt;
@@ -870,14 +869,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   public static boolean isVisible(@NotNull EditorColorsScheme scheme) {
     return !(scheme instanceof AbstractColorsScheme) || ((AbstractColorsScheme)scheme).isVisible();
-  }
-  
-  public static String getDisplayName(@NotNull EditorColorsScheme scheme) {
-    String schemeName = scheme.getName();
-    return 
-      schemeName.startsWith(SchemeManager.EDITABLE_COPY_PREFIX) ?
-      schemeName.substring(SchemeManager.EDITABLE_COPY_PREFIX.length()) :
-      schemeName; 
   }
 
   @Nullable

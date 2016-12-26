@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
+import com.intellij.application.options.schemes.AbstractSchemesPanel;
 import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -46,6 +47,10 @@ import java.util.List;
 abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleScheme> {
 
   private final static String SHARED_IMPORT_SOURCE = ApplicationBundle.message("import.scheme.shared");
+
+  protected CodeStyleSchemesActions(@NotNull AbstractSchemesPanel<CodeStyleScheme> schemesPanel) {
+    super(schemesPanel);
+  }
 
 
   @Override
@@ -117,7 +122,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
       String selectedName = scheme.getName();
       Collection<String> names = CodeStyleSchemesImpl.getSchemeManager().getAllSchemeNames();
       SaveSchemeDialog saveDialog =
-        new SaveSchemeDialog(getParentComponent(), ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
+        new SaveSchemeDialog(getSchemesPanel(), ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
       if (saveDialog.showAndGet()) {
         CodeStyleScheme newScheme = getSchemesModel().createNewScheme(saveDialog.getSchemeName(), getCurrentScheme());
         getSchemesModel().addScheme(newScheme, true);
@@ -167,7 +172,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   
   private void chooseAndImport(@NotNull CodeStyleScheme currentScheme, @NotNull String importerName) {
     if (importerName.equals(SHARED_IMPORT_SOURCE)) {
-      new SchemesToImportPopup<CodeStyleScheme>(getParentComponent()) {
+      new SchemesToImportPopup<CodeStyleScheme>(getSchemesPanel()) {
         @Override
         protected void onSchemeSelected(CodeStyleScheme scheme) {
           if (scheme != null) {
@@ -184,7 +189,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
         if (scheme != null) {
           final String additionalImportInfo = StringUtil.notNullize(importer.getAdditionalImportInfo(scheme));
           SchemeImportUtil
-            .showStatus(getParentComponent(),
+            .showStatus(getSchemesPanel(),
                         ApplicationBundle.message("message.code.style.scheme.import.success", importerName, scheme.getName(),
                                                   additionalImportInfo),
                         MessageType.INFO);
@@ -192,11 +197,11 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
       }
       catch (SchemeImportException e) {
         if (e.isWarning()) {
-          SchemeImportUtil.showStatus(getParentComponent(), e.getMessage(), MessageType.WARNING);
+          SchemeImportUtil.showStatus(getSchemesPanel(), e.getMessage(), MessageType.WARNING);
           return;
         }
         final String message = ApplicationBundle.message("message.code.style.scheme.import.failure", importerName, e.getMessage());
-        SchemeImportUtil.showStatus(getParentComponent(), message, MessageType.ERROR);
+        SchemeImportUtil.showStatus(getSchemesPanel(), message, MessageType.ERROR);
       }
     }
   }
@@ -205,7 +210,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   private CodeStyleScheme importExternalCodeStyle(final SchemeImporter<CodeStyleScheme> importer, @NotNull CodeStyleScheme currentScheme)
     throws SchemeImportException {
     final VirtualFile selectedFile = SchemeImportUtil
-      .selectImportSource(importer.getSourceExtensions(), getParentComponent(), CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
+      .selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
     if (selectedFile != null) {
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
@@ -268,7 +273,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
           .createSaveFileDialog(new FileSaverDescriptor(
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
-            ext), getParentComponent());
+            ext), getSchemesPanel());
       VirtualFileWrapper target = saver.save(null, scheme.getName() + "." + ext);
       if (target != null) {
         VirtualFile targetFile = target.getVirtualFile(true);
@@ -298,7 +303,7 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
           message = ApplicationBundle.message("scheme.exporter.ui.cannot.write.message");
           messageType = MessageType.ERROR;
         }
-        SchemeImportUtil.showStatus(getParentComponent(), message, messageType);
+        SchemeImportUtil.showStatus(getSchemesPanel(), message, messageType);
       }
     }
   }

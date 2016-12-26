@@ -116,7 +116,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     link.setVerticalAlignment(SwingConstants.BOTTOM);
 
     JPanel top = new JPanel(new BorderLayout());
-    top.add(BorderLayout.WEST, mySchemesPanel.getRootPanel());
+    top.add(BorderLayout.WEST, mySchemesPanel);
     top.add(BorderLayout.EAST, link);
     top.setBorder(JBUI.Borders.empty(10));
     add(top, BorderLayout.NORTH);
