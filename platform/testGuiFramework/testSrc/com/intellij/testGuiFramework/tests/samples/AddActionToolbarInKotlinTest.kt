@@ -28,7 +28,6 @@ class AddActionToolbarInKotlinTestTest : GuiTestCase() {
 
     simpleProject {
 
-      waitForBackgroundTasksToFinish()
       if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) invokeMenuPath("View", "Toolbar")
       invokeAction(keyStroke = "meta comma")
 

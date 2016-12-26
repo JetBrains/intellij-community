@@ -144,6 +144,11 @@ open class GuiTestCase : GuiTestBase() {
   else throw UnsupportedOperationException(
     "Sorry, unable to find JTree component \"${if (path != null) "by path ${path}" else ""}\" with ${target().toString()} as a Container")
 
+  fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String) = if (target() is Container) popupClick(
+    target() as Container, itemName)
+  else throw UnsupportedOperationException(
+    "Sorry, unable to find Popup component with ${target().toString()} as a Container")
+
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
@@ -179,7 +184,7 @@ open class GuiTestCase : GuiTestBase() {
       return JListFixture(myRobot, lists.first() as JList<*>)
     else {
       if (containingItem == null) throw ComponentLookupException("Found more than one JList, please specify item")
-      val filterJList: (JList<*>) -> Boolean = { myList -> (0..(myList.model.size)).any { it.toString() == containingItem } }
+      val filterJList: (JList<*>) -> Boolean = { myList -> (0..(myList.model.size - 1)).any { myList.model.getElementAt(it).toString() == containingItem } }
       return JListFixture(myRobot, lists.filter { filterJList(it as JList<*>) }.first() as JList<*>)
     }
   }
@@ -222,6 +227,11 @@ open class GuiTestCase : GuiTestBase() {
     })
     return JTextComponentFixture(myRobot, myRobot.finder().findByLabel(labelText, JTextComponent::class.java))
   }
+
+  private fun popupClick(container: Container, itemName: String) {
+    GuiTestUtil.clickPopupMenuItem(itemName, false, container, myRobot)
+  }
+
 
   private fun jTree(container: Container, path: String? = null): JTreeFixture {
     val myTree: JTree?
