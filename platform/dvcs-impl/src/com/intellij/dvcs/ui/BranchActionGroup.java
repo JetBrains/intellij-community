@@ -24,7 +24,7 @@ import static icons.DvcsImplIcons.*;
 
 public abstract class BranchActionGroup extends ActionGroup implements DumbAware {
 
-  private boolean myIsFavourite;
+  private boolean myIsFavorite;
   private final LayeredIcon myIcon;
   private final LayeredIcon myHoveredIcon;
 
@@ -38,23 +38,23 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
   }
 
   private void updateIcons() {
-    myIcon.setLayerEnabled(0, myIsFavourite);
-    myHoveredIcon.setLayerEnabled(0, myIsFavourite);
+    myIcon.setLayerEnabled(0, myIsFavorite);
+    myHoveredIcon.setLayerEnabled(0, myIsFavorite);
 
-    myIcon.setLayerEnabled(1, !myIsFavourite);
-    myHoveredIcon.setLayerEnabled(1, !myIsFavourite);
+    myIcon.setLayerEnabled(1, !myIsFavorite);
+    myHoveredIcon.setLayerEnabled(1, !myIsFavorite);
   }
 
-  public boolean isFavourite() {
-    return myIsFavourite;
+  public boolean isFavorite() {
+    return myIsFavorite;
   }
 
-  public void setFavourite(boolean favourite) {
-    myIsFavourite = favourite;
+  public void setFavorite(boolean favorite) {
+    myIsFavorite = favorite;
     updateIcons();
   }
 
   public void toggle() {
-    setFavourite(!myIsFavourite);
+    setFavorite(!myIsFavorite);
   }
 }

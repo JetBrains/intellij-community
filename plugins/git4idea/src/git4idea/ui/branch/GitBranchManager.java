@@ -34,13 +34,13 @@ import static git4idea.log.GitRefManager.ORIGIN_MASTER;
 public class GitBranchManager {
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcsSettings mySettings;
-  @NotNull public final BranchStorage myPredefinedFavouriteBranches = new BranchStorage();
+  @NotNull public final BranchStorage myPredefinedFavoriteBranches = new BranchStorage();
 
   public GitBranchManager(@NotNull GitRepositoryManager repositoryManager, @NotNull GitVcsSettings settings) {
     myRepositoryManager = repositoryManager;
     mySettings = settings;
     for (GitBranchType type : GitBranchType.values()) {
-      myPredefinedFavouriteBranches.myBranches.put(type.toString(), constructDefaultBranchPredefinedList(type));
+      myPredefinedFavoriteBranches.myBranches.put(type.toString(), constructDefaultBranchPredefinedList(type));
     }
   }
 
@@ -57,26 +57,26 @@ public class GitBranchManager {
     return type == GitBranchType.GIT_LOCAL ? MASTER : ORIGIN_MASTER;
   }
 
-  public boolean isFavourite(@NotNull GitBranchType branchType, @Nullable GitRepository repository, @NotNull String branchName) {
-    if (mySettings.isFavourite(branchType, repository, branchName)) return true;
-    if (mySettings.isExcludedFromFavourites(branchType, repository, branchName)) return false;
-    return myPredefinedFavouriteBranches.contains(branchType.toString(), repository, branchName);
+  public boolean isFavorite(@NotNull GitBranchType branchType, @Nullable GitRepository repository, @NotNull String branchName) {
+    if (mySettings.isFavorite(branchType, repository, branchName)) return true;
+    if (mySettings.isExcludedFromFavorites(branchType, repository, branchName)) return false;
+    return myPredefinedFavoriteBranches.contains(branchType.toString(), repository, branchName);
   }
 
-  public void setFavourite(@NotNull GitBranchType branchType,
+  public void setFavorite(@NotNull GitBranchType branchType,
                            @Nullable GitRepository repository,
                            @NotNull String branchName,
-                           boolean shouldBeFavourite) {
-    if (shouldBeFavourite) {
-      mySettings.addToFavourites(branchType, repository, branchName);
+                           boolean shouldBeFavorite) {
+    if (shouldBeFavorite) {
+      mySettings.addToFavorites(branchType, repository, branchName);
       mySettings.removeFromExcluded(branchType, repository, branchName);
     }
     else {
-      if (mySettings.isFavourite(branchType, repository, branchName)) {
-        mySettings.removeFromFavourites(branchType, repository, branchName);
+      if (mySettings.isFavorite(branchType, repository, branchName)) {
+        mySettings.removeFromFavorites(branchType, repository, branchName);
       }
-      else if (myPredefinedFavouriteBranches.contains(branchType.toString(), repository, branchName)) {
-        mySettings.excludedFromFavourites(branchType, repository, branchName);
+      else if (myPredefinedFavoriteBranches.contains(branchType.toString(), repository, branchName)) {
+        mySettings.excludedFromFavorites(branchType, repository, branchName);
       }
     }
   }

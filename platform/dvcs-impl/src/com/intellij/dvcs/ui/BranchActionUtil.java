@@ -21,10 +21,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public class BranchActionUtil {
-  public static final Comparator<BranchActionGroup> FAVOURITE_BRANCH_COMPARATOR =
-    Comparator.comparing(branch -> branch.isFavourite() ? -1 : 0);
+  public static final Comparator<BranchActionGroup> FAVORITE_BRANCH_COMPARATOR =
+    Comparator.comparing(branch -> branch.isFavorite() ? -1 : 0);
 
-  public static int getNumOfFavourites(List<? extends BranchActionGroup> branchActions) {
-    return ContainerUtil.count(branchActions, BranchActionGroup::isFavourite);
+  public static int getNumOfFavorites(List<? extends BranchActionGroup> branchActions) {
+    return ContainerUtil.count(branchActions, BranchActionGroup::isFavorite);
   }
 }

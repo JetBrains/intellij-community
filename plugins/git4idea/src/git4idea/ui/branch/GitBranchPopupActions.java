@@ -39,8 +39,8 @@ import java.util.List;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_BRANCH_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
-import static com.intellij.dvcs.ui.BranchActionUtil.FAVOURITE_BRANCH_COMPARATOR;
-import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavourites;
+import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
+import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavorites;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 import static git4idea.branch.GitBranchType.GIT_LOCAL;
 import static git4idea.branch.GitBranchType.GIT_REMOTE;
@@ -78,10 +78,10 @@ class GitBranchPopupActions {
         .filter(branch -> !branch.equals(myRepository.getCurrentBranch()))
         .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
         .collect(toList());
-    int numOfFavourites = getNumOfFavourites(localBranchActions);
-    List<AnAction> localBranchPresentationList = localBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());
-    // if there are only a few local favourites -> show several non-favourite;  for remotes it's better to show only favourites; 
-    addMoreActionIfNeeded(localBranchPresentationList, numOfFavourites > MAX_BRANCH_NUM ? numOfFavourites : MAX_BRANCH_NUM);
+    int numOfFavorites = getNumOfFavorites(localBranchActions);
+    List<AnAction> localBranchPresentationList = localBranchActions.stream().sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
+    // if there are only a few local favorites -> show several non-favorite;  for remotes it's better to show only favorites; 
+    addMoreActionIfNeeded(localBranchPresentationList, numOfFavorites > MAX_BRANCH_NUM ? numOfFavorites : MAX_BRANCH_NUM);
     popupGroup.addAll(localBranchPresentationList);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
@@ -90,9 +90,9 @@ class GitBranchPopupActions {
         .sorted()
         .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
         .collect(toList());
-    numOfFavourites = getNumOfFavourites(remoteBranchActions);
-    List<AnAction> remoteBranchPresentationList = remoteBranchActions.stream().sorted(FAVOURITE_BRANCH_COMPARATOR).collect(toList());
-    addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavourites > 0 ? numOfFavourites : MAX_BRANCH_NUM);
+    numOfFavorites = getNumOfFavorites(remoteBranchActions);
+    List<AnAction> remoteBranchPresentationList = remoteBranchActions.stream().sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
+    addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM);
     popupGroup.addAll(remoteBranchPresentationList);
     return popupGroup;
   }
@@ -169,7 +169,7 @@ class GitBranchPopupActions {
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
-      setFavourite(myGitBranchManager.isFavourite(GIT_LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+      setFavorite(myGitBranchManager.isFavorite(GIT_LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
     @NotNull
@@ -211,7 +211,7 @@ class GitBranchPopupActions {
     @Override
     public void toggle() {
       super.toggle();
-      myGitBranchManager.setFavourite(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavourite());
+      myGitBranchManager.setFavorite(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
     }
 
     static class CheckoutAction extends DumbAwareAction {
@@ -325,13 +325,13 @@ class GitBranchPopupActions {
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
-      setFavourite(myGitBranchManager.isFavourite(GIT_REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+      setFavorite(myGitBranchManager.isFavorite(GIT_REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
     @Override
     public void toggle() {
       super.toggle();
-      myGitBranchManager.setFavourite(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavourite());
+      myGitBranchManager.setFavorite(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
     }
 
     @NotNull

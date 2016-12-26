@@ -89,10 +89,10 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     @Tag("push-targets")
     public List<PushTargetInfo> PUSH_TARGETS = ContainerUtil.newArrayList();
 
-    @Tag("favourite-branches")
-    public BranchStorage FAVOURITE_BRANCHES = new BranchStorage();
-    @Tag("excluded-from-favourite")
-    public BranchStorage EXCLUDED_FAVOURITES = new BranchStorage();
+    @Tag("favorite-branches")
+    public BranchStorage FAVORITE_BRANCHES = new BranchStorage();
+    @Tag("excluded-from-favorite")
+    public BranchStorage EXCLUDED_FAVORITES = new BranchStorage();
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -292,28 +292,28 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.PUSH_TARGETS.add(new PushTargetInfo(repositoryPath, sourceBranch, targetRemote, targetBranch));
   }
 
-  public void addToFavourites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.FAVOURITE_BRANCHES.add(type.toString(), repository, branchName);
+  public void addToFavorites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
+    myState.FAVORITE_BRANCHES.add(type.toString(), repository, branchName);
   }
 
-  public void removeFromFavourites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.FAVOURITE_BRANCHES.remove(type.toString(), repository, branchName);
+  public void removeFromFavorites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
+    myState.FAVORITE_BRANCHES.remove(type.toString(), repository, branchName);
   }
 
-  public boolean isFavourite(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
-    return myState.FAVOURITE_BRANCHES.contains(type.toString(), repository, branchName);
+  public boolean isFavorite(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
+    return myState.FAVORITE_BRANCHES.contains(type.toString(), repository, branchName);
   }
 
-  public void excludedFromFavourites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.EXCLUDED_FAVOURITES.add(type.toString(), repository, branchName);
+  public void excludedFromFavorites(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
+    myState.EXCLUDED_FAVORITES.add(type.toString(), repository, branchName);
   }
 
   public void removeFromExcluded(@NotNull GitBranchType type, @Nullable GitRepository repository, @NotNull String branchName) {
-    myState.EXCLUDED_FAVOURITES.remove(type.toString(), repository, branchName);
+    myState.EXCLUDED_FAVORITES.remove(type.toString(), repository, branchName);
   }
 
-  public boolean isExcludedFromFavourites(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
-    return myState.EXCLUDED_FAVOURITES.contains(type.toString(), repository, branchName);
+  public boolean isExcludedFromFavorites(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
+    return myState.EXCLUDED_FAVORITES.contains(type.toString(), repository, branchName);
   }
 
 
