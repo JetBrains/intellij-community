@@ -78,6 +78,9 @@
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl"/>
 
+    <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
+                    serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>
+
     <projectService serviceInterface="com.intellij.pom.references.PomService"
                     serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
