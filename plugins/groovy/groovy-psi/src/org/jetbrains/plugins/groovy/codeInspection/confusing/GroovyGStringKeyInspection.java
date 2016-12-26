@@ -25,10 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
@@ -66,30 +64,23 @@ public class GroovyGStringKeyInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-      checkMethodCall(methodCallExpression);
-    }
+    public void visitExpression(@NotNull GrExpression grExpression) {
+      if (!isGStringType(grExpression)) return;
 
-    @Override
-    public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-      checkMethodCall(applicationStatement);
-    }
+      final PsiElement gstringParent = grExpression.getParent();
+      if (gstringParent == null || !(gstringParent instanceof GrArgumentList)) return;
 
-    public void checkMethodCall(@NotNull GrMethodCall grMethodCall) {
-      final GrArgumentList args = grMethodCall.getArgumentList();
+      GrExpression[] arguments = ((GrArgumentList)gstringParent).getExpressionArguments();
+      if (arguments.length != 2 || !arguments[0].equals(grExpression)) return;
 
-      if (args.getExpressionArguments().length != 2 || args.getAllArguments().length != 2) {
+      final PsiElement grandparent = gstringParent.getParent();
+      if (grandparent == null || !(grandparent instanceof GrMethodCall)) {
         return;
       }
 
-      final GrExpression firstArgument = args.getExpressionArguments()[0];
-      if (!isGStringType(firstArgument) ) {
-        return;
-      }
+      if (!isMapPutMethod((GrMethodCall)grandparent)) return;
 
-      if (!isMapPutMethod(grMethodCall)) return;
-
-      registerError(firstArgument);
+      registerError(grExpression);
     }
 
     boolean isMapPutMethod(@NotNull GrMethodCall grMethodCall) {
