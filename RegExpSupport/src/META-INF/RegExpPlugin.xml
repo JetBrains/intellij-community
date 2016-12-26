@@ -6,6 +6,9 @@
     <extensionPoint name="regExpModifierProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpModifierProvider"/>
     </extensionPoint>
+    <extensionPoint name="regExpMatcherProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpMatcherProvider"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
