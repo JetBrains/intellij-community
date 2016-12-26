@@ -115,9 +115,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       });
     }
     myTreeStructure = createStructure();
-    setTreeBuilder(createBuilder(treeModel));
 
-    installComparator();
+    BaseProjectTreeBuilder treeBuilder = createBuilder(treeModel);
+    installComparator(treeBuilder);
+    setTreeBuilder(treeBuilder);
+
     initTree();
 
     Disposer.register(getTreeBuilder(), new UiNotifyConnector(myTree, new Activatable() {
