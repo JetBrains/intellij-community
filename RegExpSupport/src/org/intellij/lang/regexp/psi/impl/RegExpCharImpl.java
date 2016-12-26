@@ -106,6 +106,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
                       }
                       return length == 4 ? parseNumber(idx, s, 16, 2, true) : null;
                     case 'u':
+                        if (length <= idx + 1) return null;
                         if (s.charAt(idx + 1) == '{') {
                             final char c = s.charAt(length - 1);
                             return (c != '}') ? null : parseNumber(idx + 1, s, 16, length - 4, true);
