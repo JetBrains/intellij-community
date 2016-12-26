@@ -15,33 +15,28 @@
  */
 package com.intellij.compiler.backwardRefs.view;
 
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class TestCompilerReferenceServiceInheritanceAction extends TestCompilerReferenceServiceAction {
-  public TestCompilerReferenceServiceInheritanceAction() {
+public class TestCompilerRefInheritanceAction extends TestCompilerHierarchyBaseAction {
+  public TestCompilerRefInheritanceAction() {
     super("Compiler Reference Direct Inheritor Search");
   }
 
   @Override
-  protected void startActionFor(@NotNull PsiElement element) {
-    if (element instanceof PsiClass) {
-      final Project project = element.getProject();
-      final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(project);
-      final GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(element.getUseScope(), project);
-      final CompilerReferenceHierarchyTestInfo hierarchyInfo = compilerReferenceService.getTestHierarchy(
-        (PsiNamedElement)element,
-        scope,
-        StdFileTypes.JAVA);
-      InternalCompilerRefServiceView.showHierarchyInfo(hierarchyInfo, element);
-    }
+  protected boolean canBeAppliedFor(@NotNull PsiElement element) {
+    return element instanceof PsiClass;
+  }
+
+  @Override
+  protected CompilerReferenceHierarchyTestInfo getHierarchy(@NotNull PsiElement element,
+                                                            @NotNull CompilerReferenceServiceImpl refService,
+                                                            @NotNull GlobalSearchScope scope) {
+    return refService.getTestHierarchy((PsiNamedElement)element, scope, StdFileTypes.JAVA);
   }
 }

@@ -31,7 +31,6 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +79,7 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
       }
     });
     setLayout(new BorderLayout());
-    add(ToolbarDecorator.createDecorator(myTree).createPanel());
+    add(myTree);
   }
 
   @Nullable
@@ -102,20 +101,20 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
   }
 
   public static void showFindUsages(CompilerReferenceFindUsagesTestInfo info, PsiElement element) {
-    final InternalCompilerRefServiceView view = getView(element);
+    final InternalCompilerRefServiceView view = createViewTab(element);
     final DefaultMutableTreeNode node = info.asTree();
     node.setUserObject(element);
     ((DefaultTreeModel)view.myTree.getModel()).setRoot(node);
   }
 
   public static void showHierarchyInfo(CompilerReferenceHierarchyTestInfo info, PsiElement element) {
-    final InternalCompilerRefServiceView view = getView(element);
+    final InternalCompilerRefServiceView view = createViewTab(element);
     final DefaultMutableTreeNode node = info.asTree();
     node.setUserObject(element);
     ((DefaultTreeModel)view.myTree.getModel()).setRoot(node);
   }
 
-  public static InternalCompilerRefServiceView getView(PsiElement element) {
+  private static InternalCompilerRefServiceView createViewTab(PsiElement element) {
     Project project = element.getProject();
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
@@ -134,5 +133,4 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
     });
     return view;
   }
-
 }

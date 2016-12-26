@@ -17,11 +17,14 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class TestCompilerReferenceServiceAction extends AnAction {
   public TestCompilerReferenceServiceAction(String text) {
@@ -29,26 +32,33 @@ public abstract class TestCompilerReferenceServiceAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    if (editor != null) {
-      final PsiElement element = TargetElementUtil.getInstance()
-        .findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, editor.getCaretModel().getOffset());
-      if (element != null) {
-        startActionFor(element);
-      }
-      System.out.println(element);
-    }
+  public final void actionPerformed(AnActionEvent e) {
+    final PsiElement element = getPsiElement(e.getDataContext());
+    if (element != null) startActionFor(element);
   }
 
   protected abstract void startActionFor(@NotNull PsiElement element);
 
+  protected abstract boolean canBeAppliedFor(@NotNull PsiElement element);
+
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    final Presentation presentation = e.getPresentation();
-    if (presentation.isEnabled()) {
-      presentation.setEnabledAndVisible(CompilerReferenceService.isEnabled() && ApplicationManagerEx.getApplicationEx().isInternal());
+  public final void update(AnActionEvent e) {
+    if (!CompilerReferenceService.isEnabled()) {
+      e.getPresentation().setEnabled(false);
+      return;
     }
+    e.getPresentation().setEnabled(getPsiElement(e.getDataContext()) != null);
+  }
+
+  @Nullable
+  private PsiElement getPsiElement(DataContext dataContext) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor == null) return null;
+    final PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor,
+                                                                                 TargetElementUtil.ELEMENT_NAME_ACCEPTED,
+                                                                                 editor.getCaretModel().getOffset());
+    if (element == null) return null;
+    return canBeAppliedFor(element) ? element : null;
+
   }
 }

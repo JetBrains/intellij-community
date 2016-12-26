@@ -23,18 +23,21 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
-public class TestCompilerReferenceServiceFindUsagesAction extends TestCompilerReferenceServiceAction {
-  public TestCompilerReferenceServiceFindUsagesAction() {
+public class TestCompilerRefFindUsagesAction extends TestCompilerReferenceServiceAction {
+  public TestCompilerRefFindUsagesAction() {
     super("Compiler Reference Find Usages");
   }
 
   @Override
   protected void startActionFor(@NotNull PsiElement element) {
-    if (element instanceof PsiMethod || element instanceof PsiField || element instanceof PsiClass) {
-      final CompilerReferenceServiceImpl compilerReferenceService =
-        (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(element.getProject());
-      final CompilerReferenceFindUsagesTestInfo compilerReferenceTestInfo = compilerReferenceService.getTestFindUsages(element);
-      InternalCompilerRefServiceView.showFindUsages(compilerReferenceTestInfo, element);
-    }
+    final CompilerReferenceServiceImpl compilerReferenceService =
+      (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(element.getProject());
+    final CompilerReferenceFindUsagesTestInfo compilerReferenceTestInfo = compilerReferenceService.getTestFindUsages(element);
+    InternalCompilerRefServiceView.showFindUsages(compilerReferenceTestInfo, element);
+  }
+
+  @Override
+  protected boolean canBeAppliedFor(@NotNull PsiElement element) {
+    return element instanceof PsiMethod || element instanceof PsiField || element instanceof PsiClass;
   }
 }

@@ -15,34 +15,30 @@
  */
 package com.intellij.compiler.backwardRefs.view;
 
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class TestCompilerReferenceServiceFunctionalExpressionSearchAction extends TestCompilerReferenceServiceAction {
+public class TestCompilerRefFunctionalExpressionSearchAction extends TestCompilerHierarchyBaseAction {
 
-  public TestCompilerReferenceServiceFunctionalExpressionSearchAction() {
+  public TestCompilerRefFunctionalExpressionSearchAction() {
     super("Compiler Reference Functional Expression Search");
   }
 
   @Override
-  protected void startActionFor(@NotNull PsiElement element) {
-    if (element instanceof PsiClass && LambdaUtil.isFunctionalClass((PsiClass)element)) {
-      final Project project = element.getProject();
-      final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(
-        project);
-      final GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(element.getUseScope(), project);
-      final CompilerReferenceHierarchyTestInfo hierarchyTestInfo =
-        compilerReferenceService.getTestFunExpressions((PsiNamedElement)element, scope, StdFileTypes.JAVA);
-      InternalCompilerRefServiceView.showHierarchyInfo(hierarchyTestInfo, element);
-    }
+  protected CompilerReferenceHierarchyTestInfo getHierarchy(@NotNull PsiElement element,
+                                                            @NotNull CompilerReferenceServiceImpl refService,
+                                                            @NotNull GlobalSearchScope scope) {
+    return refService.getTestFunExpressions((PsiNamedElement)element, scope, StdFileTypes.JAVA);
+  }
+
+  @Override
+  protected boolean canBeAppliedFor(@NotNull PsiElement element) {
+    return element instanceof PsiClass && LambdaUtil.isFunctionalClass((PsiClass)element);
   }
 }
