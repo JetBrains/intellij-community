@@ -163,7 +163,8 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     if (!project.isInitialized()) return;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     if (psiFile == null) return;
-    doQueue(project, document, getAllFileNodes(psiFile), reason, currentModalityState);
+    doQueue(project, document, getAllFileNodes(psiFile), reason, currentModalityState,
+            PsiDocumentManager.getInstance(project).getLastCommittedText(document));
   }
 
   @NotNull
@@ -171,9 +172,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                              @NotNull Document document,
                              @NotNull List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
                              @NotNull Object reason,
-                             @NotNull ModalityState currentModalityState) {
+                             @NotNull ModalityState currentModalityState,
+                             @NotNull CharSequence lastCommittedText) {
     synchronized (lock) {
-      CommitTask newTask = createNewTaskAndCancelSimilar(project, document, oldFileNodes, reason, currentModalityState);
+      CommitTask newTask = createNewTaskAndCancelSimilar(project, document, oldFileNodes, reason, currentModalityState,
+                                                         lastCommittedText);
 
       documentsToCommit.offer(newTask);
       log(project, "Queued", newTask, reason);
@@ -188,12 +191,14 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                                                    @NotNull Document document,
                                                    @NotNull List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
                                                    @NotNull Object reason,
-                                                   @NotNull ModalityState currentModalityState) {
+                                                   @NotNull ModalityState currentModalityState,
+                                                   @NotNull CharSequence lastCommittedText) {
     synchronized (lock) {
       for (Pair<PsiFileImpl, FileASTNode> pair : oldFileNodes) {
         assert pair.first.getProject() == project;
       }
-      CommitTask newTask = new CommitTask(project, document, oldFileNodes, createProgressIndicator(), reason, currentModalityState);
+      CommitTask newTask = new CommitTask(project, document, oldFileNodes, createProgressIndicator(), reason, currentModalityState,
+                                          lastCommittedText);
       cancelAndRemoveFromDocsToCommit(newTask, reason);
       cancelAndRemoveCurrentTask(newTask, reason);
       cancelAndRemoveFromDocsToApplyInEDT(newTask, reason);
@@ -404,16 +409,20 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     if (!success && task != null && documentManager.isUncommited(document)) { // sync commit has not intervened
       final Document finalDocument = document;
       final Project finalProject = project;
+      final CharSequence[] lastCommittedText = {null};
       List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes =
         ApplicationManager.getApplication().runReadAction(new Computable<List<Pair<PsiFileImpl, FileASTNode>>>() {
           @Override
           public List<Pair<PsiFileImpl, FileASTNode>> compute() {
-            PsiFile file = finalProject.isDisposed() ? null : documentManager.getPsiFile(finalDocument);
+            if (finalProject.isDisposed()) return null;
+            lastCommittedText[0] = PsiDocumentManager.getInstance(finalProject).getLastCommittedText(finalDocument);
+            PsiFile file = documentManager.getPsiFile(finalDocument);
             return file == null ? null : getAllFileNodes(file);
           }
         });
       if (oldFileNodes != null) {
-        doQueue(project, document, oldFileNodes, "re-added on failure: "+failureReason, task.myCreationModalityState);
+        doQueue(project, document, oldFileNodes, "re-added on failure: " + failureReason, task.myCreationModalityState,
+                lastCommittedText[0]);
       }
     }
     synchronized (lock) {
@@ -445,7 +454,8 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     CommitTask task;
     synchronized (lock) {
       // synchronized to ensure no new similar tasks can start before we hold the document's lock
-      task = createNewTaskAndCancelSimilar(project, document, allFileNodes, SYNC_COMMIT_REASON, ModalityState.current());
+      task = createNewTaskAndCancelSimilar(project, document, allFileNodes, SYNC_COMMIT_REASON, ModalityState.current(),
+                                           PsiDocumentManager.getInstance(project).getLastCommittedText(document));
       documentLock.lock();
     }
 
@@ -682,13 +692,14 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                @NotNull final List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes,
                @NotNull ProgressIndicator indicator,
                @NotNull Object reason,
-               @NotNull ModalityState currentModalityState) {
+               @NotNull ModalityState currentModalityState,
+               @NotNull CharSequence lastCommittedText) {
       this.document = document;
       this.project = project;
       this.indicator = indicator;
       this.reason = reason;
       myCreationModalityState = currentModalityState;
-      myLastCommittedText = PsiDocumentManager.getInstance(project).getLastCommittedText(document);
+      myLastCommittedText = lastCommittedText;
       myOldFileNodes = oldFileNodes;
       modificationSequence = ((DocumentEx)document).getModificationSequence();
     }
