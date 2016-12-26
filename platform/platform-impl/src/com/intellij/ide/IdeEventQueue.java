@@ -114,6 +114,7 @@ public class IdeEventQueue extends EventQueue {
   private boolean myIsInInputEvent;
   private AWTEvent myCurrentEvent;
   private long myLastActiveTime;
+  private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -338,6 +339,7 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+    checkForTimeJump();
     if (!appIsLoaded()) {
       try {
         super.dispatchEvent(e);
@@ -380,6 +382,15 @@ public class IdeEventQueue extends EventQueue {
         maybeReady();
       }
     }
+  }
+
+  //As we rely on system time monotonicity in many places let's log anomalies at least.
+  private void checkForTimeJump() {
+    long now = System.currentTimeMillis();
+    if (myLastEventTime > now + 1000) {
+      LOG.error("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
+    }
+    myLastEventTime = now;
   }
 
   private static boolean isInputEvent(@NotNull AWTEvent e) {
