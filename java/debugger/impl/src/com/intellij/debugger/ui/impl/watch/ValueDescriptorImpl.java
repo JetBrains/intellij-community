@@ -238,28 +238,19 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         Method method = refType.concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
         if (method != null) {
           final DebugProcessImpl process = evaluationContext.getDebugProcess();
-          process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
-          
+          Value trace = process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+
           // print to console as well
-          
-          final Field traceField = refType.fieldByName("stackTrace");
-          final Value trace = traceField != null? exceptionObj.getValue(traceField) : null; 
           if (trace instanceof ArrayReference) {
-            final ArrayReference traceArray = (ArrayReference)trace;
-            final Type componentType = ((ArrayType)traceArray.referenceType()).componentType();
-            if (componentType instanceof ClassType) {
-              process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj));
-              process.printToConsole("\n");
-              for (Value stackElement : traceArray.getValues()) {
-                process.printToConsole("\tat ");
-                process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, stackElement));
-                process.printToConsole("\n");
-              }
+            ArrayReference traceArray = (ArrayReference)trace;
+            process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
+            for (Value stackElement : traceArray.getValues()) {
+              process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
             }
           }
         }
       }
-      catch (EvaluateException | ClassNotLoadedException ignored) {
+      catch (EvaluateException ignored) {
       }
       catch (Throwable e) {
         LOG.info(e); // catch all exceptions to ensure the method returns gracefully
