@@ -56,6 +56,7 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 
 Var baseRegKey
 Var IS_UPGRADE_60
+Var downloadJreX86
 
 !define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
 !define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\"
@@ -327,21 +328,24 @@ Function ConfirmDesktopShortcut
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0
 
   ${If} $R1 != ""
-    ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
-    ${If} $R0 == ${PRODUCT_EXE_FILE}
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
-      ${If} ${RunningX64}
-        ; if jre x86 for the build is available then add checkbox to Installation Options dialog
-        StrCmp "${LINK_TO_JRE}" "null" customPreActions 0
-        inetc::head /SILENT /TOSTACK ${LINK_TO_JRE} "" /END
-        Pop $0
-        ${If} $0 == "OK"
-          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install x86 JRE by JetBrains"
-        ${EndIf}
-      ${EndIf}
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
+  ${EndIf}
+
+  ; if jre x86 for the build is available then add checkbox to Installation Options dialog
+  StrCmp "${LINK_TO_JRE}" "null" customPreActions 0
+  inetc::head /SILENT /TOSTACK ${LINK_TO_JRE} "" /END
+  Pop $0
+  ${If} $0 == "OK"
+    ; download jre x86: optional if OS is not 32-bit
+    ${If} ${RunningX64}
+      StrCpy $downloadJreX86 "0"
+    ${Else}
+      StrCpy $downloadJreX86 "1"
     ${EndIf}
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $downloadJreX86
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install JRE x86 by JetBrains"
   ${EndIf}
 customPreActions:
   Call customPreInstallActions
@@ -433,14 +437,11 @@ InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
 BrandingText " "
 
 Function PageFinishRun
-  IfFileExists $INSTDIR\bin\${PRODUCT_EXE_FILE_64} runExe64
-  IfFileExists $INSTDIR\bin\${PRODUCT_EXE_FILE} runExe32
-runExe64:
-  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE_64}" "" "$INSTDIR\bin" ""
-  goto done
-runExe32:
-  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
-done:
+  ${If} ${RunningX64}
+    !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE_64}" "" "$INSTDIR\bin" ""
+  ${Else}
+    !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
+  ${EndIf}
 FunctionEnd
 
 ;------------------------------------------------------------------------------
