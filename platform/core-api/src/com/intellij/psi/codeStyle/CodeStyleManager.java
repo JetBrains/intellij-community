@@ -181,18 +181,9 @@ public abstract class CodeStyleManager  {
    *
    * @param document   the document to reformat.
    * @param offset the offset the line at which should be reformatted.
-   * @param mode   the current formatting mode to be used when adjusting line indent.
    * @throws IncorrectOperationException if the file is read-only.
-   * @see FormattingMode
    */
-  public abstract int adjustLineIndent(@NotNull Document document, int offset, FormattingMode mode);
-
-  /**
-   * The same as {@link #adjustLineIndent(Document, int, FormattingMode)} but uses {@link FormattingMode#ADJUST_INDENT} as formatting mode.
-   */
-  public final int adjustLineIndent(@NotNull Document document, int offset) {
-    return adjustLineIndent(document, offset, FormattingMode.ADJUST_INDENT);
-  }
+  public abstract int adjustLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated this method is not intended to be used by plugins.
@@ -276,6 +267,14 @@ public abstract class CodeStyleManager  {
   public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T;
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
-
-  public abstract FormattingMode getCurrentFormattingMode();
+  
+  public static FormattingMode getCurrentFormattingMode(@NotNull Project project) {
+    if (!project.isDisposed()) {
+      CodeStyleManager instance = getInstance(project);
+      if (instance instanceof FormattingModeAwareIndentAdjuster) {
+        return ((FormattingModeAwareIndentAdjuster)instance).getCurrentFormattingMode();
+      }
+    }
+    return FormattingMode.REFORMAT;
+  }
 }
