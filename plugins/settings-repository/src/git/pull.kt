@@ -164,7 +164,7 @@ open internal class Pull(val manager: GitRepositoryClient, val indicator: Progre
       if (headId == null) {
         revWalk.parseHeaders(srcCommit)
         dirCacheCheckout = DirCacheCheckout(repository, repository.lockDirCache(), srcCommit.tree)
-        dirCacheCheckout.setFailOnConflict(true)
+        dirCacheCheckout.setFailOnConflict(false)
         dirCacheCheckout.checkout()
         val refUpdate = repository.updateRef(head.target.name)
         refUpdate.setNewObjectId(objectId)
@@ -187,7 +187,7 @@ open internal class Pull(val manager: GitRepositoryClient, val indicator: Progre
         // FAST_FORWARD detected: skip doing a real merge but only update HEAD
         refLogMessage.append(": ").append(MergeStatus.FAST_FORWARD)
         dirCacheCheckout = DirCacheCheckout(repository, headCommit.tree, repository.lockDirCache(), srcCommit.tree)
-        dirCacheCheckout.setFailOnConflict(true)
+        dirCacheCheckout.setFailOnConflict(false)
         dirCacheCheckout.checkout()
         val mergeStatus: MergeStatus
         if (squash) {
@@ -241,7 +241,7 @@ open internal class Pull(val manager: GitRepositoryClient, val indicator: Progre
           // ResolveMerger does checkout
           if (merger !is ResolveMerger) {
             dirCacheCheckout = DirCacheCheckout(repository, headCommit.tree, repository.lockDirCache(), merger.resultTreeId)
-            dirCacheCheckout.setFailOnConflict(true)
+            dirCacheCheckout.setFailOnConflict(false)
             dirCacheCheckout.checkout()
             result = ImmutableUpdateResult(dirCacheCheckout.updated.keys, dirCacheCheckout.removed)
           }
