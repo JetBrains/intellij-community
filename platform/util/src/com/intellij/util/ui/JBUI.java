@@ -36,8 +36,6 @@ import java.awt.*;
 import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -456,6 +454,21 @@ public class JBUI {
    */
   public static boolean isHiDPI(ScaleType type) {
     return isHiDPI((GraphicsDevice)null, type);
+  }
+
+  /**
+   * Equivalent of {@link #isHiDPI(Graphics2D, ScaleType)} called for the graphics of specified component.
+   *
+   * @see #isHiDPI(Graphics2D, ScaleType)
+   * @param component if it's <code>null</code> the graphics of the default screen device will be used
+   */
+  public static boolean isHiDPI(@Nullable Component component) {
+    Graphics graphics = component != null? component.getGraphics() : null;
+    try {
+      return isHiDPI((Graphics2D)graphics, ScaleType.USR);
+    } finally {
+      if (graphics != null) graphics.dispose();
+    }
   }
 
   public static class Fonts {
