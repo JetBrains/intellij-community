@@ -225,26 +225,19 @@ public class JdkUtil {
     if (javaParameters.isDynamicVMOptions() && useDynamicVMOptions()) {
       try {
         vmParamsFile = FileUtil.createTempFile("vm_params", null);
-        final PrintWriter writer = new PrintWriter(vmParamsFile);
-        try {
+        try (PrintWriter writer = new PrintWriter(vmParamsFile)) {
           for (String param : vmParametersList.getList()) {
             if (param.startsWith("-D")) {
               writer.println(param);
             }
+            else {
+              commandLine.addParameter(param);
+            }
           }
-        }
-        finally {
-          writer.close();
         }
       }
       catch (IOException e) {
-        LOG.error(e);
-      }
-      final List<String> list = vmParametersList.getList();
-      for (String param : list) {
-        if (!param.trim().startsWith("-D")) {
-          commandLine.addParameter(param);
-        }
+        throwUnableToCreateTempFile(e);
       }
     }
     else {
@@ -312,13 +305,12 @@ public class JdkUtil {
           if (param.startsWith("-D")) {
             dParams.add(param);
           }
+          else {
+            commandLine.addParameter(param);
+          }
         }
 
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(dParams));
-
-        final List<String> restParams = new ArrayList<>(vmParametersList.getList());
-        restParams.removeAll(dParams);
-        commandLine.addParameters(restParams);
       }
       else {
         commandLine.addParameters(vmParametersList.getList());
