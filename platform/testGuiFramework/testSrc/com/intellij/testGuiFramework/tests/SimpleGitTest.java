@@ -48,7 +48,7 @@ public class SimpleGitTest extends GuiTestCase {
       projectPane.selectByPath(projectName, "src");
 
       //invoke "New..." action
-      invokeAction("NewElement");
+      invokeAction(myRobot, "NewElement");
       //select first element (Java class)
       myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
 
@@ -66,13 +66,13 @@ public class SimpleGitTest extends GuiTestCase {
             () -> currentFileFixture.getVcsStatus().equals(FileStatus.UNKNOWN),
             THIRTY_SEC_TIMEOUT);
 
-      invokeAction("ChangesView.AddUnversioned");
+      invokeAction(myRobot, "ChangesView.AddUnversioned");
 
       pause("Wait when file will be marked as added",
                         () -> currentFileFixture.getVcsStatus().equals(FileStatus.ADDED),
                         THIRTY_SEC_TIMEOUT);
 
-      invokeAction("CheckinProject");
+      invokeAction(myRobot, "CheckinProject");
 
       JDialogFixture commitJDialogFixture = JDialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
       myRobot.enterText("initial commit");

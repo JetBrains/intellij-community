@@ -17,19 +17,20 @@ package com.intellij.testGuiFramework.tests.samples
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import org.junit.Ignore
 import org.junit.Test
 
 
 class AddActionToolbarInKotlinTestTest : GuiTestCase() {
 
-  @Test
+  @Test @Ignore
   @Throws(Exception::class)
   fun testAddActionToolbar() {
 
     simpleProject {
 
       if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) invokeMenuPath("View", "Toolbar")
-      invokeAction(keyStroke = "meta comma")
+      shortcut(keyStroke = "meta comma")
 
       dialog("Preferences") {
         jTree("Appearance & Behavior").clickPath("Appearance & Behavior/Menus and Toolbars")

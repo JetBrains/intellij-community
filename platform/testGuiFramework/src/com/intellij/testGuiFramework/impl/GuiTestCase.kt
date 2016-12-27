@@ -151,7 +151,7 @@ open class GuiTestCase : GuiTestBase() {
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
-  fun invokeAction(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
+  fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
 
 
   fun ideFrame() = findIdeFrame()!!
