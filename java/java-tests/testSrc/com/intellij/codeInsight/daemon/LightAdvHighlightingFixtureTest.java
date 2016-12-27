@@ -99,6 +99,12 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testProtectedFieldUsedInAnnotationParameterOfInheritor() throws Exception {
+    myFixture.addClass("package a; public class A {protected final static String A_FOO = \"A\";}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
