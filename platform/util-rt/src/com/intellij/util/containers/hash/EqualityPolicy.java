@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
 package com.intellij.util.containers.hash;
 
 
-import gnu.trove.TObjectHashingStrategy;
-
 public interface EqualityPolicy<T> {
   EqualityPolicy<?> IDENTITY = new EqualityPolicy() {
 
-    @Override
     public int getHashCode(Object value) {
       return System.identityHashCode(value);
     }
 
-    @Override
     public boolean isEqual(Object val1, Object val2) {
       return val1 == val2;
     }
@@ -34,34 +30,14 @@ public interface EqualityPolicy<T> {
 
   EqualityPolicy<?> CANONICAL = new EqualityPolicy() {
 
-    @Override
     public int getHashCode(Object value) {
       return value != null ? value.hashCode() : 0;
     }
 
-    @Override
     public boolean isEqual(Object val1, Object val2) {
       return val1 != null ? val1.equals(val2) : val2 == null;
     }
   };
-  
-  class ByHashingStrategy<T> implements EqualityPolicy<T> {
-    private final TObjectHashingStrategy<T> myStrategy;
-
-    public ByHashingStrategy(TObjectHashingStrategy<T> strategy) {
-      myStrategy = strategy;
-    }
-
-    @Override
-    public int getHashCode(T value) {
-      return myStrategy.computeHashCode(value);
-    }
-
-    @Override
-    public boolean isEqual(T val1, T val2) {
-      return myStrategy.equals(val1, val2);
-    }
-  }
 
   int getHashCode(T value);
 

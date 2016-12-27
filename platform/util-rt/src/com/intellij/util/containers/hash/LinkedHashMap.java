@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,17 +295,14 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
       this.value = value;
     }
 
-    @Override
     public K getKey() {
       return key;
     }
 
-    @Override
     public V getValue() {
       return value;
     }
 
-    @Override
     public V setValue(final V value) {
       final V result = this.value;
       this.value = value;
@@ -318,12 +315,10 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     private LinkedHashMap.Entry<K, V> e = back;
     private LinkedHashMap.Entry<K, V> last;
 
-    @Override
     public boolean hasNext() {
       return e != null;
     }
 
-    @Override
     public void remove() {
       if (last == null) {
         throw new IllegalStateException();
@@ -345,7 +340,6 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
       return new LinkedHashIterator<Map.Entry<K, V>>() {
-        @Override
         public Map.Entry<K, V> next() {
           return nextEntry();
         }
@@ -388,7 +382,6 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     @Override
     public Iterator<K> iterator() {
       return new LinkedHashIterator<K>() {
-        @Override
         public K next() {
           return nextEntry().key;
         }
@@ -422,7 +415,6 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     @Override
     public Iterator<V> iterator() {
       return new LinkedHashIterator<V>() {
-        @Override
         public V next() {
           return nextEntry().value;
         }
