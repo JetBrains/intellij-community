@@ -449,9 +449,9 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
-      String arr = context.declareResult("arr", myType + "[]", "new " + myType + "[10]", ResultKind.UNKNOWN);
+      String arr = context.declareResult("arr", myType + "[]", "new " + myType + "[10]", ResultKind.NON_FINAL);
       String count = context.declare("count", "int", "0");
-      context.setFinisher("java.util.Arrays.copyOfRange("+arr+",0,"+count+")");
+      context.addAfterStep(arr + "=java.util.Arrays.copyOfRange(" + arr + ",0," + count + ");\n");
       return "if(" + arr + ".length==" + count + ") " + arr + "=java.util.Arrays.copyOf(" + arr + "," + count + "*2);\n" +
              arr + "[" + count + "++]=" + inVar + ";\n";
     }

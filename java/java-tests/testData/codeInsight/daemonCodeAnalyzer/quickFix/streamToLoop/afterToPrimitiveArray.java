@@ -13,7 +13,8 @@ public class Main {
               arr[count++] = x;
           }
       }
-      return Arrays.copyOfRange(arr, 0, count);
+      arr = Arrays.copyOfRange(arr, 0, count);
+      return arr;
   }
 
   public static void main(String[] args) {
