@@ -18,6 +18,8 @@ package com.intellij.codeInspection.streamToLoop;
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,11 +190,18 @@ abstract class Operation {
     private String myVarName;
     private final FunctionHelper myFn;
     private final List<StreamToLoopInspection.OperationRecord> myRecords;
+    private PsiExpression myCondition;
+    private final boolean myInverted;
 
-    private FlatMapOperation(String varName, FunctionHelper fn, List<StreamToLoopInspection.OperationRecord> records) {
+    private FlatMapOperation(String varName,
+                             FunctionHelper fn,
+                             List<StreamToLoopInspection.OperationRecord> records,
+                             PsiExpression condition, boolean inverted) {
       myVarName = varName;
       myFn = fn;
       myRecords = records;
+      myCondition = condition;
+      myInverted = inverted;
     }
 
     @Override
@@ -213,11 +222,17 @@ abstract class Operation {
     @Override
     public void registerReusedElements(Consumer<PsiElement> consumer) {
       myRecords.forEach(or -> or.myOperation.registerReusedElements(consumer));
+      if(myCondition != null) {
+        consumer.accept(myCondition);
+      }
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
       myRecords.forEach(or -> or.myOperation.rename(oldName, newName, context));
+      if (myCondition != null) {
+        myCondition = FunctionHelper.replaceVarReference(myCondition, oldName, newName, context);
+      }
     }
 
     @Override
@@ -230,6 +245,13 @@ abstract class Operation {
       for(StreamToLoopInspection.OperationRecord or : StreamEx.ofReversed(myRecords)) {
         replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, innerContext);
       }
+      if (myCondition != null) {
+        String conditionText = myCondition.getText();
+        if (myInverted) {
+          conditionText = BoolUtils.getNegatedExpressionText(context.createExpression(conditionText));
+        }
+        return "if(" + conditionText + "){\n" + replacement + "}\n";
+      }
       return replacement;
     }
 
@@ -240,11 +262,27 @@ abstract class Operation {
       String varName = fn.tryLightTransform(inType);
       if(varName == null) return null;
       PsiExpression body = fn.getExpression();
+      PsiExpression condition = null;
+      boolean inverted = false;
+      if(body instanceof PsiConditionalExpression) {
+        PsiConditionalExpression ternary = (PsiConditionalExpression)body;
+        condition = ternary.getCondition();
+        PsiExpression thenExpression = ternary.getThenExpression();
+        PsiExpression elseExpression = ternary.getElseExpression();
+        if(StreamApiUtil.isNullOrEmptyStream(thenExpression)) {
+          body = elseExpression;
+          inverted = true;
+        }
+        else if(StreamApiUtil.isNullOrEmptyStream(elseExpression)) {
+          body = thenExpression;
+        }
+        else return null;
+      }
       if(!(body instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)body;
       List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall);
       if(records == null || StreamToLoopInspection.getTerminal(records) != null) return null;
-      return new FlatMapOperation(varName, fn, records);
+      return new FlatMapOperation(varName, fn, records, condition, inverted);
     }
   }
 
