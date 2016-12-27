@@ -131,6 +131,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
+    new VcsLogSpeedSearch(this);
 
     initColumnSize();
     addComponentListener(new ComponentAdapter() {
