@@ -49,15 +49,23 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
 
 ;------------------------------------------------------------------------------
+; Variables
+;------------------------------------------------------------------------------
+  Var STARTMENU_FOLDER
+  Var config_path
+  Var system_path
+  Var productLauncher
+  Var baseRegKey
+  Var downloadJreX86
+  Var productDir
+  Var control_fields
+  Var max_fields
+
+;------------------------------------------------------------------------------
 ; on GUI initialization installer checks whether IDEA is already installed
 ;------------------------------------------------------------------------------
 
 !define MUI_CUSTOMFUNCTION_GUIINIT GUIInit
-
-Var baseRegKey
-Var IS_UPGRADE_60
-Var downloadJreX86
-
 !define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
 !define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\"
 !define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
@@ -387,12 +395,6 @@ removeTempJre:
 done:
 FunctionEnd
 
-;------------------------------------------------------------------------------
-; Variables
-;------------------------------------------------------------------------------
-  Var STARTMENU_FOLDER
-  Var config_path
-  Var system_path
 
 ;------------------------------------------------------------------------------
 ; configuration
@@ -401,10 +403,6 @@ FunctionEnd
 !insertmacro MUI_PAGE_WELCOME
 
 Page custom uninstallOldVersionDialog
-
-Var productDir
-Var control_fields
-Var max_fields
 
 !ifdef LICENSE_FILE
 !insertmacro MUI_PAGE_LICENSE "$(myLicenseData)"
@@ -748,7 +746,7 @@ createRegistration:
   call OMWriteRegStr
   StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open\command"
   StrCpy $2 ""
-  StrCpy $3 '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+  StrCpy $3 '$productLauncher "%1"'
   call OMWriteRegStr
 FunctionEnd
 
@@ -764,11 +762,11 @@ skip_backup:
   StrCmp $0 "" 0 command_exists
 	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
 	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
-	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$productLauncher,0"
 command_exists:
- WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" " $INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+ WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" " $productLauncher,0"
  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
-                  '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+                  '$productLauncher "%1"'
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -776,12 +774,19 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
 
+; set up a launcher for associations
+  ${If} ${RunningX64}
+     StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
+  ${Else}
+     StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${EndIf}
+
   StrCmp "${LINK_TO_JRE}" "null" shortcuts 0
-  ;download and install JRE x86
+; download and install JRE x86
   Call downloadJre
 
 shortcuts:
-  ;create shortcuts
+; create shortcuts
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
   StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
@@ -807,12 +812,11 @@ next_association:
   IntCmp $R1 $R2 get_user_choice done get_user_choice
 
 done:
-
   Call customInstallActions
 
-  ;registration application to be presented in Open With list
+; registration application to be presented in Open With list
   call ProductRegistration
-!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
@@ -830,7 +834,7 @@ done:
 
   StrCmp ${IPR} "false" skip_ipr
 
-  ; back up old value of .ipr
+; back up old value of .ipr
 !define Index "Line${__LINE__}"
   ReadRegStr $1 HKCR ".ipr" ""
   StrCmp $1 "" "${Index}-NoBackup"
@@ -843,9 +847,9 @@ done:
 	WriteRegStr HKCR "IntelliJIdeaProjectFile" "" "IntelliJ IDEA Project File"
 	WriteRegStr HKCR "IntelliJIdeaProjectFile\shell" "" "open"
 "${Index}-Skip:"
-  WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+  WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$productLauncher,0"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" \
-    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+    '$productLauncher "%1"'
 !undef Index
 
 skip_ipr:
@@ -878,7 +882,7 @@ skip_properties:
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "InstallLocation" "$INSTDIR"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
-              "DisplayIcon" "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+              "DisplayIcon" "$productLauncher"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "DisplayVersion" "${VER_BUILD}"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
@@ -894,7 +898,7 @@ skip_properties:
 
   ExecWait "$INSTDIR\jre\jre\bin\javaw.exe -Xshare:dump"
   SetOutPath $INSTDIR\bin
-  ; set the current time for installation files under $INSTDIR\bin
+; set the current time for installation files under $INSTDIR\bin
   ExecCmd::exec 'copy "$INSTDIR\bin\*.*s" +,,'
   call winVersion
   ${If} $0 == "1"
@@ -908,7 +912,7 @@ skip_properties:
       "$INSTDIR\bin\$0" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
 
-  ;reset icon cache
+; reset icon cache
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 SectionEnd
 
