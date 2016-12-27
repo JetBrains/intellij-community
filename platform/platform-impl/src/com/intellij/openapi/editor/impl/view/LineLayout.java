@@ -266,7 +266,7 @@ abstract class LineLayout {
       char c = text[i];
       if (c == '\t' && tabFragment != null) {
         assert run.level == 0;
-        addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, fontRenderContext, false);
+        addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, false);
         chunk.fragments.add(tabFragment);
         currentFontInfo = null;
         currentIndex = i + 1;
@@ -281,24 +281,23 @@ abstract class LineLayout {
             surrogatePair = true;
           }
         }
-        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, fontPreferences);
+        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, fontPreferences, fontRenderContext);
         if (!fontInfo.equals(currentFontInfo)) {
-          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, fontRenderContext, run.isRtl());
+          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, run.isRtl());
           currentFontInfo = fontInfo;
           currentIndex = i;
         }
         if (surrogatePair) i++;
       }
     }
-    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFontInfo, fontRenderContext, run.isRtl());
+    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFontInfo, run.isRtl());
     assert !chunk.fragments.isEmpty();
   }
   
-  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, 
-                                              FontRenderContext fontRenderContext, boolean isRtl) {
+  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl) {
     if (to > from) {
       assert fontInfo != null;
-      chunk.fragments.add(TextFragmentFactory.createTextFragment(chars, from, to, isRtl, fontInfo, fontRenderContext));
+      chunk.fragments.add(TextFragmentFactory.createTextFragment(chars, from, to, isRtl, fontInfo));
     }
   }
   

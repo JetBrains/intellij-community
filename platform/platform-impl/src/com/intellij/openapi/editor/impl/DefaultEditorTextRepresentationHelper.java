@@ -20,6 +20,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
 
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 
 /**
  * Not thread-safe. Performs caching of char widths, so cache reset must be invoked (via {@link #clearSymbolWidthCache()} method) when
@@ -46,6 +47,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
    * {@link Editor#getColorsScheme()} often due to contention in 'assert read access'.
    */
   private final Editor             myEditor;
+  private FontRenderContext myFontRenderContext;
 
   public DefaultEditorTextRepresentationHelper(Editor editor) {
     myEditor = editor;
@@ -67,7 +69,8 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
       return result;
     }
     Key key = mySharedKey.clone();
-    FontInfo font = ComplementaryFontsRegistry.getFontAbleToDisplay(c, key.fontType, myEditor.getColorsScheme().getFontPreferences());
+    FontInfo font = ComplementaryFontsRegistry.getFontAbleToDisplay(c, key.fontType, myEditor.getColorsScheme().getFontPreferences(),
+                                                                    myFontRenderContext);
     result = font.charWidth(c);
     if (mySymbolWidthCache.size() >= MAX_SYMBOLS_WIDTHS_CACHE_SIZE) {
       // Don't expect to be here.
@@ -79,6 +82,12 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
 
   public void clearSymbolWidthCache() {
     mySymbolWidthCache.clear();
+  }
+
+  public void updateContext() {
+    FontRenderContext oldContext = myFontRenderContext;
+    myFontRenderContext = FontInfo.getFontRenderContext(myEditor.getContentComponent());
+    if (!myFontRenderContext.equals(oldContext)) clearSymbolWidthCache();
   }
 
   private static class Key {

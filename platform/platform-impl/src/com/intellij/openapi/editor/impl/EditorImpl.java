@@ -147,8 +147,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Cursor EMPTY_CURSOR;
 
   static {
-    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, Font.PLAIN, UIManager.getFont("Label.font").getFamily()); // load costly font info
-
     Cursor emptyCursor = null;
     if (!GraphicsEnvironment.isHeadless()) {
       try {

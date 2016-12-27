@@ -24,7 +24,7 @@ import java.awt.*;
 public class FontUtil {
   @NotNull
   public static Font getFontAbleToDisplay(char c, int size, int style, @NotNull String family) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, family).getFont();
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, family, null).getFont();
   }
 
   @NotNull

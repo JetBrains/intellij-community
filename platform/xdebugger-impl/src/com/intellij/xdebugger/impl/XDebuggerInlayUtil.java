@@ -88,7 +88,8 @@ public class XDebuggerInlayUtil {
       FontPreferences fontPreferences = colorsScheme.getFontPreferences();
       TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
       int fontStyle = attributes == null ? Font.PLAIN : attributes.getFontType();
-      return ComplementaryFontsRegistry.getFontAbleToDisplay('a', fontStyle, fontPreferences);
+      return ComplementaryFontsRegistry.getFontAbleToDisplay('a', fontStyle, fontPreferences,
+                                                             FontInfo.getFontRenderContext(editor.getContentComponent()));
     }
 
     @Override

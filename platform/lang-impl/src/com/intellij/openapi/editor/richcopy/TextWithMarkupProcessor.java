@@ -857,7 +857,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       for (; myCurrentOffset < myEndOffset; myCurrentOffset++) {
         FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(myCharSequence.charAt(myCurrentOffset),
                                                                             myFontStyle,
-                                                                            myFontPreferences);
+                                                                            myFontPreferences, null);
         String fontFamilyName = fontInfo.getFont().getFamily();
 
         if (myCurrentFontFamilyName == null) {
