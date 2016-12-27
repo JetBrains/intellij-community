@@ -17,6 +17,10 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -335,6 +340,24 @@ public class SafeDeleteTest extends MultiFileTestCase {
     finally {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
     }
+  }
+
+  public void testUsagesInScratch() throws Exception {
+    BaseRefactoringProcessor.runWithDisabledPreview(() -> {
+      VirtualFile scratchFile = ScratchRootType.getInstance()
+        .createScratchFile(getProject(), PathUtil.makeFileName("jScratch", "java"), JavaLanguage.INSTANCE,
+                           "class jScratch {{//name()\n}}", ScratchFileService.Option.create_if_missing);
+      RefactoringSettings settings = RefactoringSettings.getInstance();
+      boolean oldCommentsOption = settings.SAFE_DELETE_SEARCH_IN_COMMENTS;
+      try {
+        settings.SAFE_DELETE_SEARCH_IN_COMMENTS = true;
+        doSingleFileTest();
+      }
+      finally {
+        settings.SAFE_DELETE_SEARCH_IN_COMMENTS = oldCommentsOption;
+        WriteAction.run(() -> scratchFile.delete(this));
+      }
+    });
   }
 
   private void doTest(@NonNls final String qClassName) throws Exception {
