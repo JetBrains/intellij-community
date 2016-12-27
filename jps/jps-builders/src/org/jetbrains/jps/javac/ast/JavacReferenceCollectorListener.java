@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
 import com.sun.source.tree.*;
@@ -24,7 +23,6 @@ import com.sun.tools.javac.util.ClientCodeException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
@@ -50,14 +48,6 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private final Types myTypeUtility;
   private final Trees myTreeUtility;
   private final JavacNameTable myNameTableCache;
-
-  private NotNullLazyValue<Name> myAsterisk = new NotNullLazyValue<Name>() {
-    @NotNull
-    @Override
-    protected Name compute() {
-      return myElementUtility.getName("*");
-    }
-  };
 
   private final Map<String, ReferenceCollector> myIncompletelyProcessedFiles = new THashMap<String, ReferenceCollector>(10);
 
@@ -178,7 +168,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
           final MemberSelectTree classImport = (MemberSelectTree)qExpr;
           final Element ownerElement = incompletelyProcessedFile.getReferencedElement(classImport);
           final Name name = id.getIdentifier();
-          if (name != myAsterisk.getValue()) {
+          if (name != myNameTableCache.getAsterisk()) {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {

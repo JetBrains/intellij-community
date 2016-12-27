@@ -26,6 +26,7 @@ import javax.lang.model.util.Elements;
 public class JavacNameTable {
   private final SLRUCache<Name, String> myParsedNameCache;
   private final Elements myElements;
+  private Name myAsterisk;
 
   public JavacNameTable(Elements elements) {
     myParsedNameCache = new SLRUCache<Name, String>(1000, 1000) {
@@ -46,5 +47,13 @@ public class JavacNameTable {
   @NotNull
   public String parseBinaryName(Element element) {
     return parseName(myElements.getBinaryName((TypeElement)element));
+  }
+
+  @NotNull
+  public Name getAsterisk() {
+    if (myAsterisk == null) {
+      myAsterisk = myElements.getName("*");
+    }
+    return myAsterisk;
   }
 }
