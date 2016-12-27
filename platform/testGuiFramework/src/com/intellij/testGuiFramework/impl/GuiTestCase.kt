@@ -36,7 +36,6 @@ import java.lang.reflect.InvocationTargetException
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
-
 /**
  * @author Sergey Karashevich
  */
@@ -231,7 +230,6 @@ open class GuiTestCase : GuiTestBase() {
   private fun popupClick(container: Container, itemName: String) {
     GuiTestUtil.clickPopupMenuItem(itemName, false, container, myRobot)
   }
-
 
   private fun jTree(container: Container, path: String? = null): JTreeFixture {
     val myTree: JTree?
