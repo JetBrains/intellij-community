@@ -16,7 +16,6 @@
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.Consumer;
-import com.intellij.util.ReflectionUtil;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
@@ -55,7 +54,13 @@ final class JavacReferenceCollectorListener implements TaskListener {
                         boolean divideImportRefs,
                         Consumer<JavacFileData> dataConsumer) {
     JavacTask javacTask = (JavacTask)task;
-    Method addTaskMethod = ReflectionUtil.getMethod(JavacTask.class, "addTaskListener", TaskListener.class); // jdk >= 8
+    Method addTaskMethod; // jdk >= 8
+    try {
+      addTaskMethod = JavacTask.class.getMethod("addTaskListener", TaskListener.class);
+    }
+    catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
     final JavacReferenceCollectorListener taskListener = new JavacReferenceCollectorListener(divideImportRefs,
                                                                                              dataConsumer,
                                                                                              javacTask.getElements(),
@@ -63,6 +68,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
                                                                                              Trees.instance(javacTask));
     if (addTaskMethod != null) {
       try {
+        addTaskMethod.setAccessible(true);
         addTaskMethod.invoke(task, taskListener);
       }
       catch (IllegalAccessException e) {
