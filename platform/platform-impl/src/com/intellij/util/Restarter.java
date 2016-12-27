@@ -186,7 +186,7 @@ public class Restarter {
     return copy;
   }
 
-  @SuppressWarnings("SameParameterValue")
+  @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
   private interface Kernel32 extends StdCallLibrary {
     int GetCurrentProcessId();
     WString GetCommandLineW();
