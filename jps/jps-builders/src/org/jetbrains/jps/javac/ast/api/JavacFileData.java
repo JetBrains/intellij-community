@@ -16,11 +16,8 @@
 package org.jetbrains.jps.javac.ast.api;
 
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -28,6 +25,11 @@ import java.io.*;
 import java.util.*;
 
 public class JavacFileData {
+  private static final byte CLASS_MARKER = 0;
+  private static final byte METHOD_MARKER = 1;
+  private static final byte FIELD_MARKER = 2;
+  private static final byte FUN_EXPR_MARKER = 3;
+
   private final String myFilePath;
   private final Collection<JavacRef> myRefs;
   private final Collection<JavacRef> myImportRefs;
@@ -65,10 +67,13 @@ public class JavacFileData {
 
   @NotNull
   public byte[] asBytes() {
-    final BufferExposingByteArrayOutputStream os = new BufferExposingByteArrayOutputStream();
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
     DataOutputStream stream = new DataOutputStream(os);
     try {
-      EXTERNALIZER.save(stream, this);
+      stream.writeUTF(getFilePath());
+      saveRefs(stream, getRefs());
+      saveRefs(stream, getImportRefs());
+      saveDefs(stream, getDefs());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -78,178 +83,140 @@ public class JavacFileData {
 
   @NotNull
   public static JavacFileData fromBytes(byte[] bytes) {
-    final ByteArrayInputStream is = new ByteArrayInputStream(bytes);
+    final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
     try {
-      return EXTERNALIZER.read(new DataInputStream(is));
+      return new JavacFileData(in.readUTF(),
+                               readRefs(in),
+                               readRefs(in),
+                               readDefs(in));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private static final DataExternalizer<JavacFileData> EXTERNALIZER = new DataExternalizer<JavacFileData>() {
-    DataExternalizer<JavacRef> myRefSeqExternalizer = createRefExternalizer();
-    DataExternalizer<JavacDef> myDefSeqExternalizer = createDefExternalizer();
-
-    @Override
-    public void save(@NotNull DataOutput out, JavacFileData data) throws IOException {
-      out.writeUTF(data.getFilePath());
-      saveRefs(out, data.getRefs());
-      saveRefs(out, data.getImportRefs());
-      saveDefs(out, data.getDefs());
-    }
-
-    @Override
-    public JavacFileData read(@NotNull DataInput in) throws IOException {
-      return new JavacFileData(in.readUTF(),
-                               readRefs(in),
-                               readRefs(in),
-                               readDefs(in));
-    }
-
-
-    private void saveRefs(final DataOutput out, Collection<JavacRef> refs) throws IOException {
-      DataInputOutputUtil.writeSeq(out, refs, new ThrowableConsumer<JavacRef, IOException>() {
-        @Override
-        public void consume(JavacRef ref) throws IOException {
-          myRefSeqExternalizer.save(out, ref);
-        }
-      });
-    }
-
-    private Collection<JavacRef> readRefs(final DataInput in) throws IOException {
-      return DataInputOutputUtil.readSeq(in, new ThrowableComputable<JavacRef, IOException>() {
-        @Override
-        public JavacRef compute() throws IOException {
-          return myRefSeqExternalizer.read(in);
-        }
-      });
-    }
-
-    private void saveDefs(final DataOutput out, List<JavacDef> defs) throws IOException {
-      DataInputOutputUtil.writeSeq(out, defs, new ThrowableConsumer<JavacDef, IOException>() {
-        @Override
-        public void consume(JavacDef def) throws IOException {
-          myDefSeqExternalizer.save(out, def);
-        }
-      });
-    }
-
-    private List<JavacDef> readDefs(final DataInput in) throws IOException {
-      return DataInputOutputUtil.readSeq(in, new ThrowableComputable<JavacDef, IOException>() {
-        @Override
-        public JavacDef compute() throws IOException {
-          return myDefSeqExternalizer.read(in);
-        }
-      });
-    }
-
-  };
-
-  private static DataExternalizer<JavacDef> createDefExternalizer() {
-    return new DataExternalizer<JavacDef>() {
-      private static final byte CLASS_MARKER = 0;
-      private static final byte FUN_EXPR_MARKER = 1;
-
-      DataExternalizer<JavacRef> refExternalizer = createRefExternalizer();
-
+  private static void saveRefs(final DataOutput out, Collection<JavacRef> refs) throws IOException {
+    DataInputOutputUtil.writeSeq(out, refs, new ThrowableConsumer<JavacRef, IOException>() {
       @Override
-      public void save(@NotNull DataOutput out, JavacDef def) throws IOException {
-        if (def instanceof JavacDef.JavacClassDef) {
-          out.writeByte(CLASS_MARKER);
-          final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
-          out.writeInt(superClasses.length);
-          for (JavacRef aClass : superClasses) {
-            refExternalizer.save(out, aClass);
-          }
-        }
-        else if (def instanceof JavacDef.JavacFunExprDef) {
-          out.writeByte(FUN_EXPR_MARKER);
-        } else {
-          throw new IllegalStateException("unknown type: " + def.getClass());
-        }
-        refExternalizer.save(out, def.getDefinedElement());
+      public void consume(JavacRef ref) throws IOException {
+        writeJavacRef(out, ref);
       }
-
-      @Override
-      public JavacDef read(@NotNull DataInput in) throws IOException {
-        final byte marker = in.readByte();
-        switch (marker) {
-          case CLASS_MARKER:
-            final int supersSize = in.readInt();
-            JavacRef[] superClasses = new JavacRef[supersSize];
-            for (int i = 0; i < supersSize; i++) {
-              superClasses[i] = refExternalizer.read(in);
-            }
-            return new JavacDef.JavacClassDef(refExternalizer.read(in), superClasses);
-          case FUN_EXPR_MARKER:
-            return new JavacDef.JavacFunExprDef(refExternalizer.read(in));
-          default: throw new IllegalStateException("unknown marker " + marker);
-        }
-      }
-    };
+    });
   }
 
-  private static DataExternalizer<JavacRef> createRefExternalizer() {
-    return new DataExternalizer<JavacRef>() {
-      private static final byte CLASS_MARKER = 0;
-      private static final byte METHOD_MARKER = 1;
-      private static final byte FIELD_MARKER = 2;
-
+  private static Collection<JavacRef> readRefs(final DataInput in) throws IOException {
+    return DataInputOutputUtil.readSeq(in, new ThrowableComputable<JavacRef, IOException>() {
       @Override
-      public void save(@NotNull DataOutput out, JavacRef ref) throws IOException {
-        if (ref instanceof JavacRef.JavacClass) {
-          out.writeByte(CLASS_MARKER);
-          out.writeBoolean(((JavacRef.JavacClass)ref).isAnonymous());
-        }
-        else if (ref instanceof JavacRef.JavacField) {
-          out.writeByte(FIELD_MARKER);
-          IOUtil.writeUTF(out, ref.getOwnerName());
-        }
-        else if (ref instanceof JavacRef.JavacMethod) {
-          out.writeByte(METHOD_MARKER);
-          IOUtil.writeUTF(out, ref.getOwnerName());
-          out.write(((JavacRef.JavacMethod)ref).getParamCount());
-        } else {
-          throw new IllegalStateException("unknown type: " + ref.getClass());
-        }
-        writeModifiers(out, ref.getModifiers());
-        IOUtil.writeUTF(out, ref.getName());
+      public JavacRef compute() throws IOException {
+        return readJavacRef(in);
       }
+    });
+  }
 
+  private static void saveDefs(final DataOutput out, List<JavacDef> defs) throws IOException {
+    DataInputOutputUtil.writeSeq(out, defs, new ThrowableConsumer<JavacDef, IOException>() {
       @Override
-      public JavacRef read(@NotNull DataInput in) throws IOException {
-        final byte marker = in.readByte();
-        switch (marker) {
-          case CLASS_MARKER:
-            return new JavacRef.JavacClassImpl(in.readBoolean(), readModifiers(in), IOUtil.readUTF(in));
-          case METHOD_MARKER:
-            return new JavacRef.JavacMethodImpl(IOUtil.readUTF(in), in.readByte(), readModifiers(in), IOUtil.readUTF(in));
-          case FIELD_MARKER:
-            return new JavacRef.JavacFieldImpl(IOUtil.readUTF(in), readModifiers(in), IOUtil.readUTF(in));
-          default:
-            throw new IllegalStateException("unknown marker " + marker);
+      public void consume(JavacDef def) throws IOException {
+        writeJavacDef(out, def);
+      }
+    });
+  }
+
+  private static List<JavacDef> readDefs(final DataInput in) throws IOException {
+    return DataInputOutputUtil.readSeq(in, new ThrowableComputable<JavacDef, IOException>() {
+      @Override
+      public JavacDef compute() throws IOException {
+        return readJavacDef(in);
+      }
+    });
+  }
+
+  private static JavacDef readJavacDef(@NotNull DataInput in) throws IOException {
+    final byte marker = in.readByte();
+    switch (marker) {
+      case CLASS_MARKER:
+        final int supersSize = in.readInt();
+        JavacRef[] superClasses = new JavacRef[supersSize];
+        for (int i = 0; i < supersSize; i++) {
+          superClasses[i] = readJavacRef(in);
         }
-      }
+        return new JavacDef.JavacClassDef(readJavacRef(in), superClasses);
+      case FUN_EXPR_MARKER:
+        return new JavacDef.JavacFunExprDef(readJavacRef(in));
+      default:
+        throw new IllegalStateException("unknown marker " + marker);
+    }
+  }
 
-      private void writeModifiers(final DataOutput output, Set<Modifier> modifiers) throws IOException {
-        DataInputOutputUtil.writeSeq(output, modifiers, new ThrowableConsumer<Modifier, IOException>() {
-          @Override
-          public void consume(Modifier modifier) throws IOException {
-            IOUtil.writeUTF(output, modifier.name());
-          }
-        });
+  private static void writeJavacDef(@NotNull DataOutput out, JavacDef def) throws IOException {
+    if (def instanceof JavacDef.JavacClassDef) {
+      out.writeByte(CLASS_MARKER);
+      final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
+      out.writeInt(superClasses.length);
+      for (JavacRef aClass : superClasses) {
+        writeJavacRef(out, aClass);
       }
+    }
+    else if (def instanceof JavacDef.JavacFunExprDef) {
+      out.writeByte(FUN_EXPR_MARKER);
+    }
+    else {
+      throw new IllegalStateException("unknown type: " + def.getClass());
+    }
+    writeJavacRef(out, def.getDefinedElement());
+  }
 
-      private Set<Modifier> readModifiers(final DataInput input) throws IOException {
-        final List<Modifier> modifierList = DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
-          @Override
-          public Modifier compute() throws IOException {
-            return Modifier.valueOf(IOUtil.readUTF(input));
-          }
-        });
-        return modifierList.isEmpty() ? Collections.<Modifier>emptySet() : EnumSet.copyOf(modifierList);
+  private static void writeJavacRef(@NotNull DataOutput out, JavacRef ref) throws IOException {
+    if (ref instanceof JavacRef.JavacClass) {
+      out.writeByte(CLASS_MARKER);
+      out.writeBoolean(((JavacRef.JavacClass)ref).isAnonymous());
+    }
+    else if (ref instanceof JavacRef.JavacField) {
+      out.writeByte(FIELD_MARKER);
+      out.writeUTF(ref.getOwnerName());
+    }
+    else if (ref instanceof JavacRef.JavacMethod) {
+      out.writeByte(METHOD_MARKER);
+      out.writeUTF(ref.getOwnerName());
+      out.write(((JavacRef.JavacMethod)ref).getParamCount());
+    }
+    else {
+      throw new IllegalStateException("unknown type: " + ref.getClass());
+    }
+    writeModifiers(out, ref.getModifiers());
+    out.writeUTF(ref.getName());
+  }
+
+  private static JavacRef readJavacRef(@NotNull DataInput in) throws IOException {
+    final byte marker = in.readByte();
+    switch (marker) {
+      case CLASS_MARKER:
+        return new JavacRef.JavacClassImpl(in.readBoolean(), readModifiers(in), in.readUTF());
+      case METHOD_MARKER:
+        return new JavacRef.JavacMethodImpl(in.readUTF(), in.readByte(), readModifiers(in), in.readUTF());
+      case FIELD_MARKER:
+        return new JavacRef.JavacFieldImpl(in.readUTF(), readModifiers(in), in.readUTF());
+      default:
+        throw new IllegalStateException("unknown marker " + marker);
+    }
+  }
+
+  private static void writeModifiers(final DataOutput output, Set<Modifier> modifiers) throws IOException {
+    DataInputOutputUtil.writeSeq(output, modifiers, new ThrowableConsumer<Modifier, IOException>() {
+      @Override
+      public void consume(Modifier modifier) throws IOException {
+        output.writeUTF(modifier.name());
       }
-    };
+    });
+  }
+
+  private static Set<Modifier> readModifiers(final DataInput input) throws IOException {
+    final List<Modifier> modifierList = DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
+      @Override
+      public Modifier compute() throws IOException {
+        return Modifier.valueOf(input.readUTF());
+      }
+    });
+    return modifierList.isEmpty() ? Collections.<Modifier>emptySet() : EnumSet.copyOf(modifierList);
   }
 }
