@@ -351,6 +351,16 @@ abstract class Operation {
     }
 
     @Override
+    Operation combineWithNext(Operation next) {
+      if (next instanceof TerminalOperation.ToArrayTerminalOperation ||
+          (next instanceof TerminalOperation.ToCollectionTerminalOperation
+           && ((TerminalOperation.ToCollectionTerminalOperation)next).isList())) {
+        return new TerminalOperation.SortedTerminalOperation((TerminalOperation.AccumulatedOperation)next, myComparator);
+      }
+      return null;
+    }
+
+    @Override
     String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String list = context.registerVarName(Arrays.asList("toSort", "listToSort"));
       context.addAfterStep(new SourceOperation.ForEachSource(context.createExpression(list)).wrap(null, outVar, code, context));

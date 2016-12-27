@@ -9,7 +9,7 @@ public class Main {
       for (String s : list) {
           result.add(s);
       }
-      result.sort(String.CASE_INSENSITIVE_ORDER);
-      return result;
+      result.sort(null);
+      return result.toArray(new String[0]);
   }
 }
