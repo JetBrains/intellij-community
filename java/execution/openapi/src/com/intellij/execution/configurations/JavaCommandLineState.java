@@ -53,7 +53,9 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
-    javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
+    if (!javaParameters.isDynamicClasspath()) {
+      javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
+    }
     return javaParameters.toCommandLine();
   }
 
