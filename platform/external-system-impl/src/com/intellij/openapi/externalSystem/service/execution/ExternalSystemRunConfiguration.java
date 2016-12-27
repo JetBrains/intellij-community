@@ -4,6 +4,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -169,6 +170,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       String debuggerSetup = null;
       if (myDebugPort > 0) {
         debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+      } else {
+        ParametersList parametersList = myEnv.getUserData(ExternalSystemTaskExecutionSettings.DEBUGGER_SETUP_KEY);
+        if (parametersList != null) {
+          debuggerSetup = parametersList.getParametersString();
+        }
       }
 
       ApplicationManager.getApplication().assertIsDispatchThread();
