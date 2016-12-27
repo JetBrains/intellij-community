@@ -179,4 +179,25 @@ appender('FOO_<caret>APP', ConsoleAppender)
       assert targetElement.target instanceof AppenderTarget
     }
   }
+
+  void 'test no error when class with same name exists'() {
+    fixture.with {
+      addClass '''\
+package pckg1;
+public class SomeClass {}
+'''
+      addClass '''
+package pckg2;
+public class SomeConfigurableClass {
+  public void setSomeClass(pckg1.SomeClass someClass) {}
+}'''
+      configureByText 'logback.groovy', '''\
+appender('foo', pckg2.SomeConfigurableClass) {
+  someClass = SomeClass.<caret>
+}
+'''
+      enableInspections GrUnresolvedAccessInspection
+      completeBasic()
+    }
+  }
 }
