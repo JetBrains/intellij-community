@@ -19,6 +19,7 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,6 +62,7 @@ public class Restarter {
   }
 
   public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
+    Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
       restartOnWindows(beforeRestart);
     }
