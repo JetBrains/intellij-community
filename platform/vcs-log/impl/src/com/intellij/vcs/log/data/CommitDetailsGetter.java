@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,8 +20,9 @@ public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails
 
   CommitDetailsGetter(@NotNull VcsLogStorage hashMap,
                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                      @NotNull VcsLogIndex index,
                       @NotNull Disposable parentDisposable) {
-    super(hashMap, logProviders, new VcsCommitCache<>(), parentDisposable);
+    super(hashMap, logProviders, new VcsCommitCache<>(), index, parentDisposable);
   }
 
   @Nullable
