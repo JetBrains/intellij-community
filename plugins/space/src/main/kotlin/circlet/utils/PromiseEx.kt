@@ -2,6 +2,7 @@ package circlet.utils
 
 import com.intellij.openapi.application.*
 import runtime.*
+import runtime.kdata.*
 import runtime.lifetimes.*
 
 fun<T> Promise<T>.thenLater(lifetime : Lifetime, modalityState: ModalityState = ModalityState.current(), handler: (T) -> Unit): Promise<T> =

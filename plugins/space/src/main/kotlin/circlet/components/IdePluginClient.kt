@@ -160,9 +160,7 @@ class IdePluginClient(val project: Project) :
             { a, b -> disable() })
         notification.notify(lt, project)
         attemptToConnectNotificationShown = true
-        lt.add {
-            attemptToConnectNotificationShown = false
-        }
+        lt.inContext { afterTermination { attemptToConnectNotificationShown = false } }
     }
 
     fun notifyDisconnected(lt: Lifetime) {

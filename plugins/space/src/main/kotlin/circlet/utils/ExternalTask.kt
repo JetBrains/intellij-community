@@ -4,28 +4,31 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import klogging.*
 import runtime.*
+import runtime.kdata.*
 import runtime.lifetimes.*
 
 private val log = KLoggers.logger("plugin/ExternalTask.kt")
 
-interface IExternalTask{
-    val lifetime : Lifetime
+interface IExternalTask {
+    val lifetime: Lifetime
 
-    val cancel : () -> Unit
+    val cancel: () -> Unit
 
-    val title : String get
-    val header : String get
-    val description : String get
-    val isIndeterminate : Boolean get
+    val title: String get
+    val header: String get
+    val description: String get
+    val isIndeterminate: Boolean get
     val progress: Double
 }
 
-fun externalTask(project : Project, cancelable : Boolean, task : IExternalTask): Task {
+fun externalTask(project: Project, cancelable: Boolean, task: IExternalTask): Task {
 
     val lock = Object()
-    task.lifetime.add {
-        Sync.exec(lock) {
-            lock.notify()
+    task.lifetime.inContext {
+        afterTermination {
+            Sync.exec(lock) {
+                lock.notify()
+            }
         }
     }
 

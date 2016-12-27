@@ -13,31 +13,30 @@ import com.intellij.psi.*
 import runtime.kdata.*
 import runtime.lifetimes.*
 
-inline fun <reified T: Any> ComponentManager.getComponent() : T =
+inline fun <reified T : Any> ComponentManager.getComponent(): T =
     this.getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
 
-inline fun <reified T : Any>component() : T = application.getComponent<T>()
-inline fun <reified T : Any>Project.component() : T = this.getComponent<T>()
+inline fun <reified T : Any> component(): T = application.getComponent<T>()
+inline fun <reified T : Any> Project.component(): T = this.getComponent<T>()
 
-val DataContext.Editor : Editor?
+val DataContext.Editor: Editor?
     get() = CommonDataKeys.EDITOR.getData(this)
 
-val DataContext.PsiFile : PsiFile?
+val DataContext.PsiFile: PsiFile?
     get() = CommonDataKeys.PSI_FILE.getData(this)
 
-val DataContext.Project : Project?
+val DataContext.Project: Project?
     get() = CommonDataKeys.PROJECT.getData(this)
 
 
-
 fun createApplicationLifetime(): Lifetime {
-    val result = Lifetime.create(Lifetime.Eternal)
+    val result = Lifetime()
     application.addApplicationListener(object : ApplicationAdapter() {
         override fun applicationExiting() {
             result.terminate()
         }
     })
-    return result.lifetime
+    return result
 }
 
 val application: Application
@@ -48,9 +47,9 @@ val applicationEx: ApplicationEx
 
 // Bad inspection Disposable {} != object: Disposable {}
 @Suppress("ObjectLiteralToLambda")
-fun Disposable.attachLifetime(): BindingContext {
-    val defComponent = BindingContext()
-    Disposer.register(this, object: Disposable {
+fun Disposable.attachLifetime(): Lifetime {
+    val defComponent = Lifetime()
+    Disposer.register(this, object : Disposable {
         override fun dispose() {
             defComponent.terminate()
         }
@@ -59,12 +58,12 @@ fun Disposable.attachLifetime(): BindingContext {
 }
 
 interface ILifetimedComponent {
-    val componentLifetime: BindingContext
+    val componentLifetime: Lifetime
 }
 
 class LifetimedComponent(project: Project) : ILifetimedComponent {
-    private val lifetime: BindingContext = project.attachLifetime()
-    final override val componentLifetime: BindingContext
+    private val lifetime: Lifetime = project.attachLifetime()
+    final override val componentLifetime: Lifetime
         get() = lifetime
 }
 
@@ -73,7 +72,7 @@ interface ILifetimedApplicationComponent : Disposable {
 }
 
 class LifetimedApplicationComponent() : ILifetimedApplicationComponent {
-    private val lifetimeDefinition = Lifetime.create(Lifetime.Eternal)
+    private val lifetimeDefinition = Lifetime()
 
     init {
         Disposer.register(application, this)
@@ -84,11 +83,11 @@ class LifetimedApplicationComponent() : ILifetimedApplicationComponent {
     }
 
     final override val componentLifetime: Lifetime
-        get() = lifetimeDefinition.lifetime
+        get() = lifetimeDefinition
 }
 
 fun Notification.notify(lifetime: Lifetime, project: Project?) {
-    lifetime.add{ this.expire() }
+    lifetime.inContext { afterTermination { expire() } }
     Notifications.Bus.notify(this, project)
 }
 

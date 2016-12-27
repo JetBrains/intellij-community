@@ -24,7 +24,7 @@ class LoginAuthStatus(val status: LoginStatus, val statusText: String) {
 }
 
 class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
-    val lifetime = BindingContext()
+    val lifetime = Lifetime()
     val loginStatus = Property.createMutable(LoginAuthStatus(LoginStatus.InProrgess, ""))
 
     val login = Property.createMutable(loginComponent.login)
