@@ -28,14 +28,14 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
         return JPanel(BorderLayout()).apply {
             border = EmptyBorder(5.px, 5.px, 5.px, 5.px)
             add(JLabel().apply {
-                viewModel.loginStatus.bind(viewModel.lifetime, { status ->
-                    text = status.presentStatus()
-                    icon = when (status.status) {
+                viewModel.loginStatus.forEach(viewModel.lifetime) {
+                    text = it.presentStatus()
+                    icon = when (it.status) {
                         LoginStatus.Fail -> AllIcons.General.Error
                         LoginStatus.Success -> AllIcons.General.InspectionsOK
                         LoginStatus.InProrgess -> null
                     }
-                })
+                }
             }, BorderLayout.CENTER)
         }
     }
@@ -107,7 +107,7 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
     override fun removeUpdate(e: DocumentEvent?) = refresh()
 
     override fun dispose() {
-        viewModel.lifetimeDef.terminate()
+        viewModel.lifetime.terminate()
         super.dispose()
     }
 }

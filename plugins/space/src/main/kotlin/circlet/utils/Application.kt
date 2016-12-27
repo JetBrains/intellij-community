@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.psi.*
+import runtime.kdata.*
 import runtime.lifetimes.*
 
 inline fun <reified T: Any> ComponentManager.getComponent() : T =
@@ -47,24 +48,23 @@ val applicationEx: ApplicationEx
 
 // Bad inspection Disposable {} != object: Disposable {}
 @Suppress("ObjectLiteralToLambda")
-fun Disposable.attachLifetime(): Lifetime {
-    val defComponent = Lifetime.create(Lifetime.Eternal)
+fun Disposable.attachLifetime(): BindingContext {
+    val defComponent = BindingContext()
     Disposer.register(this, object: Disposable {
         override fun dispose() {
             defComponent.terminate()
         }
-
     })
-    return defComponent.lifetime
+    return defComponent
 }
 
 interface ILifetimedComponent {
-    val componentLifetime: Lifetime
+    val componentLifetime: BindingContext
 }
 
 class LifetimedComponent(project: Project) : ILifetimedComponent {
-    private val lifetime: Lifetime = project.attachLifetime()
-    final override val componentLifetime: Lifetime
+    private val lifetime: BindingContext = project.attachLifetime()
+    final override val componentLifetime: BindingContext
         get() = lifetime
 }
 

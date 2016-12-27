@@ -1,14 +1,13 @@
 package circlet.components
 
 import circlet.*
-import circlet.reactive.*
 import circlet.utils.*
 import com.intellij.ide.passwordSafe.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import klogging.*
 import runtime.*
-import runtime.reactive.*
+import runtime.kdata.*
 
 private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
 
@@ -39,8 +38,8 @@ class CircletLoginComponent() :
     val login : String get() = passwords.getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, LOGIN_ID).orEmpty()
     val pass : String get() = passwords.getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, PASS_ID).orEmpty()
     val token : String get() = passwords.getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, TOKEN_ID).orEmpty()
-    val credentialsUpdated = Signal<Boolean>()
-    val enabled = Property(false)
+    val credentialsUpdated = Signal.create<Boolean>()
+    val enabled = Property.createMutable(false)
 
     fun getAccessToken(login : String, pass : String) : Promise<AuthenticationResponse> {
         log.info( "Checking credentials for ${login}" )

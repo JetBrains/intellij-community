@@ -11,6 +11,7 @@ import com.intellij.xml.util.*
 import klogging.*
 import nl.komponents.kovenant.*
 import runtime.*
+import runtime.kdata.*
 import runtime.klogger.*
 import runtime.lifetimes.*
 import runtime.reactive.*
@@ -34,32 +35,32 @@ class IdePluginClient(val project: Project) :
 
     var attemptToConnectNotificationShown = false
 
-    val state = Property(ConnectingState.Disconnected)
-    val askPasswordExplicitlyAllowed = Property(false)
-    val client = Property<CircletClient?>(null)
+    val state = Property.createMutable(ConnectingState.Disconnected)
+    val askPasswordExplicitlyAllowed = Property.createMutable(false)
+    val client = Property.createMutable<CircletClient?>(null)
 
     init {
 
-        loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
-            state.value = ConnectingState.TryConnect
+//        loginDataComponent.enabled.filter { it }.forEach(componentLifetime) { enabledLt ->
+//            state.value = ConnectingState.TryConnect
+//
+//            enabledLt.add {
+//                disconnect()
+//            }
+//        }
 
-            enabledLt.add {
-                disconnect()
-            }
-        }
-
-        state.view(componentLifetime) { lt, state ->
-            when (state) {
-                ConnectingState.TryConnect -> tryReconnect(lt)
-                ConnectingState.AuthFailed -> authCheckFailedNotification()
-                ConnectingState.Connected -> notifyConnected()
-                ConnectingState.Disconnected -> notifyDisconnected(lt)
-            }
-        }
-
-        loginDataComponent.credentialsUpdated.advise(componentLifetime, {
-            state.value = ConnectingState.TryConnect
-        })
+//        state.view(componentLifetime) { lt, state ->
+//            when (state) {
+//                ConnectingState.TryConnect -> tryReconnect(lt)
+//                ConnectingState.AuthFailed -> authCheckFailedNotification()
+//                ConnectingState.Connected -> notifyConnected()
+//                ConnectingState.Disconnected -> notifyDisconnected(lt)
+//            }
+//        }
+//
+//        loginDataComponent.credentialsUpdated.advise(componentLifetime, {
+//            state.value = ConnectingState.TryConnect
+//        })
 
 /*
         ProgressManager.getInstance().run(externalTask(myProject, true, object: IExternalTask {
