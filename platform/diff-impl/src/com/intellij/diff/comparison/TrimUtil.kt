@@ -13,339 +13,402 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-import com.intellij.diff.util.IntPair;
-import com.intellij.diff.util.MergeRange;
-import com.intellij.diff.util.Range;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.IntPair
+import com.intellij.diff.util.MergeRange
+import com.intellij.diff.util.Range
+import com.intellij.openapi.util.text.StringUtil.isWhiteSpace
 
-import java.util.List;
-
-import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
-
-@SuppressWarnings({"Duplicates", "unused", "TypeParameterExplicitlyExtendsObject"})
-public class TrimUtil {
-  public static boolean isPunctuation(char c) {
-    if (c == '_') return false;
-    boolean isPunctuation = false;
-    isPunctuation |= c >= 33 & c <= 47; // !"#$%&'()*+,-./
-    isPunctuation |= c >= 58 & c <= 64; // :;<=>?@
-    isPunctuation |= c >= 91 & c <= 96; // [\]^_`
-    isPunctuation |= c >= 123 & c <= 126; // {|}~
-    return isPunctuation;
+@Suppress("NAME_SHADOWING")
+object TrimUtil {
+  @JvmStatic fun isPunctuation(c: Char): Boolean {
+    if (c == '_') return false
+    val b = c.toInt()
+    return b >= 33 && b <= 47 || // !"#$%&'()*+,-./
+           b >= 58 && b <= 64 || // :;<=>?@
+           b >= 91 && b <= 96 || // [\]^_`
+           b >= 123 && b <= 126  // {|}~
   }
 
-  public static boolean isAlpha(char c) {
-    return !isWhiteSpace(c) && !isPunctuation(c);
+  @JvmStatic fun isAlpha(c: Char): Boolean {
+    return !isWhiteSpace(c) && !isPunctuation(c)
   }
 
   //
   // Trim
   //
 
-  @NotNull
-  public static Range trim(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                           int start1, int start2, int end1, int end2) {
-    start1 = trimStart(text1, start1, end1);
-    end1 = trimEnd(text1, start1, end1);
-    start2 = trimStart(text2, start2, end2);
-    end2 = trimEnd(text2, start2, end2);
+  @JvmStatic fun trim(text1: CharSequence, text2: CharSequence,
+                      start1: Int, start2: Int, end1: Int, end2: Int): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
 
-    return new Range(start1, end1, start2, end2);
+    start1 = trimStart(text1, start1, end1)
+    end1 = trimEnd(text1, start1, end1)
+    start2 = trimStart(text2, start2, end2)
+    end2 = trimEnd(text2, start2, end2)
+
+    return Range(start1, end1, start2, end2)
   }
 
-  @NotNull
-  public static MergeRange trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                      int start1, int start2, int start3, int end1, int end2, int end3) {
-    start1 = trimStart(text1, start1, end1);
-    end1 = trimEnd(text1, start1, end1);
-    start2 = trimStart(text2, start2, end2);
-    end2 = trimEnd(text2, start2, end2);
-    start3 = trimStart(text3, start3, end3);
-    end3 = trimEnd(text3, start3, end3);
+  @JvmStatic fun trim(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                      start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
+    var start1 = start1
+    var start2 = start2
+    var start3 = start3
+    var end1 = end1
+    var end2 = end2
+    var end3 = end3
 
-    return new MergeRange(start1, end1, start2, end2, start3, end3);
+    start1 = trimStart(text1, start1, end1)
+    end1 = trimEnd(text1, start1, end1)
+    start2 = trimStart(text2, start2, end2)
+    end2 = trimEnd(text2, start2, end2)
+    start3 = trimStart(text3, start3, end3)
+    end3 = trimEnd(text3, start3, end3)
+
+    return MergeRange(start1, end1, start2, end2, start3, end3)
   }
 
-  @NotNull
-  public static IntPair trim(@NotNull CharSequence text, int start, int end) {
-    start = trimStart(text, start, end);
-    end = trimEnd(text, start, end);
+  @JvmStatic fun trim(text: CharSequence, start: Int, end: Int): IntPair {
+    var start = start
+    var end = end
 
-    return new IntPair(start, end);
+    start = trimStart(text, start, end)
+    end = trimEnd(text, start, end)
+
+    return IntPair(start, end)
   }
 
-  public static int trimStart(@NotNull CharSequence text, int start, int end) {
+  @JvmStatic fun trimStart(text: CharSequence, start: Int, end: Int): Int {
+    var start = start
+
     while (start < end) {
-      char c = text.charAt(start);
-      if (!isWhiteSpace(c)) break;
-      start++;
+      val c = text[start]
+      if (!isWhiteSpace(c)) break
+      start++
     }
-    return start;
+    return start
   }
 
-  public static int trimEnd(@NotNull CharSequence text, int start, int end) {
+  @JvmStatic fun trimEnd(text: CharSequence, start: Int, end: Int): Int {
+    var end = end
+
     while (start < end) {
-      char c = text.charAt(end - 1);
-      if (!isWhiteSpace(c)) break;
-      end--;
+      val c = text[end - 1]
+      if (!isWhiteSpace(c)) break
+      end--
     }
-    return end;
+    return end
   }
 
   //
   // Expand
   //
 
-  @NotNull
-  public static Range expand(@NotNull List<?> text1, @NotNull List<?> text2,
-                             int start1, int start2, int end1, int end2) {
-    int count1 = expandForward(text1, text2, start1, start2, end1, end2);
-    start1 += count1;
-    start2 += count1;
+  @JvmStatic fun expand(text1: List<*>, text2: List<*>,
+                        start1: Int, start2: Int, end1: Int, end2: Int): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
 
-    int count2 = expandBackward(text1, text2, start1, start2, end1, end2);
-    end1 -= count2;
-    end2 -= count2;
+    val count1 = expandForward(text1, text2, start1, start2, end1, end2)
+    start1 += count1
+    start2 += count1
 
-    return new Range(start1, end1, start2, end2);
+    val count2 = expandBackward(text1, text2, start1, start2, end1, end2)
+    end1 -= count2
+    end2 -= count2
+
+    return Range(start1, end1, start2, end2)
   }
 
-  @NotNull
-  public static Range expand(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                             int start1, int start2, int end1, int end2) {
-    int count1 = expandForward(text1, text2, start1, start2, end1, end2);
-    start1 += count1;
-    start2 += count1;
+  @JvmStatic fun expand(text1: CharSequence, text2: CharSequence,
+                        start1: Int, start2: Int, end1: Int, end2: Int): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
 
-    int count2 = expandBackward(text1, text2, start1, start2, end1, end2);
-    end1 -= count2;
-    end2 -= count2;
+    val count1 = expandForward(text1, text2, start1, start2, end1, end2)
+    start1 += count1
+    start2 += count1
 
-    return new Range(start1, end1, start2, end2);
+    val count2 = expandBackward(text1, text2, start1, start2, end1, end2)
+    end1 -= count2
+    end2 -= count2
+
+    return Range(start1, end1, start2, end2)
   }
 
-  @NotNull
-  public static Range expandW(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                              int start1, int start2, int end1, int end2) {
-    int count1 = expandForwardW(text1, text2, start1, start2, end1, end2);
-    start1 += count1;
-    start2 += count1;
+  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence,
+                         start1: Int, start2: Int, end1: Int, end2: Int): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
 
-    int count2 = expandBackwardW(text1, text2, start1, start2, end1, end2);
-    end1 -= count2;
-    end2 -= count2;
+    val count1 = expandForwardW(text1, text2, start1, start2, end1, end2)
+    start1 += count1
+    start2 += count1
 
-    return new Range(start1, end1, start2, end2);
+    val count2 = expandBackwardW(text1, text2, start1, start2, end1, end2)
+    end1 -= count2
+    end2 -= count2
+
+    return Range(start1, end1, start2, end2)
   }
 
-  @NotNull
-  public static MergeRange expandW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                   int start1, int start2, int start3, int end1, int end2, int end3) {
-    int count1 = expandForwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3);
-    start1 += count1;
-    start2 += count1;
-    start3 += count1;
+  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                         start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
+    var start1 = start1
+    var start2 = start2
+    var start3 = start3
+    var end1 = end1
+    var end2 = end2
+    var end3 = end3
 
-    int count2 = expandBackwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3);
-    end1 -= count2;
-    end2 -= count2;
-    end3 -= count2;
+    val count1 = expandForwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3)
+    start1 += count1
+    start2 += count1
+    start3 += count1
 
-    return new MergeRange(start1, end1, start2, end2, start3, end3);
+    val count2 = expandBackwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3)
+    end1 -= count2
+    end2 -= count2
+    end3 -= count2
+
+    return MergeRange(start1, end1, start2, end2, start3, end3)
   }
 
-  public static int expandForward(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                  int start1, int start2, int end1, int end2) {
-    int oldStart1 = start1;
+  @JvmStatic fun expandForward(text1: CharSequence, text2: CharSequence,
+                               start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    var start1 = start1
+    var start2 = start2
+
+    val oldStart1 = start1
     while (start1 < end1 && start2 < end2) {
-      char c1 = text1.charAt(start1);
-      char c2 = text2.charAt(start2);
-      if (c1 != c2) break;
-      start1++;
-      start2++;
+      val c1 = text1[start1]
+      val c2 = text2[start2]
+      if (c1 != c2) break
+      start1++
+      start2++
     }
 
-    return start1 - oldStart1;
+    return start1 - oldStart1
   }
 
-  public static int expandForward(@NotNull List<?> text1, @NotNull List<?> text2,
-                                  int start1, int start2, int end1, int end2) {
-    int oldStart1 = start1;
+  @JvmStatic fun expandForward(text1: List<*>, text2: List<*>,
+                               start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    var start1 = start1
+    var start2 = start2
+
+    val oldStart1 = start1
     while (start1 < end1 && start2 < end2) {
-      Object c1 = text1.get(start1);
-      Object c2 = text2.get(start2);
-      if (!c1.equals(c2)) break;
-      start1++;
-      start2++;
+      val c1 = text1[start1]
+      val c2 = text2[start2]
+      if (c1 != c2) break
+      start1++
+      start2++
     }
 
-    return start1 - oldStart1;
+    return start1 - oldStart1
   }
 
-  public static int expandForwardW(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                   int start1, int start2, int end1, int end2) {
-    int oldStart1 = start1;
+  @JvmStatic fun expandForwardW(text1: CharSequence, text2: CharSequence,
+                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    var start1 = start1
+    var start2 = start2
+
+    val oldStart1 = start1
     while (start1 < end1 && start2 < end2) {
-      char c1 = text1.charAt(start1);
-      char c2 = text2.charAt(start2);
-      if (c1 != c2 || !isWhiteSpace(c1)) break;
-      start1++;
-      start2++;
+      val c1 = text1[start1]
+      val c2 = text2[start2]
+      if (c1 != c2 || !isWhiteSpace(c1)) break
+      start1++
+      start2++
     }
 
-    return start1 - oldStart1;
+    return start1 - oldStart1
   }
 
-  public static int expandBackward(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                   int start1, int start2, int end1, int end2) {
-    int oldEnd1 = end1;
+  @JvmStatic fun expandBackward(text1: CharSequence, text2: CharSequence,
+                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    var end1 = end1
+    var end2 = end2
+
+    val oldEnd1 = end1
     while (start1 < end1 && start2 < end2) {
-      char c1 = text1.charAt(end1 - 1);
-      char c2 = text2.charAt(end2 - 1);
-      if (c1 != c2) break;
-      end1--;
-      end2--;
+      val c1 = text1[end1 - 1]
+      val c2 = text2[end2 - 1]
+      if (c1 != c2) break
+      end1--
+      end2--
     }
 
-    return oldEnd1 - end1;
+    return oldEnd1 - end1
   }
 
-  public static int expandBackward(@NotNull List<?> text1, @NotNull List<?> text2,
-                                   int start1, int start2, int end1, int end2) {
-    int oldEnd1 = end1;
+  @JvmStatic fun expandBackward(text1: List<*>, text2: List<*>,
+                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    var end1 = end1
+    var end2 = end2
+
+    val oldEnd1 = end1
     while (start1 < end1 && start2 < end2) {
-      Object c1 = text1.get(end1 - 1);
-      Object c2 = text2.get(end2 - 1);
-      if (!c1.equals(c2)) break;
-      end1--;
-      end2--;
+      val c1 = text1[end1 - 1]
+      val c2 = text2[end2 - 1]
+      if (c1 != c2) break
+      end1--
+      end2--
     }
 
-    return oldEnd1 - end1;
+    return oldEnd1 - end1
   }
 
-  public static int expandBackwardW(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                    int start1, int start2, int end1, int end2) {
-    int oldEnd1 = end1;
+  @JvmStatic fun expandBackwardW(text1: CharSequence, text2: CharSequence,
+                                 start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    var end1 = end1
+    var end2 = end2
+
+    val oldEnd1 = end1
     while (start1 < end1 && start2 < end2) {
-      char c1 = text1.charAt(end1 - 1);
-      char c2 = text2.charAt(end2 - 1);
-      if (c1 != c2 || !isWhiteSpace(c1)) break;
-      end1--;
-      end2--;
+      val c1 = text1[end1 - 1]
+      val c2 = text2[end2 - 1]
+      if (c1 != c2 || !isWhiteSpace(c1)) break
+      end1--
+      end2--
     }
 
-    return oldEnd1 - end1;
+    return oldEnd1 - end1
   }
 
-  public static int expandForwardW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                   int start1, int start2, int start3, int end1, int end2, int end3) {
-    int oldStart1 = start1;
+  @JvmStatic fun expandForwardW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                                start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
+    var start1 = start1
+    var start2 = start2
+    var start3 = start3
+
+    val oldStart1 = start1
     while (start1 < end1 && start2 < end2 && start3 < end3) {
-      char c1 = text1.charAt(start1);
-      char c2 = text2.charAt(start2);
-      char c3 = text3.charAt(start3);
-      if (c1 != c2 || c1 != c3 || !isWhiteSpace(c1)) break;
-      start1++;
-      start2++;
-      start3++;
+      val c1 = text1[start1]
+      val c2 = text2[start2]
+      val c3 = text3[start3]
+      if (c1 != c2 || c1 != c3 || !isWhiteSpace(c1)) break
+      start1++
+      start2++
+      start3++
     }
 
-    return start1 - oldStart1;
+    return start1 - oldStart1
   }
 
-  public static int expandBackwardW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                    int start1, int start2, int start3, int end1, int end2, int end3) {
-    int oldEnd1 = end1;
+  @JvmStatic fun expandBackwardW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                                 start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
+    var end1 = end1
+    var end2 = end2
+    var end3 = end3
+
+    val oldEnd1 = end1
     while (start1 < end1 && start2 < end2 && start3 < end3) {
-      char c1 = text1.charAt(end1 - 1);
-      char c2 = text2.charAt(end2 - 1);
-      char c3 = text3.charAt(end3 - 1);
-      if (c1 != c2 || c1 != c3|| !isWhiteSpace(c1)) break;
-      end1--;
-      end2--;
-      end3--;
+      val c1 = text1[end1 - 1]
+      val c2 = text2[end2 - 1]
+      val c3 = text3[end3 - 1]
+      if (c1 != c2 || c1 != c3 || !isWhiteSpace(c1)) break
+      end1--
+      end2--
+      end3--
     }
 
-    return oldEnd1 - end1;
+    return oldEnd1 - end1
   }
 
-  @NotNull
-  public static IntPair expandForwardIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                        int start1, int start2, int end1, int end2) {
+  @JvmStatic fun expandForwardIW(text1: CharSequence, text2: CharSequence,
+                                 start1: Int, start2: Int, end1: Int, end2: Int): IntPair {
+    var start1 = start1
+    var start2 = start2
+
     while (start1 < end1 && start2 < end2) {
-      char c1 = text1.charAt(start1);
-      char c2 = text2.charAt(start2);
+      val c1 = text1[start1]
+      val c2 = text2[start2]
 
       if (c1 == c2) {
-        start1++;
-        start2++;
-        continue;
+        start1++
+        start2++
+        continue
       }
 
-      boolean skipped = false;
+      var skipped = false
       if (isWhiteSpace(c1)) {
-        skipped = true;
-        start1++;
+        skipped = true
+        start1++
       }
       if (isWhiteSpace(c2)) {
-        skipped = true;
-        start2++;
+        skipped = true
+        start2++
       }
-      if (!skipped) break;
+      if (!skipped) break
     }
 
-    start1 = trimStart(text1, start1, end1);
-    start2 = trimStart(text2, start2, end2);
+    start1 = trimStart(text1, start1, end1)
+    start2 = trimStart(text2, start2, end2)
 
-    return new IntPair(start1, start2);
+    return IntPair(start1, start2)
   }
 
-  @NotNull
-  public static IntPair expandBackwardIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                         int start1, int start2, int end1, int end2) {
+  @JvmStatic fun expandBackwardIW(text1: CharSequence, text2: CharSequence,
+                                  start1: Int, start2: Int, end1: Int, end2: Int): IntPair {
+    var end1 = end1
+    var end2 = end2
+
     while (start1 < end1 && start2 < end2) {
-      char c1 = text1.charAt(end1 - 1);
-      char c2 = text2.charAt(end2 - 1);
+      val c1 = text1[end1 - 1]
+      val c2 = text2[end2 - 1]
 
       if (c1 == c2) {
-        end1--;
-        end2--;
-        continue;
+        end1--
+        end2--
+        continue
       }
 
-      boolean skipped = false;
+      var skipped = false
       if (isWhiteSpace(c1)) {
-        skipped = true;
-        end1--;
+        skipped = true
+        end1--
       }
       if (isWhiteSpace(c2)) {
-        skipped = true;
-        end2--;
+        skipped = true
+        end2--
       }
-      if (!skipped) break;
+      if (!skipped) break
     }
 
-    end1 = trimEnd(text1, start1, end1);
-    end2 = trimEnd(text2, start2, end2);
+    end1 = trimEnd(text1, start1, end1)
+    end2 = trimEnd(text2, start2, end2)
 
-    return new IntPair(end1, end2);
+    return IntPair(end1, end2)
   }
 
-  @NotNull
-  public static Range expandIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                               int start1, int start2, int end1, int end2) {
-    IntPair start = expandForwardIW(text1, text2, start1, start2, end1, end2);
-    start1 = start.val1;
-    start2 = start.val2;
+  @JvmStatic fun expandIW(text1: CharSequence, text2: CharSequence,
+                          start1: Int, start2: Int, end1: Int, end2: Int): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
 
-    IntPair end = expandBackwardIW(text1, text2, start1, start2, end1, end2);
-    end1 = end.val1;
-    end2 = end.val2;
+    val start = expandForwardIW(text1, text2, start1, start2, end1, end2)
+    start1 = start.val1
+    start2 = start.val2
 
-    return new Range(start1, end1, start2, end2);
+    val end = expandBackwardIW(text1, text2, start1, start2, end1, end2)
+    end1 = end.val1
+    end2 = end.val2
+
+    return Range(start1, end1, start2, end2)
   }
 
 
@@ -353,71 +416,65 @@ public class TrimUtil {
   // Misc
   //
 
-  @NotNull
-  public static Range expand(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
-    return expand(text1, text2, range.start1, range.start2, range.end1, range.end2);
+  @JvmStatic fun expand(text1: CharSequence, text2: CharSequence, range: Range): Range {
+    return expand(text1, text2, range.start1, range.start2, range.end1, range.end2)
   }
 
-  @NotNull
-  public static Range expandW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
-    return expandW(text1, text2, range.start1, range.start2, range.end1, range.end2);
+  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, range: Range): Range {
+    return expandW(text1, text2, range.start1, range.start2, range.end1, range.end2)
   }
 
-  @NotNull
-  public static Range trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
-    return trim(text1, text2, range.start1, range.start2, range.end1, range.end2);
+  @JvmStatic fun trim(text1: CharSequence, text2: CharSequence, range: Range): Range {
+    return trim(text1, text2, range.start1, range.start2, range.end1, range.end2)
   }
 
-  @NotNull
-  public static MergeRange trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                @NotNull MergeRange range) {
-    return trim(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3);
+  @JvmStatic fun trim(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                      range: MergeRange): MergeRange {
+    return trim(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3)
   }
 
-  @NotNull
-  public static MergeRange expandW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                   @NotNull MergeRange range) {
-    return expandW(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3);
+  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                         range: MergeRange): MergeRange {
+    return expandW(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3)
   }
 
-  @NotNull
-  public static Range expandIW(@NotNull CharSequence text1, @NotNull CharSequence text2) {
-    return expandIW(text1, text2, 0, 0, text1.length(), text2.length());
+  @JvmStatic fun expandIW(text1: CharSequence, text2: CharSequence): Range {
+    return expandIW(text1, text2, 0, 0, text1.length, text2.length)
   }
 
   //
   // Equality
   //
 
-  public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                 @NotNull Range range) {
-    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
-    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
-    return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.DEFAULT);
+  @JvmStatic fun isEquals(text1: CharSequence, text2: CharSequence,
+                          range: Range): Boolean {
+    val sequence1 = text1.subSequence(range.start1, range.end1)
+    val sequence2 = text2.subSequence(range.start2, range.end2)
+    return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.DEFAULT)
   }
 
-  public static boolean isEqualsIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
-                                   @NotNull Range range) {
-    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
-    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
-    return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES);
+  @JvmStatic fun isEqualsIW(text1: CharSequence, text2: CharSequence,
+                            range: Range): Boolean {
+    val sequence1 = text1.subSequence(range.start1, range.end1)
+    val sequence2 = text2.subSequence(range.start2, range.end2)
+    return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES)
   }
 
-  public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                 @NotNull MergeRange range) {
-    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
-    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
-    CharSequence sequence3 = text3.subSequence(range.start3, range.end3);
+  @JvmStatic fun isEquals(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                          range: MergeRange): Boolean {
+    val sequence1 = text1.subSequence(range.start1, range.end1)
+    val sequence2 = text2.subSequence(range.start2, range.end2)
+    val sequence3 = text3.subSequence(range.start3, range.end3)
     return ComparisonUtil.isEquals(sequence2, sequence1, ComparisonPolicy.DEFAULT) &&
-           ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.DEFAULT);
+           ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.DEFAULT)
   }
 
-  public static boolean isEqualsIW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
-                                   @NotNull MergeRange range) {
-    CharSequence sequence1 = text1.subSequence(range.start1, range.end1);
-    CharSequence sequence2 = text2.subSequence(range.start2, range.end2);
-    CharSequence sequence3 = text3.subSequence(range.start3, range.end3);
+  @JvmStatic fun isEqualsIW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                            range: MergeRange): Boolean {
+    val sequence1 = text1.subSequence(range.start1, range.end1)
+    val sequence2 = text2.subSequence(range.start2, range.end2)
+    val sequence3 = text3.subSequence(range.start3, range.end3)
     return ComparisonUtil.isEquals(sequence2, sequence1, ComparisonPolicy.IGNORE_WHITESPACES) &&
-           ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.IGNORE_WHITESPACES);
+           ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.IGNORE_WHITESPACES)
   }
 }
