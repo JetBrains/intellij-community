@@ -31,7 +31,7 @@ public final class IdeInitialConfigButtonUsages {
 
   private static volatile Set<String> ourPredefinedDisabledPlugins = ALL_PLUGINS_SELECTED;
 
-  private static volatile Set<String> ourDownloadedPlugins = Collections.emptySet();
+  private static Set<String> ourDownloadedPlugins = Collections.emptySet();
 
   public static ConfigImport getConfigImport() {
     return ourConfigImport;
@@ -66,11 +66,11 @@ public final class IdeInitialConfigButtonUsages {
     ourPredefinedDisabledPlugins = predefinedDisabledPlugins;
   }
 
-  public static Set<String> getDownloadedPlugins() {
+  public synchronized static Set<String> getDownloadedPlugins() {
     return ourDownloadedPlugins;
   }
 
-  public static void addDownloadedPlugin(String pluginId) {
+  public synchronized static void addDownloadedPlugin(String pluginId) {
     if (ourDownloadedPlugins.isEmpty()) {
       ourDownloadedPlugins = new HashSet<>();
     }
