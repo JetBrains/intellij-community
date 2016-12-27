@@ -29,7 +29,7 @@ import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
@@ -295,7 +295,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
-    else if (VcsLogDataKeysInternal.LOG_UI_PROPERTIES.is(dataId)) {
+    else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUiProperties;
     }
     return null;

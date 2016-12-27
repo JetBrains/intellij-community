@@ -28,7 +28,7 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +42,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    VcsLogUiProperties properties = e.getRequiredData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
     ActionGroup settingsGroup = new DefaultActionGroup(ContainerUtil.map(PermanentGraph.SortType.values(),
                                                                          (Function<PermanentGraph.SortType, AnAction>)sortType ->
@@ -64,7 +64,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabled(properties != null);
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       String description = "IntelliSort: " + properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE).getName();

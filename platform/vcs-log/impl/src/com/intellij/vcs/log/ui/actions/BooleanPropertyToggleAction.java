@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogDataKeysInternal;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,14 +43,14 @@ public abstract class BooleanPropertyToggleAction extends ToggleAction implement
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties == null || !properties.exists(getProperty())) return false;
     return properties.get(getProperty());
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(getProperty())) {
       properties.set(getProperty(), state);
     }
@@ -58,7 +58,7 @@ public abstract class BooleanPropertyToggleAction extends ToggleAction implement
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    VcsLogUiProperties properties = e.getData(VcsLogDataKeysInternal.LOG_UI_PROPERTIES);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabledAndVisible(properties != null && properties.exists(getProperty()));
 
     super.update(e);
