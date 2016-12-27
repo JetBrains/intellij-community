@@ -243,12 +243,13 @@ public class JavacFileData {
       }
 
       private Set<Modifier> readModifiers(final DataInput input) throws IOException {
-        return EnumSet.copyOf(DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
+        final List<Modifier> modifierList = DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
           @Override
           public Modifier compute() throws IOException {
             return Modifier.valueOf(IOUtil.readUTF(input));
           }
-        }));
+        });
+        return modifierList.isEmpty() ? Collections.<Modifier>emptySet() : EnumSet.copyOf(modifierList);
       }
     };
   }
