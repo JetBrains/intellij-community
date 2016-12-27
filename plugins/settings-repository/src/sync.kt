@@ -170,10 +170,8 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
     }
 
     if (schemeManagersToReload.isNotEmpty()) {
-      invokeAndWaitIfNeed {
-        for (schemeManager in schemeManagersToReload) {
-          schemeManager.reload()
-        }
+      for (schemeManager in schemeManagersToReload) {
+        schemeManager.reload()
       }
     }
 

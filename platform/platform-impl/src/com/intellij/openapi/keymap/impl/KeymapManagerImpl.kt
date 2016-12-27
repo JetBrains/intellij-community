@@ -31,6 +31,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
@@ -57,6 +58,15 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
         for (listener in listeners) {
           listener.activeKeymapChanged(newScheme)
+        }
+      }
+
+      override fun reloaded(schemeManager: SchemeManager<Keymap>) {
+        if (schemeManager.currentScheme == null) {
+          // listeners expect that event will be fired in EDT
+          AppUIUtil.invokeOnEdt {
+            schemeManager.setCurrentSchemeName(defaultKeymap.defaultKeymapName, true)
+          }
         }
       }
     })
