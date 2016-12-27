@@ -179,6 +179,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   static void doCommit(RootModelImpl rootModel) {
     rootModel.docommit();
     rootModel.dispose();
+
+    try {
+      ((ModuleRootManagerImpl)getInstance(rootModel.getModule())).myModificationCount++;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
 
