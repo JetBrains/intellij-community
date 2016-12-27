@@ -267,7 +267,14 @@ public abstract class CodeStyleManager  {
   public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T;
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
-  
+
+  /**
+   * Retrieves the current formatting mode.
+   * 
+   * @param project The current project used to obtain {@code CodeStyleManager} instance.
+   * @return The current formatting mode.
+   * @see FormattingMode
+   */
   public static FormattingMode getCurrentFormattingMode(@NotNull Project project) {
     if (!project.isDisposed()) {
       CodeStyleManager instance = getInstance(project);
