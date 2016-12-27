@@ -334,7 +334,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     loadSchemes()
 
-    (processor as? LazySchemeProcessor)?.reloaded()
+    (processor as? LazySchemeProcessor)?.reloaded(this)
   }
 
   private fun removeExternalizableSchemes() {

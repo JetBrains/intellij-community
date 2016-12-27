@@ -66,7 +66,10 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
 
   open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
 
-  open fun reloaded() {
+  /**
+   * May be called from any thread - EDT is not guaranteed.
+   */
+  open fun reloaded(schemeManager: SchemeManager<SCHEME>) {
   }
 }
 
