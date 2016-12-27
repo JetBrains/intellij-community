@@ -35,396 +35,137 @@ object TrimUtil {
     return !isWhiteSpace(c) && !isPunctuation(c)
   }
 
-  //
-  // Trim
-  //
+
+  @JvmStatic fun trim(text: CharSequence, start: Int, end: Int): IntPair {
+    return trim(start, end,
+                { index -> isWhiteSpace(text[index]) })
+  }
+
+  @JvmStatic fun trimStart(text: CharSequence, start: Int, end: Int): Int {
+    return trimStart(start, end,
+                     { index -> isWhiteSpace(text[index]) })
+  }
+
+  @JvmStatic fun trimEnd(text: CharSequence, start: Int, end: Int): Int {
+    return trimEnd(start, end,
+                   { index -> isWhiteSpace(text[index]) })
+  }
+
 
   @JvmStatic fun trim(text1: CharSequence, text2: CharSequence,
                       start1: Int, start2: Int, end1: Int, end2: Int): Range {
-    var start1 = start1
-    var start2 = start2
-    var end1 = end1
-    var end2 = end2
-
-    start1 = trimStart(text1, start1, end1)
-    end1 = trimEnd(text1, start1, end1)
-    start2 = trimStart(text2, start2, end2)
-    end2 = trimEnd(text2, start2, end2)
-
-    return Range(start1, end1, start2, end2)
+    return trim(start1, start2, end1, end2,
+                { index -> isWhiteSpace(text1[index]) },
+                { index -> isWhiteSpace(text2[index]) })
   }
 
   @JvmStatic fun trim(text1: CharSequence, text2: CharSequence, text3: CharSequence,
                       start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
-    var start1 = start1
-    var start2 = start2
-    var start3 = start3
-    var end1 = end1
-    var end2 = end2
-    var end3 = end3
-
-    start1 = trimStart(text1, start1, end1)
-    end1 = trimEnd(text1, start1, end1)
-    start2 = trimStart(text2, start2, end2)
-    end2 = trimEnd(text2, start2, end2)
-    start3 = trimStart(text3, start3, end3)
-    end3 = trimEnd(text3, start3, end3)
-
-    return MergeRange(start1, end1, start2, end2, start3, end3)
+    return trim(start1, start2, start3, end1, end2, end3,
+                { index -> isWhiteSpace(text1[index]) },
+                { index -> isWhiteSpace(text2[index]) },
+                { index -> isWhiteSpace(text3[index]) })
   }
 
-  @JvmStatic fun trim(text: CharSequence, start: Int, end: Int): IntPair {
-    var start = start
-    var end = end
-
-    start = trimStart(text, start, end)
-    end = trimEnd(text, start, end)
-
-    return IntPair(start, end)
-  }
-
-  @JvmStatic fun trimStart(text: CharSequence, start: Int, end: Int): Int {
-    var start = start
-
-    while (start < end) {
-      val c = text[start]
-      if (!isWhiteSpace(c)) break
-      start++
-    }
-    return start
-  }
-
-  @JvmStatic fun trimEnd(text: CharSequence, start: Int, end: Int): Int {
-    var end = end
-
-    while (start < end) {
-      val c = text[end - 1]
-      if (!isWhiteSpace(c)) break
-      end--
-    }
-    return end
-  }
-
-  //
-  // Expand
-  //
 
   @JvmStatic fun expand(text1: List<*>, text2: List<*>,
                         start1: Int, start2: Int, end1: Int, end2: Int): Range {
-    var start1 = start1
-    var start2 = start2
-    var end1 = end1
-    var end2 = end2
-
-    val count1 = expandForward(text1, text2, start1, start2, end1, end2)
-    start1 += count1
-    start2 += count1
-
-    val count2 = expandBackward(text1, text2, start1, start2, end1, end2)
-    end1 -= count2
-    end2 -= count2
-
-    return Range(start1, end1, start2, end2)
-  }
-
-  @JvmStatic fun expand(text1: CharSequence, text2: CharSequence,
-                        start1: Int, start2: Int, end1: Int, end2: Int): Range {
-    var start1 = start1
-    var start2 = start2
-    var end1 = end1
-    var end2 = end2
-
-    val count1 = expandForward(text1, text2, start1, start2, end1, end2)
-    start1 += count1
-    start2 += count1
-
-    val count2 = expandBackward(text1, text2, start1, start2, end1, end2)
-    end1 -= count2
-    end2 -= count2
-
-    return Range(start1, end1, start2, end2)
-  }
-
-  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence,
-                         start1: Int, start2: Int, end1: Int, end2: Int): Range {
-    var start1 = start1
-    var start2 = start2
-    var end1 = end1
-    var end2 = end2
-
-    val count1 = expandForwardW(text1, text2, start1, start2, end1, end2)
-    start1 += count1
-    start2 += count1
-
-    val count2 = expandBackwardW(text1, text2, start1, start2, end1, end2)
-    end1 -= count2
-    end2 -= count2
-
-    return Range(start1, end1, start2, end2)
-  }
-
-  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
-                         start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
-    var start1 = start1
-    var start2 = start2
-    var start3 = start3
-    var end1 = end1
-    var end2 = end2
-    var end3 = end3
-
-    val count1 = expandForwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3)
-    start1 += count1
-    start2 += count1
-    start3 += count1
-
-    val count2 = expandBackwardW(text1, text2, text3, start1, start2, start3, end1, end2, end3)
-    end1 -= count2
-    end2 -= count2
-    end3 -= count2
-
-    return MergeRange(start1, end1, start2, end2, start3, end3)
-  }
-
-  @JvmStatic fun expandForward(text1: CharSequence, text2: CharSequence,
-                               start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    var start1 = start1
-    var start2 = start2
-
-    val oldStart1 = start1
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[start1]
-      val c2 = text2[start2]
-      if (c1 != c2) break
-      start1++
-      start2++
-    }
-
-    return start1 - oldStart1
+    return expand(start1, start2, end1, end2,
+                  { index1, index2 -> text1[index1] == text2[index2] })
   }
 
   @JvmStatic fun expandForward(text1: List<*>, text2: List<*>,
                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    var start1 = start1
-    var start2 = start2
-
-    val oldStart1 = start1
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[start1]
-      val c2 = text2[start2]
-      if (c1 != c2) break
-      start1++
-      start2++
-    }
-
-    return start1 - oldStart1
-  }
-
-  @JvmStatic fun expandForwardW(text1: CharSequence, text2: CharSequence,
-                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    var start1 = start1
-    var start2 = start2
-
-    val oldStart1 = start1
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[start1]
-      val c2 = text2[start2]
-      if (c1 != c2 || !isWhiteSpace(c1)) break
-      start1++
-      start2++
-    }
-
-    return start1 - oldStart1
-  }
-
-  @JvmStatic fun expandBackward(text1: CharSequence, text2: CharSequence,
-                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    var end1 = end1
-    var end2 = end2
-
-    val oldEnd1 = end1
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[end1 - 1]
-      val c2 = text2[end2 - 1]
-      if (c1 != c2) break
-      end1--
-      end2--
-    }
-
-    return oldEnd1 - end1
+    return expandForward(start1, start2, end1, end2,
+                         { index1, index2 -> text1[index1] == text2[index2] })
   }
 
   @JvmStatic fun expandBackward(text1: List<*>, text2: List<*>,
                                 start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    var end1 = end1
-    var end2 = end2
-
-    val oldEnd1 = end1
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[end1 - 1]
-      val c2 = text2[end2 - 1]
-      if (c1 != c2) break
-      end1--
-      end2--
-    }
-
-    return oldEnd1 - end1
+    return expandBackward(start1, start2, end1, end2,
+                          { index1, index2 -> text1[index1] == text2[index2] })
   }
+
+
+  @JvmStatic fun expand(text1: CharSequence, text2: CharSequence,
+                        start1: Int, start2: Int, end1: Int, end2: Int): Range {
+    return expand(start1, start2, end1, end2,
+                  { index1, index2 -> text1[index1] == text2[index2] })
+  }
+
+  @JvmStatic fun expandForward(text1: CharSequence, text2: CharSequence,
+                               start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    return expandForward(start1, start2, end1, end2,
+                         { index1, index2 -> text1[index1] == text2[index2] })
+  }
+
+  @JvmStatic fun expandBackward(text1: CharSequence, text2: CharSequence,
+                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    return expandBackward(start1, start2, end1, end2,
+                          { index1, index2 -> text1[index1] == text2[index2] })
+  }
+
+
+  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence,
+                         start1: Int, start2: Int, end1: Int, end2: Int): Range {
+    return expandIgnored(start1, start2, end1, end2,
+                         { index1, index2 -> text1[index1] == text2[index2] },
+                         { index -> isWhiteSpace(text1[index]) })
+  }
+
+
+  @JvmStatic fun expandForwardW(text1: CharSequence, text2: CharSequence,
+                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    return expandForwardIgnored(start1, start2, end1, end2,
+                                { index1, index2 -> text1[index1] == text2[index2] },
+                                { index -> isWhiteSpace(text1[index]) })
+  }
+
 
   @JvmStatic fun expandBackwardW(text1: CharSequence, text2: CharSequence,
                                  start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    var end1 = end1
-    var end2 = end2
+    return expandBackwardIgnored(start1, start2, end1, end2,
+                                 { index1, index2 -> text1[index1] == text2[index2] },
+                                 { index -> isWhiteSpace(text1[index]) })
+  }
 
-    val oldEnd1 = end1
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[end1 - 1]
-      val c2 = text2[end2 - 1]
-      if (c1 != c2 || !isWhiteSpace(c1)) break
-      end1--
-      end2--
-    }
 
-    return oldEnd1 - end1
+  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                         start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
+    return expandIgnored(start1, start2, start3, end1, end2, end3,
+                         { index1, index2 -> text1[index1] == text2[index2] },
+                         { index1, index3 -> text1[index1] == text3[index3] },
+                         { index -> isWhiteSpace(text1[index]) })
   }
 
   @JvmStatic fun expandForwardW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
                                 start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
-    var start1 = start1
-    var start2 = start2
-    var start3 = start3
-
-    val oldStart1 = start1
-    while (start1 < end1 && start2 < end2 && start3 < end3) {
-      val c1 = text1[start1]
-      val c2 = text2[start2]
-      val c3 = text3[start3]
-      if (c1 != c2 || c1 != c3 || !isWhiteSpace(c1)) break
-      start1++
-      start2++
-      start3++
-    }
-
-    return start1 - oldStart1
+    return expandForwardIgnored(start1, start2, start3, end1, end2, end3,
+                                { index1, index2 -> text1[index1] == text2[index2] },
+                                { index1, index3 -> text1[index1] == text3[index3] },
+                                { index -> isWhiteSpace(text1[index]) })
   }
 
   @JvmStatic fun expandBackwardW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
                                  start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
-    var end1 = end1
-    var end2 = end2
-    var end3 = end3
-
-    val oldEnd1 = end1
-    while (start1 < end1 && start2 < end2 && start3 < end3) {
-      val c1 = text1[end1 - 1]
-      val c2 = text2[end2 - 1]
-      val c3 = text3[end3 - 1]
-      if (c1 != c2 || c1 != c3 || !isWhiteSpace(c1)) break
-      end1--
-      end2--
-      end3--
-    }
-
-    return oldEnd1 - end1
+    return expandBackwardIgnored(start1, start2, start3, end1, end2, end3,
+                                 { index1, index2 -> text1[index1] == text2[index2] },
+                                 { index1, index3 -> text1[index1] == text3[index3] },
+                                 { index -> isWhiteSpace(text1[index]) })
   }
 
-  @JvmStatic fun expandForwardIW(text1: CharSequence, text2: CharSequence,
-                                 start1: Int, start2: Int, end1: Int, end2: Int): IntPair {
-    var start1 = start1
-    var start2 = start2
-
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[start1]
-      val c2 = text2[start2]
-
-      if (c1 == c2) {
-        start1++
-        start2++
-        continue
-      }
-
-      var skipped = false
-      if (isWhiteSpace(c1)) {
-        skipped = true
-        start1++
-      }
-      if (isWhiteSpace(c2)) {
-        skipped = true
-        start2++
-      }
-      if (!skipped) break
-    }
-
-    start1 = trimStart(text1, start1, end1)
-    start2 = trimStart(text2, start2, end2)
-
-    return IntPair(start1, start2)
-  }
-
-  @JvmStatic fun expandBackwardIW(text1: CharSequence, text2: CharSequence,
-                                  start1: Int, start2: Int, end1: Int, end2: Int): IntPair {
-    var end1 = end1
-    var end2 = end2
-
-    while (start1 < end1 && start2 < end2) {
-      val c1 = text1[end1 - 1]
-      val c2 = text2[end2 - 1]
-
-      if (c1 == c2) {
-        end1--
-        end2--
-        continue
-      }
-
-      var skipped = false
-      if (isWhiteSpace(c1)) {
-        skipped = true
-        end1--
-      }
-      if (isWhiteSpace(c2)) {
-        skipped = true
-        end2--
-      }
-      if (!skipped) break
-    }
-
-    end1 = trimEnd(text1, start1, end1)
-    end2 = trimEnd(text2, start2, end2)
-
-    return IntPair(end1, end2)
-  }
 
   @JvmStatic fun expandIW(text1: CharSequence, text2: CharSequence,
                           start1: Int, start2: Int, end1: Int, end2: Int): Range {
-    var start1 = start1
-    var start2 = start2
-    var end1 = end1
-    var end2 = end2
-
-    val start = expandForwardIW(text1, text2, start1, start2, end1, end2)
-    start1 = start.val1
-    start2 = start.val2
-
-    val end = expandBackwardIW(text1, text2, start1, start2, end1, end2)
-    end1 = end.val1
-    end2 = end.val2
-
-    return Range(start1, end1, start2, end2)
+    return trimExpand(start1, start2, end1, end2,
+                      { index1, index2 -> text1[index1] == text2[index2] },
+                      { index -> isWhiteSpace(text1[index]) },
+                      { index -> isWhiteSpace(text2[index]) })
   }
 
 
-  //
-  // Misc
-  //
-
-  @JvmStatic fun expand(text1: CharSequence, text2: CharSequence, range: Range): Range {
-    return expand(text1, text2, range.start1, range.start2, range.end1, range.end2)
-  }
-
-  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, range: Range): Range {
-    return expandW(text1, text2, range.start1, range.start2, range.end1, range.end2)
-  }
-
-  @JvmStatic fun trim(text1: CharSequence, text2: CharSequence, range: Range): Range {
+  @JvmStatic fun trim(text1: CharSequence, text2: CharSequence,
+                      range: Range): Range {
     return trim(text1, text2, range.start1, range.start2, range.end1, range.end2)
   }
 
@@ -433,18 +174,21 @@ object TrimUtil {
     return trim(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3)
   }
 
+  @JvmStatic fun expand(text1: CharSequence, text2: CharSequence,
+                        range: Range): Range {
+    return expand(text1, text2, range.start1, range.start2, range.end1, range.end2)
+  }
+
+  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence,
+                         range: Range): Range {
+    return expandW(text1, text2, range.start1, range.start2, range.end1, range.end2)
+  }
+
   @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
                          range: MergeRange): MergeRange {
     return expandW(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3)
   }
 
-  @JvmStatic fun expandIW(text1: CharSequence, text2: CharSequence): Range {
-    return expandIW(text1, text2, 0, 0, text1.length, text2.length)
-  }
-
-  //
-  // Equality
-  //
 
   @JvmStatic fun isEquals(text1: CharSequence, text2: CharSequence,
                           range: Range): Boolean {
@@ -476,5 +220,342 @@ object TrimUtil {
     val sequence3 = text3.subSequence(range.start3, range.end3)
     return ComparisonUtil.isEquals(sequence2, sequence1, ComparisonPolicy.IGNORE_WHITESPACES) &&
            ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.IGNORE_WHITESPACES)
+  }
+
+  //
+  // Trim
+  //
+
+  private inline fun trim(start1: Int, start2: Int, end1: Int, end2: Int,
+                          ignored1: (Int) -> Boolean,
+                          ignored2: (Int) -> Boolean): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
+
+    start1 = trimStart(start1, end1, ignored1)
+    end1 = trimEnd(start1, end1, ignored1)
+    start2 = trimStart(start2, end2, ignored2)
+    end2 = trimEnd(start2, end2, ignored2)
+
+    return Range(start1, end1, start2, end2)
+  }
+
+  private inline fun trim(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
+                          ignored1: (Int) -> Boolean,
+                          ignored2: (Int) -> Boolean,
+                          ignored3: (Int) -> Boolean): MergeRange {
+    var start1 = start1
+    var start2 = start2
+    var start3 = start3
+    var end1 = end1
+    var end2 = end2
+    var end3 = end3
+
+    start1 = trimStart(start1, end1, ignored1)
+    end1 = trimEnd(start1, end1, ignored1)
+    start2 = trimStart(start2, end2, ignored2)
+    end2 = trimEnd(start2, end2, ignored2)
+    start3 = trimStart(start3, end3, ignored3)
+    end3 = trimEnd(start3, end3, ignored3)
+
+    return MergeRange(start1, end1, start2, end2, start3, end3)
+  }
+
+  private inline fun trim(start: Int, end: Int,
+                          ignored: (Int) -> Boolean): IntPair {
+    var start = start
+    var end = end
+
+    start = trimStart(start, end, ignored)
+    end = trimEnd(start, end, ignored)
+
+    return IntPair(start, end)
+  }
+
+  private inline fun trimStart(start: Int, end: Int,
+                               ignored: (Int) -> Boolean): Int {
+    var start = start
+
+    while (start < end) {
+      if (!ignored(start)) break
+      start++
+    }
+    return start
+  }
+
+  private inline fun trimEnd(start: Int, end: Int,
+                             ignored: (Int) -> Boolean): Int {
+    var end = end
+
+    while (start < end) {
+      if (!ignored(end - 1)) break
+      end--
+    }
+    return end
+  }
+
+  //
+  // Expand
+  //
+
+  private inline fun expand(start1: Int, start2: Int, end1: Int, end2: Int,
+                            equals: (Int, Int) -> Boolean): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
+
+    val count1 = expandForward(start1, start2, end1, end2, equals)
+    start1 += count1
+    start2 += count1
+
+    val count2 = expandBackward(start1, start2, end1, end2, equals)
+    end1 -= count2
+    end2 -= count2
+
+    return Range(start1, end1, start2, end2)
+  }
+
+  private inline fun expandForward(start1: Int, start2: Int, end1: Int, end2: Int,
+                                   equals: (Int, Int) -> Boolean): Int {
+    var start1 = start1
+    var start2 = start2
+
+    val oldStart1 = start1
+    while (start1 < end1 && start2 < end2) {
+      if (!equals(start1, start2)) break
+      start1++
+      start2++
+    }
+
+    return start1 - oldStart1
+  }
+
+  private inline fun expandBackward(start1: Int, start2: Int, end1: Int, end2: Int,
+                                    equals: (Int, Int) -> Boolean): Int {
+    var end1 = end1
+    var end2 = end2
+
+    val oldEnd1 = end1
+    while (start1 < end1 && start2 < end2) {
+      if (!equals(end1 - 1, end2 - 1)) break
+      end1--
+      end2--
+    }
+
+    return oldEnd1 - end1
+  }
+
+  //
+  // Expand Ignored
+  //
+
+  private inline fun expandIgnored(start1: Int, start2: Int, end1: Int, end2: Int,
+                                   equals: (Int, Int) -> Boolean,
+                                   ignored1: (Int) -> Boolean): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
+
+    val count1 = expandForwardIgnored(start1, start2, end1, end2, equals, ignored1)
+    start1 += count1
+    start2 += count1
+
+    val count2 = expandBackwardIgnored(start1, start2, end1, end2, equals, ignored1)
+    end1 -= count2
+    end2 -= count2
+
+    return Range(start1, end1, start2, end2)
+  }
+
+  private inline fun expandForwardIgnored(start1: Int, start2: Int, end1: Int, end2: Int,
+                                          equals: (Int, Int) -> Boolean,
+                                          ignored1: (Int) -> Boolean): Int {
+    var start1 = start1
+    var start2 = start2
+
+    val oldStart1 = start1
+    while (start1 < end1 && start2 < end2) {
+      if (!equals(start1, start2)) break
+      if (!ignored1(start1)) break
+      start1++
+      start2++
+    }
+
+    return start1 - oldStart1
+  }
+
+  private inline fun expandBackwardIgnored(start1: Int, start2: Int, end1: Int, end2: Int,
+                                           equals: (Int, Int) -> Boolean,
+                                           ignored1: (Int) -> Boolean): Int {
+    var end1 = end1
+    var end2 = end2
+
+    val oldEnd1 = end1
+    while (start1 < end1 && start2 < end2) {
+      if (!equals(end1 - 1, end2 - 1)) break
+      if (!ignored1(end1 - 1)) break
+      end1--
+      end2--
+    }
+
+    return oldEnd1 - end1
+  }
+
+  private inline fun expandIgnored(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
+                                   equals12: (Int, Int) -> Boolean,
+                                   equals13: (Int, Int) -> Boolean,
+                                   ignored1: (Int) -> Boolean): MergeRange {
+    var start1 = start1
+    var start2 = start2
+    var start3 = start3
+    var end1 = end1
+    var end2 = end2
+    var end3 = end3
+
+    val count1 = expandForwardIgnored(start1, start2, start3, end1, end2, end3, equals12, equals13, ignored1)
+    start1 += count1
+    start2 += count1
+    start3 += count1
+
+    val count2 = expandBackwardIgnored(start1, start2, start3, end1, end2, end3, equals12, equals13, ignored1)
+    end1 -= count2
+    end2 -= count2
+    end3 -= count2
+
+    return MergeRange(start1, end1, start2, end2, start3, end3)
+  }
+
+  private inline fun expandForwardIgnored(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
+                                          equals12: (Int, Int) -> Boolean,
+                                          equals13: (Int, Int) -> Boolean,
+                                          ignored1: (Int) -> Boolean): Int {
+    var start1 = start1
+    var start2 = start2
+    var start3 = start3
+
+    val oldStart1 = start1
+    while (start1 < end1 && start2 < end2 && start3 < end3) {
+      if (!equals12(start1, start2)) break
+      if (!equals13(start1, start3)) break
+      if (!ignored1(start1)) break
+      start1++
+      start2++
+      start3++
+    }
+
+    return start1 - oldStart1
+  }
+
+  private inline fun expandBackwardIgnored(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
+                                           equals12: (Int, Int) -> Boolean,
+                                           equals13: (Int, Int) -> Boolean,
+                                           ignored1: (Int) -> Boolean): Int {
+    var end1 = end1
+    var end2 = end2
+    var end3 = end3
+
+    val oldEnd1 = end1
+    while (start1 < end1 && start2 < end2 && start3 < end3) {
+      if (!equals12(end1 - 1, end2 - 1)) break
+      if (!equals13(end1 - 1, end3 - 1)) break
+      if (!ignored1(end1 - 1)) break
+      end1--
+      end2--
+      end3--
+    }
+
+    return oldEnd1 - end1
+  }
+
+  //
+  // Trim Expand
+  //
+
+  private inline fun trimExpand(start1: Int, start2: Int, end1: Int, end2: Int,
+                                equals: (Int, Int) -> Boolean,
+                                ignored1: (Int) -> Boolean,
+                                ignored2: (Int) -> Boolean): Range {
+    var start1 = start1
+    var start2 = start2
+    var end1 = end1
+    var end2 = end2
+
+    val starts = trimExpandForward(start1, start2, end1, end2, equals, ignored1, ignored2)
+    start1 = starts.val1
+    start2 = starts.val2
+
+    val ends = trimExpandBackward(start1, start2, end1, end2, equals, ignored1, ignored2)
+    end1 = ends.val1
+    end2 = ends.val2
+
+    return Range(start1, end1, start2, end2)
+  }
+
+  private inline fun trimExpandForward(start1: Int, start2: Int, end1: Int, end2: Int,
+                                       equals: (Int, Int) -> Boolean,
+                                       ignored1: (Int) -> Boolean,
+                                       ignored2: (Int) -> Boolean): IntPair {
+    var start1 = start1
+    var start2 = start2
+
+    while (start1 < end1 && start2 < end2) {
+      if (equals(start1, start2)) {
+        start1++
+        start2++
+        continue
+      }
+
+      var skipped = false
+      if (ignored1(start1)) {
+        skipped = true
+        start1++
+      }
+      if (ignored2(start2)) {
+        skipped = true
+        start2++
+      }
+      if (!skipped) break
+    }
+
+    start1 = trimStart(start1, end1, ignored1)
+    start2 = trimStart(start2, end2, ignored2)
+
+    return IntPair(start1, start2)
+  }
+
+  private inline fun trimExpandBackward(start1: Int, start2: Int, end1: Int, end2: Int,
+                                        equals: (Int, Int) -> Boolean,
+                                        ignored1: (Int) -> Boolean,
+                                        ignored2: (Int) -> Boolean): IntPair {
+    var end1 = end1
+    var end2 = end2
+
+    while (start1 < end1 && start2 < end2) {
+      if (equals(end1 - 1, end2 - 1)) {
+        end1--
+        end2--
+        continue
+      }
+
+      var skipped = false
+      if (ignored1(end1 - 1)) {
+        skipped = true
+        end1--
+      }
+      if (ignored2(end2 - 1)) {
+        skipped = true
+        end2--
+      }
+      if (!skipped) break
+    }
+
+    end1 = trimEnd(start1, end1, ignored1)
+    end2 = trimEnd(start2, end2, ignored2)
+
+    return IntPair(end1, end2)
   }
 }
