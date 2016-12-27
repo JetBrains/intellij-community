@@ -10,8 +10,8 @@ org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, getProperty("bar"))
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, s.bar);
 }
 
-private static <Value>Value setProperty0(groovy.lang.GroovyObjectSupport propOwner, java.lang.String property, Value newValue) {
-propOwner.setProperty(property, newValue);
-return newValue;
+private static <Value>Value setProperty0(A propOwner, java.lang.String s, Value o) {
+propOwner.setProperty(s, o);
+return o;
 }
 }
