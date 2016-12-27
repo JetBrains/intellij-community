@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperation;
 
@@ -521,25 +520,33 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     public void setFinisher(ConditionalExpression conditionalExpression) {
       if(conditionalExpression instanceof ConditionalExpression.Optional) {
-        conditionalExpression = tryUnwrapOptional((ConditionalExpression.Optional)conditionalExpression, expr -> true);
+        conditionalExpression = tryUnwrapOptional((ConditionalExpression.Optional)conditionalExpression, true);
       }
       setFinisher(conditionalExpression.asExpression());
     }
 
     public String assignAndBreak(ConditionalExpression conditionalExpression) {
-      Predicate<PsiElement> predicate = expr -> PsiUtil.skipParenthesizedExprUp(expr.getParent()) instanceof PsiReturnStatement;
+      PsiStatement statement = PsiTreeUtil.getParentOfType(myPlaceholder, PsiStatement.class);
+      boolean inReturn = statement instanceof PsiReturnStatement;
       if(conditionalExpression instanceof ConditionalExpression.Optional) {
-        conditionalExpression = tryUnwrapOptional((ConditionalExpression.Optional)conditionalExpression, predicate);
+        conditionalExpression = tryUnwrapOptional((ConditionalExpression.Optional)conditionalExpression, inReturn);
       }
-      if(conditionalExpression instanceof ConditionalExpression.Boolean) {
-        conditionalExpression = tryUnwrapBoolean((ConditionalExpression.Boolean)conditionalExpression);
+      if (conditionalExpression instanceof ConditionalExpression.Boolean) {
+        conditionalExpression = tryUnwrapBoolean((ConditionalExpression.Boolean)conditionalExpression, inReturn);
       }
-      if(predicate.test(myPlaceholder)) {
+      if (inReturn) {
         setFinisher(conditionalExpression.getFalseBranch());
-        return "return " + conditionalExpression.getTrueBranch() + ";";
+        Object mark = new Object();
+        PsiTreeUtil.mark(myPlaceholder, mark);
+        PsiElement returnCopy = statement.copy();
+        PsiElement placeHolderCopy = PsiTreeUtil.releaseMark(returnCopy, mark);
+        LOG.assertTrue(placeHolderCopy != null);
+        PsiElement replacement = placeHolderCopy.replace(createExpression(conditionalExpression.getTrueBranch()));
+        return (placeHolderCopy == returnCopy ? replacement : returnCopy).getText();
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(myPlaceholder.getParent());
-      if(parent instanceof PsiIfStatement && conditionalExpression.getTrueBranch().equals(String.valueOf(true))) {
+      if(parent instanceof PsiIfStatement && conditionalExpression instanceof ConditionalExpression.Boolean &&
+         !((ConditionalExpression.Boolean)conditionalExpression).isInverted()) {
         PsiIfStatement ifStatement = (PsiIfStatement)parent;
         if(ifStatement.getElseBranch() == null) {
           PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
@@ -573,32 +580,51 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       return found + " = " + conditionalExpression.getTrueBranch() + ";\n" + getBreakStatement();
     }
 
-    private ConditionalExpression tryUnwrapBoolean(ConditionalExpression.Boolean condition) {
+    private ConditionalExpression tryUnwrapBoolean(ConditionalExpression.Boolean condition, boolean unwrapLazilyEvaluated) {
       if (myPlaceholder instanceof PsiExpression) {
         PsiExpression negation = BoolUtils.findNegation((PsiExpression)myPlaceholder);
         if (negation != null) {
           myPlaceholder = negation;
           condition = condition.negate();
         }
+
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(myPlaceholder.getParent());
-        if (parent instanceof PsiConditionalExpression) {
+        ConditionalExpression candidate = null;
+        if (parent instanceof PsiPolyadicExpression) {
+          PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
+          PsiExpression[] operands = expression.getOperands();
+          if (operands.length > 1 && PsiTreeUtil.isAncestor(operands[0], myPlaceholder, false)) {
+            IElementType type = expression.getOperationTokenType();
+            if (type.equals(JavaTokenType.ANDAND)) {
+              candidate = condition
+                .toPlain("boolean", StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" && "), "false");
+            } else if (type.equals(JavaTokenType.OROR)) {
+              candidate = condition
+                .toPlain("boolean", "true", StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" || "));
+            }
+          }
+        } else if (parent instanceof PsiConditionalExpression) {
           PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
           if (PsiTreeUtil.isAncestor(ternary.getCondition(), myPlaceholder, false)) {
-            myPlaceholder = ternary;
             PsiType type = ternary.getType();
             PsiExpression thenExpression = ternary.getThenExpression();
             PsiExpression elseExpression = ternary.getElseExpression();
             if (type != null && thenExpression != null && elseExpression != null) {
-              return condition.toPlain(type.getCanonicalText(), thenExpression.getText(), elseExpression.getText());
+              candidate = condition.toPlain(type.getCanonicalText(), thenExpression.getText(), elseExpression.getText());
             }
           }
+        }
+        if (candidate != null &&
+            (unwrapLazilyEvaluated || ExpressionUtils.isSimpleExpression(createExpression(candidate.getFalseBranch())))) {
+          myPlaceholder = parent;
+          return candidate;
         }
       }
       return condition;
     }
 
     @NotNull
-    private ConditionalExpression tryUnwrapOptional(ConditionalExpression.Optional condition, Predicate<PsiElement> predicate) {
+    private ConditionalExpression tryUnwrapOptional(ConditionalExpression.Optional condition, boolean unwrapLazilyEvaluated) {
       if (myPlaceholder instanceof PsiExpression) {
         PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myPlaceholder);
         if (call != null && !(call.getParent() instanceof PsiExpressionStatement)) {
@@ -613,7 +639,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
             if ("orElse".equals(name)) {
               absentExpression = args[0].getText();
             }
-            else if ("orElseGet".equals(name) && predicate.test(call)) {
+            else if (unwrapLazilyEvaluated && "orElseGet".equals(name)) {
               FunctionHelper helper = FunctionHelper.create(args[0], 0);
               if (helper != null) {
                 helper.transform(this);

@@ -99,6 +99,10 @@ interface ConditionalExpression {
       return new Boolean(myCondition, !myInvert);
     }
 
+    public boolean isInverted() {
+      return myInvert;
+    }
+
     public Plain toPlain(String type, String trueBranch, String falseBranch) {
       return myInvert ? new Plain(type, myCondition, falseBranch, trueBranch) :
              new Plain(type, myCondition, trueBranch, falseBranch);
