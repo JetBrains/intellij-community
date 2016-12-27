@@ -37,13 +37,21 @@ public final class IdeInitialConfigButtonUsages {
     return ourConfigImport;
   }
 
-  public static void setConfigImport(JRadioButton ...buttons) {
-    if (buttons.length < ConfigImport.values().length) {
-      for (int i = 0; i < buttons.length; i++) {
-        if (buttons[i] != null && buttons[i].isSelected()) {
-          ourConfigImport = ConfigImport.values()[i];
-        }
-      }
+  public static void setConfigImport(JRadioButton myRbDoNotImport,
+                                     JRadioButton myRbImport,
+                                     JRadioButton myRbImportAuto,
+                                     JRadioButton myCustomButton) {
+    if (myRbDoNotImport != null && myRbDoNotImport.isSelected()) {
+      ourConfigImport = ConfigImport.DO_NOT_IMPORT;
+    }
+    else if (myRbImport != null && myRbImport.isSelected()) {
+      ourConfigImport = ConfigImport.IMPORT_PATH;
+    }
+    else if (myRbImportAuto != null && myRbImportAuto.isSelected()) {
+      ourConfigImport = ConfigImport.IMPORT_AUTO;
+    }
+    else if (myCustomButton != null && myCustomButton.isSelected()) {
+      ourConfigImport = ConfigImport.IMPORT_CUSTOM;
     }
   }
 
