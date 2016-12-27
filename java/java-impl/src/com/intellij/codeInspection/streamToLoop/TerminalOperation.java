@@ -887,8 +887,8 @@ abstract class TerminalOperation extends Operation {
       String map = context.declareResult("map", resultType.getCanonicalText(), "new java.util.HashMap<>()", ResultKind.FINAL);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
-      context.addInitStep(map + ".put(false, " + myCollector.getSupplier() + ");");
-      context.addInitStep(map + ".put(true, " + myCollector.getSupplier() + ");");
+      context.addBeforeStep(map + ".put(false, " + myCollector.getSupplier() + ");");
+      context.addBeforeStep(map + ".put(true, " + myCollector.getSupplier() + ");");
       return myCollector.getAccumulator(map + ".get(" + myPredicate.getText() + ")", inVar.getName());
     }
   }

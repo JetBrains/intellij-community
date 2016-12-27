@@ -257,9 +257,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, context);
         }
         ct.insertCommentsBefore(statement);
-        for (String declaration : context.getDeclarations()) {
-          addStatement(project, statement, factory.createStatementFromText(declaration, statement));
-        }
         for (PsiStatement addedStatement : ((PsiBlockStatement)factory.createStatementFromText("{" + replacement + "}", statement))
           .getCodeBlock().getStatements()) {
           addStatement(project, statement, addedStatement);
@@ -360,7 +357,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     private final PsiStatement myStatement;
     private final Set<String> myUsedNames;
     private final Set<String> myUsedLabels;
-    private final List<String> myDeclarations = new ArrayList<>();
+    private final List<String> myBeforeSteps = new ArrayList<>();
+    private final List<String> myAfterSteps = new ArrayList<>();
     private final CommentTracker myCommentTracker;
     private PsiElement myPlaceholder;
     private final PsiElementFactory myFactory;
@@ -425,10 +423,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       return label == null ? "break;\n" : "break "+label+";\n";
     }
 
-    public List<String> getDeclarations() {
-      return myDeclarations;
-    }
-
     public String registerVarName(Collection<String> variants) {
       if(variants.isEmpty()) {
         return registerVarName(Collections.singleton("val"));
@@ -452,12 +446,28 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
     public String declare(String desiredName, String type, String initializer) {
       String name = registerVarName(
         mySuffix.isEmpty() ? Collections.singleton(desiredName) : Arrays.asList(desiredName, desiredName + mySuffix));
-      myDeclarations.add(type + " " + name + " = " + initializer + ";");
+      myBeforeSteps.add(type + " " + name + " = " + initializer + ";");
       return name;
     }
 
-    public void addInitStep(String initStatement) {
-      myDeclarations.add(initStatement);
+    public void addBeforeStep(String beforeStatement) {
+      myBeforeSteps.add(beforeStatement);
+    }
+
+    public void addAfterStep(String afterStatement) {
+      myAfterSteps.add(0, afterStatement);
+    }
+
+    public String drainAfterSteps() {
+      String afterSteps = String.join("", myAfterSteps);
+      myAfterSteps.clear();
+      return afterSteps;
+    }
+
+    public String drainBeforeSteps() {
+      String beforeSteps = String.join("", myBeforeSteps);
+      myBeforeSteps.clear();
+      return beforeSteps;
     }
 
     public String declareResult(String desiredName, String type, String initializer, @NotNull ResultKind kind) {
@@ -472,13 +482,13 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
             PsiExpression oldInitializer = copy.getInitializer();
             LOG.assertTrue(oldInitializer != null);
             oldInitializer.replace(createExpression(initializer));
-            myDeclarations.add(copy.getText());
+            myBeforeSteps.add(copy.getText());
             return var.getName();
           }
         }
       }
       String name = registerVarName(Arrays.asList(desiredName, "result"));
-      myDeclarations.add(type + " " + name + " = " + initializer + ";");
+      myBeforeSteps.add(type + " " + name + " = " + initializer + ";");
       if(myFinisher != null) {
         throw new IllegalStateException("Finisher is already defined");
       }

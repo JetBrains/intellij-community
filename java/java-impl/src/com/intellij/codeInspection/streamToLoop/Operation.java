@@ -16,15 +16,13 @@
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -70,6 +68,9 @@ abstract class Operation {
     if(name.equals("filter") && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new FilterOperation(fn);
+    }
+    if(name.equals("sorted") && !(inType instanceof PsiPrimitiveType)) {
+      return new SortedOperation(args.length == 1 ? args[0] : null);
     }
     if(name.equals("peek") && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
@@ -229,7 +230,7 @@ abstract class Operation {
       for(StreamToLoopInspection.OperationRecord or : StreamEx.ofReversed(myRecords)) {
         replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, innerContext);
       }
-      return StreamEx.of(innerContext.getDeclarations()).map(str -> str  + "\n").joining()+replacement;
+      return replacement;
     }
 
     @Nullable
@@ -301,6 +302,25 @@ abstract class Operation {
     String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String limit = context.declare("limit", "long", myLimit.getText());
       return "if(" + limit + "--==0) " + context.getBreakStatement() + code;
+    }
+  }
+
+  static class SortedOperation extends Operation {
+    private final @Nullable PsiExpression myComparator;
+
+    SortedOperation(@Nullable PsiExpression comparator) {
+      myComparator = comparator;
+    }
+
+    @Override
+    String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String list = context.registerVarName(Arrays.asList("toSort", "listToSort"));
+      context.addAfterStep(new SourceOperation.ForEachSource(context.createExpression(list)).wrap(null, outVar, code, context));
+      context.addAfterStep(list + ".sort(" + (myComparator == null ? "null" : myComparator.getText()) + ");\n");
+      String listType = CommonClassNames.JAVA_UTIL_LIST + "<" + inVar.getType() + ">";
+      String initializer = "new " + CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<>()";
+      context.addBeforeStep(listType + " " + list + "=" + initializer + ";");
+      return list+".add("+inVar+");\n";
     }
   }
 }

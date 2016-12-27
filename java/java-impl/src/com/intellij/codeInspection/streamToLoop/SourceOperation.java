@@ -24,6 +24,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -41,9 +42,12 @@ abstract class SourceOperation extends Operation {
     return true;
   }
 
+  @NotNull
   @Override
   final String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-    return wrap(outVar, code, context);
+    // Cannot inline "result" as wrap may register more beforeSteps
+    String result = wrap(outVar, code, context);
+    return context.drainBeforeSteps() + result + context.drainAfterSteps();
   }
 
   abstract String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context);
