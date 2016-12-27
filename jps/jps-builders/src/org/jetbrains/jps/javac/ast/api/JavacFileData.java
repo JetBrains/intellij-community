@@ -18,14 +18,13 @@ package org.jetbrains.jps.javac.ast.api;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class JavacFileData {
@@ -79,7 +78,7 @@ public class JavacFileData {
 
   @NotNull
   public static JavacFileData fromBytes(byte[] bytes) {
-    final UnsyncByteArrayInputStream is = new UnsyncByteArrayInputStream(bytes);
+    final ByteArrayInputStream is = new ByteArrayInputStream(bytes);
     try {
       return EXTERNALIZER.read(new DataInputStream(is));
     }
@@ -94,7 +93,7 @@ public class JavacFileData {
 
     @Override
     public void save(@NotNull DataOutput out, JavacFileData data) throws IOException {
-      EnumeratorStringDescriptor.INSTANCE.save(out, data.getFilePath());
+      out.writeUTF(data.getFilePath());
       saveRefs(out, data.getRefs());
       saveRefs(out, data.getImportRefs());
       saveDefs(out, data.getDefs());
@@ -102,7 +101,7 @@ public class JavacFileData {
 
     @Override
     public JavacFileData read(@NotNull DataInput in) throws IOException {
-      return new JavacFileData(EnumeratorStringDescriptor.INSTANCE.read(in),
+      return new JavacFileData(in.readUTF(),
                                readRefs(in),
                                readRefs(in),
                                readDefs(in));

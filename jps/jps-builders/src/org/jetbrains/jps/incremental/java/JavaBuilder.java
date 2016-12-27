@@ -1047,8 +1047,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
-      vmOptions.addAll(extension.getExternalBuildProcessOptions(compilingTool));
+    for (ExternalJavacOptionsProvider extension : JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider.class)) {
+      vmOptions.addAll(extension.getOptions(compilingTool));
     }
 
     if (JavaCompilers.ECLIPSE_ID.equals(compilingTool.getId())) {
@@ -1119,9 +1119,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     @Override
     public void customOutputData(String pluginId, String dataName, byte[] data) {
-      final JavaCompilerToolExtension handler = JavaCompilerToolExtension.getExtension(pluginId);
-      if (handler != null) {
-        handler.processData(dataName, data);
+      for (CustomOutputDataListener listener : JpsServiceManager.getInstance().getExtensions(CustomOutputDataListener.class)) {
+        if (pluginId.equals(listener.getId())) {
+          listener.processData(dataName, data);
+          return;
+        }
       }
     }
 

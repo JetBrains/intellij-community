@@ -27,8 +27,8 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
