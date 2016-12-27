@@ -50,17 +50,18 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
   }
 
   return object: ConfigurableUi<IcsSettings> {
+    private var noRepositoryRow: Row? = null
+    private var repositoryRow: Row? = null
+
     override fun isModified(settings: IcsSettings) = editor.isModified
 
     override fun getComponent() = panel {
-      row("Repository:") {
-        if (editor.model.isEmpty) {
-          hint("Use File -> Settings Repository... to configure")
-        }
-        else {
-          editor.comboBox()
-          deleteButton()
-        }
+      noRepositoryRow = row("Repository:") {
+        hint("Use File -> Settings Repository... to configure")
+      }
+      repositoryRow = row("Repository:") {
+        editor.comboBox()
+        deleteButton()
       }
     }
 
@@ -81,6 +82,9 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
 
       editor.reset(list)
       editor.model.selectedItem = upstream
+
+      noRepositoryRow!!.visible = list.isEmpty()
+      repositoryRow!!.visible = list.isNotEmpty()
 
       deleteButton.isEnabled = editor.model.selectedItem != null
     }

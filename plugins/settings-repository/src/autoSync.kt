@@ -152,7 +152,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
                           if (!onAppExit &&
                               !app.isDisposeInProgress &&
                               updateResult != null &&
-                              updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
+                              updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
                             // force to avoid saveAll & confirmation
                             app.exit(true, true, true)
                           }

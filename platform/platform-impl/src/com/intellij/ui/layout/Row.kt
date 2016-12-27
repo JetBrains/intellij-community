@@ -45,7 +45,11 @@ import javax.swing.JLabel
 abstract class Row() {
   abstract var enabled: Boolean
 
+  abstract var visible: Boolean
+
   abstract var subRowsEnabled: Boolean
+
+  abstract var subRowsVisible: Boolean
 
   abstract val subRows: List<Row>
 
