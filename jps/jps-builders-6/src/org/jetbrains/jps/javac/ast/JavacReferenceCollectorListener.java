@@ -19,9 +19,6 @@ import com.intellij.util.Consumer;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
@@ -48,7 +45,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private final Trees myTreeUtility;
   private final JavacNameTable myNameTableCache;
 
-  private final Map<String, ReferenceCollector> myIncompletelyProcessedFiles = new THashMap<String, ReferenceCollector>(10);
+  private final Map<String, ReferenceCollector> myIncompletelyProcessedFiles = new HashMap<String, ReferenceCollector>(10);
 
   static void installOn(JavaCompiler.CompilationTask task,
                         boolean divideImportRefs,
@@ -245,17 +242,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   }
 
   private static Set<JavacRef> createReferenceHolder() {
-    return new THashSet<JavacRef>(new TObjectHashingStrategy<JavacRef>() {
-      @Override
-      public int computeHashCode(JavacRef ref) {
-        return ((JavacRef.JavacElementRefBase) ref).getOriginalElement().hashCode();
-      }
-
-      @Override
-      public boolean equals(JavacRef r1, JavacRef r2) {
-        return ((JavacRef.JavacElementRefBase) r1).getOriginalElement() == ((JavacRef.JavacElementRefBase) r2).getOriginalElement();
-      }
-    });
+    return new HashSet<JavacRef>();
   }
 
   private static List<JavacDef> createDefinitionHolder() {

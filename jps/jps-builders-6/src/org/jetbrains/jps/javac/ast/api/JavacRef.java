@@ -161,6 +161,21 @@ public interface JavacRef {
       }
       throw new AssertionError("unexpected element: " + element + " class: " + element.getClass());
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      JavacElementRefBase base = (JavacElementRefBase)o;
+
+      return myOriginalElement == base.myOriginalElement;
+    }
+
+    @Override
+    public int hashCode() {
+      return myOriginalElement.hashCode();
+    }
   }
 
   class JavacElementClassImpl extends JavacElementRefBase implements JavacClass {

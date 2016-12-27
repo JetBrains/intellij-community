@@ -16,8 +16,8 @@
 package org.jetbrains.jps.javac.ast.api;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -96,7 +96,7 @@ public class JavacFileData {
   }
 
   private static void saveRefs(final DataOutput out, Collection<JavacRef> refs) throws IOException {
-    DataInputOutputUtil.writeSeq(out, refs, new ThrowableConsumer<JavacRef, IOException>() {
+    DataInputOutputUtilRt.writeSeq(out, refs, new ThrowableConsumer<JavacRef, IOException>() {
       @Override
       public void consume(JavacRef ref) throws IOException {
         writeJavacRef(out, ref);
@@ -105,7 +105,7 @@ public class JavacFileData {
   }
 
   private static Collection<JavacRef> readRefs(final DataInput in) throws IOException {
-    return DataInputOutputUtil.readSeq(in, new ThrowableComputable<JavacRef, IOException>() {
+    return DataInputOutputUtilRt.readSeq(in, new ThrowableComputable<JavacRef, IOException>() {
       @Override
       public JavacRef compute() throws IOException {
         return readJavacRef(in);
@@ -114,7 +114,7 @@ public class JavacFileData {
   }
 
   private static void saveDefs(final DataOutput out, List<JavacDef> defs) throws IOException {
-    DataInputOutputUtil.writeSeq(out, defs, new ThrowableConsumer<JavacDef, IOException>() {
+    DataInputOutputUtilRt.writeSeq(out, defs, new ThrowableConsumer<JavacDef, IOException>() {
       @Override
       public void consume(JavacDef def) throws IOException {
         writeJavacDef(out, def);
@@ -123,7 +123,7 @@ public class JavacFileData {
   }
 
   private static List<JavacDef> readDefs(final DataInput in) throws IOException {
-    return DataInputOutputUtil.readSeq(in, new ThrowableComputable<JavacDef, IOException>() {
+    return DataInputOutputUtilRt.readSeq(in, new ThrowableComputable<JavacDef, IOException>() {
       @Override
       public JavacDef compute() throws IOException {
         return readJavacDef(in);
@@ -202,7 +202,7 @@ public class JavacFileData {
   }
 
   private static void writeModifiers(final DataOutput output, Set<Modifier> modifiers) throws IOException {
-    DataInputOutputUtil.writeSeq(output, modifiers, new ThrowableConsumer<Modifier, IOException>() {
+    DataInputOutputUtilRt.writeSeq(output, modifiers, new ThrowableConsumer<Modifier, IOException>() {
       @Override
       public void consume(Modifier modifier) throws IOException {
         output.writeUTF(modifier.name());
@@ -211,7 +211,7 @@ public class JavacFileData {
   }
 
   private static Set<Modifier> readModifiers(final DataInput input) throws IOException {
-    final List<Modifier> modifierList = DataInputOutputUtil.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
+    final List<Modifier> modifierList = DataInputOutputUtilRt.readSeq(input, new ThrowableComputable<Modifier, IOException>() {
       @Override
       public Modifier compute() throws IOException {
         return Modifier.valueOf(input.readUTF());
