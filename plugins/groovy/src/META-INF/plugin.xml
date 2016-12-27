@@ -355,6 +355,8 @@
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedRenameFieldProcessor"
                                order="first, before groovyFieldRenameProcessor"/>
 
+    <automaticRenamerFactory implementation="org.jetbrains.plugins.groovy.refactoring.rename.GroovyAutomaticOverloadsRenamerFactory"/>
+
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
 
