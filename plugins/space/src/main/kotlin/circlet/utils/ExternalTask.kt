@@ -5,7 +5,6 @@ import com.intellij.openapi.project.*
 import klogging.*
 import runtime.*
 import runtime.kdata.*
-import runtime.lifetimes.*
 
 private val log = KLoggers.logger("plugin/ExternalTask.kt")
 
