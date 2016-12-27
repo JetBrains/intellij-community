@@ -388,7 +388,7 @@ public class IdeEventQueue extends EventQueue {
   private void checkForTimeJump() {
     long now = System.currentTimeMillis();
     if (myLastEventTime > now + 1000) {
-      LOG.error("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
+      LOG.warn("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
     }
     myLastEventTime = now;
   }
