@@ -81,7 +81,8 @@ public class DebugAttachDetector {
     if (!app.isInternal()
         || app.isUnitTestMode()
         || app.isHeadlessEnvironment()
-        || "true".equals(System.getProperty("idea.debug.mode"))) return;
+        || Boolean.getBoolean("disable.attach.detector")
+        || Boolean.getBoolean("idea.debug.mode")) return;
 
     Pair<String, Integer> attachAddress = getAttachAddress(ManagementFactory.getRuntimeMXBean().getInputArguments());
     if (attachAddress == null) return;
