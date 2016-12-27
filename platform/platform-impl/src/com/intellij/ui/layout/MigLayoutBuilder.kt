@@ -81,6 +81,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     }
 
     lc.noVisualPadding()
+    lc.hideMode = 3
 
     container.layout = MigLayout(lc)
 
@@ -209,6 +210,19 @@ private class MigLayoutRow(private val componentConstraints: MutableMap<Componen
       }
     }
 
+  override var visible: Boolean = true
+    get() = field
+    set(value) {
+      if (field == value) {
+        return
+      }
+
+      field = value
+      for (c in components) {
+        c.isVisible = value
+      }
+    }
+
   override var subRowsEnabled: Boolean = true
     get() = field
     set(value) {
@@ -218,6 +232,17 @@ private class MigLayoutRow(private val componentConstraints: MutableMap<Componen
 
       field = value
       _subRows?.forEach { it.enabled = value }
+    }
+
+  override var subRowsVisible: Boolean = true
+    get() = field
+    set(value) {
+      if (field == value) {
+        return
+      }
+
+      field = value
+      _subRows?.forEach { it.visible = value }
     }
 
   override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?) {

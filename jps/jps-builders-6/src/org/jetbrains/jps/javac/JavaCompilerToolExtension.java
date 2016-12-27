@@ -16,24 +16,18 @@
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ExtensionsSupport;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 
-import javax.tools.JavaCompiler;
+import javax.tools.*;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 09-Nov-16
  */
 public abstract class JavaCompilerToolExtension {
-  @NotNull
-  public abstract String getId();
-
-  /**
+   /**
    * This method is called before compiler task execution.
    * The extension can install all necessary compiler listeners here.
    *
@@ -45,31 +39,9 @@ public abstract class JavaCompilerToolExtension {
   public void beforeCompileTaskExecution(@NotNull JavaCompilingTool compilingTool, @NotNull JavaCompiler.CompilationTask task, @NotNull Collection<String> options, @NotNull DiagnosticOutputConsumer diagnosticConsumer) {
   }
 
-  /**
-   * Custom data passed through DiagnosticOutputConsumer object with pluginId == thisExtensionId will be passed to this method
-   * @param dataName
-   * @param content
-   */
-  public void processData(String dataName, byte[] content) {
-  }
-
-  public List<String> getExternalBuildProcessOptions(@NotNull JavaCompilingTool compilingTool) {
-    return Collections.emptyList();
-  }
-
   private static final ExtensionsSupport<JavaCompilerToolExtension> ourExtSupport = new ExtensionsSupport<JavaCompilerToolExtension>(JavaCompilerToolExtension.class);
   @NotNull
   public static Collection<JavaCompilerToolExtension> getExtensions() {
     return ourExtSupport.getExtensions();
-  }
-
-  @Nullable
-  public static JavaCompilerToolExtension getExtension(@NotNull String id) {
-    for (JavaCompilerToolExtension extension : getExtensions()) {
-      if (id.equals(extension.getId())) {
-        return extension;
-      }
-    }
-    return null;
   }
 }

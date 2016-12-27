@@ -142,7 +142,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 
       if (updateResult != null) {
         val app = ApplicationManager.getApplication()
-        restartApplication = updateStoragesFromStreamProvider(app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus,
+        restartApplication = updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus,
                                                               reloadAllSchemes = syncType == SyncType.OVERWRITE_LOCAL)
       }
     }
@@ -158,30 +158,28 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
     }
     return updateResult != null || isReadOnlySourcesChanged
   }
-}
 
-private fun updateCloudSchemes(indicator: ProgressIndicator): Boolean {
-  val changedRootDirs = icsManager.readOnlySourcesManager.update(indicator) ?: return false
-  val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
-  icsManager.schemeManagerFactory.value.process {
-    val fileSpec = toRepositoryPath(it.fileSpec, it.roamingType)
-    if (changedRootDirs.contains(fileSpec)) {
-      schemeManagersToReload.add(it)
+  private fun updateCloudSchemes(indicator: ProgressIndicator): Boolean {
+    val changedRootDirs = icsManager.readOnlySourcesManager.update(indicator) ?: return false
+    val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
+    icsManager.schemeManagerFactory.value.process {
+      val fileSpec = toRepositoryPath(it.fileSpec, it.roamingType)
+      if (changedRootDirs.contains(fileSpec)) {
+        schemeManagersToReload.add(it)
+      }
     }
-  }
 
-  if (schemeManagersToReload.isNotEmpty()) {
-    invokeAndWaitIfNeed {
+    if (schemeManagersToReload.isNotEmpty()) {
       for (schemeManager in schemeManagersToReload) {
         schemeManager.reload()
       }
     }
-  }
 
-  return schemeManagersToReload.isNotEmpty()
+    return schemeManagersToReload.isNotEmpty()
+  }
 }
 
-internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {
+internal fun updateStoragesFromStreamProvider(icsManager: IcsManager, store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()

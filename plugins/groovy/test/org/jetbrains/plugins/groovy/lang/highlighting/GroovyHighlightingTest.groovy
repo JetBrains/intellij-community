@@ -1605,15 +1605,15 @@ A.foo = 3 //no error
 
   void testSOEIfExtendsItself() {
     testHighlighting('''\
-<error descr="Cyclic inheritance involving 'A'"><error descr="Method 'invokeMethod' is not implemented">class A extends A</error></error> {
+<error descr="Cyclic inheritance involving 'A'">class A extends A</error> {
   def foo
 }
 
-<error descr="Cyclic inheritance involving 'B'"><error descr="Method 'invokeMethod' is not implemented">class B extends C</error></error> {
+<error descr="Cyclic inheritance involving 'B'">class B extends C</error> {
   def foo
 }
 
-<error descr="Cyclic inheritance involving 'C'"><error descr="Method 'invokeMethod' is not implemented">class C extends B</error></error> {
+<error descr="Cyclic inheritance involving 'C'">class C extends B</error> {
 }
 ''')
   }

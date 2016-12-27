@@ -223,7 +223,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     if (c.hasFocus()) {
       Color graphiteColor = new Color(0x6f6f72);
       Color blueColor = ColorUtil.brighter(new Color(0x006de2), 3);
-      g.setColor(ColorUtil.withAlpha(IntelliJLaf.isGraphite() ? graphiteColor : blueColor, .3));
+      g.setColor(ColorUtil.withAlpha(IntelliJLaf.isGraphite() ? graphiteColor : blueColor, .35));
       Area area = new Area(getShape(r, 7, false));
       area.subtract(new Area(getShape(r, 3.5, true)));
       g.fill(area);
@@ -232,7 +232,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   private static RoundRectangle2D.Double getShape(Rectangle r, double radius, boolean inner) {
-    double max_radius = 7;
+    double max_radius = 6;
     radius = Math.min(max_radius, Math.max(0, radius));
     double inset = max_radius - radius;
     double indent = inner ? 0.5 : 0;

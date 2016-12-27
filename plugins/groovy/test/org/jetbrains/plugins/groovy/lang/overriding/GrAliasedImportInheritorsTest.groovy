@@ -61,7 +61,10 @@ new Roo<Double>() {}
     def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
     assert inheritors.size() == 4
     inheritors.each {
-      def type = (it as GrTypeDefinition).getImplementsListTypes(false).first()
+      def type = (it as GrTypeDefinition).getSuperTypes(false).find {
+        it.resolve() == iface
+      }
+      assert type != null
       def resolveResult = type.resolveGenerics()
       assert resolveResult.element == iface
       assert resolveResult.substitutor.substitute(iface.typeParameters.first())

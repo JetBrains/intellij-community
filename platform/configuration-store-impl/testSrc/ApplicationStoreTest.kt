@@ -323,7 +323,8 @@ internal class ApplicationStoreTest {
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
-    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean): Boolean {
+      return true
     }
 
     val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
@@ -341,13 +342,15 @@ internal class ApplicationStoreTest {
       return map
     }
 
-    override fun <R> read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> R): R {
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       val data = getMap(roamingType).get(fileSpec)
-      return data?.let { ByteArrayInputStream(it.toByteArray()) }.let(consumer)
+      data?.let { ByteArrayInputStream(it.toByteArray()) }.let(consumer)
+      return true
     }
 
-    override fun delete(fileSpec: String, roamingType: RoamingType) {
-      data[roamingType]?.remove(fileSpec)
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+      data.get(roamingType)?.remove(fileSpec)
+      return true
     }
   }
 

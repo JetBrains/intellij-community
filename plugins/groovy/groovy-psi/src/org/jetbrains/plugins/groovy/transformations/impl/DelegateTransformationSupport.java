@@ -243,6 +243,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
   );
 
   private static boolean overridesObjectOrGroovyObject(PsiMethod method) {
+    if (GroovyObjectTransformationSupport.isGroovyObjectSupportMethod(method)) return true;
+
     final String name = method.getName();
     if (!OBJECT_METHODS.contains(name) && !GROOVY_OBJECT_METHODS.contains(name)) return false;
 

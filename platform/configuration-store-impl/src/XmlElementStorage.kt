@@ -47,24 +47,24 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   override fun hasState(storageData: StateMap, componentName: String) = storageData.hasState(componentName)
 
-  override fun loadData(): StateMap {
-    val element: Element?
-    // we don't use local data if has stream provider
-    if (provider != null && provider.isApplicable(fileSpec, roamingType)) {
-      element = LOG.catchAndLog {
-        loadDataFromProvider().apply { dataLoadedFromProvider(this) }
+  override fun loadData() = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
+
+  private fun loadElement(useStreamProvider: Boolean = true): Element? {
+    var element: Element? = null
+    LOG.catchAndLog {
+      if (!useStreamProvider || !(provider?.read(fileSpec, roamingType) {
+        it?.let {
+          element = loadElement(it)
+        }
+      } ?: false)) {
+        element = loadLocalData()
       }
     }
-    else {
-      element = loadLocalData()
-    }
-    return element?.let { loadState(element) } ?: StateMap.EMPTY
+    return element
   }
 
   protected open fun dataLoadedFromProvider(element: Element?) {
   }
-
-  private fun loadDataFromProvider(): Element? = provider!!.read(fileSpec, roamingType) { it?.let(::loadElement) }
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
@@ -127,14 +127,14 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       }
 
       val provider = storage.provider
-      if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
-        if (element == null) {
-          provider.delete(storage.fileSpec, storage.roamingType)
+      if (element == null) {
+        if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
+          saveLocally(null)
         }
-        else {
-          // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          provider.write(storage.fileSpec, element.toBufferExposingByteArray(), storage.roamingType)
-        }
+      }
+      else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
+        // we should use standard line-separator (\n) - stream provider can share file content on any OS
+        provider.write(storage.fileSpec, element.toBufferExposingByteArray(), storage.roamingType)
       }
       else {
         saveLocally(element)
@@ -163,14 +163,14 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     updatedFrom(changedComponentNames, deleted, true)
   }
 
-  fun updatedFrom(changedComponentNames: MutableSet<String>, deleted: Boolean, streamProvider: Boolean) {
+  fun updatedFrom(changedComponentNames: MutableSet<String>, deleted: Boolean, useStreamProvider: Boolean) {
     if (roamingType == RoamingType.DISABLED) {
       // storage roaming was changed to DISABLED, but settings repository has old state
       return
     }
 
     LOG.catchAndLog {
-      val newElement = if (deleted) null else if (streamProvider) loadDataFromProvider() else loadLocalData()
+      val newElement = if (deleted) null else loadElement(useStreamProvider)
       val states = storageDataRef.get()
       if (newElement == null) {
         // if data was loaded, mark as changed all loaded components

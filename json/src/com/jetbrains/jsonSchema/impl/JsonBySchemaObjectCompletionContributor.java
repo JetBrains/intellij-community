@@ -243,7 +243,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
           // inserting longer string for proper formatting
           final String stringToInsert = ": 1";
           EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
-          formatInsertedString(context, project, stringToInsert.length());
+          formatInsertedString(context, stringToInsert.length());
           final int offset = editor.getCaretModel().getOffset();
           context.getDocument().deleteString(offset, offset + 1);
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -277,7 +277,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
 
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                formatInsertedString(context, project, stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length());
                 EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
                 handler.execute(editor, editor.getCaretModel().getCurrentCaret(),
                                 DataManager.getInstance().getDataContext(editor.getContentComponent()));
@@ -288,7 +288,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                 SelectionModel model = editor.getSelectionModel();
 
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, stringToInsert.length());
-                formatInsertedString(context, context.getProject(), stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length());
                 int start = editor.getSelectionModel().getSelectionStart();
                 model.setSelection(start - value.length(), start);
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
@@ -297,7 +297,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                 stringToInsert = ":[]";
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
 
-                formatInsertedString(context, project, stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length());
                 break;
               case _string:
               case _integer:
@@ -366,14 +366,15 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    formatInsertedString(context, context.getProject(), stringToInsert.length());
+    formatInsertedString(context, stringToInsert.length());
 
     if (hasValues) {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
   }
 
-  public static void formatInsertedString(InsertionContext context, Project project, int offset) {
+  public static void formatInsertedString(@NotNull InsertionContext context, int offset) {
+    Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(context.getDocument());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformatText(context.getFile(), context.getStartOffset(), context.getTailOffset() + offset);

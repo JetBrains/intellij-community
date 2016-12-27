@@ -15,20 +15,17 @@
  */
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.Consumer;
-import com.intellij.util.ReflectionUtil;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
+import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -51,21 +48,19 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private final Trees myTreeUtility;
   private final JavacNameTable myNameTableCache;
 
-  private NotNullLazyValue<Name> myAsterisk = new NotNullLazyValue<Name>() {
-    @NotNull
-    @Override
-    protected Name compute() {
-      return myElementUtility.getName("*");
-    }
-  };
-
   private final Map<String, ReferenceCollector> myIncompletelyProcessedFiles = new THashMap<String, ReferenceCollector>(10);
 
   static void installOn(JavaCompiler.CompilationTask task,
                         boolean divideImportRefs,
                         Consumer<JavacFileData> dataConsumer) {
     JavacTask javacTask = (JavacTask)task;
-    Method addTaskMethod = ReflectionUtil.getMethod(JavacTask.class, "addTaskListener", TaskListener.class); // jdk >= 8
+    Method addTaskMethod; // jdk >= 8
+    try {
+      addTaskMethod = JavacTask.class.getMethod("addTaskListener", TaskListener.class);
+    }
+    catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
     final JavacReferenceCollectorListener taskListener = new JavacReferenceCollectorListener(divideImportRefs,
                                                                                              dataConsumer,
                                                                                              javacTask.getElements(),
@@ -73,6 +68,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
                                                                                              Trees.instance(javacTask));
     if (addTaskMethod != null) {
       try {
+        addTaskMethod.setAccessible(true);
         addTaskMethod.invoke(task, taskListener);
       }
       catch (IllegalAccessException e) {
@@ -178,7 +174,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
           final MemberSelectTree classImport = (MemberSelectTree)qExpr;
           final Element ownerElement = incompletelyProcessedFile.getReferencedElement(classImport);
           final Name name = id.getIdentifier();
-          if (name != myAsterisk.getValue()) {
+          if (name != myNameTableCache.getAsterisk()) {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {

@@ -31,6 +31,7 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
       }
     });
     setLayout(new BorderLayout());
-    add(myTree);
+    add(new JBScrollPane(myTree));
   }
 
   @Nullable

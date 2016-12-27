@@ -33,14 +33,14 @@ import org.jetbrains.settingsRepository.git.upstream
 import org.jetbrains.settingsRepository.git.use
 import java.nio.file.Path
 
-class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path) {
+class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Path) {
   private val repositoryList = object : AtomicClearableLazyValue<List<Repository>>() {
     override fun compute(): List<Repository> {
-      if (settings.readOnlySources.isEmpty()) {
+      if (icsManager.settings.readOnlySources.isEmpty()) {
         return emptyList()
       }
 
-      return settings.readOnlySources.mapSmartNotNull { source ->
+      return icsManager.settings.readOnlySources.mapSmartNotNull { source ->
         LOG.catchAndLog {
           if (!source.active) {
             return@mapSmartNotNull null
@@ -64,7 +64,7 @@ class ReadOnlySourceManager(private val settings: IcsSettings, val rootDir: Path
     get() = repositoryList.value
 
   fun setSources(sources: List<ReadonlySource>) {
-    settings.readOnlySources = sources
+    icsManager.settings.readOnlySources = sources
     repositoryList.drop()
   }
 

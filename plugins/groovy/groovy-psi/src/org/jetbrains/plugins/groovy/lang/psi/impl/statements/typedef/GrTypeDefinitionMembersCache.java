@@ -98,12 +98,10 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     if (includeSynthetic && TransformationUtilKt.isUnderTransformation(myDefinition)) includeSynthetic = false;
     return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] extendsTypes = getTransformationResult().getExtendsTypes();
-      PsiClassType[] result = GrClassImplUtil.getExtendsListTypes(myDefinition, extendsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
+      return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     } : () -> {
       PsiClassType[] extendsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getExtendsClause());
-      PsiClassType[] result = GrClassImplUtil.getExtendsListTypes(myDefinition, extendsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
+      return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     }).clone();
   }
 
@@ -112,18 +110,17 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     if (includeSynthetic && TransformationUtilKt.isUnderTransformation(myDefinition)) includeSynthetic = false;
     return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] implementsTypes = getTransformationResult().getImplementsTypes();
-      PsiClassType[] result = GrClassImplUtil.getImplementsListTypes(myDefinition, implementsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
+      return CachedValueProvider.Result.create(implementsTypes, myDependencies);
     } : () -> {
       PsiClassType[] implementsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getImplementsClause());
-      PsiClassType[] result = GrClassImplUtil.getImplementsListTypes(myDefinition, implementsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
+      return CachedValueProvider.Result.create(implementsTypes, myDependencies);
     }).clone();
   }
 
   @NotNull
   private TransformationResult getTransformationResult() {
-    assert !TransformationUtilKt.isUnderTransformation(myDefinition);
+    boolean underTransformation = TransformationUtilKt.isUnderTransformation(myDefinition);
+    assert !underTransformation;
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));

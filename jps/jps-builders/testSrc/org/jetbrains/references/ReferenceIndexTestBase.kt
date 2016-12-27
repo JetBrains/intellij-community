@@ -23,17 +23,14 @@ import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.PersistentStringEnumerator
 import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
-import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex
 import org.jetbrains.jps.backwardRefs.LightRef
+import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices
-import org.jetbrains.jps.builders.BuildResult
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
-import org.jetbrains.jps.javac.JavaCompilerToolExtension
-import org.jetbrains.jps.javac.ast.RefCollectorCompilerToolExtension
 import java.io.File
 
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
@@ -58,22 +55,6 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
     addModule("m", PathUtil.getParentPath(representativeFile!!))
     rebuildAllModules()
     assertIndexEquals("initialIndex.txt")
-  }
-
-  override fun rebuildAllModules() {
-    try {
-      super.rebuildAllModules()
-    } finally {
-      (JavaCompilerToolExtension.getExtension(RefCollectorCompilerToolExtension.ID) as RefCollectorCompilerToolExtension).clearRegistrars()
-    }
-  }
-
-  override fun buildAllModules(): BuildResult {
-    try {
-      return super.buildAllModules()
-    } finally {
-      (JavaCompilerToolExtension.getExtension(RefCollectorCompilerToolExtension.ID) as RefCollectorCompilerToolExtension).clearRegistrars()
-    }
   }
 
   protected fun renameFile(fileToRename: String, newName: String) {
