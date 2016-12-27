@@ -345,6 +345,8 @@
     <renamePsiElementProcessor id="groovyLightElementRenamer"
                                implementation="org.jetbrains.plugins.groovy.refactoring.rename.GrLightElementRenamer"
                                order="first, after groovyPropertyRenameProcessor"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrReflectedMethodProcessor"
+                               order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedClassProcessor"
                                order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedMethodProcessor"
