@@ -36,12 +36,12 @@ public class CreationPositionTracker extends AbstractProjectComponent {
    * Stores all tracked instance for each debug session.
    */
   private final ConcurrentHashMap<XDebugSession, Map<ObjectReference, List<StackFrameItem>>>
-      mySession2Reference2Stack = new ConcurrentHashMap<>();
+    mySession2Reference2Stack = new ConcurrentHashMap<>();
 
   private final ConcurrentHashMap<XDebugSession, Map<ObjectReference, List<StackFrameItem>>>
-      myPinnedSession2Reference2Stack = new ConcurrentHashMap<>();
+    myPinnedSession2Reference2Stack = new ConcurrentHashMap<>();
 
-  public CreationPositionTracker(Project project) {
+  public CreationPositionTracker(@NotNull Project project) {
     super(project);
   }
 
@@ -52,7 +52,7 @@ public class CreationPositionTracker extends AbstractProjectComponent {
 
   @Nullable
   public List<StackFrameItem> getStack(@NotNull XDebugSession session, @NotNull ObjectReference ref) {
-    List<StackFrameItem> stack = extract(mySession2Reference2Stack, session, ref);
+    final List<StackFrameItem> stack = extract(mySession2Reference2Stack, session, ref);
     return stack != null ? stack : extract(myPinnedSession2Reference2Stack, session, ref);
   }
 
@@ -72,17 +72,17 @@ public class CreationPositionTracker extends AbstractProjectComponent {
   }
 
   public void releaseBySession(@NotNull XDebugSession session) {
-    if(mySession2Reference2Stack.containsKey(session)) {
+    if (mySession2Reference2Stack.containsKey(session)) {
       mySession2Reference2Stack.put(session, new ConcurrentHashMap<>());
     }
   }
 
   public void unpinStacks(@NotNull XDebugSession session, @NotNull ReferenceType ref) {
-    Map<ObjectReference, List<StackFrameItem>> ref2Stack = myPinnedSession2Reference2Stack.getOrDefault(session, null);
+    final Map<ObjectReference, List<StackFrameItem>> ref2Stack = myPinnedSession2Reference2Stack.get(session);
     if (ref2Stack != null) {
-      Iterator<ObjectReference> iterator = ref2Stack.keySet().iterator();
+      final Iterator<ObjectReference> iterator = ref2Stack.keySet().iterator();
       while (iterator.hasNext()) {
-        ObjectReference reference = iterator.next();
+        final ObjectReference reference = iterator.next();
         if (ref.equals(reference.referenceType())) {
           iterator.remove();
         }
@@ -95,21 +95,21 @@ public class CreationPositionTracker extends AbstractProjectComponent {
   }
 
   public void pinStacks(@NotNull XDebugSession session, @NotNull ReferenceType ref) {
-    Map<ObjectReference, List<StackFrameItem>> ref2Stack = mySession2Reference2Stack.getOrDefault(session, null);
+    final Map<ObjectReference, List<StackFrameItem>> ref2Stack = mySession2Reference2Stack.get(session);
     if (ref2Stack != null) {
-      Map<ObjectReference, List<StackFrameItem>> ref2StacksByReferenceType = ref2Stack.entrySet().stream()
-          .filter(entry -> ref.equals(entry.getKey().referenceType()))
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      final Map<ObjectReference, List<StackFrameItem>> ref2StacksByReferenceType = ref2Stack.entrySet().stream()
+        .filter(entry -> ref.equals(entry.getKey().referenceType()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       myPinnedSession2Reference2Stack.put(session, ref2StacksByReferenceType);
     }
   }
 
   @Nullable
-  private static<T> T extract(@NotNull Map<XDebugSession, Map<ObjectReference, T>> map,
-                              @NotNull XDebugSession session, @NotNull ObjectReference ref) {
-    Map<ObjectReference, T> ref2something = map.getOrDefault(session, null);
-    if(ref2something != null) {
-      return ref2something.getOrDefault(ref, null);
+  private static <T> T extract(@NotNull Map<XDebugSession, Map<ObjectReference, T>> map,
+                               @NotNull XDebugSession session, @NotNull ObjectReference ref) {
+    final Map<ObjectReference, T> ref2something = map.get(session);
+    if (ref2something != null) {
+      return ref2something.get(ref);
     }
 
     return null;
