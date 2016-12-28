@@ -36,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -371,7 +370,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                    VcsLogHighlighter.TextStyle.NORMAL);
 
     final VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
-    if (details == null || details instanceof LoadingDetails) return defaultStyle;
+    if (details == null) return defaultStyle;
 
     List<VcsLogHighlighter.VcsCommitStyle> styles =
       ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(details, selected));
