@@ -27,18 +27,21 @@ class DoNotSaveDefaultsTest {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val directory = app.stateStore.stateStorageManager.expandMacros(APP_CONFIG)
     val dirPath = Paths.get(directory)
+    val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
     try {
+      System.setProperty("store.save.use.modificationCount", "false")
       app.doNotSave(false)
       runInEdtAndWait {
         app.saveAll()
       }
     }
     finally {
+      System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")
       app.doNotSave(true)
     }
 
     println(directory)
-    println(printDirectoryTree(dirPath.toFile()))
+    println(printDirectoryTree(dirPath))
   }
 }
 

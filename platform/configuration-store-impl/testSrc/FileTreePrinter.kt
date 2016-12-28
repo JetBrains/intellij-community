@@ -1,9 +1,11 @@
 package com.intellij.configurationStore
 
-import java.io.File
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.isDirectory
+import java.nio.file.Path
 
-fun printDirectoryTree(folder: File): String {
-  if (!folder.isDirectory) {
+fun printDirectoryTree(folder: Path): String {
+  if (!folder.isDirectory()) {
     throw IllegalArgumentException("folder is not a Directory")
   }
   val indent = 0
@@ -12,17 +14,17 @@ fun printDirectoryTree(folder: File): String {
   return sb.toString()
 }
 
-private fun printDirectoryTree(folder: File, indent: Int, sb: StringBuilder) {
-  if (!folder.isDirectory) {
+private fun printDirectoryTree(dir: Path, indent: Int, sb: StringBuilder) {
+  if (!dir.isDirectory()) {
     throw IllegalArgumentException("folder is not a Directory")
   }
   getIndentString(indent, sb)
   sb.append("\u251c\u2500\u2500")
-  sb.append(folder.name)
+  sb.append(dir.fileName.toString())
   sb.append("/")
   sb.append("\n")
-  for (file in folder.listFiles()!!) {
-    if (file.isDirectory) {
+  for (file in dir.directoryStreamIfExists { it.map { it } }!!) {
+    if (file.isDirectory()) {
       printDirectoryTree(file, indent + 1, sb)
     }
     else {
@@ -31,10 +33,10 @@ private fun printDirectoryTree(folder: File, indent: Int, sb: StringBuilder) {
   }
 }
 
-private fun printFile(file: File, indent: Int, sb: StringBuilder) {
+private fun printFile(file: Path, indent: Int, sb: StringBuilder) {
   getIndentString(indent, sb)
   sb.append("\u251c\u2500\u2500")
-  sb.append(file.name)
+  sb.append(file.fileName.toString())
   sb.append("\n")
 }
 
