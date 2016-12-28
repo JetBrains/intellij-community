@@ -96,7 +96,7 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).isRegularFile
+    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).doesNotExist()
   }
 
   @Test fun `remove deprecated storage on write`() {
@@ -323,9 +323,7 @@ internal class ApplicationStoreTest {
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
-    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean): Boolean {
-      return true
-    }
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) = true
 
     val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
