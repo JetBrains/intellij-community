@@ -229,7 +229,7 @@ public class JdkUtil {
         vmParamsFile = FileUtil.createTempFile("idea_vm_params", null);
         try (PrintWriter writer = new PrintWriter(vmParamsFile)) {
           for (String param : vmParametersList.getList()) {
-            if (param.startsWith("-D")) {
+            if (isUserDefinedProperty(param)) {
               writer.println(param);
             }
             else {
@@ -324,7 +324,7 @@ public class JdkUtil {
       if (dynamicVMOptions) {
         List<String> properties = new ArrayList<>();
         for (String param : vmParametersList.getList()) {
-          if (param.startsWith("-D")) {
+          if (isUserDefinedProperty(param)) {
             properties.add(param);
           }
           else {
@@ -365,6 +365,11 @@ public class JdkUtil {
     }
 
     return dynamicParameters;
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private static boolean isUserDefinedProperty(String param) {
+    return param.startsWith("-D") && !(param.startsWith("-Dsun.") || param.startsWith("-Djava."));
   }
 
   private static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
