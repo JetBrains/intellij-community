@@ -83,10 +83,17 @@ public interface LibraryTable {
     boolean isChanged();
   }
 
-  interface Listener extends EventListener{
-    void afterLibraryAdded (Library newLibrary);
-    void afterLibraryRenamed (Library library);
-    void beforeLibraryRemoved (Library library);
-    void afterLibraryRemoved (Library library);
+  interface Listener extends EventListener {
+    default void afterLibraryAdded(Library newLibrary) {
+    }
+
+    default void afterLibraryRenamed(Library library) {
+    }
+
+    default void beforeLibraryRemoved(Library library) {
+    }
+
+    default void afterLibraryRemoved(Library library) {
+    }
   }
 }

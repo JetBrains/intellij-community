@@ -322,21 +322,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     @Override
-    public void afterLibraryAdded(Library newLibrary) {
-    }
-
-    @Override
     public void afterLibraryRenamed(Library library) {
       myLibraryByNameCache = null;
-    }
-
-    @Override
-    public void beforeLibraryRemoved(Library library) {
-    }
-
-    @Override
-    public void afterLibraryRemoved(Library library) {
-
     }
 
     @Override
