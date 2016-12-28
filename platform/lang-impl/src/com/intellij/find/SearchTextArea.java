@@ -60,6 +60,7 @@ import java.beans.PropertyChangeListener;
 
 public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
   private final JTextArea myTextArea;
+  private final boolean mySearchMode;
   private final boolean myInfoMode;
   private final JLabel myInfoLabel;
   private JPanel myIconsPanel = null;
@@ -69,12 +70,13 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   private final ActionButton myHistoryPopupButton;
   private final LafHelper myHelper;
 
-  public SearchTextArea(boolean search) {
-    this(new JTextArea(), search, false);
+  public SearchTextArea(boolean searchMode) {
+    this(new JTextArea(), searchMode, false);
   }
 
-  public SearchTextArea(@NotNull JTextArea textArea, boolean search, boolean infoMode) {
+  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
     myTextArea = textArea;
+    mySearchMode = searchMode;
     myInfoMode = infoMode;
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
@@ -127,9 +129,10 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     myHelper = createHelper();
 
-    myHistoryPopupButton = createButton(new ShowHistoryAction(search));
+    myHistoryPopupButton = createButton(new ShowHistoryAction());
     myClearButton = createButton(new ClearAction());
     myNewLineButton = createButton(new NewLineAction());
+    myNewLineButton.setVisible(searchMode);
     myIconsPanel = new NonOpaquePanel();
 
     updateLayout();
@@ -212,11 +215,13 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   @Override
   public void focusGained(FocusEvent e) {
+    myNewLineButton.setVisible(true);
     repaint();
   }
 
   @Override
   public void focusLost(FocusEvent e) {
+    myNewLineButton.setVisible(mySearchMode);
     repaint();
   }
 
@@ -253,14 +258,11 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class ShowHistoryAction extends DumbAwareAction {
-    private final boolean myShowSearchHistory;
 
-    public ShowHistoryAction(boolean search) {
-      super((search ? "Search" : "Replace") + " History",
-            (search ? "Search" : "Replace") + " history",
+    public ShowHistoryAction() {
+      super((mySearchMode ? "Search" : "Replace") + " History",
+            (mySearchMode ? "Search" : "Replace") + " history",
             myHelper.getShowHistoryIcon());
-
-      myShowSearchHistory = search;
 
       KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK);
       registerCustomShortcutSet(new CustomShortcutSet(new KeyboardShortcut(stroke, null)), myTextArea);
@@ -270,9 +272,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
-      String[] recent = myShowSearchHistory ? findInProjectSettings.getRecentFindStrings()
-                                            : findInProjectSettings.getRecentReplaceStrings();
-      String title = "Recent " + (myShowSearchHistory ? "Searches" : "Replaces");
+      String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
+                                     : findInProjectSettings.getRecentReplaceStrings();
+      String title = "Recent " + (mySearchMode ? "Searches" : "Replaces");
       JBList historyList = new JBList((Object[])ArrayUtil.reverseArray(recent));
       Utils.showCompletionPopup(SearchTextArea.this, historyList, title, myTextArea, null);
     }
