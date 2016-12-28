@@ -27,8 +27,10 @@ def _modify_code_arguments(original_code, insert_code, insert_code_obj, attr, op
 
 def _modify_new_lines(code_to_modify, code_insert, before_line_offset):
     new_list = list(code_to_modify.co_lnotab)
+    abs_offset = 0
     for i in range(0, len(new_list), 2):
-        if new_list[i] == before_line_offset and (i + 2) < len(new_list):
+        abs_offset += new_list[i]
+        if abs_offset == before_line_offset and (i + 2) < len(new_list):
             new_list[i + 2] += len(code_insert)
     return bytes(new_list)
 
