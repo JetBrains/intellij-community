@@ -423,7 +423,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                                         List<PsiElement> results,
                                         PsiAssignmentExpression assignment,
                                         CommentTracker ct) {
-      PsiExpression rValue = assignment.getRExpression();
+      PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         if (rValue instanceof PsiPolyadicExpression &&
             ((PsiPolyadicExpression)rValue).getOperationTokenType().equals(JavaTokenType.PLUS)) {
