@@ -16,7 +16,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -47,9 +45,6 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class StringConcatenationInLoopsInspection extends BaseInspection {
-
-  @SuppressWarnings("PublicField")
-  public boolean m_ignoreUnlessAssigned = true;
 
   @Override
   @NotNull
@@ -64,17 +59,11 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("string.concatenation.in.loops.only.option"),
-                                          this, "m_ignoreUnlessAssigned");
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new StringConcatenationInLoopsVisitor();
   }
 
-  private class StringConcatenationInLoopsVisitor extends BaseInspectionVisitor {
+  private static class StringConcatenationInLoopsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -90,7 +79,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
       if (ExpressionUtils.isEvaluatedAtCompileTime(expression)) return;
 
-      if (m_ignoreUnlessAssigned && !isAppendedRepeatedly(expression)) return;
+      if (!isAppendedRepeatedly(expression)) return;
       final PsiJavaToken sign = expression.getTokenBeforeOperand(operands[1]);
       assert sign != null;
       registerError(sign, getAppendedVariable(expression));
@@ -110,11 +99,9 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
       if (!checkExpression(expression, lhs.getType())) return;
 
-      if (m_ignoreUnlessAssigned) {
-        lhs = PsiUtil.skipParenthesizedExprDown(lhs);
-        if (!(lhs instanceof PsiReferenceExpression)) {
-          return;
-        }
+      lhs = PsiUtil.skipParenthesizedExprDown(lhs);
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return;
       }
       registerError(sign, getAppendedVariable(expression));
     }
@@ -146,7 +133,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     @Contract("null, _ -> false")
-    private boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
+    private static boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
       if(statement == null || statement == loop) return false;
       for(PsiStatement sibling = statement; sibling != null; sibling = PsiTreeUtil.getNextSiblingOfType(sibling, PsiStatement.class)) {
         if(sibling instanceof PsiContinueStatement) return false;
@@ -203,7 +190,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     @Nullable
-    private PsiCodeBlock getSurroundingBlock(PsiElement expression) {
+    private static PsiCodeBlock getSurroundingBlock(PsiElement expression) {
       PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiClassInitializer.class, PsiLambdaExpression.class);
       if(parent instanceof PsiMethod) {
         return ((PsiMethod)parent).getBody();
@@ -218,7 +205,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       return null;
     }
 
-    private boolean containingStatementExits(PsiElement element) {
+    private static boolean containingStatementExits(PsiElement element) {
       final PsiStatement newExpressionStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
       if (newExpressionStatement == null) {
         return false;
@@ -227,7 +214,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       return !ControlFlowUtils.statementMayCompleteNormally(parentStatement);
     }
 
-    private boolean isAppendedRepeatedly(PsiExpression expression) {
+    private static boolean isAppendedRepeatedly(PsiExpression expression) {
       PsiElement parent = expression.getParent();
       while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiPolyadicExpression) {
         parent = parent.getParent();
@@ -253,7 +240,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       return isAppended(variable, rhs);
     }
 
-    private boolean isAppended(PsiVariable variable, PsiExpression expression) {
+    private static boolean isAppended(PsiVariable variable, PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if(expression instanceof PsiPolyadicExpression) {
         for(PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {

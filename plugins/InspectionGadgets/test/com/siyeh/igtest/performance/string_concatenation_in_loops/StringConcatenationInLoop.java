@@ -37,7 +37,7 @@ public class StringConcatenationInLoop
         }
         for(int i = 0; i < 5; i++)
         {
-            baz( foo <warning descr="String concatenation '+' in loop">+</warning> "  " + i);
+            baz( foo + "  " + i);
         }
         for(int i = 0; i < 5; i++)
         {
@@ -162,7 +162,7 @@ public class StringConcatenationInLoop
         String s = "asdf";
         final int len =  array.length;
         for (int k = 0; k < len; k++) {
-            array[k] <warning descr="String concatenation '+=' in loop">+=</warning> "b";
+            array[k] += "b";
             s <warning descr="String concatenation '+=' in loop">+=</warning> k;
         }
     }
