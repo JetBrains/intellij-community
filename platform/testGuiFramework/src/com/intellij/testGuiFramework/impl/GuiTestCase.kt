@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
@@ -25,11 +26,8 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
 import com.intellij.util.net.HttpConfigurable
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.SmartWaitRobot
-import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.*
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
 import java.awt.Component
 import java.awt.Container
 import java.lang.reflect.InvocationTargetException
@@ -168,25 +166,22 @@ open class GuiTestCase : GuiTestBase() {
     }
   }
 
-  //*********PRIVATE REALISATIONS
   private fun jList(container: Container, containingItem: String? = null): JListFixture {
 
-    Pause.pause(object : Condition("Finding for JList") {
-      override fun test(): Boolean {
-        val lists = myRobot.finder().findAll(container, { it is JList<*> })
-        return !lists.isEmpty()
+    val extCellReader = ExtendedJListCellReader()
+    val myJList = waitUntilFound(myRobot, container, object : GenericTypeMatcher<JList<*>>(JList::class.java) {
+      override fun isMatching(myList: JList<*>): Boolean {
+        if (containingItem == null) return true //if were searching for any jList()
+        val elements = (0..myList.model.size - 1).map { it -> extCellReader.valueAt(myList, it) }
+        return elements.any { it.toString() == containingItem }
       }
-    }, GuiTestUtil.SHORT_TIMEOUT)
-
-    val lists = myRobot.finder().findAll(container, { component -> component is JList<*> })
-    if (lists.size == 1)
-      return JListFixture(myRobot, lists.first() as JList<*>)
-    else {
-      if (containingItem == null) throw ComponentLookupException("Found more than one JList, please specify item")
-      val filterJList: (JList<*>) -> Boolean = { myList -> (0..(myList.model.size - 1)).any { myList.model.getElementAt(it).toString() == containingItem } }
-      return JListFixture(myRobot, lists.filter { filterJList(it as JList<*>) }.first() as JList<*>)
-    }
+    })
+    val jListFixture = JListFixture(myRobot, myJList)
+    jListFixture.replaceCellReader(extCellReader)
+    return jListFixture
   }
+
+
 
   private fun button(container: Container, name: String): JButtonFixture {
     val jButton = GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JButton>(JButton::class.java) {
