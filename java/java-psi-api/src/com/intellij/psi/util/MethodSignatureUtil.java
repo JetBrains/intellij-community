@@ -411,7 +411,7 @@ public class MethodSignatureUtil {
     if (r1 instanceof PsiClassType && r2 != null) {
 
       //R1, adapted to the type parameters of d2 (§8.4.4), is a subtype of R2.
-      final PsiSubstitutor adaptingSubstitutor = getSuperMethodSignatureSubstitutor(d1, d2);
+      final PsiSubstitutor adaptingSubstitutor = getSuperMethodSignatureSubstitutor(d2, d1);
       if (adaptingSubstitutor != null && r2.isAssignableFrom(adaptingSubstitutor.substitute(r1))) {
         return true;
       }
