@@ -1377,6 +1377,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
+    EditorTestUtil.waitForLoading(editor);
     if (editor != null) {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
     }
