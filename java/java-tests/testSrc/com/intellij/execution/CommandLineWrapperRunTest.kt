@@ -53,9 +53,7 @@ class CommandLineWrapperRunTest : BareTestFixtureTestCase() {
     parameters.setUseDynamicClasspath(dynamicCp)
     parameters.setUseClasspathJar(classPathJar)
     parameters.setUseDynamicVMOptions(dynamicArgs)
-    if (classPathJar) {
-      parameters.setPassProgramParametersViaClasspathJar(dynamicArgs)
-    }
+    parameters.setUseDynamicParameters(dynamicArgs)
 
     val command = parameters.toCommandLine()
     val out = ExecUtil.execAndGetOutput(command)

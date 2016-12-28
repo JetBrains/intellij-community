@@ -151,7 +151,7 @@ public class CommandLineWrapper {
   }
 
   /**
-   * args: "classpath file" [ @vm_params "VM options file" ] "main class" [ args ... ]
+   * args: "classpath file" [ @vm_params "VM options file" ] [ @app_params "args file" ] "main class" [ args ... ]
    * @noinspection Duplicates, ResultOfMethodCallIgnored
    */
   private static AppData loadMainClassWithCustomLoader(File classpathFile, String[] args) throws Exception {
@@ -175,11 +175,9 @@ public class CommandLineWrapper {
     int startArgsIdx = 2;
 
     List properties = Collections.EMPTY_LIST;
-    if (args.length >= 3 && "@vm_params".equals(args[1])) {
-      startArgsIdx = 4;
-
-      File vmParamsFile = new File(args[2]);
-      BufferedReader vmParamsReader = new BufferedReader(new FileReader(args[2]));
+    if (args.length > startArgsIdx && "@vm_params".equals(args[startArgsIdx - 1])) {
+      File vmParamsFile = new File(args[startArgsIdx]);
+      BufferedReader vmParamsReader = new BufferedReader(new FileReader(vmParamsFile));
       try {
         properties = new ArrayList();
         String property;
@@ -191,12 +189,35 @@ public class CommandLineWrapper {
         vmParamsReader.close();
         vmParamsFile.delete();
       }
+
+      startArgsIdx += 2;
+    }
+
+    String[] mainArgs;
+    if (args.length > startArgsIdx && "@app_params".equals(args[startArgsIdx - 1])) {
+      File appParamsFile = new File(args[startArgsIdx]);
+      BufferedReader appParamsReader = new BufferedReader(new FileReader(appParamsFile));
+      try {
+        List list = new ArrayList();
+        String arg;
+        while ((arg = appParamsReader.readLine()) != null) {
+          list.add(arg);
+        }
+        mainArgs = (String[])list.toArray(new String[list.size()]);
+      }
+      finally {
+        appParamsReader.close();
+        appParamsFile.delete();
+      }
+
+      startArgsIdx += 2;
+    }
+    else {
+      mainArgs = new String[args.length - startArgsIdx];
+      System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
     }
 
     String mainClassName = args[startArgsIdx - 1];
-    String[] mainArgs = new String[args.length - startArgsIdx];
-    System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
-
     ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[classpathUrls.size()]), null);
     String systemLoaderName = System.getProperty("java.system.class.loader");
     if (systemLoaderName != null) {

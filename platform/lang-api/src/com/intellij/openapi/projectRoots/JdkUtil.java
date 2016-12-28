@@ -167,17 +167,16 @@ public class JdkUtil {
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
     final Class commandLineWrapper;
-    boolean passProgramParametersViaClassPathJar = false;
+    boolean dynamicParameters = false;
     if (javaParameters.isDynamicClasspath() &&
         !explicitClassPath(vmParameters) &&
         javaParameters.getModulePath().isEmpty() &&
         (commandLineWrapper = getCommandLineWrapperClass()) != null) {
       if (isClassPathJarEnabled(javaParameters, PathUtil.getJarPathForClass(ClassPath.class))) {
-        passProgramParametersViaClassPathJar = javaParameters.isPassProgramParametersViaClasspathJar();
-        appendJarClasspathParams(javaParameters, commandLine, vmParameters, commandLineWrapper, passProgramParametersViaClassPathJar);
+        dynamicParameters = setClasspathJarParams(javaParameters, commandLine, vmParameters, commandLineWrapper);
       }
       else {
-        appendOldCommandLineWrapper(javaParameters, commandLine, vmParameters, commandLineWrapper);
+        dynamicParameters = setCommandLineWrapperParams(javaParameters, commandLine, vmParameters, commandLineWrapper);
       }
     }
     else {
@@ -202,7 +201,7 @@ public class JdkUtil {
       throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));
     }
 
-    if (!passProgramParametersViaClassPathJar) {
+    if (!dynamicParameters) {
       commandLine.addParameters(javaParameters.getProgramParametersList().getList());
     }
 
@@ -217,14 +216,17 @@ public class JdkUtil {
     return vmParameters.hasParameter("-p") || vmParameters.hasParameter("--module-path");
   }
 
-  private static void appendOldCommandLineWrapper(SimpleJavaParameters javaParameters,
-                                                  GeneralCommandLine commandLine,
-                                                  ParametersList vmParametersList,
-                                                  Class commandLineWrapper) throws CantRunException {
+  private static boolean setCommandLineWrapperParams(SimpleJavaParameters javaParameters,
+                                                     GeneralCommandLine commandLine,
+                                                     ParametersList vmParametersList,
+                                                     Class commandLineWrapper) throws CantRunException {
+    boolean dynamicVMOptions = javaParameters.isDynamicVMOptions() && useDynamicVMOptions();
+    boolean dynamicParameters = javaParameters.isDynamicParameters() && useDynamicParameters();
+
     File vmParamsFile = null;
-    if (javaParameters.isDynamicVMOptions() && useDynamicVMOptions()) {
+    if (dynamicVMOptions) {
       try {
-        vmParamsFile = FileUtil.createTempFile("vm_params", null);
+        vmParamsFile = FileUtil.createTempFile("idea_vm_params", null);
         try (PrintWriter writer = new PrintWriter(vmParamsFile)) {
           for (String param : vmParametersList.getList()) {
             if (param.startsWith("-D")) {
@@ -244,17 +246,28 @@ public class JdkUtil {
       commandLine.addParameters(vmParametersList.getList());
     }
 
+    File appParamsFile = null;
+    if (dynamicParameters) {
+      try {
+        appParamsFile = FileUtil.createTempFile("idea_app_params", null);
+        try (PrintWriter writer = new PrintWriter(appParamsFile)) {
+          for (String path : javaParameters.getProgramParametersList().getList()) {
+            writer.println(path);
+          }
+        }
+      }
+      catch (IOException e) {
+        throwUnableToCreateTempFile(e);
+      }
+    }
+
     File classpathFile = null;
     try {
-      classpathFile = FileUtil.createTempFile("classpath", null);
-      final PrintWriter writer = new PrintWriter(classpathFile);
-      try {
+      classpathFile = FileUtil.createTempFile("idea_classpath", null);
+      try (PrintWriter writer = new PrintWriter(classpathFile)) {
         for (String path : javaParameters.getClassPath().getPathList()) {
           writer.println(path);
         }
-      }
-      finally {
-        writer.close();
       }
 
       String classpath = PathUtil.getJarPathForClass(commandLineWrapper);
@@ -284,39 +297,47 @@ public class JdkUtil {
       commandLine.addParameter(vmParamsFile.getAbsolutePath());
     }
 
-    final Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
+    if (appParamsFile != null) {
+      commandLine.addParameter("@app_params");
+      commandLine.addParameter(appParamsFile.getAbsolutePath());
+    }
+
+    Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
     ContainerUtil.addIfNotNull(filesToDelete, classpathFile);
     ContainerUtil.addIfNotNull(filesToDelete, vmParamsFile);
+    ContainerUtil.addIfNotNull(filesToDelete, appParamsFile);
+
+    return dynamicParameters;
   }
 
-  private static void appendJarClasspathParams(SimpleJavaParameters javaParameters,
+  private static boolean setClasspathJarParams(SimpleJavaParameters javaParameters,
                                                GeneralCommandLine commandLine,
                                                ParametersList vmParametersList,
-                                               Class commandLineWrapper,
-                                               boolean storeProgramParametersInJar) throws CantRunException {
+                                               Class commandLineWrapper) throws CantRunException {
+    boolean dynamicVMOptions = javaParameters.isDynamicVMOptions() && useDynamicVMOptions();
+    boolean dynamicParameters = javaParameters.isDynamicParameters() && useDynamicParameters();
+
     try {
       final Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
 
-      final boolean writeDynamicVMOptions = javaParameters.isDynamicVMOptions() && useDynamicVMOptions();
-      if (writeDynamicVMOptions) {
-        List<String> dParams = new ArrayList<>();
+      if (dynamicVMOptions) {
+        List<String> properties = new ArrayList<>();
         for (String param : vmParametersList.getList()) {
           if (param.startsWith("-D")) {
-            dParams.add(param);
+            properties.add(param);
           }
           else {
             commandLine.addParameter(param);
           }
         }
-
-        manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(dParams));
+        manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(properties));
       }
       else {
         commandLine.addParameters(vmParametersList.getList());
       }
 
-      if (storeProgramParametersInJar) {
+      if (dynamicParameters) {
         manifest.getMainAttributes().putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
       }
 
@@ -328,7 +349,7 @@ public class JdkUtil {
 
       final String jarFile = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
-      if (writeDynamicVMOptions || storeProgramParametersInJar) {
+      if (dynamicVMOptions || dynamicParameters) {
         commandLine.addParameter(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator + jarFile);
         appendEncoding(javaParameters, commandLine, vmParametersList);
         commandLine.addParameter(commandLineWrapper.getName());
@@ -342,6 +363,8 @@ public class JdkUtil {
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
     }
+
+    return dynamicParameters;
   }
 
   private static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
@@ -439,7 +462,11 @@ public class JdkUtil {
   }
 
   public static boolean useDynamicVMOptions() {
-    return PropertiesComponent.getInstance().getBoolean("dynamic.vmoptions", true);
+    return PropertiesComponent.getInstance().getBoolean("idea.dynamic.vmoptions", true);
+  }
+
+  public static boolean useDynamicParameters() {
+    return PropertiesComponent.getInstance().getBoolean("idea.dynamic.parameters", true);
   }
 
   public static boolean useClasspathJar() {
