@@ -215,8 +215,11 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     private static boolean isAppended(PsiVariable variable, PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if(expression instanceof PsiPolyadicExpression) {
-        for(PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {
-          if(ExpressionUtils.isReferenceTo(operand, variable) || isAppended(variable, operand)) return true;
+        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        if (polyadicExpression.getOperationTokenType().equals(JavaTokenType.PLUS)) {
+          for (PsiExpression operand : polyadicExpression.getOperands()) {
+            if (ExpressionUtils.isReferenceTo(operand, variable) || isAppended(variable, operand)) return true;
+          }
         }
       }
       return false;

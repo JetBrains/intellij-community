@@ -94,6 +94,12 @@ public class StringConcatenationInLoop
                 System.out.println(s);
             }
         }
+        for (int i = 0; i < 10; i++) {
+            s = (s == "") + "...";
+        }
+        for (int i = 0; i < 10; i++) {
+            s = ("xyz" <warning descr="String concatenation '+' in loop">+</warning> (i <warning descr="String concatenation '+' in loop">+</warning> s)) <warning descr="String concatenation '+' in loop">+</warning> "...";
+        }
         System.out.println(foo);
         return foo;
     }
