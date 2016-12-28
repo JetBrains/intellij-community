@@ -45,10 +45,15 @@ public class IndexedDetails extends LoadingDetails {
   public String getSubject() {
     String message = myIndex.getFullMessage(myCommitIndex);
     if (message != null) {
-      int subjectEnd = message.indexOf("\n\n");
-      if (subjectEnd > 0) return message.substring(0, subjectEnd).replace("\n", " ");
-      return message.replace("\n", " ");
+      return getSubject(message);
     }
     return super.getSubject();
+  }
+
+  @NotNull
+  public static String getSubject(@NotNull String fullMessage) {
+    int subjectEnd = fullMessage.indexOf("\n\n");
+    if (subjectEnd > 0) return fullMessage.substring(0, subjectEnd).replace("\n", " ");
+    return fullMessage.replace("\n", " ");
   }
 }
