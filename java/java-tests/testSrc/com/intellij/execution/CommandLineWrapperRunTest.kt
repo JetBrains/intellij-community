@@ -65,18 +65,18 @@ class CommandLineWrapperRunTest : BareTestFixtureTestCase() {
                  "arg[0]=first parameter\n" +
                  "arg[1]=next parameter\n", out.stdout)
   }
+}
 
-  object Helper {
-    val PROPERTY1 = "idea.wrapper.exec.test.1"
-    val PROPERTY2 = "idea.wrapper.exec.test.2"
+internal object Helper {
+  val PROPERTY1 = "idea.wrapper.exec.test.1"
+  val PROPERTY2 = "idea.wrapper.exec.test.2"
 
-    @JvmStatic
-    fun main(args: Array<String>) {
-      println(PROPERTY1 + "=" + System.getProperty(PROPERTY1))
-      println(PROPERTY2 + "=" + System.getProperty(PROPERTY2))
-      for (i in args.indices) {
-        println("arg[" + i + "]=" + args[i])
-      }
+  @JvmStatic
+  fun main(args: Array<String>) {
+    println(PROPERTY1 + "=" + System.getProperty(PROPERTY1))
+    println(PROPERTY2 + "=" + System.getProperty(PROPERTY2))
+    for (i in args.indices) {
+      println("arg[" + i + "]=" + args[i])
     }
   }
 }
