@@ -133,8 +133,8 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   override fun getState(): Element {
     val result = Element("state")
-    if (schemeManager.currentScheme != null) {
-      schemeManager.currentScheme?.let {
+    schemeManager.currentScheme?.let {
+      if (it.name != DefaultKeymap.instance.defaultKeymapName) {
         val e = Element(ACTIVE_KEYMAP)
         e.setAttribute(NAME_ATTRIBUTE, it.name)
         result.addContent(e)
