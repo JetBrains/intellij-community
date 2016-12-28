@@ -1,2 +1,2 @@
-xs = [[x for x in f'{foo}'] for foo in range(10)]
-                      <ref>
+xs = [42 for foo in range(10) for _ in f'{foo}']
+                                            <ref>

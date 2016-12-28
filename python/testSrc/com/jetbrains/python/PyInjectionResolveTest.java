@@ -76,6 +76,16 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   }
   
   // PY-21479
+  public void testFStringNestedInResultComprehensionSourcePart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+  
+  // PY-21479
+  public void testFStringComprehensionConditionPart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
   public void testFStringNestedComprehensionSourcePart() {
     assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
   }

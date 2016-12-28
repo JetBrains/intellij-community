@@ -41,8 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 /**
  * User : ktisha
  */
@@ -101,19 +99,19 @@ public class PyDocReference extends PyReferenceImpl {
   @Nullable
   private PsiElement getScopeControlFlowAnchor(@NotNull PsiLanguageInjectionHost host) {
     if (isInsideFormattedStringNode(host)) {
-      // Comprehension's result expression is preserved in CFG: this anchor is necessary for flow-sensitive getResultsFromProcessor()
-      final PsiElement parentComprehensionResult = PsiTreeUtil.findFirstParent(host, PyDocReference::isComprehensionResult);
-      if (parentComprehensionResult != null) {
-        return parentComprehensionResult;
+      final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, PyDocReference::isComprehensionResultOrComponent);
+      if (comprehensionPart != null) {
+        return comprehensionPart;
       }
       return PsiTreeUtil.getParentOfType(host, PyStatement.class);
     }
     return null;
   }
 
-  private static boolean isComprehensionResult(@NotNull PsiElement element) {
-    final PyComprehensionElement comprehension = as(element.getParent(), PyComprehensionElement.class);
-    return comprehension != null && comprehension.getResultExpression() == element;
+  private static boolean isComprehensionResultOrComponent(@NotNull PsiElement element) {
+    // Any comprehension component and its result are represented as children expressions of the comprehension element.
+    // Only they have respective nodes in CFG and thus can be used as anchors for getResultsFromProcessor().
+    return element instanceof PyExpression && element.getParent() instanceof PyComprehensionElement;
   }
   
   private boolean isInsideFormattedStringNode(@NotNull PsiLanguageInjectionHost host) {
