@@ -1,6 +1,6 @@
 import dis
 from _pydevd_bundle.pydevd_comm import get_global_debugger
-from _pydevd_frame_eval.pydevd_frame_tracing import _pydev_trace_code_wrapper
+from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 
 ignore_list = ['pydevd.py', 'pydevd_comm.py']
@@ -23,7 +23,7 @@ cdef PyObject*get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
         if breakpoints:
             for offset, line in dis.findlinestarts(<object> frame.f_code):
                 if line in breakpoints:
-                    new_code = insert_code(<object> frame.f_code, _pydev_trace_code_wrapper.__code__, line)
+                    new_code = insert_code(<object> frame.f_code, pydev_trace_code_wrapper.__code__, line)
                     frame.f_code = <PyCodeObject *> new_code
     return _PyEval_EvalFrameDefault(frame, exc)
 
