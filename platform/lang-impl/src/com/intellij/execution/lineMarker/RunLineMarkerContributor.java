@@ -32,10 +32,10 @@ public abstract class RunLineMarkerContributor {
   static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
 
   public static class Info {
-    final Icon icon;
-    final AnAction[] actions;
+    public final Icon icon;
+    public final AnAction[] actions;
 
-    final Function<PsiElement, String> tooltipProvider;
+    public final Function<PsiElement, String> tooltipProvider;
 
     public Info(Icon icon, @NotNull AnAction[] actions, @Nullable Function<PsiElement, String> tooltipProvider) {
       this.icon = icon;
