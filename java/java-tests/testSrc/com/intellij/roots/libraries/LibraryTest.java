@@ -50,12 +50,8 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
 public class LibraryTest extends ModuleRootManagerTestCase {
   public void testModification() throws Exception {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    final Library library = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        return libraryTable.createLibrary("NewLibrary");
-      }
-    });
+    final Library library = ApplicationManager.getApplication().runWriteAction(
+      (Computable<Library>)() -> libraryTable.createLibrary("NewLibrary"));
     final boolean[] listenerNotifiedOnChange = new boolean[1];
     library.getRootProvider().addRootSetChangedListener(wrapper -> listenerNotifiedOnChange[0] = true);
     final Library.ModifiableModel model1 = library.getModifiableModel();
@@ -206,12 +202,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   public void testJarDirectoriesSerialization() {
     LibraryTable table = getLibraryTable();
-    Library library = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        return table.createLibrary("jarDirs");
-      }
-    });
+    Library library = ApplicationManager.getApplication().runWriteAction((Computable<Library>)() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
