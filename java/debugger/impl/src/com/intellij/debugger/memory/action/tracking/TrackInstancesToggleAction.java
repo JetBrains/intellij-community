@@ -20,7 +20,7 @@ import com.intellij.debugger.memory.tracking.TrackingType;
 import com.intellij.debugger.memory.ui.ClassesTable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.openapi.project.Project;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,8 @@ public class TrackInstancesToggleAction extends ToggleAction {
     ReferenceType selectedClass = getSelectedClass(e);
     if (selectedClass instanceof ArrayType) {
       e.getPresentation().setEnabled(false);
-    } else {
+    }
+    else {
       super.update(e);
     }
   }
@@ -40,9 +41,9 @@ public class TrackInstancesToggleAction extends ToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
     ReferenceType selectedClass = getSelectedClass(e);
-    XDebugSession debugSession = getDebugSession(e);
-    if (debugSession != null && selectedClass != null) {
-      InstancesTracker tracker = InstancesTracker.getInstance(debugSession.getProject());
+    final Project project = e.getProject();
+    if (project != null && selectedClass != null) {
+      InstancesTracker tracker = InstancesTracker.getInstance(project);
       return tracker.isTracked(selectedClass.name());
     }
 
@@ -51,10 +52,10 @@ public class TrackInstancesToggleAction extends ToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    ReferenceType selectedClass = getSelectedClass(e);
-    XDebugSession debugSession = getDebugSession(e);
-    if (selectedClass != null && debugSession != null) {
-      InstancesTracker tracker = InstancesTracker.getInstance(debugSession.getProject());
+    final ReferenceType selectedClass = getSelectedClass(e);
+    final Project project = e.getProject();
+    if (selectedClass != null && project != null) {
+      InstancesTracker tracker = InstancesTracker.getInstance(project);
       boolean isAlreadyTracked = tracker.isTracked(selectedClass.name());
 
       if (isAlreadyTracked && !state) {
@@ -70,10 +71,5 @@ public class TrackInstancesToggleAction extends ToggleAction {
   @Nullable
   private static ReferenceType getSelectedClass(AnActionEvent e) {
     return e.getData(ClassesTable.SELECTED_CLASS_KEY);
-  }
-
-  @Nullable
-  private static XDebugSession getDebugSession(AnActionEvent e) {
-    return e.getData(ClassesTable.DEBUG_SESSION_KEY);
   }
 }

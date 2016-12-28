@@ -16,13 +16,16 @@
 package com.intellij.debugger.memory.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.sun.jdi.ReferenceType;
 import com.intellij.debugger.memory.ui.ClassesTable;
 import com.intellij.debugger.memory.ui.InstancesWindow;
 
 public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
   private static final String POPUP_ELEMENT_LABEL = "Show Instances";
+
   @Override
   protected boolean isEnabled(AnActionEvent e) {
     return super.isEnabled(e) && getSelectedClass(e) != null;
@@ -30,10 +33,13 @@ public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
 
   @Override
   protected void perform(AnActionEvent e) {
-    XDebugSession debugSession = getDebugSession(e);
-    ReferenceType selectedClass = getSelectedClass(e);
-    if (debugSession != null && selectedClass != null) {
-      new InstancesWindow(debugSession, selectedClass::instances, selectedClass.name()).show();
+    final Project project = e.getProject();
+    final ReferenceType selectedClass = getSelectedClass(e);
+    if (project != null && selectedClass != null) {
+      final XDebugSession debugSession = XDebuggerManager.getInstance(project).getCurrentSession();
+      if (debugSession != null) {
+        new InstancesWindow(debugSession, limit -> selectedClass.instances(limit), selectedClass.name()).show();
+      }
     }
   }
 

@@ -21,8 +21,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.xdebugger.XDebugSession;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,17 +48,15 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
 
   @Nullable
   private PsiClass getPsiClass(AnActionEvent e) {
-    ReferenceType selectedClass = getSelectedClass(e);
-    XDebugSession session = getDebugSession(e);
-    if (selectedClass == null || session == null) {
+    final ReferenceType selectedClass = getSelectedClass(e);
+    final Project project = e.getProject();
+    if (selectedClass == null || project == null) {
       return null;
     }
 
-    ReferenceType targetClass = getObjectType(selectedClass);
+    final ReferenceType targetClass = getObjectType(selectedClass);
     if (targetClass != null) {
-      Project project = session.getProject();
-      return DebuggerUtils
-          .findClass(targetClass.name(), project, GlobalSearchScope.allScope(project));
+      return DebuggerUtils.findClass(targetClass.name(), project, GlobalSearchScope.allScope(project));
     }
 
     return null;
@@ -69,8 +68,8 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
       return ref;
     }
 
-    String elementTypeName = ref.name().replace("[]", "");
-    VirtualMachine vm = ref.virtualMachine();
+    final String elementTypeName = ref.name().replace("[]", "");
+    final VirtualMachine vm = ref.virtualMachine();
     final List<ReferenceType> referenceTypes = vm.classesByName(elementTypeName);
     if (referenceTypes.size() == 1) {
       return referenceTypes.get(0);

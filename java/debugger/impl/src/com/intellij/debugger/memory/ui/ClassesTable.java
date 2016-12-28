@@ -16,8 +16,11 @@
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
+import com.intellij.debugger.memory.tracking.TrackingType;
 import com.intellij.debugger.memory.utils.AbstractTableColumnDescriptor;
 import com.intellij.debugger.memory.utils.AbstractTableModelWithColumns;
+import com.intellij.debugger.memory.utils.InstancesProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -39,9 +42,6 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
-import com.intellij.debugger.memory.tracking.TrackingType;
-import com.intellij.debugger.memory.utils.InstancesProvider;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -52,7 +52,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public static final DataKey<ReferenceType> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
-  public static final DataKey<XDebugSession> DEBUG_SESSION_KEY = DataKey.create("ClassesTable.DebugSession");
   public static final DataKey<InstancesProvider> NEW_INSTANCES_PROVIDER_KEY =
     DataKey.create("ClassesTable.NewInstances");
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
@@ -63,10 +62,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
   private static final int DIFF_COLUMN_MIN_WIDTH = 80;
+  private static final UnknownDiffValue UNKNOWN_VALUE = new UnknownDiffValue();
 
   private final DiffViewTableModel myModel = new DiffViewTableModel();
-  private final UnknownDiffValue myUnknownValue = new UnknownDiffValue();
-  private final XDebugSession myDebugSession;
   private final Map<ReferenceType, DiffValue> myCounts = new ConcurrentHashMap<>();
   private final InstancesTracker myInstancesTracker;
   private final ClassesFilteredView myParent;
@@ -84,11 +82,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
                boolean onlyTracked, @NotNull ClassesFilteredView parent) {
     setModel(myModel);
 
-    myDebugSession = session;
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
     myOnlyTracked = onlyTracked;
-    myInstancesTracker = InstancesTracker.getInstance(myDebugSession.getProject());
+    myInstancesTracker = InstancesTracker.getInstance(session.getProject());
     myParent = parent;
 
     TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
@@ -115,7 +112,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
         int ix = entry.getIdentifier();
         ReferenceType ref = myItems.get(ix);
-        DiffValue diff = myCounts.getOrDefault(ref, myUnknownValue);
+        DiffValue diff = myCounts.getOrDefault(ref, UNKNOWN_VALUE);
 
         boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
                                             || myOnlyWithInstances && !diff.hasInstance()
@@ -229,7 +226,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       ReferenceType ref = classes.get(i);
       DiffValue oldValue = isInitialized && !myCounts.containsKey(ref)
                            ? new DiffValue(0, 0)
-                           : myCounts.getOrDefault(ref, myUnknownValue);
+                           : myCounts.getOrDefault(ref, UNKNOWN_VALUE);
       myCounts.put(ref, oldValue.update(counts[i]));
     }
 
@@ -252,15 +249,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myModel.show();
   }
 
-
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
     if (SELECTED_CLASS_KEY.is(dataId)) {
       return getSelectedClass();
-    }
-    if (DEBUG_SESSION_KEY.is(dataId)) {
-      return myDebugSession;
     }
     if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
       ReferenceType selectedClass = getSelectedClass();
@@ -310,13 +303,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         new AbstractTableColumnDescriptor("Count", Long.class) {
           @Override
           public Object getValue(int ix) {
-            return myCounts.getOrDefault(myItems.get(ix), myUnknownValue).myCurrentCount;
+            return myCounts.getOrDefault(myItems.get(ix), UNKNOWN_VALUE).myCurrentCount;
           }
         },
         new AbstractTableColumnDescriptor("Diff", DiffValue.class) {
           @Override
           public Object getValue(int ix) {
-            return myCounts.getOrDefault(myItems.get(ix), myUnknownValue);
+            return myCounts.getOrDefault(myItems.get(ix), UNKNOWN_VALUE);
           }
         }
       });
