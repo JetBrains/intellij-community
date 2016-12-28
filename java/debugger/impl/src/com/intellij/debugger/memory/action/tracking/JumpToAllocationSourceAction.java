@@ -17,7 +17,9 @@ package com.intellij.debugger.memory.action.tracking;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.memory.action.DebuggerTreeAction;
+import com.intellij.debugger.memory.component.CreationPositionTracker;
 import com.intellij.debugger.memory.ui.StackFramePopup;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -27,9 +29,6 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.debugger.memory.component.CreationPositionTracker;
-import com.intellij.debugger.memory.utils.StackFrameItem;
-import com.intellij.debugger.memory.ui.InstancesTree;
 
 import java.util.List;
 
@@ -62,8 +61,8 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
       return null;
     }
 
-    final XDebugSession session = e.getData(InstancesTree.DEBUG_SESSION_DATA_KEY);
+    final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     final CreationPositionTracker tracker = CreationPositionTracker.getInstance(project);
-    return session == null || tracker == null ? null : tracker.getStack(session, ref);
+    return session != null && tracker != null ? tracker.getStack(session, ref) : null;
   }
 }

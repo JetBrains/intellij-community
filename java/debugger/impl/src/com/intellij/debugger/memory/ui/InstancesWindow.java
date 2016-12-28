@@ -84,7 +84,7 @@ public class InstancesWindow extends DialogWrapper {
   private static final int DEFAULT_INSTANCES_LIMIT = 500000;
 
   private final Project myProject;
-  private final XDebugSession myDebugSession;
+  private final DebugProcessImpl myDebugProcess;
   private final InstancesProvider myInstancesProvider;
   private final String myClassName;
   private MyInstancesView myInstancesView;
@@ -95,19 +95,25 @@ public class InstancesWindow extends DialogWrapper {
     super(session.getProject(), false);
 
     myProject = session.getProject();
-    myDebugSession = session;
+    myDebugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
+      .getDebugProcess(session.getDebugProcess().getProcessHandler());
     myInstancesProvider = provider;
     myClassName = className;
 
     addWarningMessage(null);
-    myDebugSession.addSessionListener(new XDebugSessionListener() {
+    session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
         ApplicationManager.getApplication().invokeLater(() -> close(OK_EXIT_CODE));
       }
     }, myDisposable);
     setModal(false);
+    myInstancesView = new MyInstancesView(session);
+    myInstancesView.setPreferredSize(
+      new JBDimension(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
+
     init();
+
     JRootPane root = myInstancesView.getRootPane();
     root.setDefaultButton(myInstancesView.myFilterButton);
   }
@@ -126,9 +132,6 @@ public class InstancesWindow extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    myInstancesView = new MyInstancesView();
-    myInstancesView.setPreferredSize(
-      new JBDimension(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
     return myInstancesView;
   }
 
@@ -165,20 +168,22 @@ public class InstancesWindow extends DialogWrapper {
     private final JButton myFilterButton = new JButton("Filter");
     private final FilteringProgressView myProgress = new FilteringProgressView();
 
-    private final AnActionListener.Adapter myActionListener = new MyActionListener();
     private final Object myFilteringTaskLock = new Object();
 
     private boolean myIsAndroidVM = false;
 
     private volatile MyFilteringWorker myFilteringTask = null;
 
-    MyInstancesView() {
+    MyInstancesView(@NotNull XDebugSession session) {
       super(new BorderLayout(0, JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP)));
 
       Disposer.register(InstancesWindow.this.myDisposable, this);
-      XValueMarkers<?, ?> markers = getValueMarkers();
-      ActionManager.getInstance().addAnActionListener(myActionListener, InstancesWindow.this.myDisposable);
-      myDebugSession.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
+      XValueMarkers<?, ?> markers = getValueMarkers(session);
+      if (markers != null) {
+        final MyActionListener listener = new MyActionListener(markers);
+        ActionManager.getInstance().addAnActionListener(listener, InstancesWindow.this.myDisposable);
+      }
+      session.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
       JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
 
       myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myClassName,
@@ -203,7 +208,7 @@ public class InstancesWindow extends DialogWrapper {
 
       myProgress.addStopActionListener(this::cancelFilteringTask);
 
-      myInstancesTree = new InstancesTree(myProject, myDebugSession, editorsProvider, markers, this::updateInstances);
+      myInstancesTree = new InstancesTree(myProject, editorsProvider, markers, this::updateInstances);
 
       myFilterButton.addActionListener(e -> {
         String expression = myFilterConditionEditor.getExpression().getExpression();
@@ -229,7 +234,7 @@ public class InstancesWindow extends DialogWrapper {
         }
       }.installOn(list);
 
-      InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(myDebugSession,
+      InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(session,
                                                                                             myInstancesTree, list, myClassName);
 
       add(filteringPane, BorderLayout.NORTH);
@@ -248,12 +253,9 @@ public class InstancesWindow extends DialogWrapper {
     }
 
     private void updateInstances() {
-      DebugProcessImpl debugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
-        .getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
-
       cancelFilteringTask();
 
-      debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debugProcess.getDebuggerContext()) {
+      myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
         @Override
         public Priority getPriority() {
           return Priority.LOWEST;
@@ -261,13 +263,13 @@ public class InstancesWindow extends DialogWrapper {
 
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-          myIsAndroidVM = AndroidUtil.isAndroidVM(debugProcess.getVirtualMachineProxy().getVirtualMachine());
+          myIsAndroidVM = AndroidUtil.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine());
           int limit = myIsAndroidVM
                       ? AndroidUtil.ANDROID_INSTANCES_LIMIT
                       : DEFAULT_INSTANCES_LIMIT;
           List<ObjectReference> instances = myInstancesProvider.getInstances(limit + 1);
 
-          EvaluationContextImpl evaluationContext = debugProcess
+          EvaluationContextImpl evaluationContext = myDebugProcess
             .getDebuggerContext().createEvaluationContext();
 
           if (instances.size() > limit) {
@@ -296,9 +298,9 @@ public class InstancesWindow extends DialogWrapper {
       }
     }
 
-    private XValueMarkers<?, ?> getValueMarkers() {
-      return myDebugSession instanceof XDebugSessionImpl
-             ? ((XDebugSessionImpl)myDebugSession).getValueMarkers()
+    private XValueMarkers<?, ?> getValueMarkers(@NotNull XDebugSession session) {
+      return session instanceof XDebugSessionImpl
+             ? ((XDebugSessionImpl)session).getValueMarkers()
              : null;
     }
 
@@ -326,15 +328,19 @@ public class InstancesWindow extends DialogWrapper {
     }
 
     private class MyActionListener extends AnActionListener.Adapter {
+      private final XValueMarkers<?, ?> myValueMarkers;
+
+      private MyActionListener(@NotNull XValueMarkers<?, ?> markers) {
+        myValueMarkers = markers;
+      }
+
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == myInstancesView.myInstancesTree &&
             (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
           final XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);
-          final XValueMarkers<?, ?> markers = getValueMarkers();
 
-          if (markers != null && selectedNode != null) {
-
+          if (selectedNode != null) {
             TreeNode currentNode = selectedNode;
             while (!myInstancesTree.getRoot().equals(currentNode.getParent())) {
               currentNode = currentNode.getParent();
@@ -344,8 +350,8 @@ public class InstancesWindow extends DialogWrapper {
 
             final String expression = valueContainer.getEvaluationExpression();
             if (expression != null) {
-              markers.markValue(valueContainer,
-                                new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
+              myValueMarkers.markValue(valueContainer,
+                                       new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
             }
 
             ApplicationManager.getApplication().invokeLater(() -> myInstancesTree
@@ -481,9 +487,7 @@ public class InstancesWindow extends DialogWrapper {
                         @NotNull XExpression expression,
                         @NotNull EvaluationContextImpl evaluationContext) {
         if (refs.size() != 0) {
-          DebugProcessImpl debugProcess =
-            (DebugProcessImpl)DebuggerManager.getInstance(myProject).getDebugProcess(myDebugSession.getDebugProcess().getProcessHandler());
-          myTask = new FilteringTask(refs.get(0).referenceType(), debugProcess, expression, refs,
+          myTask = new FilteringTask(refs.get(0).referenceType(), myDebugProcess, expression, refs,
                                      new MyFilteringCallback(evaluationContext));
         }
         else {
