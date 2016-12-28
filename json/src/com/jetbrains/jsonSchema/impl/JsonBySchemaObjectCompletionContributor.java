@@ -6,8 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -100,7 +99,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
             final JsonProperty parent = possibleParent instanceof JsonProperty ? (JsonProperty)possibleParent : null;
             final boolean hasValue = hasValuePart(parent);
 
-            final Collection<String> properties = getExistingProperties(parent);
+            final Collection<String> properties = JsonPsiUtil.getOtherSiblingPropertyNames(parent);
 
             JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
               @Override
@@ -122,23 +121,6 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
       }
-    }
-
-    public Collection<String> getExistingProperties(@Nullable JsonProperty property) {
-      if (property == null) return ContainerUtil.emptyList();
-
-      PsiElement parent = property.getParent();
-      if (!(parent instanceof JsonObject)) return ContainerUtil.emptyList();
-
-      JsonObject object = (JsonObject)parent;
-      HashSet<String> result = ContainerUtil.newHashSet();
-      for (JsonProperty jsonProperty : object.getPropertyList()) {
-        if (jsonProperty == property) continue;
-
-        result.add(jsonProperty.getName());
-      }
-
-      return result;
     }
 
     public boolean hasValuePart(@Nullable JsonProperty property) {

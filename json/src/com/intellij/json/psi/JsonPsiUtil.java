@@ -7,10 +7,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.json.JsonParserDefinition.JSON_COMMENTARIES;
 
@@ -209,5 +213,19 @@ public class JsonPsiUtil {
       object.addAfter(new JsonElementGenerator(object.getProject()).createComma(), addedProperty);
     }
     return addedProperty;
+  }
+
+  @NotNull
+  public static Set<String> getOtherSiblingPropertyNames(@Nullable JsonProperty property) {
+    if (property == null) return Collections.emptySet();
+    JsonObject object = ObjectUtils.tryCast(property.getParent(), JsonObject.class);
+    if (object == null) return Collections.emptySet();
+    Set<String> result = ContainerUtil.newHashSet();
+    for (JsonProperty jsonProperty : object.getPropertyList()) {
+      if (jsonProperty != property) {
+        result.add(jsonProperty.getName());
+      }
+    }
+    return result;
   }
 }
