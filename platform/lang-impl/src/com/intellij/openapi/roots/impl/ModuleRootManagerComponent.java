@@ -20,8 +20,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -58,11 +62,22 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
 
   @Override
   public long getStateModificationCount() {
-    long result = myModificationCount;
     Module module = getModule();
-    if (module instanceof ModuleEx) {
-      result += ((ModuleEx)module).getOptionsModificationCount();
+    if (!module.isLoaded() || !(module instanceof ModuleEx)) {
+      return myModificationCount;
     }
-    return result;
+
+    final long[] result = {myModificationCount};
+    result[0] += ((ModuleEx)module).getOptionsModificationCount();
+    final List<String> handledLibraryTables = new SmartList<>();
+    getRootModel().orderEntries().forEachLibrary(library -> {
+      LibraryTable table = library.getTable();
+      if (table instanceof PersistentStateComponentWithModificationTracker && !handledLibraryTables.contains(table.getTableLevel())) {
+        handledLibraryTables.add(table.getTableLevel());
+        result[0] += ((PersistentStateComponentWithModificationTracker)table).getStateModificationCount();
+      }
+      return true;
+    });
+    return result[0];
   }
 }
