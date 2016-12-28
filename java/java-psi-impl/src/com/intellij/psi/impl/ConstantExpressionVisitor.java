@@ -247,7 +247,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() == ((Number)rOperandValue).doubleValue());
       }
       else if (lOperandValue instanceof String && rOperandValue instanceof String) {
-        value = Boolean.valueOf(lOperandValue == rOperandValue);
+        value = Boolean.valueOf(lOperandValue.equals(rOperandValue));
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() == ((Boolean)rOperandValue).booleanValue());
@@ -260,7 +260,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
         value = Boolean.valueOf(((Number)lOperandValue).doubleValue() != ((Number)rOperandValue).doubleValue());
       }
       else if (lOperandValue instanceof String && rOperandValue instanceof String) {
-        value = Boolean.valueOf(lOperandValue != rOperandValue);
+        value = Boolean.valueOf(!lOperandValue.equals(rOperandValue));
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
         value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() != ((Boolean)rOperandValue).booleanValue());
