@@ -299,6 +299,71 @@ internal class ApplicationStoreTest {
     </application>""".trimIndent())
   }
 
+  @Test fun PersistentStateComponentWithModificationTracker() {
+    testAppConfig.refreshVfs()
+
+    @State(name = "A", storages = arrayOf(Storage("a.xml")))
+    open class A : PersistentStateComponentWithModificationTracker<TestState> {
+      var modificationCount: Long = 0
+
+      override fun getStateModificationCount() = modificationCount
+
+      var options = TestState()
+
+      var stateCalledCount = 0
+
+      override fun getState(): TestState {
+        stateCalledCount++
+        return options
+      }
+
+      override fun loadState(state: TestState) {
+        this.options = state
+      }
+
+      fun incModificationCount() {
+        modificationCount++
+      }
+    }
+
+    val component = A()
+    componentStore.initComponent(component, false)
+
+    assertThat(component.modificationCount).isEqualTo(0)
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // test that store correctly set last modification count to component modification count on init
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // change modification count - store will be forced to check changes using serialization and A.getState will be called
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    // test that store correctly save last modification time and doesn't call our state on next save
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    val componentFile = testAppConfig.resolve("a.xml")
+    assertThat(componentFile).doesNotExist()
+
+    // update data but "forget" to update modification count
+    component.options.foo = "new"
+
+    saveStore()
+    assertThat(componentFile).doesNotExist()
+
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(2)
+
+    assertThat(componentFile).hasContent("""
+    <application>
+      <component name="A" foo="new" />
+    </application>""".trimIndent())
+  }
+
   @Test fun `do not check if only format changed for non-roamable storage`() {
     @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()

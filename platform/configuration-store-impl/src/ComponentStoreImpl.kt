@@ -60,8 +60,6 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   w1 - w2
 }
 
-private class ComponentInfo(val component: Any, var lastModificationCount: Long)
-
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
   private val settingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
@@ -147,7 +145,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           var currentModificationCount = -1L
 
           if (info.lastModificationCount >= 0) {
-            currentModificationCount = (info.component as ModificationTracker).modificationCount
+            currentModificationCount = info.currentModificationCount
             if (currentModificationCount == info.lastModificationCount) {
               LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
               if (isUseModificationCount) {
@@ -157,7 +155,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
 
           commitComponent(externalizationSession, info.component, name)
-          info.lastModificationCount = currentModificationCount
+          info.updateModificationCount(currentModificationCount)
         }
         catch (e: Throwable) {
           if (errors == null) {
@@ -268,7 +266,12 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun doAddComponent(name: String, component: Any): ComponentInfo {
-    val newInfo = ComponentInfo(component, (component as? ModificationTracker)?.modificationCount ?: -1)
+    val newInfo = when (component) {
+      is ModificationTracker -> ComponentWithModificationTrackerInfo(component)
+      is PersistentStateComponentWithModificationTracker<*> -> ComponentWithStateModificationTrackerInfo(component)
+      else -> ComponentInfoImpl(component)
+    }
+
     val existing = components.put(name, newInfo)
     if (existing != null && existing.component !== component) {
       components.put(name, existing)
@@ -285,9 +288,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     if (doInitComponent(stateSpec, component, changedStorages, reloadData)) {
       // if component was initialized, update lastModificationCount
-      if (info.lastModificationCount >= 0) {
-        info.lastModificationCount = (component as ModificationTracker).modificationCount
-      }
+      info.updateModificationCount()
       return true
     }
     return false
@@ -559,4 +560,43 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
     doNotify(macros, project, Collections.singletonMap(substitutor, store))
   }, project.disposed)
+}
+
+private interface ComponentInfo {
+  val component: Any
+  val lastModificationCount: Long
+  val currentModificationCount: Long
+
+  fun updateModificationCount(newCount: Long = currentModificationCount) {
+  }
+}
+
+private open class ComponentInfoImpl(override val component: Any) : ComponentInfo {
+  override val lastModificationCount: Long
+    get() = -1
+
+  override val currentModificationCount: Long
+    get() = -1
+}
+
+private abstract class ModificationTrackerAwareComponentInfo : ComponentInfo {
+  override abstract var lastModificationCount: Long
+
+  override final fun updateModificationCount(newCount: Long) {
+    lastModificationCount = newCount
+  }
+}
+
+private class ComponentWithStateModificationTrackerInfo(override val component: PersistentStateComponentWithModificationTracker<*>) : ModificationTrackerAwareComponentInfo() {
+  override var lastModificationCount = currentModificationCount
+
+  override val currentModificationCount: Long
+    get() = component.stateModificationCount
+}
+
+private class ComponentWithModificationTrackerInfo(override val component: ModificationTracker) : ModificationTrackerAwareComponentInfo() {
+  override var lastModificationCount = currentModificationCount
+
+  override val currentModificationCount: Long
+    get() = component.modificationCount
 }

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
-                                                                      PersistentStateComponent<ModuleRootManagerImpl.ModuleRootManagerState>,
+                                                                      PersistentStateComponentWithModificationTracker<ModuleRootManagerImpl.ModuleRootManagerState>,
                                                                       StateStorageChooserEx {
   public ModuleRootManagerComponent(Module module,
                                     ProjectRootManagerImpl projectRootManager,
@@ -53,5 +54,15 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
       // IDEA-133480 Eclipse integration: .iml content is not reduced on setting Dependencies Storage Format = Eclipse
       return isEffectiveStorage ? Resolution.DO : (isDefault ? Resolution.CLEAR : Resolution.SKIP);
     }
+  }
+
+  @Override
+  public long getStateModificationCount() {
+    long result = myModificationCount;
+    Module module = getModule();
+    if (module instanceof ModuleEx) {
+      result += ((ModuleEx)module).getOptionsModificationCount();
+    }
+    return result;
   }
 }

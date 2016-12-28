@@ -24,7 +24,6 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleServiceManager;
-import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -32,7 +31,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
@@ -46,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable, ModificationTracker {
+public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -58,7 +56,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
-  private volatile long myModificationCount;
+  protected volatile long myModificationCount;
 
   public ModuleRootManagerImpl(Module module,
                                ProjectRootManagerImpl projectRootManager,
@@ -364,15 +362,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     catch (InvalidDataException e) {
       LOG.error(e);
     }
-  }
-
-  @Override
-  public long getModificationCount() {
-    long result = myModificationCount;
-    if (myModule instanceof ModuleEx) {
-      result += ((ModuleEx)myModule).getOptionsModificationCount();
-    }
-    return result;
   }
 
   public static class ModuleRootManagerState implements JDOMExternalizable {
