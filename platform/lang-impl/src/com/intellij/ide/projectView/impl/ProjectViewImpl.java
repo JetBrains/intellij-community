@@ -1913,7 +1913,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public Collection<String> getPaneIds() {
-    return myId2Pane.keySet();
+    return Collections.unmodifiableCollection(myId2Pane.keySet());
   }
 
   @NotNull
