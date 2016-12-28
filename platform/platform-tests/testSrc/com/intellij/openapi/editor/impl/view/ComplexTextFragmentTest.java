@@ -101,7 +101,7 @@ public class ComplexTextFragmentTest {
     try {
       int length = gv.getNumChars();
       char[] text = new char[length];
-      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, null);
+      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0, 
                                                              fontInfo);
       int[] charPositions = new int[length];
