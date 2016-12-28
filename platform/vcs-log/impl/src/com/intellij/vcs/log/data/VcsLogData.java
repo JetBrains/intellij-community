@@ -226,10 +226,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myCurrentUser;
   }
 
-  public boolean isMultiRoot() {
-    return myLogProviders.size() > 1;
-  }
-
   @NotNull
   public Project getProject() {
     return myProject;
