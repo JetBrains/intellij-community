@@ -18,10 +18,7 @@ class StreamProviderWrapper : StreamProvider {
                                roamingType: RoamingType,
                                filter: Function1<String, Boolean>,
                                processor: Function3<String, InputStream, Boolean, Boolean>): Boolean {
-    return streamProvider?.let {
-      it.processChildren(path, roamingType, filter, processor)
-      true
-    } ?: false
+    return streamProvider?.processChildren(path, roamingType, filter, processor) ?: false
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
