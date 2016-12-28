@@ -13,5 +13,6 @@
     <orderEntry type="library" exported="" scope="TEST" name="JDOM" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
+    <orderEntry type="library" scope="TEST" name="snakeyaml" level="project" />
   </component>
 </module>

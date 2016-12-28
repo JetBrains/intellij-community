@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework.assertions
 
-import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.util.io.readText
 import com.intellij.util.io.size
 import org.assertj.core.api.AbstractCharSequenceAssert
@@ -67,9 +66,6 @@ class StringAssertEx(actual: String?) : AbstractCharSequenceAssert<StringAssertE
   fun isEqualTo(expected: Path) {
     isNotNull
 
-    val expectedContent = expected.readText()
-    if (actual != expectedContent) {
-      throw FileComparisonFailure(null, expectedContent, actual, expected.toString())
-    }
+    compareFileContent(actual, expected)
   }
 }
