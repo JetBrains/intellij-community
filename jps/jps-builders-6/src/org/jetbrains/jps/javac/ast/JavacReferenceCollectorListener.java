@@ -56,7 +56,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
       addTaskMethod = JavacTask.class.getMethod("addTaskListener", TaskListener.class);
     }
     catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
+      addTaskMethod = null;
     }
     final JavacReferenceCollectorListener taskListener = new JavacReferenceCollectorListener(divideImportRefs,
                                                                                              dataConsumer,
