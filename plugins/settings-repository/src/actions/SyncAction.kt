@@ -29,6 +29,10 @@ internal val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
 
 internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
     val repositoryManager = icsManager.repositoryManager
     e.presentation.isEnabledAndVisible = repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()
   }
@@ -63,11 +67,15 @@ internal class ConfigureIcsAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode) {
+      return
+    }
+
     if (icsManager.active) {
       e.presentation.isEnabledAndVisible = true
     }
     else {
-      val application = ApplicationManager.getApplication()
       val provider = (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider
       e.presentation.isEnabledAndVisible = provider == null || !provider.enabled
     }
