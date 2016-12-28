@@ -89,8 +89,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     myIsDisposed = true;
 
     if (Disposer.isDebugMode()) {
-      final Set<Map.Entry<RootModelImpl, Throwable>> entries = myModelCreations.entrySet();
-      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<>(entries)) {
+      List<Map.Entry<RootModelImpl, Throwable>> entries;
+      synchronized (myModelCreations) {
+        entries = new ArrayList<>(myModelCreations.entrySet());
+      }
+      for (final Map.Entry<RootModelImpl, Throwable> entry : entries) {
         System.err.println("***********************************************************************************************");
         System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
         System.err.println("***********************************************************************************************");
@@ -115,7 +118,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
       public void dispose() {
         super.dispose();
         if (Disposer.isDebugMode()) {
-          myModelCreations.remove(this);
+          synchronized (myModelCreations) {
+            myModelCreations.remove(this);
+          }
         }
 
         for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
@@ -124,7 +129,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
       }
     };
     if (Disposer.isDebugMode()) {
-      myModelCreations.put(model, new Throwable());
+      synchronized (myModelCreations) {
+        myModelCreations.put(model, new Throwable());
+      }
     }
     return model;
   }
