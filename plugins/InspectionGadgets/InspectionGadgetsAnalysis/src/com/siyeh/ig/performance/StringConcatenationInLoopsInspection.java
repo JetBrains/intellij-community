@@ -126,39 +126,11 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
         if (variable != null) {
           PsiLoopStatement commonLoop = getOutermostCommonLoop(expression, variable);
-          return commonLoop != null && !flowBreaksLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop);
+          return commonLoop != null && !ControlFlowUtils
+            .flowBreaksLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop);
         }
       }
       return !containingStatementExits(expression);
-    }
-
-    @Contract("null, _ -> false")
-    private static boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
-      if(statement == null || statement == loop) return false;
-      for(PsiStatement sibling = statement; sibling != null; sibling = PsiTreeUtil.getNextSiblingOfType(sibling, PsiStatement.class)) {
-        if(sibling instanceof PsiContinueStatement) return false;
-        if(sibling instanceof PsiThrowStatement || sibling instanceof PsiReturnStatement) return true;
-        if(sibling instanceof PsiBreakStatement) {
-          PsiBreakStatement breakStatement = (PsiBreakStatement)sibling;
-          PsiStatement exitedStatement = breakStatement.findExitedStatement();
-          if(exitedStatement == loop) return true;
-          return flowBreaksLoop(exitedStatement, loop);
-        }
-      }
-      PsiElement parent = statement.getParent();
-      if(parent == loop) return false;
-      if(parent instanceof PsiCodeBlock) {
-        PsiElement gParent = parent.getParent();
-        if(gParent instanceof PsiBlockStatement || gParent instanceof PsiSwitchStatement) {
-          return flowBreaksLoop((PsiStatement)gParent, loop);
-        }
-        return false;
-      }
-      if(parent instanceof PsiLabeledStatement || parent instanceof PsiIfStatement || parent instanceof PsiSwitchLabelStatement
-        || parent instanceof PsiSwitchStatement) {
-        return flowBreaksLoop((PsiStatement)parent, loop);
-      }
-      return false;
     }
 
     private PsiLoopStatement getOutermostCommonLoop(PsiExpression expression, PsiVariable variable) {

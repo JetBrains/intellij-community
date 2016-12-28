@@ -53,6 +53,47 @@ public class StringConcatenationInLoop
                 throw new Error("foo" + i);
             }
         }
+        String s = "";
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s += i;
+                {
+                    System.out.println(s);
+                    break;
+                }
+            }
+        }
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s += i;
+                {
+                    System.out.println(s);
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s += i;
+                {
+                    {
+                        System.out.println(s);
+                    }
+                    break;
+                }
+            }
+        }
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s <warning descr="String concatenation '+=' in loop">+=</warning> i;
+                {
+                    System.out.println(s);
+                }
+                System.out.println(s);
+            }
+        }
         System.out.println(foo);
         return foo;
     }
