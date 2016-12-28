@@ -301,6 +301,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         }
         myFailedModulePaths.remove(modulePath);
       }
+      catch (IOException e) {
+        reportError(errors, task.second, e);
+      }
       catch (Exception e) {
         LOG.error(e);
       }
