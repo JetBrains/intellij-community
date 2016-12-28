@@ -125,7 +125,9 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
-      final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
+      final VirtualFile file = myFileDocManager.getFile(document);
+      if (file == null) continue;
+      final Module m = getModuleForSourceContentFile(file);
       if (m != null) dirtyModules.add(m);
     }
     for (Document document : myPsiDocManager.getUncommittedDocuments()) {
@@ -197,7 +199,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }, myService.getProject());
   }
 
-  private Module getModuleForSourceContentFile(VirtualFile file) {
+  private Module getModuleForSourceContentFile(@NotNull VirtualFile file) {
     if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
       return myService.getFileIndex().getModuleForFile(file);
     }
