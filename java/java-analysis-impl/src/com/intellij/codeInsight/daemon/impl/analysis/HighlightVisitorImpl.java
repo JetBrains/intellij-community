@@ -596,6 +596,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitImportStaticStatement(PsiImportStaticStatement statement) {
     myHolder.add(checkFeature(statement, Feature.STATIC_IMPORTS));
+    if (!myHolder.hasErrorResults()) myHolder.add(ImportsHighlightUtil.checkStaticOnDemandImportResolvesToClass(statement));
   }
 
   @Override

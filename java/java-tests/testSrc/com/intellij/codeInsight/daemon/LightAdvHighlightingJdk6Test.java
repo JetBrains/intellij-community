@@ -90,4 +90,8 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() throws Exception {
     doTest(false, false);
   }
+
+  public void testStaticOnDemandImportResolvesToClass() throws Exception {
+    doTest(false, false);
+  }
 }
