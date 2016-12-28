@@ -72,10 +72,10 @@ import javax.swing.plaf.synth.SynthStyle;
 import javax.swing.plaf.synth.SynthStyleFactory;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
@@ -888,10 +888,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (window instanceof RootPaneContainer && window != UIUtil.getWindow(owner) &&
           ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
-        window.addComponentListener(new ComponentAdapter() {
+        window.addWindowListener(new WindowAdapter() {
           @Override
-          public void componentHidden(ComponentEvent e) {
-            window.removeComponentListener(this);
+          public void windowClosed(WindowEvent e) {
+            window.removeWindowListener(this);
             ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
             DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
             DialogWrapper.cleanupWindowListeners(window);
