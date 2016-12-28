@@ -77,7 +77,7 @@ public class ExecutionHelper {
     @NotNull final List<? extends Exception> errors,
     @NotNull final String tabDisplayName,
     @Nullable final VirtualFile file) {
-    showExceptions(myProject, errors, Collections.<Exception>emptyList(), tabDisplayName, file);
+    showExceptions(myProject, errors, Collections.emptyList(), tabDisplayName, file);
   }
 
   public static void showExceptions(
@@ -319,11 +319,11 @@ public class ExecutionHelper {
 
   private static void descriptorToFront(@NotNull final Project project, @NotNull final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
+      RunContentManager manager = ExecutionManager.getInstance(project).getContentManager();
+      ToolWindow toolWindow = manager.getToolWindowByDescriptor(descriptor);
       if (toolWindow != null) {
         toolWindow.show(null);
-        //noinspection ConstantConditions
-        toolWindow.getContentManager().setSelectedContent(descriptor.getAttachedContent());
+        manager.selectRunContent(descriptor);
       }
     }, project.getDisposed());
   }

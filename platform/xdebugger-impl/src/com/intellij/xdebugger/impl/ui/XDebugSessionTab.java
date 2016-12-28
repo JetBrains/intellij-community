@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
@@ -377,8 +378,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myRunContentDescriptor != null) {
-        ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
-          .getToolWindowByDescriptor(myRunContentDescriptor);
+        RunContentManager manager = ExecutionManager.getInstance(myProject).getContentManager();
+        ToolWindow toolWindow = manager.getToolWindowByDescriptor(myRunContentDescriptor);
         if (toolWindow != null) {
           if (!toolWindow.isVisible()) {
             toolWindow.show(() -> {
@@ -388,8 +389,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
               myRebuildWatchesRunnable.run();
             });
           }
-          //noinspection ConstantConditions
-          toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
+          manager.selectRunContent(myRunContentDescriptor);
         }
       }
     });

@@ -69,6 +69,8 @@ public abstract class BaseProgramRunner<Settings extends RunnerSettings> impleme
   static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
     if (descriptor != null) {
       descriptor.setExecutionId(environment.getExecutionId());
+      descriptor.setContentToolWindowId(ExecutionManager.getInstance(environment.getProject()).getContentManager()
+                                          .getContentDescriptorToolWindowId(environment.getRunnerAndConfigurationSettings()));
       RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
       if (settings != null) {
         descriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());

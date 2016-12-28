@@ -104,7 +104,7 @@ public class ProgramRunnerUtil {
             return;
           }
 
-          final String toolWindowId = environment.getExecutor().getToolWindowId();
+          final String toolWindowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
           ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
           if (toolWindowManager.canShowNotification(toolWindowId)) {
             //noinspection SSBasedInspection
@@ -128,7 +128,9 @@ public class ProgramRunnerUtil {
       if (name == null) {
         name = "<Unknown>";
       }
-      ExecutionUtil.handleExecutionError(project, environment.getExecutor().getToolWindowId(), name, e);
+      ExecutionUtil.handleExecutionError(project,
+                                         ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
+                                         name, e);
     }
   }
 
