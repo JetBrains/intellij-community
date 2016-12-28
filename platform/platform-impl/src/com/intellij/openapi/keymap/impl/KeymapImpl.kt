@@ -32,6 +32,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
@@ -40,7 +41,6 @@ import org.jdom.Element
 import java.awt.event.InputEvent
 import java.util.*
 import javax.swing.KeyStroke
-import kotlin.reflect.jvm.internal.impl.utils.SmartList
 
 private val KEY_MAP = "keymap"
 private val KEYBOARD_SHORTCUT = "keyboard-shortcut"
