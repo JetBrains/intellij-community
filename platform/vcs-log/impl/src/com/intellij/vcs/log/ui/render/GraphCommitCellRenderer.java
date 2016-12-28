@@ -212,7 +212,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style) {
-      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " "), style);
+      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " ").trim(), style);
     }
 
     private int getAvailableWidth(int column) {
