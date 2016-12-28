@@ -183,7 +183,7 @@ public class PathManagerEx {
   /**
    * @return path to 'community' project home if {@code testClass} is located in the community project and path to 'ultimate' project otherwise
    */
-  public static String getHomePath(Class<? extends TestCase> testClass) {
+  public static String getHomePath(Class<?> testClass) {
     TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
     return strategy == TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE ? getCommunityHomePath() : PathManager.getHomePath();
   }

@@ -353,9 +353,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Nullable
   @Override
   public State getState() {
-    if (mySchemeManager.getCurrentScheme() != null) {
-      String name = mySchemeManager.getCurrentScheme().getName();
-      myState.colorScheme = "Default".equals(name) ? null : name;
+    String currentSchemeName = mySchemeManager.getCurrentSchemeName();
+    if (currentSchemeName != null) {
+      myState.colorScheme = ("Default".equals(currentSchemeName) || (SchemeManager.EDITABLE_COPY_PREFIX + "Default").equals(
+        currentSchemeName)) ? null : currentSchemeName;
     }
     return myState;
   }

@@ -68,4 +68,10 @@ class StringAssertEx(actual: String?) : AbstractCharSequenceAssert<StringAssertE
 
     compareFileContent(actual, expected)
   }
+
+  fun toMatchSnapshot(snapshotFile: Path) {
+    isNotNull
+
+    compareFileContent(actual, snapshotFile)
+  }
 }

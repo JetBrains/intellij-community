@@ -5,21 +5,27 @@ import com.intellij.util.io.isDirectory
 import java.nio.file.Path
 import java.util.*
 
-fun printDirectoryTree(dir: Path): String {
+fun printDirectoryTree(dir: Path, excluded: Set<String> = emptySet()): String {
   val sb = StringBuilder()
-  printDirectoryTree(dir, 0, sb)
+  printDirectoryTree(dir, 0, sb, excluded)
   return sb.toString()
 }
 
-private fun printDirectoryTree(dir: Path, indent: Int, sb: StringBuilder) {
+private fun printDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, excluded: Set<String>) {
+  val fileList = sortedFileList(dir) ?: return
+
   getIndentString(indent, sb)
   sb.append("\u251c\u2500\u2500")
   sb.append(dir.fileName.toString())
   sb.append("/")
   sb.append("\n")
-  for (file in sortedFileList(dir)) {
+  for (file in fileList) {
+    if (excluded.contains(file.fileName.toString())) {
+      continue
+    }
+
     if (file.isDirectory()) {
-      printDirectoryTree(file, indent + 1, sb)
+      printDirectoryTree(file, indent + 1, sb, excluded)
     }
     else {
       printFile(file, indent + 1, sb)
@@ -27,13 +33,13 @@ private fun printDirectoryTree(dir: Path, indent: Int, sb: StringBuilder) {
   }
 }
 
-private fun sortedFileList(dir: Path): List<Path> {
+private fun sortedFileList(dir: Path): List<Path>? {
   return dir.directoryStreamIfExists {
     val list = ArrayList<Path>()
     it.mapTo(list) { it }
     list.sort()
     list
-  } ?: emptyList()
+  }
 }
 
 private fun printFile(file: Path, indent: Int, sb: StringBuilder) {
