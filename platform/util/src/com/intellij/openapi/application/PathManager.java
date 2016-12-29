@@ -195,7 +195,7 @@ public class PathManager {
   }
 
   public static void ensureConfigFolderExists() {
-    checkAndCreate(getConfigPath(), true);
+    FileUtil.createDirectory(new File(getConfigPath()));
   }
 
   @NotNull
@@ -206,11 +206,6 @@ public class PathManager {
   @NotNull
   public static File getOptionsFile(@NotNull String fileName) {
     return new File(getOptionsPath(), fileName + ".xml");
-  }
-
-  @NotNull
-  public static File getOptionsFile(@NotNull NamedJDOMExternalizable externalizable) {
-    return getOptionsFile(externalizable.getExternalFileName());
   }
 
   @NotNull
@@ -257,7 +252,7 @@ public class PathManager {
       ourSystemPath = getHomePath() + File.separator + SYSTEM_FOLDER;
     }
 
-    checkAndCreate(ourSystemPath, true);
+    FileUtil.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
   }
 
@@ -268,9 +263,9 @@ public class PathManager {
 
   @NotNull
   public static File getIndexRoot() {
-    String indexRoot = System.getProperty("index_root_path", getSystemPath() + "/index");
-    checkAndCreate(indexRoot, true);
-    return new File(indexRoot);
+    File indexRoot = new File(System.getProperty("index_root_path", getSystemPath() + "/index"));
+    FileUtil.createDirectory(indexRoot);
+    return indexRoot;
   }
 
   @NotNull
@@ -533,6 +528,7 @@ public class PathManager {
     return platformPath(selector, macPart, null, null, null, fallback);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static String platformPath(@NotNull String selector,
                                      @Nullable String macPart,
                                      @Nullable String winVar,
@@ -559,13 +555,10 @@ public class PathManager {
     return getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
-  private static boolean checkAndCreate(String path, boolean createIfNotExists) {
-    if (createIfNotExists) {
-      File file = new File(path);
-      if (!file.exists()) {
-        return file.mkdirs();
-      }
-    }
-    return false;
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #getOptionsFile(String)} (to be removed in IDEA 2018) */
+  public static File getOptionsFile(@NotNull NamedJDOMExternalizable externalizable) {
+    return getOptionsFile(externalizable.getExternalFileName());
   }
+  //</editor-fold>
 }
