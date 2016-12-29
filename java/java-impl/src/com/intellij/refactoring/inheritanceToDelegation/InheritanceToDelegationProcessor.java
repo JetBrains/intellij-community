@@ -121,9 +121,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     myGenerateGetter = generateGetter;
 
     myDelegatedInterfaces = new LinkedHashSet<>();
-    addAll(myDelegatedInterfaces, delegatedInterfaces);
+    Collections.addAll(myDelegatedInterfaces, delegatedInterfaces);
     myDelegatedMethods = new LinkedHashSet<>();
-    addAll(myDelegatedMethods, delegatedMethods);
+    Collections.addAll(myDelegatedMethods, delegatedMethods);
     myDelegatedMethodsVisibility = new HashMap<>();
     for (PsiMethod method : myDelegatedMethods) {
       MethodSignature signature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
@@ -157,7 +157,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass).toArray(PsiClass.EMPTY_ARRAY);
     myClassInheritors = new HashSet<>();
     myClassInheritors.add(myClass);
-    addAll(myClassInheritors, inheritors);
+    Collections.addAll(myClassInheritors, inheritors);
 
     {
       ClassReferenceScanner scanner = new ClassReferenceSearchingScanner(myClass);
@@ -188,7 +188,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usagesIn = refUsages.get();
     ArrayList<UsageInfo> oldUsages = new ArrayList<>();
-    addAll(oldUsages, usagesIn);
+    Collections.addAll(oldUsages, usagesIn);
     final ObjectUpcastedUsageInfo[] objectUpcastedUsageInfos = objectUpcastedUsages(usagesIn);
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -641,12 +641,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiField createField(final String fieldVisibility, final boolean fieldInitializerNeeded, String defaultTypeName) throws IncorrectOperationException {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append(fieldVisibility);
-    buffer.append(" final " + defaultTypeName + "  ");
+    buffer.append(" final ").append(defaultTypeName).append("  ");
     buffer.append(myFieldName);
     if (fieldInitializerNeeded) {
-      buffer.append(" = new " + defaultTypeName + "()");
+      buffer.append(" = new ").append(defaultTypeName).append("()");
     }
     buffer.append(";");
     return myFactory.createFieldFromText(buffer.toString(), myClass);
@@ -898,9 +898,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private Set<PsiMember> getAllBaseClassMembers() {
     HashSet<PsiMember> result = new HashSet<>();
-    addAll(result, myBaseClass.getAllFields());
-    addAll(result, myBaseClass.getAllInnerClasses());
-    addAll(result, myBaseClass.getAllMethods());
+    Collections.addAll(result, (PsiMember[])myBaseClass.getAllFields());
+    Collections.addAll(result, (PsiMember[])myBaseClass.getAllInnerClasses());
+    Collections.addAll(result, (PsiMember[])myBaseClass.getAllMethods());
 
     //remove java.lang.Object members
     for (Iterator<PsiMember> iterator = result.iterator(); iterator.hasNext();) {
@@ -917,12 +917,6 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     InheritanceUtil.getSuperClasses(myBaseClass, temp, true);
     temp.add(myBaseClass);
     return Collections.unmodifiableSet(temp);
-  }
-
-  private static <T> void addAll(Collection<T> collection, T[] objs) {
-    for (T obj : objs) {
-      collection.add(obj);
-    }
   }
 
   private boolean isDelegated(PsiMember classMember) {
