@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.testFramework.vcs.ExecutableHelper
 import git4idea.repo.GitRepository
 import org.junit.Assert.assertFalse
@@ -39,14 +40,14 @@ fun gitExecutable() = GitExecutorHolder.PathHolder.GIT_EXECUTABLE
 }
 
 private fun doCallGit(command: String, ignoreNonZeroExitCode: Boolean): String {
-  val split = Executor.splitCommandInParameters(command)
+  val split = splitCommandInParameters(command)
   split.add(0, gitExecutable())
-  val workingDir = Executor.ourCurrentDir()
-  Executor.debug("[" + workingDir.name + "] # git " + command)
+  val workingDir = ourCurrentDir()
+  debug("[" + workingDir.name + "] # git " + command)
   for (attempt in 0..MAX_RETRIES - 1) {
     var stdout: String
     try {
-      stdout = Executor.run(workingDir, split, ignoreNonZeroExitCode)
+      stdout = run(workingDir, split, ignoreNonZeroExitCode)
       if (!isIndexLockFileError(stdout)) {
         return stdout
       }
@@ -79,7 +80,7 @@ fun git(formatString: String, vararg args: String): String {
 }
 
 fun cd(repository: GitRepository) {
-  Executor.cd(repository.root.path)
+  cd(repository.root.path)
 }
 
 @JvmOverloads fun add(path: String = ".") {
@@ -91,8 +92,16 @@ fun addCommit(message: String): String {
   return commit(message)
 }
 
+fun branch(name: String) : String {
+  return git("branch $name")
+}
+
 fun checkout(vararg params: String) {
   git("checkout " + StringUtil.join(params, " "))
+}
+
+fun checkoutNew(branchName: String, startPoint: String = ""): String {
+  return git("checkout -b $branchName $startPoint")
 }
 
 fun commit(message: String): String {
@@ -100,18 +109,28 @@ fun commit(message: String): String {
   return last()
 }
 
-fun tac(file: String): String {
-  Executor.touch(file, "content" + Math.random())
+@JvmOverloads fun tac(file: String, content: String = "content" + Math.random()): String {
+  touch(file, content)
   return addCommit("touched " + file)
 }
 
+fun appendAndCommit(file: String, additionalContent: String) : String {
+  append(file, additionalContent)
+  add(file)
+  return commit("Add more content")
+}
+
 fun modify(file: String): String {
-  Executor.overwrite(file, "content" + Math.random())
+  overwrite(file, "content" + Math.random())
   return addCommit("modified " + file)
 }
 
 fun last(): String {
   return git("log -1 --pretty=%H")
+}
+
+fun lastMessage(): String {
+  return git("log -1 --pretty=%B")
 }
 
 fun log(vararg params: String): String {
@@ -134,7 +153,7 @@ private fun printVersionTheFirstTime() {
 }
 
 fun file(fileName: String): TestFile {
-  val f = Executor.child(fileName)
+  val f = child(fileName)
   return TestFile(f)
 }
 
@@ -157,7 +176,7 @@ class TestFile internal constructor(private val myFile: File) {
     return this
   }
 
-  fun create(content: String): TestFile {
+  fun create(content: String = ""): TestFile {
     assertNotExists()
     FileUtil.writeToFile(myFile, content.toByteArray(), false)
     return this
@@ -173,7 +192,17 @@ class TestFile internal constructor(private val myFile: File) {
     return this
   }
 
-  fun exists(): Boolean {
-    return myFile.exists()
+  fun addCommit(message: String): TestFile {
+    add()
+    commit(message)
+    return this
   }
+
+  fun hash() = last()
+
+  fun exists() = myFile.exists()
+}
+
+class TestCommit internal constructor(shortHash: String, hash: String) {
+
 }

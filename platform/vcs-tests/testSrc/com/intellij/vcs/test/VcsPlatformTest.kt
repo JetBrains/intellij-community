@@ -16,6 +16,10 @@
 package com.intellij.vcs.test
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -30,6 +34,8 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import java.io.File
 import java.util.*
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 abstract class VcsPlatformTest : PlatformTestCase() {
 
@@ -39,6 +45,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   protected lateinit var myProjectPath: String
 
   private lateinit var myTestStartedIndicator: String
+  private val asyncTasks = mutableSetOf<AsyncTask>()
 
   protected lateinit var changeListManager: ChangeListManagerImpl
 
@@ -63,15 +70,20 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     try {
-      clearFields(this)
+      waitForPendingTasks()
     }
     finally {
       try {
-        runInEdtAndWait { super@VcsPlatformTest.tearDown() }
+        clearFields(this)
       }
       finally {
-        if (myAssertionsInTestDetected) {
-          TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator)
+        try {
+          runInEdtAndWait { super@VcsPlatformTest.tearDown() }
+        }
+        finally {
+          if (myAssertionsInTestDetected) {
+            TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator)
+          }
         }
       }
     }
@@ -127,6 +139,24 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     changeListManager.ensureUpToDate(false)
   }
 
+  protected fun waitForPendingTasks() {
+    for ((name, indicator, future) in asyncTasks) {
+      if (!future.isDone) {
+        LOG.error("Task $name didn't finish within the test")
+        indicator.cancel();
+        future.get(10, TimeUnit.SECONDS)
+      }
+    }
+  }
+
+  protected fun executeOnPooledThread(runnable: () -> Unit){
+    val indicator = EmptyProgressIndicator()
+    val future = ApplicationManager.getApplication().executeOnPooledThread {
+      ProgressManager.getInstance().executeProcessUnderProgress({ runnable() }, indicator)
+    }
+    asyncTasks.add(AsyncTask(super.getTestName(false), indicator, future))
+  }
+
   private fun checkTestRootIsEmpty(testRoot: File) {
     val files = testRoot.listFiles()
     if (files != null && files.size > 0) {
@@ -148,4 +178,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   private fun createTestStartedIndicator(): String {
     return "Starting " + javaClass.name + "." + getTestName(false) + Math.random()
   }
+
+  data class AsyncTask(val name: String,
+                  val indicator: ProgressIndicator,
+                  val future: Future<*>)
 }
