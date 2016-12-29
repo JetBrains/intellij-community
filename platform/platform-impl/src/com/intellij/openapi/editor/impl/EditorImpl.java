@@ -122,8 +122,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.lang.Math.round;
-
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
@@ -2686,7 +2684,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
     private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
-    private double myFractionalRemainder;
+    private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
@@ -2741,7 +2739,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setCurrentValue(int value) {
       super.setValue(value);
 
-      myFractionalRemainder = 0.0D;
+      myAdjuster.reset();
     }
 
     @Override
@@ -2757,12 +2755,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
      */
     @Override
     public void adjustValue(double delta) {
-      double compoundDelta = myFractionalRemainder + delta;
-      int integralDelta = (int)round(compoundDelta);
-      myFractionalRemainder = compoundDelta - (double)integralDelta;
-      if (integralDelta != 0) {
-        setValue(getTargetValue() + integralDelta);
-      }
+      myAdjuster.adjustValue(delta);
     }
 
     /**

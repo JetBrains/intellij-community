@@ -213,7 +213,7 @@ public class SmoothScrollPane extends JScrollPane {
 
   protected class SmoothScrollBar extends ScrollBar implements Interpolable, FinelyAdjustable {
     private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
-    private double myFractionalRemainder;
+    private final Adjuster myAdjuster = new Adjuster(delta -> setValue(getTargetValue() + delta));
 
     protected SmoothScrollBar(int orientation) {
       super(orientation);
@@ -237,7 +237,7 @@ public class SmoothScrollPane extends JScrollPane {
     public void setCurrentValue(int value) {
       super.setValue(value);
 
-      myFractionalRemainder = 0.0D;
+      myAdjuster.reset();;
     }
 
     @Override
@@ -248,12 +248,7 @@ public class SmoothScrollPane extends JScrollPane {
     // Support subpixel deltas
     @Override
     public void adjustValue(double delta) {
-      double compoundDelta = myFractionalRemainder + delta;
-      int integralDelta = (int)round(compoundDelta);
-      myFractionalRemainder = compoundDelta - (double)integralDelta;
-      if (integralDelta != 0) {
-        setValue(getTargetValue() + integralDelta);
-      }
+      myAdjuster.adjustValue(delta);
     }
   }
 }
