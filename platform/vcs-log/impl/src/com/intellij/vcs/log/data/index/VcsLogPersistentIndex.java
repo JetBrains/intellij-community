@@ -74,6 +74,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController = new MySingleTaskController();
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
 
+  @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
   @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = ContainerUtil.newHashMap();
 
   public VcsLogPersistentIndex(@NotNull Project project,
@@ -372,6 +374,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   @Override
+  public void addListener(@NotNull IndexingFinishedListener l) {
+    myListeners.add(l);
+  }
+
+  @Override
+  public void removeListener(@NotNull IndexingFinishedListener l) {
+    myListeners.remove(l);
+  }
+
+  @Override
   public void dispose() {
   }
 
@@ -517,6 +529,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
         finally {
           myNumberOfTasks.get(root).decrementAndGet();
+        }
+
+        if (isIndexed(root)) {
+          myListeners.forEach(listener -> listener.indexingFinished(root));
         }
       }
 

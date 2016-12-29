@@ -297,6 +297,18 @@ class VcsLogFilterer {
     return ContainerUtil.map2Set(commits, commitId -> myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
   }
 
+  public boolean affectedByIndexingRoots(@NotNull VcsLogFilterCollection filters, @NotNull List<VirtualFile> roots) {
+    List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
+    if (detailsFilters.isEmpty()) return false;
+
+    Set<VirtualFile> affectedRoots = VcsLogUtil.getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
+    boolean needsIndex = !affectedRoots.isEmpty();
+    if (needsIndex) {
+      LOG.debug(filters + " are affected by indexing of " + affectedRoots);
+    }
+    return needsIndex;
+  }
+
   private static class FilterResult {
     @Nullable private final Set<Integer> matchingCommits;
     private final boolean canRequestMore;

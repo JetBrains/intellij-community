@@ -61,6 +61,14 @@ public class EmptyIndex implements VcsLogIndex {
   }
 
   @Override
+  public void addListener(@NotNull IndexingFinishedListener l) {
+  }
+
+  @Override
+  public void removeListener(@NotNull IndexingFinishedListener l) {
+  }
+
+  @Override
   public void markCorrupted() {
   }
 }

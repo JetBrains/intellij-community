@@ -41,4 +41,12 @@ public interface VcsLogIndex {
   String getFullMessage(int index);
 
   void markCorrupted();
+
+  void addListener(@NotNull IndexingFinishedListener l);
+
+  void removeListener(@NotNull IndexingFinishedListener l);
+
+  interface IndexingFinishedListener {
+    void indexingFinished(@NotNull VirtualFile root);
+  }
 }

@@ -15,13 +15,14 @@
  */
 package com.intellij.vcs.log.visible;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 
 /**
  */
-public interface VisiblePackRefresher {
+public interface VisiblePackRefresher extends Disposable {
 
   void addVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener);
 
