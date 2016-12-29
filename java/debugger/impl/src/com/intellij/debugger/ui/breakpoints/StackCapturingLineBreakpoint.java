@@ -31,6 +31,7 @@ import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import java.util.Collections;
@@ -115,7 +116,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       .limit(1);
   }
 
-  public static void track(DebugProcessImpl debugProcess, String classFqn, String methodName, String methodSignature, int paramNo) {
+  public static void track(DebugProcessImpl debugProcess, String classFqn, String methodName, @Nullable String methodSignature, int paramNo) {
     StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess, classFqn, methodName, methodSignature, paramNo);
     breakpoint.createRequest(debugProcess);
   }

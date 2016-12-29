@@ -28,13 +28,17 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "DebuggerSettings",
@@ -90,6 +94,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
+
+  private List<CapturePoint> myCapturePoints = new CopyOnWriteArrayList<>();
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
 
@@ -192,6 +198,18 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       LOG.error(e);
     }
     return null;
+  }
+
+  @Tag("capture-points")
+  @AbstractCollection(surroundWithTag = false)
+  public List<CapturePoint> getCapturePoints() {
+    return myCapturePoints;
+  }
+
+  // for serialization, do not remove
+  @SuppressWarnings("unused")
+  public void setCapturePoints(List<CapturePoint> capturePoints) {
+    myCapturePoints = capturePoints;
   }
 
   public static class ContentState implements Cloneable {

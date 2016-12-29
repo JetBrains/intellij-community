@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SimpleConfigurable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
@@ -59,6 +60,10 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
       case HOTSWAP:
         return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"),
                                                        JavaHotSwapConfigurableUi.class, DebuggerSettings::getInstance));
+      case ROOT:
+        if (Registry.is("debugger.capture.points")) {
+          return singletonList(new CaptureConfigurable());
+        }
     }
     return Collections.emptyList();
   }
