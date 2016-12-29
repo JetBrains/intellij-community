@@ -1245,9 +1245,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByText(@NotNull final String fileName, @NotNull final String text) {
     assertInitialized();
-    return new WriteCommandAction<PsiFile>(getProject()) {
+    VirtualFile vFile = new WriteCommandAction<VirtualFile>(getProject()) {
       @Override
-      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         final VirtualFile vFile;
         if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
           final VirtualFile root = LightPlatformTestCase.getSourceRoot();
@@ -1274,10 +1274,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
 
         VfsUtil.saveText(vFile, text);
-        configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
-        result.setResult(getFile());
+        result.setResult(vFile);
       }
     }.execute().getResultObject();
+    configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
+    return getFile();
   }
 
   @Override
