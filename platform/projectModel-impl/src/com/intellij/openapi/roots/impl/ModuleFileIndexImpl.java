@@ -43,7 +43,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  public boolean iterateContent(@NotNull ContentIterator iterator) {
+  public boolean iterateContent(@NotNull ContentIterator processor) {
     final Set<VirtualFile> contentRoots = ApplicationManager.getApplication().runReadAction((Computable<Set<VirtualFile>>)() -> {
       if (myModule.isDisposed()) return Collections.emptySet();
 
@@ -66,7 +66,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       return result;
     });
     for (VirtualFile contentRoot : contentRoots) {
-      if (!iterateContentUnderDirectory(contentRoot, iterator)) {
+      if (!iterateContentUnderDirectory(contentRoot, processor)) {
         return false;
       }
     }

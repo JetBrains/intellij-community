@@ -35,14 +35,14 @@ public abstract class FileIndexBase implements FileIndex {
 
   @Override
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
-                                              @NotNull ContentIterator iterator,
+                                              @NotNull ContentIterator processor,
                                               @NotNull VirtualFileFilter customFilter) {
-    return iterateContentUnderDirectoryWithFilter(dir, iterator, file -> myContentFilter.accept(file) && customFilter.accept(file));
+    return iterateContentUnderDirectoryWithFilter(dir, processor, file -> myContentFilter.accept(file) && customFilter.accept(file));
   }
 
   @Override
-  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
-    return iterateContentUnderDirectoryWithFilter(dir, iterator, myContentFilter);
+  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator processor) {
+    return iterateContentUnderDirectoryWithFilter(dir, processor, myContentFilter);
   }
 
   private static boolean iterateContentUnderDirectoryWithFilter(@NotNull VirtualFile dir,

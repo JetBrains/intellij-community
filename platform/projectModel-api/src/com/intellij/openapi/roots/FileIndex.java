@@ -31,33 +31,26 @@ import java.util.Set;
  */
 public interface FileIndex {
   /**
-   * Iterates all files and directories under content roots skipping excluded and ignored files and directories.
+   * Processes all files and directories under content roots skipping excluded and ignored files and directories.
    *
-   * @param iterator the iterator receiving the files.
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
-  boolean iterateContent(@NotNull ContentIterator iterator);
+  boolean iterateContent(@NotNull ContentIterator processor);
 
   /**
-   * Iterates all files and directories in the content under directory <code>dir</code> (including the directory itself) skipping excluded
-   * and ignored files and directories. Does not iterate anything if <code>dir</code> is not in the content.
+   * Processes all files and directories in the content under directory <code>dir</code> (including the directory itself) skipping excluded
+   * and ignored files and directories. Does nothing if <code>dir</code> is not in the content.
    *
-   * @param dir      the directory the contents of which is iterated.
-   * @param iterator the iterator receiving the files.
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
-  boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator);
+  boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator processor);
 
   /**
-   * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional custom filter to the processor
-   *
-   * @param dir          the directory the contents of which is iterated.
-   * @param iterator     the iterator receiving the files.
-   * @param customFilter custom filter for files and directories
-   * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
+   * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional <code>customFilter</code> to
+   * the iterator, in case you need to skip some file system branches using your own logic.
    */
   boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
-                                       @NotNull ContentIterator iterator,
+                                       @NotNull ContentIterator processor,
                                        @NotNull VirtualFileFilter customFilter);
 
   /**
@@ -67,13 +60,10 @@ public interface FileIndex {
   boolean isInContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns {@code true} if {@code fileOrDir} is a file located under a sources, tests or resources root and not excluded or ignored.
+   * Returns {@code true} if {@code file} is a file located under a sources, tests or resources root and not excluded or ignored.
    * <p/>
    * Note that sometimes a file can belong to the content and be a source file but not belong to sources of the content.
    * This happens if sources of some library are located under the content (so they belong to the project content but not as sources).
-   *
-   * @param file the file to check.
-   * @return true if the file is a source file in the content sources, false otherwise.
    */
   boolean isContentSourceFile(@NotNull VirtualFile file);
 
@@ -91,8 +81,6 @@ public interface FileIndex {
    * you'd better use {@link TestSourcesFilter#isTestSources(VirtualFile, Project)} instead
    * which includes {@link ProjectFileIndex#isInTestSourceContent(VirtualFile)} invocation.
    *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file or directory belongs to a test source root, false otherwise.
    * @see TestSourcesFilter#isTestSources(VirtualFile, Project)
    */
   boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);

@@ -48,12 +48,12 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  public boolean iterateContent(@NotNull ContentIterator iterator) {
+  public boolean iterateContent(@NotNull ContentIterator processor) {
     Module[] modules =
       ApplicationManager.getApplication().runReadAction((Computable<Module[]>)() -> ModuleManager.getInstance(myProject).getModules());
     for (final Module module : modules) {
       for (VirtualFile contentRoot : getRootsToIterate(module)) {
-        if (!iterateContentUnderDirectory(contentRoot, iterator)) {
+        if (!iterateContentUnderDirectory(contentRoot, processor)) {
           return false;
         }
       }
