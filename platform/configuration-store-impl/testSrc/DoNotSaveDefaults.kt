@@ -60,7 +60,8 @@ class DoNotSaveDefaultsTest {
       "path.macros.xml" /* todo EP to register (provide) macro dynamically */,
       "stubIndex.xml" /* low-level non-roamable stuff */,
       "tomee.extensions.xml", "jboss.extensions.xml", "glassfish.extensions.xml" /* javaee non-roamable stuff, it will be better to fix it */,
-      "diff.xml" /* IDEA-166058 */
+      "diff.xml" /* IDEA-166058 */,
+      "debugger.renderers.xml", "debugger.xml" /* todo */
     ))
     println(directoryTree)
     assertThat(directoryTree).toMatchSnapshot(testData.resolve("DoNotSaveDefaults.snap.txt"))

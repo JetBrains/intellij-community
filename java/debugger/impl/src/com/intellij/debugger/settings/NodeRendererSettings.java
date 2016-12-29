@@ -126,8 +126,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     final Element element = new Element("NodeRendererSettings");
-    JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, myHexRenderer.isEnabled()? "true" : "false");
-    JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, areAlternateCollectionViewsEnabled()? "true" : "false");
+    if (myHexRenderer.isEnabled()) {
+      JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, "true");
+    }
+    if (!areAlternateCollectionViewsEnabled()) {
+      JDOMExternalizerUtil
+        .writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, "false");
+    }
+
     try {
       element.addContent(writeRenderer(myArrayRenderer));
       element.addContent(writeRenderer(myToStringRenderer));
@@ -158,9 +164,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       setAlternateCollectionViewsEnabled("true".equalsIgnoreCase(alternativeEnabled));
     }
 
-    final List rendererElements = root.getChildren(RENDERER_TAG);
-    for (final Object rendererElement : rendererElements) {
-      final Element elem = (Element)rendererElement;
+    for (final Element elem : root.getChildren(RENDERER_TAG)) {
       final String id = elem.getAttributeValue(RENDERER_ID);
       if (id == null) {
         continue;
