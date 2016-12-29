@@ -48,7 +48,10 @@ class DoNotSaveDefaultsTest {
     }
 
     println(directory)
-    val directoryTree = printDirectoryTree(dirPath, setOf("path.macros.xml"))
+    val directoryTree = printDirectoryTree(dirPath, setOf(
+      "path.macros.xml" /* todo EP to register (provide) macro dynamically */,
+      "stubIndex.xml" /* low-level non-roamable stuff */
+    ))
     println(directoryTree)
     assertThat(directoryTree).toMatchSnapshot(testData.resolve("DoNotSaveDefaults.snap.txt"))
   }

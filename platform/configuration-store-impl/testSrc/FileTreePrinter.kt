@@ -1,5 +1,6 @@
 package com.intellij.configurationStore
 
+import com.intellij.util.containers.nullize
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.isDirectory
 import java.nio.file.Path
@@ -12,7 +13,7 @@ fun printDirectoryTree(dir: Path, excluded: Set<String> = emptySet()): String {
 }
 
 private fun printDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, excluded: Set<String>) {
-  val fileList = sortedFileList(dir) ?: return
+  val fileList = sortedFileList(dir)?.filter { !excluded.contains(it.fileName.toString()) }.nullize() ?: return
 
   getIndentString(indent, sb)
   sb.append("\u251c\u2500\u2500")
@@ -20,10 +21,6 @@ private fun printDirectoryTree(dir: Path, indent: Int, sb: StringBuilder, exclud
   sb.append("/")
   sb.append("\n")
   for (file in fileList) {
-    if (excluded.contains(file.fileName.toString())) {
-      continue
-    }
-
     if (file.isDirectory()) {
       printDirectoryTree(file, indent + 1, sb, excluded)
     }
