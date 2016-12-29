@@ -1,7 +1,7 @@
 class Test {
   void foo() {
     <selection>final String str = "";
-    if (str == "") {
+    if (str == "a") {
       return;
     }</selection>
     new Runnable() {
