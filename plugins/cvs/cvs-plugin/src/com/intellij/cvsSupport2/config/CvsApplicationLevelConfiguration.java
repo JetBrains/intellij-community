@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import java.util.List;
  * author: lesya
  */
 public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExternalizable, RoamingTypeDisabled {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration");
 
   public List<CvsRootConfiguration> CONFIGURATIONS = new ArrayList<>();
@@ -72,14 +71,16 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
     return ServiceManager.getService(CvsApplicationLevelConfiguration.class);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "CvsApplicationLevelConfiguration";
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    for (Element child : (Iterable<Element>)element.getChildren(CONFIGURATION_ELEMENT_NAME)) {
+    for (Element child : element.getChildren(CONFIGURATION_ELEMENT_NAME)) {
       CONFIGURATIONS.add(createConfigurationOn(child));
     }
 
@@ -100,21 +101,21 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
     return false;
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, new CvsApplicationLevelConfiguration()));
     for (CvsRootConfiguration configuration : CONFIGURATIONS) {
       createConfigurationElement(configuration, element);
     }
   }
 
-  private static void createConfigurationElement(CvsRootConfiguration configuration, Element element)
-    throws WriteExternalException {
+  private static void createConfigurationElement(CvsRootConfiguration configuration, Element element) {
     Element child = new Element(CONFIGURATION_ELEMENT_NAME);
     configuration.writeExternal(child);
     element.addContent(child);
   }
 
-  private CvsRootConfiguration createConfigurationOn(Element child) throws InvalidDataException {
+  private CvsRootConfiguration createConfigurationOn(Element child) {
     CvsRootConfiguration config = createNewConfiguration(this);
     config.readExternal(child);
     return config;
