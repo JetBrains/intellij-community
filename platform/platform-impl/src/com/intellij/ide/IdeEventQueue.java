@@ -31,10 +31,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -50,6 +47,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
+import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -1193,5 +1191,32 @@ public class IdeEventQueue extends EventQueue {
 
   public void addPostEventListener(@NotNull PostEventHook listener, @NotNull Disposable parentDisposable) {
     myPostEventListeners.addListener(listener, parentDisposable);
+  }
+
+  private static Ref<Method> unsafeNonBlockingExecuteRef;
+
+  /**
+   * Must be called on the Event Dispatching thread.
+   * <p>
+   * Executes the system runnable which is allowed to perform invocations on the toolkit thread in prioritized order to avoid deadlocking.
+   * Not for general use.
+   *
+   * @param r the system runnable to execute
+   */
+  public static void unsafeNonblockingExecute(Runnable r) {
+    assert EventQueue.isDispatchThread();
+    if (unsafeNonBlockingExecuteRef == null) {
+      // The method is available in JBSDK.
+      unsafeNonBlockingExecuteRef = Ref.create(ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class));
+    }
+    if (unsafeNonBlockingExecuteRef.get() != null) {
+      try {
+        unsafeNonBlockingExecuteRef.get().invoke(Toolkit.getDefaultToolkit(), r);
+        return;
+      }
+      catch (Exception ignore) {
+      }
+    }
+    r.run();
   }
 }
