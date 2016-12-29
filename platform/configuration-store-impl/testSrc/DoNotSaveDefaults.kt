@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ProjectRule
@@ -35,6 +36,13 @@ class DoNotSaveDefaultsTest {
     val directory = app.stateStore.stateStorageManager.expandMacros(APP_CONFIG)
     val dirPath = Paths.get(directory)
     val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
+
+    // wake up
+    ServiceManagerImpl.processAllImplementationClasses(app, { clazz, pluginDescriptor ->
+      app.picoContainer.getComponentInstance(clazz.name)
+      true
+    })
+
     try {
       System.setProperty("store.save.use.modificationCount", "false")
       app.doNotSave(false)

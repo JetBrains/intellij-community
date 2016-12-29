@@ -56,6 +56,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     myRegistry = productivityFeaturesRegistry;
   }
 
+  @Override
   public boolean isToBeShown(String featureId, Project project) {
     return isToBeShown(featureId, project, DAY);
   }
@@ -114,6 +115,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     return FIRST_RUN_TIME;
   }
 
+  @Override
   public void loadState(final Element element) {
     List featuresList = element.getChildren(FEATURE_TAG);
     for (Object aFeaturesList : featuresList) {
@@ -147,6 +149,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     SHOW_IN_COMPILATION_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_COMPILATION, Boolean.toString(true))).booleanValue();
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
@@ -175,6 +178,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     return element;
   }
 
+  @Override
   public void triggerFeatureUsed(String featureId) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
@@ -186,6 +190,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     }
   }
 
+  @Override
   public void triggerFeatureShown(String featureId) {
     FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
     if (descriptor != null) {
