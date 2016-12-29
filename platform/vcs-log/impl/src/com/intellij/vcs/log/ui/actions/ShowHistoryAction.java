@@ -70,8 +70,7 @@ public class ShowHistoryAction extends DumbAwareAction {
           presentation.setEnabledAndVisible(false);
         }
         else {
-          presentation.setVisible(dataManager.getRoots().contains(root));
-          presentation.setEnabled(dataManager.getIndex().isIndexed(root));
+          presentation.setEnabledAndVisible(dataManager.getRoots().contains(root));
         }
       }
     }
