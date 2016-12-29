@@ -25,8 +25,10 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
+import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -37,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -332,6 +335,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
+      createStackCapturingBreakpoints();
+
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {
         XDebugSession session = getSession().getXDebugSession();
@@ -344,6 +349,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final String transportName = DebuggerBundle.getTransportName(getConnection());
       showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
       LOG.debug("leave: processVMStartEvent()");
+    }
+  }
+
+  private void createStackCapturingBreakpoints() {
+    if (Registry.is("debugger.capture.points")) {
+      for (CapturePoint point : DebuggerSettings.getInstance().getCapturePoints()) {
+        StackCapturingLineBreakpoint.track(this, point.myClassName, point.myMethodName, null, point.myParamNo);
+      }
     }
   }
 
