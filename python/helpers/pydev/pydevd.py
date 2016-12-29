@@ -872,6 +872,8 @@ class PyDB:
             self.patch_threads()
             pydevd_tracing.SetTrace(self.trace_dispatch)
         else:
+            # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
+            # functions, because frame evaluation function is set to all threads by default.
             set_frame_eval()
 
         PyDBCommandThread(self).start()
