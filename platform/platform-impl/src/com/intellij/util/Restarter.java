@@ -83,9 +83,9 @@ public class Restarter {
 
     int pid = kernel32.GetCurrentProcessId();
     IntByReference argc = new IntByReference();
-    Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
-    kernel32.LocalFree(argv_ptr);
+    Pointer argvPtr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
+    String[] argv = getRestartArgv(argvPtr.getWideStringArray(0, argc.getValue()));
+    kernel32.LocalFree(argvPtr);
 
     // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
     // argv[0] as the program name is only a convention, i.e. there is no guarantee
@@ -100,12 +100,13 @@ public class Restarter {
       argv[0] = Native.toString(buffer);
     }
 
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), commands -> {
-      Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
-      Collections.addAll(commands, beforeRestart);
-      Collections.addAll(commands, String.valueOf(argv.length));
-      Collections.addAll(commands, argv);
-    });
+    List<String> args = new ArrayList<>();
+    args.add(String.valueOf(pid));
+    args.add(String.valueOf(beforeRestart.length));
+    Collections.addAll(args, beforeRestart);
+    args.add(String.valueOf(argv.length));
+    Collections.addAll(args, argv);
+    runRestarter(new File(PathManager.getBinPath(), "restarter.exe"), args);
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
@@ -135,11 +136,10 @@ public class Restarter {
     String homePath = PathManager.getHomePath();
     int p = homePath.indexOf(".app");
     if (p < 0) throw new IOException("Application bundle not found: " + homePath);
-    String bundlePath = homePath.substring(0, p + 4);
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), commands -> {
-      commands.add(bundlePath);
-      Collections.addAll(commands, beforeRestart);
-    });
+    List<String> args = new ArrayList<>();
+    args.add(homePath.substring(0, p + 4));
+    Collections.addAll(args, beforeRestart);
+    runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
   }
 
   private static void restartOnUnix(String... beforeRestart) throws IOException {
@@ -149,18 +149,16 @@ public class Restarter {
     int pid = UnixProcessManager.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
 
-    doScheduleRestart(new File(PathManager.getBinPath(), "restart.py"), commands -> {
-      commands.add(String.valueOf(pid));
-      commands.add(launcherScript);
-      Collections.addAll(commands, beforeRestart);
-    });
+    List<String> args = new ArrayList<>();
+    args.add(String.valueOf(pid));
+    args.add(launcherScript);
+    Collections.addAll(args, beforeRestart);
+    runRestarter(new File(PathManager.getBinPath(), "restart.py"), args);
   }
 
-  private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
-    List<String> commands = new ArrayList<>();
-    commands.add(createTempExecutable(restarterFile).getPath());
-    argumentsBuilder.consume(commands);
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
+  private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
+    restarterArgs.add(0, createTempExecutable(restarterFile).getPath());
+    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
   }
 
   @NotNull
