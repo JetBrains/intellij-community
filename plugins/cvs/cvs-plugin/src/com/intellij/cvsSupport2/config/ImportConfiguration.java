@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,11 @@ package com.intellij.cvsSupport2.config;
 
 import com.intellij.cvsSupport2.ui.experts.importToCvs.FileExtension;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +32,6 @@ import java.util.List;
  * author: lesya
  */
 public class ImportConfiguration extends AbstractConfiguration {
-
   public String VENDOR;
   public String RELEASE_TAG;
   public String LOG_MESSAGE;
@@ -44,9 +48,10 @@ public class ImportConfiguration extends AbstractConfiguration {
   }
 
   public Collection<FileExtension> getExtensions() {
-    if (KEYWORD_SUBSTITUTION_WRAPPERS == null || KEYWORD_SUBSTITUTION_WRAPPERS.length() == 0) {
+    if (StringUtil.isEmpty(KEYWORD_SUBSTITUTION_WRAPPERS)) {
       return Collections.emptyList();
     }
+
     final ArrayList<FileExtension> result = new ArrayList<>();
     final String[] wrappers = KEYWORD_SUBSTITUTION_WRAPPERS.split(";");
     for (String wrapper : wrappers) {
@@ -66,5 +71,10 @@ public class ImportConfiguration extends AbstractConfiguration {
       buffer.append(";");
     }
     KEYWORD_SUBSTITUTION_WRAPPERS = buffer.toString();
+  }
+
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, new ImportConfiguration()));
   }
 }
