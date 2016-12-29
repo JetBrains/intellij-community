@@ -15,31 +15,25 @@
  */
 package com.intellij.util.indexing.impl;
 
+import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import java.io.IOException;
+
 import java.util.Map;
 
 /**
- * Represents a <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward index data structure</>:
- * an index indented to hold a mappings of inputId-s to contained keys.
+ * A class intended to make a diff between existing forward index data and new one.
  */
 @ApiStatus.Experimental
-public interface ForwardIndex<Key, Value> {
+public abstract class InputDataDiffBuilder<Key, Value> {
+  protected final int myInputId;
+
+  protected InputDataDiffBuilder(int id) {myInputId = id;}
   /**
-   * Creates a diff builder for given inputId.
+   * produce a diff between existing data and newData and consume result to addProcessor, updateProcessor and removeProcessor.
    */
-  @NotNull
-  InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException;
-
-  /**
-   * Update data for inputId.
-   */
-  void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException;
-
-  void flush();
-
-  void clear() throws IOException;
-
-  void close() throws IOException;
+  public abstract void differentiate(@NotNull Map<Key, Value> newData,
+                                     @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
+                                     @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
+                                     @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException;
 }

@@ -573,12 +573,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
                               @NotNull final Map<K, StubIdList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(key);
-      final ThrowableComputable<ForwardIndex.InputKeyIterator<K, StubIdList>, IOException>
-        oldMapGetter = () -> new MapInputKeyIterator<>(oldValues);
-      index.updateWithMap(fileId,
-                          DiffUpdateData.ourDiffUpdateEnabled
-                          ? new DiffUpdateData<>(newValues, oldMapGetter, key, null)
-                          : new SimpleUpdateData<>(newValues, oldMapGetter, key, null));
+      final ThrowableComputable<InputDataDiffBuilder<K, StubIdList>, IOException>
+        oldMapGetter = () -> new MapInputDataDiffBuilder<>(fileId, oldValues);
+      index.updateWithMap(fileId, new UpdateData<>(newValues, oldMapGetter, key, null));
     }
     catch (StorageException e) {
       LOG.info(e);

@@ -20,10 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.EmptyInputKeyIterator;
-import com.intellij.util.indexing.impl.ForwardIndex;
-import com.intellij.util.indexing.impl.MapIndexStorage;
-import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -194,8 +191,8 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   private static class EmptyForwardIndex<T> implements ForwardIndex<Integer, T> {
     @NotNull
     @Override
-    public InputKeyIterator<Integer, T> getInputKeys(int inputId) {
-      return EmptyInputKeyIterator.getInstance();
+    public InputDataDiffBuilder<Integer, T> getDiffBuilder(int inputId) {
+      return new EmptyInputDataDiffBuilder<>(inputId);
     }
 
     @Override

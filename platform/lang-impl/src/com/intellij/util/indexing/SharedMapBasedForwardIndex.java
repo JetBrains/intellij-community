@@ -16,10 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.indexing.impl.AbstractForwardIndex;
-import com.intellij.util.indexing.impl.CollectionInputKeyIterator;
-import com.intellij.util.indexing.impl.DebugAssertions;
-import com.intellij.util.indexing.impl.MapBasedForwardIndex;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +36,7 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
 
   @NotNull
   @Override
-  public InputKeyIterator<Key, Value> getInputKeys(int inputId) throws IOException {
+  public InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException {
     Collection<Key> keys;
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       keys = SharedIndicesData.recallFileData(inputId, myIndexId, mySnapshotIndexExternalizer);
@@ -56,9 +53,9 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
         }
         keys = keysFromInputsIndex;
       }
-      return new CollectionInputKeyIterator<>(keys);
+      return new CollectionInputDataDiffBuilder<>(inputId, keys);
     }
-    return new CollectionInputKeyIterator<>(myUnderlying.getInputsIndex().get(inputId));
+    return new CollectionInputDataDiffBuilder<>(inputId, myUnderlying.getInputsIndex().get(inputId));
   }
 
   @Override

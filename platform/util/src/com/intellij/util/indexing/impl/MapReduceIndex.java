@@ -51,7 +51,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final DataIndexer<Key, Value, Input> myIndexer;
 
   protected volatile ForwardIndex<Key, Value> myForwardIndex;
-  private final boolean myUseDiffUpdate;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private volatile boolean myDisposed;
@@ -85,9 +84,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myStorage = storage;
     myValueExternalizer = extension.getValueExternalizer();
     myForwardIndex = forwardIndex;
-    myUseDiffUpdate = DiffUpdateData.ourDiffUpdateEnabled && (forwardIndex == null ||
-                                                              myForwardIndex instanceof AbstractForwardIndex &&
-                                                              !((AbstractForwardIndex)myForwardIndex).hasOnlyKeysData());
   }
 
   @NotNull
@@ -222,10 +218,10 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @NotNull
   protected UpdateData<Key, Value> calculateUpdateData(final int inputId, @Nullable Input content) {
     final Map<Key, Value> data = mapInput(content);
-    return createUpdateData(data, new ThrowableComputable<ForwardIndex.InputKeyIterator<Key, Value>, IOException>() {
+    return createUpdateData(data, new ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException>() {
       @Override
-      public ForwardIndex.InputKeyIterator<Key, Value> compute() throws IOException {
-        return readInputKeys(inputId);
+      public InputDataDiffBuilder<Key, Value> compute() throws IOException {
+        return getKeysDiffBuilder(inputId);
       }
     }, new ThrowableRunnable<IOException>() {
       @Override
@@ -236,16 +232,15 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
-  protected ForwardIndex.InputKeyIterator<Key, Value> readInputKeys(int inputId) throws IOException {
-    return myForwardIndex.getInputKeys(inputId);
+  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+    return myForwardIndex.getDiffBuilder(inputId);
   }
 
   @NotNull
   protected UpdateData<Key, Value> createUpdateData(Map<Key, Value> data,
-                                                    ThrowableComputable<ForwardIndex.InputKeyIterator<Key, Value>, IOException> keys,
+                                                    ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
                                                     ThrowableRunnable<IOException> forwardIndexUpdate) {
-    return myUseDiffUpdate ? new DiffUpdateData<Key, Value>(data, keys, myIndexId, forwardIndexUpdate)
-                           : new SimpleUpdateData<Key, Value>(data, keys, myIndexId, forwardIndexUpdate);
+    return new UpdateData<Key, Value>(data, keys, myIndexId, forwardIndexUpdate);
   }
 
   protected Map<Key, Value> mapInput(Input content) {
@@ -268,8 +263,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return myModificationStamp.get();
   }
 
-  private final UpdateData.RemovedKeyProcessor<Key>
-    myRemovedKeyProcessor = new UpdateData.RemovedKeyProcessor<Key>() {
+  private final RemovedKeyProcessor<Key>
+    myRemovedKeyProcessor = new RemovedKeyProcessor<Key>() {
     @Override
     public void process(Key key, int inputId) throws StorageException {
       myModificationStamp.incrementAndGet();
@@ -277,7 +272,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   };
 
-  private final UpdateData.KeyValueUpdateProcessor<Key, Value> myAddedKeyProcessor = new UpdateData.KeyValueUpdateProcessor<Key, Value>() {
+  private final KeyValueUpdateProcessor<Key, Value> myAddedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
       myModificationStamp.incrementAndGet();
@@ -285,7 +280,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   };
 
-  private final UpdateData.KeyValueUpdateProcessor<Key, Value> myUpdatedKeyProcessor = new UpdateData.KeyValueUpdateProcessor<Key, Value>() {
+  private final KeyValueUpdateProcessor<Key, Value> myUpdatedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
       myModificationStamp.incrementAndGet();
@@ -300,7 +295,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       try {
         ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
-        updateData.iterateKeys(inputId, myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
+        updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
         updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
