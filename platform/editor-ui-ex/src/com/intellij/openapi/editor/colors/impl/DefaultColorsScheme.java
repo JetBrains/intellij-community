@@ -72,7 +72,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   @Override
-  public void readExternal(Element parentNode) {
+  public void readExternal(@NotNull Element parentNode) {
     super.readExternal(parentNode);
     myName = parentNode.getAttributeValue(NAME_ATTR);
   }

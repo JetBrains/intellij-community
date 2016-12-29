@@ -24,7 +24,6 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import org.assertj.core.api.Assertions
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -69,11 +68,11 @@ class EditorColorSchemeTest {
     assertThat(schemeFile.parent).hasChildren("Foo.icls")
 
     // test reload
-    val sizeBeforeReload = manager.schemeManager.allSchemes.size
+    val schemeNamesBeforeReload = manager.schemeManager.allSchemes.map { it.name }
     schemeManagerFactory.process {
       it.reload()
     }
 
-    Assertions.assertThat(manager.schemeManager.allSchemes).hasSize(sizeBeforeReload)
+    assertThat(manager.schemeManager.allSchemes.map { it.name }).isEqualTo(schemeNamesBeforeReload)
   }
 }

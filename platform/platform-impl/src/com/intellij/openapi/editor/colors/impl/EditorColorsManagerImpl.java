@@ -40,7 +40,6 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.JdomKt;
 import com.intellij.util.io.URLUtil;
@@ -132,11 +131,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
       @Override
       public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager) {
-        // todo is EDT really required (develar: for now it will be better just to use invokeOnEdt)
-        AppUIUtil.invokeOnEdt(() -> {
-          initEditableDefaultSchemesCopies();
-          initEditableBundledSchemesCopies();
-        });
+        initEditableDefaultSchemesCopies();
+        initEditableBundledSchemesCopies();
       }
     }
     mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor());
