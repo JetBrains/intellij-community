@@ -214,17 +214,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
   }
 
   protected VirtualFile create(VirtualFile parent, String name) {
-    return create(parent, name, false);
-  }
-
-  protected VirtualFile createDir(VirtualFile parent, String name) {
-    return create(parent, name, true);
-  }
-
-  private VirtualFile create(VirtualFile parent, String name, boolean dir) {
-    final VirtualFile file = dir ?
-                             VcsTestUtil.findOrCreateDir(myProject, parent, name) :
-                             createFile(myProject, parent, name, "content" + Math.random());
+    VirtualFile file = createFile(parent, name, "content" + Math.random());
     dirty(file);
     return file;
   }
@@ -252,7 +242,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     deleteFileInCommand(myProject, file);
   }
 
-  private void dirty(VirtualFile file) {
+  protected void dirty(VirtualFile file) {
     myDirtyScope.addDirtyFile(VcsUtil.getFilePath(file));
   }
 

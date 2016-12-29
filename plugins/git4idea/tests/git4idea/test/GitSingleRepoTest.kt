@@ -16,6 +16,14 @@
 package git4idea.test
 
 import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
+import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.vcs.AbstractVcsTestCase
+import git4idea.GitUtil
+import git4idea.GitVcs
 import git4idea.repo.GitRepository
 
 abstract class GitSingleRepoTest : GitPlatformTest() {
@@ -31,5 +39,32 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
 
   protected open fun makeInitialCommit(): Boolean {
     return true
+  }
+
+  protected fun VcsConfiguration.StandardConfirmation.doSilently() =
+    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_ACTION_SILENTLY)
+
+  protected fun VcsConfiguration.StandardConfirmation.doNothing() =
+    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
+
+  protected fun prepareUnversionedFile(fileName: String): VirtualFile {
+    val file = myProjectRoot.createFile(fileName, "initial\ncontent\n")
+    updateChangeListManager()
+    assertUnversioned(file)
+    return file
+  }
+
+  protected fun VirtualFile.createDir(dir: String) = VcsTestUtil.findOrCreateDir(myProject, this, dir)!!
+
+  protected fun VirtualFile.createFile(fileName: String, content: String) = VcsTestUtil.createFile(myProject, this, fileName, content)!!
+
+  protected fun renameFile(file: VirtualFile, newName: String) {
+    VcsTestUtil.renameFileInCommand(myProject, file, newName)
+    updateChangeListManager()
+  }
+
+  protected fun assertUnversioned(file: VirtualFile) {
+    assertTrue("File should be unversioned! All changes: " + GitUtil.getLogString(myProjectPath, changeListManager.allChanges),
+               changeListManager.isUnversioned(file))
   }
 }
