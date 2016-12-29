@@ -29,11 +29,14 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
+import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
@@ -46,6 +49,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   private TreeModel myTreeModel;
   private SMTestRunnerResultsForm myResultsViewer;
   private MockPrinter myMockResettablePrinter;
+  private File myTempFile;
 
   private class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
@@ -96,6 +100,10 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     Disposer.dispose(myConsole);
 
     super.tearDown();
+
+    if (myTempFile != null) {
+      assertFalse(myTempFile.exists());
+    }
   }
 
   public void testOnStartedTesting() {
@@ -168,6 +176,21 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testOnTestComparisonFailure() {
     onTestStarted("some_test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, "actual", "expected"));
+
+    final String fullName = myEventsProcessor.getFullTestName("some_test");
+    final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
+
+    assertNotNull(proxy);
+    assertTrue(proxy.isDefect());
+    assertFalse(proxy.isInProgress());
+  }
+
+  public void testOnTestComparisonFailureLongExpectedText() throws IOException {
+    onTestStarted("some_test");
+    myTempFile = FileUtil.createTempFile("expected", "");
+    FileUtil.writeToFile(myTempFile, "expected text");
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", null, false, "actual",
+                                                        "expected", myTempFile.getCanonicalPath(), null, true, false, -1));
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);

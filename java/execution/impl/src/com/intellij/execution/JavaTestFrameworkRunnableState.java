@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -125,14 +126,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    return startSMRunner(executor);
-  }
-
-  /**
-   * to be removed in 2017.1, compatibility with jtreg plugin
-   */
-  @Deprecated
-  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -226,6 +219,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
+    }
+
+    if (ConsoleBuffer.useCycleBuffer()) {
+      javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
 
     return javaParameters;

@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -29,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -446,23 +448,26 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText) {
-    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null);
+    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null);
   }
 
   public void setTestComparisonFailed(@NotNull final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
-                                      @Nullable final String filePath) {
-    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, filePath, null);
+                                      @NotNull final TestFailedEvent event) {
+    TestComparisionFailedState comparisionFailedState =
+      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath());
+    comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFIleTemp());
+    comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
-                                      @Nullable final String stackTrace,
-                                      @NotNull final String actualText,
-                                      @NotNull final String expectedText,
-                                      @Nullable final String expectedFilePath,
-                                      @Nullable final String actualFilePath) {
+  public TestComparisionFailedState setTestComparisonFailed(@NotNull final String localizedMessage,
+                                                            @Nullable final String stackTrace,
+                                                            @NotNull final String actualText,
+                                                            @NotNull final String expectedText,
+                                                            @Nullable final String expectedFilePath,
+                                                            @Nullable final String actualFilePath) {
     setStacktraceIfNotSet(stackTrace);
     final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
     if (myState instanceof CompoundTestFailedState) {
@@ -478,6 +483,16 @@ public class SMTestProxy extends AbstractTestProxy {
       myState = comparisionFailedState;
     }
     fireOnNewPrintable(comparisionFailedState);
+    return comparisionFailedState;
+  }
+
+  @Override
+  public void dispose() {
+    if (myState instanceof TestFailedState) {
+      Disposer.dispose((TestFailedState)myState);
+    }
+
+    super.dispose();
   }
 
   public void setTestIgnored(@Nullable String ignoreComment, @Nullable String stackTrace) {
