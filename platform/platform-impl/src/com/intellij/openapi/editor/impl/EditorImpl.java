@@ -2726,7 +2726,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
      */
     @Override
     public void setValue(int value) {
-      if (ComponentSettings.getInstance().isSmoothScrollingEligibleFor(myEditorComponent) && myScrollingModel.isAnimationEnabled()) {
+      ComponentSettings settings = ComponentSettings.getInstance();
+      if (settings.isSmoothScrollingEligibleFor(myEditorComponent) &&
+          settings.isInterpolationEligibleFor(this) &&
+          myScrollingModel.isAnimationEnabled()) {
         myInterpolator.setTarget(value, ((MyScrollPane)myScrollPane).getInitialDelay(getValueIsAdjusting()));
       }
       else {

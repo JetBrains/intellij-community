@@ -224,7 +224,8 @@ public class SmoothScrollPane extends JScrollPane {
 
     @Override
     public void setValue(int value) {
-      if (ComponentSettings.getInstance().isSmoothScrollingEligibleFor(getViewport().getView())) {
+      ComponentSettings settings = ComponentSettings.getInstance();
+      if (settings.isSmoothScrollingEligibleFor(getViewport().getView()) && settings.isInterpolationEligibleFor(this)) {
         myInterpolator.setTarget(value, getInitialDelay(getValueIsAdjusting()));
       }
       else {

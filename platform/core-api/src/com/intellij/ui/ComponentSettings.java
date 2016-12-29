@@ -17,7 +17,9 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -42,6 +44,32 @@ public class ComponentSettings {
            !myPowerSaveModeEnabled &&
            component != null &&
            component.isShowing();
+  }
+
+  /* A heuristics that disables scrolling interpolation in diff / merge windows.
+     We need to to make scrolling synchronization compatible with the interpolation first. */
+  public boolean isInterpolationEligibleFor(JScrollBar scrollbar) {
+    Component[] components = getComponents((Window)scrollbar.getTopLevelAncestor());
+    if (components.length == 1 && components[0].getClass().getName().contains("DiffWindow")) {
+      return false;
+    }
+    if (components.length == 2 && components[0] instanceof Container) {
+      Component[] subComponents = ((Container)components[0]).getComponents();
+      if (subComponents.length == 1 && subComponents[0].getClass().getName().contains("MergeWindow")) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static Component[] getComponents(@Nullable Window window) {
+    if (window instanceof JFrame) {
+      return ((JFrame)window).getContentPane().getComponents();
+    }
+    if (window instanceof JDialog) {
+      return ((JDialog)window).getContentPane().getComponents();
+    }
+    return new Component[0];
   }
 
   public void setSmoothScrollingEnabled(boolean enabled) {
