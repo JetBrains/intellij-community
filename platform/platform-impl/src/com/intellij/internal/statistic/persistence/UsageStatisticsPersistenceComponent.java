@@ -117,8 +117,8 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     if (isAllowed()) {
       element.setAttribute(IS_ALLOWED_ATTR, "true");
     }
-    if (isShowNotification()) {
-      element.setAttribute(SHOW_NOTIFICATION_ATTR, "true");
+    if (!isShowNotification()) {
+      element.setAttribute(SHOW_NOTIFICATION_ATTR, "false");
     }
     if (myPeriod != SendPeriod.WEEKLY) {
       element.setAttribute(PERIOD_ATTR, myPeriod.getName());
