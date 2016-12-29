@@ -4,7 +4,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -20,17 +19,14 @@ import org.jetbrains.annotations.NotNull;
 public abstract class FileIndexBase implements FileIndex {
   protected final FileTypeRegistry myFileTypeRegistry;
   protected final DirectoryIndex myDirectoryIndex;
-  private final VirtualFileFilter myContentFilter = new VirtualFileFilter() {
-    @Override
-    public boolean accept(VirtualFile file) {
-      assert file != null;
-      return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
-        !isScopeDisposed() && isInContent(file)
-      );
-    }
+  private final VirtualFileFilter myContentFilter = file -> {
+    assert file != null;
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
+      !isScopeDisposed() && isInContent(file)
+    );
   };
 
-  public FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager, @NotNull Project project) {
+  public FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
     myDirectoryIndex = directoryIndex;
     myFileTypeRegistry = fileTypeManager;
   }

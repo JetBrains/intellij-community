@@ -38,7 +38,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   private final Module myModule;
 
   public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
-    super(directoryIndex, FileTypeRegistry.getInstance(), module.getProject());
+    super(directoryIndex, FileTypeRegistry.getInstance());
     myModule = module;
   }
 

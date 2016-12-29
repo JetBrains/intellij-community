@@ -43,7 +43,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   private final Project myProject;
 
   public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
-    super(directoryIndex, fileTypeManager, project);
+    super(directoryIndex, fileTypeManager);
     myProject = project;
   }
 
