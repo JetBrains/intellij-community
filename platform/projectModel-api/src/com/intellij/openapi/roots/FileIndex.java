@@ -47,7 +47,8 @@ public interface FileIndex {
 
   /**
    * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional <code>customFilter</code> to
-   * the iterator, in case you need to skip some file system branches using your own logic.
+   * the iterator, in case you need to skip some file system branches using your own logic. If <code>customFilter</code> returns false on
+   * a directory, it won't be processed, but iteration will go on.
    */
   boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
                                        @NotNull ContentIterator processor,
