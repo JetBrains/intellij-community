@@ -136,8 +136,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
-  public static int TEST_PROJECTS_CREATED;
-  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = true;
+  @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
+  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
   private static final int MAX_LEAKY_PROJECTS = 5;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
@@ -147,6 +147,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     //noinspection ConstantConditions
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         for (int i = 0; i < 42; i++) {
