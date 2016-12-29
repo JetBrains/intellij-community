@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 import com.intellij.util.containers.nullize
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.isDirectory
+import com.intellij.util.io.readChars
 import java.nio.file.Path
 import java.util.*
 
@@ -44,6 +45,7 @@ private fun printFile(file: Path, indent: Int, sb: StringBuilder) {
   sb.append("\u251c\u2500\u2500")
   sb.append(file.fileName.toString())
   sb.append("\n")
+  sb.append(file.readChars())
 }
 
 private fun getIndentString(indent: Int, sb: StringBuilder) {
