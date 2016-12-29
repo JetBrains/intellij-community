@@ -15,10 +15,12 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
@@ -30,12 +32,19 @@ import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
@@ -497,5 +506,45 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final List<? extends SMTestProxy> tests = suite.getChildren();
     assertEquals(1, tests.size());
     assertEquals("ATe&st", tests.get(0).getName());
+  }
+
+  public void testPreserveFullOutputAfterImport() throws Exception {
+
+    mySuite.addChild(mySimpleTest);
+    for (int i = 0; i < 550; i++) {
+      String message = "line" + i + "\n";
+      mySimpleTest.addLast(printer -> printer.print(message, ConsoleViewContentType.NORMAL_OUTPUT));
+    }
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
+
+    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+    TransformerHandler handler = transformerFactory.newTransformerHandler();
+    handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
+    handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+    File output = FileUtil.createTempFile("output", "");
+    try {
+      FileUtilRt.createParentDirs(output);
+      handler.setResult(new StreamResult(new FileWriter(output)));
+      MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
+      TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
+
+      String savedText = FileUtil.loadFile(output);
+      assertTrue(savedText.split("\n").length > 550);
+
+      myEventsProcessor.onStartTesting();
+      ImportedToGeneralTestEventsConverter.parseTestResults(new StringReader(savedText), myEventsProcessor);
+      myEventsProcessor.onFinishTesting();
+
+      List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
+      assertSize(1, children);
+      SMTestProxy testProxy = children.get(0);
+      MockPrinter mockPrinter = new MockPrinter();
+      testProxy.printOn(mockPrinter);
+      assertSize(550, mockPrinter.getAllOut().split("\n"));
+    }
+    finally {
+      FileUtil.delete(output);
+    }
   }
 }

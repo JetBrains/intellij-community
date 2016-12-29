@@ -586,7 +586,12 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Override
   public void printOwnPrintablesOn(Printer printer) {
-    super.printOwnPrintablesOn(printer);
+    if (isLeaf()) {
+      super.printOn(printer);
+    }
+    else {
+      super.printOwnPrintablesOn(printer);
+    }
     printState(myState, printer);
   }
 
