@@ -216,10 +216,12 @@ public abstract class TokenSets {
                                                                GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH,
                                                                GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE);
 
+  public static final TokenSet PARENTHESIZED_BINARY_OP_SET = TokenSet.create(GroovyTokenTypes.mEQUAL, GroovyTokenTypes.mNOT_EQUAL);
+
   public static final TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR,
-                                                                           GroovyTokenTypes.mBXOR, GroovyTokenTypes.mEQUAL,
+                                                                           GroovyTokenTypes.mBXOR,
                                                                            GroovyTokenTypes.mLOR, GroovyTokenTypes.mPLUS,
-                                                                           GroovyTokenTypes.mSTAR, GroovyTokenTypes.mNOT_EQUAL,
+                                                                           GroovyTokenTypes.mSTAR,
                                                                            GroovyTokenTypes.mLAND);
 
 

@@ -174,6 +174,23 @@ class Operators {
     doTest "!a.equals(b)", "a != b"
   }
 
+  void testSamePrioritiesExpression() {
+    doTest "a.eq<caret>uals(b) == 1", "(a == b) == 1"
+    doTest "1 == a.eq<caret>uals(b)", "1 == (a == b)"
+    doTest "!a.eq<caret>uals(b) == 1", "(a != b) == 1"
+    doTest "1 == !a.eq<caret>uals(b)", "1 == (a != b)"
+
+    doTest "1 + a.p<caret>lus(b)", "1 + a + b"
+    doTest "1 + a.m<caret>inus(b)", "1 + a - b"
+    doTest "1 - a.m<caret>inus(b)", "1 - (a - b)"
+    doTest "1 - a.p<caret>lus(b)", "1 - (a + b)"
+
+    doTest "a.m<caret>inus(b) - 1", "a - b - 1"
+    doTest "a.p<caret>lus(b) - 1", "a + b - 1"
+    doTest "a.m<caret>inus(b) + 1", "a - b + 1"
+    doTest "a.p<caret>lus(b) + 1", "a + b + 1"
+  }
+
   void testComplexNegatableBinaryExpression() {
     doTest(/!(1.toString().replace('1', '2')+"").equals(2.toString())/, /(1.toString().replace('1', '2') + "") != 2.toString()/)
   }
