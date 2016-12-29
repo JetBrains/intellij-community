@@ -38,8 +38,21 @@ public abstract class FileIndexBase implements FileIndex {
   protected abstract boolean isScopeDisposed();
 
   @Override
+  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
+                                              @NotNull ContentIterator iterator,
+                                              @NotNull VirtualFileFilter customFilter) {
+    return iterateContentUnderDirectoryWithFilter(dir, iterator, file -> myContentFilter.accept(file) && customFilter.accept(file));
+  }
+
+  @Override
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
-    return VfsUtilCore.iterateChildrenRecursively(dir, myContentFilter, iterator);
+    return iterateContentUnderDirectoryWithFilter(dir, iterator, myContentFilter);
+  }
+
+  private static boolean iterateContentUnderDirectoryWithFilter(@NotNull VirtualFile dir,
+                                                                @NotNull ContentIterator iterator,
+                                                                @NotNull VirtualFileFilter filter) {
+    return VfsUtilCore.iterateChildrenRecursively(dir, filter, iterator);
   }
 
   @NotNull

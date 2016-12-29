@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -46,6 +47,18 @@ public interface FileIndex {
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
   boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator);
+
+  /**
+   * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional custom filter to the processor
+   *
+   * @param dir          the directory the contents of which is iterated.
+   * @param iterator     the iterator receiving the files.
+   * @param customFilter custom filter for files and directories
+   * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
+   */
+  boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
+                                       @NotNull ContentIterator iterator,
+                                       @NotNull VirtualFileFilter customFilter);
 
   /**
    * Returns {@code true} if {@code fileOrDir} is a file or directory under a content root of this project or module and not excluded or
