@@ -25,7 +25,7 @@ import java.nio.file.Paths
 import javax.swing.JCheckBox
 
 internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
-  override fun getSettings() = icsManager.settings
+  override fun getSettings() = if (ApplicationManager.getApplication().isUnitTestMode) IcsSettings() else icsManager.settings
 
   override fun createUi() = IcsConfigurableUi()
 }
@@ -33,7 +33,7 @@ internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings
 internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(Paths.get(PathManager.getConfigPath()).resolve("settingsRepository")) else org.jetbrains.settingsRepository.icsManager
 
-  private val editors = listOf(createRepositoryListEditor(), createReadOnlySourcesEditor())
+  private val editors = listOf(createRepositoryListEditor(icsManager), createReadOnlySourcesEditor())
   private val autoSync = JCheckBox("Auto Sync")
 
   override fun dispose() {

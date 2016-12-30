@@ -34,7 +34,7 @@ internal class RepositoryItem(var url: String? = null) {
   override fun toString() = url ?: ""
 }
 
-internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
+internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUi<IcsSettings> {
   val editor = ComboBoxModelEditor(object: ListItemEditor<RepositoryItem> {
     override fun getItemClass() = RepositoryItem::class.java
 
@@ -69,7 +69,7 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
       val newList = editor.apply()
       if (newList.isEmpty()) {
         // repo is deleted
-        deleteRepository()
+        deleteRepository(icsManager)
       }
     }
 
@@ -91,7 +91,7 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
   }
 }
 
-private fun deleteRepository() {
+private fun deleteRepository(icsManager: IcsManager) {
   // as two tasks, - user should be able to cancel syncing before delete and continue to delete
   runModalTask("Syncing before delete Repository", cancellable = true) { indicator ->
     indicator.isIndeterminate = true
