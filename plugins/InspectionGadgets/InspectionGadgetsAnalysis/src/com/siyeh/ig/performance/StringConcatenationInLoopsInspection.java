@@ -130,7 +130,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             .flowBreaksLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop);
         }
       }
-      return !containingStatementExits(expression);
+      return false;
     }
 
     private PsiLoopStatement getOutermostCommonLoop(PsiExpression expression, PsiVariable variable) {
@@ -175,15 +175,6 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         }
       }
       return null;
-    }
-
-    private static boolean containingStatementExits(PsiElement element) {
-      final PsiStatement newExpressionStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-      if (newExpressionStatement == null) {
-        return false;
-      }
-      final PsiStatement parentStatement = PsiTreeUtil.getParentOfType(newExpressionStatement, PsiStatement.class);
-      return !ControlFlowUtils.statementMayCompleteNormally(parentStatement);
     }
 
     private static boolean isAppendedRepeatedly(PsiExpression expression) {
