@@ -32,6 +32,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,11 +277,21 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
           // Likely we are inside of the bulk method implementation
           if (method != null && method.getName().equals(info.myBulkName)) return;
         }
-        if (qualifier != null && info.isSupportedIterable(qualifier, iterable, USE_ARRAYS_AS_LIST)) {
+        if (isSupportedQualifier(qualifier) && info.isSupportedIterable(qualifier, iterable, USE_ARRAYS_AS_LIST)) {
           holder.registerProblem(methodExpression,
                                  InspectionsBundle.message("inspection.replace.with.bulk.message", info.getReplacementName()),
                                  new UseBulkOperationFix(info));
         }
+      }
+
+      @Contract("null -> false")
+      private boolean isSupportedQualifier(PsiExpression qualifier) {
+        if (qualifier instanceof PsiThisExpression) return true;
+        if (qualifier instanceof PsiReferenceExpression) {
+          PsiExpression subQualifier = ((PsiReferenceExpression)qualifier).getQualifierExpression();
+          return subQualifier == null || isSupportedQualifier(subQualifier);
+        }
+        return false;
       }
     };
   }
@@ -377,6 +388,7 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
       if (!(qualifierType instanceof PsiClassType)) return false;
       PsiType type = iterable.getType();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterable.getProject());
+      String text = iterable.getText();
       if (type instanceof PsiArrayType) {
         PsiType componentType = ((PsiArrayType)type).getComponentType();
         if (!useArraysAsList || componentType instanceof PsiPrimitiveType) return false;
@@ -384,10 +396,10 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
           JavaPsiFacade.getInstance(iterable.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, iterable.getResolveScope());
         if (listClass == null) return false;
         type = factory.createType(listClass, componentType);
+        text = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + text + ")";
       }
       if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return false;
-      PsiExpression expression =
-        factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + iterable.getText() + ")", iterable);
+      PsiExpression expression = factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + text + ")", iterable);
       if (!(expression instanceof PsiMethodCallExpression)) return false;
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       PsiMethod bulkMethod = call.resolveMethod();
