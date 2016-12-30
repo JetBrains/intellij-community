@@ -32,6 +32,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -52,7 +53,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
-  private static ImmutableMap<String, String> COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
+  private static final ImmutableMap<String, String> COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put("typing.List", "list")
     .put("typing.Dict", "dict")
     .put("typing.Set", PyNames.SET)
@@ -69,20 +70,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("typing.MutableSet", PyNames.COLLECTIONS + "." + "MutableSet")
     .build();
 
-  public static ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
+  public static final ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put("list", "List")
     .put("dict", "Dict")
     .put("set", "Set")
     .put("frozenset", "FrozenSet")
     .build();
 
-  private static ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
+  private static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     .add("typing.Generic")
     .add("typing.AbstractGeneric")
     .add("typing.Protocol")
     .build();
 
-  private static ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
+  private static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
     .add("typing.overload")
     .add("typing.Any")
     .add("typing.TypeVar")
@@ -123,28 +124,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return typeFromTypeComment;
     }
 
-    final String comment = func.getTypeCommentAnnotation();
-    if (comment != null) {
-      final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(param, comment);
-      final PyCallableType functionType = as(result.getType(), PyCallableType.class);
-      if (functionType != null) {
-        final List<PyCallableParameter> paramTypes = functionType.getParameters(context);
-        // Function annotation of kind (...) -> Type
-        if (paramTypes == null) {
-          return Ref.create();
-        }
-        final PyParameter[] funcParams = func.getParameterList().getParameters();
-        final int startOffset = omitFirstParamInTypeComment(func) ? 1 : 0;
-        for (int paramIndex = 0; paramIndex < funcParams.length; paramIndex++) {
-          if (funcParams[paramIndex] == param) {
-            final int typeIndex = paramIndex - startOffset;
-            if (typeIndex >= 0 && typeIndex < paramTypes.size()) {
-              return Ref.create(paramTypes.get(typeIndex).getType(context));
-            }
-            break;
-          }
-        }
+    final PyFunctionTypeAnnotation annotation = getFunctionTypeAnnotation(func);
+    if (annotation == null) {
+      return null;
+    }
+    final PyParameterTypeList list = annotation.getParameterTypeList();
+    final List<PyExpression> params = list.getParameterTypes();
+    if (params.size() == 1) {
+      final PyNoneLiteralExpression noneExpr = as(params.get(0), PyNoneLiteralExpression.class);
+      if (noneExpr != null && noneExpr.isEllipsis()) {
+        return Ref.create();
       }
+    }
+    final int startOffset = omitFirstParamInTypeComment(func) ? 1 : 0;
+    final List<PyParameter> funcParams = Arrays.asList(func.getParameterList().getParameters());
+    final int i = funcParams.indexOf(param) - startOffset;
+    if (i >= 0 && i < params.size()) {
+      return Ref.create(getType(params.get(i), new Context(context)));
     }
     return null;
   }
@@ -229,16 +225,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       // XXX: Requires switching from stub to AST
       return annotation.getValue();
     }
-    final String comment = function.getTypeCommentAnnotation();
-    if (comment != null) {
-      final PyFunctionTypeAnnotationFile file = CachedValuesManager.getCachedValue(function, () ->
-        CachedValueProvider.Result.create(new PyFunctionTypeAnnotationFile(comment, function), function));
-      final PyFunctionTypeAnnotation functionAnnotation = file.getAnnotation();
-      if (functionAnnotation != null) {
-        return functionAnnotation.getReturnType();
-      }
+    final PyFunctionTypeAnnotation functionAnnotation = getFunctionTypeAnnotation(function);
+    if (functionAnnotation != null) {
+      return functionAnnotation.getReturnType();
     }
     return null;
+  }
+
+  @Nullable
+  private static PyFunctionTypeAnnotation getFunctionTypeAnnotation(@NotNull PyFunction function) {
+    final String comment = function.getTypeCommentAnnotation();
+    if (comment == null) {
+      return null;
+    }
+    final PyFunctionTypeAnnotationFile file = CachedValuesManager.getCachedValue(function, () ->
+      CachedValueProvider.Result.create(new PyFunctionTypeAnnotationFile(comment, function), function));
+    return file.getAnnotation();
   }
 
   @Nullable
@@ -289,8 +291,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   /**
    * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to
-   * contain type annotation in PEP 484 compatible format, that can be parsed with either {@link PyTypeParser#parse(PsiElement, String)}
-   * or {@link PyTypeParser#parsePep484FunctionTypeComment(PsiElement, String)}.
+   * contain type annotation in PEP 484 compatible format.
    */
   @Nullable
   public static String getTypeCommentValue(@NotNull String text) {
