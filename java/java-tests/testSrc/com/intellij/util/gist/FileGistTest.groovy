@@ -54,6 +54,16 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
     return GistManager.instance.newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, { p, f -> LoadTextUtil.loadText(f).toString().substring(0, 3) })
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      ((GistManagerImpl)GistManager.instance).resetReindexCount()
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
   void "test data is cached per file"() {
     VirtualFileGist<Integer> gist = countingVfsGist()
 
