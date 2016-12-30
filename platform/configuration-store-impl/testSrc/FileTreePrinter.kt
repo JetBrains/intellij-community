@@ -45,7 +45,7 @@ private fun printFile(file: Path, indent: Int, sb: StringBuilder) {
   sb.append("\u251c\u2500\u2500")
   sb.append(file.fileName.toString())
   sb.append("\n")
-  sb.append(file.readChars())
+  sb.append(file.readChars()).append("\n\n")
 }
 
 private fun getIndentString(indent: Int, sb: StringBuilder) {
