@@ -44,7 +44,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.containers.ContainerUtil.list;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -140,13 +139,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final List<PyParameter> funcParams = Arrays.asList(func.getParameterList().getParameters());
     final int i = funcParams.indexOf(param) - startOffset;
     if (i >= 0 && i < params.size()) {
-      return Ref.create(getParameterType(params.get(i), context));
+      return Ref.create(getParameterTypeFromFunctionComment(params.get(i), context));
     }
     return null;
   }
 
   @Nullable
-  private static PyType getParameterType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static PyType getParameterTypeFromFunctionComment(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final PyStarExpression starExpr = as(expression, PyStarExpression.class);
     if (starExpr != null) {
       final PyExpression inner = starExpr.getExpression();
@@ -162,6 +161,27 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return getType(expression, new Context(context));
+  }
+
+  @Nullable
+  private static Ref<PyType> getParameterTypeFromTypeComment(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+    final String typeComment = parameter.getTypeCommentAnnotation();
+
+    if (typeComment != null) {
+      final PyType type = getStringBasedType(typeComment, parameter, new Context(context));
+
+      if (parameter.isPositionalContainer()) {
+        return Ref.create(PyTypeUtil.toPositionalContainerType(parameter, type));
+      }
+
+      if (parameter.isKeywordContainer()) {
+        return Ref.create(PyTypeUtil.toKeywordContainerType(parameter, type));
+      }
+
+      return Ref.create(type);
+    }
+
+    return null;
   }
 
   @Nullable
@@ -189,27 +209,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         .orElse(annotationValueType);
 
       return Ref.create(result);
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static Ref<PyType> getParameterTypeFromTypeComment(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
-    final String typeComment = parameter.getTypeCommentAnnotation();
-
-    if (typeComment != null) {
-      final PyType type = getStringBasedType(typeComment, parameter, new Context(context));
-
-      if (parameter.isPositionalContainer()) {
-        return Ref.create(PyTypeUtil.toPositionalContainerType(parameter, type));
-      }
-
-      if (parameter.isKeywordContainer()) {
-        return Ref.create(PyTypeUtil.toKeywordContainerType(parameter, type));
-      }
-
-      return Ref.create(type);
     }
 
     return null;
@@ -425,76 +424,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     finally {
       context.getExpressionCache().remove(resolved);
     }
-  }
-
-  @Nullable
-  public static PyType getType(@NotNull PsiElement resolved, @NotNull List<PyType> elementTypes) {
-    final String qualifiedName = getQualifiedName(resolved);
-    
-    final List<Integer> paramListTypePositions = new ArrayList<>();
-    final List<Integer> ellipsisTypePositions = new ArrayList<>();
-    for (int i = 0; i < elementTypes.size(); i++) {
-      final PyType type = elementTypes.get(i);
-      if (type instanceof PyTypeParser.ParameterListType) {
-        paramListTypePositions.add(i);
-      }
-      else if (type instanceof PyTypeParser.EllipsisType) {
-        ellipsisTypePositions.add(i);
-      }
-    }
-    
-    if (!paramListTypePositions.isEmpty()) {
-      if (!("typing.Callable".equals(qualifiedName) && paramListTypePositions.equals(list(0)))) {
-        return null;
-      }
-    }
-    if (!ellipsisTypePositions.isEmpty()) {
-      if (!("typing.Callable".equals(qualifiedName) && ellipsisTypePositions.equals(list(0)) ||
-            "typing.Tuple".equals(qualifiedName) && ellipsisTypePositions.equals(list(1)) && elementTypes.size() == 2)) {
-        return null;
-      }
-    }
-    
-    if ("typing.Union".equals(qualifiedName)) {
-      return PyUnionType.union(elementTypes);
-    }
-    if ("typing.Optional".equals(qualifiedName) && elementTypes.size() == 1) {
-      return PyUnionType.union(elementTypes.get(0), PyNoneType.INSTANCE);
-    }
-    if ("typing.Callable".equals(qualifiedName) && elementTypes.size() == 2) {
-      final PyTypeParser.ParameterListType paramList = as(elementTypes.get(0), PyTypeParser.ParameterListType.class);
-      if (paramList != null) {
-        return new PyCallableTypeImpl(paramList.getCallableParameters(), elementTypes.get(1));
-      }
-      if (elementTypes.get(0) instanceof PyTypeParser.EllipsisType) {
-        return new PyCallableTypeImpl(null, elementTypes.get(1));
-      }
-    }
-    if ("typing.Tuple".equals(qualifiedName)) {
-      if (elementTypes.size() > 1 && elementTypes.get(1) instanceof PyTypeParser.EllipsisType) {
-        return PyTupleType.createHomogeneous(resolved, elementTypes.get(0));
-      }
-      return PyTupleType.create(resolved, elementTypes);
-    }
-    final PyType builtinCollection = getBuiltinCollection(resolved);
-    if (builtinCollection instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)builtinCollection;
-      return new PyCollectionTypeImpl(classType.getPyClass(), false, elementTypes);
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PyType getTypeFromTargetExpression(@NotNull PyTargetExpression expression, @NotNull TypeEvalContext context) {
-    return getTypeFromTargetExpression(expression, new Context(context));
-  }
-
-  @Nullable
-  private static PyType getTypeFromTargetExpression(@NotNull PyTargetExpression expression,
-                                                    @NotNull Context context) {
-    // XXX: Requires switching from stub to AST
-    final PyExpression assignedValue = expression.findAssignedValue();
-    return assignedValue != null ? getTypeForResolvedElement(assignedValue, context) : null;
   }
 
   @Nullable
