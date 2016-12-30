@@ -1,4 +1,4 @@
-// "Replace with addAll" "true"
+// "Replace iteration with bulk 'Collection.addAll' call" "true"
 import java.util.*;
 
 public class Collect {
@@ -6,6 +6,8 @@ public class Collect {
 
   void collectNames(List<Person> persons){
     List<Person> names = new ArrayList<>();
-      names.addAll(persons);
+    for (Person person : persons) {
+      <caret>names.add(person);
+    }
   }
 }

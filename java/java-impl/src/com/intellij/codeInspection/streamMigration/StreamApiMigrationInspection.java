@@ -140,6 +140,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                                                                              ref2.getQualifierExpression());
   }
 
+  /**
+   * Extracts an addend from assignment expression like {@code x+=addend} or {@code x = x+addend}
+   *
+   * @param assignment assignment expression to extract an addend from
+   * @return extracted addend expression or null if supplied assignment statement is not an addition
+   */
   @Nullable
   static PsiExpression extractAddend(PsiAssignmentExpression assignment) {
       if(JavaTokenType.PLUSEQ.equals(assignment.getOperationTokenType())) {
@@ -184,6 +190,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return null;
   }
 
+  /**
+   * Extract incremented value from expression which looks like {@code x++}, {@code ++x}, {@code x = x + 1} or {@code x += 1}
+   *
+   * @param expression expression to extract the incremented value
+   * @return an extracted incremented value or null if increment pattern is not detected in the supplied expression
+   */
   @Contract("null -> null")
   static PsiExpression extractIncrementedLValue(PsiExpression expression) {
     if(expression instanceof PsiPostfixExpression) {
@@ -675,23 +687,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Nullable
     private BaseStreamApiMigration findCollectMigration(PsiLoopStatement statement, TerminalBlock tb) {
       boolean addAll = statement instanceof PsiForeachStatement && !tb.hasOperations() && isAddAllCall(tb);
+      // Don't suggest to convert the loop which can be trivially replaced via addAll:
+      // this is covered by UseBulkOperationInspection and ManualArrayToCollectionCopyInspection
+      if(addAll) return null;
+      PsiMethodCallExpression call = tb.getSingleMethodCall();
+      if(call != null && call.getMethodExpression().getQualifierExpression() instanceof PsiMethodCallExpression) {
+        call = (PsiMethodCallExpression)call.getMethodExpression().getQualifierExpression();
+      }
       String methodName;
-      if(addAll) {
-        methodName = "addAll";
+      if(canCollect(statement, call)) {
+        if(extractToArrayExpression(statement, call) != null)
+          methodName = "toArray";
+        else
+          methodName = "collect";
       } else {
-        PsiMethodCallExpression call = tb.getSingleMethodCall();
-        if(call != null && call.getMethodExpression().getQualifierExpression() instanceof PsiMethodCallExpression) {
-          call = (PsiMethodCallExpression)call.getMethodExpression().getQualifierExpression();
-        }
-        if(canCollect(statement, call)) {
-          if(extractToArrayExpression(statement, call) != null)
-            methodName = "toArray";
-          else
-            methodName = "collect";
-        } else {
-          if (!SUGGEST_FOREACH || tb.getCountExpression() != null) return null;
-          methodName = "forEach";
-        }
+        if (!SUGGEST_FOREACH || tb.getCountExpression() != null) return null;
+        methodName = "forEach";
       }
       return new CollectMigration(methodName);
     }
@@ -1276,9 +1287,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(initializer == null) return null;
 
       // check that increment is like for(...;...;i++)
-      if(!(forStatement.getUpdate() instanceof PsiExpressionStatement)) return null;
-      PsiExpression lValue = extractIncrementedLValue(((PsiExpressionStatement)forStatement.getUpdate()).getExpression());
-      if(!ExpressionUtils.isReferenceTo(lValue, counter)) return null;
+      if(!VariableAccessUtils.variableIsIncremented(counter, forStatement.getUpdate())) return null;
 
       // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
       if(!(forStatement.getCondition() instanceof PsiBinaryExpression)) return null;

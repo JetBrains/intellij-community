@@ -19,7 +19,6 @@ import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -60,9 +59,6 @@ class CollectMigration extends BaseStreamApiMigration {
     if (call == null) return null;
 
     restoreComments(loopStatement, body);
-    if (!tb.hasOperations() && StreamApiMigrationInspection.isAddAllCall(tb) && loopStatement instanceof PsiForeachStatement) {
-      return handleAddAll(loopStatement, factory, call);
-    }
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
     PsiLocalVariable variable = StreamApiMigrationInspection.extractCollectionVariable(qualifierExpression);
     if(variable != null && InheritanceUtil.isInheritor(variable.getType(), CommonClassNames.JAVA_UTIL_MAP)) {
@@ -156,19 +152,6 @@ class CollectMigration extends BaseStreamApiMigration {
     }
     builder.append("))");
     return replaceInitializer(loopStatement, variable, initializer, builder.toString(), status);
-  }
-
-  @Nullable
-  private static PsiElement handleAddAll(@NotNull PsiLoopStatement loopStatement, PsiElementFactory factory, PsiMethodCallExpression call) {
-    PsiExpression iteratedValue = ((PsiForeachStatement)loopStatement).getIteratedValue();
-    if (iteratedValue == null) return null;
-    PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-    String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
-    String collectionText = iteratedValue.getType() instanceof PsiArrayType
-                            ? CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + iteratedValue.getText() + ")"
-                            : iteratedValue.getText();
-    String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + collectionText + ");");
-    return loopStatement.replace(factory.createStatementFromText(callText, loopStatement));
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// "Replace with addAll" "false"
+// "Replace iteration with bulk 'Collection.addAll' call" "false"
 
 import java.util.*;
 
@@ -16,8 +16,8 @@ public class Main {
 
     @Override
     public boolean addAll(Collection<? extends String> c) {
-      for (String e : <caret>c) {
-        add(e);
+      for (String e : c) {
+        a<caret>dd(e);
       }
       return true;
     }

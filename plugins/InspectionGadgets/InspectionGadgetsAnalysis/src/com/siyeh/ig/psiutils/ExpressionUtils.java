@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -863,5 +864,25 @@ public class ExpressionUtils {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns an array expression from array length retrieval expression
+   * @param expression expression to extract an array expression from
+   * @return an array expression or null if supplied expression is not array length retrieval
+   */
+  @Nullable
+  public static PsiExpression getArrayFromLengthExpression(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiReferenceExpression)) return null;
+    final PsiReferenceExpression reference =
+      (PsiReferenceExpression)expression;
+    final String referenceName = reference.getReferenceName();
+    if (!HardcodedMethodConstants.LENGTH.equals(referenceName)) return null;
+    final PsiExpression qualifier = reference.getQualifierExpression();
+    if (qualifier == null) return null;
+    final PsiType type = qualifier.getType();
+    if (type == null || type.getArrayDimensions() <= 0) return null;
+    return qualifier;
   }
 }

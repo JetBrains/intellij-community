@@ -1,4 +1,4 @@
-// "Replace with addAll" "true"
+// "Replace iteration with bulk 'Collection.addAll' call" "true"
 import java.util.ArrayList;
 import java.util.List;
 
@@ -6,9 +6,7 @@ class Sample {
   List<String> foo = new ArrayList<>();
   String foo(){
     Sample sm = new Sample();
-    for (String s : fo<caret>o) {
-      sm.foo.add(s);
-    }
+      sm.foo.addAll(foo);
     return null;
   }
 }

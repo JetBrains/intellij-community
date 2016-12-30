@@ -1,14 +1,11 @@
-// "Replace with collect" "false"
+// "Replace iteration with bulk 'Collection.addAll' call" "true"
 import java.util.*;
 
 public class Collect {
   class Person {}
 
   void collectNames(List<Person> persons){
-    // Handled by UseBulkOperationInspection
     List<Person> names = new ArrayList<>();
-    for (Person person : p<caret>ersons) {
-      names.add(person);
-    }
+      names.addAll(persons);
   }
 }
