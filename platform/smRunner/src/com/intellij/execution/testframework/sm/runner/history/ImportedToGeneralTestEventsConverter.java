@@ -25,11 +25,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
+import java.util.function.Supplier;
 
 public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
 
@@ -57,7 +59,14 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
 
   private void parseTestResults() {
     try {
-      parseTestResults(new InputStreamReader(new FileInputStream(myFile), CharsetToolkit.UTF8_CHARSET), getProcessor());
+      parseTestResults(() -> {
+        try {
+          return new InputStreamReader(new FileInputStream(myFile), CharsetToolkit.UTF8_CHARSET);
+        }
+        catch (FileNotFoundException e) {
+          return null;
+        }
+      }, getProcessor());
     }
     catch (IOException e) {
       final String message = e.getMessage();
@@ -66,10 +75,14 @@ public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEve
     }
   }
 
-  public static void parseTestResults(Reader reader, GeneralTestEventsProcessor processor) throws IOException {
+  public static void parseTestResults(Supplier<Reader> readerSupplier, GeneralTestEventsProcessor processor) throws IOException {
+    parseTestResults(readerSupplier.get(), ImportTestOutputExtension.findHandler(readerSupplier, processor));
+  }
+
+  public static void parseTestResults(Reader reader, final DefaultHandler contentHandler) throws IOException {
     try {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new InputSource(reader), new ImportedTestContentHandler(processor));
+      parser.parse(new InputSource(reader), contentHandler);
     }
     catch (ParserConfigurationException | SAXException e) {
       throw new IOException(e);

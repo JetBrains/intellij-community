@@ -895,6 +895,8 @@
 
     <extensionPoint name="projectViewNestingRulesProvider"
                     interface="com.intellij.ide.projectView.ProjectViewNestingRulesProvider"/>
+    <extensionPoint name="importTestOutput"
+                    interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension"/>
   </extensionPoints>
 </idea-plugin>
 

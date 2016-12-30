@@ -1854,6 +1854,7 @@
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
 
     <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
+    <importTestOutput implementation="com.intellij.execution.AntTestContentHandler$AntTestOutputExtension"/>
   </extensions>
 
   <actions>
