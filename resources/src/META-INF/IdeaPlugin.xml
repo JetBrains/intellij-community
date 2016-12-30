@@ -331,6 +331,8 @@
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
 
     <extensionPoint name="documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
+
+    <extensionPoint name="java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -861,7 +863,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UseBulkOperation"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.UseBulkOperationInspection"
+                     implementationClass="com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection"
                      displayName="Use bulk operation instead of iteration"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparatorCombinators"
                      groupBundle="messages.InspectionsBundle"
@@ -1855,6 +1857,8 @@
 
     <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
     <importTestOutput implementation="com.intellij.execution.AntTestContentHandler$AntTestOutputExtension"/>
+
+    <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
   </extensions>
 
   <actions>

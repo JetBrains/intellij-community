@@ -16,14 +16,27 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.UseBulkOperationInspection;
+import com.intellij.codeInspection.bulkOperation.BulkMethodInfo;
+import com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider;
+import com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection;
+import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
 
 
 public class UseBulkOperationInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
+    Extensions.getArea(null).getExtensionPoint(BulkMethodInfoProvider.KEY.getName())
+      .registerExtension(new BulkMethodInfoProvider() {
+        @NotNull
+        @Override
+        public Stream<BulkMethodInfo> consumers() {
+          return Stream.of(new BulkMethodInfo("testpackage.TestClass", "test", "test"));
+        }
+      });
     UseBulkOperationInspection inspection = new UseBulkOperationInspection();
     inspection.USE_ARRAYS_AS_LIST = true;
     return new LocalInspectionTool[]{

@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -45,14 +44,8 @@ import java.util.regex.Pattern;
  * @author Tagir Valeev
  */
 public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool {
-  private static BulkMethodInfo[] INFOS = {
-    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_COLLECTION, "add", "addAll"),
-    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_LIST, "remove", "removeAll"),
-    new BulkMethodInfo("org.springframework.data.repository.CrudRepository", "save", "save"),
-    new BulkMethodInfo("org.springframework.data.repository.CrudRepository", "delete", "delete"),
-  };
-
-  private List<BulkMethodInfo> myInfos = StreamEx.of(INFOS).toList();
+  private List<BulkMethodInfo> myInfos = StreamEx.of(BulkMethodInfoProvider.KEY.getExtensions())
+    .flatMap(BulkMethodInfoProvider::consumers).toList();
 
   public boolean USE_ARRAYS_AS_LIST = true;
 
@@ -275,7 +268,7 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
         if (qualifier instanceof PsiThisExpression) {
           PsiMethod method = PsiTreeUtil.getParentOfType(iterable, PsiMethod.class);
           // Likely we are inside of the bulk method implementation
-          if (method != null && method.getName().equals(info.myBulkName)) return;
+          if (method != null && method.getName().equals(info.getBulkName())) return;
         }
         if (isSupportedQualifier(qualifier) && info.isSupportedIterable(qualifier, iterable, USE_ARRAYS_AS_LIST)) {
           holder.registerProblem(methodExpression,
@@ -347,81 +340,10 @@ public class UseBulkOperationInspection extends BaseJavaBatchLocalInspectionTool
           ct.delete(loop);
         }
       }
-      PsiElement result = ct.replaceAndRestoreComments(parent, ct.text(qualifier) + "." + myInfo.myBulkName + "(" + iterableText + ")"
+      PsiElement result = ct.replaceAndRestoreComments(parent, ct.text(qualifier) + "." + myInfo.getBulkName() + "(" + iterableText + ")"
                                                                + (parent instanceof PsiStatement ? ";" : ""));
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
-    }
-  }
-
-  private static class BulkMethodInfo {
-    private final String myClassName;
-    private final String mySimpleName;
-    private final String myBulkName;
-
-    private BulkMethodInfo(String className, String simpleName, String bulkName) {
-      myClassName = className;
-      mySimpleName = simpleName;
-      myBulkName = bulkName;
-    }
-
-    public boolean isMyMethod(PsiReferenceExpression ref) {
-      if (!mySimpleName.equals(ref.getReferenceName())) return false;
-      PsiElement element = ref.resolve();
-      if (!(element instanceof PsiMethod)) return false;
-      PsiMethod method = (PsiMethod)element;
-      PsiParameterList parameters = method.getParameterList();
-      if (parameters.getParametersCount() != 1) return false;
-      PsiParameter parameter = parameters.getParameters()[0];
-      PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameter.getType());
-      if (parameterClass == null ||
-          CommonClassNames.JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) ||
-          CommonClassNames.JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName())) {
-        return false;
-      }
-      PsiClass methodClass = method.getContainingClass();
-      return methodClass != null && InheritanceUtil.isInheritor(methodClass, myClassName);
-    }
-
-    public boolean isSupportedIterable(PsiExpression qualifier, PsiExpression iterable, boolean useArraysAsList) {
-      PsiType qualifierType = qualifier.getType();
-      if (!(qualifierType instanceof PsiClassType)) return false;
-      PsiType type = iterable.getType();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterable.getProject());
-      String text = iterable.getText();
-      if (type instanceof PsiArrayType) {
-        PsiType componentType = ((PsiArrayType)type).getComponentType();
-        if (!useArraysAsList || componentType instanceof PsiPrimitiveType) return false;
-        PsiClass listClass =
-          JavaPsiFacade.getInstance(iterable.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, iterable.getResolveScope());
-        if (listClass == null) return false;
-        type = factory.createType(listClass, componentType);
-        text = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + text + ")";
-      }
-      if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return false;
-      PsiExpression expression = factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + text + ")", iterable);
-      if (!(expression instanceof PsiMethodCallExpression)) return false;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      PsiMethod bulkMethod = call.resolveMethod();
-      if (bulkMethod == null) return false;
-      PsiParameterList parameters = bulkMethod.getParameterList();
-      if (parameters.getParametersCount() != 1) return false;
-      PsiType parameterType = parameters.getParameters()[0].getType();
-      parameterType = call.resolveMethodGenerics().getSubstitutor().substitute(parameterType);
-      PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
-      return parameterClass != null &&
-             (CommonClassNames.JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) ||
-              CommonClassNames.JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName())) &&
-             parameterType.isAssignableFrom(type);
-    }
-
-    public String getReplacementName() {
-      return StringUtil.getShortName(myClassName) + "." + myBulkName;
-    }
-
-    @Override
-    public String toString() {
-      return myClassName + "::" + mySimpleName + " => " + myBulkName;
     }
   }
 }
