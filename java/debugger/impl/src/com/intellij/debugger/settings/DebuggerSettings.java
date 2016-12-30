@@ -76,7 +76,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean SKIP_GETTERS;
   public boolean SKIP_CLASSLOADERS = true;
 
-  public String RUN_HOTSWAP_AFTER_COMPILE = "RunHotswapAsk";
+  public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
   public boolean COMPILE_BEFORE_HOTSWAP = true;
   public boolean HOTSWAP_HANG_WARNING_ENABLED = false;
 
