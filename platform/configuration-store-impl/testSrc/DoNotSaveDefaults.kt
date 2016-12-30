@@ -63,6 +63,7 @@ class DoNotSaveDefaultsTest {
       "feature.usage.statistics.xml" /* non-roamable usage counters */,
       "tomee.extensions.xml", "jboss.extensions.xml", "glassfish.extensions.xml" /* javaee non-roamable stuff, it will be better to fix it */,
       "diff.xml" /* IDEA-166058 */,
+      "dimensions.xml" /* non-roamable sizes of window, dialogs, etc. */,
       "debugger.renderers.xml", "debugger.xml" /* todo */
     ))
     println(directoryTree)
