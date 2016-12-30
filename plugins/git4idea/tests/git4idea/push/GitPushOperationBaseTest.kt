@@ -20,7 +20,6 @@ import com.intellij.dvcs.push.PushSupport
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
@@ -41,14 +40,12 @@ import java.io.File
 abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
   protected lateinit var myPushSupport: GitPushSupport
-  protected lateinit var myVcsHelper: MockVcsHelper
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
     myPushSupport = findGitPushSupport()
-    myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)

@@ -318,7 +318,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     makeCommit("msg")
 
     agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
-    myVcsHelper.onMerge {}
+    vcsHelper.onMerge {}
 
     val result = push("master", "origin/master")
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, listOf("bro.txt"), result)

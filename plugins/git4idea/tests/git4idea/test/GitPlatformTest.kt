@@ -40,6 +40,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var myVcs: GitVcs
   protected lateinit var myDialogManager: TestDialogManager
   protected lateinit var myVcsNotifier: TestVcsNotifier
+  protected lateinit var vcsHelper: MockVcsHelper
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -50,6 +51,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
     myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
     myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
+
+    vcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
     myGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
@@ -114,6 +117,10 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     hookFile.setExecutable(true, false)
   }
 
+  protected fun `do nothing on merge`() {
+    vcsHelper.onMerge{}
+  }
+
   protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
     return GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
   }
@@ -138,5 +145,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     if (notification != null) {
       fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}");
     }
+  }
+
+  protected fun `assert merge dialog was shown`() {
+    assertTrue("Merge dialog was not shown", vcsHelper.mergeDialogWasShown())
   }
 }

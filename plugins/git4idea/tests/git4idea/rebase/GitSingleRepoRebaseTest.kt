@@ -80,7 +80,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseOnMaster()
 
-    assertTrue(myVcsHelper.mergeDialogWasShown())
+    `assert merge dialog was shown`()
   }
 
   fun `test fail on 2nd commit should show notification with proposal to abort`() {
@@ -104,7 +104,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
     var conflicts = 0
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
         conflicts++
         myRepo.assertConflict("c.txt")
         resolveConflicts(myRepo)
@@ -120,7 +120,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test continue rebase after resolving all conflicts`() {
     myRepo.`prepare simple conflict`()
 
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
         resolveConflicts(myRepo)
     }
 
@@ -262,7 +262,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test local changes are restored after successful abort`() {
     myRepo.`prepare simple conflict`()
     val localChange = LocalChange(myRepo, "new.txt", "content").generate()
-    myVcsHelper.onMerge {}
+    `do nothing on merge`()
     myDialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
@@ -279,7 +279,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test local changes are not restored after failed abort`() {
     myRepo.`prepare simple conflict`()
     LocalChange(myRepo, "new.txt", "content").generate()
-    myVcsHelper.onMerge {}
+    `do nothing on merge`()
     myDialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
@@ -358,7 +358,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     rebaseOnMaster()
     myRepo.assertConflict("c.txt")
 
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
       resolveConflicts(myRepo)
     }
     GitRebaseUtils.continueRebase(myProject)
@@ -382,7 +382,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     val hash2skip = DvcsUtil.getShortHash(git("log -2 --pretty=%H").lines()[1])
 
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
       file("c.txt").write("base\nmaster")
       resolveConflicts(myRepo)
     }
