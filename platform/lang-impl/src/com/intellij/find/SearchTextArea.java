@@ -320,7 +320,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   @NotNull
   private LafHelper createHelper() {
-    return SystemInfo.isMac ? new MacLafHelper() : new DefaultLafHelper();
+    return SystemInfo.isMac && !UIUtil.isUnderDarcula() ? new MacLafHelper() : new DefaultLafHelper();
   }
 
   private static abstract class LafHelper {
