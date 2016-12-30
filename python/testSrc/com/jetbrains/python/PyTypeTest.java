@@ -1227,21 +1227,6 @@ public class PyTypeTest extends PyTestCase {
                     "    expr = foo\n");
   }
 
-  // PY-18427
-  public void testConditionalTypeInDocstring() {
-    doTest("Union[str, int]",
-           "if something:\n" +
-           "    Type = int\n" +
-           "else:\n" +
-           "    Type = str\n" +
-           "\n" +
-           "def f(expr):\n" +
-           "    '''\n" +
-           "    :type expr: Type\n" +
-           "    '''\n" +
-           "    pass\n");
-  }
-
   // PY-18254
   public void testFunctionTypeCommentInStubs() {
     doMultiFileTest("MyClass",
