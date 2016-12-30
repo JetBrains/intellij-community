@@ -42,33 +42,33 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     }
   }
 
-  internal class SharedSettings {
+  internal data class SharedSettings(
     // Fragments settings
-    var CONTEXT_RANGE: Int = 4
+    var CONTEXT_RANGE: Int = 4,
 
-    var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false
+    var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
     var MERGE_LST_GUTTER_MARKERS: Boolean = true
-  }
+  )
 
-  internal class PlaceSettings {
+  internal data class PlaceSettings(
     // Diff settings
-    var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD
-    var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT
+    var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD,
+    var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT,
 
     // Presentation settings
-    var ENABLE_SYNC_SCROLL: Boolean = true
+    var ENABLE_SYNC_SCROLL: Boolean = true,
 
     // Editor settings
-    var SHOW_WHITESPACES: Boolean = false
-    var SHOW_LINE_NUMBERS: Boolean = true
-    var SHOW_INDENT_LINES: Boolean = false
-    var USE_SOFT_WRAPS: Boolean = false
-    var HIGHLIGHTING_LEVEL: HighlightingLevel = HighlightingLevel.INSPECTIONS
-    var READ_ONLY_LOCK: Boolean = true
+    var SHOW_WHITESPACES: Boolean = false,
+    var SHOW_LINE_NUMBERS: Boolean = true,
+    var SHOW_INDENT_LINES: Boolean = false,
+    var USE_SOFT_WRAPS: Boolean = false,
+    var HIGHLIGHTING_LEVEL: HighlightingLevel = HighlightingLevel.INSPECTIONS,
+    var READ_ONLY_LOCK: Boolean = true,
 
     // Fragments settings
     var EXPAND_BY_DEFAULT: Boolean = true
-  }
+  )
 
   class TextDiffSettings internal constructor(val SHARED_SETTINGS: SharedSettings,
                                               val PLACE_SETTINGS: PlaceSettings) {
@@ -160,11 +160,11 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
   class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    internal var PLACES_MAP: MutableMap<String, PlaceSettings> = defaultPlaceSettings()
+    internal var PLACES_MAP: TreeMap<String, PlaceSettings> = defaultPlaceSettings()
     internal var SHARED_SETTINGS = SharedSettings()
 
     companion object {
-      private fun defaultPlaceSettings(): MutableMap<String, PlaceSettings> {
+      private fun defaultPlaceSettings(): TreeMap<String, PlaceSettings> {
         val map = TreeMap<String, PlaceSettings>()
 
         val changes = PlaceSettings()
