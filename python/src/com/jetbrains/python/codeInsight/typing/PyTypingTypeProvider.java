@@ -140,9 +140,28 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final List<PyParameter> funcParams = Arrays.asList(func.getParameterList().getParameters());
     final int i = funcParams.indexOf(param) - startOffset;
     if (i >= 0 && i < params.size()) {
-      return Ref.create(getType(params.get(i), new Context(context)));
+      return Ref.create(getParameterType(params.get(i), context));
     }
     return null;
+  }
+
+  @Nullable
+  private static PyType getParameterType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final PyStarExpression starExpr = as(expression, PyStarExpression.class);
+    if (starExpr != null) {
+      final PyExpression inner = starExpr.getExpression();
+      if (inner != null) {
+        return PyTypeUtil.toPositionalContainerType(expression, getType(inner, new Context(context)));
+      }
+    }
+    final PyDoubleStarExpression doubleStarExpr = as(expression, PyDoubleStarExpression.class);
+    if (doubleStarExpr != null) {
+      final PyExpression inner = doubleStarExpr.getExpression();
+      if (inner != null) {
+        return PyTypeUtil.toKeywordContainerType(expression, getType(inner, new Context(context)));
+      }
+    }
+    return getType(expression, new Context(context));
   }
 
   @Nullable
