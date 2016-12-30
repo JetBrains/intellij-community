@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
@@ -84,7 +85,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
   }
 
   val editor = TableModelEditor(COLUMNS, itemEditor, "No sources configured")
-  editor.reset(icsManager.settings.readOnlySources)
+  editor.reset(if (ApplicationManager.getApplication().isUnitTestMode) emptyList() else icsManager.settings.readOnlySources)
   return object : ConfigurableUi<IcsSettings> {
     override fun isModified(settings: IcsSettings) = editor.isModified
 

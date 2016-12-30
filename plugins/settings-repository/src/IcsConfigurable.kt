@@ -16,9 +16,12 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.layout.*
+import java.nio.file.Paths
 import javax.swing.JCheckBox
 
 internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
@@ -28,6 +31,8 @@ internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings
 }
 
 internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
+  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(Paths.get(PathManager.getConfigPath()).resolve("settingsRepository")) else org.jetbrains.settingsRepository.icsManager
+
   private val editors = listOf(createRepositoryListEditor(), createReadOnlySourcesEditor())
   private val autoSync = JCheckBox("Auto Sync")
 
