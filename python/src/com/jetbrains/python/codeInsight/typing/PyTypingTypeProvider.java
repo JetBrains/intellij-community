@@ -23,11 +23,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -205,26 +209,33 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
-      final PyAnnotation annotation = function.getAnnotation();
-      if (annotation != null) {
-        // XXX: Requires switching from stub to AST
-        final PyExpression value = annotation.getValue();
-        if (value != null) {
-          final PyType type = getType(value, new Context(context));
-          return type != null ? Ref.create(type) : null;
-        }
+      final PyExpression value = getReturnTypeAnnotation(function);
+      if (value != null) {
+        final PyType type = getType(value, new Context(context));
+        return type != null ? Ref.create(type) : null;
       }
       final PyType constructorType = getGenericConstructorType(function, new Context(context));
       if (constructorType != null) {
         return Ref.create(constructorType);
       }
-      final String comment = function.getTypeCommentAnnotation();
-      if (comment != null) {
-        final PyTypeParser.ParseResult result = PyTypeParser.parsePep484FunctionTypeComment(callable, comment);
-        final PyCallableType funcType = as(result.getType(), PyCallableType.class);
-        if (funcType != null) {
-          return Ref.create(funcType.getReturnType(context));
-        }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyExpression getReturnTypeAnnotation(@NotNull PyFunction function) {
+    final PyAnnotation annotation = function.getAnnotation();
+    if (annotation != null) {
+      // XXX: Requires switching from stub to AST
+      return annotation.getValue();
+    }
+    final String comment = function.getTypeCommentAnnotation();
+    if (comment != null) {
+      final PyFunctionTypeAnnotationFile file = CachedValuesManager.getCachedValue(function, () ->
+        CachedValueProvider.Result.create(new PyFunctionTypeAnnotationFile(comment, function), function));
+      final PyFunctionTypeAnnotation functionAnnotation = file.getAnnotation();
+      if (functionAnnotation != null) {
+        return functionAnnotation.getReturnType();
       }
     }
     return null;
