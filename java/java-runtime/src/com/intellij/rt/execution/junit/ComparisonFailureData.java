@@ -157,7 +157,7 @@ public class ComparisonFailureData {
       try {
         //noinspection SSBasedInspection
         File tempFile = File.createTempFile(expectedOrActualPrefix, "");
-        OutputStream stream = new FileOutputStream(tempFile, false);
+        OutputStream stream = new FileOutputStream(tempFile);
         try {
           stream.write(text.getBytes("UTF-8"), 0, text.length());
         }
