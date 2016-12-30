@@ -470,7 +470,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18726
   public void testFunctionTypeCommentBadCallableParameter2() {
-    doTest("Any",
+    doTest("(bool, int) -> Any",
            "from typing import Callable, Tuple\n" +
            "\n" +
            "def f(cb):\n" +
