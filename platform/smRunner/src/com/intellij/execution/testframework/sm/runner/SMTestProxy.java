@@ -458,7 +458,7 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @NotNull final TestFailedEvent event) {
     TestComparisionFailedState comparisionFailedState =
       setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath());
-    comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFIleTemp());
+    comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
     comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 

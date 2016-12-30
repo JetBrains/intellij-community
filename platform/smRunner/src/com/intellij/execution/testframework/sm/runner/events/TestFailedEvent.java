@@ -80,7 +80,7 @@ public class TestFailedEvent extends TreeNodeEvent {
     myExpectedFileTemp = Boolean.parseBoolean(attributes.get("expectedIsTempFile"));
   }
 
-  public boolean isExpectedFIleTemp() {
+  public boolean isExpectedFileTemp() {
     return myExpectedFileTemp;
   }
 
