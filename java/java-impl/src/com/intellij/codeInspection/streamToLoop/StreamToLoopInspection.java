@@ -479,6 +479,12 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
           if(declaration.getDeclaredElements().length == 1) {
             myPlaceholder = declaration;
             PsiVariable copy = (PsiVariable)var.copy();
+            if (kind == ResultKind.NON_FINAL) {
+              PsiModifierList modifierList = copy.getModifierList();
+              if (modifierList != null) {
+                modifierList.setModifierProperty(PsiModifier.FINAL, false);
+              }
+            }
             PsiExpression oldInitializer = copy.getInitializer();
             LOG.assertTrue(oldInitializer != null);
             oldInitializer.replace(createExpression(initializer));
@@ -498,9 +504,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
 
     @Contract("null -> false")
     private static boolean canUseAsNonFinal(PsiVariable var) {
-      if(!(var instanceof PsiLocalVariable) || var.hasModifierProperty(PsiModifier.FINAL)) {
-        return false;
-      }
+      if (!(var instanceof PsiLocalVariable)) return false;
       PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
       return block != null && ReferencesSearch.search(var).forEach(ref -> {
         PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
