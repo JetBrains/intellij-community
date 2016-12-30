@@ -41,7 +41,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private String myHost;
   private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
   private String myLiteralPort;
-  private boolean myAnonymous;
   private String myUserName;
   private String myPassword;
   private boolean myUseKeyPair;
@@ -131,15 +130,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   @Override
-  public boolean isAnonymous() {
-    return myAnonymous;
-  }
-
-  public void setAnonymous(boolean anonymous) {
-    myAnonymous = anonymous;
-  }
-
-  @Override
   public String getPrivateKeyFile() {
     return myPrivateKeyFile;
   }
@@ -178,7 +168,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   @NotNull
   public String getSerializedUserName() {
-    if (myAnonymous || myUserName == null) return "";
+    if (myUserName == null) return "";
     return myUserName;
   }
 
@@ -193,8 +183,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   @NotNull
   public String getSerializedPassword() {
-    if (myAnonymous) return "";
-
     if (myStorePassword) {
       return PasswordUtil.encodePassword(myPassword);
     }
@@ -245,7 +233,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static void copyRemoteCredentials(@NotNull RemoteCredentials from, @NotNull MutableRemoteCredentials to) {
     to.setHost(from.getHost());
     to.setLiteralPort(from.getLiteralPort());//then port is copied
-    to.setAnonymous(from.isAnonymous());
     to.setUserName(from.getUserName());
     to.setPassword(from.getPassword());
     to.setUseKeyPair(from.isUseKeyPair());
@@ -258,9 +245,13 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public void load(Element element) {
     setHost(element.getAttributeValue(HOST));
     setLiteralPort(element.getAttributeValue(PORT));
-    setAnonymous(StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false));
     setSerializedUserName(element.getAttributeValue(USERNAME));
     setSerializedPassword(element.getAttributeValue(PASSWORD));
+    boolean isAnonymous = StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false);
+    if (isAnonymous) {
+      setSerializedUserName("anonymous");
+      setSerializedPassword("user@example.com");
+    }
     setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
     setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
@@ -270,7 +261,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public void save(Element rootElement) {
     rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
     rootElement.setAttribute(PORT, StringUtil.notNullize(getLiteralPort()));
-    rootElement.setAttribute(ANONYMOUS, Boolean.toString(isAnonymous()));
     rootElement.setAttribute(USERNAME, getSerializedUserName());
     rootElement.setAttribute(PASSWORD, getSerializedPassword());
     rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
@@ -287,7 +277,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     RemoteCredentialsHolder holder = (RemoteCredentialsHolder)o;
 
     if (myLiteralPort != null ? !myLiteralPort.equals(holder.myLiteralPort) : holder.myLiteralPort != null) return false;
-    if (myAnonymous != holder.myAnonymous) return false;
     if (myUseKeyPair != holder.myUseKeyPair) return false;
     if (myStorePassword != holder.myStorePassword) return false;
     if (myStorePassphrase != holder.myStorePassphrase) return false;
@@ -305,7 +294,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public int hashCode() {
     int result = myHost != null ? myHost.hashCode() : 0;
     result = 31 * result + (myLiteralPort != null ? myLiteralPort.hashCode() : 0);
-    result = 31 * result + (myAnonymous ? 1 : 0);
     result = 31 * result + (myUserName != null ? myUserName.hashCode() : 0);
     result = 31 * result + (myPassword != null ? myPassword.hashCode() : 0);
     result = 31 * result + (myUseKeyPair ? 1 : 0);
