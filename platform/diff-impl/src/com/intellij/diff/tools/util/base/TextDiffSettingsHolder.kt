@@ -13,253 +13,181 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.util.base;
+package com.intellij.diff.tools.util.base
 
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.Key;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.TreeMap;
+import com.intellij.diff.util.DiffPlaces
+import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.util.Key
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import java.util.*
 
 @State(
   name = "TextDiffSettings",
-  storages = @Storage(value = DiffUtil.DIFF_CONFIG)
+  storages = arrayOf(Storage(value = DiffUtil.DIFF_CONFIG))
 )
-public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiffSettingsHolder.State> {
-  public static final Key<TextDiffSettings> KEY = Key.create("TextDiffSettings");
+class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
+  companion object {
+    @JvmField val KEY: Key<TextDiffSettings> = Key.create("TextDiffSettings")
 
-  public static final int[] CONTEXT_RANGE_MODES = {1, 2, 4, 8, -1};
-  public static final String[] CONTEXT_RANGE_MODE_LABELS = {"1", "2", "4", "8", "Disable"};
+    @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
+    @JvmField val CONTEXT_RANGE_MODE_LABELS: Array<String> = arrayOf("1", "2", "4", "8", "Disable")
 
-  private final static class SharedSettings {
-    // Fragments settings
-    public int CONTEXT_RANGE = 4;
-
-    public boolean MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = false;
-    public boolean MERGE_LST_GUTTER_MARKERS = true;
+    @JvmStatic
+    fun getInstance(): TextDiffSettingsHolder {
+      return ServiceManager.getService(TextDiffSettingsHolder::class.java)
+    }
   }
 
-  private static class PlaceSettings {
+  internal class SharedSettings {
+    // Fragments settings
+    var CONTEXT_RANGE: Int = 4
+
+    var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false
+    var MERGE_LST_GUTTER_MARKERS: Boolean = true
+  }
+
+  internal class PlaceSettings {
     // Diff settings
-    public HighlightPolicy HIGHLIGHT_POLICY = HighlightPolicy.BY_WORD;
-    public IgnorePolicy IGNORE_POLICY = IgnorePolicy.DEFAULT;
+    var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD
+    var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT
 
     // Presentation settings
-    public boolean ENABLE_SYNC_SCROLL = true;
+    var ENABLE_SYNC_SCROLL: Boolean = true
 
     // Editor settings
-    public boolean SHOW_WHITESPACES = false;
-    public boolean SHOW_LINE_NUMBERS = true;
-    public boolean SHOW_INDENT_LINES = false;
-    public boolean USE_SOFT_WRAPS = false;
-    public HighlightingLevel HIGHLIGHTING_LEVEL = HighlightingLevel.INSPECTIONS;
-    public boolean READ_ONLY_LOCK = true;
+    var SHOW_WHITESPACES: Boolean = false
+    var SHOW_LINE_NUMBERS: Boolean = true
+    var SHOW_INDENT_LINES: Boolean = false
+    var USE_SOFT_WRAPS: Boolean = false
+    var HIGHLIGHTING_LEVEL: HighlightingLevel = HighlightingLevel.INSPECTIONS
+    var READ_ONLY_LOCK: Boolean = true
 
     // Fragments settings
-    public boolean EXPAND_BY_DEFAULT = true;
+    var EXPAND_BY_DEFAULT: Boolean = true
   }
 
-  public static class TextDiffSettings {
-    @NotNull public SharedSettings SHARED_SETTINGS = new SharedSettings();
-    @NotNull public PlaceSettings PLACE_SETTINGS = new PlaceSettings();
-
-    public TextDiffSettings() {
-    }
-
-    public TextDiffSettings(@NotNull SharedSettings SHARED_SETTINGS,
-                            @NotNull PlaceSettings PLACE_SETTINGS) {
-      this.SHARED_SETTINGS = SHARED_SETTINGS;
-      this.PLACE_SETTINGS = PLACE_SETTINGS;
-    }
+  class TextDiffSettings internal constructor(val SHARED_SETTINGS: SharedSettings,
+                                              val PLACE_SETTINGS: PlaceSettings) {
+    constructor() : this(SharedSettings(), PlaceSettings())
 
     // Presentation settings
 
-    public boolean isEnableSyncScroll() {
-      return PLACE_SETTINGS.ENABLE_SYNC_SCROLL;
-    }
-
-    public void setEnableSyncScroll(boolean value) {
-      PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
-    }
+    var isEnableSyncScroll: Boolean
+      get()      = PLACE_SETTINGS.ENABLE_SYNC_SCROLL
+      set(value) { PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value }
 
     // Diff settings
 
-    @NotNull
-    public HighlightPolicy getHighlightPolicy() {
-      return PLACE_SETTINGS.HIGHLIGHT_POLICY;
-    }
+    var highlightPolicy: HighlightPolicy
+      get()      = PLACE_SETTINGS.HIGHLIGHT_POLICY
+      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value }
 
-    public void setHighlightPolicy(@NotNull HighlightPolicy value) {
-      PLACE_SETTINGS.HIGHLIGHT_POLICY = value;
-    }
-
-    @NotNull
-    public IgnorePolicy getIgnorePolicy() {
-      return PLACE_SETTINGS.IGNORE_POLICY;
-    }
-
-    public void setIgnorePolicy(@NotNull IgnorePolicy policy) {
-      PLACE_SETTINGS.IGNORE_POLICY = policy;
-    }
+    var ignorePolicy: IgnorePolicy
+      get()      = PLACE_SETTINGS.IGNORE_POLICY
+      set(value) { PLACE_SETTINGS.IGNORE_POLICY = value }
 
     //
     // Merge
     //
 
-    public boolean isAutoApplyNonConflictedChanges() {
-      return SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES;
-    }
+    var isAutoApplyNonConflictedChanges: Boolean
+      get()      = SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES
+      set(value) { SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = value }
 
-    public void setAutoApplyNonConflictedChanges(boolean value) {
-      SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = value;
-    }
-
-    public boolean isEnableLstGutterMarkersInMerge() {
-      return SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS;
-    }
-
-    public void setEnableLstGutterMarkersInMerge(boolean value) {
-      SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS = value;
-    }
+    var isEnableLstGutterMarkersInMerge: Boolean
+      get()      = SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS
+      set(value) { SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS = value }
 
     // Editor settings
 
-    public boolean isShowLineNumbers() {
-      return PLACE_SETTINGS.SHOW_LINE_NUMBERS;
-    }
+    var isShowLineNumbers: Boolean
+      get()      = PLACE_SETTINGS.SHOW_LINE_NUMBERS
+      set(value) { PLACE_SETTINGS.SHOW_LINE_NUMBERS = value }
 
-    public void setShowLineNumbers(boolean state) {
-      PLACE_SETTINGS.SHOW_LINE_NUMBERS = state;
-    }
+    var isShowWhitespaces: Boolean
+      get()      = PLACE_SETTINGS.SHOW_WHITESPACES
+      set(value) { PLACE_SETTINGS.SHOW_WHITESPACES = value }
 
-    public boolean isShowWhitespaces() {
-      return PLACE_SETTINGS.SHOW_WHITESPACES;
-    }
+    var isShowIndentLines: Boolean
+      get()      = PLACE_SETTINGS.SHOW_INDENT_LINES
+      set(value) { PLACE_SETTINGS.SHOW_INDENT_LINES = value }
 
-    public void setShowWhiteSpaces(boolean state) {
-      PLACE_SETTINGS.SHOW_WHITESPACES = state;
-    }
+    var isUseSoftWraps: Boolean
+      get()      = PLACE_SETTINGS.USE_SOFT_WRAPS
+      set(value) { PLACE_SETTINGS.USE_SOFT_WRAPS = value }
 
-    public boolean isShowIndentLines() {
-      return PLACE_SETTINGS.SHOW_INDENT_LINES;
-    }
+    var highlightingLevel: HighlightingLevel
+      get()      = PLACE_SETTINGS.HIGHLIGHTING_LEVEL
+      set(value) { PLACE_SETTINGS.HIGHLIGHTING_LEVEL = value }
 
-    public void setShowIndentLines(boolean state) {
-      PLACE_SETTINGS.SHOW_INDENT_LINES = state;
-    }
+    var contextRange: Int
+      get()      = SHARED_SETTINGS.CONTEXT_RANGE
+      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value }
 
-    public boolean isUseSoftWraps() {
-      return PLACE_SETTINGS.USE_SOFT_WRAPS;
-    }
+    var isExpandByDefault: Boolean
+      get()      = PLACE_SETTINGS.EXPAND_BY_DEFAULT
+      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value }
 
-    public void setUseSoftWraps(boolean state) {
-      PLACE_SETTINGS.USE_SOFT_WRAPS = state;
-    }
-
-    @NotNull
-    public HighlightingLevel getHighlightingLevel() {
-      return PLACE_SETTINGS.HIGHLIGHTING_LEVEL;
-    }
-
-    public void setHighlightingLevel(@NotNull HighlightingLevel state) {
-      PLACE_SETTINGS.HIGHLIGHTING_LEVEL = state;
-    }
-
-    public int getContextRange() {
-      return SHARED_SETTINGS.CONTEXT_RANGE;
-    }
-
-    public void setContextRange(int value) {
-      SHARED_SETTINGS.CONTEXT_RANGE = value;
-    }
-
-    public boolean isExpandByDefault() {
-      return PLACE_SETTINGS.EXPAND_BY_DEFAULT;
-    }
-
-    public void setExpandByDefault(boolean value) {
-      PLACE_SETTINGS.EXPAND_BY_DEFAULT = value;
-    }
-
-    public boolean isReadOnlyLock() {
-      return PLACE_SETTINGS.READ_ONLY_LOCK;
-    }
-
-    public void setReadOnlyLock(boolean state) {
-      PLACE_SETTINGS.READ_ONLY_LOCK = state;
-    }
+    var isReadOnlyLock: Boolean
+      get()      = PLACE_SETTINGS.READ_ONLY_LOCK
+      set(value) { PLACE_SETTINGS.READ_ONLY_LOCK = value }
 
     //
     // Impl
     //
 
-    @NotNull
-    public static TextDiffSettings getSettings() {
-      return getSettings(null);
-    }
+    companion object {
+      @JvmStatic
+      fun getSettings(): TextDiffSettings {
+        return getSettings(null)
+      }
 
-    @NotNull
-    public static TextDiffSettings getSettings(@Nullable String place) {
-      return getInstance().getSettings(place);
+      @JvmStatic
+      fun getSettings(place: String?): TextDiffSettings {
+        return getInstance().getSettings(place)
+      }
     }
   }
 
-  @NotNull
-  public TextDiffSettings getSettings(@Nullable String place) {
-    if (place == null) place = DiffPlaces.DEFAULT;
-
-    PlaceSettings placeSettings = myState.PLACES_MAP.get(place);
-    if (placeSettings == null) {
-      placeSettings = new PlaceSettings();
-      myState.PLACES_MAP.put(place, placeSettings);
-    }
-    return new TextDiffSettings(myState.SHARED_SETTINGS, placeSettings);
+  fun getSettings(place: String?): TextDiffSettings {
+    val placeSettings = myState.PLACES_MAP.getOrPut(place ?: DiffPlaces.DEFAULT, { PlaceSettings() })
+    return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings)
   }
 
-  public static class State {
+  class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    public Map<String, PlaceSettings> PLACES_MAP = getDefaultPlaceSettings();
-    public SharedSettings SHARED_SETTINGS = new SharedSettings();
+    internal var PLACES_MAP: MutableMap<String, PlaceSettings> = defaultPlaceSettings()
+    internal var SHARED_SETTINGS = SharedSettings()
+
+    companion object {
+      private fun defaultPlaceSettings(): MutableMap<String, PlaceSettings> {
+        val map = TreeMap<String, PlaceSettings>()
+
+        val changes = PlaceSettings()
+        changes.EXPAND_BY_DEFAULT = false
+        val commit = PlaceSettings()
+        commit.EXPAND_BY_DEFAULT = false
+
+        map.put(DiffPlaces.DEFAULT, PlaceSettings())
+        map.put(DiffPlaces.CHANGES_VIEW, changes)
+        map.put(DiffPlaces.COMMIT_DIALOG, commit)
+
+        return map
+      }
+    }
   }
 
-  private State myState = new State();
+  private var myState: State = State()
 
-  @NotNull
-  @Override
-  public State getState() {
-    return myState;
+  override fun getState(): State {
+    return myState
   }
 
-  @Override
-  public void loadState(State state) {
-    myState = state;
-  }
-
-  public static TextDiffSettingsHolder getInstance() {
-    return ServiceManager.getService(TextDiffSettingsHolder.class);
-  }
-
-  @NotNull
-  public static Map<String, PlaceSettings> getDefaultPlaceSettings() {
-    Map<String, PlaceSettings> map = new TreeMap<>();
-
-    PlaceSettings changes = new PlaceSettings();
-    changes.EXPAND_BY_DEFAULT = false;
-    PlaceSettings commit = new PlaceSettings();
-    commit.EXPAND_BY_DEFAULT = false;
-
-    map.put(DiffPlaces.DEFAULT, new PlaceSettings());
-    map.put(DiffPlaces.CHANGES_VIEW, changes);
-    map.put(DiffPlaces.COMMIT_DIALOG, commit);
-
-    return map;
+  override fun loadState(state: State) {
+    myState = state
   }
 }
