@@ -58,7 +58,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
@@ -103,7 +102,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return 0;
   };
 
-  private boolean myPlainMode;
+  private boolean myHideModuleGroups;
 
   private final ModuleManager myModuleManager;
 
@@ -151,7 +150,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final ArrayList<AnAction> result = super.createActions(fromPopup);
     if (fromPopup) {
       result.add(Separator.getInstance());
-      result.add(new MyGroupAction());
+      result.add(new HideGroupsAction());
       addCollapseExpandActions(result);
     }
     return result;
@@ -229,7 +228,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (nodesAdded) {
         myTree.setShowsRootHandles(true);
       }
-      final String[] groupPath = myPlainMode ? null : myContext.myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
+      final String[] groupPath = myHideModuleGroups ? null : myContext.myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
         myRoot.add(moduleNode);
       }
@@ -282,7 +281,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       nodes[i ++] = node;
     }
     for (final MyNode moduleNode : nodes) {
-      final String[] groupPath = myPlainMode
+      final String[] groupPath = myHideModuleGroups
                                  ? null
                                  : group != null ? group.getGroupPath() : null;
       if (groupPath == null || groupPath.length == 0){
@@ -492,15 +491,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   public void addLibraryOrderEntry(final Module module, final Library library) {
-    Component parent = WindowManager.getInstance().suggestParentWindow(module.getProject());
-
     final ModuleEditor moduleEditor = myContext.myModulesConfigurator.getModuleEditor(module);
     LOG.assertTrue(moduleEditor != null, "Current module editor was not initialized");
     final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
     final OrderEntry[] entries = modelProxy.getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), library.getName())) {
-        if (Messages.showYesNoDialog(parent,
+        if (Messages.showYesNoDialog(module.getProject(),
                                      ProjectBundle.message("project.roots.replace.library.entry.message", entry.getPresentableName()),
                                      ProjectBundle.message("project.roots.replace.library.entry.title"),
                                      Messages.getInformationIcon()) == Messages.YES) {
@@ -605,7 +602,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                   PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  private boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
+  private static boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       if (extension.canBeCopied(configurable)) {
         return true;
@@ -669,7 +666,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (DataKeys.MODULE_CONTEXT_ARRAY.is(dataId)){
+      if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)){
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           ArrayList<Module> modules = new ArrayList<>();
@@ -685,7 +682,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           return !modules.isEmpty() ? modules.toArray(new Module[modules.size()]) : null;
         }
       }
-      if (DataKeys.MODULE_CONTEXT.is(dataId)){
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)){
         return getSelectedModule();
       }
       if (LangDataKeys.MODIFIABLE_MODULE_MODEL.is(dataId)){
@@ -697,20 +694,18 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
 
-  private class MyGroupAction extends ToggleAction implements DumbAware {
+  private class HideGroupsAction extends ToggleAction implements DumbAware {
 
-    public MyGroupAction() {
+    public HideGroupsAction() {
       super("", "", AllIcons.ObjectBrowser.CompactEmptyPackages);
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      String text = ProjectBundle.message("project.roots.plain.mode.action.text.disabled");
-      if (myPlainMode){
-        text = ProjectBundle.message("project.roots.plain.mode.action.text.enabled");
-      }
+      String text;
+      text = ProjectBundle.message(myHideModuleGroups ? "project.roots.plain.mode.action.text.enabled" : "project.roots.plain.mode.action.text.disabled");
       presentation.setText(text);
       presentation.setDescription(text);
 
@@ -721,12 +716,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myPlainMode;
+      return myHideModuleGroups;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myPlainMode = state;
+      myHideModuleGroups = state;
       DefaultMutableTreeNode selection = null;
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null){
