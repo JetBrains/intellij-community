@@ -495,7 +495,7 @@ public class RegExpParser implements PsiParser {
     checkMatches(builder, RegExpTT.LBRACE, "'{' expected");
     checkMatches(builder, RegExpTT.NAME, "Unicode character name expected");
     checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
-    marker.done(RegExpElementTypes.NAMED_CHARACTER_ELEMENT);
+    marker.done(RegExpElementTypes.NAMED_CHARACTER);
   }
 
   private static void patternExpected(PsiBuilder builder) {
