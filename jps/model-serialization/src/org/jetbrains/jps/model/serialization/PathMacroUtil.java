@@ -58,7 +58,7 @@ public class PathMacroUtil {
     // rather than the .idea directory itself is considered the module root
     // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
     String moduleDirParent = PathUtilRt.getParentPath(moduleDir);
-    if (!StringUtil.isEmpty(moduleDirParent) && PathUtilRt.getFileName(moduleDirParent).equals(DIRECTORY_STORE_NAME)) {
+    if (!StringUtil.isEmpty(moduleDirParent) && PathUtilRt.getFileName(moduleDir).equals(DIRECTORY_STORE_NAME)) {
       moduleDir = moduleDirParent;
     }
     moduleDir = toSystemIndependentName(moduleDir);
