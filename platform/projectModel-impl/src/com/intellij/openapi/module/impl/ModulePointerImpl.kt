@@ -56,4 +56,6 @@ class ModulePointerImpl : ModulePointer {
     moduleName = resolvedModule!!.name
     this.module = null
   }
+
+  override fun toString() = "moduleName: $moduleName, module: $module"
 }

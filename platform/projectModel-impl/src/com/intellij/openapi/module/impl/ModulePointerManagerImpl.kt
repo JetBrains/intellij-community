@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,18 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
 
     return lock.read {
       unresolved.get(moduleName) ?: lock.write {
-        unresolved.getOrPut(moduleName, { ModulePointerImpl(moduleName, lock) })
+        unresolved.get(moduleName)?.let {
+          return it
+        }
+
+        // let's find in the pointers (if model not committed, see testDisposePointerFromUncommittedModifiableModel)
+        pointers.keys.firstOrNull { it.name == moduleName }?.let {
+          return create(it)
+        }
+
+        val pointer = ModulePointerImpl(moduleName, lock)
+        unresolved.put(moduleName, pointer)
+        pointer
       }
     }
   }
