@@ -45,6 +45,7 @@ public class JUnitUtil {
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
   @NonNls public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
+  @NonNls public static final String CUSTOM_TESTABLE_ANNOTATION = "org.junit.platform.commons.annotation.Testable";
   @NonNls public static final String TEST5_FACTORY_ANNOTATION = "org.junit.jupiter.api.TestFactory";
   @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
@@ -69,7 +70,9 @@ public class JUnitUtil {
   private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION,
                                                                                                         TEST5_ANNOTATION,
                                                                                                         TEST5_FACTORY_ANNOTATION));
-  public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION));
+  public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION,
+                                                                                                        TEST5_FACTORY_ANNOTATION,
+                                                                                                        CUSTOM_TESTABLE_ANNOTATION));
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
@@ -219,6 +222,10 @@ public class JUnitUtil {
     if (modifierList == null) return false;
 
     if (psiClass.getContainingClass() != null && AnnotationUtil.isAnnotated(psiClass, JUNIT5_NESTED, false)) {
+      return true;
+    }
+
+    if (MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
       return true;
     }
 
