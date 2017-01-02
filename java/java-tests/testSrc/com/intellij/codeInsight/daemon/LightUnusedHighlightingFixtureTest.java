@@ -31,9 +31,6 @@ public class LightUnusedHighlightingFixtureTest extends LightCodeInsightFixtureT
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new UnusedDeclarationInspection(true));
-  }
-
-  public void testMarkFieldsWhichAreExplicitlyWrittenAsUnused() throws Exception {
     PlatformTestUtil.registerExtension(ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(PsiElement element) {
@@ -50,7 +47,9 @@ public class LightUnusedHighlightingFixtureTest extends LightCodeInsightFixtureT
         return element instanceof PsiField && "implicitWrite".equals(((PsiNamedElement)element).getName());
       }
     }, getTestRootDisposable());
+  }
 
+  public void testMarkFieldsWhichAreExplicitlyWrittenAsUnused() throws Exception {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
