@@ -277,6 +277,22 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return mySizeManager.getPreferredSize();
   }
 
+  /**
+   * Returns preferred pixel width of the lines in range.
+   * <p>
+   * This method is currently used only with "idea.true.smooth.scrolling" experimental option.
+   *
+   * @param beginLine begin visual line (inclusive)
+   * @param endLine   end visual line (exclusive), may be greater than the actual number of lines
+   * @return preferred pixel width
+   */
+  public int getPreferredWidth(int beginLine, int endLine) {
+    assertIsDispatchThread();
+    assert !myEditor.isPurePaintingMode();
+    myEditor.getSoftWrapModel().prepareToMapping();
+    return mySizeManager.getPreferredWidth(beginLine, endLine);
+  }
+
   public int getPreferredHeight() {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();

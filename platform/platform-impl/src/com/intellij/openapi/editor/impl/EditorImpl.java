@@ -1841,7 +1841,58 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public Dimension getPreferredSize() {
-    return isReleased ? new Dimension() : myView.getPreferredSize();
+    return isReleased ? new Dimension()
+                      : SystemProperties.isTrueSmoothScrollingEnabled()
+                        ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
+                        : myView.getPreferredSize();
+  }
+
+  /* When idea.true.smooth.scrolling=true, this method is used to compute width of currently visible line range
+     rather than width of the whole document.
+
+     As transparent scrollbars, by definition, prevent blit-acceleration of scrolling, and we really need blit-acceleration
+     because not all hardware can render pixel-by-pixel scrolling with acceptable FPS without it (we now have 4K-5K displays, you know).
+     To have both the hardware acceleration and the transparent scrollbars we need to completely redesign JViewport machinery to support
+     independent layers, which is (probably) possible, but it's a rather cumbersome task.
+
+     Another approach is to make scrollbars opaque, but only in the editor (as editor is a slow-to-draw component with large screen area).
+     This is what "true smooth scrolling" option currently does. Interestingly, making the vertical scrollbar opaque might actually be
+     a good thing because on modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
+     when it does, its mixing with the navigation bar only reduces intelligibility of both the navigation bar and the code itself.
+
+     Horizontal scrollbar is another story - a single long line of text forces horizontal scrollbar in the whole document,
+     and in that case "transparent" scrollbar has some merits. However, instead of using transparency, we can hide horizontal
+     scrollbar altogether when it's not needed for currently visible content. In a sense, this approach is superior,
+     as even "transparent" scrollbar is only semi-transparent (thus we may prefer "on-demand" scrollbar in the general case).
+
+     Hiding the horizontal scrollbar also solves another issue - when both scrollbars are visible, vertical scrolling with
+     a high-precision touchpad can result in unintentional horizontal shifts (because of the touchpad sensitivity).
+     When visible content fully fits horizontally (i.e. in most cases), hiding the unneeded scrollbar
+     reliably prevents the horizontal  "jitter".
+
+     Keep in mind that this functionality is experimental and may need more polishing.
+
+     In principle, we can apply this method to other components by defining, for example,
+     VariableWidth interface and supporting it in JBScrollPane. */
+  private int getPreferredWidthOfVisibleLines() {
+    Rectangle area = getScrollingModel().getVisibleArea();
+    VisualPosition begin = xyToVisualPosition(area.getLocation());
+    VisualPosition end = xyToVisualPosition(new Point(area.x + area.width, area.y + area.height));
+    return Math.max(myView.getPreferredWidth(begin.line, end.line), getScrollingWidth());
+  }
+
+  /* Returns the width of current horizontal scrolling state.
+     Complements the getPreferredWidthOfVisibleLines() method to allows to retain horizontal
+     scrolling position that is beyond the width of currently visible lines. */
+  private int getScrollingWidth() {
+    JScrollBar scrollbar = myScrollPane.getHorizontalScrollBar();
+    if (scrollbar != null) {
+      BoundedRangeModel model = scrollbar.getModel();
+      if (model != null) {
+        return model.getValue() + model.getExtent();
+      }
+    }
+    return 0;
   }
 
   @NotNull
