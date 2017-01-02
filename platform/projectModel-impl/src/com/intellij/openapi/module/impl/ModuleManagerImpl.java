@@ -798,8 +798,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final Set<Module> set = new THashSet<>(myModuleModel.myModules.values());
-      for (Module thisModule : myModules.values()) {
+      Module[] modules = myModuleModel.getModules();
+      final Set<Module> set = new THashSet<>(Arrays.asList(modules));
+      for (Module thisModule : modules) {
         if (!set.contains(thisModule)) {
           Disposer.dispose(thisModule);
         }
@@ -857,7 +858,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myModuleModel.myModulesCache = null;
     incModificationCount();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final Collection<Module> oldModules = myModuleModel.myModules.values();
+    final Collection<Module> oldModules = Arrays.asList(myModuleModel.getModules());
     final Collection<Module> newModules = moduleModel.myModules.values();
 
     final Collection<Module> addedModules;
@@ -883,7 +884,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
       if (!moduleModel.myModulesToDispose.isEmpty()) {
         List<Module> neverAddedModules = new ArrayList<>(moduleModel.myModulesToDispose);
-        neverAddedModules.removeAll(myModuleModel.myModules.values());
+        neverAddedModules.removeAll(oldModules);
         for (final Module neverAddedModule : neverAddedModules) {
           neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
           Disposer.dispose(neverAddedModule);
