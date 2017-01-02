@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.components.impl;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
@@ -23,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 public class ProjectPathMacroManager extends BasePathMacroManager {
   private final Project myProject;
@@ -36,7 +36,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
   @Override
   public ExpandMacroToPathMap getExpandMacroMap() {
     final ExpandMacroToPathMap result = super.getExpandMacroMap();
-    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject));
+    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject));
     return result;
   }
 
@@ -44,7 +44,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
   @Override
   public ReplacePathToMacroMap getReplacePathMap() {
     final ReplacePathToMacroMap result = super.getReplacePathMap();
-    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject), null);
+    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject), null);
     return result;
   }
 

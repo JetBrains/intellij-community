@@ -101,7 +101,8 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     return new CoreModuleScopeProvider();
   }
 
-  protected PathMacroManager createModulePathMacroManager(@NotNull Project project) {
+  // used by Upsource
+  protected PathMacroManager createModulePathMacroManager(@SuppressWarnings("unused") @NotNull Project project) {
     return new ModulePathMacroManager(PathMacros.getInstance(), this);
   }
 
