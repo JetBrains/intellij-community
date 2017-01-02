@@ -26,16 +26,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Function
 import gnu.trove.THashMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 /**
  * @author nik
  */
-class ModulePointerManagerImpl(private val myProject: Project) : ModulePointerManager() {
-  private val myUnresolved = THashMap<String, ModulePointerImpl>()
-  private val myPointers = THashMap<Module, ModulePointerImpl>()
+class ModulePointerManagerImpl(private val project: Project) : ModulePointerManager() {
+  private val unresolved = THashMap<String, ModulePointerImpl>()
+  private val pointers = THashMap<Module, ModulePointerImpl>()
+  private val lock = ReentrantReadWriteLock()
 
   init {
-    myProject.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
       override fun beforeModuleRemoved(project: Project, module: Module) {
         unregisterPointer(module)
       }
@@ -52,52 +56,57 @@ class ModulePointerManagerImpl(private val myProject: Project) : ModulePointerMa
     })
   }
 
-  @Synchronized private fun moduleAppears(module: Module) {
-    val pointer = myUnresolved.remove(module.name)
-    if (pointer != null && pointer.moduleAdded(module)) {
-      registerPointer(module, pointer)
+  private fun moduleAppears(module: Module) {
+    lock.write {
+      unresolved.remove(module.name)?.let {
+        it.moduleAdded(module)
+        registerPointer(module, it)
+      }
     }
   }
 
   private fun registerPointer(module: Module, pointer: ModulePointerImpl) {
-    myPointers.put(module, pointer)
+    pointers.put(module, pointer)
     Disposer.register(module, Disposable { unregisterPointer(module) })
   }
 
-  @Synchronized private fun unregisterPointer(module: Module) {
-    val pointer = myPointers.remove(module)
-    if (pointer != null) {
-      pointer.moduleRemoved(module)
-      myUnresolved.put(pointer.moduleName, pointer)
+  private fun unregisterPointer(module: Module) {
+    lock.write {
+      pointers.remove(module)?.let {
+        it.moduleRemoved(module)
+        unresolved.put(it.moduleName, it)
+      }
     }
   }
 
-  @Synchronized override fun create(module: Module): ModulePointer {
-    var pointer: ModulePointerImpl? = myPointers[module]
-    if (pointer == null) {
-      pointer = myUnresolved[module.name]
+  @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+  override fun create(module: Module): ModulePointer {
+    return lock.read { pointers.get(module) } ?: lock.write {
+      pointers.get(module)?.let {
+        return it
+      }
+
+      var pointer = unresolved.remove(module.name)
       if (pointer == null) {
-        pointer = ModulePointerImpl(module)
+        pointer = ModulePointerImpl(module, lock)
       }
       else {
         pointer.moduleAdded(module)
       }
       registerPointer(module, pointer)
+      pointer!!
     }
-    return pointer
   }
 
-  @Synchronized override fun create(moduleName: String): ModulePointer {
-    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName)
-    if (module != null) {
-      return create(module)
+  override fun create(moduleName: String): ModulePointer {
+    ModuleManager.getInstance(project).findModuleByName(moduleName)?.let {
+      return create(it)
     }
 
-    var pointer: ModulePointerImpl? = myUnresolved[moduleName]
-    if (pointer == null) {
-      pointer = ModulePointerImpl(moduleName)
-      myUnresolved.put(moduleName, pointer)
+    return lock.read {
+      unresolved.get(moduleName) ?: lock.write {
+        unresolved.getOrPut(moduleName, { ModulePointerImpl(moduleName, lock) })
+      }
     }
-    return pointer
   }
 }

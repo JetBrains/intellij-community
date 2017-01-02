@@ -487,7 +487,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   @Override
   public Module findModuleByName(@NotNull String name) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.findModuleByName(name);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,51 +18,42 @@ package com.intellij.openapi.module.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModulePointer
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
 
-import java.util.concurrent.atomic.AtomicReference
+private val LOG = Logger.getInstance(ModulePointerImpl::class.java)
 
 class ModulePointerImpl : ModulePointer {
+  private var module: Module? = null
+  private var moduleName: String? = null
+  private val lock: ReentrantReadWriteLock
 
-  private val myModule: AtomicReference<Module>
-  private var myModuleName: String? = null
-
-  internal constructor(module: Module) {
-    myModule = AtomicReference(module)
-    myModuleName = null
+  internal constructor(module: Module, lock: ReentrantReadWriteLock) {
+    this.module = module
+    this.lock = lock
   }
 
-  internal constructor(name: String) {
-    myModule = AtomicReference<Module>(null)
-    myModuleName = name
+  internal constructor(moduleName: String, lock: ReentrantReadWriteLock) {
+    this.moduleName = moduleName
+    this.lock = lock
   }
 
-  override fun getModule(): Module? {
-    return myModule.get()
+  override fun getModule() = lock.read { module }
+
+  override fun getModuleName(): String = lock.read { module?.name ?: moduleName!! }
+
+  // must be called under lock, so, explicit lock using is not required
+  internal fun moduleAdded(module: Module) {
+    LOG.assertTrue(moduleName == module.name)
+    moduleName = null
+    this.module = module
   }
 
-  override fun getModuleName(): String {
-    val module = myModule.get()
-    return module?.name ?: myModuleName
-  }
-
-  internal fun moduleAdded(module: Module): Boolean {
-    if (!myModule.compareAndSet(null, module)) {
-      return false
-    }
-
-    LOG.assertTrue(myModuleName == module.name)
-    myModuleName = null
-    return true
-  }
-
+  // must be called under lock, so, explicit lock using is not required
   internal fun moduleRemoved(module: Module) {
-    val resolvedModule = myModule.get()
+    val resolvedModule = this.module
     LOG.assertTrue(resolvedModule === module)
-    myModuleName = resolvedModule.name
-    myModule.set(null)
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance(ModulePointerImpl::class.java)
+    moduleName = resolvedModule!!.name
+    this.module = null
   }
 }
