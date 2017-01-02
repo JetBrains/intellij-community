@@ -164,21 +164,15 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     else {
       key = storageClass.name!!
     }
-    storageLock.read {
-      var storage = storages.get(key)
-      if (storage == null) {
-        storageLock.write {
-          storage = createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive)
-          storages.put(key, storage)
-        }
-      }
-      return storage!!
+
+    return storageLock.read { storages.get(key) } ?: storageLock.write {
+      storages.getOrPut(key, { createStateStorage(storageClass, normalizedCollapsedPath, roamingType, stateSplitter, exclusive) })
     }
   }
 
   fun getCachedFileStorages() = storageLock.read { storages.values.toSet() }
 
-  fun findCachedFileStorage(name: String) : StateStorage? = storageLock.read { storages[name] }
+  fun findCachedFileStorage(name: String) : StateStorage? = storageLock.read { storages.get(name) }
 
   fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null) = storageLock.read {
     Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
@@ -441,7 +435,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
 private fun String.startsWithMacro(macro: String): Boolean {
   val i = macro.length
-  return length > i && get(i) == '/' && startsWith(macro)
+  return getOrNull(i) == '/' && startsWith(macro)
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
