@@ -70,21 +70,21 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     get() = true
 
   companion object {
-    private fun createDefaultVirtualTracker(componentManager: ComponentManager?) = when (componentManager) {
-      null -> {
-        null
-      }
-      is Application -> {
-        StorageVirtualFileTracker(componentManager.messageBus)
-      }
-      else -> {
-        val tracker = (ApplicationManager.getApplication().stateStore.stateStorageManager as? StateStorageManagerImpl)?.virtualFileTracker
-        if (tracker != null) {
+    private fun createDefaultVirtualTracker(componentManager: ComponentManager?): StorageVirtualFileTracker? {
+      return when (componentManager) {
+        null -> {
+          null
+        }
+        is Application -> {
+          StorageVirtualFileTracker(componentManager.messageBus)
+        }
+        else -> {
+          val tracker = (ApplicationManager.getApplication().stateStore.stateStorageManager as? StateStorageManagerImpl)?.virtualFileTracker ?: return null
           Disposer.register(componentManager, Disposable {
             tracker.remove { it.storageManager.componentManager == componentManager }
           })
+          tracker
         }
-        tracker
       }
     }
   }
