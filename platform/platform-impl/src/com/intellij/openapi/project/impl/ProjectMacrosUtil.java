@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitForProgressToShow;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -57,7 +56,9 @@ public class ProjectMacrosUtil {
   }
 
   public static boolean checkMacros(@NotNull final Project project, @NotNull final Set<String> usedMacros) {
-    usedMacros.removeAll(getDefinedMacros());
+    PathMacros pathMacros = PathMacros.getInstance();
+    usedMacros.removeAll(pathMacros.getSystemMacroNames());
+    usedMacros.removeAll(pathMacros.getUserMacroNames());
 
     // try to lookup values in System properties
     String pathMacroSystemPrefix = "path.macro.";
@@ -65,7 +66,7 @@ public class ProjectMacrosUtil {
       String macro = it.next();
       String value = System.getProperty(pathMacroSystemPrefix + macro, null);
       if (value != null) {
-        WriteAction.run(() -> PathMacros.getInstance().setMacro(macro, value));
+        WriteAction.run(() -> pathMacros.setMacro(macro, value));
         it.remove();
       }
     }
@@ -79,13 +80,5 @@ public class ProjectMacrosUtil {
     final boolean[] result = new boolean[1];
     WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(() -> result[0] = showMacrosConfigurationDialog(project, usedMacros), ModalityState.NON_MODAL);
     return result[0];
-  }
-
-  @NotNull
-  public static Set<String> getDefinedMacros() {
-    PathMacros pathMacros = PathMacros.getInstance();
-    Set<String> definedMacros = new THashSet<>(pathMacros.getUserMacroNames());
-    definedMacros.addAll(pathMacros.getSystemMacroNames());
-    return definedMacros;
   }
 }
