@@ -339,7 +339,7 @@ class PostHighlightingVisitor {
         return info;
       }
     }
-    else if (UnusedSymbolUtil.isImplicitRead(myProject, field, progress)) {
+    else if (UnusedSymbolUtil.isImplicitUsage(myProject, field, progress) && !UnusedSymbolUtil.isImplicitWrite(myProject, field, progress)) {
       return null;
     }
     else if (UnusedSymbolUtil.isFieldUnused(myProject, myFile, field, progress, helper)) {
