@@ -105,7 +105,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     // Check for the exact name in advance for performance reasons
     if ("Generic".equals(referenceExpression.getName())) {
       if (resolveToQualifiedNames(referenceExpression, context).contains("typing.Generic")) {
-        return new PyCustomType("typing.Generic", null, false);
+        return createTypingGenericType();
       }
     }
     return null;
@@ -214,6 +214,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @NotNull
+  private static PyType createTypingGenericType() {
+    return new PyCustomType("typing.Generic", null, false);
+  }
+
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func) {
     return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD;
   }
@@ -281,6 +286,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      // Depends on typing.Generic defined as a target expression
+      if ("typing.Generic".equals(target.getQualifiedName())) {
+        return createTypingGenericType();
+      }
       if (context.maySwitchToAST(target)) {
         // XXX: Requires switching from stub to AST
         final PyAnnotation annotation = target.getAnnotation();
