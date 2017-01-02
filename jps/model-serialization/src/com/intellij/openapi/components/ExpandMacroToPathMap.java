@@ -16,6 +16,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -32,7 +33,7 @@ public class ExpandMacroToPathMap extends PathMacroMap {
   private final Map<String, String> myMacroExpands = ContainerUtil.newHashMap();
 
   public void addMacroExpand(@NotNull String macroName, @NotNull String path) {
-    myMacroExpands.put(macroName, PathMacroMap.quotePath(path));
+    myMacroExpands.put(macroName, FileUtil.toSystemIndependentName(path));
   }
 
   public void put(@NotNull String fromText, @NotNull String toText) {

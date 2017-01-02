@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,7 +56,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   public void addMacroReplacement(String path, String macroName) {
-    addReplacement(quotePath(path), "$" + macroName + "$", true);
+    addReplacement(FileUtil.toSystemIndependentName(path), "$" + macroName + "$", true);
   }
 
   public void addReplacement(String path, String macroExpr, boolean overwrite) {
