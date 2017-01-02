@@ -65,6 +65,10 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyTest(PyTypeCheckerInspection.class);
   }
 
+  public void testOverloadedGenerics() {
+    doPyTest(PyTypeCheckerInspection.class);
+  }
+
   public void testPyiUnusedParameters() {
     doPyiTest(PyUnusedLocalInspection.class);
   }
