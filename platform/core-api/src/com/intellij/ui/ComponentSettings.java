@@ -47,7 +47,10 @@ public class ComponentSettings {
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.
-     We need to to make scrolling synchronization compatible with the interpolation first. */
+     We need to to make scrolling synchronization compatible with the interpolation first.
+
+     NOTE: The implementation is a temporary, ad-hoc heuristics that is needed solely to
+           facilitate testing of the experimental "true smooth scrolling" feature. */
   public boolean isInterpolationEligibleFor(JScrollBar scrollbar) {
     Component[] components = getComponents((Window)scrollbar.getTopLevelAncestor());
     if (components.length == 1 && components[0].getClass().getName().contains("DiffWindow")) {
