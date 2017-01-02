@@ -822,8 +822,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     private void disposeModel() {
+      Module[] modules = getModules();
       myModulesCache = null;
-      for (final Module module : myModules.values()) {
+      for (Module module : modules) {
         Disposer.dispose(module);
       }
       myModules.clear();
@@ -859,13 +860,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     incModificationCount();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = Arrays.asList(myModuleModel.getModules());
-    final Collection<Module> newModules = moduleModel.myModules.values();
+    final Collection<Module> newModules = Arrays.asList(moduleModel.getModules());
 
     final Collection<Module> addedModules;
     final Collection<Module> removedModules;
     if (oldModules.isEmpty()) {
-      // create immutable copy
-      addedModules = new ArrayList<>(newModules);
+      addedModules = newModules;
       removedModules = Collections.emptyList();
     }
     else {
