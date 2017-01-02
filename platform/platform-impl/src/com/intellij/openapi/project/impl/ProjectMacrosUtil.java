@@ -20,7 +20,10 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -66,7 +69,7 @@ public class ProjectMacrosUtil {
       String macro = it.next();
       String value = System.getProperty(pathMacroSystemPrefix + macro, null);
       if (value != null) {
-        WriteAction.run(() -> pathMacros.setMacro(macro, value));
+        pathMacros.setMacro(macro, value);
         it.remove();
       }
     }
