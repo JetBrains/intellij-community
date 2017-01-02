@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores
+package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StateStorageOperation
@@ -21,8 +21,11 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.util.messages.Topic
 
+val STORAGE_TOPIC = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+
 interface StateStorageManager {
   val macroSubstitutor: TrackingPathMacroSubstitutor?
+    get() = null
 
   fun getStateStorage(storageSpec: Storage): StateStorage
 
@@ -41,7 +44,7 @@ interface StateStorageManager {
   fun expandMacros(path: String): String
 
   interface ExternalizationSession {
-    fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any)
+    fun setState(storageSpecs: Array<out Storage>, component: Any, componentName: String, state: Any)
 
     fun setStateInOldStorage(component: Any, componentName: String, state: Any)
 
@@ -49,9 +52,5 @@ interface StateStorageManager {
      * return empty list if nothing to save
      */
     fun createSaveSessions(): List<StateStorage.SaveSession>
-  }
-
-  companion object {
-    val STORAGE_TOPIC = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
   }
 }

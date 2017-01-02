@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.StateStorageManager.ExternalizationSession
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -23,8 +24,10 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
-import com.intellij.openapi.components.impl.stores.*
-import com.intellij.openapi.components.impl.stores.StateStorageManager.ExternalizationSession
+import com.intellij.openapi.components.impl.stores.DefaultStateSerializer
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException

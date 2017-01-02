@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package com.intellij.openapi.roots.impl.storage;
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.configurationStore.StateStorageBase;
+import com.intellij.configurationStore.StateStorageManager;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -99,7 +100,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
           for (String path : paths) {
             if (path.equals(event.getPath())) {
-              module.getMessageBus().syncPublisher(StateStorageManager.STORAGE_TOPIC).storageFileChanged(event, ClasspathStorage.this, module);
+              module.getMessageBus().syncPublisher(StateStorageManagerKt.getSTORAGE_TOPIC()).storageFileChanged(event, ClasspathStorage.this, module);
               return;
             }
           }

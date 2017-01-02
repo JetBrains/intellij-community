@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,26 @@
  */
 package com.intellij.cvsSupport2.config;
 
-import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * author: lesya
- */
-public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExternalizable, RoamingTypeDisabled {
+@State(name = "CvsApplicationLevelConfiguration", storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED))
+public class CvsApplicationLevelConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration");
 
   public List<CvsRootConfiguration> CONFIGURATIONS = new ArrayList<>();
@@ -71,16 +71,23 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
     return ServiceManager.getService(CvsApplicationLevelConfiguration.class);
   }
 
+  @Nullable
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "CvsApplicationLevelConfiguration";
+  public Element getState() {
+    Element state = new Element("state");
+    DefaultJDOMExternalizer.writeExternal(this, state, new DifferenceFilter<>(this, new CvsApplicationLevelConfiguration()));
+    for (CvsRootConfiguration configuration : CONFIGURATIONS) {
+      Element child = new Element(CONFIGURATION_ELEMENT_NAME);
+      configuration.writeExternal(child);
+      state.addContent(child);
+    }
+    return state;
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    for (Element child : element.getChildren(CONFIGURATION_ELEMENT_NAME)) {
+  public void loadState(Element state) {
+    DefaultJDOMExternalizer.readExternal(this, state);
+    for (Element child : state.getChildren(CONFIGURATION_ELEMENT_NAME)) {
       CONFIGURATIONS.add(createConfigurationOn(child));
     }
 
@@ -99,20 +106,6 @@ public class CvsApplicationLevelConfiguration implements NamedComponent, JDOMExt
       }
     }
     return false;
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, new CvsApplicationLevelConfiguration()));
-    for (CvsRootConfiguration configuration : CONFIGURATIONS) {
-      createConfigurationElement(configuration, element);
-    }
-  }
-
-  private static void createConfigurationElement(CvsRootConfiguration configuration, Element element) {
-    Element child = new Element(CONFIGURATION_ELEMENT_NAME);
-    configuration.writeExternal(child);
-    element.addContent(child);
   }
 
   private CvsRootConfiguration createConfigurationOn(Element child) {
