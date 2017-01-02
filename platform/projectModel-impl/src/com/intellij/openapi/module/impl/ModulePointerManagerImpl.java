@@ -13,110 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module.impl;
+package com.intellij.openapi.module.impl
 
-import com.intellij.ProjectTopics;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModulePointer;
-import com.intellij.openapi.module.ModulePointerManager;
-import com.intellij.openapi.project.ModuleListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.intellij.ProjectTopics
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModulePointer
+import com.intellij.openapi.module.ModulePointerManager
+import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.Function
+import gnu.trove.THashMap
 
 /**
  * @author nik
  */
-public class ModulePointerManagerImpl extends ModulePointerManager {
-  private final Map<String, ModulePointerImpl> myUnresolved = new HashMap<>();
-  private final Map<Module, ModulePointerImpl> myPointers = new HashMap<>();
-  private final Project myProject;
+class ModulePointerManagerImpl(private val myProject: Project) : ModulePointerManager() {
+  private val myUnresolved = THashMap<String, ModulePointerImpl>()
+  private val myPointers = THashMap<Module, ModulePointerImpl>()
 
-  public ModulePointerManagerImpl(Project project) {
-    myProject = project;
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
-      @Override
-      public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
-        unregisterPointer(module);
+  init {
+    myProject.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+      override fun beforeModuleRemoved(project: Project, module: Module) {
+        unregisterPointer(module)
       }
 
-      @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        moduleAppears(module);
+      override fun moduleAdded(project: Project, module: Module) {
+        moduleAppears(module)
       }
 
-      @Override
-      public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
-        for (Module module : modules) {
-          moduleAppears(module);
+      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<Module, String>) {
+        for (module in modules) {
+          moduleAppears(module)
         }
       }
-    });
+    })
   }
 
-  private synchronized void moduleAppears(Module module) {
-    ModulePointerImpl pointer = myUnresolved.remove(module.getName());
-    if (pointer != null && pointer.getModule() == null) {
-      pointer.moduleAdded(module);
-      registerPointer(module, pointer);
+  @Synchronized private fun moduleAppears(module: Module) {
+    val pointer = myUnresolved.remove(module.name)
+    if (pointer != null && pointer.moduleAdded(module)) {
+      registerPointer(module, pointer)
     }
   }
 
-  private void registerPointer(final Module module, final ModulePointerImpl pointer) {
-    myPointers.put(module, pointer);
-    Disposer.register(module, new Disposable() {
-      @Override
-      public void dispose() {
-        unregisterPointer(module);
-      }
-    });
+  private fun registerPointer(module: Module, pointer: ModulePointerImpl) {
+    myPointers.put(module, pointer)
+    Disposer.register(module, Disposable { unregisterPointer(module) })
   }
 
-  private synchronized void unregisterPointer(Module module) {
-    final ModulePointerImpl pointer = myPointers.remove(module);
+  @Synchronized private fun unregisterPointer(module: Module) {
+    val pointer = myPointers.remove(module)
     if (pointer != null) {
-      pointer.moduleRemoved(module);
-      myUnresolved.put(pointer.getModuleName(), pointer);
+      pointer.moduleRemoved(module)
+      myUnresolved.put(pointer.moduleName, pointer)
     }
   }
 
-  @NotNull
-  @Override
-  public synchronized ModulePointer create(@NotNull Module module) {
-    ModulePointerImpl pointer = myPointers.get(module);
+  @Synchronized override fun create(module: Module): ModulePointer {
+    var pointer: ModulePointerImpl? = myPointers[module]
     if (pointer == null) {
-      pointer = myUnresolved.get(module.getName());
+      pointer = myUnresolved[module.name]
       if (pointer == null) {
-        pointer = new ModulePointerImpl(module);
+        pointer = ModulePointerImpl(module)
       }
       else {
-        pointer.moduleAdded(module);
+        pointer.moduleAdded(module)
       }
-      registerPointer(module, pointer);
+      registerPointer(module, pointer)
     }
-    return pointer;
+    return pointer
   }
 
-  @NotNull
-  @Override
-  public synchronized ModulePointer create(@NotNull String moduleName) {
-    final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+  @Synchronized override fun create(moduleName: String): ModulePointer {
+    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName)
     if (module != null) {
-      return create(module);
+      return create(module)
     }
 
-    ModulePointerImpl pointer = myUnresolved.get(moduleName);
+    var pointer: ModulePointerImpl? = myUnresolved[moduleName]
     if (pointer == null) {
-      pointer = new ModulePointerImpl(moduleName);
-      myUnresolved.put(moduleName, pointer);
+      pointer = ModulePointerImpl(moduleName)
+      myUnresolved.put(moduleName, pointer)
     }
-    return pointer;
+    return pointer
   }
 }
