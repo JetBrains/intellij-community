@@ -13,53 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.components.impl.stores
 
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
+import com.intellij.util.messages.Topic
 
-import java.util.List;
+interface StateStorageManager {
+  val macroSubstitutor: TrackingPathMacroSubstitutor?
 
-public interface StateStorageManager {
-  Topic<StorageManagerListener> STORAGE_TOPIC =
-    new Topic<>("STORAGE_LISTENER", StorageManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
-
-  @Nullable
-  TrackingPathMacroSubstitutor getMacroSubstitutor();
-
-  @NotNull
-  StateStorage getStateStorage(@NotNull Storage storageSpec);
+  fun getStateStorage(storageSpec: Storage): StateStorage
 
   /**
    * Rename file
    * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)
+   * *
    * @param newName Only new file name (foo.iml)
    */
-  void rename(@NotNull String path, @NotNull String newName);
+  fun rename(path: String, newName: String)
 
-  @Nullable
-  ExternalizationSession startExternalization();
+  fun startExternalization(): ExternalizationSession?
 
-  @Nullable
-  StateStorage getOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull StateStorageOperation operation);
+  fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage?
 
-  @NotNull
-  String expandMacros(@NotNull String path);
+  fun expandMacros(path: String): String
 
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, @NotNull String componentName, @NotNull Object state);
+    fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any)
 
-    void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state);
+    fun setStateInOldStorage(component: Any, componentName: String, state: Any)
 
     /**
      * return empty list if nothing to save
      */
-    @NotNull
-    List<StateStorage.SaveSession> createSaveSessions();
+    fun createSaveSessions(): List<StateStorage.SaveSession>
+  }
+
+  companion object {
+    val STORAGE_TOPIC = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
   }
 }
