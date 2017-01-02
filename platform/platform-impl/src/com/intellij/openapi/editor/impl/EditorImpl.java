@@ -71,6 +71,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.*;
@@ -900,6 +901,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       };
 
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+      // When there's a background image, suppress hardware-accelerated scrolling as blitting cannot be used with the static overlay.
+      // For the simplicity, editor re-opening is required for the toggle to take effect.
+      // To have both the hardware acceleration and the background image we need to completely redesign JViewport machinery to support
+      // independent layers, which is (probably) possible, but it's a rather cumbersome task.
+      // Smooth scrolling still works event without the blit-acceleration, but with suboptimal performance and CPU usage.
+      if (IdeBackgroundUtil.isBackgroundImageSet(myProject)) {
+        JComponent component = new JComponent() {}; // transparent
+        component.setPreferredSize(new Dimension(1, 1));
+        layeredPane.add(component, JLayeredPane.POPUP_LAYER);
+      }
       myPanel.add(layeredPane);
 
       new ContextMenuImpl(layeredPane, myScrollPane, this);
