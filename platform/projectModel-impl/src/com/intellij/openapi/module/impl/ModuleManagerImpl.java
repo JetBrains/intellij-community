@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,7 +242,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.CORES_COUNT);
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
-    Set<String> paths = new HashSet<>();
+    Set<String> paths = new THashSet<>();
     boolean parallel = Registry.is("parallel.modules.loading");
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
@@ -312,7 +312,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     progressIndicator.checkCanceled();
 
-    onModuleLoadErrors(errors);
+    onModuleLoadErrors(moduleModel, errors);
 
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
@@ -352,14 +352,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
   }
 
-  protected void onModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
+  private void onModuleLoadErrors(@NotNull ModuleModelImpl moduleModel, @NotNull List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
-    myModuleModel.myModulesCache = null;
+    moduleModel.myModulesCache = null;
     for (ModuleLoadingErrorDescription error : errors) {
-      final Module module = myModuleModel.getModuleByFilePath(error.getModulePath().getPath());
+      final Module module = moduleModel.getModuleByFilePath(error.getModulePath().getPath());
       if (module != null) {
-        myModuleModel.myModules.remove(module.getName());
+        moduleModel.myModules.remove(module.getName());
         ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
       }
     }
@@ -367,6 +367,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     fireModuleLoadErrors(errors);
   }
 
+  // overridden in Upsource
   protected void fireModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new RuntimeException(errors.get(0).getDescription());
