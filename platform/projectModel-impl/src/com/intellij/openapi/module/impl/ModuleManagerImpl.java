@@ -522,14 +522,23 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   @NotNull
   public List<Module> getModuleDependentModules(@NotNull Module module) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myModuleModel.getModuleDependentModules(module);
+    List<Module> result = new SmartList<>();
+    for (Module aModule : getModules()) {
+      if (isModuleDependsOn(aModule, module)) {
+        result.add(aModule);
+      }
+    }
+    return result;
   }
 
   @Override
   public boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myModuleModel.isModuleDependent(module, onModule);
+    return isModuleDependsOn(module, onModule);
+  }
+
+  private static boolean isModuleDependsOn(@NotNull Module module, @NotNull Module onModule) {
+    return ModuleRootManager.getInstance(module).isDependsOn(onModule);
   }
 
   protected void fireModulesAdded() {
@@ -679,7 +688,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Nullable
     private ModuleEx getModuleByFilePath(@NotNull String filePath) {
-      for (Module module : myModules.values()) {
+      for (Module module : getModules()) {
         if (SystemInfo.isFileSystemCaseSensitive ? module.getModuleFilePath().equals(filePath) : module.getModuleFilePath().equalsIgnoreCase(filePath)) {
           return (ModuleEx)module;
         }
@@ -767,20 +776,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           return Arrays.asList(dependentModules).iterator();
         }
       }));
-    }
-
-    @NotNull private List<Module> getModuleDependentModules(Module module) {
-      List<Module> result = new ArrayList<>();
-      for (Module aModule : myModules.values()) {
-        if (isModuleDependent(aModule, module)) {
-          result.add(aModule);
-        }
-      }
-      return result;
-    }
-
-    private boolean isModuleDependent(Module module, Module onModule) {
-      return ModuleRootManager.getInstance(module).isDependsOn(onModule);
     }
 
     @Override
