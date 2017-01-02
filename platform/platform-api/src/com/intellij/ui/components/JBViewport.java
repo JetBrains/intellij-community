@@ -103,7 +103,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void setViewPosition(Point p) {
-    if (CAPABILITIES_DEBUG.asBoolean() && !isInsideLogToolWindow()) {
+    if (CAPABILITIES_DEBUG.asBoolean() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
       checkScrollingCapabilities();
     }
 
