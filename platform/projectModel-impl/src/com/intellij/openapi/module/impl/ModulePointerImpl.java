@@ -13,58 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module.impl;
+package com.intellij.openapi.module.impl
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModulePointer;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModulePointer
 
-/**
- * @author dsl
- */
-public class ModulePointerImpl implements ModulePointer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModulePointerImpl");
-  private Module myModule;
-  private String myModuleName;
+import java.util.concurrent.atomic.AtomicReference
 
-  ModulePointerImpl(Module module) {
-    myModule = module;
-    myModuleName = null;
+class ModulePointerImpl : ModulePointer {
+
+  private val myModule: AtomicReference<Module>
+  private var myModuleName: String? = null
+
+  internal constructor(module: Module) {
+    myModule = AtomicReference(module)
+    myModuleName = null
   }
 
-  ModulePointerImpl(String name) {
-    myModule = null;
-    myModuleName = name;
+  internal constructor(name: String) {
+    myModule = AtomicReference<Module>(null)
+    myModuleName = name
   }
 
-  @Override
-  public Module getModule() {
-    return myModule;
+  override fun getModule(): Module? {
+    return myModule.get()
   }
 
-  @Override
-  @NotNull
-  public String getModuleName() {
-    if (myModule != null) {
-      return myModule.getName();
+  override fun getModuleName(): String {
+    val module = myModule.get()
+    return module?.name ?: myModuleName
+  }
+
+  internal fun moduleAdded(module: Module): Boolean {
+    if (!myModule.compareAndSet(null, module)) {
+      return false
     }
-    else {
-      return myModuleName;
-    }
+
+    LOG.assertTrue(myModuleName == module.name)
+    myModuleName = null
+    return true
   }
 
-  void moduleAdded(Module module) {
-    LOG.assertTrue(myModule == null);
-    LOG.assertTrue(myModuleName.equals(module.getName()));
-    myModuleName = null;
-    myModule = module;
+  internal fun moduleRemoved(module: Module) {
+    val resolvedModule = myModule.get()
+    LOG.assertTrue(resolvedModule === module)
+    myModuleName = resolvedModule.name
+    myModule.set(null)
   }
 
-  void moduleRemoved(Module module) {
-    LOG.assertTrue(myModule == module);
-    myModuleName = myModule.getName();
-    myModule = null;
+  companion object {
+    private val LOG = Logger.getInstance(ModulePointerImpl::class.java)
   }
-
 }
