@@ -58,7 +58,19 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
 
   protected String getInlineAllText() {
     final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
-    return RefactoringBundle.message("all.references.and.remove.the.field") + occurrencesString;
+    return RefactoringBundle.message("all.references.field", occurrencesString);
+  }
+
+  @Override
+  protected String getDeleteTheDeclarationText() {
+    if (myField.isWritable()) return RefactoringBundle.message("all.references.remove.field");
+    return super.getDeleteTheDeclarationText();
+  }
+
+  @Override
+  protected String getKeepTheDeclarationText() {
+    if (myField.isWritable()) return RefactoringBundle.message("all.references.keep.field");
+    return super.getKeepTheDeclarationText();
   }
 
   protected boolean isInlineThis() {
@@ -89,7 +101,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     super.doAction();
     invokeRefactoring(
       new InlineConstantFieldProcessor(myField, getProject(), myReferenceExpression, isInlineThisOnly(), isSearchInCommentsAndStrings(),
-                                       isSearchForTextOccurrences()));
+                                       isSearchForTextOccurrences(), isDeleteTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_FIELD_THIS = isInlineThisOnly();
