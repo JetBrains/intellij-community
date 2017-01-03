@@ -21,11 +21,8 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.refreshVfs
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
@@ -243,7 +240,9 @@ internal class ApplicationStoreTest {
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
   }
 
-  @Test fun `modification tracker`() {
+  @Test
+  @RunsInEdt
+  fun `modification tracker`() {
     testAppConfig.refreshVfs()
 
     @State(name = "A", storages = arrayOf(Storage("a.xml")))
@@ -305,7 +304,9 @@ internal class ApplicationStoreTest {
     </application>""".trimIndent())
   }
 
-  @Test fun PersistentStateComponentWithModificationTracker() {
+  @Test
+  @RunsInEdt
+  fun PersistentStateComponentWithModificationTracker() {
     testAppConfig.refreshVfs()
 
     @State(name = "TestPersistentStateComponentWithModificationTracker", storages = arrayOf(Storage("b.xml")))
