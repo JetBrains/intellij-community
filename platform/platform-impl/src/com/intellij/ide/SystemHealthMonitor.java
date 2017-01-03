@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -64,6 +68,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
+    checkSignalBlocking();
     checkLauncherScript();
     startDiskSpaceMonitoring();
   }
@@ -88,6 +93,24 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             }
           }
         }
+      }
+    }
+  }
+
+  private void checkSignalBlocking() {
+    if (SystemInfo.isUnix) {
+      try {
+        LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
+        Memory buf = new Memory(1024);
+        if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
+          long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);
+          if (handler == LibC.SIG_IGN) {
+            showNotification("ide.sigint.ignored.message");
+          }
+        }
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
       }
     }
   }
@@ -223,5 +246,12 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         JobScheduler.getScheduler().schedule(this, timeout, TimeUnit.SECONDS);
       }
     }, 1, TimeUnit.SECONDS);
+  }
+
+  @SuppressWarnings({"SpellCheckingInspection", "SameParameterValue"})
+  private interface LibC extends Library {
+    int SIGINT = 2;
+    long SIG_IGN = 1L;
+    int sigaction(int signum, Pointer act, Pointer oldact);
   }
 }
