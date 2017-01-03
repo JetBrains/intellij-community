@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,23 +144,29 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       return
     }
 
-    val updater = repositoryManager.fetch()
-    // we merge in EDT non-modal to ensure that new settings will be properly applied
-    app.invokeAndWait({
-                        catchAndLog {
-                          val updateResult = updater.merge()
-                          if (!onAppExit &&
-                              !app.isDisposeInProgress &&
-                              updateResult != null &&
-                              updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult, app.messageBus)) {
-                            // force to avoid saveAll & confirmation
-                            app.exit(true, true, true)
-                          }
-                        }
-                      }, ModalityState.NON_MODAL)
+    // update read-only sources at first (because contain scheme - to ensure that some scheme will exist when it will be set as current by some setting)
+    updateCloudSchemes(icsManager)
 
-    if (!updater.definitelySkipPush) {
-      repositoryManager.push()
+    if (hasUpstream) {
+      val updater = repositoryManager.fetch()
+      // we merge in EDT non-modal to ensure that new settings will be properly applied
+      app.invokeAndWait({
+                          catchAndLog {
+                            val updateResult = updater.merge()
+                            if (!onAppExit &&
+                                !app.isDisposeInProgress &&
+                                updateResult != null &&
+                                updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult,
+                                                                 app.messageBus)) {
+                              // force to avoid saveAll & confirmation
+                              app.exit(true, true, true)
+                            }
+                          }
+                        }, ModalityState.NON_MODAL)
+
+      if (!updater.definitelySkipPush) {
+        repositoryManager.push()
+      }
     }
   }
 }
