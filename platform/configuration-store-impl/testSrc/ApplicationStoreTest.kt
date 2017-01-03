@@ -26,6 +26,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.systemIndependentPath
@@ -250,8 +251,10 @@ internal class ApplicationStoreTest {
       var options = TestState()
 
       var stateCalledCount = 0
+      var lastGetStateStackTrace: String? = null
 
       override fun getState(): TestState {
+        lastGetStateStackTrace = ExceptionUtil.currentStackTrace()
         stateCalledCount++
         return options
       }
@@ -268,7 +271,10 @@ internal class ApplicationStoreTest {
     assertThat(component.stateCalledCount).isEqualTo(0)
 
     // test that store correctly set last modification count to component modification count on init
+    component.lastGetStateStackTrace = null
     saveStore()
+    @Suppress("USELESS_CAST")
+    assertThat(component.lastGetStateStackTrace as String?).isNull()
     assertThat(component.stateCalledCount).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
@@ -302,7 +308,7 @@ internal class ApplicationStoreTest {
   @Test fun PersistentStateComponentWithModificationTracker() {
     testAppConfig.refreshVfs()
 
-    @State(name = "A", storages = arrayOf(Storage("a.xml")))
+    @State(name = "TestPersistentStateComponentWithModificationTracker", storages = arrayOf(Storage("b.xml")))
     open class A : PersistentStateComponentWithModificationTracker<TestState> {
       var modificationCount: Long = 0
 
@@ -345,7 +351,7 @@ internal class ApplicationStoreTest {
     saveStore()
     assertThat(component.stateCalledCount).isEqualTo(1)
 
-    val componentFile = testAppConfig.resolve("a.xml")
+    val componentFile = testAppConfig.resolve("b.xml")
     assertThat(componentFile).doesNotExist()
 
     // update data but "forget" to update modification count
@@ -360,7 +366,7 @@ internal class ApplicationStoreTest {
 
     assertThat(componentFile).hasContent("""
     <application>
-      <component name="A" foo="new" />
+      <component name="TestPersistentStateComponentWithModificationTracker" foo="new" />
     </application>""".trimIndent())
   }
 
