@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -46,7 +48,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent, ModificationTracker, BulkFileListener {
+public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
   private final TempFileSystem TEMP_FILE_SYSTEM;
   private final LocalFileSystem LOCAL_FILE_SYSTEM;
@@ -75,18 +77,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     assertAllPointersDisposed();
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "VirtualFilePointerManager";
   }
 
   private static class EventDescriptor {
@@ -352,10 +344,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     for (FilePointerPartNode node : out) {
       node.addAllPointersTo(pointers);
     }
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @Override
