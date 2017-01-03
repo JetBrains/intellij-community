@@ -1,12 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -30,10 +25,10 @@ class SingularGuavaTableHandler extends SingularMapHandler {
     this.sortedCollection = sortedCollection;
   }
 
-  public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo) {
+  public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo, PsiSubstitutor substitutor) {
     final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
     final LombokLightFieldBuilder fieldBuilder =
-      new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(psiVariable.getType(), psiVariable.getProject()))
+      new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(substitutor.substitute(psiVariable.getType()), psiVariable.getProject()))
         .withModifier(PsiModifier.PRIVATE)
         .withNavigationElement(psiVariable)
         .withContainingClass(innerClass);

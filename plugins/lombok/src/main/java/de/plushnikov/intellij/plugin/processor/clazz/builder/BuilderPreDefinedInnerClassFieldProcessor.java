@@ -34,11 +34,11 @@ public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPr
     if (null == psiParentMethod) {
       final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiParentClass);
       final Collection<PsiField> builderFields = builderHandler.getBuilderFields(psiParentClass, existedFields, accessorsInfo);
-      target.addAll(builderHandler.generateFields(builderFields, psiBuilderClass, accessorsInfo));
+      target.addAll(builderHandler.generateFields(builderFields, psiBuilderClass, accessorsInfo, BuilderHandler.getBuilderSubstitutor(psiParentClass, psiBuilderClass)));
     } else {
       final AccessorsInfo accessorsInfo = AccessorsInfo.EMPTY;
       final Collection<PsiParameter> builderParameters = builderHandler.getBuilderParameters(psiParentMethod, existedFields);
-      target.addAll(builderHandler.generateFields(builderParameters, psiBuilderClass, accessorsInfo));
+      target.addAll(builderHandler.generateFields(builderParameters, psiBuilderClass, accessorsInfo, BuilderHandler.getBuilderSubstitutor(psiParentMethod, psiBuilderClass)));
     }
   }
 }

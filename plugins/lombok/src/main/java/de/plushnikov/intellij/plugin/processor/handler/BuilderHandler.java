@@ -2,21 +2,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiTypeParameterListOwner;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
@@ -89,6 +75,21 @@ public class BuilderHandler {
   public BuilderHandler(ToStringProcessor toStringProcessor, NoArgsConstructorProcessor noArgsConstructorProcessor) {
     this.toStringProcessor = toStringProcessor;
     this.noArgsConstructorProcessor = noArgsConstructorProcessor;
+  }
+
+  public static PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiTypeParameter[] typeParameters = classOrMethodToBuild.getTypeParameters();
+      PsiTypeParameter[] builderParams = innerClass.getTypeParameters();
+      if (typeParameters.length == builderParams.length) {
+        for (int i = 0; i < typeParameters.length; i++) {
+          PsiTypeParameter typeParameter = typeParameters[i];
+          substitutor = substitutor.put(typeParameter, PsiSubstitutor.EMPTY.substitute(builderParams[i]));
+        }
+      }
+    }
+    return substitutor;
   }
 
 
@@ -289,8 +290,9 @@ public class BuilderHandler {
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
     final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
-    builderClass.withFields(generateFields(builderParameters, builderClass, AccessorsInfo.EMPTY));
-    builderClass.withMethods(createMethods(psiClass, psiMethod, builderClass, psiBuilderType, psiAnnotation, builderParameters));
+    PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
+    builderClass.withFields(generateFields(builderParameters, builderClass, AccessorsInfo.EMPTY, builderSubstitutor));
+    builderClass.withMethods(createMethods(psiClass, psiMethod, builderClass, psiBuilderType, psiAnnotation, builderParameters, builderSubstitutor));
 
     return builderClass;
   }
@@ -305,14 +307,15 @@ public class BuilderHandler {
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
     final Collection<PsiField> psiFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet(), accessorsInfo);
-    builderClass.withFields(generateFields(psiFields, builderClass, accessorsInfo));
-    builderClass.withMethods(createMethods(psiClass, null, builderClass, psiBuilderType, psiAnnotation, psiFields));
+    PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
+    builderClass.withFields(generateFields(psiFields, builderClass, accessorsInfo, builderSubstitutor));
+    builderClass.withMethods(createMethods(psiClass, null, builderClass, psiBuilderType, psiAnnotation, psiFields, builderSubstitutor));
 
     return builderClass;
   }
 
   @NotNull
-  public Collection<PsiMethod> createMethods(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiType psiBuilderType, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<? extends PsiVariable> psiVariables) {
+  public Collection<PsiMethod> createMethods(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass psiBuilderClass, @NotNull PsiType psiBuilderType, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<? extends PsiVariable> psiVariables, PsiSubstitutor builderSubstitutor) {
     final Collection<PsiMethod> methodsIntern = PsiClassUtil.collectClassMethodsIntern(psiBuilderClass);
     final Set<String> existedMethodNames = new HashSet<String>(methodsIntern.size());
     for (PsiMethod existedMethod : methodsIntern) {
@@ -338,7 +341,7 @@ public class BuilderHandler {
         final PsiType returnType = createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(psiBuilderClass));
 
         final String singularName = handler.createSingularName(singularAnnotation, fieldName);
-        handler.addBuilderMethod(psiMethods, psiVariable, fieldName, psiBuilderClass, fluentBuilder, returnType, singularName);
+        handler.addBuilderMethod(psiMethods, psiVariable, fieldName, psiBuilderClass, fluentBuilder, returnType, singularName, builderSubstitutor);
       }
 
       handler.appendBuildPrepare(buildMethodPrepareString, psiVariable, fieldName);
@@ -352,7 +355,7 @@ public class BuilderHandler {
       if (buildMethodParameterString.length() > 0) {
         buildMethodParameterString.deleteCharAt(buildMethodParameterString.length() - 1);
       }
-      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, psiBuilderType, buildMethodName, buildMethodPrepareString.toString(), buildMethodParameterString.toString()));
+      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, builderSubstitutor.substitute(psiBuilderType), buildMethodName, buildMethodPrepareString.toString(), buildMethodParameterString.toString()));
 
     }
     if (!existedMethodNames.contains(ToStringProcessor.METHOD_NAME)) {
@@ -428,12 +431,12 @@ public class BuilderHandler {
   }
 
   @NotNull
-  public Collection<PsiField> generateFields(@NotNull Collection<? extends PsiVariable> psiVariables, @NotNull PsiClass psiBuilderClass, @NotNull AccessorsInfo accessorsInfo) {
+  public Collection<PsiField> generateFields(@NotNull Collection<? extends PsiVariable> psiVariables, @NotNull PsiClass psiBuilderClass, @NotNull AccessorsInfo accessorsInfo, PsiSubstitutor builderSubstitutor) {
     List<PsiField> fields = new ArrayList<PsiField>();
     for (PsiVariable psiVariable : psiVariables) {
       final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, Singular.class);
       BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiVariable, singularAnnotation, isShouldGenerateFullBodyBlock());
-      handler.addBuilderField(fields, psiVariable, psiBuilderClass, accessorsInfo);
+      handler.addBuilderField(fields, psiVariable, psiBuilderClass, accessorsInfo, builderSubstitutor);
     }
     return fields;
   }
