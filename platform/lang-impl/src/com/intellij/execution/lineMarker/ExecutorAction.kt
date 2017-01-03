@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,5 +105,25 @@ class ExecutorAction private constructor(private val origin: AnAction, private v
     }
 
     return executor.getStartActionText(BaseRunConfigurationAction.suggestRunActionName(configuration))
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other?.javaClass != javaClass) return false
+
+    other as ExecutorAction
+
+    if (origin != other.origin) return false
+    if (executor != other.executor) return false
+    if (order != other.order) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = origin.hashCode()
+    result = 31 * result + executor.hashCode()
+    result = 31 * result + order
+    return result
   }
 }
