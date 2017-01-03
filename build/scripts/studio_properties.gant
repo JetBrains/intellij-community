@@ -401,7 +401,7 @@ def getProperties(String home, String buildNumber) {
                 module("blaze-java")
                 module("blaze-testing")
               }
-              fileset(dir: "$home/../vendor/google3/blaze/base/lib") { include(name: "*.jar") }
+              fileset(dir: "$home/../vendor/google3/blaze/proto_deps") { include(name: "*.jar") }
             }
           }
         }
