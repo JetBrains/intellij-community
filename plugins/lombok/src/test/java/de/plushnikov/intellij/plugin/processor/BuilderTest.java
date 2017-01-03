@@ -106,4 +106,8 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   public void testBuilder$BuilderGenerics() throws IOException {
     doTest(true);
   }
+
+  public void testBuilder$BuilderGenericsOnConstructor() throws IOException {
+    doTest(true);
+  }
 }

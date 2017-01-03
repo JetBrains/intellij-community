@@ -372,7 +372,7 @@ public class BuilderHandler {
     final LombokLightClassBuilder classBuilder = new LombokLightClassBuilder(project, builderClassName, builderClassQualifiedName)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withParameterTypes(psiTypeParameterListOwner.getTypeParameterList())
+      .withParameterTypes(psiTypeParameterListOwner instanceof PsiMethod && ((PsiMethod) psiTypeParameterListOwner).isConstructor() ? psiClass.getTypeParameterList() : psiTypeParameterListOwner.getTypeParameterList())
       .withModifier(PsiModifier.PUBLIC);
     if (isStatic) {
       classBuilder.withModifier(PsiModifier.STATIC);
