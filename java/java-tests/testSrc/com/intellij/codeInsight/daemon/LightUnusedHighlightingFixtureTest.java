@@ -44,7 +44,6 @@ public class LightUnusedHighlightingFixtureTest extends LightCodeInsightFixtureT
 
       @Override
       public boolean isImplicitWrite(PsiElement element) {
-        new Throwable().printStackTrace();
         return element instanceof PsiField && "implicitWrite".equals(((PsiNamedElement)element).getName());
       }
     }, getTestRootDisposable());

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
 import com.intellij.openapi.extensions.Extensions;
@@ -40,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnusedSymbolUtil {
-  private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
 
   public static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
     return EntryPointsManagerBase.getInstance(project).isEntryPoint(modifierListOwner);
@@ -50,7 +48,7 @@ public class UnusedSymbolUtil {
                                         @NotNull PsiModifierListOwner element,
                                         @NotNull ProgressIndicator progress) {
     if (isInjected(project, element)) return true;
-    for (ImplicitUsageProvider provider : ourImplicitUsageProviders) {
+    for (ImplicitUsageProvider provider : Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
       progress.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
@@ -61,7 +59,7 @@ public class UnusedSymbolUtil {
   }
 
   public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @NotNull ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
+    for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
       progress.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
@@ -73,7 +71,7 @@ public class UnusedSymbolUtil {
   public static boolean isImplicitWrite(@NotNull Project project,
                                         @NotNull PsiVariable element,
                                         @NotNull ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
+    for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
       progress.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
