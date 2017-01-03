@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 public interface RegExpQuantifier extends RegExpAtom {
 
-    @NotNull
-    RegExpAtom getAtom();
-
     /**
      * The min,max occurrence count the quantifier represents. This is either an instance of
      * {@link org.intellij.lang.regexp.psi.RegExpQuantifier.SimpleCount} for the ?, * or +
