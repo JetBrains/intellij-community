@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT;
 
 /**
  * @author Maxim.Medvedev
@@ -146,7 +150,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     GenerationUtil.writeThrowsList(builder, method.getThrowsList(), getMethodExceptions(method), classNameProvider);
 
     if (!isAbstract) {
-      /************* body **********/
+      /* ************ body ********* */
       if (method instanceof GrMethod) {
         if (method instanceof GrReflectedMethod && ((GrReflectedMethod)method).getSkippedParameters().length > 0) {
           builder.append("{\n").append(generateDelegateCall((GrReflectedMethod)method)).append("\n}\n");
@@ -184,7 +188,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     for (GrParameter param : actualParams) {
       actual.add(param.getName());
     }
-    
+
     StringBuilder builder = new StringBuilder();
     if (method.isConstructor()) {
       builder.append("this");
@@ -337,8 +341,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
   @Override
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition) {
-    List<PsiMethod> result = new ArrayList<>(Arrays.asList(typeDefinition.getMethods()));
-
+    List<PsiMethod> result = ContainerUtil.filter(
+      typeDefinition.getMethods(),
+      m -> !GroovyObjectTransformationSupport.isGroovyObjectSupportMethod(m)
+    );
     if (typeDefinition instanceof GroovyScriptClass) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
       final String name = typeDefinition.getName();
@@ -368,7 +374,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     Map<PsiMethod, String> setters = context.getSetters();
     Set<Map.Entry<PsiMethod, String>> entries = setters.entrySet();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      entries = ImmutableSortedSet.copyOf((o1, o2) -> o1.getValue().compareTo(o2.getValue()), entries);
+      entries = ImmutableSortedSet.copyOf(Comparator.comparing(Map.Entry::getValue), entries);
     }
     for (Map.Entry<PsiMethod, String> entry : entries) {
       new SetterWriter(builder, psiClass, entry.getKey(), entry.getValue(), classNameProvider, context).write();
@@ -404,29 +410,31 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   }
 
   private static boolean shouldSkipInImplements(PsiClass typeDefinition, PsiClassType implementsType) {
-    return implementsType.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT) &&
-        typeDefinition instanceof GrTypeDefinition &&
-        !typeDefinition.isInterface() &&
-        !GenerationSettings.implementGroovyObjectAlways &&
-        !isInList(implementsType, ((GrTypeDefinition)typeDefinition).getImplementsClause()) &&
-        !containsMethodsOf((GrTypeDefinition)typeDefinition, GroovyCommonClassNames.GROOVY_OBJECT);
+    return implementsType.equalsToText(GROOVY_OBJECT) &&
+           typeDefinition instanceof GrTypeDefinition &&
+           !typeDefinition.isInterface() &&
+           !GenerationSettings.implementGroovyObjectAlways &&
+           !isInList(implementsType, ((GrTypeDefinition)typeDefinition).getImplementsClause()) &&
+           !containsMethodsOf((GrTypeDefinition)typeDefinition, GROOVY_OBJECT);
   }
 
   @Override
   public void writeExtendsList(StringBuilder text, PsiClass typeDefinition) {
     final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
+    PsiClassType type = null;
     if (extendsClassesTypes.length > 0) {
-      PsiClassType type = extendsClassesTypes[0];
-
-      if (type.equalsToText(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT) &&
-          typeDefinition instanceof GrTypeDefinition &&
-          !GenerationSettings.implementGroovyObjectAlways &&
-          !isInList(type, ((GrTypeDefinition)typeDefinition).getExtendsClause()) &&
-          !containsMethodsOf((GrTypeDefinition)typeDefinition, GroovyCommonClassNames.GROOVY_OBJECT)) {
-        return;
+      type = extendsClassesTypes[0];
+    }
+    else {
+      if (typeDefinition instanceof GrTypeDefinition) {
+        if (GenerationSettings.implementGroovyObjectAlways || containsMethodsOf((GrTypeDefinition)typeDefinition, GROOVY_OBJECT)) {
+          type = TypesUtil.createType(GROOVY_OBJECT_SUPPORT, typeDefinition);
+        }
       }
+    }
 
+    if (type != null) {
       text.append("extends ");
       TypeWriter.writeType(text, type, typeDefinition, classNameProvider);
       text.append(' ');

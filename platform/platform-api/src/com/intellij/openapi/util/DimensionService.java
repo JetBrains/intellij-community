@@ -280,7 +280,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
   private static Pair<String, Float> keyPair(String key, @Nullable Project project) {
     GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (env.isHeadlessInstance()) {
-      return new Pair(key + ".headless", 1f);
+      return new Pair<>(key + ".headless", 1f);
     }
     JFrame frame = null;
     final Component owner = IdeFocusManager.findInstance().getFocusOwner();
@@ -323,6 +323,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
       int dpi = ((int)(96 * JBUI.pixScale(gd)));
       realKey += "@" + dpi + "dpi";
     }
-    return new Pair(realKey, scale);
+    return new Pair<>(realKey, scale);
   }
 }

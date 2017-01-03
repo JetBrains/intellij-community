@@ -143,6 +143,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     };
 
     myLeftPanel = new NonOpaquePanel(new BorderLayout());
+    myLeftPanel.setBorder(JBUI.Borders.emptyLeft(6));
     myLeftPanel.add(mySearchFieldWrapper, BorderLayout.NORTH);
     myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
 

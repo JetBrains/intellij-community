@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,10 @@ public abstract class RunLineMarkerContributor {
   static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
 
   public static class Info {
-    final Icon icon;
-    final AnAction[] actions;
+    public final Icon icon;
+    public final AnAction[] actions;
 
-    final Function<PsiElement, String> tooltipProvider;
+    public final Function<PsiElement, String> tooltipProvider;
 
     public Info(Icon icon, @NotNull AnAction[] actions, @Nullable Function<PsiElement, String> tooltipProvider) {
       this.icon = icon;
@@ -51,6 +51,13 @@ public abstract class RunLineMarkerContributor {
 
     public Info(@NotNull final AnAction action) {
       this(action.getTemplatePresentation().getIcon(), new AnAction[]{action}, element -> getText(action, element));
+    }
+
+    /**
+     * Checks if this Info should replace another one, that is if the other should be discarded.
+     */
+    public boolean shouldReplace(@NotNull Info other) {
+      return false;
     }
   }
 

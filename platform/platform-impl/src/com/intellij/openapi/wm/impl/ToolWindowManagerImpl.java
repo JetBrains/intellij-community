@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1440,51 +1440,52 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (button == null) return;
 
         final Runnable show = () -> {
-          if (button.isShowing()) {
-            PositionTracker<Balloon> tracker = new PositionTracker<Balloon>(button) {
-              @Override
-              @Nullable
-              public RelativePoint recalculateLocation(Balloon object) {
-                Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
-                StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
-
-                if (twButton == null) {
-                  return null;
+            PositionTracker<Balloon> tracker;
+            if (button.isShowing()) {
+              tracker = new PositionTracker<Balloon>(button) {
+                @Override
+                @Nullable
+                public RelativePoint recalculateLocation(Balloon object) {
+                  Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
+                  StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
+                  if (twButton == null) {
+                    return null;
+                  }
+                  //noinspection ConstantConditions
+                  if (getToolWindow(toolWindowId).getAnchor() != anchor) {
+                    object.hide();
+                    return null;
+                  }
+                  final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
+                  return new RelativePoint(twButton, point);
                 }
-
-                //noinspection ConstantConditions
-                if (getToolWindow(toolWindowId).getAnchor() != anchor) {
-                  object.hide();
-                  return null;
+              };
+            }
+            else {
+              tracker = new PositionTracker<Balloon>(myToolWindowsPane) {
+                @Override
+                public RelativePoint recalculateLocation(Balloon object) {
+                  final Rectangle bounds = myToolWindowsPane.getBounds();
+                  final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
+                  if (ToolWindowAnchor.TOP == anchor) {
+                    target.y = 0;
+                  }
+                  else if (ToolWindowAnchor.BOTTOM == anchor) {
+                    target.y = bounds.height - 3;
+                  }
+                  else if (ToolWindowAnchor.LEFT == anchor) {
+                    target.x = 0;
+                  }
+                  else if (ToolWindowAnchor.RIGHT == anchor) {
+                    target.x = bounds.width;
+                  }
+                  return new RelativePoint(myToolWindowsPane, target);
                 }
-
-                final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
-                return new RelativePoint(twButton, point);
-              }
-            };
+              }; 
+            }
             if (!balloon.isDisposed()) {
               balloon.show(tracker, position.get());
             }
-          }
-          else {
-            final Rectangle bounds = myToolWindowsPane.getBounds();
-            final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
-            if (ToolWindowAnchor.TOP == anchor) {
-              target.y = 0;
-            }
-            else if (ToolWindowAnchor.BOTTOM == anchor) {
-              target.y = bounds.height - 3;
-            }
-            else if (ToolWindowAnchor.LEFT == anchor) {
-              target.x = 0;
-            }
-            else if (ToolWindowAnchor.RIGHT == anchor) {
-              target.x = bounds.width;
-            }
-            if (!balloon.isDisposed()) {
-              balloon.show(new RelativePoint(myToolWindowsPane, target), position.get());
-            }
-          }
         };
 
         if (!button.isValid()) {

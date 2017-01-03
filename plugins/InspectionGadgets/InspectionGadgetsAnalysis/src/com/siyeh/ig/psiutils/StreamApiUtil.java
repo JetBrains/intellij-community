@@ -46,4 +46,22 @@ public class StreamApiUtil {
     }
     return streamType;
   }
+
+  public static boolean isNullOrEmptyStream(PsiExpression expression) {
+    if(ExpressionUtils.isNullLiteral(expression)) {
+      return true;
+    }
+    if (!(expression instanceof PsiMethodCallExpression)) return false;
+    PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    String name = call.getMethodExpression().getReferenceName();
+    if ((!"empty".equals(name) && !"of".equals(name)) || !(call.getArgumentList().getExpressions().length == 0)) {
+      return false;
+    }
+    PsiMethod method = call.resolveMethod();
+    if (method == null || !method.hasModifierProperty(PsiModifier.STATIC)) return false;
+    PsiClass aClass = method.getContainingClass();
+    if(aClass == null) return false;
+    String qualifiedName = aClass.getQualifiedName();
+    return qualifiedName != null && qualifiedName.startsWith("java.util.stream.");
+  }
 }

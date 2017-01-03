@@ -153,10 +153,7 @@ public class LookupCellRenderer implements ListCellRenderer {
           presentation.setItemTextForeground(JBColor.RED);
           presentation.setItemText("Error occurred, see the log in Help | Show Log");
         }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        catch (Error e) {
+        catch (Exception | Error e) {
           LOG.error(e);
         }
       } else {
@@ -461,7 +458,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     Set<Font> fonts = ContainerUtil.newHashSet();
     FontPreferences fontPreferences = myLookup.getFontPreferences();
     for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences).getFont());
+      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences, null).getFont());
     }
 
     eachFont: for (Font font : fonts) {

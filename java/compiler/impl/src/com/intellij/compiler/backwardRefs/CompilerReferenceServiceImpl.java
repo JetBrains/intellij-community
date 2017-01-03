@@ -17,6 +17,9 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
+import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
+import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -503,5 +506,41 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   @NotNull
   public DirtyScopeHolder getDirtyScopeHolder() {
     return myDirtyScopeHolder;
+  }
+
+  @NotNull
+  public CompilerReferenceFindUsagesTestInfo getTestFindUsages(@NotNull PsiElement element) {
+    myReadDataLock.lock();
+    try {
+      final TIntHashSet referentFileIds = getReferentFileIds(element);
+      final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
+      return new CompilerReferenceFindUsagesTestInfo(referentFileIds, dirtyScopeInfo, myProject);
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @NotNull
+  public CompilerReferenceHierarchyTestInfo getTestHierarchy(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
+    myReadDataLock.lock();
+    try {
+      final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, scope, fileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
+      final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
+      return new CompilerReferenceHierarchyTestInfo(hierarchyInfo, dirtyScopeInfo);
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @NotNull
+  public CompilerReferenceHierarchyTestInfo getTestFunExpressions(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
+    myReadDataLock.lock();
+    try {
+      final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, scope, fileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
+      final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
+      return new CompilerReferenceHierarchyTestInfo(hierarchyInfo, dirtyScopeInfo);
+    } finally {
+      myReadDataLock.unlock();
+    }
   }
 }

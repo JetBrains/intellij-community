@@ -16,9 +16,6 @@
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.util.ReflectionUtil;
 import com.siyeh.ig.LightInspectionTestCase;
 
 @SuppressWarnings("WeakerAccess")
@@ -116,6 +113,26 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       "  public static class Err {\n" +
       "    public boolean isTVisible() { return true; }\n" +
       "  }\n"+
+      "}");
+    myFixture.configureByFiles("y/C.java","x/Sub.java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testQualifiedAccessFromSubclass() {
+    myFixture.allowTreeAccessForAllFiles();
+    myFixture.addFileToProject("x/Sub.java",
+      "package x; " +
+      "import y.C; " +
+      "class Sub extends C {\n" +
+      "  void bazz(C c) {\n" +
+      "    int a = c.foo; c.bar();" +
+      "  }\n" +
+      "}\n" +
+      "");
+    myFixture.addFileToProject("y/C.java",
+      "package y; public class C {\n" +
+      "  public int foo = 0;\n" +
+      "  public void bar() {}\n"+
       "}");
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();

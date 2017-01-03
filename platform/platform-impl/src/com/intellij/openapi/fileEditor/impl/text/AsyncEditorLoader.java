@@ -91,23 +91,27 @@ public class AsyncEditorLoader {
     long startStamp = myEditor.getDocument().getModificationStamp();
     return ourExecutor.submit(() -> {
       Ref<Runnable> ref = new Ref<>();
-      while (!myEditorComponent.isDisposed()) {
-        ProgressIndicatorUtils.runWithWriteActionPriority(
-          () -> ref.set(psiDocumentManager.commitAndRunReadAction(() -> myProject.isDisposed() ? EmptyRunnable.INSTANCE
-                                                                                               : myTextEditor.loadEditorInBackground())),
-          new ProgressIndicatorBase()
-        );
-        Runnable continuation = ref.get();
-        if (continuation != null) {
-          invokeLater(() -> {
-            if (startStamp == myEditor.getDocument().getModificationStamp()) loadingFinished(continuation);
-            else if (!myProject.isDisposed() && !myEditorComponent.isDisposed()) scheduleLoading();
-          });
-          return continuation;
+      try {
+        while (!myEditorComponent.isDisposed()) {
+          ProgressIndicatorUtils.runWithWriteActionPriority(
+            () -> ref.set(psiDocumentManager.commitAndRunReadAction(() -> myProject.isDisposed() ? EmptyRunnable.INSTANCE
+                                                                                                 : myTextEditor.loadEditorInBackground())),
+            new ProgressIndicatorBase()
+          );
+          Runnable continuation = ref.get();
+          if (continuation != null) {
+            invokeLater(() -> {
+              if (startStamp == myEditor.getDocument().getModificationStamp()) loadingFinished(continuation);
+              else if (!myProject.isDisposed() && !myEditorComponent.isDisposed()) scheduleLoading();
+            });
+            return continuation;
+          }
+          TimeUnit.MILLISECONDS.sleep(RETRY_TIME_MS);
         }
-        TimeUnit.MILLISECONDS.sleep(RETRY_TIME_MS);
       }
-      invokeLater(() -> loadingFinished(null));
+      finally {
+        if (ref.isNull()) invokeLater(() -> loadingFinished(null));
+      }
       return null;
     });
   }

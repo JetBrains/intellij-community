@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public static final String IML_EXTENSION = ".iml";
   protected final Project myProject;
   protected final MessageBus myMessageBus;
-  protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl();
+  protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
@@ -242,7 +242,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("modules loader", JobSchedulerImpl.CORES_COUNT);
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
-    Set<String> paths = new HashSet<>();
+    Set<String> paths = new THashSet<>();
     boolean parallel = Registry.is("parallel.modules.loading");
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
@@ -301,6 +301,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         }
         myFailedModulePaths.remove(modulePath);
       }
+      catch (IOException e) {
+        reportError(errors, task.second, e);
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -309,7 +312,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     progressIndicator.checkCanceled();
 
-    onModuleLoadErrors(errors);
+    onModuleLoadErrors(moduleModel, errors);
 
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
@@ -349,14 +352,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
   }
 
-  protected void onModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
+  private void onModuleLoadErrors(@NotNull ModuleModelImpl moduleModel, @NotNull List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
-    myModuleModel.myModulesCache = null;
+    moduleModel.myModulesCache = null;
     for (ModuleLoadingErrorDescription error : errors) {
-      final Module module = myModuleModel.getModuleByFilePath(error.getModulePath().getPath());
+      final Module module = moduleModel.getModuleByFilePath(error.getModulePath().getPath());
       if (module != null) {
-        myModuleModel.myModules.remove(module.getName());
+        moduleModel.myModules.remove(module.getName());
         ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
       }
     }
@@ -364,6 +367,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     fireModuleLoadErrors(errors);
   }
 
+  // overridden in Upsource
   protected void fireModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new RuntimeException(errors.get(0).getDescription());
@@ -484,7 +488,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   @Override
   public Module findModuleByName(@NotNull String name) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.findModuleByName(name);
   }
 
@@ -520,14 +523,23 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   @NotNull
   public List<Module> getModuleDependentModules(@NotNull Module module) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myModuleModel.getModuleDependentModules(module);
+    List<Module> result = new SmartList<>();
+    for (Module aModule : getModules()) {
+      if (isModuleDependsOn(aModule, module)) {
+        result.add(aModule);
+      }
+    }
+    return result;
   }
 
   @Override
   public boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myModuleModel.isModuleDependent(module, onModule);
+    return isModuleDependsOn(module, onModule);
+  }
+
+  private static boolean isModuleDependsOn(@NotNull Module module, @NotNull Module onModule) {
+    return ModuleRootManager.getInstance(module).isDependsOn(onModule);
   }
 
   protected void fireModulesAdded() {
@@ -555,7 +567,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @NotNull
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
-  class ModuleModelImpl implements ModifiableModuleModel {
+  static class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
     private volatile Module[] myModulesCache;
 
@@ -565,11 +577,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     private boolean myIsWritable;
     private Map<Module, String[]> myModuleGroupPath;
 
-    private ModuleModelImpl() {
+    private final ModuleManagerImpl myManager;
+
+    private ModuleModelImpl(@NotNull ModuleManagerImpl manager) {
+      myManager = manager;
       myIsWritable = false;
     }
 
     private ModuleModelImpl(@NotNull ModuleModelImpl that) {
+      myManager = that.myManager;
       myModules.putAll(that.myModules);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
@@ -651,7 +667,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
       ModuleEx module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = createModule(filePath);
+        module = myManager.createModule(filePath);
         final ModuleEx newModule = module;
         initModule(module, filePath, () -> {
           newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
@@ -666,7 +682,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     @NotNull
-    private String resolveShortWindowsName(@NotNull String filePath) {
+    private static String resolveShortWindowsName(@NotNull String filePath) {
       try {
         return FileUtil.resolveShortWindowsName(filePath);
       }
@@ -677,7 +693,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Nullable
     private ModuleEx getModuleByFilePath(@NotNull String filePath) {
-      for (Module module : myModules.values()) {
+      for (Module module : getModules()) {
         if (SystemInfo.isFileSystemCaseSensitive ? module.getModuleFilePath().equals(filePath) : module.getModuleFilePath().equalsIgnoreCase(filePath)) {
           return (ModuleEx)module;
         }
@@ -713,8 +729,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       String path = moduleFile.getPath();
       ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
       return () -> ApplicationManager.getApplication().runReadAction((ThrowableComputable<ModuleEx, IOException>)() -> {
-        if (myProject.isDisposed()) return null;
-        ModuleEx result = createAndLoadModule(path);
+        if (myManager.myProject.isDisposed()) return null;
+        ModuleEx result = myManager.createAndLoadModule(path);
         initModule(result, path, null);
         return result;
       });
@@ -767,20 +783,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       }));
     }
 
-    @NotNull private List<Module> getModuleDependentModules(Module module) {
-      List<Module> result = new ArrayList<>();
-      for (Module aModule : myModules.values()) {
-        if (isModuleDependent(aModule, module)) {
-          result.add(aModule);
-        }
-      }
-      return result;
-    }
-
-    private boolean isModuleDependent(Module module, Module onModule) {
-      return ModuleRootManager.getInstance(module).isDependsOn(onModule);
-    }
-
     @Override
     public void commit() {
       ModifiableRootModel[] rootModels = new ModifiableRootModel[0];
@@ -788,7 +790,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     private void commitWithRunnable(Runnable runnable) {
-      commitModel(this, runnable);
+      myManager.commitModel(this, runnable);
       clearRenamingStuff();
     }
 
@@ -801,14 +803,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final Set<Module> set = new THashSet<>(myModuleModel.myModules.values());
-      for (Module thisModule : myModules.values()) {
-        if (!set.contains(thisModule)) {
+      final Set<Module> existingModules = new THashSet<>(Arrays.asList(myManager.myModuleModel.getModules()));
+      for (Module thisModule : getModules()) {
+        if (!existingModules.contains(thisModule)) {
           Disposer.dispose(thisModule);
         }
       }
       for (Module moduleToDispose : myModulesToDispose) {
-        if (!set.contains(moduleToDispose)) {
+        if (!existingModules.contains(moduleToDispose)) {
           Disposer.dispose(moduleToDispose);
         }
       }
@@ -820,12 +822,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (!myIsWritable) {
         return false;
       }
-      return !myModules.equals(myModuleModel.myModules) || !Comparing.equal(myModuleModel.myModuleGroupPath, myModuleGroupPath);
+      return !myModules.equals(myManager.myModuleModel.myModules) || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath);
     }
 
     private void disposeModel() {
+      Module[] modules = getModules();
       myModulesCache = null;
-      for (final Module module : myModules.values()) {
+      for (Module module : modules) {
         Disposer.dispose(module);
       }
       myModules.clear();
@@ -860,14 +863,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myModuleModel.myModulesCache = null;
     incModificationCount();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final Collection<Module> oldModules = myModuleModel.myModules.values();
-    final Collection<Module> newModules = moduleModel.myModules.values();
+    final Collection<Module> oldModules = Arrays.asList(myModuleModel.getModules());
+    final Collection<Module> newModules = Arrays.asList(moduleModel.getModules());
 
     final Collection<Module> addedModules;
     final Collection<Module> removedModules;
     if (oldModules.isEmpty()) {
-      // create immutable copy
-      addedModules = new ArrayList<>(newModules);
+      addedModules = newModules;
       removedModules = Collections.emptyList();
     }
     else {
@@ -886,7 +888,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
       if (!moduleModel.myModulesToDispose.isEmpty()) {
         List<Module> neverAddedModules = new ArrayList<>(moduleModel.myModulesToDispose);
-        neverAddedModules.removeAll(myModuleModel.myModules.values());
+        neverAddedModules.removeAll(oldModules);
         for (final Module neverAddedModule : neverAddedModules) {
           neverAddedModule.putUserData(DISPOSED_MODULE_NAME, neverAddedModule.getName());
           Disposer.dispose(neverAddedModule);

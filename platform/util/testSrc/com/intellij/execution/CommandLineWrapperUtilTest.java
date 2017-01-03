@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,26 +30,25 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CommandLineWrapperUtilTest {
-
   @Test
   public void testManifestWithJarsAndDirectories() throws Exception {
-    final File tempDirectory = FileUtil.createTempDirectory("dirWithClasses", "suffix");
-    File jarFile = null;
+    File tempDirectory = FileUtil.createTempDirectory("dirWithClasses", "suffix");
     try {
-      final List<String> paths = Arrays.asList(tempDirectory.getAbsolutePath(), tempDirectory.getAbsolutePath() + "/directory with spaces/some.jar");
-      jarFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), paths);
-      final JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
-      final Manifest manifest = inputStream.getManifest();
-      final String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-      final String tempDirectoryUrl = tempDirectory.toURI().toURL().toString();
-      assertTrue(tempDirectoryUrl, tempDirectoryUrl.endsWith("/"));
-      assertEquals(tempDirectoryUrl + " " + tempDirectoryUrl +"directory%20with%20spaces/some.jar", classPath);
+      List<String> paths = Arrays.asList(tempDirectory.getAbsolutePath(), tempDirectory.getAbsolutePath() + "/directory with spaces/some.jar");
+      File jarFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), paths);
+      try (JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile))) {
+        Manifest manifest = inputStream.getManifest();
+        String classPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+        String tempDirectoryUrl = tempDirectory.toURI().toURL().toString();
+        assertTrue(tempDirectoryUrl, tempDirectoryUrl.endsWith("/"));
+        assertEquals(tempDirectoryUrl + " " + tempDirectoryUrl +"directory%20with%20spaces/some.jar", classPath);
+      }
+      finally {
+        FileUtil.delete(jarFile);
+      }
     }
     finally {
       FileUtil.delete(tempDirectory);
-      if (jarFile != null) {
-        FileUtil.delete(jarFile);
-      }
     }
   }
 }

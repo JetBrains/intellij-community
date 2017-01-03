@@ -160,6 +160,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
+    <runLineMarkerContributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyRunLineMarkerContributor"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
 
@@ -434,6 +435,8 @@
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
     <lang.parserDefinition language="PythonRegExp"
                            implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="PythonRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpSyntaxHighlighterFactory"/>
     <lang.parserDefinition language="PythonVerboseRegExp"
                            implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
     <lang.syntaxHighlighterFactory language="PythonVerboseRegExp"
@@ -604,6 +607,7 @@
                                                   implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
+    <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
   </extensions>
 
   <extensionPoints>

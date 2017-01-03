@@ -635,7 +635,7 @@ public class GenericsHighlightUtil {
     }
 
     if (superMethod.hasModifierProperty(PsiModifier.STATIC) && superContainingClass != null &&
-        superContainingClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(superContainingClass)) {
+        superContainingClass.isInterface() && !checkEqualsSuper && PsiUtil.isLanguageLevel8OrHigher(superContainingClass)) {
       return null;
     }
 

@@ -16,12 +16,12 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
@@ -32,21 +32,21 @@ import java.util.Arrays;
 class ComplexTextFragment extends TextFragment {
   private static final Logger LOG = Logger.getInstance(ComplexTextFragment.class);
   private static final double CLIP_MARGIN = 1e4;
-  
+
   @NotNull
   private final GlyphVector myGlyphVector;
   @Nullable
   private final short[] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
-  
-  ComplexTextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl,
-                      @NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
+
+  ComplexTextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
     super(end - start);
     assert start >= 0;
     assert end <= lineChars.length;
     assert start < end;
-    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(font, fontRenderContext, lineChars, start, end, isRtl);
+    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(fontInfo.getFont(), fontInfo.getFontRenderContext(),
+                                                                      lineChars, start, end, isRtl);
     int numChars = end - start;
     int numGlyphs = myGlyphVector.getNumGlyphs();
     float totalWidth = (float)myGlyphVector.getGlyphPosition(numGlyphs).getX();
@@ -106,7 +106,7 @@ class ComplexTextFragment extends TextFragment {
       }
     }
   }
-  
+
   private void setCharPosition(int logicalCharIndex, float x, boolean isRtl, int numChars) {
     int charPosition = isRtl ? numChars - logicalCharIndex - 2 : logicalCharIndex;
     if (charPosition >= 0 && charPosition < numChars - 1) {

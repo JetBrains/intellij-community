@@ -217,10 +217,7 @@ public class MigrationMapSet {
           myMaps.add(map);
         }
       }
-      catch(InvalidDataException e){
-        LOG.error("Invalid data in file: " + files[i].getAbsolutePath());
-      }
-      catch (JDOMException e) {
+      catch(InvalidDataException | JDOMException e){
         LOG.error("Invalid data in file: " + files[i].getAbsolutePath());
       }
       catch (IOException e) {

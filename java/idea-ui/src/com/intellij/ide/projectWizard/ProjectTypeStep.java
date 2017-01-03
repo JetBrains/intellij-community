@@ -715,6 +715,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   @Override
   public String getHelpId() {
+    if (getCustomStep() != null && getCustomStep().getHelpId() != null) {
+      return getCustomStep().getHelpId();
+    }
     return myContext.isCreatingNewProject() ? "Project_Category_and_Options" : "Module_Category_and_Options";
   }
 }

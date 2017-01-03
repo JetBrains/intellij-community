@@ -26,15 +26,19 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "DebuggerSettings",
@@ -53,9 +57,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String SUSPEND_THREAD = "SuspendThread";
   @NonNls public static final String SUSPEND_NONE = "SuspendNone";
 
-  @NonNls public static final String EVALUATE_FRAGMENT = "EvaluateFragment";
-  @NonNls public static final String EVALUATE_EXPRESSION = "EvaluateExpression";
-
   @NonNls public static final String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
   @NonNls public static final String RUN_HOTSWAP_NEVER = "RunHotswapNever";
   @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
@@ -64,20 +65,19 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
   @NonNls public static final String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
 
-  public boolean TRACING_FILTERS_ENABLED;
+  public boolean TRACING_FILTERS_ENABLED = true;
   public int DEBUGGER_TRANSPORT;
-  public boolean FORCE_CLASSIC_VM;
+  public boolean FORCE_CLASSIC_VM = true;
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
-  public boolean SKIP_SYNTHETIC_METHODS;
+  public boolean SKIP_SYNTHETIC_METHODS = true;
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
-  public boolean SKIP_CLASSLOADERS;
+  public boolean SKIP_CLASSLOADERS = true;
 
-  public String EVALUATION_DIALOG_TYPE;
-  public String RUN_HOTSWAP_AFTER_COMPILE;
-  public boolean COMPILE_BEFORE_HOTSWAP;
+  public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
+  public boolean COMPILE_BEFORE_HOTSWAP = true;
   public boolean HOTSWAP_HANG_WARNING_ENABLED = false;
 
   public volatile boolean WATCH_RETURN_VALUES = false;
@@ -90,6 +90,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
+
+  private List<CapturePoint> myCapturePoints = new CopyOnWriteArrayList<>();
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
 
@@ -114,7 +116,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @Nullable
   @Override
   public Element getState() {
-    Element state = XmlSerializer.serialize(this, new SkipDefaultValuesSerializationFilters());
+    Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
     try {
       DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
     }
@@ -192,6 +194,18 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       LOG.error(e);
     }
     return null;
+  }
+
+  @Tag("capture-points")
+  @AbstractCollection(surroundWithTag = false)
+  public List<CapturePoint> getCapturePoints() {
+    return myCapturePoints;
+  }
+
+  // for serialization, do not remove
+  @SuppressWarnings("unused")
+  public void setCapturePoints(List<CapturePoint> capturePoints) {
+    myCapturePoints = capturePoints;
   }
 
   public static class ContentState implements Cloneable {

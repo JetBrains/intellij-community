@@ -61,7 +61,7 @@ public class NewColorAndFontPanel extends JPanel {
 
     JPanel top = new JPanel(new BorderLayout());
 
-    top.add(mySchemesPanel.getRootPanel(), BorderLayout.NORTH);
+    top.add(mySchemesPanel, BorderLayout.NORTH);
     top.add(myOptionsPanel.getPanel(), BorderLayout.CENTER);
     if (optionsPanel instanceof ConsoleFontOptions) {
       JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.TRAILING));
@@ -220,7 +220,7 @@ public class NewColorAndFontPanel extends JPanel {
       .createBalloon();
     Disposer.register(ApplicationManager.getApplication(), balloon);
     balloon.show(new RelativePoint(
-      mySchemesPanel.getRootPanel(),
-      new Point(mySchemesPanel.getRootPanel().getWidth() / 10, mySchemesPanel.getRootPanel().getHeight())), Balloon.Position.below);
+      mySchemesPanel,
+      new Point(mySchemesPanel.getWidth() / 10, mySchemesPanel.getHeight())), Balloon.Position.below);
   }
 }

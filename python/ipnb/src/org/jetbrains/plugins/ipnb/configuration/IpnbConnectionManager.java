@@ -483,10 +483,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       try {
         connection.close();
       }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      catch (InterruptedException e) {
+      catch (IOException | InterruptedException e) {
         LOG.error(e);
       }
     }

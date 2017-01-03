@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,8 +80,10 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, "java.lang.Object");
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "null");
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, "");
-    properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, aClass.getQualifiedName());
-    properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, aClass.getName());
+    String fqn = aClass.getQualifiedName();
+    if (fqn != null) properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, fqn);
+    String className = aClass.getName();
+    if (className != null) properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, className);
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, "methodMissing");
 
     String bodyText;

@@ -95,7 +95,7 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpGroupImpl(node);
         } else if (type == RegExpElementTypes.PROPERTY) {
             return new RegExpPropertyImpl(node);
-        } else if (type == RegExpElementTypes.NAMED_CHARACTER_ELEMENT) {
+        } else if (type == RegExpElementTypes.NAMED_CHARACTER) {
             return new RegExpNamedCharacterImpl(node);
         } else if (type == RegExpElementTypes.SET_OPTIONS) {
             return new RegExpSetOptionsImpl(node);

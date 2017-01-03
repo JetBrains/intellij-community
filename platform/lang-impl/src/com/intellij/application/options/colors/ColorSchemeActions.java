@@ -16,6 +16,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SaveSchemeDialog;
+import com.intellij.application.options.schemes.AbstractSchemesPanel;
 import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -32,12 +33,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColorsScheme> {
+
+  protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme> schemesPanel) {
+    super(schemesPanel);
+  }
 
   @Override
   protected Collection<String> getSchemeImportersNames() {
@@ -56,7 +60,7 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
     }
     final SchemeImporter<EditorColorsScheme> importer = SchemeImporterEP.getImporter(importerName, EditorColorsScheme.class);
     if (importer != null) {
-      VirtualFile importSource = SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getParentComponent(), null);
+      VirtualFile importSource = SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null);
       if (importSource != null) {
         try {
           EditorColorsScheme imported =
@@ -73,7 +77,7 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
           }
         }
         catch (SchemeImportException e) {
-          SchemeImportUtil.showStatus(getParentComponent(), "Import failed: " + e.getMessage(), MessageType.ERROR);
+          SchemeImportUtil.showStatus(getSchemesPanel(), "Import failed: " + e.getMessage(), MessageType.ERROR);
         }
       }
     }
@@ -82,7 +86,7 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
   private boolean tryImportWithImportHandler(@NotNull String importerName) {
      for (ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
        if (importerName.equals(importHandler.getTitle())) {
-         importHandler.performImport(getParentComponent(), scheme -> {
+         importHandler.performImport(getSchemesPanel(), scheme -> {
            if (scheme != null) getOptions().addImportedScheme(scheme);
          });
          return true;
@@ -103,9 +107,9 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
   @Override
   protected void doSaveAs(@NotNull  EditorColorsScheme scheme) {
     List<String> names = ContainerUtil.newArrayList(getOptions().getSchemeNames());
-    String selectedName = AbstractColorsScheme.getDisplayName(scheme);
+    String selectedName = SchemeManager.getDisplayName(scheme);
     SaveSchemeDialog dialog =
-      new SaveSchemeDialog(getParentComponent(), ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
+      new SaveSchemeDialog(getSchemesPanel(), ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
     if (dialog.showAndGet()) {
       getOptions().saveSchemeAs(dialog.getSchemeName());
     }

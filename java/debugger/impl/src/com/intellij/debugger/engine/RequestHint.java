@@ -266,8 +266,7 @@ public class RequestHint {
           try {
             if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
           }
-          catch (Exception e) {LOG.error(e);}
-          catch (AssertionError e) {LOG.error(e);}
+          catch (Exception | AssertionError e) {LOG.error(e);}
         }
       }
       // smart step feature

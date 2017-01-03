@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -660,11 +660,7 @@ public class MavenIndex {
 
         indexId = createContext(getDataContextDir(dir), dir.getName());
       }
-      catch (IOException e) {
-        close(true);
-        throw new MavenIndexException(e);
-      }
-      catch (MavenServerIndexerException e) {
+      catch (IOException | MavenServerIndexerException e) {
         close(true);
         throw new MavenIndexException(e);
       }

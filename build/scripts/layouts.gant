@@ -49,9 +49,6 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
       jar("jps-builders-6.jar") {
         module("jps-builders-6")
       }
-      jar("jps-plugin-system.jar") {
-        module("jps-plugin-system")
-      }
       //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
       jar("groovy-jps-plugin.jar") {
         module("groovy-jps-plugin")

@@ -2,7 +2,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -106,7 +105,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           }
 
           val componentManager = storage.storageManager.componentManager!!
-          componentManager.messageBus.syncPublisher(StateStorageManager.STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
+          componentManager.messageBus.syncPublisher(STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
         }
       }
     })

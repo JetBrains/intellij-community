@@ -332,12 +332,7 @@ public class RegExpParser implements PsiParser {
 
     if (RegExpTT.GROUPS.contains(type)) {
       builder.advanceLexer();
-      if (!parsePattern(builder)) {
-        patternExpected(builder);
-      }
-      else {
-        checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
-      }
+      parseGroupEnd(builder);
       marker.done(RegExpElementTypes.GROUP);
     }
     else if (type == RegExpTT.SET_OPTIONS) {
@@ -354,12 +349,7 @@ public class RegExpParser implements PsiParser {
 
       if (builder.getTokenType() == RegExpTT.COLON) {
         builder.advanceLexer();
-        if (!parsePattern(builder)) {
-          patternExpected(builder);
-        }
-        else {
-          checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
-        }
+        parseGroupEnd(builder);
         marker.done(RegExpElementTypes.GROUP);
       }
       else {
@@ -367,11 +357,7 @@ public class RegExpParser implements PsiParser {
         marker.done(RegExpElementTypes.SET_OPTIONS);
       }
     }
-    else if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
-      builder.advanceLexer();
-      marker.done(RegExpElementTypes.CHAR);
-    }
-    else if (RegExpTT.CHARACTERS.contains(type)) {
+    else if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN || RegExpTT.CHARACTERS.contains(type)) {
       builder.advanceLexer();
       marker.done(RegExpElementTypes.CHAR);
     }
@@ -387,12 +373,7 @@ public class RegExpParser implements PsiParser {
       builder.advanceLexer();
       checkMatches(builder, RegExpTT.NAME, "Group name expected");
       checkMatches(builder, type == RegExpTT.RUBY_QUOTED_NAMED_GROUP ? RegExpTT.QUOTE : RegExpTT.GT, "Unclosed group name");
-      if (!parsePattern(builder)) {
-        patternExpected(builder);
-      }
-      else {
-        checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
-      }
+      parseGroupEnd(builder);
       marker.done(RegExpElementTypes.GROUP);
     }
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
@@ -413,18 +394,7 @@ public class RegExpParser implements PsiParser {
         builder.error("Group name or number expected");
       }
       checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
-      if (!parseBranch(builder)) {
-        patternExpected(builder);
-      }
-      else {
-        if (builder.getTokenType() == RegExpTT.UNION) {
-          builder.advanceLexer();
-          if (!parseBranch(builder)) {
-            patternExpected(builder);
-          }
-        }
-        checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
-      }
+      parseGroupEnd(builder);
       marker.done(RegExpElementTypes.PY_COND_REF);
     }
     else if (type == RegExpTT.PROPERTY) {
@@ -448,6 +418,15 @@ public class RegExpParser implements PsiParser {
       return null;
     }
     return marker;
+  }
+
+  private void parseGroupEnd(PsiBuilder builder) {
+    if (!parsePattern(builder)) {
+      patternExpected(builder);
+    }
+    else {
+      checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
+    }
   }
 
   private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {
@@ -516,7 +495,7 @@ public class RegExpParser implements PsiParser {
     checkMatches(builder, RegExpTT.LBRACE, "'{' expected");
     checkMatches(builder, RegExpTT.NAME, "Unicode character name expected");
     checkMatches(builder, RegExpTT.RBRACE, "'}' expected");
-    marker.done(RegExpElementTypes.NAMED_CHARACTER_ELEMENT);
+    marker.done(RegExpElementTypes.NAMED_CHARACTER);
   }
 
   private static void patternExpected(PsiBuilder builder) {

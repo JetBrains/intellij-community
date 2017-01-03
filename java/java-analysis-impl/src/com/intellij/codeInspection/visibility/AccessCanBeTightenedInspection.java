@@ -268,6 +268,17 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         return suggestPackageLocal(member);
       }
       if (innerClass != null && memberClass != null && innerClass.isInheritor(memberClass, true)) {
+        PsiExpression qualifier = null;
+        if (element instanceof PsiReferenceExpression) {
+          qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+        }
+        else if (element instanceof PsiMethodCallExpression) {
+          qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
+        }
+
+        if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
+          return PsiUtil.ACCESS_LEVEL_PUBLIC;
+        }
         //access from subclass can be via protected, except for constructors
         PsiElement resolved = element instanceof PsiReference ? ((PsiReference)element).resolve() : null;
         boolean isConstructor = resolved instanceof PsiClass && element.getParent() instanceof PsiNewExpression

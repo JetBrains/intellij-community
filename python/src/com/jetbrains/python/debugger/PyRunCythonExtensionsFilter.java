@@ -153,10 +153,7 @@ public class PyRunCythonExtensionsFilter implements Filter {
           }
         });
       }
-      catch (IOException e) {
-        showErrorDialog(e.getMessage());
-      }
-      catch (ExecutionException e) {
+      catch (IOException | ExecutionException e) {
         showErrorDialog(e.getMessage());
       }
     }

@@ -603,13 +603,7 @@ public class EduAdaptiveStepicConnector {
         wrapper = new Gson().fromJson(entityString, StepicWrappers.ResultSubmissionWrapper.class);
       }
     }
-    catch (InterruptedException e) {
-      LOG.warn(e.getMessage());
-    }
-    catch (IOException e) {
-      LOG.warn(e.getMessage());
-    }
-    catch (URISyntaxException e) {
+    catch (InterruptedException | URISyntaxException | IOException e) {
       LOG.warn(e.getMessage());
     }
     return wrapper;
@@ -679,10 +673,7 @@ public class EduAdaptiveStepicConnector {
       }
       return ids;
     }
-    catch (IOException e) {
-      LOG.warn(e.getMessage());
-    }
-    catch (URISyntaxException e) {
+    catch (IOException | URISyntaxException e) {
       LOG.warn(e.getMessage());
     }
     return Collections.emptyList();

@@ -74,7 +74,6 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(CellConstraints.class));  // jGoodies-forms
     cp.addAll(getInstrumentationUtilRoots());
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    cp.add(getJpsPluginSystemClassesPath().getAbsolutePath().replace('\\', '/'));
     cp.addAll(getJavac8RefScannerClasspath());
     //don't forget to update layoutCommunityJps() in layouts.gant accordingly
 
@@ -192,23 +191,6 @@ public class ClasspathBootstrap {
     else {
       //running from jars: instrumentation-util-8 is located in the same jar
       return Collections.singletonList(instrumentationUtilPath);
-    }
-  }
-
-  private static File getJpsPluginSystemClassesPath() {
-    File classesRoot = new File(getResourcePath(ClasspathBootstrap.class));
-    if (classesRoot.isDirectory()) {
-      //running from sources: load classes from .../out/production/jps-plugin-system
-      return new File(classesRoot.getParentFile(), "jps-plugin-system");
-    }
-    else {
-      File jar = new File(classesRoot.getParentFile(), "rt/jps-plugin-system.jar");
-      if (jar.exists()) {
-        //running from installed IDE
-        return jar;
-      }
-      //running from standalone JPS distribution
-      return new File(classesRoot.getParentFile(), "jps-plugin-system.jar");
     }
   }
 

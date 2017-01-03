@@ -17,6 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +26,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +57,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   public void addMacroReplacement(String path, String macroName) {
-    addReplacement(quotePath(path), "$" + macroName + "$", true);
+    addReplacement(FileUtil.toSystemIndependentName(path), "$" + macroName + "$", true);
   }
 
   public void addReplacement(String path, String macroExpr, boolean overwrite) {
@@ -171,10 +173,10 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private static int getIndex(@NotNull final Map.Entry<String, String> s) {
     final String replacement = s.getValue();
     if (replacement.contains("..")) return 1;
-    if (replacement.contains("$" + PathMacrosImpl.USER_HOME_MACRO_NAME + "$")) return 1;
-    if (replacement.contains("$" + PathMacrosImpl.APPLICATION_HOME_MACRO_NAME + "$")) return 1;
-    if (replacement.contains("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$")) return 3;
-    if (replacement.contains("$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$")) return 3;
+    if (replacement.contains("$" + PathMacroUtil.USER_HOME_NAME + "$")) return 1;
+    if (replacement.contains("$" + PathMacroUtil.APPLICATION_HOME_DIR + "$")) return 1;
+    if (replacement.contains("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$")) return 3;
+    if (replacement.contains("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$")) return 3;
     return 2;
   }
 

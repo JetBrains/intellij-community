@@ -16,19 +16,24 @@
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.layout.*
+import java.nio.file.Paths
 import javax.swing.JCheckBox
 
 internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
-  override fun getSettings() = icsManager.settings
+  override fun getSettings() = if (ApplicationManager.getApplication().isUnitTestMode) IcsSettings() else icsManager.settings
 
   override fun createUi() = IcsConfigurableUi()
 }
 
 internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
-  private val editors = listOf(createRepositoryListEditor(), createReadOnlySourcesEditor())
+  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(Paths.get(PathManager.getConfigPath()).resolve("settingsRepository")) else org.jetbrains.settingsRepository.icsManager
+
+  private val editors = listOf(createRepositoryListEditor(icsManager), createReadOnlySourcesEditor())
   private val autoSync = JCheckBox("Auto Sync")
 
   override fun dispose() {
@@ -49,7 +54,11 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
   override fun apply(settings: IcsSettings) {
     settings.autoSync = autoSync.isSelected
 
-    editors.forEach { it.apply(settings) }
+    editors.forEach {
+      if (it.isModified(settings)) {
+        it.apply(settings)
+      }
+    }
 
     saveSettings(settings, icsManager.settingsFile)
   }

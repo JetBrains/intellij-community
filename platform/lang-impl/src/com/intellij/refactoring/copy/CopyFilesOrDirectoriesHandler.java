@@ -240,10 +240,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
         }
       }
     }
-    catch (final IncorrectOperationException ex) {
-      Messages.showErrorDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"));
-    }
-    catch (final IOException ex) {
+    catch (final IncorrectOperationException | IOException ex) {
       Messages.showErrorDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"));
     }
   }

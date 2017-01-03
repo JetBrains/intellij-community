@@ -600,6 +600,53 @@ public class ControlFlowUtils {
     return false;
   }
 
+  /**
+   * Checks whether control flow after executing given statement will definitely not go into the next iteration of given loop.
+   *
+   * @param statement executed statement. It's not checked whether this statement itself breaks the loop.
+   * @param loop a surrounding loop. Must be parent of statement
+   * @return true if it can be statically defined that next loop iteration will not be executed.
+   */
+  @Contract("null, _ -> false")
+  public static boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
+    if(statement == null || statement == loop) return false;
+    for (PsiStatement sibling = nextExecutedStatement(statement); sibling != null; sibling = nextExecutedStatement(sibling)) {
+      if(sibling instanceof PsiContinueStatement) return false;
+      if(sibling instanceof PsiThrowStatement || sibling instanceof PsiReturnStatement) return true;
+      if(sibling instanceof PsiBreakStatement) {
+        PsiBreakStatement breakStatement = (PsiBreakStatement)sibling;
+        PsiStatement exitedStatement = breakStatement.findExitedStatement();
+        if(exitedStatement == loop) return true;
+        return flowBreaksLoop(exitedStatement, loop);
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiStatement nextExecutedStatement(PsiStatement statement) {
+    PsiStatement next = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+    while (next instanceof PsiBlockStatement) {
+      PsiStatement[] statements = ((PsiBlockStatement)next).getCodeBlock().getStatements();
+      if (statements.length == 0) break;
+      next = statements[0];
+    }
+    if (next == null) {
+      PsiElement parent = statement.getParent();
+      if (parent instanceof PsiCodeBlock) {
+        PsiElement gParent = parent.getParent();
+        if (gParent instanceof PsiBlockStatement || gParent instanceof PsiSwitchStatement) {
+          return nextExecutedStatement((PsiStatement)gParent);
+        }
+      }
+      else if (parent instanceof PsiLabeledStatement || parent instanceof PsiIfStatement || parent instanceof PsiSwitchLabelStatement
+               || parent instanceof PsiSwitchStatement) {
+        return nextExecutedStatement((PsiStatement)parent);
+      }
+    }
+    return next;
+  }
+
   private static class NakedBreakFinder extends JavaRecursiveElementWalkingVisitor {
     private boolean m_found;
 

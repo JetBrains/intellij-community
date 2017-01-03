@@ -26,7 +26,7 @@ class GroovyGStringKeyInspectionTest extends GrHighlightingTestBase {
   void testMapLiteral() {
     testHighlighting('''
       def key = 'key'
-      [<warning>"${key}"</warning>: 'value', (key): 'value']
+      [<warning>"${key}"</warning>: 'value', (key): "${key}"]
     ''')
   }
   void testMapLiteralGStringFromClosure() {
@@ -60,7 +60,7 @@ class GroovyGStringKeyInspectionTest extends GrHighlightingTestBase {
     testHighlighting('''
       def key = 'foo'
       def map = [:]
-      map.put(<warning>"${key}"</warning>, 'bar')
+      map.put(<warning>"${key}"</warning>, "${key}")
     ''')
   }
 

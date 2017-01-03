@@ -104,13 +104,7 @@ public class PsiCopyPasteManager {
     try {
       transferData = content.getTransferData(ourDataFlavor);
     }
-    catch (UnsupportedFlavorException e) {
-      return null;
-    }
-    catch (IOException e) {
-      return null;
-    }
-    catch (InvalidDnDOperationException e) {
+    catch (UnsupportedFlavorException | InvalidDnDOperationException | IOException e) {
       return null;
     }
 

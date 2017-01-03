@@ -35,7 +35,7 @@ public class AddActionToolbarTest extends GuiTestCase {
   public void testAddActionToolbar() throws Exception {
 
     //import project
-    IdeFrameFixture ideFrameFixture = importSimpleApplication();
+    IdeFrameFixture ideFrameFixture = importSimpleProject();
     ideFrameFixture.waitForBackgroundTasksToFinish();
 
     //check toolbar and open if is hidden
@@ -67,7 +67,7 @@ public class AddActionToolbarTest extends GuiTestCase {
     findAndClickOkButton(preferencesDialog);
     //choose File in project tree
 
-    ideFrameFixture.getProjectView().selectProjectPane().selectByPath(ideFrameFixture.getProject().getName(), "src", "Main.java").click(myRobot);
+    ideFrameFixture.getProjectView().selectProjectPane().selectByPath(ideFrameFixture.getProject().getName(), "src", "Main.java").click();
     //ActionButton("Print") wait and click
     ActionButtonFixture.findByActionId("Print", myRobot, ideFrameFixture.target()).waitUntilEnabledAndShowing().click();
     //Dialog("Print")

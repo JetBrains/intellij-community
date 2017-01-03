@@ -60,7 +60,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
         @Override
         public void setSelected(boolean state) {
-          myTextSettings.setShowWhiteSpaces(state);
+          myTextSettings.setShowWhitespaces(state);
         }
 
         @Override

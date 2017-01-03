@@ -21,11 +21,9 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.refreshVfs
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.systemIndependentPath
@@ -96,7 +94,7 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).isRegularFile
+    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).doesNotExist()
   }
 
   @Test fun `remove deprecated storage on write`() {
@@ -242,7 +240,9 @@ internal class ApplicationStoreTest {
     assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
   }
 
-  @Test fun `modification tracker`() {
+  @Test
+  @RunsInEdt
+  fun `modification tracker`() {
     testAppConfig.refreshVfs()
 
     @State(name = "A", storages = arrayOf(Storage("a.xml")))
@@ -250,8 +250,10 @@ internal class ApplicationStoreTest {
       var options = TestState()
 
       var stateCalledCount = 0
+      var lastGetStateStackTrace: String? = null
 
       override fun getState(): TestState {
+        lastGetStateStackTrace = ExceptionUtil.currentStackTrace()
         stateCalledCount++
         return options
       }
@@ -268,7 +270,10 @@ internal class ApplicationStoreTest {
     assertThat(component.stateCalledCount).isEqualTo(0)
 
     // test that store correctly set last modification count to component modification count on init
+    component.lastGetStateStackTrace = null
     saveStore()
+    @Suppress("USELESS_CAST")
+    assertThat(component.lastGetStateStackTrace as String?).isNull()
     assertThat(component.stateCalledCount).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
@@ -299,6 +304,73 @@ internal class ApplicationStoreTest {
     </application>""".trimIndent())
   }
 
+  @Test
+  @RunsInEdt
+  fun PersistentStateComponentWithModificationTracker() {
+    testAppConfig.refreshVfs()
+
+    @State(name = "TestPersistentStateComponentWithModificationTracker", storages = arrayOf(Storage("b.xml")))
+    open class A : PersistentStateComponentWithModificationTracker<TestState> {
+      var modificationCount: Long = 0
+
+      override fun getStateModificationCount() = modificationCount
+
+      var options = TestState()
+
+      var stateCalledCount = 0
+
+      override fun getState(): TestState {
+        stateCalledCount++
+        return options
+      }
+
+      override fun loadState(state: TestState) {
+        this.options = state
+      }
+
+      fun incModificationCount() {
+        modificationCount++
+      }
+    }
+
+    val component = A()
+    componentStore.initComponent(component, false)
+
+    assertThat(component.modificationCount).isEqualTo(0)
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // test that store correctly set last modification count to component modification count on init
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(0)
+
+    // change modification count - store will be forced to check changes using serialization and A.getState will be called
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    // test that store correctly save last modification time and doesn't call our state on next save
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(1)
+
+    val componentFile = testAppConfig.resolve("b.xml")
+    assertThat(componentFile).doesNotExist()
+
+    // update data but "forget" to update modification count
+    component.options.foo = "new"
+
+    saveStore()
+    assertThat(componentFile).doesNotExist()
+
+    component.incModificationCount()
+    saveStore()
+    assertThat(component.stateCalledCount).isEqualTo(2)
+
+    assertThat(componentFile).hasContent("""
+    <application>
+      <component name="TestPersistentStateComponentWithModificationTracker" foo="new" />
+    </application>""".trimIndent())
+  }
+
   @Test fun `do not check if only format changed for non-roamable storage`() {
     @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
@@ -323,8 +395,7 @@ internal class ApplicationStoreTest {
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
   private class MyStreamProvider : StreamProvider {
-    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) {
-    }
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) = true
 
     val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
@@ -341,13 +412,15 @@ internal class ApplicationStoreTest {
       return map
     }
 
-    override fun <R> read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> R): R {
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       val data = getMap(roamingType).get(fileSpec)
-      return data?.let { ByteArrayInputStream(it.toByteArray()) }.let(consumer)
+      data?.let { ByteArrayInputStream(it.toByteArray()) }.let(consumer)
+      return true
     }
 
-    override fun delete(fileSpec: String, roamingType: RoamingType) {
-      data[roamingType]?.remove(fileSpec)
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+      data.get(roamingType)?.remove(fileSpec)
+      return true
     }
   }
 

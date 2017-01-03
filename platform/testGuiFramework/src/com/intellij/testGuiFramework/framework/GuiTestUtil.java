@@ -548,13 +548,15 @@ GuiTestUtil {
     // First find the JBList which holds the popup. There could be other JBLists in the hierarchy,
     // so limit it to one that is actually used as a popup, as identified by its model being a ListPopupModel:
     assertNotNull(root);
-    JBList list = robot.finder().find(root, new GenericTypeMatcher<JBList>(JBList.class) {
+
+    JBList list = waitUntilFound(robot, new GenericTypeMatcher<JBList>(JBList.class) {
       @Override
       protected boolean isMatching(@NotNull JBList list) {
         ListModel model = list.getModel();
         return model instanceof ListPopupModel;
       }
     });
+
 
     // We can't use the normal JListFixture method to click by label since the ListModel items are
     // ActionItems whose toString does not reflect the text, so search through the model items instead:

@@ -813,6 +813,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return Collections.emptyList();
     }
     PsiElement element = position.getElementAt();
+    if (element == null) {
+      return Collections.emptyList();
+    }
     final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     do {
       PsiElement parent = element.getParent();

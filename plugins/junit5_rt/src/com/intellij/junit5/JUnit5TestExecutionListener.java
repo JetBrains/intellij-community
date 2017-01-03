@@ -281,6 +281,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         if (visited.add(childIdentifier)) {
           sendTreeUnderRoot(testPlan, childIdentifier, visited);
         }
+        else {
+          System.err.println("Identifier \'" + childIdentifier.getUniqueId() + "\' is reused");
+        }
       }
       myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "\']");
     }

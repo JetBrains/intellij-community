@@ -759,4 +759,22 @@ trait T2 extends T {
 ''')
     }
   }
+
+  void 'test rename reflected method with overloads'() {
+    fixture.with {
+      configureByText '_.groovy', '''\
+class A {
+  def fo<caret>o(a, b, c = 1) {}
+  def foo(d = 2) {}
+}
+'''
+      renameElementAtCaretUsingHandler 'foo1'
+      checkResult '''\
+class A {
+  def foo1(a, b, c = 1) {}
+  def foo1(d = 2) {}
+}
+'''
+    }
+  }
 }

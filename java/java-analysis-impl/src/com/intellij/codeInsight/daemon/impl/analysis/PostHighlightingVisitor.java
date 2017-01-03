@@ -339,10 +339,16 @@ class PostHighlightingVisitor {
         return info;
       }
     }
-    else if (UnusedSymbolUtil.isImplicitUsage(myProject, field, progress)) {
+    else if (UnusedSymbolUtil.isImplicitUsage(myProject, field, progress) && !UnusedSymbolUtil.isImplicitWrite(myProject, field, progress)) {
       return null;
     }
     else if (UnusedSymbolUtil.isFieldUnused(myProject, myFile, field, progress, helper)) {
+      if (UnusedSymbolUtil.isImplicitWrite(myProject, field, progress)) {
+        String message = JavaErrorMessages.message("private.field.is.not.used.for.reading", identifier.getText());
+        HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(field), myDeadCodeKey);
+        return highlightInfo;
+      }
       return formatUnusedSymbolHighlightInfo(project, "field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType, identifier);
     }
     return null;

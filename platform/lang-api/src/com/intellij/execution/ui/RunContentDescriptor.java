@@ -49,6 +49,7 @@ public class RunContentDescriptor implements Disposable {
   private boolean myAutoFocusContent = false;
 
   private Content myContent;
+  private String myContentToolWindowId;
   @NotNull
   private final AnAction[] myRestartActions;
 
@@ -177,6 +178,18 @@ public class RunContentDescriptor implements Disposable {
 
   public void setAttachedContent(@NotNull Content content) {
     myContent = content;
+  }
+
+  /**
+   * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
+   */
+  @Nullable
+  public String getContentToolWindowId() {
+    return myContentToolWindowId;
+  }
+
+  public void setContentToolWindowId(String contentToolWindowId) {
+    myContentToolWindowId = contentToolWindowId;
   }
 
   public boolean isActivateToolWindowWhenAdded() {

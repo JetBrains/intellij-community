@@ -171,7 +171,7 @@ public class JavacMain {
           extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
         }
         catch (Throwable e) {
-          fileManager.getContext().reportMessage(Diagnostic.Kind.MANDATORY_WARNING, extension.getId() + ": " + e.getMessage());
+          fileManager.getContext().reportMessage(Diagnostic.Kind.MANDATORY_WARNING, extension.getClass() + " : " + e.getMessage());
           e.printStackTrace(System.err);
         }
       }

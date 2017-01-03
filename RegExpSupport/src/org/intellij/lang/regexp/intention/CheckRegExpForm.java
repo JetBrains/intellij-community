@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -47,6 +48,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.lang.regexp.RegExpMatchResult;
+import org.intellij.lang.regexp.RegExpMatcherProvider;
 import org.intellij.lang.regexp.RegExpModifierProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -73,7 +76,6 @@ public class CheckRegExpForm {
   private JBLabel myMessage;
   private Project myProject;
 
-
   public CheckRegExpForm(@NotNull PsiFile regexpFile) {
     myRegexpFile = regexpFile;
   }
@@ -97,6 +99,7 @@ public class CheckRegExpForm {
 
     myRootPanel = new JPanel(new BorderLayout()) {
       Disposable disposable;
+      Alarm updater;
 
       @Override
       public void addNotify() {
@@ -112,28 +115,29 @@ public class CheckRegExpForm {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
 
-        final Alarm updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
-        Runnable scheduler = () -> {
-          TransactionId transactionId = TransactionGuard.getInstance().getContextTransaction();
-          updater.cancelAllRequests();
-          if (!updater.isDisposed()) {
-            updater.addRequest(() -> {
-              Boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
-              TransactionGuard.getInstance().submitTransaction(myProject, transactionId, () -> setBalloonState(correct));
-            }, 200);
-          }
-        };
+        updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
         DocumentAdapter documentListener = new DocumentAdapter() {
           @Override
           public void documentChanged(DocumentEvent e) {
-            scheduler.run();
+            update();
           }
         };
         myRegExp.addDocumentListener(documentListener);
         mySampleText.addDocumentListener(documentListener);
 
-        scheduler.run();
+        update();
         mySampleText.selectAll();
+      }
+
+      public void update() {
+        final TransactionId transactionId = TransactionGuard.getInstance().getContextTransaction();
+        updater.cancelAllRequests();
+        if (!updater.isDisposed()) {
+          updater.addRequest(() -> {
+            final RegExpMatchResult result = isMatchingText(myRegexpFile, mySampleText.getText());
+            TransactionGuard.getInstance().submitTransaction(myProject, transactionId, () -> setBalloonState(result));
+          }, 200);
+        }
       }
 
       @Override
@@ -146,9 +150,22 @@ public class CheckRegExpForm {
     myRootPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
   }
 
-  private void setBalloonState(Boolean correct) {
-    mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
-    myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
+  void setBalloonState(RegExpMatchResult result) {
+    mySampleText.setBackground(result == RegExpMatchResult.MATCHES ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
+    switch (result) {
+      case MATCHES:
+        myMessage.setText("Matches!");
+        break;
+      case NO_MATCH:
+        myMessage.setText("No match");
+        break;
+      case TIMEOUT:
+        myMessage.setText("Pattern is too complex");
+        break;
+      case BAD_REGEXP:
+        myMessage.setText("Bad pattern");
+        break;
+    }
     myRootPanel.revalidate();
     Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
     if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
@@ -166,14 +183,29 @@ public class CheckRegExpForm {
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    Boolean result = isMatchingText(regexpFile, sampleText);
-    return result != null && result;
+    final RegExpMatchResult result = isMatchingText(regexpFile, sampleText);
+    return result != null && result == RegExpMatchResult.MATCHES;
   }
-  private static Boolean isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
+  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
     final String regExp = regexpFile.getText();
 
-    Integer patternFlags = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
-      PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
+    final Language regexpFileLanguage = regexpFile.getLanguage();
+    final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regexpFileLanguage);
+    if (matcherProvider != null) {
+      final RegExpMatchResult result = ApplicationManager.getApplication().runReadAction((Computable<RegExpMatchResult>)() -> {
+        final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
+        if (host != null) {
+          return matcherProvider.matches(regExp, regexpFile, host, sampleText, 1000L);
+        }
+        return null;
+      });
+      if (result != null) {
+        return result;
+      }
+    }
+
+    final Integer patternFlags = ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
+      final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
       int flags = 0;
       if (host != null) {
         for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
@@ -186,12 +218,14 @@ public class CheckRegExpForm {
 
     try {
       //noinspection MagicConstant
-      return Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000)).matches();
+      return Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000)).matches()
+             ? RegExpMatchResult.MATCHES
+             : RegExpMatchResult.NO_MATCH;
     } catch (ProcessCanceledException pc) {
-      return null;
+      return RegExpMatchResult.TIMEOUT;
     }
     catch (Exception ignore) {}
 
-    return false;
+    return RegExpMatchResult.BAD_REGEXP;
   }
 }

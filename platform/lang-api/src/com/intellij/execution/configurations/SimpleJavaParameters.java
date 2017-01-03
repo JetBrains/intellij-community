@@ -45,8 +45,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myUseDynamicClasspath;
   private boolean myUseDynamicVMOptions;
-  private boolean myUseClasspathJar = false;
-  private boolean myPassProgramParametersViaClasspathJar;
+  private boolean myUseDynamicParameters;
+  private boolean myUseClasspathJar;
   private String myJarPath;
 
   @Nullable
@@ -111,33 +111,27 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseDynamicVMOptions;
   }
 
+  /** Allows to pass system properties via a temporary file in order to avoid "too long command line" problem. */
   public void setUseDynamicVMOptions(boolean useDynamicVMOptions) {
     myUseDynamicVMOptions = useDynamicVMOptions;
+  }
+
+  public boolean isDynamicParameters() {
+    return myUseDynamicParameters;
+  }
+
+  /** Allows to pass program parameters via a temporary file in order to avoid "too long command line" problem. */
+  public void setUseDynamicParameters(boolean useDynamicParameters) {
+    myUseDynamicParameters = useDynamicParameters;
   }
 
   public boolean isUseClasspathJar() {
     return myUseClasspathJar;
   }
 
-  /**
-   * Call this method and pass {@code true} to pass classpath of the application via MANIFEST.MF file in a specially generated classpath.jar
-   * archive instead of passing it via -classpath command line option. This may be needed to avoid problems with too long command line on Windows.
-   */
+  /** Allows to use a specially crafted .jar file instead of a custom class loader to pass classpath/properties/parameters. */
   public void setUseClasspathJar(boolean useClasspathJar) {
     myUseClasspathJar = useClasspathJar;
-  }
-
-  public boolean isPassProgramParametersViaClasspathJar() {
-    return myPassProgramParametersViaClasspathJar;
-  }
-
-  /**
-   * Call this method and pass {@code true} to pass program parameters via attribute in MANIFEST.MF of the classpath jar instead of passing
-   * them via command line. This may be needed to avoid problems with too long command line on Windows.
-   */
-  public void setPassProgramParametersViaClasspathJar(@SuppressWarnings("SameParameterValue") boolean passProgramParametersViaClasspathJar) {
-    LOG.assertTrue(myUseClasspathJar);
-    myPassProgramParametersViaClasspathJar = passProgramParametersViaClasspathJar;
   }
 
   public String getJarPath() {
@@ -163,4 +157,17 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #isDynamicParameters()} (to be removed in IDEA 2018) */
+  public boolean isPassProgramParametersViaClasspathJar() {
+    return isDynamicParameters();
+  }
+
+  /** @deprecated use {@link #setUseDynamicParameters(boolean)} (to be removed in IDEA 2018) */
+  public void setPassProgramParametersViaClasspathJar(@SuppressWarnings("SameParameterValue") boolean passProgramParametersViaClasspathJar) {
+    LOG.assertTrue(myUseClasspathJar);
+    setUseDynamicParameters(passProgramParametersViaClasspathJar);
+  }
+  //</editor-fold>
 }

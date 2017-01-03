@@ -17,20 +17,18 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.font.FontDesignMetrics;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.*;
@@ -43,30 +41,47 @@ public class FontInfo {
   private static final Logger LOG = Logger.getInstance(FontInfo.class);
   
   private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = Registry.is("ide.mac.fix.font.fallback");
-  private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
+  private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
+  private static final Font DUMMY_FONT = new Font(null);
 
   private final Font myFont;
   private final int mySize;
   @JdkConstants.FontStyle private final int myStyle;
   private final boolean myUseLigatures;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
+  private final FontRenderContext myContext;
   private FontMetrics myFontMetrics = null;
 
+  /**
+   * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
+   */
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
-    this(familyName, size, style, false);    
+    this(familyName, size, style, style, false, null);
   }
-  
+
+  /**
+   * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
+   */
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures) {
-    this(familyName, size, style, style, useLigatures);    
+    this(familyName, size, style, useLigatures, null);
   }
-  
-  FontInfo(final String familyName, final int size, 
-           @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle, boolean useLigatures) {
+
+  /**
+   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
+   */
+  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures,
+                  FontRenderContext fontRenderContext) {
+    this(familyName, size, style, style, useLigatures, fontRenderContext);
+  }
+
+  FontInfo(final String familyName, final int size,
+           @JdkConstants.FontStyle int style, @JdkConstants.FontStyle int realStyle, boolean useLigatures, FontRenderContext context) {
     mySize = size;
     myStyle = style;
     myUseLigatures = useLigatures;
     Font font = new Font(familyName, style, size);
     myFont = useLigatures ? getFontWithLigaturesEnabled(font, realStyle) : font;
+    myContext = context;
   }
 
   @NotNull
@@ -155,7 +170,7 @@ public class FontInfo {
   private boolean canDisplayImpl(int codePoint) {
     if (!Character.isValidCodePoint(codePoint)) return false;
     if (USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE) {
-      return myFont.createGlyphVector(DUMMY_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0) > 0;
+      return myFont.createGlyphVector(DEFAULT_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0) > 0;
     }
     else {
       return myFont.canDisplay(codePoint);
@@ -176,27 +191,20 @@ public class FontInfo {
     return FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
   }
 
-  public FontMetrics fontMetrics() {
+  public synchronized FontMetrics fontMetrics() {
     if (myFontMetrics == null) {
-      // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
-      // width is not equal to the antialiased one (IDEA-81539).
-      final Graphics graphics = createReferenceGraphics();
-      graphics.setFont(myFont);
-      myFontMetrics = graphics.getFontMetrics();
+      myFontMetrics = FontDesignMetrics.getMetrics(myFont, myContext == null ? getFontRenderContext(null) : myContext);
     }
     return myFontMetrics;
   }
 
-  public static Graphics2D createReferenceGraphics() {
-    Graphics2D graphics = (Graphics2D)UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
-    EditorUIUtil.setupAntialiasing(graphics);
-    return graphics;
+  public static FontRenderContext getFontRenderContext(Component component) {
+    if (component == null) {
+        return DEFAULT_CONTEXT;
+    }
+    return component.getFontMetrics(DUMMY_FONT).getFontRenderContext();
   }
-  
-  void reset() {
-    myFontMetrics = null;
-  }
-  
+
   public int getSize() {
     return mySize;
   }
@@ -209,7 +217,11 @@ public class FontInfo {
   public boolean areLigaturesEnabled() {
     return myUseLigatures;
   }
-  
+
+  public FontRenderContext getFontRenderContext() {
+    return myContext;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

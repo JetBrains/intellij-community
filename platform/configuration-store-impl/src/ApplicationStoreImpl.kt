@@ -23,6 +23,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -86,16 +87,17 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
 
   override fun dataLoadedFromProvider(storage: FileBasedStorage, element: Element?) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
-    try {
+    if (storage.fileSpec != "path.macros.xml") {
+      return
+    }
+
+    LOG.catchAndLog {
       if (element == null) {
         storage.file.delete()
       }
       else {
         JDOMUtil.writeElement(element, storage.file.outputStream().writer(), "\n")
       }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
     }
   }
 

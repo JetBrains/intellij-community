@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
@@ -41,19 +42,19 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @NotNull private final Project myProject;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLog myLog;
-  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
 
   @NotNull private final Collection<VcsLogListener> myLogListeners = ContainerUtil.newArrayList();
   @NotNull private final VisiblePackChangeListener myVisiblePackChangeListener;
-  @NotNull private final MyTextFilterSettings myTextFilterSettings;
+  @NotNull private final VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener myPropertiesListener;
 
   @NotNull private VisiblePack myVisiblePack;
 
   public VcsLogUiImpl(@NotNull VcsLogData logData,
                       @NotNull Project project,
                       @NotNull VcsLogColorManager manager,
-                      @NotNull VcsLogUiProperties uiProperties,
+                      @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VcsLogFilterer filterer) {
     myProject = project;
     myColorManager = manager;
@@ -64,7 +65,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myLog = new VcsLogImpl(logData, this);
     myVisiblePack = VisiblePack.EMPTY;
     myMainFrame = new MainFrame(logData, this, project, uiProperties, myLog, myVisiblePack);
-    myTextFilterSettings = new MyTextFilterSettings();
 
     for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -76,6 +76,9 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       }
     });
     myFilterer.addVisiblePackChangeListener(myVisiblePackChangeListener);
+
+    myPropertiesListener = new MyVcsLogUiPropertiesListener();
+    myUiProperties.addChangeListener(myPropertiesListener);
   }
 
   public void requestFocus() {
@@ -94,7 +97,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     myVisiblePack = pack;
 
     myMainFrame.updateDataPack(myVisiblePack, permGraphChanged);
-    setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
+    myPropertiesListener.onShowLongEdgesChanged();
     fireFilterChangeEvent(myVisiblePack, permGraphChanged);
     repaintUI();
   }
@@ -127,55 +130,28 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   public void expandAll() {
     performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND),
-                      "Expanding " + (getBekType() == PermanentGraph.SortType.LinearBek ? "merges..." : "linear branches..."));
+                      "Expanding " +
+                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
+                       ? "merges..."
+                       : "linear branches..."));
   }
 
   public void collapseAll() {
     performLongAction(new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE),
-                      "Collapsing " + (getBekType() == PermanentGraph.SortType.LinearBek ? "merges..." : "linear branches..."));
-  }
-
-  @Override
-  public void setLongEdgeVisibility(boolean visibility) {
-    myVisiblePack.getVisibleGraph().getActionController().setLongEdgesHidden(!visibility);
-    myUiProperties.setLongEdgesVisibility(visibility);
-  }
-
-  @Override
-  public boolean areLongEdgesVisible() {
-    return myUiProperties.areLongEdgesVisible();
-  }
-
-  @Override
-  public void setBekType(@NotNull PermanentGraph.SortType bekType) {
-    myUiProperties.setBek(bekType.ordinal());
-    myFilterer.onSortTypeChange(bekType);
-  }
-
-  @Override
-  @NotNull
-  public PermanentGraph.SortType getBekType() {
-    return PermanentGraph.SortType.values()[myUiProperties.getBekSortType()];
-  }
-
-  public void setShowRootNames(boolean isShowRootNames) {
-    myUiProperties.setShowRootNames(isShowRootNames);
-    myMainFrame.getGraphTable().rootColumnUpdated();
+                      "Collapsing " +
+                      (myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
+                       ? "merges..."
+                       : "linear branches..."));
   }
 
   public boolean isShowRootNames() {
-    return myUiProperties.isShowRootNames();
+    return myUiProperties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES);
   }
 
   @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
-    return myUiProperties.isHighlighterEnabled(id);
-  }
-
-  @Override
-  public void setHighlighterEnabled(@NotNull String id, boolean enabled) {
-    myUiProperties.enableHighlighter(id, enabled);
-    repaintUI();
+    VcsLogHighlighterProperty property = VcsLogHighlighterProperty.get(id);
+    return myUiProperties.exists(property) && myUiProperties.get(property);
   }
 
   @Override
@@ -183,43 +159,12 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     return myMainFrame.areGraphActionsEnabled();
   }
 
-  @Override
-  public boolean isShowDetails() {
-    return myUiProperties.isShowDetails();
-  }
-
-  @Override
-  public void setShowDetails(boolean showDetails) {
-    myMainFrame.showDetails(showDetails);
-    myUiProperties.setShowDetails(showDetails);
-  }
-
-  @Override
   public boolean isCompactReferencesView() {
-    return myUiProperties.isCompactReferencesView();
+    return myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW);
   }
 
-  @Override
-  public void setCompactReferencesView(boolean compact) {
-    myUiProperties.setCompactReferencesView(compact);
-    myMainFrame.getGraphTable().setCompactReferencesView(compact);
-  }
-
-  @Override
   public boolean isShowTagNames() {
-    return myUiProperties.isShowTagNames();
-  }
-
-  @Override
-  public void setShowTagNames(boolean show) {
-    myUiProperties.setShowTagNames(show);
-    myMainFrame.getGraphTable().setShowTagNames(show);
-  }
-
-  @NotNull
-  @Override
-  public TextFilterSettings getTextFilterSettings() {
-    return myTextFilterSettings;
+    return myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES);
   }
 
   @NotNull
@@ -360,31 +305,54 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
 
   @Override
   public void dispose() {
+    myUiProperties.removeChangeListener(myPropertiesListener);
     myFilterer.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;
   }
 
-  private class MyTextFilterSettings implements TextFilterSettings {
+  public MainVcsLogUiProperties getProperties() {
+    return myUiProperties;
+  }
+
+  private class MyVcsLogUiPropertiesListener extends VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener {
     @Override
-    public boolean isFilterByRegexEnabled() {
-      return myUiProperties.getTextFilterSettings().isFilterByRegexEnabled();
+    public void onShowDetailsChanged() {
+      myMainFrame.showDetails(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
     }
 
     @Override
-    public void setFilterByRegexEnabled(boolean enabled) {
-      myUiProperties.getTextFilterSettings().setFilterByRegexEnabled(enabled);
-      applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+    public void onShowLongEdgesChanged() {
+      myVisiblePack.getVisibleGraph().getActionController().setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
 
     @Override
-    public boolean isMatchCaseEnabled() {
-      return myUiProperties.getTextFilterSettings().isMatchCaseEnabled();
+    public void onBekChanged() {
+      myFilterer.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
     }
 
     @Override
-    public void setMatchCaseEnabled(boolean enabled) {
-      myUiProperties.getTextFilterSettings().setMatchCaseEnabled(enabled);
+    public void onShowRootNamesChanged() {
+      myMainFrame.getGraphTable().rootColumnUpdated();
+    }
+
+    @Override
+    public void onHighlighterChanged() {
+      repaintUI();
+    }
+
+    @Override
+    public void onCompactReferencesViewChanged() {
+      myMainFrame.getGraphTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
+    }
+
+    @Override
+    public void onShowTagNamesChanged() {
+      myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+    }
+
+    @Override
+    public void onTextFilterSettingsChanged() {
       applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
     }
   }

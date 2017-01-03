@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.FormattingModeAwareIndentAdjuster;
 import org.jetbrains.annotations.NotNull;
 
 public class FormatterBasedIndentAdjuster  {
@@ -64,7 +65,10 @@ public class FormatterBasedIndentAdjuster  {
       int lineStart = myDocument.getLineStartOffset(myLine);
       CommandProcessor.getInstance().runUndoTransparentAction(() ->
         ApplicationManager.getApplication().runWriteAction(() -> {
-          CodeStyleManager.getInstance(myProject).adjustLineIndent(myDocument, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER);
+          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+          if (codeStyleManager instanceof FormattingModeAwareIndentAdjuster) {
+            ((FormattingModeAwareIndentAdjuster)codeStyleManager).adjustLineIndent(myDocument, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER);
+          }
         }));
     }
   }

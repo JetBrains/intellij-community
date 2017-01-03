@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,11 +140,14 @@ public class UrlClassLoader extends ClassLoader {
       return this; 
     }
     
-    public Builder allowUnescaped() { return allowUnescaped(true); }
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    public Builder noPreload() { return preload(false); }
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
+    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+
+    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
+    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
+    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
+    public Builder preload(boolean preload) { myPreload = preload; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }

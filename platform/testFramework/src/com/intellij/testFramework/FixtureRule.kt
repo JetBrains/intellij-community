@@ -64,7 +64,7 @@ open class ApplicationRule : ExternalResource() {
 /**
  * Project created on request, so, could be used as a bare (only application).
  */
-class ProjectRule() : ApplicationRule() {
+class ProjectRule : ApplicationRule() {
   companion object {
     private var sharedProject: ProjectEx? = null
     private val projectOpened = AtomicBoolean()
@@ -242,7 +242,7 @@ fun Project.use(task: (Project) -> Unit) {
   }
 }
 
-class DisposeNonLightProjectsRule() : ExternalResource() {
+class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {
     val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance() as ProjectManagerImpl
     projectManager?.openProjects?.forEachGuaranteed {

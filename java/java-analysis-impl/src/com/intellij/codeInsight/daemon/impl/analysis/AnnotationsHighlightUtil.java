@@ -445,55 +445,6 @@ public class AnnotationsHighlightUtil {
     return ref;
   }
 
-  static HighlightInfo checkForeignInnerClassesUsed(final PsiAnnotation annotation) {
-    final HighlightInfo[] infos = new HighlightInfo[1];
-    final PsiAnnotationOwner owner = annotation.getOwner();
-    if (owner instanceof PsiModifierList) {
-      final PsiElement parent = ((PsiModifierList)owner).getParent();
-      if (parent instanceof PsiClass) {
-        annotation.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitElement(PsiElement element) {
-            if (infos[0] != null) return;
-            super.visitElement(element);
-          }
-
-          @Override
-          public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
-            super.visitClassObjectAccessExpression(expression);
-            final PsiTypeElement operand = expression.getOperand();
-            final PsiClass classType = PsiUtil.resolveClassInType(operand.getType());
-            if (classType != null) {
-              checkAccessibility(operand.getInnermostComponentReferenceElement(), classType, HighlightUtil.formatClass(classType));
-            }
-          }
-
-          @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement resolve = expression.resolve();
-            if (resolve instanceof PsiField) {
-              checkAccessibility(expression, (PsiMember)resolve, HighlightUtil.formatField((PsiField)resolve));
-            }
-          }
-
-          private void checkAccessibility(PsiJavaCodeReferenceElement expression, PsiMember resolve, String memberString) {
-            if (resolve.hasModifierProperty(PsiModifier.PRIVATE) &&
-                PsiTreeUtil.isAncestor(parent, resolve, true)) {
-              String description = JavaErrorMessages.message("private.symbol",
-                                                             memberString,
-                                                             HighlightUtil.formatClass((PsiClass)parent));
-              infos[0] =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-              HighlightUtil.registerAccessQuickFixAction(resolve, expression, infos[0], null);
-            }
-          }
-        });
-      }
-    }
-    return infos[0];
-  }
-
   @Nullable
   static HighlightInfo checkAnnotationType(PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();

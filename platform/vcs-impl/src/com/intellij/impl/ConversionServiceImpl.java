@@ -109,10 +109,7 @@ public class ConversionServiceImpl extends ConversionService {
       saveConversionResult(context);
       return new ConversionResultImpl(runners);
     }
-    catch (CannotConvertException e) {
-      listener.error(e.getMessage());
-    }
-    catch (IOException e) {
+    catch (CannotConvertException | IOException e) {
       listener.error(e.getMessage());
     }
     return ConversionResultImpl.ERROR_OCCURRED;

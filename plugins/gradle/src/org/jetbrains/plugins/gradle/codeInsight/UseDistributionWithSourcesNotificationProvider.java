@@ -117,9 +117,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
         return panel;
       }
     }
-    catch (ProcessCanceledException ignored) {
-    }
-    catch (IndexNotReadyException ignored) {
+    catch (ProcessCanceledException | IndexNotReadyException ignored) {
     }
 
     return null;

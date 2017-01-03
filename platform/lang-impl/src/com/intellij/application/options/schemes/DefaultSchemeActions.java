@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,8 +33,14 @@ import java.util.List;
 public abstract class DefaultSchemeActions<T extends Scheme> {
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
+  private AbstractSchemesPanel<T> mySchemesPanel;
+  
+  public enum SchemeLevel {
+    IDE_Only, IDE, Project
+  }
 
-  protected DefaultSchemeActions() {
+  protected DefaultSchemeActions(@NotNull AbstractSchemesPanel<T> schemesPanel) {
+    mySchemesPanel = schemesPanel;
     mySchemeImportersNames = getSchemeImportersNames();
     mySchemeExporterNames = getSchemeExporterNames();
   }
@@ -173,7 +178,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
           return namedActions.toArray(new AnAction[namedActions.size()]);
         }
       }, e.getDataContext(), null, true);
-      listPopup.showUnderneathOf(getParentComponent());
+      listPopup.showUnderneathOf(mySchemesPanel.getToolbar());
     }
 
     @NotNull
@@ -232,13 +237,17 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   
   protected abstract void doExport(@NotNull T scheme, @NotNull String exporterName);
   
+  protected abstract void onSchemeChanged(@Nullable T scheme);
+  
   @Nullable
   protected abstract T getCurrentScheme();
   
   protected abstract Class<T> getSchemeType();
 
-  @NotNull
-  protected abstract JComponent getParentComponent();
-
+  public AbstractSchemesPanel<T> getSchemesPanel() {
+    return mySchemesPanel;
+  }
+  
+  public abstract SchemeLevel getSchemeLevel(@NotNull T scheme);
 }
 

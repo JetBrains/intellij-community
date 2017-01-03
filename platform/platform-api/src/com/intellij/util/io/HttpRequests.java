@@ -493,4 +493,27 @@ public final class HttpRequests {
 
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
+
+  /**
+   * Encodes a URI component by replacing each instance of certain characters by one, two, three,
+   * or four escape sequences representing the UTF-8 encoding of the character.
+   * Behaves similarly to standard JavaScript build-in function <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent">encodeURIComponent</a>.
+   * @param s  a component of a URI
+   * @return a new string representing the provided string encoded as a URI component
+   */
+  @NotNull
+  public static String encodeURIComponent(@NotNull String s) {
+    try {
+      return URLEncoder.encode(s, CharsetToolkit.UTF8)
+        .replaceAll("\\+", "%20")
+        .replaceAll("%21", "!")
+        .replaceAll("%27", "'")
+        .replaceAll("%28", "(")
+        .replaceAll("%29", ")")
+        .replaceAll("%7E", "~");
+    }
+    catch (UnsupportedEncodingException e) {
+      return s;
+    }
+  }
 }

@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ENUM;
@@ -74,7 +73,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   @Override
   @NotNull
   public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
-    return new PsiClassType[]{createEnumType(), createGroovyObjectSupportType()};
+    return new PsiClassType[]{createEnumType()};
   }
 
   private PsiClassType createEnumType() {
@@ -91,10 +90,6 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
       return factory.createType(enumClass, substitutor);
     }
     return TypesUtil.createTypeByFQClassName(JAVA_LANG_ENUM, this);
-  }
-
-  private PsiClassType createGroovyObjectSupportType() {
-    return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, this);
   }
 
   @Override

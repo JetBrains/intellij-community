@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
-import com.intellij.openapi.editor.impl.TextChangeImpl;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
@@ -245,6 +242,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     myContext.reset();
     myOffset2fontType.clear();
     myOffset2widthInPixels.clear();
+    EditorTextRepresentationHelper editorTextRepresentationHelper = SoftWrapModelImpl.getEditorTextRepresentationHelper(myEditor);
+    if (editorTextRepresentationHelper instanceof DefaultEditorTextRepresentationHelper) {
+      ((DefaultEditorTextRepresentationHelper)editorTextRepresentationHelper).updateContext();
+    }
 
     // Define start of the visual line that holds target range start.
     final int start = event.getStartOffset(); 

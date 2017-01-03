@@ -83,7 +83,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       if (myExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)myExpression).hasFormalParameterTypes() ||
           myExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)myExpression).isExact()) {
         for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-          final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(parameter.getType()));
+          final PsiType type = substitutor.substitute(parameter.getType());
           if (!session.isProperType(type)) {
             session.registerIncompatibleErrorMessage("Parameter type is not yet inferred: " + session.getPresentableText(type));
             return false;
@@ -93,7 +93,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
       final PsiType returnType = interfaceMethod.getReturnType();
       if (myExpression instanceof PsiLambdaExpression || !((PsiMethodReferenceExpression)myExpression).isExact()) {
-        final PsiType type = session.substituteWithInferenceVariables(substitutor.substitute(returnType));
+        final PsiType type = substitutor.substitute(returnType);
         if (!session.isProperType(type)) {
           session.registerIncompatibleErrorMessage("Return type is not yet inferred: " + session.getPresentableText(type));
           return false;

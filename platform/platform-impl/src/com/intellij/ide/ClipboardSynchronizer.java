@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,10 +233,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
             return myFullTransferable.getSecond();
           }
         }
-        catch (UnsupportedFlavorException e) {
-          LOG.info(e);
-        }
-        catch (IOException e) {
+        catch (UnsupportedFlavorException | IOException e) {
           LOG.info(e);
         }
       }
@@ -259,10 +256,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           myFullTransferable = Pair.create(stringData, content);
           super.setContent(new StringSelection(stringData), owner);
         }
-        catch (UnsupportedFlavorException e) {
-          LOG.info(e);
-        }
-        catch (IOException e) {
+        catch (UnsupportedFlavorException | IOException e) {
           LOG.info(e);
         }
       } else {
@@ -438,8 +432,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         @SuppressWarnings({"unchecked"}) final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
         return set;
       }
-      catch (IllegalAccessException ignore) { }
-      catch (IllegalArgumentException ignore) { }
+      catch (IllegalAccessException | IllegalArgumentException ignore) { }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
         if (cause instanceof IllegalStateException) {

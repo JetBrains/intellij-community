@@ -155,10 +155,7 @@ public class StudyProjectGenerator {
       course.initCourse(isAdaptive);
       return course;
     }
-    catch (UnsupportedEncodingException e) {
-      LOG.warn(e.getMessage());
-    }
-    catch (FileNotFoundException e) {
+    catch (UnsupportedEncodingException | FileNotFoundException e) {
       LOG.warn(e.getMessage());
     }
     finally {

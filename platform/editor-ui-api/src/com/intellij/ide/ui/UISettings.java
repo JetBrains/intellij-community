@@ -330,4 +330,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public static void setupComponentAntialiasing(JComponent component) {
     component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
   }
+
+  public static void setupEditorAntialiasing(JComponent component) {
+    component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, getInstance().EDITOR_AA_TYPE.getTextInfo());
+  }
 }

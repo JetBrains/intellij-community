@@ -737,7 +737,8 @@ public class JBScrollPane extends SmoothScrollPane {
     boolean ignore = event.getWheelRotation() == 0;
     if (ignore && isPreciseRotationSupported()) {
       double rotation = event.getPreciseWheelRotation();
-      ignore = rotation == 0 || !Double.isFinite(rotation);
+      double delta = MouseWheelEventEx.getScrollingDelta(event);
+      ignore = (rotation == 0.0D || !Double.isFinite(rotation)) && (delta == 0.0D || !Double.isFinite(delta));
     }
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }

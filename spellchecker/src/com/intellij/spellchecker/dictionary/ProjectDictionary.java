@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ProjectDictionary implements EditableDictionary {
@@ -136,7 +135,7 @@ public class ProjectDictionary implements EditableDictionary {
     if (dictionaries == null) {
       return null;
     }
-    Set<String> words = new HashSet<>();
+    Set<String> words = new THashSet<>();
     for (Dictionary dictionary : dictionaries) {
       Set<String> otherWords = dictionary.getWords();
       if (otherWords != null) {
@@ -164,7 +163,6 @@ public class ProjectDictionary implements EditableDictionary {
     for (EditableDictionary dictionary : dictionaries) {
       dictionary.traverse(consumer);
     }
-
   }
 
   @Override

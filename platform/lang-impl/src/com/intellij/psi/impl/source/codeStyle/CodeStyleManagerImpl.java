@@ -57,7 +57,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class CodeStyleManagerImpl extends CodeStyleManager {
+public class CodeStyleManagerImpl extends CodeStyleManager implements FormattingModeAwareIndentAdjuster {
   private static final Logger LOG = Logger.getInstance(CodeStyleManagerImpl.class);
   private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED
     = ThreadLocal.withInitial(() -> new ProcessingUnderProgressInfo());
@@ -341,8 +341,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     return bottomost;
   }
-
-  @Override
+  
   public int adjustLineIndent(@NotNull final Document document, final int offset, FormattingMode mode) {
     return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(() -> {
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -353,6 +352,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
       return doAdjustLineIndentByOffset(file, offset, mode);
     });
+  }
+
+  @Override
+  public int adjustLineIndent(@NotNull Document document, int offset) {
+    return adjustLineIndent(document, offset, FormattingMode.ADJUST_INDENT);
   }
 
   private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset, FormattingMode mode) {

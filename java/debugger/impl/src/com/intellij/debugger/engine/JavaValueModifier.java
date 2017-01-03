@@ -187,16 +187,7 @@ public abstract class JavaValueModifier extends XValueModifier {
           setValue(expressionToShow, evaluator, evaluationContext, setValueRunnable);
         }
       }
-      catch (InvocationException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (ClassNotLoadedException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (IncompatibleThreadStateException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InvalidTypeException e) {
+      catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       catch (ObjectCollectedException e) {

@@ -85,7 +85,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.mainJarName = "idea.jar"
     productLayout.searchableOptionsModule = "resources-en"
 
-    productLayout.additionalPlatformJars.put("rt/jps-plugin-system.jar", "jps-plugin-system")
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "external-system-rt")
     productLayout.additionalPlatformJars.put("jps-launcher.jar", "jps-launcher")
     productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")

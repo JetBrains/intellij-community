@@ -24,7 +24,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   @NotNull private final VcsLogData myLogData;
   @NotNull private final List<String> myAllUsers;
 
-  UserFilterPopupComponent(@NotNull VcsLogUiProperties uiProperties,
+  UserFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                            @NotNull VcsLogData logData,
                            @NotNull FilterModel<VcsLogUserFilter> filterModel) {
     super("User", uiProperties, filterModel);

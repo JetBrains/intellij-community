@@ -122,4 +122,12 @@ public abstract class SchemeManager<T extends Scheme> {
   public boolean isMetadataEditable(@NotNull T scheme) {
     return true;
   }
+
+  public static String getDisplayName(@NotNull Scheme scheme) {
+    String schemeName = scheme.getName();
+    return
+      schemeName.startsWith(EDITABLE_COPY_PREFIX) ?
+      schemeName.substring(EDITABLE_COPY_PREFIX.length()) :
+      schemeName;
+  }
 }

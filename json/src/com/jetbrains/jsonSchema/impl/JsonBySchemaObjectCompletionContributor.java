@@ -6,8 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -100,7 +99,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
             final JsonProperty parent = possibleParent instanceof JsonProperty ? (JsonProperty)possibleParent : null;
             final boolean hasValue = hasValuePart(parent);
 
-            final Collection<String> properties = getExistingProperties(parent);
+            final Collection<String> properties = JsonPsiUtil.getOtherSiblingPropertyNames(parent);
 
             JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
               @Override
@@ -122,23 +121,6 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
       }
-    }
-
-    public Collection<String> getExistingProperties(@Nullable JsonProperty property) {
-      if (property == null) return ContainerUtil.emptyList();
-
-      PsiElement parent = property.getParent();
-      if (!(parent instanceof JsonObject)) return ContainerUtil.emptyList();
-
-      JsonObject object = (JsonObject)parent;
-      HashSet<String> result = ContainerUtil.newHashSet();
-      for (JsonProperty jsonProperty : object.getPropertyList()) {
-        if (jsonProperty == property) continue;
-
-        result.add(jsonProperty.getName());
-      }
-
-      return result;
     }
 
     public boolean hasValuePart(@Nullable JsonProperty property) {
@@ -243,7 +225,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
           // inserting longer string for proper formatting
           final String stringToInsert = ": 1";
           EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
-          formatInsertedString(context, project, stringToInsert.length());
+          formatInsertedString(context, stringToInsert.length());
           final int offset = editor.getCaretModel().getOffset();
           context.getDocument().deleteString(offset, offset + 1);
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -277,7 +259,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
 
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                formatInsertedString(context, project, stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length());
                 EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
                 handler.execute(editor, editor.getCaretModel().getCurrentCaret(),
                                 DataManager.getInstance().getDataContext(editor.getContentComponent()));
@@ -288,7 +270,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                 SelectionModel model = editor.getSelectionModel();
 
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, stringToInsert.length());
-                formatInsertedString(context, context.getProject(), stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length());
                 int start = editor.getSelectionModel().getSelectionStart();
                 model.setSelection(start - value.length(), start);
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
@@ -297,7 +279,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                 stringToInsert = ":[]";
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
 
-                formatInsertedString(context, project, stringToInsert.length());
+                formatInsertedString(context, stringToInsert.length());
                 break;
               case _string:
               case _integer:
@@ -366,14 +348,15 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    formatInsertedString(context, context.getProject(), stringToInsert.length());
+    formatInsertedString(context, stringToInsert.length());
 
     if (hasValues) {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
   }
 
-  public static void formatInsertedString(InsertionContext context, Project project, int offset) {
+  public static void formatInsertedString(@NotNull InsertionContext context, int offset) {
+    Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(context.getDocument());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformatText(context.getFile(), context.getStartOffset(), context.getTailOffset() + offset);

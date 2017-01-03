@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,14 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
@@ -105,40 +100,14 @@ public class SystemInfo extends SystemInfoRt {
   // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
   public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
-  // http://www.freedesktop.org/software/systemd/man/os-release.html
-  private static final NotNullLazyValue<Map<String, String>> ourOsReleaseInfo = new AtomicNotNullLazyValue<Map<String, String>>() {
-    @NotNull
-    @Override
-    protected Map<String, String> compute() {
-      if (isUnix && !isMac) {
-        try {
-          List<String> lines = FileUtil.loadLines("/etc/os-release");
-          Map<String, String> info = ContainerUtil.newHashMap();
-          for (String line : lines) {
-            int p = line.indexOf('=');
-            if (p > 0) {
-              String name = line.substring(0, p);
-              String value = StringUtil.unquoteString(line.substring(p + 1));
-              if (!StringUtil.isEmptyOrSpaces(name) && !StringUtil.isEmptyOrSpaces(value)) {
-                info.put(name, value);
-              }
-            }
-          }
-          return info;
-        }
-        catch (IOException ignored) { }
-      }
-
-      return Collections.emptyMap();
-    }
-  };
-  @Nullable
+  /** @deprecated not for generic use (to be removed in IDEA 2018) */
   public static String getUnixReleaseName() {
-    return ourOsReleaseInfo.getValue().get("NAME");
+    return null;
   }
-  @Nullable
+
+  /** @deprecated not for generic use (to be removed in IDEA 2018) */
   public static String getUnixReleaseVersion() {
-    return ourOsReleaseInfo.getValue().get("VERSION");
+    return null;
   }
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));

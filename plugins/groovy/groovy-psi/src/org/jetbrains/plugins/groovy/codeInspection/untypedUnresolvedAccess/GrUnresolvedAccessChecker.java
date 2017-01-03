@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.ArrayList;
@@ -336,6 +337,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean isNotFromGroovyObject(@NotNull PsiMethod found) {
+    if (GroovyObjectTransformationSupport.isGroovyObjectSupportMethod(found)) return false;
     PsiClass aClass = found.getContainingClass();
     if (aClass == null) return false;
     String qname = aClass.getQualifiedName();

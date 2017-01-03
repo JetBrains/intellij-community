@@ -31,19 +31,27 @@ public final class IdeInitialConfigButtonUsages {
 
   private static volatile Set<String> ourPredefinedDisabledPlugins = ALL_PLUGINS_SELECTED;
 
-  private static volatile Set<String> ourDownloadedPlugins = Collections.emptySet();
+  private static Set<String> ourDownloadedPlugins = Collections.emptySet();
 
   public static ConfigImport getConfigImport() {
     return ourConfigImport;
   }
 
-  public static void setConfigImport(JRadioButton ...buttons) {
-    if (buttons.length < ConfigImport.values().length) {
-      for (int i = 0; i < buttons.length; i++) {
-        if (buttons[i] != null && buttons[i].isSelected()) {
-          ourConfigImport = ConfigImport.values()[i];
-        }
-      }
+  public static void setConfigImport(JRadioButton myRbDoNotImport,
+                                     JRadioButton myRbImport,
+                                     JRadioButton myRbImportAuto,
+                                     JRadioButton myCustomButton) {
+    if (myRbDoNotImport != null && myRbDoNotImport.isSelected()) {
+      ourConfigImport = ConfigImport.DO_NOT_IMPORT;
+    }
+    else if (myRbImport != null && myRbImport.isSelected()) {
+      ourConfigImport = ConfigImport.IMPORT_PATH;
+    }
+    else if (myRbImportAuto != null && myRbImportAuto.isSelected()) {
+      ourConfigImport = ConfigImport.IMPORT_AUTO;
+    }
+    else if (myCustomButton != null && myCustomButton.isSelected()) {
+      ourConfigImport = ConfigImport.IMPORT_CUSTOM;
     }
   }
 
@@ -66,11 +74,11 @@ public final class IdeInitialConfigButtonUsages {
     ourPredefinedDisabledPlugins = predefinedDisabledPlugins;
   }
 
-  public static Set<String> getDownloadedPlugins() {
+  public synchronized static Set<String> getDownloadedPlugins() {
     return ourDownloadedPlugins;
   }
 
-  public static void addDownloadedPlugin(String pluginId) {
+  public synchronized static void addDownloadedPlugin(String pluginId) {
     if (ourDownloadedPlugins.isEmpty()) {
       ourDownloadedPlugins = new HashSet<>();
     }

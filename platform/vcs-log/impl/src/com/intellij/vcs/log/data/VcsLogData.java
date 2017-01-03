@@ -189,7 +189,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       DataPack dataPack = myRefresher.readFirstBlock();
       fireDataPackChangeEvent(dataPack);
       initSw.report();
-    }, "Loading History...");
+    });
   }
 
   private void readCurrentUser() {
@@ -226,10 +226,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myCurrentUser;
   }
 
-  public boolean isMultiRoot() {
-    return myLogProviders.size() > 1;
-  }
-
   @NotNull
   public Project getProject() {
     return myProject;
@@ -250,8 +246,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myContainingBranchesGetter;
   }
 
-  private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
-    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, title, false) {
+  private void runInBackground(@NotNull ThrowableConsumer<ProgressIndicator, VcsException> task) {
+    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);

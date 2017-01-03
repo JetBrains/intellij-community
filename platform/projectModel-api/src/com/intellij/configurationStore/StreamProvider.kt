@@ -24,6 +24,9 @@ interface StreamProvider {
   val enabled: Boolean
     get() = true
 
+  /**
+   * Called only on `write`
+   */
   fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT) = true
 
   /**
@@ -33,14 +36,22 @@ interface StreamProvider {
    */
   fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
 
-  fun <R> read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT, consumer: (InputStream?) -> R): R
+  /**
+   * `true` if provider is applicable for file.
+   */
+  fun read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT, consumer: (InputStream?) -> Unit): Boolean
 
-  fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean)
+  /**
+   * `true` if provider is fully responsible and local sources must be not used.
+   */
+  fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean
 
   /**
    * Delete file or directory
+   *
+   * `true` if provider is fully responsible and local sources must be not used.
    */
-  fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT)
+  fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean
 }
 
 @TestOnly

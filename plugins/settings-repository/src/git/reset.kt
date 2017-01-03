@@ -18,6 +18,7 @@ package org.jetbrains.settingsRepository.git
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.api.MergeResult
+import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.merge.MergeStrategy
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.MutableUpdateResult
@@ -65,6 +66,10 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
             LOG.debug("uninitialized remote (empty) - we don't need to merge")
           }
           return result
+        }
+
+        if (repository.repositoryState == RepositoryState.MERGING) {
+          repository.resetHard()
         }
 
         val secondMergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)

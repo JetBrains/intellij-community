@@ -172,6 +172,7 @@ overridden
 thisProp
 fromSuper
 fromSuper2
+metaClass
 metaPropertyValues
 properties
 superProp
@@ -181,7 +182,6 @@ getProperty
 hashCode
 identity
 invokeMethod
-metaClass
 notify
 notifyAll
 setProperty

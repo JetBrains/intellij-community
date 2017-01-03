@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -116,10 +117,14 @@ public class ParameterHintsPresentationManager implements Disposable {
     if (metrics != null) {
       Font font = metrics.getFont();
       if (!familyName.equals(font.getFamily()) || size != font.getSize()) metrics = null;
+      else {
+        FontRenderContext currentContext = FontInfo.getFontRenderContext(editor.getContentComponent());
+        if (currentContext.equals(metrics.metrics.getFontRenderContext())) metrics = null;
+      }
     }
     if (metrics == null) {
       Font font = new Font(familyName, Font.PLAIN, size);
-      metrics = new MyFontMetrics(font);
+      metrics = new MyFontMetrics(editor, font);
       editor.putUserData(HINT_FONT_METRICS, metrics);
     }
     return metrics;
@@ -129,11 +134,10 @@ public class ParameterHintsPresentationManager implements Disposable {
     private final FontMetrics metrics;
     private final int lineHeight;
 
-    private MyFontMetrics(Font font) {
-      metrics = FontInfo.createReferenceGraphics().getFontMetrics(font);
+    private MyFontMetrics(Editor editor, Font font) {
+      metrics = editor.getContentComponent().getFontMetrics(font);
       // We assume this will be a better approximation to a real line height for a given font
-      lineHeight = (int)Math.ceil(metrics.getFont().createGlyphVector(metrics.getFontRenderContext(), "Ap")
-                                      .getVisualBounds().getHeight());
+      lineHeight = (int)Math.ceil(font.createGlyphVector(metrics.getFontRenderContext(), "Ap").getVisualBounds().getHeight());
     }
 
     private Font getFont() {

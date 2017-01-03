@@ -66,7 +66,8 @@ public class LoadingDecorator {
 
       @Override
       protected void paintCycleEnd() {
-        setLoadingLayerVisible(false);
+        myLoadingLayer.setAlpha(0); // paint with zero alpha before hiding completely
+        hideLoadingLayer();
         myLoadingLayer.setAlpha(-1);
       }
     };
@@ -81,16 +82,16 @@ public class LoadingDecorator {
     Disposer.register(parent, myLoadingLayer.myProgress);
   }
 
-  private void setLoadingLayerVisible(boolean visible) {
+  private void hideLoadingLayer() {
     if (SystemProperties.isTrueSmoothScrollingEnabled()) {
-      setLoadingLayerPresent(visible);
+      myPane.remove(myLoadingLayer);
     }
-    myLoadingLayer.setVisible(visible);
+    myLoadingLayer.setVisible(false);
   }
 
   public void setLoadingLayerVisible(boolean visible, boolean takeSnapshot) {
-    if (SystemProperties.isTrueSmoothScrollingEnabled()) {
-      setLoadingLayerPresent(visible);
+    if (SystemProperties.isTrueSmoothScrollingEnabled() && visible) {
+      setLoadingLayerPresent();
     }
     myLoadingLayer.setVisible(visible, takeSnapshot);
   }
@@ -102,13 +103,9 @@ public class LoadingDecorator {
 
      Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
      This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
-  private void setLoadingLayerPresent(boolean present) {
-    if (present) {
-      if (myPane.getComponentCount() < 2) {
-        myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
-      }
-    } else {
-      myPane.remove(myLoadingLayer);
+  private void setLoadingLayerPresent() {
+    if (myPane.getComponentCount() < 2) {
+      myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
     }
   }
 

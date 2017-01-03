@@ -77,7 +77,19 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   @Override
   protected String getInlineAllText() {
     final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
-    return (RefactoringBundle.message(myMethod.isWritable() ? "all.invocations.and.remove.the.method" : "all.invocations.in.project")) + occurrencesString;
+    return (RefactoringBundle.message(myMethod.isWritable() ? "all.invocations.the.method" : "all.invocations.in.project")) + occurrencesString;
+  }
+
+  @Override
+  protected String getKeepTheDeclarationText() {
+    if (myMethod.isWritable()) return RefactoringBundle.message("all.invocations.keep.the.method");
+    return super.getKeepTheDeclarationText();
+  }
+
+  @Override
+  protected String getDeleteTheDeclarationText() {
+    if (myMethod.isWritable()) return RefactoringBundle.message("all.invocations.remove.the.method");
+    return super.getDeleteTheDeclarationText();
   }
 
   @Override
@@ -85,7 +97,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     super.doAction();
     invokeRefactoring(
       new InlineMethodProcessor(getProject(), myMethod, myReferenceElement, myEditor, isInlineThisOnly(), isSearchInCommentsAndStrings(),
-                                isSearchForTextOccurrences()));
+                                isSearchForTextOccurrences(), isDeleteTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();

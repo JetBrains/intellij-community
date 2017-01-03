@@ -882,7 +882,7 @@ public class TypesUtil {
     if (type instanceof PsiClassType) {
       PsiClass resolved = ((PsiClassType)type).resolve();
       if (resolved instanceof PsiAnonymousClass) {
-        return getQualifiedName(((PsiAnonymousClass)resolved).getBaseClassType());
+        return "anonymous " + getQualifiedName(((PsiAnonymousClass)resolved).getBaseClassType());
       }
       if (resolved != null) {
         return resolved.getQualifiedName();

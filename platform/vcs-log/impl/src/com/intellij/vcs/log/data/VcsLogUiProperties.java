@@ -15,56 +15,41 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.vcs.log.VcsLogUi;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Objects;
 
 public interface VcsLogUiProperties {
-  boolean isShowDetails();
-
-  void setShowDetails(boolean showDetails);
-
-  void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup);
-
-  void addRecentlyFilteredBranchGroup(@NotNull List<String> valuesInGroup);
-
   @NotNull
-  List<List<String>> getRecentlyFilteredUserGroups();
+  <T> T get(@NotNull VcsLogUiProperty<T> property);
 
-  @NotNull
-  List<List<String>> getRecentlyFilteredBranchGroups();
+  <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value);
 
-  boolean areLongEdgesVisible();
+  <T> boolean exists(@NotNull VcsLogUiProperty<T> property);
 
-  void setLongEdgesVisibility(boolean visible);
+  class VcsLogUiProperty<T> {
+    @NotNull private final String myName;
 
-  int getBekSortType();
+    public VcsLogUiProperty(@NotNull String name) {
+      myName = name;
+    }
 
-  void setBek(int bekSortType);
+    @Override
+    public String toString() {
+      return myName;
+    }
 
-  boolean isShowRootNames();
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      VcsLogUiProperty<?> property = (VcsLogUiProperty<?>)o;
+      return Objects.equals(myName, property.myName);
+    }
 
-  void setShowRootNames(boolean isShowRootNames);
-
-  boolean isHighlighterEnabled(@NotNull String id);
-
-  void enableHighlighter(@NotNull String id, boolean value);
-
-  void saveFilterValues(@NotNull String filterName, @Nullable List<String> values);
-
-  @Nullable
-  List<String> getFilterValues(@NotNull String filterName);
-
-  boolean isCompactReferencesView();
-
-  void setCompactReferencesView(boolean compact);
-
-  boolean isShowTagNames();
-
-  void setShowTagNames(boolean showTags);
-
-  @NotNull
-  VcsLogUi.TextFilterSettings getTextFilterSettings();
+    @Override
+    public int hashCode() {
+      return Objects.hash(myName);
+    }
+  }
 }

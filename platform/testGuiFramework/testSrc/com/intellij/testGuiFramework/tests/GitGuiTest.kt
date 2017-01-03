@@ -71,6 +71,7 @@ class GitGuiTest : GuiTestCase() {
     val ideFrame = findIdeFrame()
     ideFrame.waitForBackgroundTasksToFinish()
 
+
     val projectView = ideFrame.projectView
     val testJavaPath = "src/First.java"
     val editor = ideFrame.editor

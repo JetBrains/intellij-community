@@ -1,4 +1,4 @@
-// "Change type of 'res' to StringBuilder" "true"
+// "Convert variable 'res' from String to StringBuilder" "true"
 
 public class Main {
     String test(String[] strings) {
@@ -7,7 +7,7 @@ public class Main {
             if (/*before*/!res/*within*/.isEmpty()) {
                 res += ", ";
             }
-            res <caret>+= s;
+            res = (res <caret>+ s);
         }
         return res;
     }

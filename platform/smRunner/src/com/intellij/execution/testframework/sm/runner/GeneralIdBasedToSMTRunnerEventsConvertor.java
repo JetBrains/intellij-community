@@ -254,10 +254,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       String failureMessage = testFailedEvent.getLocalizedFailureMessage();
       String stackTrace = testFailedEvent.getStacktrace();
       if (comparisonFailureActualText != null && comparisonFailureExpectedText != null) {
-        testProxy.setTestComparisonFailed(failureMessage, stackTrace,
-                                          comparisonFailureActualText, comparisonFailureExpectedText,
-                                          testFailedEvent.getExpectedFilePath(),
-                                          testFailedEvent.getActualFilePath());
+        testProxy.setTestComparisonFailed(failureMessage, stackTrace, comparisonFailureActualText, comparisonFailureExpectedText, testFailedEvent);
       } else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
         testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
       } else {

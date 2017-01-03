@@ -241,6 +241,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
       }
+      catch (RuntimeException e) {
+        processRuntimeException(e);
+      }
     }
     return new TIntHashSet();
   }
@@ -253,6 +256,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
+      }
+      catch (RuntimeException e) {
+        processRuntimeException(e);
       }
     }
     return new TIntHashSet();
@@ -288,11 +294,24 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       catch (StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
       }
+      catch (RuntimeException e) {
+        processRuntimeException(e);
+      }
 
       return filter(myIndexStorage.messages, message -> VcsLogTextFilterImpl.matches(filter, message));
     }
 
     return EmptyIntHashSet.INSTANCE;
+  }
+
+  private void processRuntimeException(@NotNull RuntimeException e) {
+    if (myIndexStorage != null) myIndexStorage.markCorrupted();
+    if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    else {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -396,6 +415,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogPathsIndex.PATHS, logId);
       cleanupOldStorageFile(INDEX + "-" + VcsLogUserIndex.USERS, logId);
       cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogUserIndex.USERS, logId);
+    }
+
+    void markCorrupted() {
+      catchAndWarn(commits::markCorrupted);
     }
 
     private static void catchAndWarn(@NotNull ThrowableRunnable<IOException> runnable) {

@@ -94,9 +94,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
         return true
       }
       val propertyName = method.name.removePrefix(prefix).decapitalize()
-      if (name != null) assert(propertyName == name) {
-        "$propertyName, $name"
-      }
+      if (name != null && name != propertyName) return true
 
       val parameter = method.parameterList.parameters.singleOrNull() ?: return true
       val classType = wrapClassType(parameter.type, place) ?: return true

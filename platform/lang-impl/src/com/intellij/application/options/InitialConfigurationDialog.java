@@ -37,11 +37,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -151,7 +151,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean cellHasFocus) {
         if (value != null) {
-          setText(AbstractColorsScheme.getDisplayName((EditorColorsScheme)value));
+          setText(SchemeManager.getDisplayName((EditorColorsScheme)value));
         }
       }
     });

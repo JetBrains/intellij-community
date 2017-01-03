@@ -38,7 +38,6 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
   public void testDelayedWorks() throws InterruptedException {
     final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
-    final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
 
@@ -46,6 +45,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
     int delay = 1000;
     long start = System.currentTimeMillis();
+    List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     ScheduledFuture<?> f1 = service.schedule(() -> {
       log.add(new LogInfo(1));
       TimeoutUtil.sleep(10);
@@ -80,12 +80,16 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertEquals(String.valueOf(f3.isDone()), elapsed > delay, f3.isDone());
     assertTrue(f4.isDone());
 
-    TimeoutUtil.sleep(delay/2+500);
-    assertTrue(f1.isDone());
-    assertTrue(f2.isDone());
-    assertTrue(f3.isDone());
-    assertTrue(f4.isDone());
-
+    TimeoutUtil.sleep(delay/2);
+    long time = System.currentTimeMillis();
+    while (!f1.isDone() ||
+          !f2.isDone() ||
+          !f3.isDone() ||
+          !f4.isDone()) {
+      if (System.currentTimeMillis() > time + 10000) {
+        throw new AssertionError("Unfinished after 10 seconds");
+      }
+    }
 
     assertEquals(4, log.size());
     assertEquals(4, log.get(0).runnable);
@@ -145,7 +149,6 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
   public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() throws InterruptedException, ExecutionException {
     final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
-    final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     // pre-start one thread
     Future<?> future = service.submit(EmptyRunnable.getInstance());
     future.get();
@@ -154,6 +157,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
     int delay = 500;
 
+    List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
     ScheduledFuture<?> f1 = service.schedule((Runnable)() -> log.add(new LogInfo(1)), delay, TimeUnit.MILLISECONDS);
     ScheduledFuture<?> f2 = service.schedule((Runnable)() -> log.add(new LogInfo(2)), delay + 100, TimeUnit.MILLISECONDS);
     ScheduledFuture<?> f3 = service.schedule((Runnable)() -> log.add(new LogInfo(3)), delay + 200, TimeUnit.MILLISECONDS);
@@ -221,8 +225,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       ));
     TimeoutUtil.sleep(delay);
     long start = System.currentTimeMillis();
-    while (!service.delayQueue.isEmpty() && System.currentTimeMillis() < start + 20000) {
+    while (!service.delayQueue.isEmpty()) {
       // wait till all tasks transferred to backend
+      if (System.currentTimeMillis() > start + 20000) throw new AssertionError("Not transferred after 20 seconds");
     }
     List<SchedulingWrapper.MyScheduledFutureTask> queuedTasks = new ArrayList<>(service.delayQueue);
     if (!queuedTasks.isEmpty()) {

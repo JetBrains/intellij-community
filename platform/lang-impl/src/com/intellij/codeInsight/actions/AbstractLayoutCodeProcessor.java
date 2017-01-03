@@ -563,10 +563,7 @@ public abstract class AbstractLayoutCodeProcessor {
           myStopFormatting = true;
         }
       }
-      catch (InterruptedException e) {
-        LOG.error("Got unexpected exception during formatting " + file, e);
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException e) {
         LOG.error("Got unexpected exception during formatting " + file, e);
       }
     }

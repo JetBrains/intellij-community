@@ -563,22 +563,22 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
 
-  private void fireContentAdded(Content content, int newIndex) {
+  private void fireContentAdded(@NotNull Content content, int newIndex) {
     ContentManagerEvent e = new ContentManagerEvent(this, content, newIndex, ContentManagerEvent.ContentOperation.add);
     myDispatcher.getMulticaster().contentAdded(e);
   }
 
-  private void fireContentRemoved(Content content, int oldIndex) {
+  private void fireContentRemoved(@NotNull Content content, int oldIndex) {
     ContentManagerEvent e = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.remove);
     myDispatcher.getMulticaster().contentRemoved(e);
   }
 
-  private void fireSelectionChanged(Content content, ContentManagerEvent.ContentOperation operation) {
+  private void fireSelectionChanged(@NotNull Content content, ContentManagerEvent.ContentOperation operation) {
     ContentManagerEvent e = new ContentManagerEvent(this, content, getIndexOfContent(content), operation);
     myDispatcher.getMulticaster().selectionChanged(e);
   }
 
-  private boolean fireContentRemoveQuery(Content content, int oldIndex, ContentManagerEvent.ContentOperation operation) {
+  private boolean fireContentRemoveQuery(@NotNull Content content, int oldIndex, ContentManagerEvent.ContentOperation operation) {
     ContentManagerEvent event = new ContentManagerEvent(this, content, oldIndex, operation);
     for (ContentManagerListener listener : myDispatcher.getListeners()) {
       listener.contentRemoveQuery(event);

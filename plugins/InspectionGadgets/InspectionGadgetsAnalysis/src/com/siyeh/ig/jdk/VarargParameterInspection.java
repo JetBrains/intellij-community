@@ -167,11 +167,10 @@ public class VarargParameterInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() < 1) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 0) {
         return;
       }
-      final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter lastParameter = parameters[parameters.length - 1];
       if (lastParameter.isVarArgs()) {
         registerMethodError(method);

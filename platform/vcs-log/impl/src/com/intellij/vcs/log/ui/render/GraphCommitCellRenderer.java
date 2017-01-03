@@ -217,8 +217,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
     private int getAvailableWidth(int column) {
       int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
-      return Math.min(columnWidth - super.getPreferredSize().width,
-                      myReferencePainter.isCompact() ? columnWidth / 3 : Math.max(columnWidth - FREE_SPACE, 0));
+      int freeSpace = columnWidth - super.getPreferredSize().width;
+      if (myReferencePainter.isCompact()) {
+        return Math.min(freeSpace, columnWidth / 3);
+      }
+      else {
+        return Math.max(freeSpace, columnWidth / 2);
+      }
     }
 
     private int calculateHeight() {

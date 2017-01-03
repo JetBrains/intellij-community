@@ -117,5 +117,41 @@ public class ConcurrentHashSet<K> implements Set<K> {
   public String toString() {
     return map.keySet().toString();
   }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (obj instanceof ConcurrentHashSet) {
+      return map.equals(((ConcurrentHashSet)obj).map);
+    }
+
+    if (!(obj instanceof Set)) {
+      return false;
+    }
+
+    Set<?> c = (Set<?>)obj;
+    if (c.size() != size()) {
+      return false;
+    }
+
+    try {
+      return containsAll(c);
+    }
+    catch (ClassCastException ignored) {
+      return false;
+    }
+    catch (NullPointerException ignored) {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return map.hashCode();
+  }
 }
 

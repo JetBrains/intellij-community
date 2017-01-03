@@ -257,7 +257,8 @@ public class PsiImplUtil {
     else if (parentPriorityLevel == newPriorityLevel && parentPriorityLevel != 0) {
       if (oldParent instanceof GrBinaryExpression) {
         GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
-        if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand())) {
+        if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand()) ||
+          TokenSets.PARENTHESIZED_BINARY_OP_SET.contains(binaryExpression.getOperationTokenType())) {
           newExpr = factory.createParenthesizedExpr(newExpr);
         }
       }

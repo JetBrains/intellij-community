@@ -17,7 +17,6 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosCollector;
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.IdeBundle;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,7 +99,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
         }
         final Element root = JDOMUtil.load(file);
         final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
-        usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
+        usedMacros.remove("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$");
         usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
 
         if (usedMacros.size() > 0) {
@@ -109,11 +109,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
           }
         }
       }
-      catch (JDOMException e) {
-        Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
-        return false;
-      }
-      catch (IOException e) {
+      catch (JDOMException | IOException e) {
         Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
         return false;
       }

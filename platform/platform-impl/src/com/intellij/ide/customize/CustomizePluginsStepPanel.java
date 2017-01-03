@@ -36,6 +36,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -233,8 +234,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   public boolean beforeOkAction() {
     try {
       PluginManager.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
-      IdeInitialConfigButtonUsages.setPredefinedDisabledPlugins(new com.intellij.util.containers.HashSet<>(myPluginGroups.getDisabledPluginIds())/*
-        myPluginGroups.getTree().values().stream().flatMap(pair -> pair.getSecond().stream()).collect(Collectors.toSet())*/);
+      IdeInitialConfigButtonUsages.setPredefinedDisabledPlugins(new HashSet<>(myPluginGroups.getDisabledPluginIds()));
     }
     catch (IOException ignored) {
     }

@@ -16,6 +16,7 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
@@ -38,6 +39,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -123,7 +125,9 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
-      final Module m = getModuleForSourceContentFile(myFileDocManager.getFile(document));
+      final VirtualFile file = myFileDocManager.getFile(document);
+      if (file == null) continue;
+      final Module m = getModuleForSourceContentFile(file);
       if (m != null) dirtyModules.add(m);
     }
     for (Document document : myPsiDocManager.getUncommittedDocuments()) {
@@ -195,7 +199,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }, myService.getProject());
   }
 
-  private Module getModuleForSourceContentFile(VirtualFile file) {
+  private Module getModuleForSourceContentFile(@NotNull VirtualFile file) {
     if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
       return myService.getFileIndex().getModuleForFile(file);
     }
@@ -207,6 +211,19 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   public Set<Module> getAllDirtyModulesForTest() {
     synchronized (myLock) {
       return getAllDirtyModules();
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  DirtyScopeTestInfo getState() {
+    synchronized (myLock) {
+      final Module[] vfsChangedModules = myVFSChangedModules.toArray(Module.EMPTY_ARRAY);
+      final List<Module> unsavedChangedModuleList = new ArrayList<>(getAllDirtyModules());
+      ContainerUtil.removeAll(unsavedChangedModuleList, vfsChangedModules);
+      final Module[] unsavedChangedModules = unsavedChangedModuleList.toArray(Module.EMPTY_ARRAY);
+      final List<VirtualFile> excludedFiles = myExcludedFilesScope instanceof Iterable ? ContainerUtil.newArrayList((Iterable<VirtualFile>)myExcludedFilesScope) : Collections.emptyList();
+      return new DirtyScopeTestInfo(vfsChangedModules, unsavedChangedModules, excludedFiles.toArray(VirtualFile.EMPTY_ARRAY), getDirtyScope());
     }
   }
 }

@@ -1,0 +1,53 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.ui.components;
+
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+
+import static java.lang.Math.signum;
+
+/**
+ * An adapter from {@code Consumer<Integer>} to {@link FinelyAdjustable} that accumulates fractional remainders.
+ */
+public class Adjuster implements FinelyAdjustable {
+  private final Consumer<Integer> myConsumer;
+  private double myFractionalRemainder;
+
+  public Adjuster(@NotNull Consumer<Integer> consumer) {
+    myConsumer = consumer;
+  }
+
+  @Override
+  public void adjustValue(double delta) {
+    if (delta == 0.0D) {
+      return;
+    }
+    if (signum(myFractionalRemainder) != signum(delta)) {
+      myFractionalRemainder = 0.0D;
+    }
+    double compoundDelta = myFractionalRemainder + delta;
+    int integralDelta = (int)compoundDelta;
+    myFractionalRemainder = compoundDelta - (double)integralDelta;
+    if (integralDelta != 0) {
+      myConsumer.consume(integralDelta);
+    }
+  }
+
+  public void reset() {
+    myFractionalRemainder = 0.0D;
+  }
+}

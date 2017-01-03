@@ -363,6 +363,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // work. We do however need to provide a TextUI implementation since some
     // screen reader support code will invoke it
     setUI(new EditorAccessibilityTextUI());
+    UISettings.setupEditorAntialiasing(this);
     invalidate();
   }
 

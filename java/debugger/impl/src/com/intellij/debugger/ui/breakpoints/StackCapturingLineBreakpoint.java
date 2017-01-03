@@ -19,14 +19,19 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
+import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import java.util.Collections;
@@ -39,14 +44,24 @@ import java.util.Map;
  */
 public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private final DebugProcessImpl myDebugProcess;
+
+  private final String mySignature;
+  private final int myParamNo;
+
   public static final Key<Map<ObjectReference, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
 
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
 
-  public StackCapturingLineBreakpoint(DebugProcessImpl debugProcess, String className, String methodName) {
+  public StackCapturingLineBreakpoint(DebugProcessImpl debugProcess,
+                                      String className,
+                                      String methodName,
+                                      String methodSignature,
+                                      int paramNo) {
     super(debugProcess.getProject(), null);
     myDebugProcess = debugProcess;
+    mySignature = methodSignature;
+    myParamNo = paramNo;
     myProperties.EMULATED = true;
     myProperties.WATCH_EXIT = false;
     myProperties.myClassPattern = className;
@@ -69,19 +84,22 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     try {
       SuspendContextImpl suspendContext = action.getSuspendContext();
       if (suspendContext != null) {
-        Map<ObjectReference, List<StackFrameItem>> stacks = myDebugProcess.getUserData(CAPTURED_STACKS);
-        if (stacks == null) {
-          stacks = new LinkedHashMap<ObjectReference, List<StackFrameItem>>() {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry eldest) {
-              return size() > MAX_STORED_STACKS;
-            }
-          };
-          myDebugProcess.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
-        }
-        Value key = ContainerUtil.getFirstItem(suspendContext.getFrameProxy().getArgumentValues());
-        if (key instanceof ObjectReference) {
-          stacks.put((ObjectReference)key, StackFrameItem.createFrames(suspendContext.getThread()));
+        StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
+        if (frameProxy != null) {
+          Map<ObjectReference, List<StackFrameItem>> stacks = myDebugProcess.getUserData(CAPTURED_STACKS);
+          if (stacks == null) {
+            stacks = new LinkedHashMap<ObjectReference, List<StackFrameItem>>() {
+              @Override
+              protected boolean removeEldestEntry(Map.Entry eldest) {
+                return size() > MAX_STORED_STACKS;
+              }
+            };
+            myDebugProcess.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
+          }
+          Value key = ContainerUtil.getOrElse(frameProxy.getArgumentValues(), myParamNo, null);
+          if (key instanceof ObjectReference) {
+            stacks.put((ObjectReference)key, StackFrameItem.createFrames(suspendContext.getThread()));
+          }
         }
       }
     }
@@ -90,8 +108,16 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     return false;
   }
 
-  public static void track(DebugProcessImpl debugProcess, String classFqn, String methodName) {
-    StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess, classFqn, methodName);
+  @Override
+  public StreamEx matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
+    String methodName = getMethodName();
+    return methods
+      .filter(m -> Comparing.equal(methodName, m.name()) && (mySignature == null || Comparing.equal(mySignature, m.signature())))
+      .limit(1);
+  }
+
+  public static void track(DebugProcessImpl debugProcess, String classFqn, String methodName, @Nullable String methodSignature, int paramNo) {
+    StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess, classFqn, methodName, methodSignature, paramNo);
     breakpoint.createRequest(debugProcess);
   }
 }

@@ -444,10 +444,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
             result.add(list);
           }
         }
-        catch (IOException e) {
-          exceptionConsumer.consume(new VcsException(e));
-        }
-        catch (PatchSyntaxException e) {
+        catch (IOException | PatchSyntaxException e) {
           exceptionConsumer.consume(new VcsException(e));
         }
       }
@@ -900,11 +897,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         }
         writePatchesToFile(myProject, listCopy.PATH, patches, commitContext);
       }
-      catch (IOException e) {
-        LOG.info(e);
-        // left file as is
-      }
-      catch (PatchSyntaxException e) {
+      catch (IOException | PatchSyntaxException e) {
         LOG.info(e);
         // left file as is
       }

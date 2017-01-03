@@ -18,6 +18,7 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import static java.util.Collections.unmodifiableList;
  */
 public class AsyncTreeModel extends InvokableTreeModel {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
-  private final CmdGetRoot rootLoader = new CmdGetRoot();
+  private final CmdGetRoot rootLoader = new CmdGetRoot("Load root", null);
   private final AtomicBoolean rootLoaded = new AtomicBoolean();
   private final Command.Processor processor;
   private final MapBasedTree<Object, Object> tree = new MapBasedTree<>(true, object -> object);
@@ -54,7 +55,7 @@ public class AsyncTreeModel extends InvokableTreeModel {
       Object object = path.getLastPathComponent();
       if (path.getParentPath() == null && type == EventType.StructureChanged) {
         // set a new root object according to the specification
-        processor.consume(rootLoader, object);
+        processor.process(new CmdGetRoot("Update root", object));
         return;
       }
       processor.foreground.invokeLaterIfNeeded(() -> {
@@ -177,14 +178,28 @@ public class AsyncTreeModel extends InvokableTreeModel {
     processor.process(new CmdGetChildren(name, entry, true));
   }
 
-  private final class CmdGetRoot implements Command<Object> {
-    @Override
-    public Object get() {
-      return model.getRoot();
+  private final class CmdGetRoot implements Command<Pair<Object, Boolean>> {
+    private final String name;
+    private final Object root;
+
+    public CmdGetRoot(String name, Object root) {
+      this.name = name;
+      this.root = root;
     }
 
     @Override
-    public void accept(Object root) {
+    public String toString() {
+      return root == null ? name : name + ": " + root;
+    }
+
+    @Override
+    public Pair<Object, Boolean> get() {
+      Object object = root != null ? root : model.getRoot();
+      return Pair.create(object, model.isLeaf(object));
+    }
+
+    @Override
+    public void accept(Pair<Object, Boolean> root) {
       boolean updated = tree.updateRoot(root);
       Entry<Object> entry = tree.getRootEntry();
       if (updated) treeStructureChanged(entry, null, null);
@@ -192,7 +207,7 @@ public class AsyncTreeModel extends InvokableTreeModel {
     }
   }
 
-  private final class CmdGetChildren implements Command<List<Object>> {
+  private final class CmdGetChildren implements Command<List<Pair<Object, Boolean>>> {
     private final String name;
     private final Entry<Object> entry;
     private final boolean deep;
@@ -209,22 +224,23 @@ public class AsyncTreeModel extends InvokableTreeModel {
     }
 
     @Override
-    public List<Object> get() {
+    public List<Pair<Object, Boolean>> get() {
       Object object = entry.getNode();
       if (model.isLeaf(object)) return null;
 
       int count = model.getChildCount(object);
       if (count <= 0) return emptyList();
 
-      ArrayList<Object> children = new ArrayList<>(count);
+      ArrayList<Pair<Object, Boolean>> children = new ArrayList<>(count);
       for (int i = 0; i < count; i++) {
-        children.add(model.getChild(object, i));
+        Object child = model.getChild(object, i);
+        children.add(Pair.create(child, model.isLeaf(child)));
       }
       return unmodifiableList(children);
     }
 
     @Override
-    public void accept(List<Object> children) {
+    public void accept(List<Pair<Object, Boolean>> children) {
       Object object = entry.getNode();
       if (entry != tree.findEntry(object)) {
         LOG.debug("ignore updating of changed node: ", object);

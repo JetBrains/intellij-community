@@ -123,6 +123,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest();
   }
 
+  public void testMethodHierarchyWithDeclaredTypeParameters() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false, false);
   }

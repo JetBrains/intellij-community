@@ -114,8 +114,7 @@ public class ConfigImportHelper {
         return ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (ClassNotFoundException ignored) { }
-    catch (RuntimeException ignored) { }
+    catch (ClassNotFoundException | RuntimeException ignored) { }
     return new ConfigImportSettings();
   }
 

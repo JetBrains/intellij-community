@@ -225,11 +225,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       final Class actionClass = Class.forName(className, true, loader);
       setIconFromClass(actionClass, loader, iconPath, presentation, pluginId);
     }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
-      reportActionError(pluginId, "class with name \"" + className + "\" not found");
-    }
-    catch (NoClassDefFoundError e) {
+    catch (ClassNotFoundException | NoClassDefFoundError e) {
       LOG.error(e);
       reportActionError(pluginId, "class with name \"" + className + "\" not found");
     }

@@ -178,15 +178,19 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @NotNull
   public String[] getSchemeNames() {
-    List<MyColorScheme> schemes = new ArrayList<>(mySchemes.values());
-    Collections.sort(schemes, EditorColorSchemesComparator.INSTANCE);
-
-    List<String> names = new ArrayList<>(schemes.size());
-    for (MyColorScheme scheme : schemes) {
+    List<String> names = new ArrayList<>();
+    for (EditorColorsScheme scheme : getOrderedSchemes()) {
       names.add(scheme.getName());
     }
 
     return ArrayUtil.toStringArray(names);
+  }
+  
+  @NotNull
+  public Collection<EditorColorsScheme> getOrderedSchemes() {
+    List<EditorColorsScheme> schemes = new ArrayList<>(mySchemes.values());
+    Collections.sort(schemes, EditorColorSchemesComparator.INSTANCE);
+    return schemes;
   }
 
   @NotNull
@@ -376,7 +380,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     if (myRootSchemesPanel == null) {
       ensureSchemesPanel();
     }
-    return myRootSchemesPanel.getRootPanel();
+    return myRootSchemesPanel;
   }
 
   @Override

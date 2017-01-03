@@ -1,4 +1,4 @@
-@FooAnnotation(<error descr="'Foo.BAR' has private access in 'Foo'">Foo.BAR</error>)
+@FooAnnotation(Foo.<error descr="'BAR' has private access in 'Foo'">BAR</error>)
 class Foo {
   private static final String BAR = "bar";
 }

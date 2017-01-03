@@ -1012,4 +1012,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testBoundsPromotionForDerivedType() throws Exception {
     doTest();
   }
+
+  public void testSameErasureForStaticMethodsInInterfaces() throws Exception {
+    doTest();
+  }
 }

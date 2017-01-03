@@ -65,9 +65,7 @@ public class MessagesFixture {
     try{
       findByTitle(robot, root, title);
       return true;
-    } catch (AssertionError ae) {
-      return false;
-    } catch (WaitTimedOutError waitTimedOutError) {
+    } catch (AssertionError | WaitTimedOutError e) {
       return false;
     }
   }

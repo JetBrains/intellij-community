@@ -146,10 +146,7 @@ public class MethodMatcher {
         pattern = Pattern.compile(methodNamePattern);
         myPatternCache.put(methodNamePattern, pattern);
       }
-      catch (PatternSyntaxException ignore) {
-        return null;
-      }
-      catch (NullPointerException ignore) {
+      catch (PatternSyntaxException | NullPointerException ignore) {
         return null;
       }
     }

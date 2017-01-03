@@ -424,7 +424,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         LOG.info(e);
       }
       catch (ExecutionException e) {
-        ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, e);
+        ExecutionUtil.handleExecutionError(project,
+                                           ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
+                                           profile, e);
         LOG.info(e);
       }
       finally {
@@ -575,6 +577,17 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         if (processHandler != null /*&& !processHandler.isProcessTerminating()*/ && !processHandler.isProcessTerminated()) {
           result.add(trinity.getFirst());
         }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public List<RunContentDescriptor> getDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
+    List<RunContentDescriptor> result = new SmartList<>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (trinity.getSecond() != null && condition.value(trinity.getSecond())) {
+        result.add(trinity.getFirst());
       }
     }
     return result;

@@ -419,20 +419,25 @@ idea.fatal.error.notification=disabled
     ensureKotlinCompilerAddedToClassPath()
 
     buildContext.projectBuilder.cleanOutput()
-    if (moduleNames == null) {
-      buildContext.projectBuilder.buildProduction()
-    }
-    else {
-      List<String> modulesToBuild = ((moduleNames as Set<String>) +
-        buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
-      List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
-      if (!invalidModules.empty) {
-        buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
+    try {
+      if (moduleNames == null) {
+        buildContext.projectBuilder.buildProduction()
       }
-      buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
+      else {
+        List<String> modulesToBuild = ((moduleNames as Set<String>) +
+                                       buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
+        List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
+        if (!invalidModules.empty) {
+          buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
+        }
+        buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
+      }
+      for (String moduleName : includingTestsInModules) {
+        buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
+      }
     }
-    for (String moduleName : includingTestsInModules) {
-      buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
+    catch (Throwable e) {
+      buildContext.messages.error("Compilation failed with exception: $e", e)
     }
   }
 

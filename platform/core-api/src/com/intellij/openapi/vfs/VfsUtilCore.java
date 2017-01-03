@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
@@ -440,6 +441,7 @@ public class VfsUtilCore {
   }
 
   @NotNull
+  @SuppressWarnings("SpellCheckingInspection")
   public static String fixURLforIDEA(@NotNull String url) {
     // removeLocalhostPrefix - false due to backward compatibility reasons
     return toIdeaUrl(url, false);
@@ -590,27 +592,20 @@ public class VfsUtilCore {
     return file;
   }
 
-  public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
-    if (!processor.process(root)) return false;
-
-    if (root.isDirectory()) {
-      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
-
-      queue.add(root.getChildren());
-
-      do {
-        final VirtualFile[] files = queue.removeFirst();
-
-        for (VirtualFile file : files) {
-          if (!processor.process(file)) return false;
-          if (file.isDirectory()) {
-            queue.add(file.getChildren());
-          }
+  public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
+    final Ref<Boolean> result = Ref.create(true);
+    visitChildrenRecursively(root, new VirtualFileVisitor() {
+      @NotNull
+      @Override
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        if (!processor.process(file)) {
+          result.set(Boolean.FALSE);
+          return skipTo(root);
         }
-      } while (!queue.isEmpty());
-    }
-
-    return true;
+        return CONTINUE;
+      }
+    });
+    return result.get();
   }
 
   /**
@@ -676,8 +671,7 @@ public class VfsUtilCore {
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
-    public DistinctVFilesRootsCollection() {
-    }
+    public DistinctVFilesRootsCollection() { }
 
     public DistinctVFilesRootsCollection(Collection<VirtualFile> virtualFiles) {
       super(virtualFiles);
@@ -693,6 +687,8 @@ public class VfsUtilCore {
     }
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
   public static void processFilesRecursively(@NotNull VirtualFile root,
                                              @NotNull Processor<VirtualFile> processor,
                                              @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
@@ -715,4 +711,5 @@ public class VfsUtilCore {
       } while (!queue.isEmpty());
     }
   }
+  //</editor-fold>
 }
