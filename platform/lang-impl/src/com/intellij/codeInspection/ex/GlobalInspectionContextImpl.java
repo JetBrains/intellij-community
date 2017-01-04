@@ -894,7 +894,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     List<ProblemDescriptor> descriptors = new ArrayList<>();
     Set<PsiFile> files = new HashSet<>();
     try {
-      final List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
       scope.accept(new PsiElementVisitor() {
         private int myCount;
         @Override
@@ -903,6 +902,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             progressIndicator.setFraction((double)++myCount / fileCount);
           }
           if (isBinary(file)) return;
+          final List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (final Tools tools : inspectionTools) {
             final InspectionToolWrapper tool = tools.getEnabledTool(file, includeDoNotShow);
             if (tool instanceof LocalInspectionToolWrapper) {
@@ -912,34 +912,41 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           }
 
           if (!lTools.isEmpty()) {
-            final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(getProject()).getDocument(file), range != null ? range.getStartOffset() : 0,
-                                                                       range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                                       HighlightInfoProcessor.getEmpty());
-            Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(getProject()), lTools);
-            ApplicationManager.getApplication().runReadAction(runnable);
+            try {
+              final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(getProject()).getDocument(file), range != null ? range.getStartOffset() : 0,
+                                                                         range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
+                                                                         HighlightInfoProcessor.getEmpty());
+              Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(getProject()), lTools);
+              ApplicationManager.getApplication().runReadAction(runnable);
 
-            List<ProblemDescriptor> localDescriptors = new ArrayList<>();
-            for (LocalInspectionToolWrapper tool : lTools) {
-              for (CommonProblemDescriptor descriptor : getPresentation(tool).getProblemDescriptors()) {
-                if (descriptor instanceof ProblemDescriptor) {
-                  localDescriptors.add((ProblemDescriptor)descriptor);
+              final List<ProblemDescriptor> localDescriptors = new ArrayList<>();
+              for (LocalInspectionToolWrapper tool : lTools) {
+                InspectionToolPresentation toolPresentation = getPresentation(tool);
+                for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
+                  if (descriptor instanceof ProblemDescriptor) {
+                    if (localDescriptors.contains(descriptor)) continue;
+                    int idx = Collections.binarySearch(localDescriptors, descriptor, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
+                    localDescriptors.add(Math.abs(idx + 1), (ProblemDescriptor)descriptor);
+                  }
                 }
               }
-            }
 
-            if (searchScope instanceof LocalSearchScope) {
-              for (Iterator<ProblemDescriptor> iterator = localDescriptors.iterator(); iterator.hasNext(); ) {
-                final ProblemDescriptor descriptor = iterator.next();
-                final TextRange infoRange = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
-                if (infoRange != null && !((LocalSearchScope)searchScope).containsRange(file, infoRange)) {
-                  iterator.remove();
+              if (searchScope instanceof LocalSearchScope) {
+                for (Iterator<ProblemDescriptor> iterator = localDescriptors.iterator(); iterator.hasNext(); ) {
+                  final ProblemDescriptor descriptor = iterator.next();
+                  final TextRange infoRange = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
+                  if (infoRange != null && !((LocalSearchScope)searchScope).containsRange(file, infoRange)) {
+                    iterator.remove();
+                  }
                 }
               }
+              if (!localDescriptors.isEmpty()) {
+                descriptors.addAll(localDescriptors);
+                files.add(file);
+              }
             }
-            if (!localDescriptors.isEmpty()) {
-              CleanupInspectionIntention.sortDescriptions(localDescriptors);
-              descriptors.addAll(localDescriptors);
-              files.add(file);
+            finally {
+              myPresentationMap.clear();
             }
           }
         }
