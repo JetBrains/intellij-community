@@ -303,7 +303,7 @@ public abstract class FileAttributesReadingTest {
     try {
       FileAttributes attributes = getAttributes(junction);
       assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-      assertEquals(0, attributes.flags);
+      assertEquals(FileAttributes.SYM_LINK, attributes.flags);
       assertTrue(attributes.isWritable());
 
       final String resolved1 = FileSystemUtil.resolveSymLink(junction);
@@ -312,8 +312,8 @@ public abstract class FileAttributesReadingTest {
       FileUtil.delete(target);
 
       attributes = getAttributes(junction);
-      assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-      assertEquals(0, attributes.flags);
+      assertNull(attributes.type);
+      assertEquals(FileAttributes.SYM_LINK, attributes.flags);
       assertTrue(attributes.isWritable());
 
       final String resolved2 = FileSystemUtil.resolveSymLink(junction);

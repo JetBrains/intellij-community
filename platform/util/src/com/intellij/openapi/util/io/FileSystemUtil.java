@@ -262,7 +262,8 @@ public class FileSystemUtil {
         Object pathObj = myGetPath.invoke(null, path, ArrayUtil.EMPTY_STRING_ARRAY);
 
         Object attributes = myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
-        boolean isSymbolicLink = (Boolean)myIsSymbolicLink.invoke(attributes);
+        boolean isSymbolicLink = (Boolean)myIsSymbolicLink.invoke(attributes) ||
+                                 SystemInfo.isWindows && (Boolean)myIsOther.invoke(attributes) && (Boolean)myIsDirectory.invoke(attributes);
         if (isSymbolicLink) {
           try {
             attributes = myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
