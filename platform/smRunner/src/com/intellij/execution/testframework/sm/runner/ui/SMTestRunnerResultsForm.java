@@ -160,7 +160,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
+    myTreeBuilder.setTestsComparator(myProperties);
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
@@ -268,7 +268,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRunning = false;
       final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
       if (sortByDuration) {
-        myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
+        myTreeBuilder.setTestsComparator(myProperties);
       }
     };
     if (myLastSelected == null) {
