@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init();
   }
 
+  @Override
   public Object getData(@NonNls String dataId) {
     if (myEditor instanceof DataProvider) {
       DataProvider provider = (DataProvider)myEditor;
@@ -114,6 +115,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return DialogStyle.COMPACT;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myEditor;
   }
