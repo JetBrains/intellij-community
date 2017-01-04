@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #include "IdeaWin32.h"
 #include <windows.h>
 
-typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr) (HANDLE, LPCWSTR, DWORD, DWORD dwFlags);
+typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr)(HANDLE, LPCWSTR, DWORD, DWORD);
 static GetFinalPathNameByHandlePtr __GetFinalPathNameByHandle = NULL;
 
 static jfieldID nameID = NULL;
@@ -31,14 +31,14 @@ static jfieldID lengthID = NULL;
 #define FILE_SHARE_ATTRIBUTES (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
 
 static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix);
-static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWIN32_FIND_DATA lpData, jclass aClass);
+static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass);
 static jobjectArray CopyObjectArray(JNIEnv* env, jobjectArray src, jclass aClass, jsize count, jsize newSize);
 
 
 // interface methods
 
 JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs(JNIEnv* env, jclass cls) {
-    __GetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetFinalPathNameByHandleW");
+    __GetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
 
     jclass fileInfoClass = env->FindClass(FILE_INFO_CLASS);
     if (fileInfoClass == NULL) {
@@ -72,7 +72,7 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
     jobject result = NULL;
     if (IS_SET(attrData.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
         // may be symlink
-        WIN32_FIND_DATA data;
+        WIN32_FIND_DATAW data;
         HANDLE h = FindFirstFileW(winPath, &data);
         if (h != INVALID_HANDLE_VALUE) {
             FindClose(h);
@@ -81,7 +81,7 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
     }
     if (result == NULL) {
         // either not a symlink or FindFirstFile() failed
-        WIN32_FIND_DATA data;
+        WIN32_FIND_DATAW data;
         data.dwFileAttributes = attrData.dwFileAttributes;
         data.dwReserved0 = 0;
         data.ftLastWriteTime = attrData.ftLastWriteTime;
@@ -103,7 +103,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
     wchar_t* winPath = ToWinPath(env, path, false);
     jstring result = path;
 
-    WIN32_FIND_DATA data;
+    WIN32_FIND_DATAW data;
     HANDLE h = FindFirstFileW(winPath, &data);
     if (h != INVALID_HANDLE_VALUE) {
         FindClose(h);
@@ -151,7 +151,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
         return NULL;
     }
 
-    WIN32_FIND_DATA data;
+    WIN32_FIND_DATAW data;
     HANDLE h = FindFirstFileW(winPath, &data);
     if (h == INVALID_HANDLE_VALUE) {
         free(winPath);
@@ -177,7 +177,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
             env->SetObjectArrayElement(result, len++, o);
             env->DeleteLocalRef(o);
         }
-        while (FindNextFile(h, &data));
+        while (FindNextFileW(h, &data));
 
         if (len != maxLen) {
             result = CopyObjectArray(env, result, fileInfoClass, len, len);
@@ -224,7 +224,7 @@ static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix) {
     return pathBuf;
 }
 
-static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWIN32_FIND_DATA lpData, jclass aClass) {
+static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass) {
     DWORD attributes = lpData->dwFileAttributes;
     LONGLONG timestamp = pairToInt64(lpData->ftLastWriteTime.dwLowDateTime, lpData->ftLastWriteTime.dwHighDateTime);
     LONGLONG length = pairToInt64(lpData->nFileSizeLow, lpData->nFileSizeHigh);
