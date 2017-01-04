@@ -228,7 +228,7 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWI
   LONGLONG length = pairToInt64(lpData->nFileSizeLow, lpData->nFileSizeHigh);
 
   if (IS_SET(attributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
-    if (IS_SET(lpData->dwReserved0, IO_REPARSE_TAG_SYMLINK)) {
+    if (IS_SET(lpData->dwReserved0, IO_REPARSE_TAG_SYMLINK) || IS_SET(lpData->dwReserved0, IO_REPARSE_TAG_MOUNT_POINT)) {
       attributes = BROKEN_SYMLINK_ATTR;
       timestamp = 0;
       length = 0;
@@ -245,7 +245,7 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWI
         wcsncpy_s(fullPath + dirLen, nameLen + 1, lpData->cFileName, nameLen);
       }
 
-      // read symlink target attributes
+      // read reparse point target attributes
       HANDLE h = CreateFileW(fullPath, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
       if (h != INVALID_HANDLE_VALUE) {
         BY_HANDLE_FILE_INFORMATION targetData;
@@ -261,7 +261,7 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWI
         free(fullPath);
       }
     } else {
-      attributes &= (~ FILE_ATTRIBUTE_REPARSE_POINT);  // keep reparse flag only for symlinks
+      attributes &= (~ FILE_ATTRIBUTE_REPARSE_POINT);  // keep the flag only for known reparse points
     }
   }
 
