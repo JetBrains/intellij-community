@@ -6,6 +6,7 @@ import circlet.utils.*
 import com.intellij.concurrency.*
 import com.intellij.notification.*
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
 import klogging.*
@@ -38,38 +39,27 @@ class IdePluginClient(val project: Project) :
 
     init {
 
-//        loginDataComponent.enabled.filter { it }.forEach(componentLifetime) { enabledLt ->
-//            state.value = ConnectingState.TryConnect
-//
-//            enabledLt.add {
-//                disconnect()
-//            }
-//        }
+        loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
+            state.value = ConnectingState.TryConnect
 
-//        state.view(componentLifetime) { lt, state ->
-//            when (state) {
-//                ConnectingState.TryConnect -> tryReconnect(lt)
-//                ConnectingState.AuthFailed -> authCheckFailedNotification()
-//                ConnectingState.Connected -> notifyConnected()
-//                ConnectingState.Disconnected -> notifyDisconnected(lt)
-//            }
-//        }
-//
-//        loginDataComponent.credentialsUpdated.advise(componentLifetime, {
-//            state.value = ConnectingState.TryConnect
-//        })
+            enabledLt.inContext {
+                disconnect()
+            }
+        }
 
-/*
-        ProgressManager.getInstance().run(externalTask(myProject, true, object: IExternalTask {
-            override val lifetime: Lifetime get() = connectingProgressLifetimeDef.lifetime
-            override val cancel: () -> Unit get() = { disconnect() }
-            override val title: String get() = connectionState?.message ?: "Connecting"
-            override val header: String get() = connectionState?.message ?: "Connecting"
-            override val description: String get() = connectionState?.message ?: "Connecting"
-            override val isIndeterminate: Boolean get() = true
-            override val progress: Double get() = 0.5
-        }))
-*/
+        state.view(componentLifetime) { lt, state ->
+            when (state) {
+                ConnectingState.TryConnect -> tryReconnect(lt)
+                ConnectingState.AuthFailed -> authCheckFailedNotification()
+                ConnectingState.Connected -> notifyConnected()
+                ConnectingState.Disconnected -> notifyDisconnected(lt)
+            }
+        }
+
+        loginDataComponent.credentialsUpdated.forEach(componentLifetime, {
+            state.value = ConnectingState.TryConnect
+        })
+
     }
 
     fun enable() {
