@@ -113,6 +113,7 @@ Developed By
 
 **Contributors**
 - [**@AlexejK** Alexej Kubarev](https://github.com/AlexejK)
+- [**@akozlova** Anna Kozlova](https://github.com/akozlova)
 - [**@twillouer** William Delanoue](https://github.com/twillouer)
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
 - [**@toadzky** David Harris](https://github.com/toadzky)
