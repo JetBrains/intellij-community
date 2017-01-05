@@ -404,7 +404,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return !ContainerUtil.equalsIdentity(oldModel, items);
   }
 
-  private boolean isSelectionVisible() {
+  protected boolean isSelectionVisible() {
     return ScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
   }
 
