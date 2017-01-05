@@ -519,7 +519,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myOffsets.getPrefixLength(item, this);
   }
 
-  private void insertLookupString(LookupElement item, final int prefix) {
+  protected void insertLookupString(LookupElement item, final int prefix) {
     final String lookupString = getCaseCorrectedLookupString(item);
 
     final Editor hostEditor = getTopLevelEditor();
