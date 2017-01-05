@@ -24,8 +24,12 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
@@ -342,6 +346,13 @@ class Intf {
 
     assert popupElements == [wanted, ChooseByNameBase.NON_PREFIX_SEPARATOR, smth]
     assert popup.calcSelectedIndex(popupElements.toArray(), 'PsiCl') == 0
+  }
+
+  void "test out-of-project-content files"() {
+    def scope = ProjectScope.getAllScope(project)
+    def file = ReadAction.compute { myFixture.javaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope).containingFile }
+    def elements = getPopupElements(new GotoFileModel(project), "Object.class", true)
+    assert file in elements
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
