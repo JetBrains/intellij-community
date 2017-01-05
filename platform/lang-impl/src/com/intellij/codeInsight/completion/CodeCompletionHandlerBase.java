@@ -20,7 +20,6 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction;
-import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
@@ -66,6 +65,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +78,7 @@ public class CodeCompletionHandlerBase {
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
+  private static int autoInsertItemTimeout = 2000;
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);
@@ -320,7 +321,7 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
-    if (freezeSemaphore.waitFor(2000)) {
+    if (freezeSemaphore.waitFor(autoInsertItemTimeout)) {
       if (!indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
         try {
           indicator.getLookup().refreshUi(true, false);
@@ -813,5 +814,10 @@ public class CodeCompletionHandlerBase {
       }
     }
     return null;
+  }
+
+  @TestOnly
+  public static void setAutoInsertTimeout(int timeout) {
+    autoInsertItemTimeout = timeout;
   }
 }

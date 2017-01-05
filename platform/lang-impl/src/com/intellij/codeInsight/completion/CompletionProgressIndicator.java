@@ -101,7 +101,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     @Override
     public void run() {
       updateLookup();
-      myQueue.setMergingTimeSpan(300);
+      myQueue.setMergingTimeSpan(20);
     }
   };
   private final Semaphore myFreezeSemaphore;
@@ -113,6 +113,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       finishCompletionProcess(true);
     }
   };
+  private static int insertSingleItemTimeSpan = 300;
   private volatile int myCount;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
@@ -154,7 +155,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     };
     LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 100, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 10, true, myEditor.getContentComponent());
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -411,7 +412,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCount++;
 
     if (myCount == 1) {
-      JobScheduler.getScheduler().schedule(myFreezeSemaphore::up, 300, TimeUnit.MILLISECONDS);
+      JobScheduler.getScheduler().schedule(myFreezeSemaphore::up, insertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
     }
     myQueue.queue(myUpdate);
   }
@@ -781,6 +782,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myAdvertiserChanges.offer(() -> myLookup.addAdvertisement(text, bgColor));
 
     myQueue.queue(myUpdate);
+  }
+
+  @TestOnly
+  public static void setGroupingTimeSpan(int timeSpan) {
+    insertSingleItemTimeSpan = timeSpan;
   }
 
   private static class ModifierTracker extends KeyAdapter {
