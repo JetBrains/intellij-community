@@ -37,12 +37,12 @@ public class VMOptionsTest {
   public void setUp() throws IOException {
     myFile = myTempDir.newFile("vmoptions.txt");
     FileUtil.writeToFile(myFile, "-Xmx512m\n-XX:MaxPermSize=128m");
-    VMOptions.setTestFile(myFile.getPath());
+    System.setProperty("jb.vmOptionsFile", myFile.getPath());
   }
 
   @After
   public void tearDown() {
-    VMOptions.clearTestFile();
+    System.clearProperty("jb.vmOptionsFile");
   }
 
   @Test
@@ -125,13 +125,11 @@ public class VMOptionsTest {
 
   @Test
   public void testWritingNonExistingFile() throws IOException {
-    File testFile = myTempDir.newFile("vmoptions.non.existing.txt");
-    FileUtil.delete(testFile);
-    VMOptions.setTestFile(testFile.getPath());
+    FileUtil.delete(myFile);
 
     VMOptions.writeOption(VMOptions.MemoryKind.HEAP, 1024);
     VMOptions.writeOption(VMOptions.MemoryKind.PERM_GEN, 256);
 
-    assertThat(FileUtil.loadFile(testFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxPermSize=256m");
+    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m -XX:MaxPermSize=256m");
   }
 }

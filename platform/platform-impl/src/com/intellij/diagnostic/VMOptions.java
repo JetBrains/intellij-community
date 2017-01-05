@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -161,10 +160,6 @@ public class VMOptions {
 
   @Nullable
   public static File getWriteFile() {
-    if (ourTestPath != null) {
-      return new File(ourTestPath);
-    }
-
     String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
     if (vmOptionsFile == null) {
       // launchers should specify a path to an options file used to configure a JVM
@@ -186,18 +181,6 @@ public class VMOptions {
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
     return new File(location, fileName);
-  }
-
-  private static String ourTestPath;
-
-  @TestOnly
-  static void setTestFile(String path) {
-    ourTestPath = path;
-  }
-
-  @TestOnly
-  static void clearTestFile() {
-    ourTestPath = null;
   }
 
   //<editor-fold desc="Deprecated stuff.">
