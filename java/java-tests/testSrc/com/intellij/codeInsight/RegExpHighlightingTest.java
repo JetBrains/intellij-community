@@ -205,6 +205,12 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("a{<error descr=\"Number expected\">,</error>}");
   }
 
+  public void testOptions() {
+    doTest("(?i)<error descr=\"Dangling metacharacter\">+</error>");
+    doTest("(?i)<error descr=\"Dangling metacharacter\">*</error>");
+    doTest("(?i)<error descr=\"Dangling metacharacter\">{5,6}</error>");
+  }
+
   private void doTest(@Language("RegExp") String code) {
     code = StringUtil.escapeBackSlashes(code);
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");

@@ -351,6 +351,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitRegExpClosure(RegExpClosure closure) {
+    if (closure.getAtom() instanceof RegExpSetOptions) {
+      myHolder.createErrorAnnotation(closure.getQuantifier(), "Dangling metacharacter");
+    }
+  }
+
+  @Override
   public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
     if (quantifier.isCounted()) {
       final RegExpNumber minElement = quantifier.getMin();
