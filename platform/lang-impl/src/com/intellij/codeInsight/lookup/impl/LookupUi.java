@@ -90,7 +90,7 @@ class LookupUi {
     myProject = project;
 
     myIconPanel.setVisible(false);
-    myIconPanel.setBackground(Color.LIGHT_GRAY);
+    myIconPanel.setOpaque(false);
     myIconPanel.add(myProcessIcon);
 
     JComponent adComponent = advertiser.getAdComponent();
