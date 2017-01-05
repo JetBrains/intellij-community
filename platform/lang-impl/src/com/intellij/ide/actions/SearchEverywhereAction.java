@@ -2027,11 +2027,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setShowShadow(false)
               .setShowBorder(false)
               .createPopup();
+            project.putUserData(SEARCH_EVERYWHERE_POPUP, myPopup);
             //myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             myPopup.getContent().setBorder(null);
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
+                project.putUserData(SEARCH_EVERYWHERE_POPUP, null);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
                   resetFields();
                   myNonProjectCheckBox.setSelected(false);
