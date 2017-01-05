@@ -141,7 +141,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
     return true;
   }
 
-  private boolean navigateInAnyFileEditor(Project project, boolean focusEditor) {
+  protected boolean navigateInAnyFileEditor(Project project, boolean focusEditor) {
     List<FileEditor> editors = FileEditorManager.getInstance(project).openEditor(this, focusEditor);
     for (FileEditor editor : editors) {
       if (editor instanceof TextEditor) {
