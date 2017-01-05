@@ -55,7 +55,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   private JBTable myFiltersTable;
   protected final List<TodoPattern> myPatterns;
   private final PatternsTableModel myPatternsModel;
-  private final List<TodoFilter> myFilters;
+  protected final List<TodoFilter> myFilters;
   private final FiltersTableModel myFiltersModel;
 
   /**
@@ -82,7 +82,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     return false;
   }
 
-  private boolean areFiltersModified() {
+  protected boolean areFiltersModified() {
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
     TodoFilter[] initialFilters = todoConfiguration.getTodoFilters();
     if (initialFilters.length != myFilters.size()) {
@@ -329,7 +329,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
-  private void stopEditing() {
+  protected void stopEditing() {
     if (myPatternsTable.isEditing()) {
       TableCellEditor editor = myPatternsTable.getCellEditor();
       if (editor != null) {
