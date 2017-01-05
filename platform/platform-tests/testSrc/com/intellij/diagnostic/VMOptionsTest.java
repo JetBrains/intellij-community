@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,9 +107,9 @@ public class VMOptionsTest {
   @Test
   public void testWriting() throws IOException {
     VMOptions.writeXmx(1024);
-    VMOptions.writeMaxPermGen(256);
+    VMOptions.writeMaxPermGen(512);
 
-    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m\n-XX:MaxPermSize=256m");
+    assertThat(FileUtil.loadFile(myFile)).isEqualToIgnoringWhitespace("-Xmx1024m\n-XX:MaxPermSize=512m");
   }
 
   @Test
