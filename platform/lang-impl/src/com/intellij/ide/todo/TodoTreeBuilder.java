@@ -80,7 +80,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   protected final PsiTodoSearchHelper mySearchHelper;
   /**
-   * If this flag is false then the updateTree() method does nothing. But when
+   * If this flag is false then the refresh() method does nothing. But when
    * the flag becomes true and myDirtyFileSet isn't empty the update is invoked.
    * This is done for optimization reasons: if TodoPane is not visible then
    * updates isn't invoked.
