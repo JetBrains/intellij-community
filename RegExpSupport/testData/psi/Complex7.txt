@@ -31,7 +31,8 @@ REGEXP_FILE
                         PsiElement(CLASS_END)(']')
                       RegExpQuantifierImpl: <{2}>
                         PsiElement(LBRACE)('{')
-                        PsiElement(NUMBER)('2')
+                        RegExpNumberImpl: <2>
+                          PsiElement(NUMBER)('2')
                         PsiElement(RBRACE)('}')
                     RegExpClassImpl: <[pP]>
                       PsiElement(CLASS_BEGIN)('[')

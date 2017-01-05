@@ -428,6 +428,39 @@ public class RegExpLexerTest extends LexerTestCase {
                            "HEX_CHAR ('\\x01')", lexer2);
   }
 
+  public void testQuantifier() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
+    doTest("a{,10}", "CHARACTER ('a')\n" +
+                     "LBRACE ('{')\n" +
+                     "COMMA (',')\n" +
+                     "NUMBER ('10')\n" +
+                     "RBRACE ('}')", lexer);
+
+    doTest("a{10,}", "CHARACTER ('a')\n" +
+                     "LBRACE ('{')\n" +
+                     "NUMBER ('10')\n" +
+                     "COMMA (',')\n" +
+                     "RBRACE ('}')", lexer);
+
+    doTest("a{", "CHARACTER ('a')\n" +
+                 "CHARACTER ('{')", lexer);
+
+    doTest("a{1", "CHARACTER ('a')\n" +
+                  "CHARACTER ('{')\n" +
+                  "CHARACTER ('1')", lexer);
+
+    doTest("a{1,", "CHARACTER ('a')\n" +
+                   "CHARACTER ('{')\n" +
+                   "CHARACTER ('1')\n" +
+                   "CHARACTER (',')", lexer);
+
+    doTest("a{,,}", "CHARACTER ('a')\n" +
+                    "CHARACTER ('{')\n" +
+                    "CHARACTER (',')\n" +
+                    "CHARACTER (',')\n" +
+                    "CHARACTER ('}')", lexer);
+  }
+
   @Override
   protected Lexer createLexer() {
     return null;

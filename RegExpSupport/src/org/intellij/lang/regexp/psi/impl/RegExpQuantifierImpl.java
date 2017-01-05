@@ -18,13 +18,10 @@ package org.intellij.lang.regexp.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.RegExpElementTypes;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpQuantifier;
-import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQuantifier {
 
@@ -32,17 +29,12 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
         super(astNode);
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpQuantifier(this);
     }
 
-    @NotNull
-    public RegExpAtom getAtom() {
-        final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.ATOMS);
-        assert nodes.length > 0;
-        return (RegExpAtom)nodes[0].getPsi();
-    }
-
+    @Override
     @NotNull
     public Count getCount() {
         final ASTNode[] nodes = getNode().getChildren(RegExpTT.QUANTIFIERS);
@@ -77,6 +69,7 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
         return null;
     }
 
+    @Override
     @NotNull
     public Type getType() {
         final ASTNode[] nodes = getNode().getChildren(RegExpTT.QUANTIFIERS);
@@ -100,11 +93,13 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
             myMax = max;
         }
 
+        @Override
         @NotNull
         public String getMin() {
             return myMin;
         }
 
+        @Override
         @NotNull
         public String getMax() {
             return myMax;
