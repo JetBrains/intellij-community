@@ -214,7 +214,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
-  ApplicationInfoImpl() {
+  public ApplicationInfoImpl() {
     String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
       Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, resource);
