@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -213,17 +212,11 @@ public class VMOptions {
       return null;
     }
 
-    return new File(location, getCustomFileName());
-  }
-
-  @NotNull
-  public static String getCustomFileName() {
-    StringBuilder sb = new StringBuilder(32);
-    sb.append(ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US));
-    if (SystemInfo.is64Bit && !SystemInfo.isMac) sb.append("64");
-    if (SystemInfo.isWindows) sb.append(".exe");
-    sb.append(".vmoptions");
-    return sb.toString();
+    String fileName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
+    if (SystemInfo.isWindows) fileName += ".exe";
+    fileName += ".vmoptions";
+    return new File(location, fileName);
   }
 
   private static String ourTestPath;
