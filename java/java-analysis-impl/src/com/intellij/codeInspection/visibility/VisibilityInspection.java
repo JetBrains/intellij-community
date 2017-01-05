@@ -48,7 +48,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.visibility.VisibilityInspection");
@@ -146,8 +148,12 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
 
+    int minLevel = -1;
     //ignore entry points.
-    if (refElement.isEntry()) return null;
+    if (refElement.isEntry()) {
+      minLevel = getMinVisibilityLevel(refElement);
+      if (minLevel <= 0) return null;
+    }
 
     //ignore implicit constructors. User should not be able to see them.
     if (refElement instanceof RefImplicitConstructor) return null;
@@ -170,15 +176,19 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (isTopLevelClass(refClass) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
+
     //ignore unreferenced code. They could be a potential entry points.
-    if (refElement.getInReferences().isEmpty()) return null;
+    if (refElement.getInReferences().isEmpty() && minLevel <= 0) {
+      minLevel = getMinVisibilityLevel(refElement);
+      if (minLevel <= 0) return null;
+    }
 
     //ignore interface members. They always have public access modifier.
     if (refElement.getOwner() instanceof RefClass) {
       RefClass refClass = (RefClass) refElement.getOwner();
       if (refClass.isInterface()) return null;
     }
-    String access = getPossibleAccess(refElement);
+    String access = getPossibleAccess(refElement, minLevel <= 0 ? PsiUtil.ACCESS_LEVEL_PRIVATE : minLevel);
     if (access != refElement.getAccessModifier() && access != null) {
       final PsiElement element = refElement.getElement();
       final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
@@ -208,11 +218,29 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
+  static int getMinVisibilityLevel(PsiMember member,
+                                   Stream<EntryPoint> stream) {
+    return stream
+      .filter(point -> point instanceof EntryPointWithModifiableVisibilityLevel)
+      .mapToInt(extension -> ((EntryPointWithModifiableVisibilityLevel)extension).getMinVisibilityLevel(member))
+      .max().orElse(-1);
+  }
+
+  private static int getMinVisibilityLevel(RefJavaElement refElement) {
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+    PsiElement element = refElement.getElement();
+    if (element instanceof PsiMember) {
+      Stream<EntryPoint> stream = Arrays.stream(point.getExtensions());
+      return getMinVisibilityLevel((PsiMember)element, stream);
+    }
+    return -1;
+  }
+
   @Nullable
   @PsiModifier.ModifierConstant
-  private String getPossibleAccess(@NotNull RefJavaElement refElement) {
+  private String getPossibleAccess(@NotNull RefJavaElement refElement, int minLevel) {
     String curAccess = refElement.getAccessModifier();
-    String weakestAccess = PsiModifier.PRIVATE;
+    String weakestAccess = PsiUtil.getAccessModifier(minLevel);
 
     if (isTopLevelClass(refElement) || isCalledOnSubClasses(refElement)) {
       weakestAccess = PsiModifier.PACKAGE_LOCAL;
