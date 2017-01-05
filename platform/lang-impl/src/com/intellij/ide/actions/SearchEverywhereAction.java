@@ -86,10 +86,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -178,6 +175,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myHistoryIndex = 0;
   boolean mySkipFocusGain = false;
+
+  public static final Key<JBPopup> SEARCH_EVERYWHERE_POPUP = new Key<JBPopup>("SearchEverywherePopup");
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
@@ -1665,7 +1664,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                   //some elements are non-physical like DB columns
                                   boolean isElementWithoutFile = element != null && element.getContainingFile() == null;
                                   boolean isFileInScope = virtualFile != null && (includeLibs || scope.accept(virtualFile));
-                                  if (isElementWithoutFile || isFileInScope) {
+                                  boolean isSpecialElement = element == null && virtualFile == null; //all Rider elements don't have any psi elements within
+                                  if (isElementWithoutFile || isFileInScope || isSpecialElement) {
                                     symbols.add(o);
                                   }
                                 }
