@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -371,9 +371,16 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     public void selectionChanged(@NotNull final FileEditorManagerEvent event){
       // updateHistoryEntry does commitDocument which is 1) very expensive and 2) cannot be performed from within PSI change listener
       // so defer updating history entry until documents committed to improve responsiveness
-      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
-        updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
-        updateHistoryEntry(event.getNewFile(), true);
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(new Runnable() {
+        @Override
+        public void run() {
+          FileEditor newEditor = event.getNewEditor();
+          if(newEditor != null && !newEditor.isValid())
+            return;
+
+          updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
+          updateHistoryEntry(event.getNewFile(), true);
+        }
       });
     }
   }

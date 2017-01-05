@@ -46,13 +46,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
+
+  private final TestEditorSplitter myTestEditorSplitter = new TestEditorSplitter();
 
   private final Project myProject;
 
@@ -85,7 +85,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   }
 
-  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(VirtualFile file, boolean focusEditor) {
+  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final VirtualFile file, boolean focusEditor) {
     // for non-text editors. uml, etc
     final FileEditorProvider provider = file.getUserData(FileEditorProvider.KEY);
     if (provider != null && provider.accept(getProject(), file)) {
@@ -96,7 +96,40 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
     assert editor != null;
     final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider ()});
+    final FileEditorProvider fileEditorProvider = getProvider();
+    Pair<FileEditor[], FileEditorProvider[]> result = Pair.create(new FileEditor[]{fileEditor}, new FileEditorProvider[]{fileEditorProvider});
+
+    modifyTabWell(new Runnable() {
+      @Override
+      public void run() {
+        myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider);
+      }
+    });
+
+    return result;
+  }
+
+  private void modifyTabWell(Runnable tabWellModification) {
+    FileEditor lastFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
+    VirtualFile lastFocusedFile  = myTestEditorSplitter.getFocusedFile();
+    FileEditorProvider oldProvider = myTestEditorSplitter.getProviderFromFocused();
+
+    tabWellModification.run();
+
+    FileEditor currentlyFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
+    VirtualFile currentlyFocusedFile = myTestEditorSplitter.getFocusedFile();
+    FileEditorProvider newProvider = myTestEditorSplitter.getProviderFromFocused();
+
+    final FileEditorManagerEvent event =
+        new FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor, newProvider);
+    final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+    notifyPublisher(new Runnable() {
+      @Override
+      public void run() {
+        publisher.selectionChanged(event);
+      }
+    });
   }
 
   @NotNull
@@ -197,16 +230,8 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    TextEditorProvider editorProvider = TextEditorProvider.getInstance();
-    Iterator<Editor> it = myVirtualFile2Editor.values().iterator();
-    while (it.hasNext()) {
-      Editor editor = it.next();
-      it.remove();
-      if (editor != null && !editor.isDisposed()){
-        editorProvider.disposeEditor(editorProvider.getTextEditor(editor));
-        editorFactory.releaseEditor(editor);
-      }
+    for (VirtualFile file : new LinkedList<VirtualFile>(myVirtualFile2Editor.keySet())) {
+      closeFile(file);
     }
   }
 
@@ -324,7 +349,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  public void closeFile(@NotNull VirtualFile file) {
+  public void closeFile(@NotNull final VirtualFile file) {
     Editor editor = myVirtualFile2Editor.remove(file);
     if (editor != null){
       TextEditorProvider editorProvider = TextEditorProvider.getInstance();
@@ -334,6 +359,13 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     if (Comparing.equal(file, myActiveFile)) {
       myActiveFile = null;
     }
+
+    modifyTabWell(new Runnable() {
+      @Override
+      public void run() {
+        myTestEditorSplitter.closeFile(file);
+      }
+    });
   }
 
   @Override
@@ -456,7 +488,17 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
-    return Pair.create(new FileEditor[0], new FileEditorProvider[0]);
+
+    Pair<FileEditor, FileEditorProvider> editorAndProvider = myTestEditorSplitter.getEditorAndProvider(file);
+
+    FileEditor[] fileEditor = new FileEditor[0];
+    FileEditorProvider[] fileEditorProvider= new FileEditorProvider[0];
+    if (editorAndProvider != null) {
+      fileEditor = new FileEditor[] {editorAndProvider.first};
+      fileEditorProvider = new FileEditorProvider[]{editorAndProvider.second};
+    }
+
+    return Pair.create(fileEditor, fileEditorProvider);
   }
 
   @Override
