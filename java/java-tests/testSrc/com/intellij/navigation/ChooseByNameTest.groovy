@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import javax.swing.*
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author peter
  */
@@ -113,8 +114,8 @@ class Intf {
 
     def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
 
-    def xxx1
-    def xxx2
+    def xxx1 = null
+    def xxx2 = null
     runInEdtAndWait {
       xxx1 = intf.findMethodsByName('_xxx1', false)
       xxx2 = intf.findMethodsByName('xxx2', false)
@@ -170,7 +171,6 @@ class Intf {
 
     popup = createPopup(new GotoFileModel(project), barContext)
     assert calcPopupElements(popup, "index") == [barIndex, fooIndex]
-
   }
 
   void "test accept file paths starting with a dot"() {
@@ -186,8 +186,8 @@ class Intf {
 
     def popup = createPopup(new GotoFileModel(project), fooIndex)
 
-    def fooDir
-    def barDir
+    def fooDir = null
+    def barDir = null
     runInEdtAndWait {
       fooDir = fooIndex.containingDirectory
       barDir = barIndex.containingDirectory
@@ -284,8 +284,8 @@ class Intf {
 
   void "test super method in jdk"() {
     def clazz = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }")
-    def ourRun
-    def sdkRun
+    def ourRun = null
+    def sdkRun = null
     runInEdtAndWait {
       ourRun = clazz.methods[0]
       sdkRun = ourRun.containingClass.interfaces[0].methods[0]
@@ -304,8 +304,8 @@ class Intf {
     def baseClass = myFixture.addClass("class Base { void xpaint() {} }")
     def subClass = myFixture.addClass("class Sub extends Base { void xpaint() {} }")
     
-    def base
-    def sub
+    def base = null
+    def sub = null
     runInEdtAndWait {
       base = baseClass.methods[0]
       sub = subClass.methods[0]
@@ -316,8 +316,8 @@ class Intf {
   }
 
   void "test groovy script class with non-identifier name"() {
-    GroovyFile file1 = myFixture.addFileToProject('foo.groovy', '')
-    GroovyFile file2 = myFixture.addFileToProject('foo-bar.groovy', '')
+    GroovyFile file1 = myFixture.addFileToProject('foo.groovy', '') as GroovyFile
+    GroovyFile file2 = myFixture.addFileToProject('foo-bar.groovy', '') as GroovyFile
 
     def variants = getPopupElements(new GotoSymbolModel2(project), 'foo', false)
     runInEdtAndWait { assert variants == [file1.scriptClass, file2.scriptClass] }
@@ -354,7 +354,7 @@ class Intf {
     semaphore.down()
     SwingUtilities.invokeLater {
       popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
-        elements = set as List
+        elements = set as List<Object>
         semaphore.up()
       } as Consumer<Set<?>>)
     }
