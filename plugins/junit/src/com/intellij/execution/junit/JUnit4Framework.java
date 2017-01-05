@@ -147,6 +147,7 @@ public class JUnit4Framework extends JavaTestFramework {
     return new FileTemplateDescriptor("JUnit4 TearDown Method.java");
   }
 
+  @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 Test Method.java");
   }
