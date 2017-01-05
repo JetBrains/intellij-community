@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -42,7 +43,7 @@ public class VMOptions {
 
     public final String optionName;
     public final String option;
-    public final Pattern pattern;
+    private final Pattern pattern;
 
     MemoryKind(String name, String separator) {
       optionName = name;
@@ -51,42 +52,9 @@ public class VMOptions {
     }
   }
 
-  public static int readXmx() {
-    return readOption(MemoryKind.HEAP, true);
-  }
-
-  public static int readMaxPermGen() {
-    return readOption(MemoryKind.PERM_GEN, true);
-  }
-
-  public static int readCodeCache() {
-    return readOption(MemoryKind.CODE_CACHE, true);
-  }
-
-  public static void writeXmx(int value) {
-    writeOption(MemoryKind.HEAP, value);
-  }
-
-  public static void writeMaxPermGen(int value) {
-    writeOption(MemoryKind.PERM_GEN, value);
-  }
-
-  public static void writeCodeCache(int value) {
-    writeOption(MemoryKind.CODE_CACHE, value);
-  }
-
-  public static int readOption(MemoryKind kind, boolean effective) {
+  public static int readOption(@NotNull MemoryKind kind, boolean effective) {
     List<String> arguments;
-    if (ourTestPath != null) {
-      try {
-        String content = FileUtil.loadFile(new File(ourTestPath));
-        arguments = Collections.singletonList(content);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else if (effective) {
+    if (effective) {
       arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
     }
     else {
@@ -129,7 +97,7 @@ public class VMOptions {
     return 1;
   }
 
-  private static void writeOption(MemoryKind option, int value) {
+  public static void writeOption(@NotNull MemoryKind option, int value) {
     File file = getWriteFile();
     if (file == null) {
       LOG.warn("VM options file not configured");
@@ -231,4 +199,36 @@ public class VMOptions {
   static void clearTestFile() {
     ourTestPath = null;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  public static int readXmx() {
+    return readOption(MemoryKind.HEAP, true);
+  }
+
+  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  public static int readMaxPermGen() {
+    return readOption(MemoryKind.PERM_GEN, true);
+  }
+
+  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  public static int readCodeCache() {
+    return readOption(MemoryKind.CODE_CACHE, true);
+  }
+
+  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
+  public static void writeXmx(int value) {
+    writeOption(MemoryKind.HEAP, value);
+  }
+
+  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
+  public static void writeMaxPermGen(int value) {
+    writeOption(MemoryKind.PERM_GEN, value);
+  }
+
+  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
+  public static void writeCodeCache(int value) {
+    writeOption(MemoryKind.CODE_CACHE, value);
+  }
+  //</editor-fold>
 }

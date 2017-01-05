@@ -137,13 +137,13 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private void save() {
     try {
       int heapSize = Integer.parseInt(myHeapSizeField.getText());
-      VMOptions.writeXmx(heapSize);
+      VMOptions.writeOption(MemoryKind.HEAP, heapSize);
     }
     catch (NumberFormatException ignored) { }
 
     try {
       int codeCacheSize = Integer.parseInt(myCodeCacheSizeField.getText());
-      VMOptions.writeCodeCache(codeCacheSize);
+      VMOptions.writeOption(MemoryKind.CODE_CACHE, codeCacheSize);
     }
     catch (NumberFormatException ignored) { }
   }
