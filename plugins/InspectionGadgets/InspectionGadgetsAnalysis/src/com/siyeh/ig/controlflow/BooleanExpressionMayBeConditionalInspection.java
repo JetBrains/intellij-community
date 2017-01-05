@@ -62,14 +62,8 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("if.may.be.conditional.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("if.may.be.conditional.quickfix");
     }
 
     @Override

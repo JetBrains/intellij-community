@@ -56,7 +56,7 @@ class FoldingModelWindow implements FoldingModelEx{
   }
 
   @Override
-  public FoldRegion getFoldingPlaceholderAt(Point p) {
+  public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
     return myDelegate.getFoldingPlaceholderAt(p);
   }
 

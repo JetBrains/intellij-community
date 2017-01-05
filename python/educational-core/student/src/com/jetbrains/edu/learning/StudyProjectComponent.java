@@ -97,32 +97,25 @@ public class StudyProjectComponent implements ProjectComponent {
     }
 
     StudyUtils.registerStudyToolWindow(course, myProject);
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            Course course = StudyTaskManager.getInstance(myProject).getCourse();
-            if (course != null) {
-              final UISettings instance = UISettings.getInstance();
-              if (instance != null) {
-                instance.HIDE_TOOL_STRIPES = false;
-                instance.fireUISettingsChanged();
-              }
-              registerShortcuts();
-              EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
-            }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(
+      (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
+        Course course1 = StudyTaskManager.getInstance(myProject).getCourse();
+        if (course1 != null) {
+          final UISettings instance = UISettings.getInstance();
+          if (instance != null) {
+            instance.HIDE_TOOL_STRIPES = false;
+            instance.fireUISettingsChanged();
           }
-        });
-      }
-    }));
+          registerShortcuts();
+          EduUsagesCollector.projectTypeOpened(course1.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
+        }
+      })));
   }
 
   private void registerShortcuts() {
     StudyToolWindow window = StudyUtils.getStudyToolWindow(myProject);
     if (window != null) {
-      List<AnAction> actionsOnToolbar = window.getActions(true);
+      List<AnAction> actionsOnToolbar = window.getActions();
       if (actionsOnToolbar != null) {
         for (AnAction action : actionsOnToolbar) {
           if (action instanceof StudyActionWithShortcut) {
@@ -155,7 +148,7 @@ public class StudyProjectComponent implements ProjectComponent {
     final Course course = EduStepicConnector.getCourse(myProject, info);
 
     if (course == null) return;
-    flushCourse(myProject, course);
+    flushCourse(course);
     course.initCourse(false);
 
     StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
@@ -197,7 +190,7 @@ public class StudyProjectComponent implements ProjectComponent {
       final ArrayList<Task> tasks = new ArrayList<>();
       for (Task task : lesson.getTaskList()) {
         index += 1;
-        final Task studentTask = studentLesson.getTask(task.getStepicId());
+        final Task studentTask = studentLesson.getTask(task.getStepId());
         if (studentTask != null && StudyStatus.Solved.equals(studentTask.getStatus())) {
           studentTask.setIndex(index);
           tasks.add(studentTask);
@@ -231,7 +224,7 @@ public class StudyProjectComponent implements ProjectComponent {
   private static void copyFile(@NotNull final File from, @NotNull final File to) {
     if (from.exists()) {
       try {
-        FileUtil.copy(from, to);
+        FileUtil.copyFileOrDir(from, to);
       }
       catch (IOException e) {
         LOG.warn("Failed to copy " + from.getName());
@@ -333,7 +326,7 @@ public class StudyProjectComponent implements ProjectComponent {
     public void fileCreated(@NotNull VirtualFileEvent event) {
       if (myProject.isDisposed()) return;
       final VirtualFile createdFile = event.getFile();
-      final VirtualFile taskDir = createdFile.getParent();
+      final VirtualFile taskDir = StudyUtils.getTaskDir(createdFile);
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
         return;
@@ -352,7 +345,7 @@ public class StudyProjectComponent implements ProjectComponent {
               final TaskFile taskFile = new TaskFile();
               taskFile.initTaskFile(task, false);
               taskFile.setUserCreated(true);
-              final String name = createdFile.getName();
+              final String name = FileUtil.getRelativePath(taskDir.getPath(), createdFile.getPath(), '/');
               taskFile.name = name;
               //TODO: put to other steps as well
               task.getTaskFiles().put(name, taskFile);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.*;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -347,7 +348,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     else {
       return null;
     }
-    if (!expressionIsArrayLengthLookup(referenceExpression)) {
+    if (ExpressionUtils.getArrayFromLengthExpression(referenceExpression) == null) {
       final PsiElement target = referenceExpression.resolve();
       if (secondDeclaredElement != null && !secondDeclaredElement.equals(target)) {
         return null;
@@ -366,7 +367,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
           return null;
         }
         referenceExpression = (PsiReferenceExpression)expression;
-        if (!expressionIsArrayLengthLookup(referenceExpression)) {
+        if (ExpressionUtils.getArrayFromLengthExpression(referenceExpression) == null) {
           return null;
         }
       }
@@ -503,25 +504,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     return new Holder(variable);
   }
 
-  private static boolean expressionIsArrayLengthLookup(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression reference =
-      (PsiReferenceExpression)expression;
-    final String referenceName = reference.getReferenceName();
-    if (!HardcodedMethodConstants.LENGTH.equals(referenceName)) {
-      return false;
-    }
-    final PsiExpression qualifier = reference.getQualifierExpression();
-    if (!(qualifier instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiType type = qualifier.getType();
-    return type != null && type.getArrayDimensions() > 0;
-  }
-
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {

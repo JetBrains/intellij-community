@@ -50,7 +50,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testNumberMultipleWrong() throws Exception {
     testImpl("{ \"properties\": { \"prop\": {\"type\": \"number\", \"multipleOf\": 2}}}",
-             "{ \"prop\": <warning descr=\"Is not multiple of 3\">3</warning>}");
+             "{ \"prop\": <warning descr=\"Is not multiple of 2\">3</warning>}");
   }
 
   public void testNumberMultipleCorrect() throws Exception {
@@ -94,6 +94,27 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     testImpl(schema, "{\"prop\": [101, 102]}");
     testImpl(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18.0\">16</warning>]}");
     testImpl(schema, "{\"prop\": [<warning descr=\"Type is not allowed\">\"test\"</warning>]}");
+  }
+
+  public void testTopLevelArray() throws Exception {
+    final String schema = "{\n" +
+                                 "  \"type\": \"array\",\n" +
+                                 "  \"items\": {\n" +
+                                 "    \"type\": \"number\", \"minimum\": 18" +
+                                 "  }\n" +
+                                 "}";
+    testImpl(schema, "[101, 102]");
+  }
+
+  public void testTopLevelObjectArray() throws Exception {
+    final String schema = "{\n" +
+                                 "  \"type\": \"array\",\n" +
+                                 "  \"items\": {\n" +
+                                 "    \"type\": \"object\", \"properties\": {\"a\": {\"type\": \"number\"}}" +
+                                 "  }\n" +
+                                 "}";
+    testImpl(schema, "[{\"a\": <warning descr=\"Type is not allowed\">true</warning>}]");
+    testImpl(schema, "[{\"a\": 18}]");
   }
 
   public void testArrayTuples1() throws Exception {
@@ -293,6 +314,77 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/integerTypeWithMinMax_schema.json"));
     String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/integerTypeWithMinMax.json"));
     testImpl(schemaText, inputText);
+  }
+
+  public void testPatternPropertiesHighlighting() throws Exception {
+    final String schema = "{\n" +
+                          "  \"patternProperties\": {\n" +
+                          "    \"^A\" : {\n" +
+                          "      \"type\": \"number\"\n" +
+                          "    },\n" +
+                          "    \"B\": {\n" +
+                          "      \"type\": \"boolean\"\n" +
+                          "    },\n" +
+                          "    \"C\": {\n" +
+                          "      \"enum\": [\"test\", \"em\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\n" +
+                     "  \"Abezjana\": 2,\n" +
+                     "  \"Auto\": <warning descr=\"Type is not allowed\">\"no\"</warning>,\n" +
+                     "  \"ABe\": <warning descr=\"Type is not allowed\">22</warning>,\n" +
+                     "  \"Boloto\": <warning descr=\"Type is not allowed\">2</warning>,\n" +
+                     "  \"Cyan\": <warning descr=\"Value should be one of: [\\\"test\\\", \\\"em\\\"]\">\"me\"</warning>\n" +
+                     "}");
+  }
+
+  public void testPatternPropertiesFromIssue() throws Exception {
+    final String schema = "{\n" +
+                          "  \"type\": \"object\",\n" +
+                          "  \"additionalProperties\": false,\n" +
+                          "  \"patternProperties\": {\n" +
+                          "    \"p[0-9]\": {\n" +
+                          "      \"type\": \"string\"\n" +
+                          "    },\n" +
+                          "    \"a[0-9]\": {\n" +
+                          "      \"enum\": [\"auto!\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\n" +
+                     "  \"p1\": <warning descr=\"Type is not allowed\">1</warning>,\n" +
+                     "  \"p2\": \"3\",\n" +
+                     "  \"a2\": \"auto!\",\n" +
+                     "  \"a1\": <warning descr=\"Value should be one of: [\\\"auto!\\\"]\">\"moto!\"</warning>\n" +
+                     "}");
+  }
+
+  public void testRootObjectRedefinedAdditionalPropertiesForbidden() throws Exception {
+    testImpl(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\": true</warning>," +
+                                          "\"r1\": \"allowed!\"}");
+  }
+
+  public static String rootObjectRedefinedSchema() {
+    return "{\n" +
+           "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+           "  \"type\": \"object\",\n" +
+           "  \"$ref\" : \"#/definitions/root\",\n" +
+           "  \"definitions\": {\n" +
+           "    \"root\" : {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"additionalProperties\": false,\n" +
+           "      \"properties\": {\n" +
+           "        \"r1\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"r2\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        }\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}\n";
   }
 
   static String schema(final String s) {

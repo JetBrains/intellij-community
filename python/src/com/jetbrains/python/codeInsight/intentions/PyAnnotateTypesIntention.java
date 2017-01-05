@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -45,12 +44,10 @@ import static com.jetbrains.python.codeInsight.intentions.TypeIntention.resolves
 /**
  * @author traff
  */
-public class PyAnnotateTypesIntention implements IntentionAction {
-  private String myText = PyBundle.message("INTN.annotate.types");
-
-  @NotNull
-  public String getText() {
-    return myText;
+public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
+  
+  public PyAnnotateTypesIntention() {
+    setText(PyBundle.message("INTN.annotate.types"));
   }
 
   @NotNull
@@ -78,7 +75,8 @@ public class PyAnnotateTypesIntention implements IntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     final PyCallable callable = getCallable(elementAt);
 
@@ -229,13 +227,7 @@ public class PyAnnotateTypesIntention implements IntentionAction {
     }
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-
   protected void updateText() {
-    myText = PyBundle.message("INTN.annotate.types");
+    setText(PyBundle.message("INTN.annotate.types"));
   }
 }

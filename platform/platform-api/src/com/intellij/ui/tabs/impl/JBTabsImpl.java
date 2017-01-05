@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
@@ -43,7 +39,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +60,7 @@ import java.util.List;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
-             UISettingsListener, QuickActionProvider, Accessible {
+             UISettingsListener, Accessible {
 
   public static final DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
@@ -171,8 +166,6 @@ public class JBTabsImpl extends JComponent
   private boolean myNavigationActionsEnabled = true;
   private boolean myUseBufferedPaint = true;
 
-  private boolean myOwnSwitchProvider = true;
-  private SwitchProvider mySwitchDelegate;
   protected TabInfo myDropInfo;
   private int myDropInfoIndex;
   protected boolean myShowDropLocation = true;
@@ -245,13 +238,12 @@ public class JBTabsImpl extends JComponent
         }
       }
     });
-    addMouseWheelListener(new MouseWheelListener() {
-      @Override
-      public void mouseWheelMoved(MouseWheelEvent e) {
-        if (mySingleRowLayout.myLastSingRowLayout != null) {
-          mySingleRowLayout.scroll(e.getUnitsToScroll() * mySingleRowLayout.getScrollUnitIncrement());
-          revalidateAndRepaint(false);
-        }
+    addMouseWheelListener(event -> {
+      int units = event.getUnitsToScroll();
+      if (units == 0) return;
+      if (mySingleRowLayout.myLastSingRowLayout != null) {
+        mySingleRowLayout.scroll(units * mySingleRowLayout.getScrollUnitIncrement());
+        revalidateAndRepaint(false);
       }
     });
 
@@ -329,7 +321,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     myImage = null;
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       entry.getKey().revalidate();
@@ -393,12 +385,6 @@ public class JBTabsImpl extends JComponent
     return myDisposed;
   }
 
-  @Override
-  public JBTabs setAdditionalSwitchProviderWhenOriginal(SwitchProvider delegate) {
-    mySwitchDelegate = delegate;
-    return this;
-  }
-
   public static Image getComponentImage(TabInfo info) {
     JComponent cmp = info.getComponent();
 
@@ -406,12 +392,12 @@ public class JBTabsImpl extends JComponent
     if (cmp.isShowing()) {
       final int width = cmp.getWidth();
       final int height = cmp.getHeight();
-      img = UIUtil.createImage(width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
+      img = UIUtil.createImage(info.getComponent(), width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = img.createGraphics();
       cmp.paint(g);
     }
     else {
-      img = UIUtil.createImage(500, 500, BufferedImage.TYPE_INT_ARGB);
+      img = UIUtil.createImage(info.getComponent(), 500, 500, BufferedImage.TYPE_INT_ARGB);
     }
     return img;
   }
@@ -1384,7 +1370,7 @@ public class JBTabsImpl extends JComponent
     if (blocked && !myPaintBlocked) {
       if (takeSnapshot) {
         if (getWidth() > 0 && getHeight() > 0) {
-          myImage = UIUtil.createImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+          myImage = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
           final Graphics2D g = myImage.createGraphics();
           super.paint(g);
           g.dispose();
@@ -2036,7 +2022,7 @@ public class JBTabsImpl extends JComponent
       BufferedImage img = label.getInactiveStateImage(bounds);
 
       if (img == null) {
-        img = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        img = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D imgG2d = img.createGraphics();
         imgG2d.addRenderingHints(g2d.getRenderingHints());
         doPaintInactive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()),
@@ -2044,7 +2030,7 @@ public class JBTabsImpl extends JComponent
         imgG2d.dispose();
       }
 
-      g2d.drawImage(img, x, y, width, height, null);
+      UIUtil.drawImage(g2d, img, x, y, width, height, null);
 
       label.setInactiveStateImage(img);
     }
@@ -2383,8 +2369,10 @@ public class JBTabsImpl extends JComponent
     JComponent component = tabInfo == null ? null : tabInfo.getComponent();
     if (component != null) {
       Dimension tabSize = minimum ? component.getMinimumSize() : component.getPreferredSize();
-      size.width = tabSize.width;
-      size.height = tabSize.height;
+      if (tabSize != null) {
+        size.width = tabSize.width;
+        size.height = tabSize.height;
+      }
     }
 
     addHeaderSize(size, 3);
@@ -2664,7 +2652,7 @@ public class JBTabsImpl extends JComponent
     unqueueFromRemove(comp);
 
     if (comp instanceof TabLabel) {
-      ((TabLabel)comp).apply(myUiDecorator.getDecoration());
+      ((TabLabel)comp).apply(myUiDecorator != null ? myUiDecorator.getDecoration() : ourDefaultDecorator.getDecoration());
     }
 
     super.addImpl(comp, constraints, index);
@@ -2699,11 +2687,6 @@ public class JBTabsImpl extends JComponent
   @NotNull
   public JComponent getComponent() {
     return this;
-  }
-
-  @Override
-  public boolean isCycleRoot() {
-    return false;
   }
 
   private void addListeners() {
@@ -3135,31 +3118,7 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
-    if (SwitchProvider.KEY.getName().equals(dataId) && myOwnSwitchProvider) {
-      return this;
-    }
-
-    if (QuickActionProvider.KEY.getName().equals(dataId)) {
-      return this;
-    }
-
     return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
-  }
-
-  @Override
-  public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
-
-    TabInfo selection = getSelectedInfo();
-    if (selection != null) {
-      ActionGroup group = selection.getGroup();
-      if (group != null) {
-        AnAction[] children = group.getChildren(null);
-        Collections.addAll(result, children);
-      }
-    }
-
-    return result;
   }
 
   @Override
@@ -3271,12 +3230,6 @@ public class JBTabsImpl extends JComponent
     return myTabDraggingEnabled && !mySplitter.isDragging();
   }
 
-  @Override
-  public JBTabsPresentation setProvideSwitchTargets(boolean provide) {
-    myOwnSwitchProvider = provide;
-    return this;
-  }
-
   void reallocate(TabInfo source, TabInfo target) {
     if (source == target || source == null || target == null) return;
 
@@ -3308,82 +3261,6 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    ArrayList<SwitchTarget> result = new ArrayList<>();
-    for (TabInfo each : myVisibleInfos) {
-      result.add(new TabTarget(each));
-    }
-
-    if (originalProvider && mySwitchDelegate != null) {
-      List<SwitchTarget> additional = mySwitchDelegate.getTargets(onlyVisible, false);
-      if (additional != null) {
-        result.addAll(additional);
-      }
-    }
-
-    return result;
-  }
-
-
-  @Override
-  public SwitchTarget getCurrentTarget() {
-    if (mySwitchDelegate != null) {
-      SwitchTarget selection = mySwitchDelegate.getCurrentTarget();
-      if (selection != null) return selection;
-    }
-
-    return new TabTarget(getSelectedInfo());
-  }
-
-  private class TabTarget extends ComparableObject.Impl implements SwitchTarget {
-
-    private final TabInfo myInfo;
-
-    private TabTarget(TabInfo info) {
-      myInfo = info;
-    }
-
-    @Override
-    public ActionCallback switchTo(boolean requestFocus) {
-      return select(myInfo, requestFocus);
-    }
-
-    @Override
-    public boolean isVisible() {
-      return getRectangle() != null;
-    }
-
-    @Override
-    public RelativeRectangle getRectangle() {
-      TabLabel label = myInfo2Label.get(myInfo);
-      if (label == null || label.getRootPane() == null) return null;
-
-      Rectangle b = label.getBounds();
-      b.x += 2;
-      b.width -= 4;
-      b.y += 2;
-      b.height -= 4;
-      return new RelativeRectangle(label.getParent(), b);
-    }
-
-    @Override
-    public Component getComponent() {
-      return myInfo2Label.get(myInfo);
-    }
-
-    @Override
-    public String toString() {
-      return myInfo.getText();
-    }
-
-    @NotNull
-    @Override
-    public Object[] getEqualityObjects() {
-      return new Object[]{myInfo};
-    }
-  }
-
-  @Override
   public void resetDropOver(TabInfo tabInfo) {
     if (myDropInfo != null) {
       TabInfo dropInfo = myDropInfo;
@@ -3408,7 +3285,7 @@ public class JBTabsImpl extends JComponent
     Dimension size = label.getPreferredSize();
     label.setBounds(0, 0, size.width, size.height);
 
-    BufferedImage img = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage img = UIUtil.createImage(this, size.width, size.height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = img.createGraphics();
     label.paintOffscreen(g);
     g.dispose();

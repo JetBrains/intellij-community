@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -50,7 +49,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
   @Override
   @NotNull
-  public final String getName() {
+  public final String getFamilyName() {
     return InspectionsBundle.message("inspection.convert.to.local.quickfix");
   }
 
@@ -99,7 +98,6 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   protected PsiElement moveDeclaration(Project project, V variable, final Collection<PsiReference> references, boolean delete) {
     final PsiCodeBlock anchorBlock = findAnchorBlock(references);
     if (anchorBlock == null) return null; //was assert, but need to fix the case when obsolete inspection highlighting is left
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(anchorBlock)) return null;
 
     final PsiElement firstElement = getLowestOffsetElement(references);
     final String localName = suggestLocalName(project, variable, anchorBlock);
@@ -225,12 +223,6 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     }
   }
 
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
-  }
-
   @Nullable
   private static PsiElement getAnchorElement(PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
     PsiElement element = firstElement;
@@ -245,6 +237,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     PsiElement firstElement = null;
     for (PsiReference reference : refs) {
       final PsiElement element = reference.getElement();
+      if (!(element instanceof PsiReferenceExpression)) continue;
       if (firstElement == null || firstElement.getTextRange().getStartOffset() > element.getTextRange().getStartOffset()) {
         firstElement = element;
       }

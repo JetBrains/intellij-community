@@ -354,7 +354,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     JpsModule module = addModule("m", src);
     File output = JpsJavaExtensionService.getInstance().getOutputDirectory(module, false);
     JpsArtifact artifact = addArtifact(root().dirCopy(new File(output, "x").getAbsolutePath()));
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(module, fs().dir("x").file("A.class"));
     assertOutput(artifact, fs().file("A.class"));
   }
@@ -367,8 +367,8 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
     assertOutput(a, fs().file("a.txt").file("b.txt"));
 
-    rebuildAll();
-    assertOutput(a, fs().file("a.txt"));
+    rebuildAllModulesAndArtifacts();
+    assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
   public void testDeleteOnlyOutputFileOnRebuildForArchiveArtifact() throws IOException {
@@ -379,7 +379,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
     assertOutput(a, fs().archive("a.jar").file("a.txt").end().file("b.txt"));
 
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(a, fs().archive("a.jar").file("a.txt").end().file("b.txt"));
   }
 

@@ -143,12 +143,7 @@ public abstract class AsyncValueLoader<T> {
 
     effectivePromise.done(doneHandler);
     if (isCancelOnReject()) {
-      effectivePromise.rejected(new Consumer<Throwable>() {
-        @Override
-        public void consume(Throwable throwable) {
-          ref.compareAndSet(effectivePromise, null);
-        }
-      });
+      effectivePromise.rejected(throwable -> ref.compareAndSet(effectivePromise, null));
     }
 
     if (effectivePromise != promise) {

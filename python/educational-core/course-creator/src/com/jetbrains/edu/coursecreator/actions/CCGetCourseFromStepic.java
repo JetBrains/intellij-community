@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -24,6 +23,7 @@ import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
+import com.jetbrains.edu.learning.stepic.CCStepicConnector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
@@ -61,21 +61,21 @@ public class CCGetCourseFromStepic extends DumbAwareAction {
 
   private static void createCourse(Project project, String courseId) {
     final VirtualFile baseDir = project.getBaseDir();
-    final CourseInfo info = EduStepicConnector.getCourseInfo(project, courseId);
+    final CourseInfo info = CCStepicConnector.getCourseInfo(courseId);
     if (info == null) return;
 
     final Course course = EduStepicConnector.getCourse(project, info);
     if (course != null) {
-      flushCourse(project, course);
+      flushCourse(course);
 
-      final File courseDirectory = StudyUtils.getCourseDirectory(project, course);
+      final File courseDirectory = StudyUtils.getCourseDirectory(course);
       ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
         final VirtualFile[] children = baseDir.getChildren();
         for (VirtualFile child : children) {
           StudyUtils.deleteFile(child);
         }
         StudyGenerator.createCourse(course, baseDir, courseDirectory, project);
-      }), ModalityState.current());
+      }));
 
 
       StudyTaskManager.getInstance(project).setCourse(course);
@@ -96,8 +96,7 @@ public class CCGetCourseFromStepic extends DumbAwareAction {
           if (taskDir == null) continue;
           for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
             ApplicationManager.getApplication()
-              .invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> createAnswerFile(project, taskDir, entry)),
-                             ModalityState.current());
+              .invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> createAnswerFile(project, taskDir, entry)));
           }
           taskIndex += 1;
         }
@@ -106,7 +105,7 @@ public class CCGetCourseFromStepic extends DumbAwareAction {
       }
       course.initCourse(true);
       ApplicationManager.getApplication()
-        .invokeAndWait(() -> StudyUtils.registerStudyToolWindow(course, project), ModalityState.current());
+        .invokeAndWait(() -> StudyUtils.registerStudyToolWindow(course, project));
     }
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     ProjectView.getInstance(project).refresh();

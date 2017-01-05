@@ -64,6 +64,7 @@ import java.util.*;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
+  static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;
   private volatile DaemonProgressIndicator myProgress;
@@ -105,7 +106,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
       public void daemonCancelEventOccurred(@NotNull String reason) {
-        myProgress.cancel();
+        if (!myProgress.isCanceled()) myProgress.cancel();
       }
     });
   }
@@ -152,7 +153,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       if (myProgress.isCanceled()) return;
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), myProgress, true, commitProcessor);
 
-      synchronized (PsiLock.LOCK) {
+      synchronized (ourInjectionPsiLock) {
         injected.clear();
         injected.addAll(newDocuments);
       }
@@ -241,7 +242,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
 
-    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<>(injectors, new MultiHostInjector[0]);
+    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<>(injectors, new MultiHostInjector[0], allInjectors);
     cachedInjectors = result;
     return result;
   }

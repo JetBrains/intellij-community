@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -25,8 +24,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
-public class UnsafeReturnStatementVisitorInspection extends InternalInspection {
+public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase {
 
   private static final String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
   private static final String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();
@@ -110,7 +110,6 @@ public class UnsafeReturnStatementVisitorInspection extends InternalInspection {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiClass) {
-        FileModificationService.getInstance().preparePsiElementsForWrite(element);
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         for (String method : myMethods) {
           element.add(factory.createMethodFromText(method, element));

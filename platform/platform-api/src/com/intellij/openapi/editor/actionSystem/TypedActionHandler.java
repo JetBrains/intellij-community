@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * Interface for actions activated by typing in the editor.
  *
  * @see TypedAction#setupHandler(TypedActionHandler)
+ * @see TypedActionHandlerEx
  */
 public interface TypedActionHandler {
   /**

@@ -95,15 +95,8 @@ public class NonThreadSafeLazyInitializationInspectionBase extends BaseInspectio
       if (!tokenType.equals(JavaTokenType.EQEQ)) {
         return false;
       }
-      final PsiExpression lhs = comparison.getLOperand();
-      final PsiExpression rhs = comparison.getROperand();
-      if (ExpressionUtils.isNullLiteral(rhs)) {
-        return VariableAccessUtils.evaluatesToVariable(lhs, variable);
-      }
-      else if (ExpressionUtils.isNullLiteral(lhs)) {
-        return VariableAccessUtils.evaluatesToVariable(rhs, variable);
-      }
-      return false;
+      final PsiExpression operand = ExpressionUtils.getValueComparedWithNull(comparison);
+      return operand != null && VariableAccessUtils.evaluatesToVariable(operand, variable);
     }
 
     private static boolean isInSynchronizedContext(PsiElement element) {

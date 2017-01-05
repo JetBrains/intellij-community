@@ -20,6 +20,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -57,7 +58,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
-    if (file.getFileType() != PlainTextFileType.INSTANCE) return null;
+    if (file.getFileType() != PlainTextFileType.INSTANCE && !(file.getFileType() instanceof AbstractFileType)) return null;
 
     final String extension = file.getExtension();
     final String fileName = file.getName();
@@ -91,7 +92,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     
-    panel.setText("Plugins supporting " + extension + " files are found");
+    panel.setText("Plugins supporting " + extension + " files found.");
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {

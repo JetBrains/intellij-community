@@ -16,14 +16,13 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectSetProcessor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -43,12 +42,9 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
     final String root = context.directory == null || context.directoryName == null ? null : context.directory.getPath() + "/" + context.directoryName;
     for (final Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {
-        context.project = UIUtil.invokeAndWaitIfNeeded(new Computable<Project>() {
-          @Override
-          public Project compute() {
-            String path = root == null ? entry.getSecond() : (root + "/" + entry.getSecond());
-            return ProjectUtil.openProject(path, null, true);
-          }
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+          String path = root == null ? entry.getSecond() : (root + "/" + entry.getSecond());
+          context.project = ProjectUtil.openProject(path, null, true);
         });
         if (context.project != null) {
           runNext.run();

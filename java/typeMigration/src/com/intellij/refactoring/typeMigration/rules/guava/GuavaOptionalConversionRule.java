@@ -61,7 +61,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
             TypeConversionDescriptor descriptor =
               new TypeConversionDescriptor(null, "java.util.Optional.ofNullable($val$.orElseGet($o$::get))") {
                 @Override
-                public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+                public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
                   setStringToReplace("$val$.or(" +
                                      GuavaOptionalConversionUtil.simplifyParameterPattern((PsiMethodCallExpression)expression)
                                      + ")");
@@ -121,7 +121,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     return new TypeConversionDescriptor("$o$", "$o$::get");
   }
 
-  private PsiClass getParameterClass(PsiMethod method) {
+  private static PsiClass getParameterClass(PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 1) {
       return null;
@@ -133,7 +133,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
     descriptorsMap.put("absent", new TypeConversionDescriptor("'Optional*.absent()", "java.util.Optional.empty()") {
       @Override
-      public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+      public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
         LOG.assertTrue(expression instanceof PsiMethodCallExpression);
 
         final PsiReferenceParameterList typeArguments = ((PsiMethodCallExpression)expression).getTypeArgumentList();

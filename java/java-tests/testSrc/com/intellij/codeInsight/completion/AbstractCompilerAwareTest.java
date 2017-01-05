@@ -17,9 +17,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,13 +35,23 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myCompilerTester = new CompilerTester(myModule);
+  }
+
+  protected void installCompiler() {
+    try {
+      myCompilerTester = new CompilerTester(getProject(), ContainerUtil.list(ModuleManager.getInstance(getProject()).getModules()));
+    }
+    catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      myCompilerTester.tearDown();
+      if (myCompilerTester != null) {
+        myCompilerTester.tearDown();
+      }
     }
     finally {
       myCompilerTester = null;
@@ -56,6 +68,10 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+    rebuildProject();
+  }
+
+  protected void rebuildProject() {
     for (final CompilerMessage compilerMessage : myCompilerTester.rebuild()) {
       assertNotSame(compilerMessage.getMessage(), CompilerMessageCategory.ERROR, compilerMessage.getCategory());
     }

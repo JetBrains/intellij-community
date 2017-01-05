@@ -27,7 +27,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -67,13 +66,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
-    return new IntroduceVariableFix(false) {
-      @Nullable
-      @Override
-      public PsiExpression getExpressionToExtract(PsiElement element) {
-        return (PsiExpression)element;
-      }
-    };
+    return new IntroduceVariableFix(true);
   }
 
   @Override
@@ -145,12 +138,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       });
 
-      myReportNullArguments = new JCheckBox("Report 'null' literals passed to not-null required parameter");
-      myTreatUnknownMembersAsNullable.setSelected(REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER);
-      myTreatUnknownMembersAsNullable.getModel().addChangeListener(new ChangeListener() {
+      myReportNullArguments = new JCheckBox("Report not-null required parameter with null-literal argument usages");
+      myReportNullArguments.setSelected(REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER);
+      myReportNullArguments.getModel().addChangeListener(new ChangeListener() {
         @Override
         public void stateChanged(ChangeEvent e) {
-          REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = myTreatUnknownMembersAsNullable.isSelected();
+          REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = myReportNullArguments.isSelected();
         }
       });
 

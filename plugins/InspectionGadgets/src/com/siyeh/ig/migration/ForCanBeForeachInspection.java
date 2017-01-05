@@ -58,12 +58,6 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionGadgetsBundle.message("foreach.replace.quickfix");
     }
 
@@ -234,33 +228,15 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     }
 
     @Nullable
-    private PsiType extractContentTypeFromType(
-      PsiType collectionType) {
+    private PsiType extractContentTypeFromType(PsiType collectionType) {
       if (!(collectionType instanceof PsiClassType)) {
         return null;
       }
-      final PsiClassType classType = (PsiClassType)collectionType;
-      final PsiType[] parameterTypes = classType.getParameters();
+      final PsiType[] parameterTypes = ((PsiClassType)collectionType).getParameters();
       if (parameterTypes.length == 0) {
         return null;
       }
-      final PsiType parameterType = parameterTypes[0];
-      if (parameterType == null) {
-        return null;
-      }
-      if (parameterType instanceof PsiWildcardType) {
-        final PsiWildcardType wildcardType =
-          (PsiWildcardType)parameterType;
-        return wildcardType.getExtendsBound();
-      }
-      else if (parameterType instanceof PsiCapturedWildcardType) {
-        final PsiCapturedWildcardType capturedWildcardType =
-          (PsiCapturedWildcardType)parameterType;
-        final PsiWildcardType wildcardType =
-          capturedWildcardType.getWildcard();
-        return wildcardType.getExtendsBound();
-      }
-      return parameterType;
+      return GenericsUtil.getVariableTypeByExpressionType(parameterTypes[0]);
     }
 
     @Nullable

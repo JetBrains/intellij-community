@@ -22,15 +22,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,18 +46,15 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
-  private final Class<? extends PsiElement> myElementClass;
   private byte myReferenceCount = 1;
-  @Nullable SmartPointerManagerImpl.PointerReference pointerReference;
+  @Nullable SmartPointerTracker.PointerReference pointerReference;
 
   SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile, boolean forInjected) {
-    this(element, createElementInfo(project, element, containingFile, forInjected), element.getClass());
+    this(element, createElementInfo(project, element, containingFile, forInjected));
   }
   SmartPsiElementPointerImpl(@NotNull E element,
-                             @NotNull SmartPointerElementInfo elementInfo,
-                             @NotNull Class<? extends PsiElement> elementClass) {
+                             @NotNull SmartPointerElementInfo elementInfo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    myElementClass = elementClass;
     myElementInfo = elementInfo;
     cacheElement(element);
   }
@@ -91,7 +90,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   E doRestoreElement() {
     //noinspection unchecked
     E element = (E)myElementInfo.restoreElement();
-    if (element != null && (!element.getClass().equals(myElementClass) || !element.isValid())) {
+    if (element != null && !element.isValid()) {
       return null;
     }
     return element;
@@ -182,7 +181,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
-    SmartPointerElementInfo info = AnchorElementInfoFactory.createElementInfo(element, containingFile);
+    SmartPointerElementInfo info = createAnchorInfo(element, containingFile);
     if (info != null) {
       return info;
     }
@@ -202,7 +201,32 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
 
-    return new SelfElementInfo(project, proper, AnchorTypeInfo.obtainInfo(element, LanguageUtil.getRootLanguage(element)), containingFile, forInjected);
+    return new SelfElementInfo(project, proper, Identikit.fromPsi(element, LanguageUtil.getRootLanguage(element)), containingFile, forInjected);
+  }
+
+  @Nullable
+  private static SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
+    if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileWithStubSupport) {
+      PsiFileWithStubSupport stubFile = (PsiFileWithStubSupport)containingFile;
+      StubTree stubTree = stubFile.getStubTree();
+      if (stubTree != null) {
+        // use stubs when tree is not loaded
+        StubBasedPsiElement stubPsi = (StubBasedPsiElement)element;
+        int stubId = PsiAnchor.calcStubIndex(stubPsi);
+        IStubElementType myStubElementType = stubPsi.getElementType();
+
+        IStubFileElementType elementTypeForStubBuilder = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
+        if (stubId != -1 && elementTypeForStubBuilder != null) { // TemplateDataElementType is not IStubFileElementType
+          return new AnchorElementInfo(element, stubFile, stubId, myStubElementType);
+        }
+      }
+    }
+
+    Pair<Identikit.ByAnchor, PsiElement> pair = Identikit.withAnchor(element, LanguageUtil.getRootLanguage(containingFile));
+    if (pair != null) {
+      return new AnchorElementInfo(pair.second, containingFile, pair.first);
+    }
+    return null;
   }
 
   @NotNull

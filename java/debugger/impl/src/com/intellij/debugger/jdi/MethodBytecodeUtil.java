@@ -15,8 +15,14 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.Patches;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,29 +47,35 @@ public class MethodBytecodeUtil {
   /**
    * Allows to use ASM MethodVisitor with jdi method bytecode
    */
-  public static void visit(ReferenceType classType, Method method, MethodVisitor methodVisitor) {
-    visit(classType, method, method.bytecodes(), methodVisitor);
+  public static void visit(Method method, MethodVisitor methodVisitor, boolean withLineNumbers) {
+    visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
   }
 
-  public static void visit(ReferenceType classType, Method method, long maxOffset, MethodVisitor methodVisitor) {
+  public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
     // need to keep the size, otherwise labels array will not be initialized correctly
     byte[] originalBytecodes = method.bytecodes();
     byte[] bytecodes = new byte[originalBytecodes.length];
     System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
-    visit(classType, method, bytecodes, methodVisitor);
+    visit(method, bytecodes, methodVisitor, withLineNumbers);
   }
 
   public static byte[] getConstantPool(ReferenceType type) {
-    try {
-      return type.constantPool();
+    if (Patches.JDK_BUG_ID_6822627) {
+      try {
+        return type.constantPool();
+      }
+      catch (NullPointerException e) { // workaround for JDK bug 6822627
+        ReflectionUtil.resetField(type, "constantPoolInfoGotten");
+        return type.constantPool();
+      }
     }
-    catch (NullPointerException e) { // workaround for JDK bug 6822627
-      ReflectionUtil.resetField(type, "constantPoolInfoGotten");
+    else {
       return type.constantPool();
     }
   }
 
-  private static void visit(ReferenceType type, Method method, byte[] bytecodes, MethodVisitor methodVisitor) {
+  private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
+    ReferenceType type = method.declaringType();
     try {
       try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
         dos.writeInt(0xCAFEBABE); // magic
@@ -100,7 +112,7 @@ public class MethodBytecodeUtil {
         }
 
         MethodVisitor mv = writer.visitMethod(Opcodes.ACC_PUBLIC, method.name(), method.signature(), method.signature(), null);
-        mv.visitAttribute(createCode(writer, method, bytecodes));
+        mv.visitAttribute(createCode(writer, method, bytecodes, withLineNumbers));
 
         new ClassReader(writer.toByteArray()).accept(new ClassVisitor(Opcodes.API_VERSION) {
           @Override
@@ -173,14 +185,14 @@ public class MethodBytecodeUtil {
   }
 
   @NotNull
-  private static Attribute createCode(ClassWriter cw, Method method, byte[] bytecodes) throws IOException {
+  private static Attribute createCode(ClassWriter cw, Method method, byte[] bytecodes, boolean withLineNumbers) throws IOException {
     return createAttribute("Code", dos -> {
       dos.writeShort(0); // max_stack
       dos.writeShort(0); // max_locals
       dos.writeInt(bytecodes.length);  // code_length
       dos.write(bytecodes); // code
       dos.writeShort(0); // exception_table_length
-      List<Location> locations = getMethodLocations(method);
+      List<Location> locations = withLineNumbers ? DebuggerUtilsEx.allLineLocations(method) : Collections.emptyList();
       if (!locations.isEmpty()) {
         dos.writeShort(1); // attributes_count
         dos.writeShort(cw.newUTF8("LineNumberTable"));
@@ -195,16 +207,6 @@ public class MethodBytecodeUtil {
         dos.writeShort(0); // attributes_count
       }
     });
-  }
-
-  @NotNull
-  private static List<Location> getMethodLocations(Method method) {
-    try {
-      return method.allLineLocations();
-    }
-    catch (AbsentInformationException ignored) {
-      return Collections.emptyList();
-    }
   }
 
   private static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
@@ -229,5 +231,59 @@ public class MethodBytecodeUtil {
         // case RET:
         return OBJECT_TYPE;
     }
+  }
+
+  @Nullable
+  public static Method getLambdaMethod(ReferenceType clsType, VirtualMachineProxy vm) {
+    Ref<Method> methodRef = Ref.create();
+    if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
+      List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
+      if (applicableMethods.size() == 1) {
+        visit(applicableMethods.get(0), new MethodVisitor(Opcodes.API_VERSION) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            ReferenceType cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
+            if (cls != null) {
+              Method method = DebuggerUtils.findMethod(cls, name, desc);
+              if (method != null) {
+                methodRef.setIfNull(method);
+              }
+            }
+          }
+        }, false);
+      }
+    }
+    return methodRef.get();
+  }
+
+  @Nullable
+  public static Method getBridgeTargetMethod(Method method, VirtualMachineProxy vm) {
+    Ref<Method> methodRef = Ref.create();
+    if (method.isBridge()) {
+      visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+        @Override
+        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+          if ("java/lang/AbstractMethodError".equals(owner)) {
+            return;
+          }
+          ReferenceType declaringType = method.declaringType();
+          ReferenceType cls;
+          owner = owner.replace("/", ".");
+          if (declaringType.name().equals(owner)) {
+            cls = declaringType;
+          }
+          else {
+            cls = ContainerUtil.getFirstItem(vm.classesByName(owner));
+          }
+          if (cls != null) {
+            Method method = DebuggerUtils.findMethod(cls, name, desc);
+            if (method != null) {
+              methodRef.setIfNull(method);
+            }
+          }
+        }
+      }, false);
+    }
+    return methodRef.get();
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class OptimizeImportsFix implements IntentionAction{
@@ -50,14 +48,8 @@ public class OptimizeImportsFix implements IntentionAction{
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    try{
-      JavaCodeStyleManager.getInstance(project).optimizeImports(file);
-    }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-    }
+    JavaCodeStyleManager.getInstance(project).optimizeImports(file);
   }
 
   @Override

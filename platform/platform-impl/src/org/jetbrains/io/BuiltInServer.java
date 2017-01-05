@@ -34,6 +34,8 @@ import java.util.Random;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.util.io.NettyKt.serverBootstrap;
+
 public class BuiltInServer implements Disposable {
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
@@ -113,7 +115,7 @@ public class BuiltInServer implements Disposable {
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    ServerBootstrap bootstrap = NettyKt.serverBootstrap(eventLoopGroup);
+    ServerBootstrap bootstrap = serverBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar, handler);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar, isEventLoopGroupOwner);
     return new BuiltInServer(eventLoopGroup, port, channelRegistrar);

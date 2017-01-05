@@ -24,10 +24,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -125,7 +124,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     for (FilePath filePath : moves.keySet()) {
       final List<Pair<Change, String>> copies = (List<Pair<Change, String>>) moves.get(filePath);
       if (copies.size() == 1) continue;
-      Collections.sort(copies, MyChangesAfterRevisionComparator.getInstance());
+      copies.sort(MyChangesAfterRevisionComparator.getInstance());
       for (int i = 0; i < (copies.size() - 1); i++) {
         somethingChanged = true;
         final Pair<Change, String> item = copies.get(i);
@@ -210,7 +209,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     newList.setData(data);
 
     if (description != null) {
-      newList.setCommentImpl(description);
+      newList.setComment(description);
     }
     if (id != null) {
       newList.setId(id);
@@ -297,13 +296,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     final boolean canEdit = list != null && (!list.isReadOnly());
     if (canEdit) {
       final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
-      listImpl.setNameImpl(toName);
+      listImpl.setName(toName);
       myMap.remove(fromName);
       myMap.put(toName, list);
-      final ChangeListEditHandler editHandler = listImpl.getEditHandler();
-      if (editHandler != null) {
-        listImpl.setCommentImpl(editHandler.changeCommentOnChangeName(toName, listImpl.getComment()));
-      }
     }
     return canEdit;
   }
@@ -315,15 +310,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final String oldComment = list.getComment();
       if (! Comparing.equal(oldComment, newComment)) {
         final LocalChangeListImpl listImpl = (LocalChangeListImpl) list;
-        listImpl.setCommentImpl(newComment);
-        final ChangeListEditHandler editHandler = listImpl.getEditHandler();
-        if (editHandler != null) {
-          listImpl.setNameImpl(editHandler.changeNameOnChangeComment(listImpl.getName(), listImpl.getComment()));
-          if (! fromName.equals(listImpl.getName())) {
-            myMap.remove(fromName);
-            myMap.put(listImpl.getName(), list);
-          }
-        }
+        listImpl.setComment(newComment);
       }
       return oldComment;
     }
@@ -366,7 +353,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     mySwitchedHolder.cleanAndAdjustScope(scope);
   }
 
-  private void correctScopeForMoves(final VcsModifiableDirtyScope scope, final Collection<Change> changes) {
+  private static void correctScopeForMoves(final VcsModifiableDirtyScope scope, final Collection<Change> changes) {
     if (scope == null) return;
     for (Change change : changes) {
       if (change.isMoved() || change.isRenamed()) {
@@ -403,7 +390,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     for(ChangeList changeList: changedLists) {
       dispatcher.changeListChanged(changeList);
     }
-    mySwitchedHolder.calculateChildren();
 
     for (String name : myListsToDisappear) {
       final LocalChangeList changeList = myMap.get(name);
@@ -414,6 +400,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myListsToDisappear.clear();
   }
 
+  @NotNull
   public List<LocalChangeList> getListsCopy() {
     final List<LocalChangeList> result = new ArrayList<>();
     for (LocalChangeList list : myMap.values()) {
@@ -839,16 +826,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @Override
   public String toString() {
-    return "ChangeListWorker{" + "myMap=" + StringUtil.join(myMap.values(), new Function<LocalChangeList, String>() {
-      @Override
-      public String fun(LocalChangeList list) {
-        return "list: " + list.getName() + " changes: " + StringUtil.join(list.getChanges(), new Function<Change, String>() {
-          @Override
-          public String fun(Change change) {
-            return change.toString();
-          }
-        }, ", ");
-      }
-    }, "\n") + '}';
+    return "ChangeListWorker{" +
+           "myMap=" +
+           StringUtil.join(myMap.values(), list -> "list: " + list.getName() + " changes: " + StringUtil.join(list.getChanges(),
+                                                                                                              change -> change.toString(),
+                                                                                                              ", "), "\n") +
+           '}';
   }
 }

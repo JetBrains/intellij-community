@@ -159,12 +159,6 @@ public class PsiTypeVariableFactory {
       }
 
       @Override
-      @NotNull
-      public String getInternalCanonicalText() {
-        return getCanonicalText();
-      }
-
-      @Override
       public boolean isValid() {
         return true;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
+@CompileStatic
 class StaticCompileTypeInferenceTest extends TypeInferenceTestBase {
 
   void testExplicitFieldType() {
@@ -31,8 +33,8 @@ class Foo {
     String aa = "i'm string"
     def foo() { a<caret>a }
 }
-''').element;
-    final PsiType type = ref.type;
+''').element
+    final PsiType type = ref.type
     assertTrue(type instanceof PsiClassType)
     assertTrue(type.canonicalText == CommonClassNames.JAVA_LANG_STRING)
   }
@@ -47,8 +49,8 @@ class Foo {
     def aa = "i'm string"
     def foo() { a<caret>a }
 }
-''').element;
-    final PsiType type = ref.type;
+''').element
+    final PsiType type = ref.type
     assertTrue(type instanceof PsiClassType)
     assertTrue(type.canonicalText == CommonClassNames.JAVA_LANG_OBJECT)
   }
@@ -62,9 +64,22 @@ class Foo {
     Object aa = "i'm string"
     def foo() { a<caret>a }
 }
-''').element;
-    final PsiType type = ref.type;
+''').element
+    final PsiType type = ref.type
     assertTrue(type instanceof PsiClassType)
     assertTrue(type.canonicalText == CommonClassNames.JAVA_LANG_OBJECT)
+  }
+
+  void 'test variable type'() {
+    final GrReferenceExpression ref = configureByText('''\
+@groovy.transform.CompileStatic
+class Foo {
+  def foo() {
+    List<Object> ll = ["a"]
+    l<caret>l
+  }
+}
+''').element as GrReferenceExpression
+    assert ref.type.canonicalText == 'java.util.List<java.lang.Object>'
   }
 }

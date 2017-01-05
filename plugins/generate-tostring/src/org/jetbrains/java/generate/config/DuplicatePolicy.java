@@ -21,7 +21,7 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This policy is to create a duplicate <code>toString</code> method.
+ * This policy is to create a duplicate {@code toString} method.
  */
 public class DuplicatePolicy implements ConflictResolutionPolicy {
 

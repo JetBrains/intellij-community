@@ -686,12 +686,11 @@ public class CodeCompletionHandlerBase {
                                         CompletionAssertions.WatchingInsertionContext context,
                                         LookupElement item,
                                         Editor editor, CompletionProgressIndicator indicator, char completionChar) {
-    int tailOffset = context.getTailOffset();
-    if (tailOffset < 0) {
+    if (!context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET)) {
       LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
     }
     else {
-      editor.getCaretModel().moveToOffset(tailOffset);
+      editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);

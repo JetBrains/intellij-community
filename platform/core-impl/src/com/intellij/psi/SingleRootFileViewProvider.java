@@ -356,7 +356,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return new PsiPlainTextFileImpl(this);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public static boolean isTooLarge(@NotNull VirtualFile vFile) {
     return isTooLargeForIntelligence(vFile);
@@ -559,6 +558,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     for (FileElement fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
       if (nodeLength != fileLength) {
+        PsiUtilCore.ensureValid(fileElement.getPsi());
         // exceptions here should be assigned to peter
         LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength);
       }

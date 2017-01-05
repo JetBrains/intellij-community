@@ -35,7 +35,7 @@ abstract class BreakpointBase<L : Any>(override val target: BreakpointTarget,
     get() = !actualLocations.isEmpty()
 
   override var condition: String? = condition
-    set(value: String?) {
+    set(value) {
       if (field != value) {
         field = value
         dirty = true
@@ -43,7 +43,7 @@ abstract class BreakpointBase<L : Any>(override val target: BreakpointTarget,
   }
 
   override var enabled: Boolean = enabled
-    set(value: Boolean) {
+    set(value) {
       if (value != field) {
         field = value
         dirty = true

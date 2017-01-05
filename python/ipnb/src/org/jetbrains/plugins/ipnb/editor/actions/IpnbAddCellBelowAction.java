@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
 public class IpnbAddCellBelowAction extends AnAction {
 
@@ -24,15 +25,10 @@ public class IpnbAddCellBelowAction extends AnAction {
   }
 
   public static void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ipnbFilePanel.createAndAddCell(true);
-            ipnbFilePanel.saveToFile();
-          }
-        });
-      }
-    }, "Ipnb.createAndAddCell", new Object());
+    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ipnbFilePanel.createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
+        ipnbFilePanel.saveToFile(false);
+      }), "Ipnb.createAndAddCell", new Object());
   }
 }

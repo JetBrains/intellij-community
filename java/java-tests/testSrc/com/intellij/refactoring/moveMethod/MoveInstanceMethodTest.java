@@ -85,6 +85,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
     doTest(false, 0);
   }
 
+  public void testUsageInAnonymousClass() throws Exception {
+    doTest(true, 0);
+  }
+
   public void testMethodReference() throws Exception {
     try {
       doTest(true, 0);

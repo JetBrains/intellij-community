@@ -23,13 +23,18 @@ import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
@@ -39,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -80,7 +84,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       @NotNull
       @Override
       public String getTemplatesDir() {
-        return new File(project.getBasePath(), Project.DIRECTORY_STORE_FOLDER + "/" + TEMPLATES_DIR).getPath();
+        return FileUtilRt.toSystemDependentName(ProjectKt.getStateStore(project).getDirectoryStorePath(false) + "/" + TEMPLATES_DIR);
       }
 
       @NotNull
@@ -111,9 +115,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
   private void setScheme(@NotNull FileTemplatesScheme scheme) {
     myScheme = scheme;
-    for (FTManager manager : getAllManagers()) {
-      manager.setScheme(scheme);
-    }
     myInitialized = true;
   }
 

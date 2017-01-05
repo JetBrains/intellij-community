@@ -39,7 +39,7 @@ interface RepositoryManager {
    */
   fun setUpstream(url: String?, branch: String? = null)
 
-  fun read(path: String): InputStream?
+  fun <R> read(path: String, consumer: (InputStream?) -> R): R
 
   /**
    * Returns false if file is not written (for example, due to ignore rules).
@@ -60,8 +60,6 @@ interface RepositoryManager {
   fun commit(indicator: ProgressIndicator? = null, syncType: SyncType? = null, fixStateIfCannotCommit: Boolean = true): Boolean
 
   fun getAheadCommitsCount(): Int
-
-  fun commit(paths: List<String>)
 
   fun push(indicator: ProgressIndicator? = null)
 

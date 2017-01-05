@@ -46,13 +46,15 @@ public class ContentHashesUtil {
     }
   };
 
-  public static MessageDigest createHashDigest() {
+  @NotNull
+  static MessageDigest createHashDigest() {
     try {
       return MessageDigest.getInstance("SHA1");
-    } catch (NoSuchAlgorithmException ex) {
-      assert false:"Every Java implementation should have SHA1 support"; // http://docs.oracle.com/javase/7/docs/api/java/security/MessageDigest.html
     }
-    return null;
+    catch (NoSuchAlgorithmException ex) {
+      assert false:"Every Java implementation should have SHA1 support"; // http://docs.oracle.com/javase/7/docs/api/java/security/MessageDigest.html
+      return null;
+    }
   }
 
   private static final int SIGNATURE_LENGTH = 20;

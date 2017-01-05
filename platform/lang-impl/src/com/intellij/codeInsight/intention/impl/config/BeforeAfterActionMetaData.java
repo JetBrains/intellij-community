@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,11 +98,7 @@ public abstract class BeforeAfterActionMetaData {
         URI uri = descriptionDirectory.toURI();
         children = uri.isOpaque() ? null : ObjectUtils.notNull(new File(uri).list(), ArrayUtil.EMPTY_STRING_ARRAY);
       }
-      catch (URISyntaxException e) {
-        cause = e;
-        children = null;
-      }
-      catch (IllegalArgumentException e) {
+      catch (URISyntaxException | IllegalArgumentException e) {
         cause = e;
         children = null;
       }

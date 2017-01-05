@@ -55,6 +55,9 @@ public abstract class BuildTargetType<T extends BuildTarget<?>> {
   @NotNull
   public abstract List<T> computeAllTargets(@NotNull JpsModel model);
 
+  /**
+   * @return implementation of {@link BuildTargetLoader} class which will be used to deserialize targets of this type from compiler caches
+   */
   @NotNull
   public abstract BuildTargetLoader<T> createLoader(@NotNull JpsModel model);
 }

@@ -51,6 +51,7 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
     return waitingForInput;
   }
 
+
   @Override
   public void addCommunicationListener(ConsoleCommunicationListener listener) {
     communicationListeners.add(listener);

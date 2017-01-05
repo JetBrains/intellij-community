@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
@@ -526,12 +525,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   private void onElementAction(String action, NodeElement element) {
-    ElementEntry entry = myElementUpdate.get(element);
-    if (entry == null) {
-      entry = new ElementEntry(element);
-      myElementUpdate.put(element, entry);
-    }
-    entry.onElementAction(action);
+    myElementUpdate.computeIfAbsent(element, k -> new ElementEntry(element)).onElementAction(action);
 
     if (myElementUpdateHook != null) {
       myElementUpdateHook.onElementAction(action, element);

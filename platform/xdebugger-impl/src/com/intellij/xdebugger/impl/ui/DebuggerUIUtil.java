@@ -65,10 +65,7 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DebuggerUIUtil {
@@ -275,7 +272,7 @@ public class DebuggerUIUtil {
       }
     });
 
-    final ComponentAdapter moveListener = new ComponentAdapter() {
+    ComponentAdapter moveListener = new ComponentAdapter() {
       @Override
       public void componentMoved(ComponentEvent e) {
         balloon.hide();
@@ -283,6 +280,15 @@ public class DebuggerUIUtil {
     };
     component.addComponentListener(moveListener);
     Disposer.register(balloon, () -> component.removeComponentListener(moveListener));
+
+    HierarchyBoundsListener hierarchyBoundsListener = new HierarchyBoundsAdapter() {
+      @Override
+      public void ancestorMoved(HierarchyEvent e) {
+        balloon.hide();
+      }
+    };
+    component.addHierarchyBoundsListener(hierarchyBoundsListener);
+    Disposer.register(balloon, () -> component.removeHierarchyBoundsListener(hierarchyBoundsListener));
 
     if (whereToShow == null) {
       balloon.showInCenterOf(component);

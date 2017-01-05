@@ -850,8 +850,8 @@ public class PyBlock implements ASTBlock {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      @SuppressWarnings("ConstantConditions") final
-      int indent = myContext.getSettings().getIndentOptions().INDENT_SIZE;
+      @SuppressWarnings("ConstantConditions") 
+      final int indent = myContext.getSettings().getIndentOptions().INDENT_SIZE;
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
 
@@ -965,11 +965,13 @@ public class PyBlock implements ASTBlock {
       }
     }
 
+    final IElementType parentType = myNode.getElementType();
     // constructs that imply indent for their children
-    if (myNode.getElementType().equals(PyElementTypes.PARAMETER_LIST)) {
+    if (parentType == PyElementTypes.PARAMETER_LIST ||
+        (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getPySettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS)) {
       return Indent.getContinuationIndent();
     }
-    if (ourListElementTypes.contains(myNode.getElementType()) || myNode.getPsi() instanceof PyStatementPart) {
+    if (ourListElementTypes.contains(parentType) || myNode.getPsi() instanceof PyStatementPart) {
       return Indent.getNormalIndent();
     }
 

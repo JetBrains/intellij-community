@@ -93,7 +93,7 @@ public final class EmptyAction extends AnAction {
            new MyDelegatingAction(action);
   }
 
-  private static class MyDelegatingAction extends AnAction {
+  public static class MyDelegatingAction extends AnAction {
     @NotNull private final AnAction myDelegate;
 
     public MyDelegatingAction(@NotNull AnAction action) {
@@ -128,7 +128,7 @@ public final class EmptyAction extends AnAction {
     }
   }
 
-  private static class MyDelegatingActionGroup extends ActionGroup {
+  public static class MyDelegatingActionGroup extends ActionGroup {
     @NotNull private final ActionGroup myDelegate;
 
     public MyDelegatingActionGroup(@NotNull ActionGroup action) {

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.validation;
 
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.PyStarExpression;
 
 /**
@@ -24,7 +25,7 @@ public class StarAnnotator extends PyAnnotator {
   @Override
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
-    if (!node.isAssignmentTarget() && !node.isUnpacking()) {
+    if (!node.isAssignmentTarget() && !node.isUnpacking() && !(node.getParent() instanceof PyParameterTypeList)) {
       getHolder().createErrorAnnotation(node, "Can't use starred expression here");
     }
   }

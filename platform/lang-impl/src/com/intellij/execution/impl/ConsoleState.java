@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public abstract class ConsoleState {
-  public abstract ConsoleState attachTo(ConsoleViewImpl console, ProcessHandler processHandler);
+  @NotNull
+  public abstract ConsoleState attachTo(@NotNull ConsoleViewImpl console, ProcessHandler processHandler);
   @NotNull
   public abstract ConsoleState dispose();
 
@@ -34,7 +35,7 @@ public abstract class ConsoleState {
     return false;
   }
 
-  public void sendUserInput(final String input) throws IOException {}
+  public void sendUserInput(@NotNull String input) throws IOException {}
 
   public abstract static class NotStartedStated extends ConsoleState {
     @NotNull

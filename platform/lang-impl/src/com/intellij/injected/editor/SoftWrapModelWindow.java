@@ -15,7 +15,6 @@
  */
 package com.intellij.injected.editor;
 
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
@@ -30,34 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 class SoftWrapModelWindow implements SoftWrapModelEx {
-  private final EditorWindowImpl myEditorWindow;
-
-  SoftWrapModelWindow(EditorWindowImpl editorWindow) {
-    myEditorWindow = editorWindow;
-  }
-
-  @NotNull
-  @Override
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual) {
-    return myEditorWindow.visualToLogicalPosition(visual);
-  }
-
-  @NotNull
-  @Override
-  public LogicalPosition offsetToLogicalPosition(int offset) {
-    return myEditorWindow.offsetToLogicalPosition(offset);
-  }
-
-  @Override
-  public int logicalPositionToOffset(@NotNull LogicalPosition logicalPosition) {
-    return myEditorWindow.logicalPositionToOffset(logicalPosition);
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual) {
-    return defaultVisual;
-  }
+  SoftWrapModelWindow() {}
 
   @Override
   public List<? extends SoftWrap> getRegisteredSoftWraps() {

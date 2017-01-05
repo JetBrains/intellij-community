@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Represents a single <code>catch</code> section of a Java <code>try ... catch</code> statement.
+ * Represents a single {@code catch} section of a Java {@code try ... catch} statement.
  *
  * @author ven
  */
@@ -78,7 +78,7 @@ public interface PsiCatchSection extends PsiElement {
   List<PsiType> getPreciseCatchTypes();
 
   /**
-   * Returns the <code>try</code> statement to which the catch section is attached.
+   * Returns the {@code try} statement to which the catch section is attached.
    *
    * @return the statement instance.
    */

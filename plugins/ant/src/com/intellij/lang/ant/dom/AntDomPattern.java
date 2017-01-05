@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,12 +237,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     if (myIncludePatterns.size() == 0) {
       return true;
     }
-    for (PrefixItem[] couldBeIncludedPattern : myCouldBeIncludedPatterns) {
-      if (matchPatternStart(couldBeIncludedPattern, relativePath)) {
-        return true;
-      }
-    }
-    return false;
+    return myCouldBeIncludedPatterns.stream().anyMatch(couldBeIncludedPattern -> matchPatternStart(couldBeIncludedPattern, relativePath));
   }
   
   private class PrefixItem {

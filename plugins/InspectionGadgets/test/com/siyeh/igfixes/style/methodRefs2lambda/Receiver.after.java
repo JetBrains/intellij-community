@@ -11,6 +11,6 @@ public class MyTest {
     }
 
     static {
-        I i = (I) (myTest) -> myTest.m();
+        I i = (I) myTest -> myTest.m();
     }
 }

@@ -658,7 +658,7 @@ public class EquivalenceChecker {
                                                      @NotNull GrNewExpression newExp2) {
     final PsiMethod constructor1 = newExp1.resolveMethod();
     final PsiMethod constructor2 = newExp2.resolveMethod();
-    if (constructor1 == null || constructor2 == null || constructor1.equals(constructor2)) {
+    if (constructor1 == null || constructor2 == null || !constructor1.equals(constructor2)) {
       return false;
     }
     return argumentListsAreEquivalent(newExp1.getArgumentList(), newExp2.getArgumentList());

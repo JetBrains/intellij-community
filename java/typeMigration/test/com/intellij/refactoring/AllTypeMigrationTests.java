@@ -7,7 +7,6 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.ConvertToAtomicIntentionTest;
 import com.intellij.codeInsight.ConvertToThreadLocalIntentionTest;
 import com.intellij.codeInsight.inspections.GuavaInspectionTest;
-import com.intellij.refactoring.typeMigration.intentions.ConvertAtomicToLongAdderIntention;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 

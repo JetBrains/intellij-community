@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.intellij.openapi.application;
 
 import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to disable expansion of path macros in the values of certain properties.
@@ -24,6 +26,9 @@ import org.jdom.Text;
  * @author yole
  */
 public abstract class PathMacroFilter {
+  public boolean skipPathMacros(@NotNull Element element) {
+    return false;
+  }
 
   public boolean skipPathMacros(Text element) {
     return false;

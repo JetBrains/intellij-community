@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -90,10 +89,15 @@ public class ControlFlowWrapper {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(final PsiElement[] elements) throws ExitStatementsNotSameException {
+  public Collection<PsiStatement> prepareExitStatements(final @NotNull PsiElement[] elements,
+                                                        final @NotNull PsiElement enclosingCodeFragment)
+    throws ExitStatementsNotSameException {
     myExitPoints = new IntArrayList();
     myExitStatements = ControlFlowUtil
       .findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, myExitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+    if (ControlFlowUtil.hasObservableThrowExitPoints(myControlFlow, myFlowStart, myFlowEnd, elements, enclosingCodeFragment)) {
+      throw new ExitStatementsNotSameException();
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit points:");
       for (int i = 0; i < myExitPoints.size(); i++) {
@@ -204,18 +208,11 @@ public class ControlFlowWrapper {
       for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
         PsiElement element = ref.getElement();
         int elementOffset = myControlFlow.getStartOffset(element);
+        if (elementOffset == -1) {
+          continue Variables;
+        }
         if (elementOffset >= myFlowStart && elementOffset <= myFlowEnd) {
           if (!isInExitStatements(element, myExitStatements)) continue Variables;
-        }
-        if (elementOffset == -1) { //references in local/anonymous classes should not be skipped
-          final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-          if (psiClass != null) {
-            final TextRange textRange = psiClass.getTextRange();
-            if (myControlFlow.getElement(myFlowStart).getTextOffset() <= textRange.getStartOffset() &&
-                textRange.getEndOffset() <= myControlFlow.getElement(myFlowEnd).getTextRange().getEndOffset()) {
-              continue Variables;
-            }
-          }
         }
       }
       iterator.remove();

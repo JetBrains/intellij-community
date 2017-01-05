@@ -31,8 +31,7 @@ public class DocumentEventImpl extends DocumentEvent {
   private final long myOldTimeStamp;
   private final boolean myIsWholeDocReplaced;
   private Diff.Change myChange;
-  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null) {
-  };
+  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null);
 
   private final int myInitialStartOffset;
   private final int myInitialOldLength;
@@ -68,6 +67,9 @@ public class DocumentEventImpl extends DocumentEvent {
     myOldTimeStamp = oldTimeStamp;
 
     myIsWholeDocReplaced = getDocument().getTextLength() != 0 && wholeTextReplaced;
+    assert initialStartOffset >= 0 : initialStartOffset;
+    assert initialOldLength >= 0 : initialOldLength;
+    assert initialStartOffset+initialOldLength <= document.getTextLength() : "initialStartOffset = " + initialStartOffset + "; initialOldLength = " + initialOldLength+";document.getTextLength() = " + document.getTextLength();
   }
 
   @Override
@@ -139,6 +141,8 @@ public class DocumentEventImpl extends DocumentEvent {
     Diff.Change change = reBuildDiffIfNeeded();
     if (change == null) return line;
 
+    int startLine = getDocument().getLineNumber(getOffset());
+    line -= startLine;
     int newLine = line;
 
     while (change != null) {
@@ -155,15 +159,19 @@ public class DocumentEventImpl extends DocumentEvent {
       change = change.link;
     }
 
-    return newLine;
+    return newLine + startLine;
   }
 
   public int translateLineViaDiffStrict(int line) throws FilesTooBigForDiffException {
     Diff.Change change = reBuildDiffIfNeeded();
     if (change == null) return line;
-    return Diff.translateLine(change, line);
+    int startLine = getDocument().getLineNumber(getOffset());
+    if (line < startLine) return line;
+    int translatedRelative = Diff.translateLine(change, line - startLine);
+    return translatedRelative < 0 ? -1 : translatedRelative + startLine;
   }
 
+  // line numbers in Diff.Change are relative to change start
   private Diff.Change reBuildDiffIfNeeded() throws FilesTooBigForDiffException {
     if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException(0);
     if (myChange == null) {

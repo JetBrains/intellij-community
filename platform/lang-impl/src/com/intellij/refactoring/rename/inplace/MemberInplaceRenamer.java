@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -223,7 +224,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             performRunnable.run();
           }
           else {
-            ApplicationManager.getApplication().invokeLater(performRunnable);
+            TransactionGuard.getInstance().submitTransactionLater(myProject, performRunnable);
           }
         }
       }
@@ -241,7 +242,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected void performRenameInner(PsiElement element, String newName) {
     final RenameProcessor renameProcessor = createRenameProcessor(element, newName);
     for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (factory.getOptionName() != null && factory.isApplicable(element)) {
+      if (factory.getOptionName() != null && factory.isEnabled() && factory.isApplicable(element)) {
         renameProcessor.addRenamerFactory(factory);
       }
     }

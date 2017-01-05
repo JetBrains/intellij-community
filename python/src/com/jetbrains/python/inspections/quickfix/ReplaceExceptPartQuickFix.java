@@ -35,13 +35,8 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceExceptPartQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("INTN.convert.except.to");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("INTN.convert.except.to");
   }
 
   @Override

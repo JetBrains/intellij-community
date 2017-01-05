@@ -788,5 +788,13 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.type('\n');
     myFixture.checkResult("<?xml version=\"1.0\" encoding=\"<caret>\" ?>");
   }
+
+  public void testAttributeValueToken() throws Exception {
+    myFixture.configureByText("foo.xml", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                                         "    <element name=\"a\" abstract=<caret>\"\"/>\n" +
+                                         "</schema>");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(0, elements.length);
+  }
 }
 

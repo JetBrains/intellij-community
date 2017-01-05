@@ -23,7 +23,7 @@ import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 // todo rename?
 public interface CvsLoginWorker {
   /**
-   * @return <code>true</code> if login attempt should be repeated after prompting user
+   * @return {@code true} if login attempt should be repeated after prompting user
    */
   @CalledInAwt
   boolean promptForPassword();

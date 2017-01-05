@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -104,7 +105,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (xmlExtension.useXmlTagInsertHandler()) {
         lookupElement = lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE);
       }
-
+      lookupElement = lookupElement.withCaseSensitivity(!(descriptor instanceof HtmlElementDescriptorImpl));
       elements.add(PrioritizedLookupElement.withPriority(lookupElement, separator > 0 ? 0 : 1));
     }
   }

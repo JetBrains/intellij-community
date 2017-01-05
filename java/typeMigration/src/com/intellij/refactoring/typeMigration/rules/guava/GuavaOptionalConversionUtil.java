@@ -17,12 +17,9 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiMatcherExpression;
-import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
-import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

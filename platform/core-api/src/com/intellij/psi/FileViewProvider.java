@@ -91,7 +91,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
 
   /**
    * @param target target language
-   * @return PsiFile for given language, or <code>null</code> if the language not present
+   * @return PsiFile for given language, or {@code null} if the language not present
    */
   PsiFile getPsi(@NotNull Language target);
 

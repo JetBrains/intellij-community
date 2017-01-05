@@ -142,20 +142,44 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     ModuleManagerImpl.getInstanceImpl(myProject).setModuleGroupPath(module, new String[]{"modules"});
     PsiTestUtil.addContentRoot(module, mainModuleRoot.findFileByRelativePath("src/com/package1/p2/p3"));
 
-    TestProjectTreeStructure structure = new TestProjectTreeStructure(myProject, getTestRootDisposable());
-    structure.setShowLibraryContents(false);
+    myStructure.setShowLibraryContents(false);
+    myStructure.hideExcludedFiles();
 
-    String structureContent = PlatformTestUtil.print(structure, structure.getRootElement(), 0, null, 10, ' ', myPrintInfo).toString();
+    assertStructureEqual("Project\n" +
+                         " nested_module.iml\n" +
+                         " noDuplicateModules\n" +
+                         "  src\n" +
+                         "   com\n" +
+                         "    package1\n" +
+                         "     Test.java\n" +
+                         " testNoDuplicateModules.iml\n");
+  }
 
-    Assert.assertFalse(structureContent.contains("modules"));
-    assertEquals("Project\n" +
-                 " noDuplicateModules\n" +
-                 "  src\n" +
-                 "   com\n" +
-                 "    package1\n" +
-                 "     Test.java\n" +
-                 " nested_module.iml\n" +
-                 " testNoDuplicateModules.iml\n",
-                 structureContent);
+  public void testContentRootUnderExcluded() {
+    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+
+    PsiTestUtil.addExcludedRoot(myModule, mainModuleRoot.findFileByRelativePath("exc"));
+
+    PsiTestUtil.addContentRoot(myModule, mainModuleRoot.findFileByRelativePath("exc/gen"));
+
+    myStructure.setShowLibraryContents(false);
+
+    assertStructureEqual("Project\n" +
+                         " contentRootUnderExcluded\n" +
+                         "  B.txt\n" +
+                         "  exc\n" +
+                         "   excluded.txt\n" +
+                         "   gen\n" +
+                         "    A.java\n" +
+                         " testContentRootUnderExcluded.iml\n");
+
+    myStructure.hideExcludedFiles();
+    assertStructureEqual("Project\n" +
+                         " Module\n" +
+                         "  contentRootUnderExcluded\n" +
+                         "   B.txt\n" +
+                         "  gen\n" +
+                         "   A.java\n" +
+                         " testContentRootUnderExcluded.iml\n");
   }
 }

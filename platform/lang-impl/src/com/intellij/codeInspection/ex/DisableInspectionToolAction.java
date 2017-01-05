@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,16 +66,7 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
 
   @Override
   public void applyFix(@NotNull Project project, final PsiFile file, @Nullable Editor editor) {
-    modifyAndCommitProjectProfile(modifiableModel -> modifiableModel.disableTool(myToolId, file), project);
-    DaemonCodeAnalyzer.getInstance(project).restart();
-  }
-
-  public static void modifyAndCommitProjectProfile(Consumer<ModifiableModel> action, Project project) {
-    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    InspectionProfile inspectionProfile = profileManager.getCurrentProfile();
-    ModifiableModel model = inspectionProfile.getModifiableModel();
-    action.consume(model);
-    model.commit();
+    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> it.disableTool(myToolId, file));
   }
 
   @Override

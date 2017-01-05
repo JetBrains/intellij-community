@@ -7,7 +7,7 @@ REGEXP_FILE
         RegExpClassImpl: <[-]>
           PsiElement(CLASS_BEGIN)('[')
           RegExpCharImpl: <->
-            PsiElement(MINUS)('-')
+            PsiElement(CHARACTER)('-')
           PsiElement(CLASS_END)(']')
         RegExpQuantifierImpl: <?>
           PsiElement(QUEST)('?')

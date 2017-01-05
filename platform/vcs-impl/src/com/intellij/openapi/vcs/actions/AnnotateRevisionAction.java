@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware, UpToDateLineNumberListener {
   @NotNull protected final FileAnnotation myAnnotation;
@@ -50,12 +48,11 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     }
 
     e.getPresentation().setVisible(true);
-
     super.update(e);
   }
 
   @Nullable
-  protected abstract List<VcsRevisionDescription> getRevisions();
+  protected abstract VcsFileRevision getRevision(int lineNumber);
 
   @Nullable
   protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
@@ -86,18 +83,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Nullable
   @Override
   protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-    VcsRevisionDescription description = getRevisionDescription(e);
-    return description == null ? null : myAnnotation.getRevisionByDescription(description);
-  }
-
-  @Nullable
-  @Override
-  protected VcsRevisionDescription getRevisionDescription(@NotNull AnActionEvent e) {
-    List<VcsRevisionDescription> revisions = getRevisions();
-    assert revisions != null;
-
-    if (currentLine < 0 || currentLine >= revisions.size()) return null;
-    return revisions.get(currentLine);
+    return getRevision(currentLine);
   }
 
   @Override
@@ -115,9 +101,5 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Override
   public void consume(Integer integer) {
     currentLine = integer;
-  }
-
-  public int getCurrentLine() {
-    return currentLine;
   }
 }

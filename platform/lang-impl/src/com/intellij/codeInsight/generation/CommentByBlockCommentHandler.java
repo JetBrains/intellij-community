@@ -28,7 +28,6 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -71,9 +70,6 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
     myDocument = editor.getDocument();
 
-    if (!FileDocumentManager.getInstance().requestWriting(myDocument, project)) {
-      return;
-    }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
     final Commenter commenter = findCommenter(myFile, myEditor, caret);
     if (commenter == null) return;

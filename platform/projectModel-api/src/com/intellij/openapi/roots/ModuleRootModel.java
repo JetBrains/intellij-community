@@ -58,7 +58,7 @@ public interface ModuleRootModel {
   @NotNull
   OrderEntry[] getOrderEntries();
 
-  /*
+  /**
    * Returns the SDK used by the module.
    *
    * @return either module-specific or inherited SDK

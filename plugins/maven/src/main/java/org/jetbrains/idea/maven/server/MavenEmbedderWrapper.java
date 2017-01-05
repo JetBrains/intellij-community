@@ -204,6 +204,15 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     }
   }
 
+  public MavenModel readModel(final File file) throws MavenProcessCanceledException {
+    return perform(new RetriableCancelable<MavenModel>() {
+      @Override
+      public MavenModel execute() throws RemoteException, MavenServerProcessCanceledException {
+        return getOrCreateWrappee().readModel(file);
+      }
+    });
+  }
+
   @NotNull
   public MavenServerExecutionResult execute(@NotNull final VirtualFile file,
                                             @NotNull final Collection<String> activeProfiles,

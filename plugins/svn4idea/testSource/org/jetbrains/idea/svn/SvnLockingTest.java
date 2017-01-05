@@ -397,10 +397,7 @@ public class SvnLockingTest extends TestCase {
             open.rollback();
           }
         }
-        catch (SqlJetException e) {
-          e.printStackTrace();
-          throw new RuntimeException(e);
-        } catch (Exception e) {
+        catch (Exception e) {
           e.printStackTrace();
           throw new RuntimeException(e);
         }

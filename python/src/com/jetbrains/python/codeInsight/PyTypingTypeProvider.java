@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -78,22 +79,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
-    final PyAnnotation annotation = param.getAnnotation();
-    if (annotation != null) {
-      // XXX: Requires switching from stub to AST
-      final PyExpression value = annotation.getValue();
-      if (value != null) {
-        final PyType type = getType(value, new Context(context));
-        if (type != null) {
-          final PyType optionalType = getOptionalTypeFromDefaultNone(param, type, context);
-          return Ref.create(optionalType != null ? optionalType : type);
-        }
-      }
+    final Ref<PyType> typeFromAnnotation = getParameterTypeFromAnnotation(param, context);
+    if (typeFromAnnotation != null) {
+      return typeFromAnnotation;
     }
 
-    final String paramComment = param.getTypeCommentAnnotation();
-    if (paramComment != null) {
-      return Ref.create(getStringBasedType(paramComment, param, new Context(context)));
+    final Ref<PyType> typeFromTypeComment = getParameterTypeFromTypeComment(param, context);
+    if (typeFromTypeComment != null) {
+      return typeFromTypeComment;
     }
 
     final String comment = func.getTypeCommentAnnotation();
@@ -119,6 +112,57 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getParameterTypeFromAnnotation(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+    final PyType annotationValueType = Optional
+      .ofNullable(parameter.getAnnotation())
+      .map(PyAnnotation::getValue) // XXX: Requires switching from stub to AST
+      .map(value -> getType(value, new Context(context)))
+      .orElse(null);
+
+    if (annotationValueType != null) {
+      if (parameter.isPositionalContainer()) {
+        return Ref.create(PyTypeUtil.toPositionalContainerType(parameter, annotationValueType));
+      }
+
+      if (parameter.isKeywordContainer()) {
+        return Ref.create(PyTypeUtil.toKeywordContainerType(parameter, annotationValueType));
+      }
+
+      final PyType result = Optional
+        .ofNullable(parameter.getDefaultValue())
+        .map(context::getType)
+        .filter(PyNoneType.class::isInstance)
+        .map(noneType -> PyUnionType.union(annotationValueType, noneType))
+        .orElse(annotationValueType);
+
+      return Ref.create(result);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getParameterTypeFromTypeComment(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+    final String typeComment = parameter.getTypeCommentAnnotation();
+
+    if (typeComment != null) {
+      final PyType type = getStringBasedType(typeComment, parameter, new Context(context));
+
+      if (parameter.isPositionalContainer()) {
+        return Ref.create(PyTypeUtil.toPositionalContainerType(parameter, type));
+      }
+
+      if (parameter.isKeywordContainer()) {
+        return Ref.create(PyTypeUtil.toKeywordContainerType(parameter, type));
+      }
+
+      return Ref.create(type);
+    }
+
     return null;
   }
 
@@ -176,6 +220,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      if (context.maySwitchToAST(target)) {
+        // XXX: Requires switching from stub to AST
+        final PyAnnotation annotation = target.getAnnotation();
+        if (annotation != null) {
+          final PyExpression value = annotation.getValue();
+          if (value != null) {
+            return getType(value, new Context(context));
+          }
+          return null;
+        }
+      }
       final String comment = target.getTypeCommentAnnotation();
       if (comment != null) {
         final PyType type = getStringBasedType(comment, referenceTarget, new Context(context));
@@ -192,7 +247,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   /**
-   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to 
+   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to
    * contain type annotation in PEP 484 compatible format, that can be parsed with either {@link PyTypeParser#parse(PsiElement, String)}
    * or {@link PyTypeParser#parsePep484FunctionTypeComment(PsiElement, String)}.
    */
@@ -207,20 +262,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   private static boolean isAny(@NotNull PyType type) {
     return type instanceof PyClassType && "typing.Any".equals(((PyClassType)type).getPyClass().getQualifiedName());
-  }
-
-  @Nullable
-  private static PyType getOptionalTypeFromDefaultNone(@NotNull PyNamedParameter param,
-                                                       @NotNull PyType type,
-                                                       @NotNull TypeEvalContext context) {
-    final PyExpression defaultValue = param.getDefaultValue();
-    if (defaultValue != null) {
-      final PyType defaultType = context.getType(defaultValue);
-      if (defaultType instanceof PyNoneType) {
-        return PyUnionType.union(type, defaultType);
-      }
-    }
-    return null;
   }
 
   @Nullable
@@ -372,7 +413,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (elementTypes.size() > 1 && elementTypes.get(1) instanceof PyTypeParser.EllipsisType) {
         return PyTupleType.createHomogeneous(resolved, elementTypes.get(0));
       }
-      return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
+      return PyTupleType.create(resolved, elementTypes);
     }
     final PyType builtinCollection = getBuiltinCollection(resolved);
     if (builtinCollection instanceof PyClassType) {
@@ -456,11 +497,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyExpression expr = ((PyExpressionStatement)element).getExpression();
       if (expr instanceof PyTupleExpression) {
         final PyTupleExpression tupleExpr = (PyTupleExpression)expr;
-        final List<PyType> elementTypes = new ArrayList<>();
-        for (PyExpression elementExpr : tupleExpr.getElements()) {
-          elementTypes.add(getType(elementExpr, context));
-        }
-        return PyTupleType.create(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
+        final List<PyType> elementTypes = ContainerUtil.map(tupleExpr.getElements(), elementExpr -> getType(elementExpr, context));
+        return PyTupleType.create(anchor, elementTypes);
       }
       return getType(expr, context);
     }
@@ -583,7 +621,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
               return PyTupleType.createHomogeneous(element, indexTypes.get(0));
             }
           }
-          return PyTupleType.create(element, indexTypes.toArray(new PyType[indexTypes.size()]));
+          return PyTupleType.create(element, indexTypes);
         }
         else if (indexExpr != null) {
           return new PyCollectionTypeImpl(cls, false, indexTypes);
@@ -633,7 +671,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    return !elements.isEmpty() ? elements : Collections.<PsiElement>singletonList(expression);
+    return !elements.isEmpty() ? elements : Collections.singletonList(expression);
   }
 
   @NotNull

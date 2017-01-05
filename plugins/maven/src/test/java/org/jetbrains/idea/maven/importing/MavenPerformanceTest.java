@@ -24,10 +24,8 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
-@SuppressWarnings("unused")
 @Bombed(user = "cdr", year = 3000, month = Calendar.FEBRUARY, day = 1, description = "do not run on build server")
 public abstract class MavenPerformanceTest extends MavenImportingTestCase {
   @Override

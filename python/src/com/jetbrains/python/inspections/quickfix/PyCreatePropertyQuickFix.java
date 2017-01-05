@@ -35,14 +35,8 @@ public class PyCreatePropertyQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.create.property");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.create.property");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

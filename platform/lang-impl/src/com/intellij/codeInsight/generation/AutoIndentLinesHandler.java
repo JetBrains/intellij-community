@@ -45,12 +45,10 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
     Document document = editor.getDocument();
     int startOffset;
     int endOffset;
-    RangeMarker selectionEndMarker = null;
-    if (editor.getSelectionModel().hasSelection()){
+    boolean hasSelection = editor.getSelectionModel().hasSelection();
+    if (hasSelection){
       startOffset = editor.getSelectionModel().getSelectionStart();
-      endOffset = editor.getSelectionModel().getSelectionEnd();
-      selectionEndMarker = document.createRangeMarker(endOffset, endOffset);
-      endOffset -= 1;
+      endOffset = editor.getSelectionModel().getSelectionEnd() - 1;
     }
     else{
       startOffset = endOffset = editor.getCaretModel().getOffset();
@@ -65,7 +63,7 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
       LOG.error(e);
     }
 
-    if (selectionEndMarker == null){
+    if (!hasSelection){
       if (line1 < document.getLineCount() - 1){
         if (document.getLineStartOffset(line1 + 1) + col >= document.getTextLength()) {
           col = document.getLineEndOffset(line1 + 1) - document.getLineStartOffset(line1 + 1);
@@ -75,11 +73,6 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
         editor.getSelectionModel().removeSelection();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
-    }
-    else{
-      if (!selectionEndMarker.isValid()) return;
-      endOffset = selectionEndMarker.getEndOffset();
-      editor.getSelectionModel().setSelection(startOffset, endOffset);
     }
   }
 

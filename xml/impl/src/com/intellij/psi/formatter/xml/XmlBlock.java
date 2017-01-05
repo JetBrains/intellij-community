@@ -28,10 +28,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,7 +323,7 @@ public class XmlBlock extends AbstractXmlBlock {
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     PsiElement element = myNode.getPsi();
-    if (element instanceof PsiFile || element instanceof XmlDocument) {
+    if (element instanceof PsiFile || element instanceof XmlDocument || element instanceof XmlProlog) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     else {

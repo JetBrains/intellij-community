@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
@@ -53,7 +54,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
   @Override
@@ -63,7 +64,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     selectOption(options, editor, file);
   }
 
-  private List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
+  private static List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
     List<AnAction> result = new ArrayList<>();
 
     UnwrapDescriptor d = getUnwrapDescription(file);
@@ -79,7 +80,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return LanguageUnwrappers.INSTANCE.forLanguage(file.getLanguage());
   }
 
-  private AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
+  private static AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
     return new MyUnwrapAction(p, ed, u, el);
   }
 
@@ -96,10 +97,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     showPopup(options, editor);
   }
 
-  private void showPopup(final List<AnAction> options, Editor editor) {
+  private static void showPopup(final List<AnAction> options, Editor editor) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
-    DefaultListModel m = new DefaultListModel();
+    DefaultListModel<String> m = new DefaultListModel<>();
     for (AnAction a : options) {
       m.addElement(((MyUnwrapAction)a).getName());
     }
@@ -191,7 +192,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     private void saveCaretPosition(PsiFile file) {
       int offset = myEditor.getCaretModel().getOffset();
       PsiElement el = file.findElementAt(offset);
-
+      if (el == null) return;
       int innerOffset = offset - el.getTextOffset();
       el.putCopyableUserData(CARET_POS_KEY, innerOffset);
     }
@@ -216,10 +217,11 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     private void highlightExtractedElements(final List<PsiElement> extractedElements) {
       for (PsiElement each : extractedElements) {
+        final TextRange textRange = each.getTextRange();
         HighlightManager.getInstance(myProject).addRangeHighlight(
             myEditor,
-            each.getTextOffset(),
-            each.getTextOffset() + each.getTextLength(),
+            textRange.getStartOffset(),
+            textRange.getEndOffset(),
             getTestAttributesForExtract(),
             false,
             true,

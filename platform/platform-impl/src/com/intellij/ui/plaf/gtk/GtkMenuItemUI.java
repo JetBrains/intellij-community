@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,20 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.basic.BasicMenuItemUI;
+import javax.swing.plaf.synth.ColorType;
 import javax.swing.plaf.synth.SynthContext;
+import javax.swing.plaf.synth.SynthMenuItemUI;
 import java.awt.*;
 
 public class GtkMenuItemUI extends BasicMenuItemUI {
   private static Icon myCachedCheckIcon = null;
 
-  private final BasicMenuItemUI myOriginalUI;
+  private final SynthMenuItemUI myOriginalUI;
   private JCheckBoxMenuItem myHiddenItem;
 
-  public GtkMenuItemUI(final MenuItemUI originalUI) {
-    assert isUiAcceptable(originalUI) : originalUI;
-    myOriginalUI = (BasicMenuItemUI)originalUI;
-  }
-
-  public static boolean isUiAcceptable(final MenuItemUI ui) {
-    return ui instanceof BasicMenuItemUI && GtkPaintingUtil.isSynthUI(ui);
+  public GtkMenuItemUI(SynthMenuItemUI originalUI) {
+    myOriginalUI = originalUI;
   }
 
   @Override
@@ -60,9 +56,9 @@ public class GtkMenuItemUI extends BasicMenuItemUI {
     resetCachedCheckIcon();
   }
 
-  private static Icon getCheckIconFromContext(final BasicMenuItemUI originalUI, final JCheckBoxMenuItem item) {
+  private static Icon getCheckIconFromContext(final SynthMenuItemUI ui, final JCheckBoxMenuItem item) {
     if (myCachedCheckIcon == null) {
-      final SynthContext context = GtkPaintingUtil.getSynthContext(originalUI, item);
+      SynthContext context = ui.getContext(item);
       myCachedCheckIcon = context.getStyle().getIcon(context, "CheckBoxMenuItem.checkIcon");
     }
     return myCachedCheckIcon;
@@ -82,10 +78,12 @@ public class GtkMenuItemUI extends BasicMenuItemUI {
 
     if (UIUtil.isMurrineBasedTheme()) {
       acceleratorFont = menuItem.getFont();
-      final Color fg = GtkPaintingUtil.getForeground(myOriginalUI, menuItem);
+      SynthContext context = myOriginalUI.getContext(menuItem);
+      Color fg = context.getStyle().getColor(context, ColorType.TEXT_FOREGROUND);
       acceleratorForeground = UIUtil.mix(fg, menuItem.getBackground(), menuItem.isSelected() ? 0.4 : 0.2);
       disabledForeground = fg;
     }
+
     if (checkIcon != null && !(checkIcon instanceof IconWrapper) && !(checkIcon instanceof EmptyIcon)) {
       checkIcon = new IconWrapper(checkIcon, myOriginalUI);
     }
@@ -97,8 +95,9 @@ public class GtkMenuItemUI extends BasicMenuItemUI {
   protected void paintText(final Graphics g, final JMenuItem menuItem, final Rectangle textRect, final String text) {
     if (!menuItem.isEnabled() && UIUtil.isMurrineBasedTheme()) {
       GtkPaintingUtil.paintDisabledText(myOriginalUI, g, menuItem, textRect, text);
-      return;
     }
-    super.paintText(g, menuItem, textRect, text);
+    else {
+      super.paintText(g, menuItem, textRect, text);
+    }
   }
 }

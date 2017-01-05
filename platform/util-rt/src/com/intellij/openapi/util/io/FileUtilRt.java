@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class FileUtilRt {
   private static final int KILOBYTE = 1024;
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
-  public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, getUserFileSizeLimit());
+  public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, Math.max(getUserFileSizeLimit(), getUserContentLoadLimit()));
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
@@ -69,7 +69,7 @@ public class FileUtilRt {
   private static String ourCanonicalTempPathCache = null;
 
   protected static final class NIOReflect {
-    // NIO-reflection initialization placed in a separate class for lazy loading 
+    // NIO-reflection initialization placed in a separate class for lazy loading
     static final boolean IS_AVAILABLE;
 
     // todo: replace reflection with normal code after migration to JDK 1.8
@@ -77,6 +77,7 @@ public class FileUtilRt {
     private static Method ourFilesWalkMethod;
     private static Method ourFileToPathMethod;
     private static Method ourPathToFileMethod;
+    private static Method ourAttributesIsOtherMethod;
     private static Object ourDeletionVisitor;
     private static Class ourNoSuchFileExceptionClass;
     private static Class ourAccessDeniedExceptionClass;
@@ -93,8 +94,12 @@ public class FileUtilRt {
         ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
+        ourAttributesIsOtherMethod = Class.forName("java.nio.file.attribute.BasicFileAttributes").getDeclaredMethod("isOther");
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
+
         final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
+        final Object Result_Skip = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("SKIP_SUBTREE").get(null);
+
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (args.length == 2) {
@@ -104,21 +109,24 @@ public class FileUtilRt {
               }
               final String methodName = method.getName();
               if ("visitFile".equals(methodName) || "postVisitDirectory".equals(methodName)) {
-                if (!performDelete(args[0])) {
-                  throw new IOException("Failed to delete " + args[0]) {
-                    // optimization: the stacktrace is not needed: the exception is used to terminate tree walkup and to pass the result
-                    @Override
-                    public synchronized Throwable fillInStackTrace() {
-                      return this;
-                    }
-                  };
+                performDelete(args[0]);
+              }
+              else if (SystemInfoRt.isWindows && "preVisitDirectory".equals(methodName)) {
+                boolean notDirectory = false;
+                try {
+                  notDirectory = Boolean.TRUE.equals(ourAttributesIsOtherMethod.invoke(second));
+                }
+                catch (Throwable ignored) { }
+                if (notDirectory) {
+                  performDelete(args[0]);
+                  return Result_Skip;
                 }
               }
             }
             return Result_Continue;
           }
 
-          private boolean performDelete(@NotNull final Object fileObject) {
+          private void performDelete(final Object fileObject) throws IOException {
             Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
               public Boolean execute(boolean lastAttempt) {
                 try {
@@ -153,7 +161,14 @@ public class FileUtilRt {
                 return lastAttempt ? Boolean.FALSE : null;
               }
             });
-            return Boolean.TRUE.equals(result);
+            if (!Boolean.TRUE.equals(result)) {
+              throw new IOException("Failed to delete " + fileObject) {
+                @Override
+                public synchronized Throwable fillInStackTrace() {
+                  return this; // optimization: the stacktrace is not needed: the exception is used to terminate tree walking and to pass the result
+                }
+              };
+            }
           }
         });
         initSuccess = true;
@@ -179,8 +194,14 @@ public class FileUtilRt {
 
   @NotNull
   public static CharSequence getExtension(@NotNull CharSequence fileName) {
+    return getExtension(fileName, "");
+  }
+
+  public static CharSequence getExtension(@NotNull CharSequence fileName, @Nullable String defaultValue) {
     int index = StringUtilRt.lastIndexOf(fileName, '.', 0, fileName.length());
-    if (index < 0) return "";
+    if (index < 0) {
+      return defaultValue;
+    }
     return fileName.subSequence(index + 1, fileName.length());
   }
 
@@ -269,12 +290,14 @@ public class FileUtilRt {
   }
 
   @NotNull
+  public static CharSequence getNameWithoutExtension(@NotNull CharSequence name) {
+    int i = StringUtilRt.lastIndexOf(name, '.', 0, name.length());
+    return i < 0 ? name : name.subSequence(0, i);
+  }
+
+  @NotNull
   public static String getNameWithoutExtension(@NotNull String name) {
-    int i = name.lastIndexOf('.');
-    if (i != -1) {
-      name = name.substring(0, i);
-    }
-    return name;
+    return getNameWithoutExtension((CharSequence)name).toString();
   }
 
   @NotNull
@@ -856,6 +879,15 @@ public class FileUtilRt {
     }
     catch (NumberFormatException e) {
       return 2500 * KILOBYTE;
+    }
+  }
+
+  public static int getUserContentLoadLimit() {
+    try {
+      return Integer.parseInt(System.getProperty("idea.max.content.load.filesize")) * KILOBYTE;
+    }
+    catch (NumberFormatException e) {
+      return 20 * MEGABYTE;
     }
   }
 

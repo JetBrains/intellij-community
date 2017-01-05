@@ -9,6 +9,7 @@ import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import java.io.BufferedReader;
@@ -30,11 +31,13 @@ public class IpnbConnection {
   protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
                                               "\"channel\":\"shell\" }";
   public static final String HTTP_DELETE = "DELETE";
+  public static final String AUTHENTICATION_NEEDED = "Authentication needed";
 
   @NotNull protected final URI myURI;
   @NotNull protected final String myKernelId;
   @NotNull protected final String mySessionId;
   @NotNull protected final IpnbConnectionListener myListener;
+  @Nullable private final String myToken;
   private WebSocketClient myShellClient;
   private WebSocketClient myIOPubClient;
   private Thread myShellThread;
@@ -44,17 +47,38 @@ public class IpnbConnection {
   private volatile boolean myIsIOPubOpen = false;
   protected volatile boolean myIsOpened = false;
 
-  private ArrayList<IpnbOutputCell> myOutput = new ArrayList<>();
+  private IpnbOutputCell myOutput;
   private int myExecCount;
+  private String myXsrf;
 
 
-  public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
+  public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
+                        @Nullable final String token) throws IOException, URISyntaxException {
     myURI = new URI(uri);
     myListener = listener;
+    myToken = token;
     mySessionId = UUID.randomUUID().toString();
+    initXSRF();
     myKernelId = startKernel();
 
     initializeClients();
+  }
+
+  private void initXSRF() {
+    try {
+      CookieManager cookieManager = new CookieManager();
+      CookieHandler.setDefault(cookieManager);
+      final URLConnection connection = new URL(myURI.toString()).openConnection();
+      connection.getHeaderFields();
+      final List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
+      for (HttpCookie cookie : cookies) {
+        if ("_xsrf".equals(cookie.getName())) {
+          myXsrf = cookie.getValue();
+        }
+      }
+    }
+    catch (IOException ignored) {
+    }
   }
 
   protected void initializeClients() throws URISyntaxException {
@@ -96,7 +120,7 @@ public class IpnbConnection {
   }
 
   public boolean isAlive() {
-    return myShellClient.isOpen() && myIOPubClient.isOpen() ;
+    return myShellClient.isOpen() && myIOPubClient.isOpen();
   }
 
   @NotNull
@@ -158,11 +182,21 @@ public class IpnbConnection {
   }
 
   @NotNull
-  private static String httpRequest(@NotNull String url, @NotNull String method) throws IOException {
+  private String httpRequest(@NotNull String url, @NotNull String method) throws IOException {
     final URLConnection urlConnection = new URL(url).openConnection();
     if (urlConnection instanceof HttpURLConnection) {
       final HttpURLConnection connection = (HttpURLConnection)urlConnection;
       connection.setRequestMethod(method);
+      connection.setReadTimeout(60000);
+      if (!StringUtil.isEmptyOrSpaces(myToken)) {
+        connection.setRequestProperty("Authorization", "token " + myToken);
+      }
+      else if (!StringUtil.isEmptyOrSpaces(myXsrf)) {
+        connection.setRequestProperty("X-XSRFToken", myXsrf);
+      }
+      if (connection.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+        throw new IOException(AUTHENTICATION_NEEDED);
+      }
       final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
       try {
         final StringBuilder builder = new StringBuilder();
@@ -283,48 +317,53 @@ public class IpnbConnection {
     }
   }
 
-  protected static void addCellOutput(@NotNull final PyContent content, ArrayList<IpnbOutputCell> output) {
+  protected void addCellOutput(@NotNull final PyContent content) {
     if (content instanceof PyErrContent) {
-      output.add(new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
-                                         ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null, null));
+      myOutput = new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
+                                         ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null, null);
     }
     else if (content instanceof PyStreamContent) {
       final String data = ((PyStreamContent)content).getData();
-      output.add(new IpnbStreamOutputCell(((PyStreamContent)content).getName(), Lists.newArrayList(data), null, null));
+      myOutput = new IpnbStreamOutputCell(((PyStreamContent)content).getName(), Lists.newArrayList(data), null, null);
     }
     else if (content instanceof PyOutContent) {
       final Map<String, Object> data = ((PyOutContent)content).getData();
       final String plainText = (String)data.get("text/plain");
       if (data.containsKey("text/latex")) {
         final String text = (String)data.get("text/latex");
-        output.add(new IpnbLatexOutputCell(Lists.newArrayList(text), null, Lists.newArrayList(plainText), null));
+        myOutput = new IpnbLatexOutputCell(Lists.newArrayList(text), false, null, Lists.newArrayList(plainText), null);
+      }
+      else if (data.containsKey("text/markdown")) {
+        final String text = (String)data.get("text/markdown");
+        myOutput = new IpnbLatexOutputCell(Lists.newArrayList(text), true, null, Lists.newArrayList(plainText), null);
       }
       else if (data.containsKey("text/html")) {
         final String html = (String)data.get("text/html");
-        output.add(new IpnbHtmlOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
+        myOutput = new IpnbHtmlOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
                                           Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(html)),
-                                          ((PyOutContent)content).getExecutionCount(), null));
+                                          ((PyOutContent)content).getExecutionCount(), null);
       }
       else if (data.containsKey("image/png")) {
         final String png = (String)data.get("image/png");
-        output.add(new IpnbPngOutputCell(png, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
+        myOutput = new IpnbPngOutputCell(png, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null);
       }
       else if (data.containsKey("image/jpeg")) {
         final String jpeg = (String)data.get("image/jpeg");
-        output.add(new IpnbJpegOutputCell(jpeg, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
+        myOutput = new IpnbJpegOutputCell(jpeg, Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null);
       }
       else if (data.containsKey("image/svg")) {
         final String svg = (String)data.get("image/svg");
-        output.add(new IpnbSvgOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(svg)),
-                                         Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null));
+        myOutput = new IpnbSvgOutputCell(Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(svg)),
+                                         Lists.newArrayList(StringUtil.splitByLinesKeepSeparators(plainText)), null, null);
       }
-      else if (plainText != null){
-        output.add(new IpnbOutOutputCell(Lists.newArrayList(plainText), ((PyOutContent)content).getExecutionCount(), null));
+      else if (plainText != null) {
+        myOutput = new IpnbOutOutputCell(Lists.newArrayList(plainText), ((PyOutContent)content).getExecutionCount(), null);
       }
     }
   }
 
-  private interface PyContent {}
+  private interface PyContent {
+  }
 
   @SuppressWarnings("UnusedDeclaration")
   protected static class Payload {
@@ -432,7 +471,8 @@ public class IpnbConnection {
 
   protected class IpnbWebSocketClient extends WebSocketClient {
     protected IpnbWebSocketClient(@NotNull final URI serverUri, @NotNull final Draft draft) {
-      super(serverUri, draft);
+      super(serverUri, draft, myToken != null ? Collections.singletonMap("Authorization", "token " + myToken) :
+                                                Collections.emptyMap(), 5000);
     }
 
     @Override
@@ -451,7 +491,8 @@ public class IpnbConnection {
       final String messageType = header.getMessageType();
       if ("pyout".equals(messageType) || "display_data".equals(messageType) || "execute_result".equals(messageType)) {
         final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
-        addCellOutput(content, myOutput);
+        addCellOutput(content);
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
       if ("execute_reply".equals(messageType)) {
         final PyExecuteReplyContent content = gson.fromJson(msg.getContent(), PyExecuteReplyContent.class);
@@ -462,28 +503,27 @@ public class IpnbConnection {
             myListener.onPayload(payload.text, parentHeader.getMessageId());
           }
         }
+        if ("ok".equals(content.status) || "error".equals(content.status)) {
+          myListener.onFinished(IpnbConnection.this, parentHeader.getMessageId());
+        }
       }
       else if ("pyerr".equals(messageType) || "error".equals(messageType)) {
         final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
-        addCellOutput(content, myOutput);
+        addCellOutput(content);
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
       else if ("stream".equals(messageType)) {
         final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
-        addCellOutput(content, myOutput);
+        addCellOutput(content);
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
       else if ("pyin".equals(messageType) || "execute_input".equals(messageType)) {
         final JsonElement executionCount = msg.getContent().get("execution_count");
         if (executionCount != null) {
           myExecCount = executionCount.getAsInt();
         }
-      }
-      else if ("status".equals(messageType)) {
-        final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
-        final String executionState = content.getExecutionState();
-        if ("idle".equals(executionState)) {
-          myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
-          myOutput.clear();
-        }
+        myOutput = null;
+        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
       }
     }
 
@@ -498,12 +538,11 @@ public class IpnbConnection {
     }
   }
 
-  public ArrayList<IpnbOutputCell> getOutput() {
+  public IpnbOutputCell getOutput() {
     return myOutput;
   }
 
   public int getExecCount() {
     return myExecCount;
   }
-
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import com.intellij.openapi.vcs.changes.ChangesSelection;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -63,7 +62,6 @@ public interface VcsDataKeys {
   DataKey<Change[]> SELECTED_CHANGES = DataKey.create("ChangeListView.SelectedChange");
   DataKey<Boolean> HAVE_SELECTED_CHANGES = DataKey.create("ChangeListView.HaveSelectedChanges");
   DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
-  DataKey<ChangeRequestChain> DIFF_REQUEST_CHAIN = DataKey.create("diffRequestChain");
   DataKey<String> UPDATE_VIEW_SELECTED_PATH = DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");
   DataKey<Iterable<Pair<VirtualFilePointer, FileStatus>>> UPDATE_VIEW_FILES_ITERABLE = DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
   DataKey<Object> LABEL_BEFORE = DataKey.create("LABEL_BEFORE");

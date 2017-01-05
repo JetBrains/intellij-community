@@ -20,18 +20,19 @@ import com.intellij.configurationStore.TestScheme
 import com.intellij.configurationStore.TestSchemesProcessor
 import com.intellij.configurationStore.save
 import com.intellij.testFramework.ProjectRule
+import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.serialize
-import com.intellij.util.xmlb.toByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.ReadonlySource
+import org.jetbrains.settingsRepository.SyncType
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
 import org.junit.ClassRule
 import org.junit.Test
 
-private val dirName = "keymaps"
+private const val dirName = "keymaps"
 
 class LoadTest : IcsTestCase() {
   companion object {
@@ -40,7 +41,8 @@ class LoadTest : IcsTestCase() {
     val projectRule = ProjectRule()
   }
 
-  private fun createSchemeManager(dirPath: String) = SchemeManagerImpl(dirPath, TestSchemesProcessor(), provider, tempDirManager.newPath("schemes"))
+  @Suppress("UNCHECKED_CAST")
+  private fun createSchemeManager(dirPath: String) = icsManager.schemeManagerFactory.value.create(dirPath, TestSchemesProcessor(), streamProvider = provider) as SchemeManagerImpl<TestScheme, TestScheme>
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
@@ -97,11 +99,18 @@ class LoadTest : IcsTestCase() {
       .commit("")
 
     remoteRepository.useAsReadOnlySource {
-      val schemesManager = createSchemeManager(dirName)
-      schemesManager.loadSchemes()
-      assertThat(schemesManager.allSchemes).containsOnly(remoteScheme, localScheme)
-      assertThat(schemesManager.isMetadataEditable(localScheme)).isTrue()
-      assertThat(schemesManager.isMetadataEditable(remoteScheme)).isFalse()
+      val schemeManager = createSchemeManager(dirName)
+      schemeManager.loadSchemes()
+      assertThat(schemeManager.allSchemes).containsOnly(remoteScheme, localScheme)
+      assertThat(schemeManager.isMetadataEditable(localScheme)).isTrue()
+      assertThat(schemeManager.isMetadataEditable(remoteScheme)).isFalse()
+
+      remoteRepository
+        .delete("$dirName/Mac OS X from RubyMine.xml")
+        .commit("")
+
+      icsManager.sync(SyncType.MERGE)
+      assertThat(schemeManager.allSchemes).containsOnly(localScheme)
     }
   }
 

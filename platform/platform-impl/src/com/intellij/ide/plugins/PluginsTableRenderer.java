@@ -20,18 +20,15 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.JBUI;
@@ -51,7 +48,7 @@ import java.util.Set;
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
-  private SimpleColoredComponent myName;
+  protected SimpleColoredComponent myName;
   private JLabel myStatus;
   private RatesPanel myRating;
   private JLabel myDownloads;
@@ -63,7 +60,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   private JPanel myBottomPanel;
   private JPanel myInfoPanel;
 
-  private final IdeaPluginDescriptor myPluginDescriptor;
+  protected final IdeaPluginDescriptor myPluginDescriptor;
   private final boolean myPluginsView;
 
   // showFullInfo: true for Plugin Repository view, false for Installed Plugins view
@@ -91,7 +88,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myInfoPanel.remove(myBottomPanel);
     }
 
-    myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
+    myPanel.setBorder(UIUtil.isJDKManagedHiDPIScreen((Graphics2D)myPanel.getGraphics()) ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
   }
 
   private void createUIComponents() {
@@ -101,11 +98,12 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (myPluginDescriptor != null) {
-      Color fg = UIUtil.getTableForeground(isSelected);
-      Color bg = UIUtil.getTableBackground(isSelected);
+      Couple<Color> colors = UIUtil.getCellColors(table, isSelected, row, column);
+      Color fg = colors.getFirst();
+      final Color background = colors.getSecond();
       Color grayedFg = isSelected ? fg : new JBColor(Gray._130, Gray._120);
 
-      myPanel.setBackground(bg);
+      myPanel.setBackground(background);
 
       myName.setForeground(fg);
       myCategory.setForeground(grayedFg);

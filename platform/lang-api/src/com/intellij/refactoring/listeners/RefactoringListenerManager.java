@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
  * <ul>
  * <li> client wishing to receive notifications registers a {@link RefactoringElementListenerProvider}
  *  with this class.
- * <li> before some <code>PsiElement</code> is subjected to a refactoring, all registered providers
+ * <li> before some {@code PsiElement} is subjected to a refactoring, all registered providers
  *  are asked to provide a {@link RefactoringElementListener} for that element
  * ({@link RefactoringElementListenerProvider#getListener(com.intellij.psi.PsiElement)} is invoked)
  * <li>When refactoring is completed, listeners for all refactoring subjects are notified,

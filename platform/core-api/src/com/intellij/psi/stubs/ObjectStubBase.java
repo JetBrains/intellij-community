@@ -21,9 +21,9 @@ import com.intellij.psi.StubBasedPsiElement;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
+ * @since 3.08.2012
  */
-public abstract class ObjectStubBase<T extends Stub>  extends UserDataHolderBase implements Stub {
+public abstract class ObjectStubBase<T extends Stub> extends UserDataHolderBase implements Stub {
   private static final Key<Boolean> DANGLING_STUB = Key.create("DIRECT_PARENT_IS_STUBBED");
 
   protected final T myParent;
@@ -52,5 +52,4 @@ public abstract class ObjectStubBase<T extends Stub>  extends UserDataHolderBase
   public void markDangling() {
     putUserData(DANGLING_STUB, true);
   }
-
 }

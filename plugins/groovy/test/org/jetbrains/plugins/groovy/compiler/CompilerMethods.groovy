@@ -42,29 +42,29 @@ trait CompilerMethods {
                                   final ProcessListener listener,
                                   RunProfile configuration,
                                   ProgramRunner runner = null) throws ExecutionException {
-    final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
+    final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass)
     def builder = new ExecutionEnvironmentBuilder(getProject(), executor).runProfile(configuration)
     if (runner) builder.runner(runner)
 
-    final ExecutionEnvironment environment = builder.build();
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
+    final ExecutionEnvironment environment = builder.build()
+    final Semaphore semaphore = new Semaphore()
+    semaphore.down()
 
-    final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>();
+    final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>()
     environment.runner.execute(environment) { RunContentDescriptor descriptor ->
       if (descriptor == null) {
-        throw new AssertionError((Object)"Null descriptor!");
+        throw new AssertionError((Object)"Null descriptor!")
       }
       disposeOnTearDown descriptor
-      final ProcessHandler handler = descriptor.getProcessHandler();
-      assert handler != null;
-      handler.addProcessListener(listener);
-      processHandler.set(handler);
-      semaphore.up();
+      final ProcessHandler handler = descriptor.getProcessHandler()
+      assert handler != null
+      handler.addProcessListener(listener)
+      processHandler.set(handler)
+      semaphore.up()
     }
     if (!semaphore.waitFor(20000)) {
       throw new AssertionError((Object)"Process took too long")
     }
-    return processHandler.get();
+    return processHandler.get()
   }
 }

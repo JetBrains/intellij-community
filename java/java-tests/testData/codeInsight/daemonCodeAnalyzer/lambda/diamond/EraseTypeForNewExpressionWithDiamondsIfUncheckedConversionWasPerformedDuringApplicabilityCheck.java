@@ -6,10 +6,10 @@ class Test {
 
     Holder dataHolder = null;
     Result<String> r3 = new Result<error descr="Cannot infer arguments"><></error>(new Holder<>(dataHolder));
-    Result<String> r4 = Result.create<error descr="'create(K)' in 'Result' cannot be applied to '(Holder)'">(new Holder<>(dataHolder))</error>;
+    Result<String> r4 = Result.create(new Holder<error descr="Cannot infer arguments"><></error>(dataHolder));
 
     Result<String> r5 = new Result<error descr="Cannot infer arguments"><></error>(Holder.create(dataHolder));
-    Result<String> r6 = Result.create<error descr="'create(K)' in 'Result' cannot be applied to '(Holder)'">(Holder.create(dataHolder))</error>;
+    Result<String> r6 = Result.create(Holder.create<error descr="'create(Holder<M>)' in 'Holder' cannot be applied to '(Holder)'">(dataHolder)</error>);
 
   }
 }

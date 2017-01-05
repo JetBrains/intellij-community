@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -5,7 +20,6 @@ import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 
@@ -13,11 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
+ * @author maxim
  * Date: 31.12.2004
  * Time: 12:01:29
- * To change this template use File | Settings | File Templates.
  */
 public class DeclarationStatementHandler extends MatchingHandler {
   private MatchingHandler myCommentHandler;
@@ -31,21 +43,17 @@ public class DeclarationStatementHandler extends MatchingHandler {
     if (!super.match(patternNode,matchedNode,context)) return false;
     final PsiDeclarationStatement dcl = (PsiDeclarationStatement)patternNode;
     if (matchedNode instanceof PsiDeclarationStatement) {
-      return GlobalMatchingVisitor.continueMatchingSequentially(
-        new SsrFilteringNodeIterator(patternNode.getFirstChild()),
-        new SsrFilteringNodeIterator(matchedNode.getFirstChild()),
-        context
-      );
+      return context.getMatcher().matchSequentially(new SsrFilteringNodeIterator(patternNode.getFirstChild()),
+                                                    new SsrFilteringNodeIterator(matchedNode.getFirstChild()));
     }
     final PsiElement[] declared = dcl.getDeclaredElements();
 
     // declaration statement could wrap class or dcl
     if (declared.length > 0 && !(matchedNode.getParent() instanceof PsiDeclarationStatement) /* skip twice matching for child*/) {
       if (!(matchedNode instanceof PsiField)) {
-        return GlobalMatchingVisitor.continueMatchingSequentially(
+        return context.getMatcher().matchSequentially(
           new ArrayBackedNodeIterator(declared),
-          new CountingNodeIterator(declared.length, new SsrFilteringNodeIterator(matchedNode)),
-          context
+          new CountingNodeIterator(declared.length, new SsrFilteringNodeIterator(matchedNode))
         );
       }
 
@@ -65,10 +73,9 @@ public class DeclarationStatementHandler extends MatchingHandler {
         }
         node = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class);
       }
-      boolean result = GlobalMatchingVisitor.continueMatchingSequentially(
+      boolean result = context.getMatcher().matchSequentially(
         new ArrayBackedNodeIterator(declared),
-        new ArrayBackedNodeIterator(matchNodes.toArray(new PsiElement[matchNodes.size()])),
-        context
+        new ArrayBackedNodeIterator(matchNodes.toArray(new PsiElement[matchNodes.size()]))
       );
 
       if (result && declared[0] instanceof PsiVariable) {
@@ -92,11 +99,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
 
   @Override
   public boolean shouldAdvanceTheMatchFor(PsiElement patternElement, PsiElement matchedElement) {
-    if (patternElement instanceof PsiComment &&
-        ( matchedElement instanceof PsiField ||
-          matchedElement instanceof PsiClass
-        )
-       ) {
+    if (patternElement instanceof PsiComment && (matchedElement instanceof PsiField || matchedElement instanceof PsiClass)) {
       return false;
     }
 

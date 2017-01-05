@@ -45,6 +45,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     findIn.accept(
       new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          visitElement(reference);
           final PsiElement target = reference.resolve();
 
           if (target instanceof PsiClass) {
@@ -216,7 +217,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
               if (defaultConstructorOnly) {
                 RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
-                if (refDefaultConstructor != null && !(refDefaultConstructor instanceof RefImplicitConstructor)) {
+                if (refDefaultConstructor != null) {
                   refDefaultConstructor.addInReference(refFrom);
                   refFrom.addOutReference(refDefaultConstructor);
                   hasConstructorsMarked = true;

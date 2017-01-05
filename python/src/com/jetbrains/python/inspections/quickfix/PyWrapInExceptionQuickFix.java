@@ -26,13 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyWrapInExceptionQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.wrap.in.exception");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.wrap.in.exception");
   }
 
   @Override

@@ -84,6 +84,10 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testInvalidConditional() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }

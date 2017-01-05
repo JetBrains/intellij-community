@@ -23,7 +23,6 @@ import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,8 +103,6 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   private boolean myIsInline = false;
 
-
-
   public TemplateImpl(@NotNull String key, @NotNull String group) {
     this(key, null, group);
     toParseSegments = false;
@@ -118,7 +115,6 @@ public class TemplateImpl extends Template implements SchemeElement {
     myString = StringUtil.convertLineSeparators(StringUtil.notNullize(string));
     myGroupName = group;
   }
-
 
   @Override
   public void addTextSegment(@NotNull String text) {
@@ -201,7 +197,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     for (Property property : Property.values()) {
       boolean value = another.getValue(property);
       if (value != Template.getDefaultValue(property)) {
-        setValue(property, value);
+        setValue(property, true);
       }
     }
     for (Variable variable : another.myVariables) {
@@ -246,7 +242,8 @@ public class TemplateImpl extends Template implements SchemeElement {
     return isDeactivated;
   }
 
-  @NotNull public TemplateContext getTemplateContext() {
+  @NotNull
+  public TemplateContext getTemplateContext() {
     return myTemplateContext;
   }
 
@@ -271,18 +268,6 @@ public class TemplateImpl extends Template implements SchemeElement {
       }
     }
     return -1;
-  }
-
-  public IntArrayList getVariableSegmentNumbers(String variableName) {
-    IntArrayList result = new IntArrayList();
-    parseSegments();
-    for (int i = 0; i < mySegments.size(); i++) {
-      Segment segment = mySegments.get(i);
-      if (segment.name.equals(variableName)) {
-        result.add(i);
-      }
-    }
-    return result;
   }
 
   @NotNull

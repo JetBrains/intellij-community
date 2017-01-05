@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,18 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "final Boolean aBoolean = Boolean.valueOf(/**/true);",
                  "final Boolean aBoolean = Boolean.TRUE;");
+  }
+
+  public void testStringConcatenation() {
+    doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                     "\"a\" + Long/**/.valueOf(1L + 2L) + \"b\"",
+                     "\"a\" + (1L + 2L) + \"b\"");
+  }
+
+  public void testStringConcatenation2() {
+    doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                     "\"a\" + Long/**/.valueOf(1L - 2L) + \"b\"",
+                     "\"a\" + (1L - 2L) + \"b\"");
   }
 
   public void testCast() {

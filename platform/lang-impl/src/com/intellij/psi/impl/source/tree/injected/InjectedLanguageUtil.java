@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ import java.util.List;
 public class InjectedLanguageUtil {
   static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS =
     Key.create("HIGHLIGHT_TOKENS");
-  public static Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
+  public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
   // meaning: injected file text is probably incorrect
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
@@ -162,7 +162,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
@@ -172,7 +172,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable Caret caret, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow || caret == null) return editor;
@@ -182,7 +182,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Caret getCaretForInjectedLanguageNoCommit(@Nullable Caret caret, @Nullable PsiFile file) {
     if (caret == null || file == null || caret instanceof InjectedCaret) return caret;
@@ -227,7 +227,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
@@ -265,7 +265,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>host</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code host} can lead to unexpected results, including throwing an exception!
    */
   @Nullable
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
@@ -274,7 +274,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>file</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code file} can lead to unexpected results, including throwing an exception!
    */
   // consider injected elements
   public static PsiElement findElementAtNoCommit(@NotNull PsiFile file, int offset) {
@@ -359,7 +359,7 @@ public class InjectedLanguageUtil {
   }
 
   /**
-   * Invocation of this method on uncommitted <code>hostFile</code> can lead to unexpected results, including throwing an exception!
+   * Invocation of this method on uncommitted {@code hostFile} can lead to unexpected results, including throwing an exception!
    */
   public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
     if (hostFile instanceof PsiCompiledElement) return null;
@@ -367,8 +367,7 @@ public class InjectedLanguageUtil {
     if (InjectedLanguageManager.getInstance(project).isInjectedFragment(hostFile)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Trinity<PsiElement, PsiElement, Language> result = tryOffset(hostFile, offset, documentManager);
-    PsiElement injected = result.first;
-    return injected;
+    return result.first;
   }
 
   // returns (injected psi, leaf element at the offset, language of the leaf element)
@@ -434,7 +433,7 @@ public class InjectedLanguageUtil {
     ConcurrentList<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
       injected =
-        ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.<DocumentWindow>createConcurrentList());
+        ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, ContainerUtil.createConcurrentList());
     }
     return injected;
   }
@@ -467,7 +466,7 @@ public class InjectedLanguageUtil {
     }
     if (hostFile != null) {
       // modification of cachedInjectedDocuments must be under PsiLock
-      synchronized (PsiLock.LOCK) {
+      synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         List<DocumentWindow> cachedInjectedDocuments = getCachedInjectedDocuments(hostFile);
         for (int i = cachedInjectedDocuments.size() - 1; i >= 0; i--) {
           DocumentWindow cachedInjectedDocument = cachedInjectedDocuments.get(i);
@@ -522,12 +521,9 @@ public class InjectedLanguageUtil {
     if (!languageManager.isInjectedFragment(injectedFile)) return false;
     TextRange elementRange = element.getTextRange();
     List<TextRange> editables = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
-    int combinedEdiablesLength = 0;
-    for (TextRange editable : editables) {
-      combinedEdiablesLength += editable.getLength();
-    }
+    int combinedEditablesLength = editables.stream().mapToInt(TextRange::getLength).sum();
 
-    return combinedEdiablesLength != elementRange.getLength();
+    return combinedEditablesLength != elementRange.getLength();
   }
 
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {

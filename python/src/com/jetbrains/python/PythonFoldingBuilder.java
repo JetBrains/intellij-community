@@ -223,7 +223,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {
     String stringText = stringLiteralExpression.getText();
-    Pair<String, String> quotes = PythonStringUtil.getQuotes(stringText);
+    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(stringText);
     if (quotes != null) {
       return quotes.second + "..." + quotes.second;
     }

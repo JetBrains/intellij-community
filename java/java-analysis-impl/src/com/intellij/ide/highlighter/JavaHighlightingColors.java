@@ -85,8 +85,6 @@ public class JavaHighlightingColors {
     = TextAttributesKey.createTextAttributesKey("ANONYMOUS_CLASS_NAME_ATTRIBUTES", CLASS_NAME_ATTRIBUTES);
   public static final TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES", CLASS_NAME_ATTRIBUTES);
-  public static final TextAttributesKey INLINE_PARAMETER_HINT
-    = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT");
   public static final TextAttributesKey TYPE_PARAMETER_NAME_ATTRIBUTES
     = TextAttributesKey.createTextAttributesKey("TYPE_PARAMETER_NAME_ATTRIBUTES", DefaultLanguageHighlighterColors.PARAMETER);
   public static final TextAttributesKey INTERFACE_NAME_ATTRIBUTES 

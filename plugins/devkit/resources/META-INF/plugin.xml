@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>Plugin DevKit</name>
   <id>DevKit</id>
   <version>1.0</version>
@@ -11,7 +11,6 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
-  <depends>com.intellij.java-i18n</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -86,12 +85,6 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
-    <localInspection language="XML" shortName="ExtensionPointBeanClass" applyToDialects="false"
-                     groupKey="inspections.group.name"
-                     displayName="&lt;extensionPoint&gt; beanClass specification"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
 
     <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
                      groupKey="inspections.group.name"
@@ -151,6 +144,10 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspection"/>
+    <localInspection language="JAVA" shortName="PsiElementConcatenation"
+                     displayName="Using PsiElement string representation to generate new expression is incorrect"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
 
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
@@ -185,6 +182,9 @@
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
+
+    <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
+    <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
   </extensions>
 
   <project-components>

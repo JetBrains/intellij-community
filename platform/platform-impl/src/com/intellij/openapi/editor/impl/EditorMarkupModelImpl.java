@@ -54,6 +54,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
@@ -80,6 +81,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
+  private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
   private static int getErrorIconWidth() {
     return JBUI.scale(14);
@@ -230,7 +232,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return new HintHint(me)
       .setAwtTooltip(true)
       .setPreferredPosition(Balloon.Position.atLeft)
-      .setBorderInsets(JBUI.insets(1))
+      .setBorderInsets(JBUI.insets(EDITOR_FRAGMENT_POPUP_BORDER))
       .setShowImmediately(true)
       .setAnimationEnabled(false);
   }
@@ -473,7 +475,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
   
   private boolean transparent() {
-    return Registry.is("editor.transparent.scrollbar", false) && EditorUtil.isRealFileEditor(myEditor);
+    /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
+
+       Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+       This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+    return !SystemProperties.isTrueSmoothScrollingEnabled() &&
+           Registry.is("editor.transparent.scrollbar", false) &&
+           EditorUtil.isRealFileEditor(myEditor);
   }
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
@@ -537,8 +545,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void uiSettingsChanged(UISettings source) {
-      if (!UISettings.getInstance().SHOW_EDITOR_TOOLTIP) {
+    public void uiSettingsChanged(UISettings uiSettings) {
+      if (!uiSettings.SHOW_EDITOR_TOOLTIP) {
         hideMyEditorPreviewHint();
       }
       setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
@@ -563,21 +571,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           g2d.setTransform(old);
         }
       }
-      else if (Registry.is("ide.scroll.new.layout")) {
-        super.paintThumb(g, c, thumbBounds);
-      }
       else {
-        int shift;
-        if (Registry.is("editor.full.width.scrollbar")) {
-          shift = isMirrored() ? -myMinMarkHeight + 1 : myMinMarkHeight;
-        }
-        else {
-          int half = getThickness() / 2;
-          shift = isMirrored() ? -half + 2 : half - 1;
-        }
-        g.translate(shift, 0);
         super.paintThumb(g, c, thumbBounds);
-        g.translate(-shift, 0);
       }
     }
 
@@ -627,6 +622,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     
     @Override
     protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
+      if (myEditor.isDisposed()) return;
       if (transparent()) {
         doPaintTrack(g, c, trackBounds);
       }
@@ -647,9 +643,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Rectangle componentBounds = c.getBounds();
       ProperTextRange docRange = ProperTextRange.create(0, componentBounds.height);
       if (myCachedTrack == null || myCachedHeight != componentBounds.height) {
-        myCachedTrack = UIUtil.createImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
+        myCachedTrack = UIUtil.createImage(c, componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
         myCachedHeight = componentBounds.height;
         myDirtyYPositions = docRange;
+        dimensionsAreValid = false;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
       if (myDirtyYPositions == WHOLE_DOCUMENT) {
@@ -898,11 +895,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void mouseWheelMoved(@NotNull MouseWheelEvent e) {
       if (myEditorPreviewHint == null) return;
-      int inc = e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
-              e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
+      int units = e.getUnitsToScroll();
+      if (units == 0) return;
       // Stop accumulating when the last or the first line has been reached as 'adjusted' position to show lens.
-      if (myLastVisualLine < myEditor.getVisibleLineCount() - 1 && inc > 0 || myLastVisualLine > 0 && inc < 0) {
-        myWheelAccumulator += inc;
+      if (myLastVisualLine < myEditor.getVisibleLineCount() - 1 && units > 0 || myLastVisualLine > 0 && units < 0) {
+        myWheelAccumulator += units;
       }
       myRowAdjuster = myWheelAccumulator / myEditor.getLineHeight();
       showToolTipByMouseMove(e);
@@ -1046,7 +1043,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @NotNull
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
-      return new LineTooltipRenderer(text);
+      return new LineTooltipRenderer(text, new Object[]{text});
     }
 
     @NotNull
@@ -1199,6 +1196,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                 boolean alignToRight,
                                 @NotNull TooltipGroup group,
                                 @NotNull final HintHint hintInfo) {
+      int contentInsets = JBUI.scale(2); // BalloonPopupBuilderImpl.myContentInsets
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       boolean needDelay = false;
       if (myEditorPreviewHint == null) {
@@ -1211,8 +1209,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           public Dimension getPreferredSize() {
             int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
                         - myEditor.getVerticalScrollBar().getWidth();
-            width--;
-            return new Dimension(width - BalloonImpl.POINTER_WIDTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            width -= JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
+            return new Dimension(width - BalloonImpl.POINTER_LENGTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
 
           @Override
@@ -1227,15 +1225,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               myCacheStartLine = fitLineToEditor(myVisualLine - myCachePreviewLines);
               myCacheEndLine = fitLineToEditor(myCacheStartLine + 2 * myCachePreviewLines + 1);
               if (myCacheLevel2 == null) {
-                myCacheLevel2 = UIUtil.createImage(size.width, myEditor.getLineHeight() * (2 * myCachePreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+                myCacheLevel2 = UIUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myCachePreviewLines + 1), BufferedImage.TYPE_INT_RGB);
               }
               Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
               EditorUIUtil.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
-              AffineTransform gutterAT = AffineTransform.getTranslateInstance(-3, lineShift);
-              AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth  - 3, lineShift);
+              int shift = JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) + contentInsets;
+              AffineTransform gutterAT = AffineTransform.getTranslateInstance(-shift, lineShift);
+              AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth - shift, lineShift);
               gutterAT.preConcatenate(t);
               contentAT.preConcatenate(t);
 
@@ -1255,7 +1254,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
             }
             if (myCacheLevel1 == null) {
-              myCacheLevel1 = UIUtil.createImage(size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+              myCacheLevel1 = UIUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
               isDirty = true;
             }
             if (isDirty) {

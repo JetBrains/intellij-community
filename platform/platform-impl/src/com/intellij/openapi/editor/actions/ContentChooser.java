@@ -169,6 +169,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (myUpdateAlarm.isDisposed()) return;
         myUpdateAlarm.cancelAllRequests();
         myUpdateAlarm.addRequest(() -> updateViewerForSelection(), 100);
       }

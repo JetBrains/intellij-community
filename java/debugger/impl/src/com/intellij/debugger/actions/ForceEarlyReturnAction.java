@@ -81,8 +81,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
           forceEarlyReturnWithFinally(thread.getVirtualMachine().mirrorOfVoid(), stackFrame, debugProcess, null);
         }
         else {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(
+          ApplicationManager.getApplication().invokeLater(
             () -> new ReturnExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), debugProcess, stackFrame).show());
         }
       }

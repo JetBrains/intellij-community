@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.regexp.validation;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
@@ -57,7 +56,6 @@ class RemoveRedundantEscapeAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final Character v = myChar.getValue();
     assert v != null;
 

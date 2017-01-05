@@ -257,7 +257,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
             currentStack = stack;
           }
         }
-        Collections.sort(res, THREADS_COMPARATOR);
+        res.sort(THREADS_COMPARATOR);
         if (currentStack != null) {
           res.add(0, currentStack);
         }

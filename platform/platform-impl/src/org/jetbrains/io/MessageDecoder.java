@@ -15,6 +15,7 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.util.io.CharSequenceBackedByChars;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;

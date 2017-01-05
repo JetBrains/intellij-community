@@ -36,7 +36,6 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getChangeNotes();
 
-  @NotNull
   String getName();
 
   @NotNull

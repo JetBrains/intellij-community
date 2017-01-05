@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -167,7 +166,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static class MyQuickFixAction implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
@@ -176,7 +175,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiReferenceParameterList)) return;
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)element;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(typeArgumentList)) return;
       try {
         final PsiMethodCallExpression expr =
           (PsiMethodCallExpression)JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("foo()", null);
@@ -186,12 +184,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         LOG.error(e);
       }
     }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
   }
 
   //separate quickfix is needed to invalidate initial method reference
@@ -199,24 +191,17 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static class MyMethodReferenceFixAction implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiTypeElement.class);
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(typeElement)) return;
       final PsiMethodReferenceExpression expression = PsiTreeUtil.getParentOfType(typeElement, PsiMethodReferenceExpression.class);
       if (expression != null) {
         expression.replace(createMethodReference(expression, typeElement));
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 }

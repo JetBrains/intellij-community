@@ -29,10 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.LoginDialog;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepic.*;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,6 +122,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     else {
       addCoursesToCombobox(myAvailableCourses);
       final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
+      if (selectedCourse == null) return;
       final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
       myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
       myDescriptionPane.setText(selectedCourse.getDescription());
@@ -218,6 +216,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           isComboboxInitialized = true;
           initCoursesCombobox();
         }
+        CourseInfo selectedCourse = (CourseInfo)myCoursesComboBox.getSelectedItem();
+        if (selectedCourse == null || selectedCourse.equals(CourseInfo.INVALID_COURSE)) {
+          setError(CONNECTION_ERROR);
+        }
       }
     });
   }
@@ -273,7 +275,9 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myCoursesComboBox.removeAllItems();
 
     addCoursesToCombobox(courses);
-    myGenerator.setSelectedCourse(StudyUtils.getFirst(courses));
+    final CourseInfo selectedCourse = StudyUtils.getFirst(courses);
+    if (selectedCourse == null) return;
+    myGenerator.setSelectedCourse(selectedCourse);
 
     myGenerator.setCourses(courses);
     myAvailableCourses = courses;
@@ -344,14 +348,13 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myLoginPanel.getLogin(),
-                                                                                               myLoginPanel.getPassword()));
-        if (stepicUser != null) {
+        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(myLoginPanel.getLogin(),
+                                                                                                      myLoginPanel.getPassword()));
+        if (stepicUser != null && stepicUser.getAccessToken() != null) {
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
-          myGenerator.myUser = stepicUser;
-          myGenerator.setEnrolledCoursesIds(EduStepicConnector.getEnrolledCoursesIds());
-
+          StepicUpdateSettings.getInstance().setUser(stepicUser);
+          myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));

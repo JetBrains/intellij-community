@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,13 +52,20 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.engine.JupiterTestEngine;
+import org.junit.platform.commons.JUnitException;
+import org.junit.platform.engine.TestEngine;
 import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.vintage.engine.VintageTestEngine;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> {
+  private static final String DEBUG_RT_PATH = "idea.junit_rt.path";
+
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
@@ -125,12 +132,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @Nullable
   public SourceScope getSourceScope() {
-    return SourceScope.modulesWithDependencies(getConfiguration().getModules());
+    return SourceScope.modules(getConfiguration().getModules());
   }
 
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters) {
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+    final String path = System.getProperty(DEBUG_RT_PATH);
+    javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
   }
 
   @Override
@@ -143,8 +151,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
     if (buf.length() > 0) {
       try {
-        myListenersFile = FileUtil.createTempFile("junit_listeners_", "");
-        myListenersFile.deleteOnExit();
+        myListenersFile = FileUtil.createTempFile("junit_listeners_", "", true);
         javaParameters.getProgramParametersList().add("@@" + myListenersFile.getPath());
         FileUtil.writeToFile(myListenersFile, buf.toString().getBytes(CharsetToolkit.UTF8_CHARSET));
       }
@@ -155,37 +162,31 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = getSourceScope();
-    final GlobalSearchScope scope = sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project);
-    if (JUnitUtil.isJUnit5(scope, project)) {
+    if (isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) {
       javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
       javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
 
-      boolean excludeVintage = false;
+      final PathsList classPath = javaParameters.getClassPath();
+      classPath.add(PathUtil.getJarPathForClass(TestExecutionListener.class));
+      classPath.add(PathUtil.getJarPathForClass(JupiterTestEngine.class));
+      classPath.add(PathUtil.getJarPathForClass(JUnitException.class));
+      classPath.add(PathUtil.getJarPathForClass(TestEngine.class));
+      classPath.add(PathUtil.getJarPathForClass(JUnitPlatform.class));
       try {
         JUnitUtil.getTestCaseClass(sourceScope);
+        classPath.add(PathUtil.getJarPathForClass(VintageTestEngine.class));
       }
-      catch (JUnitUtil.NoJUnitException e) {
-        excludeVintage = true;
-      }
-
-      final PathsList classPath = javaParameters.getClassPath();
-      final List<String> paths = classPath.getPathList();
-      final String pathForClass = PathUtil.getJarPathForClass(TestExecutionListener.class);
-      final File libDirectory = new File(pathForClass).getParentFile();
-      final File[] libJars = libDirectory.listFiles();
-      if (libJars != null) {
-        for (File jarFile : libJars) {
-          final String filePath = jarFile.getAbsolutePath();
-          if (excludeVintage && filePath.contains("vintage")) continue;
-
-          if (!paths.contains(filePath)) {
-            classPath.add(filePath);
-          }
-        }
+      catch (JUnitUtil.NoJUnitException ignore) {
       }
     }
     
     return javaParameters;
+  }
+
+  public static boolean isJUnit5(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {
+    return JUnitUtil.isJUnit5(module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                             : sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project),
+                              project);
   }
 
   @NotNull

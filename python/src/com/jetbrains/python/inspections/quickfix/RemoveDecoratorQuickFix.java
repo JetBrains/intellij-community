@@ -29,13 +29,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoveDecoratorQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.remove.decorator");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.remove.decorator");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

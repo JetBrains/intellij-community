@@ -31,7 +31,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Caret;
@@ -57,8 +56,6 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
-  public static final Logger LOG = Logger.getInstance(SimpleDiffViewer.class);
-
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final StatusPanel myStatusPanel;

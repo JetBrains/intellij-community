@@ -105,4 +105,14 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   public PsiJavaModule createModule(PsiJavaModuleStub stub) {
     return new ClsJavaModuleImpl(stub);
   }
+
+  @Override
+  public PsiRequiresStatement createRequiresStatement(PsiRequiresStatementStub stub) {
+    return new ClsRequiresStatementImpl(stub);
+  }
+
+  @Override
+  public PsiExportsStatement createExportsStatement(PsiExportsStatementStub stub) {
+    return new ClsExportsStatementImpl(stub);
+  }
 }

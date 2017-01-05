@@ -10,4 +10,15 @@ class B<T> {
     class C {}
     return obj instanceof <error descr="Illegal generic type for instanceof">C</error>;
   }
+
+  static <A> B<A> localClassInStaticMethod() {
+    class C extends B<A> {
+      @Override
+      public boolean equals(Object obj) {
+        return obj instanceof C;
+      }
+    }
+
+    return new C();
+  }
 }

@@ -60,7 +60,10 @@ public class JsonSchemaWalker {
     if (checkable == null) return;
     final boolean isName = isName(checkable);
     final List<Step> position = findPosition(checkable, isName);
-    if (position == null || position.isEmpty()) return;
+    if (position == null || position.isEmpty()) {
+      if (isName) consumer.consume(true, rootSchema);
+      return;
+    }
 
     extractSchemaVariants(consumer, rootSchema, isName, position);
   }
@@ -73,8 +76,9 @@ public class JsonSchemaWalker {
       final Pair<JsonSchemaObject, Integer> pair = queue.removeFirst();
 
       final JsonSchemaObject schema = pair.getFirst();
+      if (position.size() <= pair.getSecond()) return;
       final Step step = position.get(pair.getSecond());
-      if (step.getTransition() == null || (pair.getSecond() == (position.size() - 1))) {
+      if (step.getTransition() == null) {
         consumer.consume(isName, schema);
         continue;
       }
@@ -95,7 +99,8 @@ public class JsonSchemaWalker {
           }
         }
         if (selectedSchema != null) {
-          queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
+          if ((pair.getSecond() + 1) >= position.size()) consumer.consume(isName, selectedSchema);
+          else queue.add(Pair.create(selectedSchema, pair.getSecond() + 1));
         }
       } else {
         List<JsonSchemaObject> list = new ArrayList<>();
@@ -109,7 +114,8 @@ public class JsonSchemaWalker {
           step.getTransition().step(object, transitionResultConsumer);
           // nothing or anything does not contribute to competion
           if (transitionResultConsumer.getSchema() != null) {
-            queue.add(Pair.create(transitionResultConsumer.getSchema(), pair.getSecond() + 1));
+            if ((pair.getSecond() + 1) >= position.size()) consumer.consume(isName, transitionResultConsumer.getSchema());
+            else queue.add(Pair.create(transitionResultConsumer.getSchema(), pair.getSecond() + 1));
           }
         }
       }
@@ -159,6 +165,7 @@ public class JsonSchemaWalker {
       steps.add(new Step(StateType._value, null));
     }
     PsiElement current = element;
+    //PsiElement current = element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element;
     while (! (current instanceof PsiFile)) {
       final PsiElement position = current;
       current = current.getParent();
@@ -178,7 +185,16 @@ public class JsonSchemaWalker {
         final String propertyName = ((JsonProperty)current).getName();
         current = current.getParent();
         if (!(current instanceof JsonObject)) return null;//incorrect syntax?
-        steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+        // if either value or not first in the chain - needed for completion variant
+        if (position != element || !isName) {
+          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+        }
+      } else if (current instanceof JsonObject && position instanceof JsonProperty) {
+        // if either value or not first in the chain - needed for completion variant
+        if (position != element || !isName) {
+          final String propertyName = ((JsonProperty)position).getName();
+          steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
+        }
       } else if (current instanceof PsiFile) {
         break;
       } else {
@@ -227,6 +243,11 @@ public class JsonSchemaWalker {
       if (child != null) {
         resultConsumer.setSchema(child);
       } else {
+        final JsonSchemaObject schema = parent.getMatchingPatternPropertySchema(myName);
+        if (schema != null) {
+          resultConsumer.setSchema(schema);
+          return;
+        }
         if (parent.getAdditionalPropertiesSchema() != null) {
           resultConsumer.setSchema(parent.getAdditionalPropertiesSchema());
         } else {

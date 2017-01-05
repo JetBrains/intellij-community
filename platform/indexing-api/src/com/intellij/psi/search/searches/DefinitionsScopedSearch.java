@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,9 +53,18 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
   public static Query<PsiElement> search(PsiElement definitionsOf) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf));
   }
-  
+
   public static Query<PsiElement> search(PsiElement definitionsOf, SearchScope searchScope) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf, searchScope, true));
+    return search(definitionsOf, searchScope, true);
+  }
+
+  /**
+   * @param checkDeep false for show implementations to present definition only
+   */
+  public static Query<PsiElement> search(PsiElement definitionsOf,
+                                         SearchScope searchScope,
+                                         final boolean checkDeep) {
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf, searchScope, checkDeep));
   }
   
   public static class SearchParameters {

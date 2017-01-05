@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
@@ -55,7 +54,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * User: dcheryasov
  * Date: Oct 9, 2009 6:07:19 PM
  */
-public class ImportToggleAliasIntention implements IntentionAction {
+public class ImportToggleAliasIntention extends PyBaseIntentionAction {
   private static class IntentionState {
     private PyImportElement myImportElement;
     private PyFromImportStatement myFromImportStatement;
@@ -109,14 +108,6 @@ public class ImportToggleAliasIntention implements IntentionAction {
     }
   }
 
-  private String myLastText;
-
-
-  @NotNull
-  public String getText() {
-    return myLastText;
-  }
-
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.Family.toggle.import.alias");
@@ -128,11 +119,12 @@ public class ImportToggleAliasIntention implements IntentionAction {
     }
 
     IntentionState state = IntentionState.fromContext(editor, file);
-    myLastText = state.getText();
+    setText(state.getText());
     return state.isAvailable();
   }
 
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // sanity check: isAvailable must have set it.
     final IntentionState state = IntentionState.fromContext(editor, file);
     //
@@ -257,9 +249,5 @@ public class ImportToggleAliasIntention implements IntentionAction {
     catch (IncorrectOperationException ignored) {
       PyUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
     }
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

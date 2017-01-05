@@ -10,12 +10,12 @@ enum TestNonnull {
       if (<warning descr="Condition 'aObject == null' is always 'false'">aObject == null</warning>) {
         return new Object();
       }
-      return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+      return <warning descr="'null' is returned by the method declared as @Nonnull">null</warning>;
     }
 
     @Override
     public Object testWithoutAnnotation(Object aObject) {
-      return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+      return <warning descr="'null' is returned by the method declared as @NonnullByDefault">null</warning>;
     }
   };
 
@@ -27,7 +27,7 @@ enum TestNonnull {
   }
 
   public Object testReturn() {
-    return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+    return <warning descr="'null' is returned by the method declared as @NonnullByDefault">null</warning>;
   }
 
   @Nonnull

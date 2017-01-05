@@ -21,7 +21,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -32,10 +31,10 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,13 +142,12 @@ public class TipUIUtil {
 
   private static void updateImages(StringBuffer text, ClassLoader tipLoader) {
     final boolean dark = UIUtil.isUnderDarcula();
-    final boolean retina = UIUtil.isRetina();
 //    if (!dark && !retina) {
 //      return;
 //    }
 
     String suffix = "";
-    if (retina) suffix += "@2x";
+    if (JBUI.isHiDPI(JBUI.ScaleType.PIX)) suffix += "@2x";
     if (dark) suffix += "_dark";
     int index = text.indexOf("<img", 0);
     while (index != -1) {
@@ -165,11 +163,11 @@ public class TipUIUtil {
           URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
           if (url != null) {
             String newImgTag = "<img src=\"" + path + "\" ";
-            if (retina) {
+            if (UIUtil.isJDKManagedHiDPIScreen()) {  // [tav] todo: no screen available
               try {
                 final BufferedImage image = ImageIO.read(url.openStream());
-                final int w = image.getWidth() / 2;
-                final int h = image.getHeight() / 2;
+                final int w = (int)(image.getWidth() / JBUI.sysScale());
+                final int h = (int)(image.getHeight() / JBUI.sysScale());
                 newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
               } catch (Exception ignore) {
                 newImgTag += "width=\"400\" height=\"200\"";

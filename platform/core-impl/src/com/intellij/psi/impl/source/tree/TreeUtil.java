@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TreeUtil {
-  public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
+  private static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
   private TreeUtil() {
   }
@@ -146,7 +146,7 @@ public class TreeUtil {
     }
   }
 
-  public static boolean isLeafOrCollapsedChameleon(ASTNode node) {
+  private static boolean isLeafOrCollapsedChameleon(ASTNode node) {
     return node instanceof LeafElement || isCollapsedChameleon(node);
   }
 
@@ -247,11 +247,11 @@ public class TreeUtil {
     if (one == two) return Couple.of(null, null);
 
     LinkedList<ASTNode> oneParents = new LinkedList<ASTNode>();
-    LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
     while (one != null) {
       oneParents.add(one);
       one = one.getTreeParent();
     }
+    LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
     while (two != null) {
       twoParents.add(two);
       two = two.getTreeParent();
@@ -336,7 +336,7 @@ public class TreeUtil {
       }
       element = element.getTreeParent();
     }
-    return element;
+    return null;
   }
 
   private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
@@ -353,9 +353,9 @@ public class TreeUtil {
                                                  final CommonParentState commonParent,
                                                  final boolean expandChameleons) {
     class MyVisitor extends RecursiveTreeElementWalkingVisitor {
-      TreeElement result;
+      private TreeElement result;
 
-      MyVisitor(boolean doTransform) {
+      private MyVisitor(boolean doTransform) {
         super(doTransform);
       }
 
@@ -438,14 +438,14 @@ public class TreeUtil {
   }
 
   public static final class CommonParentState {
-    public TreeElement startLeafBranchStart = null;
-    public ASTNode nextLeafBranchStart = null;
-    public CompositeElement strongWhiteSpaceHolder = null;
-    public boolean isStrongElementOnRisingSlope = true;
+    TreeElement startLeafBranchStart;
+    public ASTNode nextLeafBranchStart;
+    CompositeElement strongWhiteSpaceHolder;
+    boolean isStrongElementOnRisingSlope = true;
   }
 
   public static class StubBindingException extends RuntimeException {
-    public StubBindingException(String message) {
+    StubBindingException(String message) {
       super(message);
     }
   }
@@ -489,7 +489,7 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, TokenSet alsoSkip, boolean forward) {
+  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, @NotNull TokenSet alsoSkip, boolean forward) {
     ASTNode element = node;
     while (true) {
       if (element == null) return null;

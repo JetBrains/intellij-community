@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
@@ -90,6 +91,12 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
         break;
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public ModalityState getModalityState() {
+    return myOriginal.getModalityState();
   }
 
   @Override

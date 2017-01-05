@@ -21,14 +21,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-public class HgIntegrationEnabler extends VcsIntegrationEnabler<HgVcs> {
+import static org.zmlx.hg4idea.HgVcsMessages.message;
+
+public class HgIntegrationEnabler extends VcsIntegrationEnabler {
 
   public HgIntegrationEnabler(@NotNull HgVcs vcs) {
     super(vcs);
@@ -40,20 +41,18 @@ public class HgIntegrationEnabler extends VcsIntegrationEnabler<HgVcs> {
     new HgInitCommand(myProject).executeAsynchronously(projectDir, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
-        VcsNotifier notification = VcsNotifier.getInstance(myProject);
+        VcsNotifier notifier = VcsNotifier.getInstance(myProject);
         if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
           success[0] = true;
           refreshVcsDir(projectDir, HgUtil.DOT_HG);
-          notification.notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
-                                     HgVcsMessages
-                                       .message("hg4idea.init.created.notification.description", projectDir.getPresentableUrl())
+          notifier.notifySuccess(message("hg4idea.init.created.notification.title"),
+                                 message("hg4idea.init.created.notification.description", projectDir.getPresentableUrl())
           );
         }
         else {
           success[0] = false;
           String errors = result != null ? result.getRawError() : "";
-          notification.notifyError(
-            HgVcsMessages.message("hg4idea.init.error.description", projectDir.getPresentableUrl()), errors);
+          notifier.notifyError(message("hg4idea.init.error.description", projectDir.getPresentableUrl()), errors);
         }
       }
     });

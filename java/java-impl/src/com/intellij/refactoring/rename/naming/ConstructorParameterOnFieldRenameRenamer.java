@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
     if (!Comparing.strEqual(propertyName, styleManager.variableNameToPropertyName(newFieldName, VariableKind.FIELD))) {
       final String paramName = styleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       final PsiClass aClass = aField.getContainingClass();
-
+      if (aClass == null) return;
       Set<PsiParameter> toRename = new HashSet<>();
       for (PsiMethod constructor : aClass.getConstructors()) {
         if (constructor instanceof PsiMirrorElement) {

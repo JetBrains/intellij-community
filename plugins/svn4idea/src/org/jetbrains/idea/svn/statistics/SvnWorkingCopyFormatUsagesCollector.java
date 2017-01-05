@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.svn.statistics;
 
+import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.statistics.VcsUsagesCollector;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class SvnWorkingCopyFormatUsagesCollector extends VcsUsagesCollector {
+public class SvnWorkingCopyFormatUsagesCollector extends AbstractApplicationUsagesCollector {
 
   private static final String GROUP_ID = "svn working copy format";
 

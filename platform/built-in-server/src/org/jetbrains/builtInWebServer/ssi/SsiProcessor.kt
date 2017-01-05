@@ -16,7 +16,11 @@
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.*
+import com.intellij.util.SmartList
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.lastModified
+import com.intellij.util.io.readChars
+import com.intellij.util.io.size
 import com.intellij.util.text.CharArrayUtil
 import gnu.trove.THashMap
 import io.netty.buffer.ByteBufUtf8Writer

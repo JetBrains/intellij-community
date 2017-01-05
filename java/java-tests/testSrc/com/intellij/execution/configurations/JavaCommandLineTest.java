@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,50 +22,57 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.testFramework.LightIdeaTestCase;
-import junit.framework.Assert;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import org.junit.Test;
 
-public class JavaCommandLineTest extends LightIdeaTestCase {
-  public void testJdk() {
+import static org.junit.Assert.*;
+
+public class JavaCommandLineTest extends BareTestFixtureTestCase {
+  @Test
+  public void testJdkMissing() {
     try {
-      CommandLineBuilder.createFromJavaParameters(new JavaParameters());
-      fail("CantRunException (main class is not specified) expected");
+      new JavaParameters().toCommandLine();
+      fail("'JDK missing' expected");
     }
     catch (CantRunException e) {
-      Assert.assertEquals(ExecutionBundle.message("run.configuration.error.no.jdk.specified"), e.getMessage());
+      assertEquals(ExecutionBundle.message("run.configuration.error.no.jdk.specified"), e.getMessage());
     }
   }
 
-  public void testMainClass() {
+  @Test
+  public void testMainClassMissing() {
     try {
       JavaParameters javaParameters = new JavaParameters();
       javaParameters.setJdk(getProjectJDK());
-      CommandLineBuilder.createFromJavaParameters(javaParameters);
-      fail("CantRunException (main class is not specified) expected");
+      javaParameters.toCommandLine();
+      fail("'main class missing' expected");
     }
     catch (CantRunException e) {
       assertEquals(ExecutionBundle.message("main.class.is.not.specified.error.message"), e.getMessage());
     }
   }
 
+  @Test
   public void testJarParameter() throws CantRunException {
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.setJdk(getProjectJDK());
     javaParameters.setJarPath("my-jar-file.jar");
-    String commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    String commandLineString = javaParameters.toCommandLine().getCommandLineString();
     assertTrue(commandLineString, commandLineString.contains("-jar my-jar-file.jar"));
   }
 
+  @Test
   public void testClasspath() throws CantRunException {
     JavaParameters javaParameters;
     String commandLineString;
 
     javaParameters = new JavaParameters();
-    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     javaParameters.setJdk(internalJdk);
     javaParameters.getClassPath().add("my-jar-file.jar");
     javaParameters.setMainClass("Main");
-    commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    commandLineString = javaParameters.toCommandLine().getCommandLineString();
     assertTrue(containsClassPath(commandLineString));
 
     javaParameters = new JavaParameters();
@@ -74,7 +81,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     javaParameters.setMainClass("Main");
     javaParameters.getVMParametersList().add("-cp");
     javaParameters.getVMParametersList().add("..");
-    commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    commandLineString = javaParameters.toCommandLine().getCommandLineString();
     commandLineString = removeClassPath(commandLineString, "-cp ..");
     assertTrue(!containsClassPath(commandLineString));
 
@@ -84,7 +91,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     javaParameters.setMainClass("Main");
     javaParameters.getVMParametersList().add("-classpath");
     javaParameters.getVMParametersList().add("..");
-    commandLineString = CommandLineBuilder.createFromJavaParameters(javaParameters).getCommandLineString();
+    commandLineString = javaParameters.toCommandLine().getCommandLineString();
     commandLineString = removeClassPath(commandLineString, "-classpath ..");
     assertTrue(!containsClassPath(commandLineString));
   }
@@ -99,13 +106,18 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
     return commandLineString;
   }
 
+  @Test
   public void testCreateProcess() {
     try {
       new KillableColoredProcessHandler(new GeneralCommandLine());
-      fail("ExecutionException (executable is not specified) expected");
+      fail("'executable missing' expected");
     }
     catch (ExecutionException e) {
       assertEquals(IdeBundle.message("run.configuration.error.executable.not.specified"), e.getMessage());
     }
+  }
+
+  private static Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17();
   }
 }

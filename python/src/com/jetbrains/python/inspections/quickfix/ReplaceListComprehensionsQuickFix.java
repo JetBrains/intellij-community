@@ -35,13 +35,8 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceListComprehensionsQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("INTN.replace.list.comprehensions");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("INTN.replace.list.comprehensions");
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -215,22 +214,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public PyFunction findTopLevelFunction(String name) {
+  public PyFunction findTopLevelFunction(@NotNull String name) {
     return findByName(name, getTopLevelFunctions());
   }
 
   @Override
-  public PyClass findTopLevelClass(String name) {
+  public PyClass findTopLevelClass(@NotNull String name) {
     return findByName(name, getTopLevelClasses());
   }
 
   @Override
-  public PyTargetExpression findTopLevelAttribute(String name) {
+  public PyTargetExpression findTopLevelAttribute(@NotNull String name) {
     return findByName(name, getTopLevelAttributes());
   }
 
   @Nullable
-  private static <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
+  private static <T extends PsiNamedElement> T findByName(@NotNull String name, @NotNull List<T> namedElements) {
     for (T namedElement : namedElements) {
       if (name.equals(namedElement.getName())) {
         return namedElement;
@@ -368,19 +367,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
+  @NotNull
   public List<PyClass> getTopLevelClasses() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.CLASS_DECLARATION, PyClass.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.CLASS_DECLARATION);
   }
 
   @NotNull
   @Override
   public List<PyFunction> getTopLevelFunctions() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.FUNCTION_DECLARATION, PyFunction.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FUNCTION_DECLARATION);
   }
 
   @Override
   public List<PyTargetExpression> getTopLevelAttributes() {
-    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.TARGET_EXPRESSION);
   }
 
   @Override
@@ -475,9 +475,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyImportElement> getImportTargets() {
-    List<PyImportElement> ret = new ArrayList<>();
-    List<PyImportStatement> imports =
-      PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
+    final List<PyImportElement> ret = new ArrayList<>();
+    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.IMPORT_STATEMENT);
     for (PyImportStatement one : imports) {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
@@ -487,7 +486,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyFromImportStatement> getFromImports() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   @Override
@@ -512,7 +511,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   private static class DunderAllBuilder extends PyRecursiveElementVisitor {
-    private List<String> myResult = null;
+    @Nullable private List<String> myResult = null;
     private boolean myDynamic = false;
     private boolean myFoundDunderAll = false;
 
@@ -575,7 +574,30 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (callee instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
         if (qualifier != null && PyNames.ALL.equals(qualifier.getText())) {
-          // TODO handle append and extend with constant arguments here
+          final String calleeName = callee.getName();
+          if ("append".equals(calleeName)) {
+            final PyStringLiteralExpression argument = node.getArgument(0, PyStringLiteralExpression.class);
+            if (argument != null) {
+              if (myResult == null) {
+                myResult = new ArrayList<>();
+              }
+              myResult.add(argument.getStringValue());
+              return;
+            }
+          }
+          else if ("extend".equals(calleeName)) {
+            final PyExpression argument = node.getArgument(0, PyExpression.class);
+            if (argument != null) {
+              final List<String> results = PyUtil.strListValue(argument);
+              if (results != null) {
+                if (myResult == null) {
+                  myResult = new ArrayList<>();
+                }
+                myResult.addAll(results);
+                return;
+              }
+            }
+          }
           myDynamic = true;
         }
       }

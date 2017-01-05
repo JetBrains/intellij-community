@@ -17,63 +17,24 @@
 
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.DefaultSchemeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeStyleSchemesPanel {
-  private JComboBox myCombo;
-
+public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme> {
+  
   private final CodeStyleSchemesModel myModel;
-  private JPanel myPanel;
-  private JButton myManageButton;
-
+  
   private boolean myIsReset = false;
-  private final Font myDefaultComboFont;
-  private final Font myBoldComboFont;
 
   public CodeStyleSchemesPanel(CodeStyleSchemesModel model) {
     myModel = model;
-
-    myDefaultComboFont = myCombo.getFont();
-    myBoldComboFont = myDefaultComboFont.deriveFont(Font.BOLD);
-    myCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        if (!myIsReset) {
-          ApplicationManager.getApplication().invokeLater(() -> onCombo());
-        }
-      }
-    });
-    myCombo.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-        Font font = myDefaultComboFont;
-        if (value instanceof CodeStyleScheme) {
-          CodeStyleScheme scheme = (CodeStyleScheme)value;
-          if (scheme.isDefault() || myModel.isProjectScheme(scheme)) {
-            font = myBoldComboFont;
-          }
-        }
-        setFont(font);
-      }
-    });
-    
-    myManageButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        showManageSchemesDialog();
-      }
-    });
   }
 
   private void onCombo() {
@@ -89,49 +50,32 @@ public class CodeStyleSchemesPanel {
     }
   }
 
-  @Nullable
-  private CodeStyleScheme getSelectedScheme() {
-    Object selected = myCombo.getSelectedItem();
-    if (selected instanceof CodeStyleScheme) {
-      return (CodeStyleScheme)selected;
-    }
-    return null;
-  }
-
-  public void disposeUIResources() {
-    myPanel.removeAll();
-  }
-
   public void resetSchemesCombo() {
     myIsReset = true;
     try {
       List<CodeStyleScheme> schemes = new ArrayList<>();
       schemes.addAll(myModel.getAllSortedSchemes());
-      DefaultComboBoxModel model = new DefaultComboBoxModel(schemes.toArray());
-      myCombo.setModel(model);
+      resetSchemes(schemes);
       if (myModel.isUsePerProjectSettings()) {
-        myCombo.setSelectedItem(myModel.getProjectScheme());
+        selectScheme(myModel.getProjectScheme());
       }
       else {
-        myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+        selectScheme(myModel.getSelectedGlobalScheme());
       }
     }
     finally {
       myIsReset = false;
     }
-
-
   }
-
 
   public void onSelectedSchemeChanged() {
     myIsReset = true;
     try {
       if (myModel.isUsePerProjectSettings()) {
-        myCombo.setSelectedItem(myModel.getProjectScheme());
+        selectScheme(myModel.getProjectScheme());
       }
       else {
-        myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+        selectScheme(myModel.getSelectedGlobalScheme());
       }
     }
     finally {
@@ -139,21 +83,43 @@ public class CodeStyleSchemesPanel {
     }
   }
 
-  public JComponent getPanel() {
-    return myPanel;
-  }
-
-  private void showManageSchemesDialog() {
-    ManageCodeStyleSchemesDialog manageSchemesDialog = new ManageCodeStyleSchemesDialog(myPanel, myModel);
-    manageSchemesDialog.show();
-  }
-
   public void usePerProjectSettingsOptionChanged() {
     if (myModel.isProjectScheme(myModel.getSelectedScheme())) {
-      myCombo.setSelectedItem(myModel.getProjectScheme());
+      selectScheme(myModel.getProjectScheme());
     }
     else {
-      myCombo.setSelectedItem(myModel.getSelectedScheme());
+      selectScheme(myModel.getSelectedScheme());
     }
+  }
+  
+
+  @Override
+  protected DefaultSchemeActions<CodeStyleScheme> createSchemeActions() {
+    return
+      new CodeStyleSchemesActions(this) {
+
+        @Override
+        protected CodeStyleSchemesModel getSchemesModel() {
+          return myModel;
+        }
+
+        @Nullable
+        @Override
+        protected CodeStyleScheme getCurrentScheme() {
+          return getSelectedScheme();
+        }
+
+        @Override
+        public SchemeLevel getSchemeLevel(@NotNull CodeStyleScheme scheme) {
+          return myModel.isProjectScheme(scheme) ? SchemeLevel.Project : SchemeLevel.IDE;
+        }
+
+        @Override
+        protected void onSchemeChanged(@Nullable CodeStyleScheme scheme) {
+          if (!myIsReset) {
+            ApplicationManager.getApplication().invokeLater(() -> onCombo());
+          }
+        }
+      };
   }
 }

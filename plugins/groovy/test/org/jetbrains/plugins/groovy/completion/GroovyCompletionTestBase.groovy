@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTestCase {
+abstract class GroovyCompletionTestBase extends LightCodeInsightFixtureTestCase {
 
   protected void doSmartTest() {
     doCompletionTest(CompletionType.SMART)
@@ -35,7 +35,7 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
   }
 
   protected void checkResult() {
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true)
   }
 
   protected void doCompletionTest(String before = null, String after = null, String type = "", CompletionType ct) {
@@ -91,27 +91,27 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
   }
 
 
-  public void doVariantableTest(String... variants) {
+  void doVariantableTest(String... variants) {
     doVariantableTest(CompletionType.BASIC, variants)
   }
 
-  public void doHasVariantsTest(String... variants) {
+  void doHasVariantsTest(String... variants) {
     doVariantableTest(null, "", CompletionType.BASIC, CompletionResult.contain, variants)
   }
 
-  public void doSmartCompletion(String... variants) {
+  void doSmartCompletion(String... variants) {
     doVariantableTest(CompletionType.SMART, variants)
   }
 
-  public void checkCompletion(String before, String type, String after) {
+  void checkCompletion(String before, String type, String after) {
     doCompletionTest(before, after, type, CompletionType.BASIC)
   }
 
-  public void checkSingleItemCompletion(String before, String after) {
+  void checkSingleItemCompletion(String before, String after) {
     doCompletionTest(before, after, CompletionType.BASIC)
   }
 
-  public void doNoVariantsTest(String before, String... excludedVariants) {
+  void doNoVariantsTest(String before, String... excludedVariants) {
     doVariantableTest(before, "", CompletionType.BASIC, CompletionResult.notContain, excludedVariants)
   }
 

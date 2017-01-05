@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
@@ -174,7 +173,6 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (assignment == null) return;
     PsiField field = getAssignedField(assignment);
     if (field == null) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     List<PsiAssignmentExpression> assignments = new ArrayList<>();
     if (!isInitializedWithSameExpression(field, assignment, assignments)) return;

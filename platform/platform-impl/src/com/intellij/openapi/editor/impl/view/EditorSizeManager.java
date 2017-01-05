@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
@@ -42,6 +43,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Calculates width (in pixels) of editor contents.
@@ -170,12 +172,12 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     int widthWithoutCaret = getPreferredWidth();
     int width = widthWithoutCaret;
     if (!myDocument.isInBulkUpdate()) {
-      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-        if (caret.isUpToDate()) {
-          int caretX = myView.visualPositionToXY(caret.getVisualPosition()).x;
-          width = Math.max(caretX, width);
-        }
-      }
+      CaretModelImpl caretModel = myEditor.getCaretModel();
+      int caretMaxX = (caretModel.isIteratingOverCarets() ? Stream.of(caretModel.getCurrentCaret()) : caretModel.getAllCarets().stream())
+        .filter(Caret::isUpToDate)
+        .mapToInt(c -> myView.visualPositionToXY(c.getVisualPosition()).x)
+        .max().orElse(0);
+      width = Math.max(width, caretMaxX);
     }
     if (shouldRespectAdditionalColumns(widthWithoutCaret)) {
       width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();
@@ -183,7 +185,29 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     Insets insets = myView.getInsets();
     return new Dimension(width + insets.left + insets.right, getPreferredHeight());
   }
-  
+
+  // Returns preferred width of the lines in range.
+  // This method is currently used only with "idea.true.smooth.scrolling" experimental option.
+  // We may unite the code with the getPreferredSize() method.
+  int getPreferredWidth(int beginLine, int endLine) {
+    int widthWithoutCaret = getPreferredWidthWithoutCaret(beginLine, endLine);
+    int width = widthWithoutCaret;
+    if (!myDocument.isInBulkUpdate()) {
+      CaretModelImpl caretModel = myEditor.getCaretModel();
+      int caretMaxX = (caretModel.isIteratingOverCarets() ? Stream.of(caretModel.getCurrentCaret()) : caretModel.getAllCarets().stream())
+        .filter(Caret::isUpToDate)
+        .filter(caret -> caret.getVisualPosition().line >= beginLine && caret.getVisualPosition().line < endLine)
+        .mapToInt(c -> myView.visualPositionToXY(c.getVisualPosition()).x)
+        .max().orElse(0);
+      width = Math.max(width, caretMaxX);
+    }
+    if (shouldRespectAdditionalColumns(widthWithoutCaret)) {
+      width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();
+    }
+    Insets insets = myView.getInsets();
+    return width + insets.left + insets.right;
+  }
+
   int getPreferredHeight() {
     int lineHeight = myView.getLineHeight();
     if (myEditor.isOneLineMode()) return lineHeight;
@@ -225,6 +249,21 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     }
     validateMaxLineWithExtension();
     return Math.max(myWidthInPixels, myMaxLineWithExtensionWidth);
+  }
+
+  // This method is currently used only with "idea.true.smooth.scrolling" experimental option.
+  // We may optimize this computation by caching results and performing incremental updates.
+  private int getPreferredWidthWithoutCaret(int beginLine, int endLine) {
+    if (myWidthInPixels < 0) {
+      assert !myDocument.isInBulkUpdate();
+      calculatePreferredWidth();
+    }
+    int maxWidth = 0;
+    for (int i = beginLine; i < endLine && i < myLineWidths.size(); i++) {
+      maxWidth = Math.max(maxWidth, Math.abs(myLineWidths.get(i)));
+    }
+    validateMaxLineWithExtension();
+    return Math.max(maxWidth, myMaxLineWithExtensionWidth);
   }
 
   private void validateMaxLineWithExtension() {

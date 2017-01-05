@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.projectView.ProjectViewNestingRulesProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.NestingTreeNode;
@@ -40,30 +41,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * <code>NestingTreeStructureProvider</code> moves some files in the Project View to be shown as children of another peer file. Standard use
+ * {@code NestingTreeStructureProvider} moves some files in the Project View to be shown as children of another peer file. Standard use
  * case is to improve folder contents presentation when it contains both source file and its compiled output. For example generated
- * <code>foo.min.js</code> file will be shown as a child of <code>foo.js</code> file.<br/>
+ * {@code foo.min.js} file will be shown as a child of {@code foo.js} file.<br/>
  * Nesting logic is based on file names only. Rules about files that should be nested are provided by
- * <code>com.intellij.projectViewNestingRulesProvider</code> extensions.
+ * {@code com.intellij.projectViewNestingRulesProvider} extensions.
  *
- * @see NestingTreeStructureProvider.NestingRulesProvider
+ * @see ProjectViewNestingRulesProvider
  */
 public class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
 
-  private static ExtensionPointName<NestingRulesProvider> EP_NAME =
+  private static ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.projectViewNestingRulesProvider");
-
-  public interface NestingRulesProvider {
-    /**
-     * Implementations should pass the longest possible file name suffix to the <code>consumer</code>.
-     * Usually it starts with dot. For example ".js"->".min.js".
-     */
-    void addFileNestingRules(@NotNull final NestingRulesConsumer consumer);
-  }
-
-  public interface NestingRulesConsumer {
-    void addNestingRule(@NotNull final String parentFileSuffix, @NotNull final String childFileSuffix);
-  }
 
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
   private Set<NestingRule> myNestingRules;
@@ -76,7 +65,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
       final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
       final MultiMap<String, String> parentToChildSuffix = new MultiMap<>();
 
-      final NestingRulesConsumer consumer = new NestingRulesConsumer() {
+      final ProjectViewNestingRulesProvider.Consumer consumer = new ProjectViewNestingRulesProvider.Consumer() {
         @Override
         public void addNestingRule(@NotNull final String parentFileSuffix, @NotNull final String childFileSuffix) {
           LOG.assertTrue(!parentFileSuffix.isEmpty() && !childFileSuffix.isEmpty(), "file suffix must not be empty");
@@ -101,7 +90,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
         }
       };
 
-      for (NestingRulesProvider provider : EP_NAME.getExtensions()) {
+      for (ProjectViewNestingRulesProvider provider : EP_NAME.getExtensions()) {
         provider.addFileNestingRules(consumer);
       }
     }
@@ -224,8 +213,8 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   /**
-   * @return only those rules where given <code>fileName</code> can potentially be a parent (if <code>parentNotChild</code> is <code>true</code>)
-   * or only those rules where given <code>fileName</code> can potentially be a child (if <code>parentNotChild</code> is <code>false</code>)
+   * @return only those rules where given {@code fileName} can potentially be a parent (if {@code parentNotChild} is {@code true})
+   * or only those rules where given {@code fileName} can potentially be a child (if {@code parentNotChild} is {@code false})
    */
   @NotNull
   private static Collection<NestingRule> filterRules(@NotNull final Collection<NestingRule> rules,

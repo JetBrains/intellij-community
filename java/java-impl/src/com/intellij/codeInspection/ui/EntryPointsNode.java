@@ -56,4 +56,9 @@ public class EntryPointsNode extends InspectionNode {
   public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
     //do nothing here
   }
+
+  @Override
+  public int getProblemCount(boolean allowSuppressed) {
+    return 0;
+  }
 }

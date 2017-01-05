@@ -35,13 +35,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ComparisonWithNoneQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.replace.equality");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.replace.equality");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

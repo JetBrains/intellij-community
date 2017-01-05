@@ -16,17 +16,29 @@
 package com.intellij.ui;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
+
+import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   private boolean myCanExpand;
@@ -73,6 +85,8 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     setComparator(new SpeedSearchComparator(false, true));
     myToStringConvertor = toString;
     myCanExpand = canExpand;
+
+    new MySelectAllAction(tree, this).registerCustomShortcutSet(tree, null);
   }
 
   @Override
@@ -95,17 +109,14 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
       final Object root = myComponent.getModel().getRoot();
       if (root instanceof DefaultMutableTreeNode || root instanceof PathAwareTreeNode) {
         final List<TreePath> paths = new ArrayList<>();
-        TreeUtil.traverseDepth((TreeNode)root, new TreeUtil.Traverse() {
-          @Override
-          public boolean accept(Object node) {
-            if (node instanceof DefaultMutableTreeNode) {
-              paths.add(new TreePath(((DefaultMutableTreeNode)node).getPath()));
-            }
-            else if (node instanceof PathAwareTreeNode) {
-              paths.add(((PathAwareTreeNode)node).getPath());
-            }
-            return true;
+        TreeUtil.traverseDepth((TreeNode)root, node -> {
+          if (node instanceof DefaultMutableTreeNode) {
+            paths.add(new TreePath(((DefaultMutableTreeNode)node).getPath()));
           }
+          else if (node instanceof PathAwareTreeNode) {
+            paths.add(((PathAwareTreeNode)node).getPath());
+          }
+          return true;
         });
         return paths.toArray(new TreePath[paths.size()]);
       }
@@ -128,5 +139,66 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
 
   public interface PathAwareTreeNode extends TreeNode {
     TreePath getPath();
+  }
+
+  @NotNull
+  private List<TreePath> findAllFilteredElements(String s) {
+    List<TreePath> paths = new ArrayList<>();
+    String _s = s.trim();
+
+    ListIterator<Object> it = getElementIterator(0);
+    while (it.hasNext()) {
+      Object element = it.next();
+      if (isMatchingElement(element, _s)) paths.add((TreePath)element);
+    }
+    return paths;
+  }
+
+  private static class MySelectAllAction extends DumbAwareAction {
+    @NotNull private final JTree myTree;
+    @NotNull private final TreeSpeedSearch mySearch;
+
+    public MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
+      myTree = tree;
+      mySearch = search;
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));
+      setEnabledInModalContext(true);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(mySearch.isPopupActive() &&
+                                     myTree.getSelectionModel().getSelectionMode() == DISCONTIGUOUS_TREE_SELECTION);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      TreeSelectionModel sm = myTree.getSelectionModel();
+
+      String query = mySearch.getEnteredPrefix();
+      if (query == null) return;
+
+      List<TreePath> filtered = mySearch.findAllFilteredElements(query);
+      if (filtered.isEmpty()) return;
+
+      boolean alreadySelected = sm.getSelectionCount() == filtered.size() &&
+                                ContainerUtil.and(filtered, (path) -> sm.isPathSelected(path));
+
+      if (alreadySelected) {
+        TreePath anchor = myTree.getAnchorSelectionPath();
+
+        sm.setSelectionPath(anchor);
+        myTree.setAnchorSelectionPath(anchor);
+
+        mySearch.findAndSelectElement(query);
+      }
+      else {
+        TreePath currentElement = (TreePath)mySearch.findElement(query);
+        TreePath anchor = ObjectUtils.chooseNotNull(currentElement, filtered.get(0));
+
+        sm.setSelectionPaths(ArrayUtil.toObjectArray(filtered, TreePath.class));
+        myTree.setAnchorSelectionPath(anchor);
+      }
+    }
   }
 }

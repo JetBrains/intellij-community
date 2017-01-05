@@ -22,7 +22,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,14 +112,13 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
                                                                parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset(),
                                                                myPriorityRange,
                                                                false, HighlightInfoProcessor.getEmpty());
-    final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     for (PsiLiteralExpression target : targets) {
       final Object value = target.getValue();
       if (!(value instanceof String)) {
         continue;
       }
-      List<InspectionToolWrapper> tools = ((InspectionProfileImpl)inspectionProfile).findToolsById((String)value, target);
+      List<InspectionToolWrapper> tools = inspectionProfile.findToolsById((String)value, target);
       if (tools == null) {
         continue;
       }

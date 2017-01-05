@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -27,22 +28,19 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils.isComparison;
 
 class CompareToTransformation extends BinaryTransformation {
-  public CompareToTransformation() {
-    super(null);
-  }
 
+  @NotNull
   @Override
-  protected GrExpression getExpandedElement(GrMethodCallExpression callExpression) {
+  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
     PsiElement parent = callExpression.getParent();
-    return isComparison(parent) ? (GrExpression)parent 
-                                : super.getExpandedElement(callExpression);
+    return isComparison(parent) ? (GrExpression)parent : super.getExpandedElement(callExpression);
   }
 
   @Override
-  protected IElementType getOperator(MethodCallData methodInfo, OptionsData optionsData) {
+  protected String getOperator(MethodCallData methodInfo, OptionsData optionsData) {
     IElementType comparison = methodInfo.getComparison();
     if (shouldChangeCompareToEqualityToEquals(optionsData, comparison)) {
-      return firstNonNull(comparison, mCOMPARE_TO);
+      return firstNonNull(comparison, mCOMPARE_TO).toString();
     }
     else {
       return null;

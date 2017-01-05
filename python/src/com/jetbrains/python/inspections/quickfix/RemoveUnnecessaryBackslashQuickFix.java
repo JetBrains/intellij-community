@@ -34,13 +34,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoveUnnecessaryBackslashQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.remove.unnecessary.backslash");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.remove.unnecessary.backslash");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

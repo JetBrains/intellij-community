@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,51 +20,60 @@ import com.intellij.execution.configurations.JavaCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.execution.application.AppMain;
 
 import java.io.File;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
-  public ProcessProxy createCommandLineProxy(final JavaCommandLine javaCmdLine) throws ExecutionException {
-    ProcessProxyImpl proxy = null;
-    final JavaParameters javaParameters = javaCmdLine.getJavaParameters();
+  private static final boolean ourMayUseLauncher = !Boolean.getBoolean("idea.no.launcher");
+
+  @Override
+  public ProcessProxy createCommandLineProxy(JavaCommandLine javaCmdLine) throws ExecutionException {
+    JavaParameters javaParameters = javaCmdLine.getJavaParameters();
     String mainClass = javaParameters.getMainClass();
-    if (ProcessProxyImpl.useLauncher() && mainClass != null) {
-      try {
-        proxy = new ProcessProxyImpl();
-        JavaSdkUtil.addRtJar(javaParameters.getClassPath());
-        final ParametersList vmParametersList = javaParameters.getVMParametersList();
-        vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, String.valueOf(proxy.getPortNumber()));
-        vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BINPATH, PathManager.getBinPath());
-        javaParameters.getProgramParametersList().prepend(mainClass);
-        javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
-      }
-      catch (ProcessProxyImpl.NoMoreSocketsException e) {
-        proxy = null;
+
+    if (ourMayUseLauncher && mainClass != null) {
+      String moduleName = javaParameters.getModuleName();
+      String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
+
+      if (moduleName == null || new File(rtJarPath).isFile()) {
+        try {
+          ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
+
+          String port = String.valueOf(proxy.getPortNumber());
+          String binPath = PathManager.getBinPath();
+
+          if (moduleName == null) {
+            JavaSdkUtil.addRtJar(javaParameters.getClassPath());
+
+            ParametersList vmParametersList = javaParameters.getVMParametersList();
+            vmParametersList.defineProperty(AppMain.LAUNCHER_PORT_NUMBER, port);
+            vmParametersList.defineProperty(AppMain.LAUNCHER_BIN_PATH, binPath);
+
+            javaParameters.getProgramParametersList().prepend(mainClass);
+            javaParameters.setMainClass(AppMain.class.getName());
+          }
+          else {
+            javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
+          }
+
+          return proxy;
+        }
+        catch (Exception e) {
+          Logger.getInstance(ProcessProxy.class).warn(e);
+        }
       }
     }
-    return proxy;
-  }
 
-  public ProcessProxy getAttachedProxy(final ProcessHandler processHandler) {
-    return processHandler != null ? processHandler.getUserData(ProcessProxyImpl.KEY) : null;
+    return null;
   }
 
   @Override
-  public boolean isBreakGenLibraryAvailable() {
-    @NonNls final String libName;
-    if (SystemInfo.isWindows) {
-      libName = "breakgen.dll";
-    }
-    else if (SystemInfo.isMac) {
-      libName = "libbreakgen.jnilib";
-    }
-    else {
-      libName = "libbreakgen.so";
-    }
-    return new File(PathManager.getBinPath() + File.separator + libName).exists();
+  public ProcessProxy getAttachedProxy(ProcessHandler processHandler) {
+    return ProcessProxyImpl.KEY.get(processHandler);
   }
 }

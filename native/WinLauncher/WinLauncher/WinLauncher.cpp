@@ -192,13 +192,22 @@ bool FindJVMInRegistryKey(const char* key, bool wow64_32)
 
 bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
 {
-  const char* keyName = LoadStdString(IDS_JDK_ONLY) == std::string("true")
-    ? "Java Development Kit"
-    : "Java Runtime Environment";
-
+  char* keyName = "Java Runtime Environment";
+  bool foundJava = false;
   char buf[_MAX_PATH];
-  sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
-  return FindJVMInRegistryKey(buf, wow64_32);
+  //search jre in registry if the product doesn't require tools.jar
+  if (LoadStdString(IDS_JDK_ONLY) != std::string("true")) {
+    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
+    foundJava = FindJVMInRegistryKey(buf, wow64_32);
+  }
+
+  //search jdk in registry if the product requires tools.jar or jre isn't installed.
+  if (!foundJava) {
+    keyName = "Java Development Kit";
+    sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
+    foundJava = FindJVMInRegistryKey(buf, wow64_32);
+  }
+  return foundJava;
 }
 
 bool FindJVMInRegistry()
@@ -555,6 +564,41 @@ bool LoadJVMLibrary()
   return true;
 }
 
+bool IsJBRE()
+{
+  if (!env) return false;
+
+  jclass cls = env->FindClass("java/lang/System");
+  if (!cls) return false;
+
+  jmethodID method = env->GetStaticMethodID(cls, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
+  if (!method) return false;
+
+  jstring jvendor = (jstring)env->CallStaticObjectMethod(cls, method, env->NewStringUTF("java.vendor"));
+  if (!jvendor) return false;
+
+  const char *cvendor = env->GetStringUTFChars(jvendor, NULL);
+  bool isJB = strstr(cvendor, "JetBrains") != NULL;
+  env->ReleaseStringUTFChars(jvendor, cvendor);
+
+  return isJB;
+}
+
+void SetProcessDPIAwareProperty()
+{
+    typedef BOOL (WINAPI SetProcessDPIAwareFunc)(void);
+    HMODULE hLibUser32Dll = ::LoadLibraryA("user32.dll");
+
+    if (hLibUser32Dll != NULL) {
+        SetProcessDPIAwareFunc *lpSetProcessDPIAware =
+            (SetProcessDPIAwareFunc*)::GetProcAddress(hLibUser32Dll, "SetProcessDPIAware");
+        if (lpSetProcessDPIAware != NULL) {
+            lpSetProcessDPIAware();
+        }
+        ::FreeLibrary(hLibUser32Dll);
+    }
+}
+
 bool CreateJVM()
 {
   JavaVMInitArgs initArgs;
@@ -583,6 +627,9 @@ bool CreateJVM()
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, buf.str().c_str(), error.c_str(), MB_OK);
   }
+
+  // Set DPI-awareness here or let JBRE do that.
+  if (!IsJBRE()) SetProcessDPIAwareProperty();
 
   return result == JNI_OK;
 }
@@ -900,7 +947,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     return 0;
   }
 
-  if (!CheckSingleInstance()) return 1;
+  //it's OK to return 0 here, because the control is transferred to the first instance
+  if (!CheckSingleInstance()) return 0;
 
   if (nativesplash = wcsstr(lpCmdLine, _T("/nativesplash")) != NULL) StartSplashProcess();
 

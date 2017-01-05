@@ -20,6 +20,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
@@ -29,13 +31,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -49,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @State(
   name = "RunManager",
@@ -65,7 +69,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new TreeMap<>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<>(); // template configurations are not included here
-  private final Map<String, Boolean> mySharedConfigurations = new THashMap<>();
+  private final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
   private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<>();
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
@@ -101,7 +105,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     myProject = project;
 
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions());
-    myProject.getMessageBus().connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         RunnerAndConfigurationSettings configuration = getSelectedConfiguration();
@@ -961,7 +965,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
     addConfiguration(tempConfiguration, isConfigurationShared(tempConfiguration),
                      getBeforeRunTasks(tempConfiguration.getConfiguration()), false);
-    setSelectedConfiguration(tempConfiguration);
+    if (Registry.is("select.run.configuration.from.context")) {
+      setSelectedConfiguration(tempConfiguration);
+    }
   }
 
   @NotNull
@@ -1027,8 +1033,8 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   @NotNull
-  public RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type) {
-    return createConfiguration(name, type);
+  public RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory factory) {
+    return createConfiguration(name, factory);
   }
 
   @Override
@@ -1071,7 +1077,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Override
-  public Icon getConfigurationIcon(@NotNull final RunnerAndConfigurationSettings settings) {
+  public Icon getConfigurationIcon(@NotNull final RunnerAndConfigurationSettings settings, boolean withLiveIndicator) {
     final String uniqueID = settings.getUniqueID();
     RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration();
     String selectedId = selectedConfiguration != null ? selectedConfiguration.getUniqueID() : "";
@@ -1123,7 +1129,15 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       myIdToIcon.put(uniqueID, icon);
       myIconCheckTimes.put(uniqueID, System.currentTimeMillis());
     }
-
+    if (withLiveIndicator) {
+      List<RunContentDescriptor> runningDescriptors = ExecutionManagerImpl.getInstance(myProject).getRunningDescriptors(s -> s == settings);
+      if (runningDescriptors.size() == 1) {
+        icon = ExecutionUtil.getLiveIndicator(icon);
+      }
+      if (runningDescriptors.size() > 1) {
+        icon = IconUtil.addText(icon, String.valueOf(runningDescriptors.size()));
+      }
+    }
     return icon;
   }
 
@@ -1154,7 +1168,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @NotNull
   @Override
-  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
+  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderID) {
     if (settings instanceof WrappingRunConfiguration) {
       return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer(), taskProviderID);
     }
@@ -1246,7 +1260,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
         }
       }
     }
-    myConfigurationToBeforeTasksMap.put(runConfiguration, ContainerUtil.notNullize(result));
+    myConfigurationToBeforeTasksMap.put(runConfiguration, result);
     fireBeforeRunTasksUpdated();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
  */
 class RehighlightingTest extends JavaCodeInsightFixtureTestCase {
 
-  public void testDeleteClassCaptionUndo() {
+  void testDeleteClassCaptionUndo() {
     myFixture.addClass('package java.lang.reflect; public class Modifier {}')
 
     myFixture.configureByText 'a.java', '''

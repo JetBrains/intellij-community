@@ -79,7 +79,7 @@ public class MavenActionUtil {
 
   public static boolean isMavenProjectFile(VirtualFile file) {
     return file != null && !file.isDirectory()
-           && MavenConstants.POM_XML.equals(file.getName())
+           && file.getName().startsWith("pom.")
            && file.isInLocalFileSystem();
   }
 

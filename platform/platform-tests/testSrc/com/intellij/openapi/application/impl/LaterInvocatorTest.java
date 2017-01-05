@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.testFramework.UsefulTestCase;
@@ -30,6 +33,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
@@ -389,7 +396,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     thread.join();
   }
 
-  private static void flushSwingQueue() {
+  static void flushSwingQueue() {
 
     try {
       Thread.sleep(10);
@@ -560,5 +567,46 @@ public class LaterInvocatorTest extends PlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertOrderedEquals(myOrder, "m12", "m2", "m1", "m1x");
     });
+  }
+
+  public void testModalityStateCurrentAllowedOnlyFromEDT() throws Exception {
+    LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
+    Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
+    try {
+      future.get(1000, TimeUnit.MILLISECONDS);
+      fail("should fail");
+    }
+    catch (ExecutionException e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Access is allowed from event dispatch thread only"));
+    }
+  }
+
+  public void testDispatchInvocationEventsWorksForJustSubmitted() {
+    Application app = ApplicationManager.getApplication();
+    app.invokeAndWait(() -> {
+      app.invokeLater(() -> {
+        myOrder.add("1");
+        assertOrderedEquals(myOrder, "1");
+        UIUtil.dispatchAllInvocationEvents();
+        assertOrderedEquals(myOrder, "1", "2");
+      });
+      app.invokeLater(new MyRunnable("2"));
+      UIUtil.dispatchAllInvocationEvents();
+    });
+    assertOrderedEquals(myOrder, "1", "2");
+  }
+
+  public void testDispatchInvocationEventsVsInvokeLaterFromBgThreadRace() {
+    Application app = ApplicationManager.getApplication();
+    app.invokeAndWait(() -> {
+      for (int i = 0; i < 1000; i++) {
+        AtomicBoolean executed = new AtomicBoolean();
+        app.executeOnPooledThread(() -> app.invokeLater(EmptyRunnable.INSTANCE));
+        app.invokeLater(() -> executed.set(true));
+        UIUtil.dispatchAllInvocationEvents();
+        assertTrue(executed.get());
+      }
+    });
+
   }
 }

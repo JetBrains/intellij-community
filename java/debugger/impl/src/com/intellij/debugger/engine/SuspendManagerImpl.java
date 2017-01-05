@@ -233,18 +233,13 @@ public class SuspendManagerImpl implements SuspendManager {
   public boolean isSuspended(ThreadReferenceProxyImpl thread) throws ObjectCollectedException{
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    boolean suspended = false;
+    boolean suspended;
 
     if (isFrozen(thread)) {
       suspended = true;
     }
     else {
-      for (SuspendContextImpl suspendContext : myEventContexts) {
-        if (suspendContext.suspends(thread)) {
-          suspended = true;
-          break;
-        }
-      }
+      suspended = myEventContexts.stream().anyMatch(suspendContext -> suspendContext.suspends(thread));
     }
 
     //bug in JDI : newly created thread may be resumed even when suspendPolicy == SUSPEND_ALL

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -42,7 +41,6 @@ public class ReplaceInaccessibleFieldWithGetterSetterFix extends LocalQuickFixAn
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiReferenceExpression place = (PsiReferenceExpression)startElement;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(place)) return;
     String qualifier = null;
     final PsiExpression qualifierExpression = place.getQualifierExpression();
     if (qualifierExpression != null) {

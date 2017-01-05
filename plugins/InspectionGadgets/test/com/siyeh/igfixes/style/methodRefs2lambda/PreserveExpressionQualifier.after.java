@@ -4,7 +4,7 @@ abstract class Result<V> {
   public abstract <U> Result<U> map(Function<V, U> f);
 
   <B, C> void m(final Result<B> b) {
-    Function<Function<B, C>, Result<C>> map = (f) -> b.map(f);
+    Function<Function<B, C>, Result<C>> map = f -> b.map(f);
   }
 
 }

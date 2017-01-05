@@ -83,14 +83,14 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     final JButton button = new BasicArrowButton(SwingConstants.SOUTH) {
       @Override
       public Dimension getPreferredSize() {
-        return JBUI.size(14, 6);
+        return JBUI.size(14, 10);
       }
 
       @Override
       public void paint(Graphics g) {
         g.setColor(getComboBackground());
         g.fillRect(0, 0, getWidth(), getHeight());
-        IconUtil.paintInCenterOf(this, g, MacIntelliJIconCache.getIcon("winCheckSign"));
+        IconUtil.paintInCenterOf(this, g, MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled()));
       }
     };
     button.setOpaque(false);

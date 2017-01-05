@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -51,9 +50,14 @@ public class InsertNewFix implements IntentionAction {
     return myMethodCall.isValid() && myMethodCall.getManager().isInProject(myMethodCall);
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myMethodCall;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(myMethodCall.getContainingFile())) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethodCall.getProject()).getElementFactory();
     PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);
 

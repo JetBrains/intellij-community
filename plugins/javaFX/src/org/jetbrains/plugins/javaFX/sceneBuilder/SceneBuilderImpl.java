@@ -21,14 +21,14 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
-import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.content.ContentPanelController;
@@ -79,10 +79,11 @@ public class SceneBuilderImpl implements SceneBuilder {
   private final JFXPanel myPanel = new JFXPanel();
   private EditorController myEditorController;
   private URLClassLoader myClassLoader;
+  private volatile Collection<CustomComponent> myCustomComponents;
   private volatile boolean mySkipChanges;
   private ChangeListener<Number> myListener;
   private ChangeListener<Number> mySelectionListener;
-  private final Map<String, int[][]> mySelectionState = new FixedHashMap<>(16);
+  private List<List<SelectionNode>> mySelectionState;
 
   public SceneBuilderImpl(URL url, Project project, EditorCallback editorCallback) {
     myFileURL = url;
@@ -105,15 +106,8 @@ public class SceneBuilderImpl implements SceneBuilder {
       return;
     }
 
-    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
-      .runReadActionInSmartMode(this::collectCustomComponents);
-    myClassLoader = createProjectContentClassLoader(myProject);
-    FXMLLoader.setDefaultClassLoader(myClassLoader);
-
     myEditorController = new EditorController();
-    if (!customComponents.isEmpty()) {
-      myEditorController.setLibrary(new CustomLibrary(myClassLoader, customComponents));
-    }
+    updateCustomLibrary();
     HierarchyTreeViewController componentTree = new HierarchyTreeViewController(myEditorController);
     ContentPanelController canvas = new ContentPanelController(myEditorController);
     InspectorPanelController propertyTable = new InspectorPanelController(myEditorController);
@@ -143,6 +137,33 @@ public class SceneBuilderImpl implements SceneBuilder {
     UsageTrigger.trigger("scene-builder.open");
   }
 
+  private void updateCustomLibrary() {
+    final URLClassLoader oldClassLoader = myClassLoader;
+    myClassLoader = createProjectContentClassLoader(myProject);
+    FXMLLoader.setDefaultClassLoader(myClassLoader);
+
+    if (oldClassLoader != null) {
+      try {
+        oldClassLoader.close();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+
+    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
+      .runReadActionInSmartMode(this::collectCustomComponents);
+
+    try {
+      final CustomLibrary customLibrary = new CustomLibrary(myClassLoader, customComponents);
+      myEditorController.setLibrary(customLibrary);
+      myCustomComponents = customComponents;
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
+  }
+
   private Collection<CustomComponent> collectCustomComponents() {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
@@ -154,7 +175,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
 
     final Collection<PsiClass> psiClasses = CachedValuesManager.getCachedValue(nodeClass, () -> {
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(nodeClass.getProject());
+      // Take custom components from libraries, but not from the project modules, because SceneBuilder instantiates the components' classes.
+      // Modules might be not compiled or may change since last compile, it's too expensive to keep track of that.
+      final GlobalSearchScope scope = ProjectScope.getLibrariesScope(nodeClass.getProject());
       final String ideJdkVersion = Object.class.getPackage().getSpecificationVersion();
       final LanguageLevel ideLanguageLevel = LanguageLevel.parse(ideJdkVersion);
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
@@ -290,15 +313,28 @@ public class SceneBuilderImpl implements SceneBuilder {
     };
     mySelectionListener = (observable, oldValue, newValue) -> {
       if (!mySkipChanges) {
-        int[][] state = getSelectionState();
-        if (state != null) {
-          mySelectionState.put(myEditorController.getFxmlText(), state);
-        }
+        mySelectionState = getSelectionState();
       }
     };
 
     myEditorController.getJobManager().revisionProperty().addListener(myListener);
     myEditorController.getSelection().revisionProperty().addListener(mySelectionListener);
+  }
+
+  @Override
+  public boolean reload() {
+    if (myCustomComponents == null) return false;
+
+    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
+      .runReadActionInSmartMode(this::collectCustomComponents);
+    if (!new THashSet<>(myCustomComponents).equals(new THashSet<>(customComponents))) return false;
+
+    Platform.runLater(() -> {
+      if (myEditorController != null) {
+        loadFile();
+      }
+    });
+    return true;
   }
 
   @Override
@@ -333,12 +369,11 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     try {
       String fxmlText = FXOMDocument.readContentFromURL(myFileURL);
-      myEditorController.setFxmlTextAndLocation(fxmlText, myFileURL);
+      String editorFxmlText = myEditorController.getFxmlText();
+      if (Objects.equals(fxmlText, editorFxmlText)) return;
 
-      int[][] selectionState = mySelectionState.get(fxmlText);
-      if (selectionState != null) {
-        restoreSelection(selectionState);
-      }
+      myEditorController.setFxmlTextAndLocation(fxmlText, myFileURL);
+      restoreSelection(mySelectionState);
     }
     catch (Throwable e) {
       myEditorCallback.handleError(e);
@@ -348,17 +383,21 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
   }
 
-  private int[][] getSelectionState() {
+  private List<List<SelectionNode>> getSelectionState() {
     AbstractSelectionGroup group = myEditorController.getSelection().getGroup();
     if (group instanceof ObjectSelectionGroup) {
       Set<FXOMObject> items = ((ObjectSelectionGroup)group).getItems();
-      int[][] state = new int[items.size()][];
-      int index = 0;
 
+      List<List<SelectionNode>> state = new ArrayList<>();
       for (FXOMObject item : items) {
-        IntArrayList path = new IntArrayList();
-        componentToPath(item, path);
-        state[index++] = path.toArray();
+        List<SelectionNode> path = new ArrayList<>();
+
+        Object graphObject = item.getSceneGraphObject();
+        for (FXOMObject component = item; component != null; component = component.getParentObject()) {
+          path.add(new SelectionNode(component));
+        }
+        Collections.reverse(path);
+        state.add(path);
       }
 
       return state;
@@ -367,45 +406,76 @@ public class SceneBuilderImpl implements SceneBuilder {
     return null;
   }
 
-  private static void componentToPath(FXOMObject component, IntArrayList path) {
-    FXOMObject parent = component.getParentObject();
-
-    if (parent != null) {
-      path.add(0, component.getParentProperty().getValues().indexOf(component));
-      componentToPath(parent, path);
-    }
-  }
-
-  private void restoreSelection(int[][] state) {
+  private void restoreSelection(List<List<SelectionNode>> state) {
+    if (state == null) return;
     Collection<FXOMObject> newSelection = new ArrayList<>();
     FXOMObject rootComponent = myEditorController.getFxomDocument().getFxomRoot();
 
-    for (int[] path : state) {
-      pathToComponent(newSelection, rootComponent, path, 0);
+    for (List<SelectionNode> path : state) {
+      FXOMObject component = getSelectedComponent(rootComponent, path, 0);
+      if (component != null) newSelection.add(component);
     }
-
     myEditorController.getSelection().select(newSelection);
   }
 
-  private static void pathToComponent(Collection<FXOMObject> components, FXOMObject component, int[] path, int index) {
-    if (index == path.length) {
-      components.add(component);
-    }
-    else {
-      List<FXOMObject> children = Collections.emptyList();
-      Map<PropertyName, FXOMProperty> properties = ((FXOMInstance)component).getProperties();
-      for (Map.Entry<PropertyName, FXOMProperty> entry : properties.entrySet()) {
-        FXOMProperty value = entry.getValue();
-        if (value instanceof FXOMPropertyC) {
-          children = ((FXOMPropertyC)value).getValues();
-          break;
-        }
-      }
+  private FXOMObject getSelectedComponent(FXOMObject component, List<SelectionNode> path, int step) {
+    if (step >= path.size()) return null;
+    SelectionNode node = new SelectionNode(component);
+    if (node.equals(path.get(step))) {
+      if (step == path.size() - 1) return component;
 
-      int componentIndex = path[index];
-      if (0 <= componentIndex && componentIndex < children.size()) {
-        pathToComponent(components, children.get(componentIndex), path, index + 1);
+      List<FXOMObject> children = getChildComponents(component);
+      if (children.isEmpty()) return null;
+      int indexInParent = path.get(step + 1).indexInParent;
+      if (indexInParent >= 0 && indexInParent < children.size()) {
+        return getSelectedComponent(children.get(indexInParent), path, step + 1);
       }
+    }
+    return null;
+  }
+
+  private static final PropertyName ourChildrenPropertyName = new PropertyName("children");
+
+  private static List<FXOMObject> getChildComponents(FXOMObject component) {
+    if (component instanceof FXOMInstance) {
+      Map<PropertyName, FXOMProperty> properties = ((FXOMInstance)component).getProperties();
+      FXOMProperty value = properties.get(ourChildrenPropertyName);
+      if (value instanceof FXOMPropertyC) {
+        return ((FXOMPropertyC)value).getValues();
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  static class SelectionNode {
+    final String qualifiedName;
+    final int indexInParent;
+
+    SelectionNode(FXOMObject component) {
+      Object graphObject = component.getSceneGraphObject();
+      qualifiedName = graphObject.getClass().getName();
+
+      FXOMPropertyC parentProperty = component.getParentProperty();
+      indexInParent = parentProperty != null ? parentProperty.getValues().indexOf(component) : -1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof SelectionNode)) return false;
+
+      SelectionNode node = (SelectionNode)o;
+      return indexInParent == node.indexInParent && Objects.equals(qualifiedName, node.qualifiedName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(qualifiedName, indexInParent);
+    }
+
+    @Override
+    public String toString() {
+      return indexInParent + ":" + qualifiedName;
     }
   }
 
@@ -507,6 +577,25 @@ public class SceneBuilderImpl implements SceneBuilder {
       builder.append("/>");
       return builder.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof CustomComponent)) return false;
+
+      CustomComponent c = (CustomComponent)o;
+      return myQualifiedName.equals(c.myQualifiedName) && Objects.equals(myModule, c.myModule);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myQualifiedName, myModule);
+    }
+
+    @Override
+    public String toString() {
+      return myModule != null ? myQualifiedName + "(" + myModule + ")" : myQualifiedName;
+    }
   }
 
   private static class CustomLibrary extends Library {
@@ -515,11 +604,10 @@ public class SceneBuilderImpl implements SceneBuilder {
     public CustomLibrary(ClassLoader classLoader, Collection<CustomComponent> customComponents) {
       classLoaderProperty.set(classLoader);
 
-      final List<LibraryItem> libraryItems = getItems();
-      libraryItems.addAll(BuiltinLibrary.getLibrary().getItems());
-      for (CustomComponent component : customComponents) {
-        libraryItems.add(new LibraryItem(component.getDisplayName(), CUSTOM_SECTION, component.getFxmlText(), null, this));
-      }
+      getItems().setAll(BuiltinLibrary.getLibrary().getItems());
+      final List<LibraryItem> items = ContainerUtil.map(
+        customComponents, component -> new LibraryItem(component.getDisplayName(), CUSTOM_SECTION, component.getFxmlText(), null, this));
+      getItems().addAll(items);
     }
 
     @Override

@@ -162,4 +162,7 @@ public abstract class JavaTestFramework implements TestFramework {
   }
 
 
+  public boolean acceptNestedClasses() {
+    return false;
+  }
 }

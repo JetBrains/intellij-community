@@ -19,10 +19,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * author: lesya
- */
 public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
   private final Document myDocument;
   private final LineStatusTrackerManagerI myLineStatusTrackerManagerI;
@@ -34,28 +32,51 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
 
   @Override
   public boolean isRangeChanged(final int start, final int end) {
-    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
-    if (tracker == null || !tracker.isOperational()) {
+    LineStatusTracker tracker = getTracker();
+    if (tracker == null) {
       return false;
     }
-    return tracker.isRangeModified(start, end);
+    else {
+      return tracker.isRangeModified(start, end);
+    }
   }
 
   @Override
   public boolean isLineChanged(int currentNumber) {
-    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
-    if (tracker == null || !tracker.isOperational()) {
+    LineStatusTracker tracker = getTracker();
+    if (tracker == null) {
       return false;
     }
-    return tracker.isLineModified(currentNumber);
+    else {
+      return tracker.isLineModified(currentNumber);
+    }
   }
 
   @Override
   public int getLineNumber(int currentNumber) {
-    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
-    if (tracker == null || !tracker.isOperational()) {
+    LineStatusTracker tracker = getTracker();
+    if (tracker == null) {
       return currentNumber;
     }
-    return tracker.transferLineToVcs(currentNumber, false);
+    else {
+      return tracker.transferLineToVcs(currentNumber, false);
+    }
+  }
+
+  @Override
+  public int getLineCount() {
+    LineStatusTracker tracker = getTracker();
+    if (tracker == null) {
+      return myDocument.getLineCount();
+    }
+    else {
+      return tracker.getVcsDocument().getLineCount();
+    }
+  }
+
+  @Nullable
+  private LineStatusTracker getTracker() {
+    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
+    return tracker != null && tracker.isOperational() ? tracker : null;
   }
 }

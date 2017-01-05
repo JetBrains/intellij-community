@@ -126,10 +126,6 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     return isModified;
   }
 
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
-  }
-
   private static boolean isModified(JTextField textField, int value) {
     try {
       int fieldValue = Integer.parseInt(textField.getText().trim());

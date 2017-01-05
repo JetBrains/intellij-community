@@ -106,6 +106,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Project getProject() {
+      //noinspection ConstantConditions
       return super.getProject();
     }
 
@@ -277,6 +278,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Project getProject() {
+      //noinspection ConstantConditions
       return super.getProject();
     }
 
@@ -372,11 +374,11 @@ public class GlobalSearchScopesCore {
       if (scope instanceof DirectoriesScope) {
         DirectoriesScope other = (DirectoriesScope)scope;
         List<VirtualFile> newDirectories = new ArrayList<>(myDirectories.length + other.myDirectories.length);
-        newDirectories.addAll(Arrays.asList(other.myDirectories));
+        newDirectories.addAll(Arrays.asList(myDirectories));
         BitSet newWithSubdirectories = (BitSet)myWithSubdirectories.clone();
-        VirtualFile[] directories = other.myDirectories;
-        for (int i = 0; i < directories.length; i++) {
-          VirtualFile otherDirectory = directories[i];
+        VirtualFile[] otherDirectories = other.myDirectories;
+        for (int i = 0; i < otherDirectories.length; i++) {
+          VirtualFile otherDirectory = otherDirectories[i];
           if (!in(otherDirectory)) {
             newWithSubdirectories.set(newDirectories.size(), other.myWithSubdirectories.get(i));
             newDirectories.add(otherDirectory);
@@ -390,6 +392,7 @@ public class GlobalSearchScopesCore {
     @NotNull
     @Override
     public Project getProject() {
+      //noinspection ConstantConditions
       return super.getProject();
     }
 

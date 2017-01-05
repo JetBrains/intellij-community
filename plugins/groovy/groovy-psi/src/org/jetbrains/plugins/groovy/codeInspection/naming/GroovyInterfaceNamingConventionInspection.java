@@ -78,7 +78,7 @@ public class GroovyInterfaceNamingConventionInspection extends ConventionInspect
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitInterfaceDefinition(GrInterfaceDefinition aClass) {
+    public void visitInterfaceDefinition(@NotNull GrInterfaceDefinition aClass) {
       super.visitInterfaceDefinition(aClass);
 
       final String name = aClass.getName();

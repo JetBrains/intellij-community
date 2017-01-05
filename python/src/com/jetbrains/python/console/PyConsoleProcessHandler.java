@@ -72,7 +72,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   }
 
   @Override
-  protected boolean shouldKillProcessSoftly() {
+  public boolean shouldKillProcessSoftly() {
     return false;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
@@ -179,7 +177,7 @@ public class ExpectedTypesProvider {
       }
 
       if (infoImpl.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE) {
-        processAllSuperTypes(infoImpl.getType(), visitor, project, set);
+        processAllSuperTypes(infoImpl.getType(), visitor, project, set, new HashSet<>());
       }
       else if (infoImpl.getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE) {
         if (infoImpl.getType() instanceof PsiPrimitiveType) {
@@ -209,7 +207,9 @@ public class ExpectedTypesProvider {
     }
   }
 
-  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project, @NotNull Set<PsiType> set) {
+  public static void processAllSuperTypes(@NotNull PsiType type, @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project, @NotNull Set<PsiType> set, @NotNull Set<PsiType> visited) {
+    if (!visited.add(type)) return;
+
     if (type instanceof PsiPrimitiveType) {
       if (type.equals(PsiType.BOOLEAN) || type.equals(PsiType.VOID) || type.equals(PsiType.NULL)) return;
 
@@ -229,10 +229,9 @@ public class ExpectedTypesProvider {
       processType(objectType, visitor, set);
 
       if (type instanceof PsiClassType) {
-        PsiType[] superTypes = type.getSuperTypes();
-        for (PsiType superType : superTypes) {
+        for (PsiType superType : type.getSuperTypes()) {
           processType(superType, visitor, set);
-          processAllSuperTypes(superType, visitor, project, set);
+          processAllSuperTypes(superType, visitor, project, set, visited);
         }
       }
     }
@@ -1050,7 +1049,7 @@ public class ExpectedTypesProvider {
                                                      @NotNull final Set<ExpectedTypeInfo> array) {
       LOG.assertTrue(substitutor.isValid());
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (!forCompletion && parameters.length != args.length) return;
+      if (!forCompletion && parameters.length != args.length && !method.isVarArgs()) return;
       if (parameters.length <= index && !method.isVarArgs()) return;
 
       for (int j = 0; j < index; j++) {
@@ -1224,13 +1223,14 @@ public class ExpectedTypesProvider {
 
     @NotNull
     private ExpectedTypeInfo[] findClassesWithDeclaredMethod(@NotNull final PsiMethodCallExpression methodCallExpr, final boolean forCompletion) {
+      PsiUtilCore.ensureValid(methodCallExpr);
       final PsiReferenceExpression reference = methodCallExpr.getMethodExpression();
       if (reference.getQualifierExpression() instanceof PsiClassObjectAccessExpression) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
       final PsiManager manager = methodCallExpr.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-      final PsiMethod[] methods = myClassProvider.findDeclaredMethods(reference.getManager(), reference.getReferenceName());
+      final PsiMethod[] methods = myClassProvider.findDeclaredMethods(manager, reference.getReferenceName());
       Set<ExpectedTypeInfo> types = new THashSet<>();
       for (PsiMethod method : methods) {
         final PsiClass aClass = method.getContainingClass();

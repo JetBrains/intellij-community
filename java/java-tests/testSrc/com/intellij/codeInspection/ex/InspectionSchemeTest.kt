@@ -17,17 +17,18 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.InMemoryFsRule
+import com.intellij.openapi.options.SchemeState
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.runInInitMode
-import com.intellij.util.readText
-import com.intellij.util.write
+import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-internal class InspectionSchemeTest {
+class InspectionSchemeTest {
   companion object {
     @JvmField
     @ClassRule
@@ -41,27 +42,35 @@ internal class InspectionSchemeTest {
   @Test fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")
     val schemeData = """
-    <inspections profile_name="Bar" version="1.0">
+    <inspections version="1.0">
       <option name="myName" value="Bar" />
       <inspection_tool class="Since15" enabled="true" level="ERROR" enabled_by_default="true" />
     "</inspections>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = ApplicationInspectionProfileManager(InspectionToolRegistrar.getInstance(),
-                                                                                            schemeManagerFactory,
-                                                                                            ApplicationManager.getApplication().messageBus)
+    val profileManager = ApplicationInspectionProfileManager(InspectionToolRegistrar.getInstance(), schemeManagerFactory, ApplicationManager.getApplication().messageBus)
     profileManager.forceInitProfiles(true)
     profileManager.initProfiles()
 
     assertThat(profileManager.profiles).hasSize(1)
-    val scheme = profileManager.profiles.first() as InspectionProfileImpl
+    val scheme = profileManager.profiles.first()
+    assertThat(scheme.schemeState).isEqualTo(SchemeState.UNCHANGED)
     assertThat(scheme.name).isEqualTo("Bar")
 
     runInInitMode { scheme.initInspectionTools(null) }
 
     schemeManagerFactory.save()
 
+    assertThat(scheme.schemeState).isEqualTo(SchemeState.UNCHANGED)
+
     assertThat(schemeFile.readText()).isEqualTo(schemeData)
     profileManager.profiles
+
+    // test reload
+    schemeManagerFactory.process {
+      it.reload()
+    }
+
+    assertThat(profileManager.profiles).hasSize(1)
   }
 }

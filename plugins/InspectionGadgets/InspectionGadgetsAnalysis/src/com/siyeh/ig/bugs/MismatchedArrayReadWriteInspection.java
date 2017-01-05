@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,12 +84,13 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
-      if (!checkVariable(field, containingClass)) {
+      if (!shouldCheckVariable(field, containingClass)) {
         return;
       }
-      final boolean written = arrayContentsAreWritten(field, containingClass);
-      final boolean read = arrayContentsAreRead(field, containingClass);
-      if (written == read) {
+      final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(field, !isSimpleArrayExpression(field.getInitializer()));
+      containingClass.accept(visitor);
+      final boolean written = visitor.isWritten();
+      if (!visitor.isReferenced() || written == visitor.isRead()) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(written));
@@ -99,66 +100,58 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-      if (!checkVariable(variable, codeBlock)) {
+      if (!shouldCheckVariable(variable, codeBlock)) {
         return;
       }
-      final boolean written = arrayContentsAreWritten(variable, codeBlock);
-      final boolean read = arrayContentsAreRead(variable, codeBlock);
-      if (written == read) {
+      final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(variable, !isSimpleArrayExpression(variable.getInitializer()));
+      codeBlock.accept(visitor);
+      final boolean written = visitor.isWritten();
+      if (!visitor.isReferenced() || written == visitor.isRead()) {
         return;
       }
       registerVariableError(variable, Boolean.valueOf(written));
     }
 
-    private static boolean checkVariable(PsiVariable variable,
-                                         PsiElement context) {
-      if (context == null) {
-        return false;
-      }
-      final PsiType type = variable.getType();
-      if (type.getArrayDimensions() == 0) {
-        return false;
-      }
-      if (VariableAccessUtils.variableIsAssigned(variable, context)) {
-        return false;
-      }
-      if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {
-        return false;
-      }
-      if (VariableAccessUtils.variableIsReturned(variable, context)) {
-        return false;
-      }
-      return !VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context);
+    private static boolean shouldCheckVariable(PsiVariable variable, PsiElement context) {
+      return context != null && variable.getType().getArrayDimensions() != 0 && !isComplexArrayExpression(variable.getInitializer());
     }
 
-    private static boolean arrayContentsAreWritten(PsiVariable variable,
-                                                   PsiElement context) {
-      if (VariableAccessUtils.arrayContentsAreAssigned(variable, context)) {
-        return true;
-      }
-      if (!isDefaultArrayInitializer(variable.getInitializer())) {
-        return true;
-      }
-      return variableIsWritten(variable, context);
-    }
-
-    private static boolean arrayContentsAreRead(PsiVariable variable,
-                                                PsiElement context) {
-      if (VariableAccessUtils.arrayContentsAreAccessed(variable, context)) {
-        return true;
-      }
-      if (isPossiblyReferenceThatIsReadLater(variable.getInitializer())) {
-        return true;
-      }
-      return variableIsRead(variable, context);
-    }
-
-    private static boolean isPossiblyReferenceThatIsReadLater(PsiExpression initializer) {
-      if (initializer == null || initializer instanceof PsiNewExpression || initializer instanceof PsiArrayInitializerExpression) {
+    static boolean isComplexArrayExpression(PsiExpression expression) {
+      expression = ParenthesesUtils.stripParentheses(expression);
+      if (expression == null) {
         return false;
       }
-      if (initializer instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
+      if (expression instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)expression;
+        final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
+        return isComplexArrayExpression(arrayInitializer);
+      }
+      else if (expression instanceof PsiArrayInitializerExpression) {
+        final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
+        for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
+          if (isComplexArrayExpression(initializer)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      else if (expression instanceof PsiReferenceExpression) {
+        return expression.getType() instanceof PsiArrayType;
+      }
+      else if (expression instanceof PsiArrayAccessExpression) {
+        return true;
+      }
+      else if (expression instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+        return isComplexArrayExpression(typeCastExpression.getOperand());
+      }
+      else if (expression instanceof PsiConditionalExpression) {
+        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+        return isComplexArrayExpression(conditionalExpression.getThenExpression()) ||
+               isComplexArrayExpression(conditionalExpression.getElseExpression());
+      }
+      else if (expression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         final PsiMethod method = methodCallExpression.resolveMethod();
         if (method == null) {
           return true;
@@ -167,23 +160,28 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
           return false;
         }
         @NonNls final String name = method.getName();
-        if (!"copyOf".equals(name) && !"copyOfRange".equals(name)) {
-          return true;
+        if ("copyOf".equals(name) || "copyOfRange".equals(name)) {
+          final PsiClass aClass = method.getContainingClass();
+          if (aClass != null && CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName())) {
+            return false;
+          }
         }
-        final PsiClass aClass = method.getContainingClass();
-        return aClass == null || !CommonClassNames.JAVA_UTIL_ARRAYS.equals(aClass.getQualifiedName());
+        else if ("toArray".equals(name) && InheritanceUtil.isInheritor(method.getContainingClass(), "java.util.Collection")) {
+          return false;
+        }
+        return true;
       }
       return true;
     }
 
-    private static boolean isDefaultArrayInitializer(PsiExpression initializer) {
+    static boolean isSimpleArrayExpression(PsiExpression initializer) {
       if (initializer == null) {
         return true;
       }
       if (initializer instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)initializer;
         final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-        return arrayInitializer == null || isDefaultArrayInitializer(arrayInitializer);
+        return arrayInitializer == null || isSimpleArrayExpression(arrayInitializer);
       }
       if (initializer instanceof PsiArrayInitializerExpression) {
         final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)initializer;
@@ -193,136 +191,147 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       return false;
     }
 
-    private static boolean variableIsWritten(@NotNull PsiVariable variable, @NotNull PsiElement context) {
-      final VariableReadWriteVisitor visitor = new VariableReadWriteVisitor(variable, true);
-      context.accept(visitor);
-      return visitor.isPassed();
-    }
+    private static class ArrayReadWriteVisitor extends JavaRecursiveElementWalkingVisitor {
+      private final PsiVariable myVariable;
+      private boolean myWritten;
+      private boolean myRead = false;
+      private boolean myIsReferenced = false;
 
-    private static boolean variableIsRead(@NotNull PsiVariable variable, @NotNull PsiElement context) {
-      final VariableReadWriteVisitor visitor =
-        new VariableReadWriteVisitor(variable, false);
-      context.accept(visitor);
-      return visitor.isPassed();
-    }
-
-    private static class VariableReadWriteVisitor extends JavaRecursiveElementWalkingVisitor {
-
-      @NotNull
-      private final PsiVariable variable;
-      private final boolean write;
-      private boolean passed;
-
-      private VariableReadWriteVisitor(@NotNull PsiVariable variable, boolean write) {
-        this.variable = variable;
-        this.write = write;
+      ArrayReadWriteVisitor(@NotNull PsiVariable variable, boolean written) {
+        myVariable = variable;
+        myWritten = written;
       }
 
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (!passed) {
-          super.visitElement(element);
-        }
-      }
-
-      @Override
-      public void visitBinaryExpression(PsiBinaryExpression expression) {
-        super.visitBinaryExpression(expression);
-        if (write || passed) {
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (myWritten && myRead) {
           return;
         }
-        final IElementType tokenType = expression.getOperationTokenType();
-        if (!JavaTokenType.EQEQ.equals(tokenType) && !JavaTokenType.NE.equals(tokenType)) {
+        super.visitReferenceExpression(expression);
+        final PsiElement target = expression.resolve();
+        if (target != myVariable) {
           return;
         }
-        final PsiExpression lhs = expression.getLOperand();
-        if (!(lhs instanceof PsiBinaryExpression)) {
-          if (VariableAccessUtils.mayEvaluateToVariable(lhs, variable)) {
-            passed = true;
-          }
-        }
-        final PsiExpression rhs = expression.getROperand();
-        if (!(rhs instanceof PsiBinaryExpression)) {
-          if (VariableAccessUtils.mayEvaluateToVariable(rhs, variable)) {
-            passed = true;
-          }
-        }
-      }
-
-      @Override
-      public void visitMethodCallExpression(
-        @NotNull PsiMethodCallExpression call) {
-        if (passed) {
-          return;
-        }
-        super.visitMethodCallExpression(call);
-        final PsiExpressionList argumentList = call.getArgumentList();
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        for (int i = 0; i < arguments.length; i++) {
-          final PsiExpression argument = arguments[i];
-          if (VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
-            if (write && i == 0 && isCallToSystemArraycopy(call)) {
-              return;
+        if (PsiUtil.isAccessedForWriting(expression)) {
+          final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
+          if (parent instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+            final PsiExpression rhs = assignmentExpression.getRExpression();
+            if (isComplexArrayExpression(rhs)) {
+              myWritten = true;
+              myRead = true;
             }
-            if (!write && i == 2 && isCallToSystemArraycopy(call)) {
-              return;
+            else if (!isSimpleArrayExpression(rhs)) {
+              myWritten = true;
             }
-            passed = true;
+          }
+          return;
+        }
+        myIsReferenced = true;
+        PsiElement parent = getParent(expression);
+        if (parent instanceof PsiArrayAccessExpression) {
+          PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+          parent = getParent(parent);
+          while (parent instanceof PsiArrayAccessExpression) {
+            arrayAccessExpression = (PsiArrayAccessExpression)parent;
+            parent = getParent(parent);
+          }
+          final PsiType type = arrayAccessExpression.getType();
+          if (type != null) {
+            final int dimensions = type.getArrayDimensions();
+            if (dimensions > 0 && dimensions != myVariable.getType().getArrayDimensions()) {
+              myWritten = true;
+            }
+          }
+          if (PsiUtil.isAccessedForWriting(arrayAccessExpression)) {
+            myWritten = true;
+          }
+          if (PsiUtil.isAccessedForReading(arrayAccessExpression)) {
+            myRead = true;
           }
         }
-      }
-
-      private static boolean isCallToSystemArraycopy(PsiMethodCallExpression call) {
-        final PsiReferenceExpression methodExpression = call.getMethodExpression();
-        @NonNls final String name = methodExpression.getReferenceName();
-        if (!"arraycopy".equals(name)) {
-          return false;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (!(qualifier instanceof PsiReferenceExpression)) {
-          return false;
-        }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
-        final PsiElement element = referenceExpression.resolve();
-        if (!(element instanceof PsiClass)) {
-          return false;
-        }
-        return "java.lang.System".equals(((PsiClass)element).getQualifiedName());
-      }
-
-      @Override
-      public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
-        if (passed) {
-          return;
-        }
-        super.visitNewExpression(newExpression);
-        visitPsiCall(newExpression);
-      }
-
-      @Override
-      public void visitEnumConstant(PsiEnumConstant enumConstant) {
-        if (passed) {
-          return;
-        }
-        super.visitEnumConstant(enumConstant);
-        visitPsiCall(enumConstant);
-      }
-
-      private void visitPsiCall(PsiCall newExpression) {
-        final PsiExpressionList argumentList = newExpression.getArgumentList();
-        if (argumentList == null) {
-          return;
-        }
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        for (final PsiExpression argument : arguments) {
-          if (VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
-            passed = true;
+        else if (parent instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+          final String name = referenceExpression.getReferenceName();
+          if ("length".equals(name) || ("clone".equals(name) && referenceExpression.getParent() instanceof PsiMethodCallExpression)) {
+            myRead = true;
           }
         }
+        else if (parent instanceof PsiForeachStatement) {
+          final PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
+          final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+          if (PsiTreeUtil.isAncestor(iteratedValue, expression, false)) {
+            myRead = true;
+          }
+        }
+        else if (parent instanceof PsiExpressionList) {
+          final PsiExpressionList expressionList = (PsiExpressionList)parent;
+          parent = parent.getParent();
+          if (parent instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method != null) {
+              final PsiClass aClass = method.getContainingClass();
+              if (aClass != null) {
+                final String methodName = method.getName();
+                final String qualifiedName = aClass.getQualifiedName();
+                if ("java.lang.System".equals(qualifiedName)) {
+                  if ("arraycopy".equals(methodName)) {
+                    final PsiExpression[] expressions = expressionList.getExpressions();
+                    if (expressions.length == 5) {
+                      if (PsiTreeUtil.isAncestor(expressions[0], expression, false)) {
+                        myRead = true;
+                        return;
+                      }
+                      else if (PsiTreeUtil.isAncestor(expressions[2], expression, false)) {
+                        myWritten = true;
+                        return;
+                      }
+                    }
+                  }
+                }
+                else if (CommonClassNames.JAVA_UTIL_ARRAYS.equals(qualifiedName)) {
+                  if ("fill".equals(methodName) || "parallelPrefix".equals(methodName) || "parallelSetAll".equals(methodName) ||
+                      "parallelSort".equals(methodName) || "setAll".equals(methodName) || "sort".equals(methodName)) {
+                    myWritten = true;
+                  }
+                  else {
+                    myRead = true;
+                  }
+                  return;
+                }
+              }
+            }
+          }
+          myRead = true;
+          myWritten = true;
+        }
+        else {
+          myWritten = true;
+          myRead = true;
+        }
       }
 
-      public boolean isPassed() {
-        return passed;
+      private static PsiElement getParent(PsiElement element) {
+        PsiElement parent = element.getParent();
+        while (parent instanceof PsiParenthesizedExpression ||
+               parent instanceof PsiTypeCastExpression ||
+               parent instanceof PsiConditionalExpression) {
+          parent = parent.getParent();
+        }
+        return parent;
+      }
+
+      public boolean isRead() {
+        return myRead;
+      }
+
+      public boolean isWritten() {
+        return myWritten;
+      }
+
+      public boolean isReferenced() {
+        return myIsReferenced;
       }
     }
   }

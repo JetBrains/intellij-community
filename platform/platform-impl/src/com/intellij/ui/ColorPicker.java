@@ -30,7 +30,6 @@ import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
 import com.intellij.ui.picker.MacColorPipette;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -98,7 +97,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     this(parent, color, true, enableOpacity, Collections.emptyList(), false);
   }
 
-  private ColorPicker(Disposable parent,
+  private ColorPicker(@NotNull Disposable parent,
                       @Nullable Color color,
                       boolean restoreColors, boolean enableOpacity,
                       List<ColorPickerListener> listeners, boolean opacityInPercent) {
@@ -1128,7 +1127,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         });
 
         pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
-        myMaskImage = UIUtil.createImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
+        myMaskImage = UIUtil.createImage(pickerDialog, SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D maskG = myMaskImage.createGraphics();
         maskG.setColor(Color.BLUE);
         maskG.fillRect(0, 0, SIZE, SIZE);
@@ -1138,7 +1137,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         maskG.fillRect(0, 0, SIZE, SIZE);
         maskG.dispose();
 
-        myPipetteImage = UIUtil.createImage(AllIcons.Ide.Pipette.getIconWidth(), AllIcons.Ide.Pipette.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        myPipetteImage = UIUtil.createImage(pickerDialog, AllIcons.Ide.Pipette.getIconWidth(), AllIcons.Ide.Pipette.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = myPipetteImage.createGraphics();
         //noinspection ConstantConditions
         AllIcons.Ide.Pipette.paintIcon(null, graphics, 0, 0);

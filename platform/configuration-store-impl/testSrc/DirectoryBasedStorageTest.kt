@@ -18,14 +18,12 @@ package com.intellij.configurationStore
 import com.intellij.idea.Bombed
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.StateStorageBase
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.loadElement
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.hasChildren
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -39,7 +37,7 @@ private fun StateStorage.ExternalizationSession.save() {
 }
 
 private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
-  var externalizationSession = startExternalization()!!
+  val externalizationSession = startExternalization()!!
   externalizationSession.setState(null, componentName, if (state == null) Element("state") else loadElement(state))
   externalizationSession.save()
 }
@@ -52,7 +50,7 @@ internal class TestStateSplitter : MainConfigurationStateSplitter() {
   override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
 }
 
-@Bombed(user = "vladimir.krivosheev", year = 2016, month = Calendar.DECEMBER, day = 10)
+@Bombed(user = "vladimir.krivosheev", year = 2018, month = Calendar.DECEMBER, day = 10)
 internal class DirectoryBasedStorageTest {
   companion object {
     @JvmField

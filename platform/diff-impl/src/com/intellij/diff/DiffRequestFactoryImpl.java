@@ -17,7 +17,6 @@ package com.intellij.diff;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.contents.FileAwareDocumentContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
@@ -47,14 +46,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
-  private final DiffContentFactory myContentFactory = DiffContentFactory.getInstance();
+  private final DiffContentFactoryEx myContentFactory = DiffContentFactoryEx.getInstanceEx();
 
   //
   // Diff
   //
 
-  @Override
   @NotNull
+  @Override
   public ContentDiffRequest createFromFiles(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     DiffContent content1 = myContentFactory.create(project, file1);
     DiffContent content2 = myContentFactory.create(project, file2);
@@ -84,8 +83,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return new SimpleDiffRequest(null, content1, content2, content3, title1, title2, title3);
   }
 
-  @Override
   @NotNull
+  @Override
   public ContentDiffRequest createClipboardVsValue(@NotNull String value) {
     DiffContent content1 = myContentFactory.createClipboardContent();
     DiffContent content2 = myContentFactory.create(value);
@@ -102,20 +101,20 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   // Titles
   //
 
-  @Override
   @NotNull
+  @Override
   public String getContentTitle(@NotNull VirtualFile file) {
     return getContentTitle(VcsUtil.getFilePath(file));
   }
 
-  @Override
   @NotNull
+  @Override
   public String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return getTitle(VcsUtil.getFilePath(file1), VcsUtil.getFilePath(file2), " vs ");
   }
 
-  @Override
   @NotNull
+  @Override
   public String getTitle(@NotNull VirtualFile file) {
     return getTitle(file, file);
   }
@@ -215,7 +214,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     List<DocumentContent> contents = new ArrayList<>(3);
     for (String text : textContents) {
-      contents.add(myContentFactory.create(text, fileType));
+      contents.add(myContentFactory.create(project, text, fileType));
     }
 
     return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, titles, applyCallback);
@@ -260,7 +259,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     List<DocumentContent> contents = new ArrayList<>(3);
     for (byte[] bytes : byteContents) {
-      contents.add(FileAwareDocumentContent.create(project, bytes, output));
+      contents.add(myContentFactory.createDocumentFromBytes(project, bytes, output));
     }
 
     return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles, applyCallback);
@@ -284,7 +283,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
       List<DiffContent> contents = new ArrayList<>(3);
       for (byte[] bytes : byteContents) {
-        contents.add(myContentFactory.createFromBytes(project, output, bytes));
+        contents.add(myContentFactory.createFromBytes(project, bytes, output));
       }
 
       return new BinaryMergeRequestImpl(project, outputContent, originalContent, contents, byteContents, title, contentTitles, applyCallback);

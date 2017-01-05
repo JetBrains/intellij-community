@@ -108,6 +108,7 @@ public abstract class PlatformIdTableBuilding {
   private static class CompositeTodoIndexer extends VersionedTodoIndexer {
     private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
 
+    @SafeVarargs
     public CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
       this.indexers = indexers;
     }

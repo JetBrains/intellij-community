@@ -29,7 +29,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
-import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
@@ -98,16 +98,14 @@ class VisiblePackBuilderTest {
       4()              +null
     }
 
-    val func = object : Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
-      override fun `fun`(param: VcsLogFilterCollection?): MutableList<TimedVcsCommit>? {
-        return ArrayList(listOf(2, 3, 4).map {
-          val id = it
-          val commit = graph.commits.firstOrNull {
-            it.id == id
-          }
-          commit!!.toVcsCommit(graph.hashMap)
-        })
-      }
+    val func = Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
+      ArrayList(listOf(2, 3, 4).map {
+        val id = it
+        val commit = graph.commits.firstOrNull {
+          it.id == id
+        }
+        commit!!.toVcsCommit(graph.hashMap)
+      })
     }
 
     graph.providers.entries.iterator().next().value.setFilteredCommitsProvider(func)
@@ -137,7 +135,7 @@ class VisiblePackBuilderTest {
       val dataPack = DataPack.build(commits, mapOf(root to hashMap.refsReversed.keys).mapValues { CompressedRefs(it.value, hashMap) }, providers, hashMap, true)
       val detailsCache = TopCommitsCache(hashMap)
       detailsCache.storeDetails(ArrayList(data.entries.mapNotNull {
-        val hash = hashMap.getCommitId(it.key.id)!!.hash
+        val hash = hashMap.getCommitId(it.key.id).hash
         if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.parents), 1L, root, it.value.subject,
@@ -156,7 +154,7 @@ class VisiblePackBuilderTest {
           return null
         }
       }
-      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter)
+      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
 
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
@@ -176,13 +174,13 @@ class VisiblePackBuilderTest {
 
   fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
-  fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionImpl(null, null, null, null, null, null, null)
+  fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionBuilder().build()
 
   fun filters(branch: VcsLogBranchFilter? = null, user: VcsLogUserFilter? = null)
-      = VcsLogFilterCollectionImpl(branch, user, null, null, null, null, null)
+      = VcsLogFilterCollectionBuilder().with(branch).with(user).build()
 
   fun filters(branch: List<String>? = null, user: VcsUser? = null)
-      = VcsLogFilterCollectionImpl(branchFilter(branch), userFilter(user), null, null, null, null, null)
+      = VcsLogFilterCollectionBuilder().with(branchFilter(branch)).with(userFilter(user)).build()
 
   fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
     return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch, branch.toHashSet()) else null
@@ -245,5 +243,6 @@ class VisiblePackBuilderTest {
     override fun flush() {
     }
   }
+
 }
 

@@ -32,8 +32,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -374,24 +372,22 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final ProjectBuilder builder = runModuleWizard(parent, anImport);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<>();
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
-        final List<Module> committedModules;
-        if (builder instanceof ProjectImportBuilder<?>) {
-          final ModifiableArtifactModel artifactModel =
-            ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
-          committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+      final List<Module> committedModules;
+      if (builder instanceof ProjectImportBuilder<?>) {
+        final ModifiableArtifactModel artifactModel =
+          ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+        committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+      }
+      else {
+        committedModules = builder.commit(myProject, myModuleModel, this);
+      }
+      if (committedModules != null) {
+        modules.addAll(committedModules);
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        for (Module module : modules) {
+          getOrCreateModuleEditor(module);
         }
-        else {
-          committedModules = builder.commit(myProject, myModuleModel, this);
-        }
-        if (committedModules != null) {
-          modules.addAll(committedModules);
-        }
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          for (Module module : modules) {
-            getOrCreateModuleEditor(module);
-          }
-        });
       });
       return modules;
     }

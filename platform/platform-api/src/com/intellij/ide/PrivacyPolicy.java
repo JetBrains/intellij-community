@@ -79,7 +79,7 @@ public final class PrivacyPolicy {
       return true;
     }
     final Version currentAccepted = getAcceptedVersion();
-    return !currentAccepted.isUnknown() && currentAccepted.getMajor() == ver.getMajor() ;
+    return !currentAccepted.isUnknown() && currentAccepted.getMajor() >= ver.getMajor();
   }
 
   public static void setVersionAccepted(@NotNull Version version) {

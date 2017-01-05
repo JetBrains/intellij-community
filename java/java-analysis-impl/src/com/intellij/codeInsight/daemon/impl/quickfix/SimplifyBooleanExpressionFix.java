@@ -16,26 +16,29 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
@@ -80,9 +83,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     if (!isAvailable()) return;
-    final PsiExpression expression = getSubExpression();
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return;
-    ApplicationManager.getApplication().runWriteAction(() -> simplifyExpression(project, expression, mySubExpressionValue));
+    simplifyExpression(project, getSubExpression(), mySubExpressionValue);
   }
 
   public static void simplifyExpression(Project project, final PsiExpression subExpression, final Boolean subExpressionValue) {
@@ -122,13 +123,18 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     return true;
   }
 
-  private static void replaceWithStatements(final PsiIfStatement orig, final PsiStatement statement) throws IncorrectOperationException {
+  private static void replaceWithStatements(@NotNull PsiIfStatement orig, @Nullable PsiStatement statement) throws IncorrectOperationException {
     if (statement == null) {
       orig.delete();
       return;
     }
     PsiElement parent = orig.getParent();
     if (parent == null) return;
+
+    if (parent instanceof PsiCodeBlock && blockAlwaysReturns(statement)) {
+      removeFollowingStatements(orig, (PsiCodeBlock)parent);
+    }
+
     if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock &&
         !DeclarationSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
       // See IDEADEV-24277
@@ -154,6 +160,23 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
     else {
       orig.replace(statement);
+    }
+  }
+
+  private static boolean blockAlwaysReturns(@NotNull PsiStatement statement) {
+    try {
+      return ControlFlowUtil.returnPresent(HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(statement));
+    }
+    catch (AnalysisCanceledException e) {
+      return false;
+    }
+  }
+
+  private static void removeFollowingStatements(@NotNull PsiIfStatement anchor, @NotNull PsiCodeBlock parentBlock) {
+    PsiStatement[] siblingStatements = parentBlock.getStatements();
+    int ifIndex = Arrays.asList(siblingStatements).indexOf(anchor);
+    if (ifIndex >= 0 && ifIndex < siblingStatements.length - 1) {
+      parentBlock.deleteChildRange(siblingStatements[ifIndex + 1], siblingStatements[siblingStatements.length - 1]);
     }
   }
 

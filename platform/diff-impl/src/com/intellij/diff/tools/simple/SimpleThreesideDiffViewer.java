@@ -33,7 +33,6 @@ import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -48,8 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
-  public static final Logger LOG = Logger.getInstance(SimpleThreesideDiffViewer.class);
-
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<>();
 
@@ -70,8 +67,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     group.add(myEditorSettingsAction);
 
     group.add(Separator.getInstance());
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
-    group.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT));
+    group.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT));
     group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
 
     group.add(Separator.getInstance());

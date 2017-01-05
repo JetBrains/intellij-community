@@ -47,10 +47,8 @@ import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.net.UnknownHostException;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -103,9 +101,18 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     final Exception error = context.getUserData(RESOLVE_ERROR_KEY);
     if (error != null) {
       final StringBuilder builder = new StringBuilder().append("Error resolving dependencies for ").append(chunk.getPresentableShortName());
-      final String details = error.getMessage();
-      if (details != null) {
-        builder.append(": ").append(details);
+      Throwable th = error;
+      final Set<Throwable> processed = new HashSet<Throwable>();
+      final Set<String> detailsMessage = new HashSet<String>();
+      while (th != null && processed.add(th)) {
+        String details = th.getMessage();
+        if (th instanceof UnknownHostException) {
+          details = "Unknown host: " + details; // hack for UnknownHostException
+        }
+        if (details != null && detailsMessage.add(details)) {
+          builder.append(":\n").append(details);
+        }
+        th = th.getCause();
       }
       final String msg = builder.toString();
       LOG.info(msg, error);
@@ -125,8 +132,21 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
         final ResourceGuard guard = ResourceGuard.get(context, descriptor);
         if (guard.requestProcessing(context.getCancelStatus())) {
           try {
-            final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion());
-            syncPaths(resolved, lib);
+            final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
+            for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
+              if (it.next().exists()) {
+                it.remove(); // leaving only non-existing stuff requiring synchronization
+              }
+            }
+            if (!required.isEmpty()) {
+              final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion());
+              if (!resolved.isEmpty()) {
+                syncPaths(required, resolved);
+              }
+              else {
+                LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
+              }
+            }
           }
           finally {
             guard.finish();
@@ -136,32 +156,20 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
   }
 
-  private static void syncPaths(@NotNull Collection<File> resolved, @NotNull JpsTypedLibrary<JpsSimpleElement<RepositoryLibraryDescriptor>> lib) throws Exception {
-    if (resolved.isEmpty()) {
-      LOG.info("No artifacts were resolved for repository dependency " + lib.getProperties().getData().getMavenId());
-      return;
-    }
+  private static void syncPaths(final Collection<File> required, @NotNull Collection<File> resolved) throws Exception {
     final THashSet<File> libFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-    libFiles.addAll(lib.getFiles(JpsOrderRootType.COMPILED));
+    libFiles.addAll(required);
     libFiles.removeAll(resolved);
 
     if (!libFiles.isEmpty()) {
-      Map<String, File> nameToArtifactMap = null;
+      final Map<String, File> nameToArtifactMap = new THashMap<String, File>(FileUtil.PATH_HASHING_STRATEGY);
+      for (File f : resolved) {
+        final File prev = nameToArtifactMap.put(f.getName(), f);
+        if (prev != null) {
+          throw new Exception("Ambiguous artifacts with the same name: " + prev.getPath() + " and " + f.getPath());
+        }
+      }
       for (File file : libFiles) {
-        if (file.exists()) {
-          continue;
-        }
-
-        if (nameToArtifactMap == null) { // lazy init
-          nameToArtifactMap = new THashMap<String, File>(FileUtil.PATH_HASHING_STRATEGY);
-          for (File f : resolved) {
-            final File prev = nameToArtifactMap.put(f.getName(), f);
-            if (prev != null) {
-              throw new Exception("Ambiguous artifacts with the same name: " + prev.getPath() + " and " + f.getPath());
-            }
-          }
-        }
-
         final File resolvedArtifact = nameToArtifactMap.get(file.getName());
         if (resolvedArtifact != null) {
           FileUtil.copy(resolvedArtifact, file);
@@ -196,8 +204,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
 
     synchronized void finish() {
-      myState = FINISHED;
-      this.notifyAll();
+      if (myState != FINISHED) {
+        myState = FINISHED;
+        this.notifyAll();
+      }
     }
 
     static void init(CompileContext context) {

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -27,6 +26,7 @@ import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -84,24 +84,23 @@ import java.util.concurrent.TimeUnit;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public class CompileDriver {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
 
-  private final Project myProject;
+  private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
+  private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
+  private static final long ONE_MINUTE_MS = 60L * 1000L;
 
+  private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
 
-  private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
-
-  private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
-
-  private static final long ONE_MINUTE_MS = 60L /*sec*/ * 1000L /*millisec*/;
+  @SuppressWarnings("deprecation") private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
 
   public CompileDriver(Project project) {
     myProject = project;
   }
 
+  @SuppressWarnings("deprecation")
   public void setCompilerFilter(CompilerFilter compilerFilter) {
     myCompilerFilter = compilerFilter == null? CompilerFilter.ALL : compilerFilter;
   }
@@ -189,11 +188,9 @@ public class CompileDriver {
     return Boolean.TRUE.equals(scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY));
   }
 
-  @Nullable
-  private TaskFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
-    throws Exception {
-    final CompileScope scope = compileContext.getCompileScope();
-    final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+  private List<TargetTypeBuildScope> getBuildScopes(@NotNull CompileContextImpl compileContext,
+                                                    CompileScope scope,
+                                                    Collection<String> paths) {
     List<TargetTypeBuildScope> scopes = new ArrayList<>();
     final boolean forceBuild = !compileContext.isMake();
     List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
@@ -207,10 +204,29 @@ public class CompileDriver {
       scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
     }
     if (paths.isEmpty()) {
-      for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
-        scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
-      }
+      scopes = mergeScopesFromProviders(scope, scopes, forceBuild);
     }
+    return scopes;
+  }
+
+  private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
+                                                              List<TargetTypeBuildScope> scopes,
+                                                              boolean forceBuild) {
+    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+      List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
+        () -> myProject.isDisposed() ? Collections.emptyList()
+                                     : provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
+      scopes = CompileScopeUtil.mergeScopes(scopes, providerScopes);
+    }
+    return scopes;
+  }
+
+  @Nullable
+  private TaskFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
+    throws Exception {
+    final CompileScope scope = compileContext.getCompileScope();
+    final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+    List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
 
     // need to pass scope's user data to server
     final Map<String, String> builderParams;
@@ -356,9 +372,6 @@ public class CompileDriver {
     });
   }
 
-
-  private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
-
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
@@ -366,8 +379,7 @@ public class CompileDriver {
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final String contentName =
-      forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
+    final String contentName = CompilerBundle.message(forceCompile ? "compiler.content.name.compile" : "compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
 
@@ -445,8 +457,8 @@ public class CompileDriver {
     compileTask.start(compileWork, () -> {
       if (isRebuild) {
         final int rv = Messages.showOkCancelDialog(
-            myProject, "You are about to rebuild the whole project.\nRun 'Make Project' instead?", "Confirm Project Rebuild",
-            "Make", "Rebuild", Messages.getQuestionIcon()
+            myProject, "You are about to rebuild the whole project.\nRun 'Build Project' instead?", "Confirm Project Rebuild",
+            "Build", "Rebuild", Messages.getQuestionIcon()
         );
         if (rv == Messages.OK /*yes, please, do run make*/) {
           startup(scope, false, false, callback, null);
@@ -541,27 +553,10 @@ public class CompileDriver {
     return message;
   }
 
-  /*
-  private void dropScopesCaches() {
-    // hack to be sure the classpath will include the output directories
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).clearScopesCachesForModules();
-      }
-    });
-  }
-  */
-
   // [mike] performance optimization - this method is accessed > 15,000 times in Aurora
-  private String getModuleOutputPath(final Module module, boolean inTestSourceContent) {
-    final Map<Module, String> map = inTestSourceContent ? myModuleTestOutputPaths : myModuleOutputPaths;
-    String path = map.get(module);
-    if (path == null) {
-      path = CompilerPaths.getModuleOutputPath(module, inTestSourceContent);
-      map.put(module, path);
-    }
-
-    return path;
+  private String getModuleOutputPath(Module module, boolean inTestSourceContent) {
+    Map<Module, String> map = inTestSourceContent ? myModuleTestOutputPaths : myModuleOutputPaths;
+    return map.computeIfAbsent(module, k -> CompilerPaths.getModuleOutputPath(module, inTestSourceContent));
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
@@ -595,9 +590,8 @@ public class CompileDriver {
     try {
       CompileTask[] tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTasks();
       if (tasks.length > 0) {
-        progressIndicator.setText(beforeTasks
-                                  ? CompilerBundle.message("progress.executing.precompile.tasks")
-                                  : CompilerBundle.message("progress.executing.postcompile.tasks"));
+        progressIndicator.setText(
+          CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
           if (!task.execute(context)) {
             return false;

@@ -106,7 +106,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
 
     if(method instanceof PsiCompiledElement){
       CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
-          "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), null, this.getHelpID());
+          "the.selected.method.cannot.be.wrapped.because.it.is.defined.in.a.non.project.class"), REFACTORING_NAME, this.getHelpID());
       return;
     }
 

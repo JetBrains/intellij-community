@@ -69,7 +69,6 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
     return findFileByPath(path);
   }
 
-  @SuppressWarnings("unused")  // used in Kotlin
   public void clearHandlersCache() {
     myHandlers.clear();
   }

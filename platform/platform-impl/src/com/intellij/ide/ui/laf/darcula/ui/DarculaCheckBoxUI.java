@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -224,6 +225,6 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return JBUI.emptyIcon(20).asUIResource();
+    return JBUI.scale(EmptyIcon.create(20)).asUIResource();
   }
 }

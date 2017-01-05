@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,9 @@ public class JavaGenericsUtil {
       }
 
       if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(aClass, aClass.getContainingClass());
         PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-        if (containingClass != null) {
+        if (containingClass != null && (enclosingStaticElement == null || PsiTreeUtil.isAncestor(enclosingStaticElement, containingClass, false))) {
           return isReifiableType(JavaPsiFacade.getElementFactory(aClass.getProject()).createType(containingClass, resolved.getSubstitutor()));
         }
       }
@@ -85,40 +86,43 @@ public class JavaGenericsUtil {
                                            @NotNull JavaResolveResult resolveResult,
                                            @NotNull LanguageLevel languageLevel) {
     final PsiElement resolve = resolveResult.getElement();
-    if (resolve instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)resolve;
+    if (!(resolve instanceof PsiMethod)) {
+      return false;
+    }
+    PsiMethod psiMethod = (PsiMethod)resolve;
 
-      if (psiMethod.isVarArgs()) {
-        if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false)) {
-          final int parametersCount = psiMethod.getParameterList().getParametersCount();
-          final PsiParameter varargParameter =
-            psiMethod.getParameterList().getParameters()[parametersCount - 1];
-          final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
-          if (!isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
+    if (!psiMethod.isVarArgs()) {
+      return false;
+    }
+    if (AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false, false)) {
+      return false;
+    }
+    int parametersCount = psiMethod.getParameterList().getParametersCount();
+    PsiParameter varargParameter = psiMethod.getParameterList().getParameters()[parametersCount - 1];
+    PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
+    if (isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
+      return false;
+    }
 
-            if (expression instanceof PsiMethodReferenceExpression) return true;
+    if (expression instanceof PsiMethodReferenceExpression) return true;
 
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiCall) {
-              final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
-              if (argumentList != null) {
-                final PsiExpression[] args = argumentList.getExpressions();
-                if (args.length == parametersCount) {
-                  final PsiExpression lastArg = args[args.length - 1];
-                  if (lastArg.getType() instanceof PsiArrayType) {
-                    return false;
-                  }
-                }
-                for (int i = parametersCount - 1; i < args.length; i++) {
-                  if (!isReifiableType(resolveResult.getSubstitutor().substitute(args[i].getType()))) {
-                    return true;
-                  }
-                }
-                return args.length < parametersCount;
-              }
-            }
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiCall) {
+      final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
+      if (argumentList != null) {
+        final PsiExpression[] args = argumentList.getExpressions();
+        if (args.length == parametersCount) {
+          final PsiExpression lastArg = args[args.length - 1];
+          if (lastArg.getType() instanceof PsiArrayType) {
+            return false;
           }
         }
+        for (int i = parametersCount - 1; i < args.length; i++) {
+          if (!isReifiableType(resolveResult.getSubstitutor().substitute(args[i].getType()))) {
+            return true;
+          }
+        }
+        return args.length < parametersCount;
       }
     }
     return false;

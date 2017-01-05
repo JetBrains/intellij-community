@@ -63,6 +63,18 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     doTest(action);
   }
 
+  public void testRenamePackageStaticImportsToNestedClasses() throws Exception {
+    final PerformAction action = (rootDir, rootAfter) -> {
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+      final PsiPackage sourcePackage = psiFacade.findPackage("pack1.pack2");
+      assertNotNull(sourcePackage);
+
+      RenamePsiPackageProcessor.createRenameMoveProcessor("pack0.pack2", sourcePackage, false, false).run();
+      FileDocumentManager.getInstance().saveAllDocuments();
+    };
+    doTest(action);
+  }
+
   public void testMovePackageWithTxtFilesInside() throws Exception {
     doTest(createAction("pack1", "target"));
   }

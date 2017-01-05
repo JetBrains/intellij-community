@@ -205,7 +205,7 @@ public class PyCallExpressionHelper {
       }
     }
     final List<PyExpression> resolvedQualifiers = resolveResult != null ? resolveResult.getQualifiers() : null;
-    final List<PyExpression> qualifiers = resolvedQualifiers != null ? resolvedQualifiers : Collections.<PyExpression>emptyList();
+    final List<PyExpression> qualifiers = resolvedQualifiers != null ? resolvedQualifiers : Collections.emptyList();
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     if (resolved instanceof PyFunction) {
       final PyFunction function = (PyFunction)resolved;
@@ -267,7 +267,7 @@ public class PyCallExpressionHelper {
     QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
     final List<PyExpression> qualifiers = followed.getQualifiers();
     final PyExpression firstQualifier = qualifiers != null && !qualifiers.isEmpty() ? qualifiers.get(0) : null;
-    boolean isByInstance = isQualifiedByInstance(function, qualifiers != null ? qualifiers : Collections.<PyExpression>emptyList(),
+    boolean isByInstance = isQualifiedByInstance(function, qualifiers != null ? qualifiers : Collections.emptyList(),
                                                  resolveContext.getTypeEvalContext());
     final boolean isConstructorCall = isConstructorName(function.getName()) &&
                                       (!callReference.isQualified() || !isConstructorName(callReference.getName()));
@@ -539,14 +539,20 @@ public class PyCallExpressionHelper {
     }
     if (init != null) {
       final PyType t = init.getCallType(context, call);
-      if (cls != null) {
-        if (init.getContainingClass() != cls) {
-          if (t instanceof PyCollectionType) {
-            final List<PyType> elementTypes = ((PyCollectionType)t).getElementTypes(context);
-            return Ref.create(new PyCollectionTypeImpl(cls, false, elementTypes));
-          }
-          return Ref.create(new PyClassTypeImpl(cls, false));
+      if (cls != null && cls != init.getContainingClass()) {
+        if (t instanceof PyTupleType) {
+          final PyTupleType tupleType = (PyTupleType)t;
+          final PyTupleType newTupleType = new PyTupleType(cls, tupleType.getElementTypes(context), tupleType.isHomogeneous());
+
+          return Ref.create(newTupleType);
         }
+
+        if (t instanceof PyCollectionType) {
+          final List<PyType> elementTypes = ((PyCollectionType)t).getElementTypes(context);
+          return Ref.create(new PyCollectionTypeImpl(cls, false, elementTypes));
+        }
+
+        return Ref.create(new PyClassTypeImpl(cls, false));
       }
       if (t != null && !(t instanceof PyNoneType)) {
         return Ref.create(t);
@@ -680,10 +686,10 @@ public class PyCallExpressionHelper {
     final PyCallExpression.PyMarkedCallee markedCallee = callExpression.resolveCallee(resolveContext, implicitOffset);
 
     if (markedCallee == null || argumentList == null) {
-      return new PyCallExpression.PyArgumentsMapping(callExpression, null, Collections.<PyExpression, PyNamedParameter>emptyMap(),
-                                                     Collections.<PyParameter>emptyList(), Collections.<PyExpression>emptyList(),
-                                                     Collections.<PyNamedParameter>emptyList(), Collections.<PyNamedParameter>emptyList(),
-                                                     Collections.<PyExpression, PyTupleParameter>emptyMap());
+      return new PyCallExpression.PyArgumentsMapping(callExpression, null, Collections.emptyMap(),
+                                                     Collections.emptyList(), Collections.emptyList(),
+                                                     Collections.emptyList(), Collections.emptyList(),
+                                                     Collections.emptyMap());
     }
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);

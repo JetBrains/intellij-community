@@ -22,6 +22,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -174,7 +175,11 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       LOG.error(e);
     }
 
+    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      if (applicationInfo.isEssentialPlugin(plugin.getPluginId().getIdString())) {
+        continue;
+      }
       final String pluginName = plugin.getName();
       final Set<String> words = getProcessedWordsWithoutStemming(pluginName);
       final String description = plugin.getDescription();

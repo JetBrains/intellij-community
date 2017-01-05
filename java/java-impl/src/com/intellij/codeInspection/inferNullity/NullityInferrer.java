@@ -17,7 +17,6 @@ package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -182,7 +181,7 @@ public class NullityInferrer {
   private static void invoke(final Project project,
                              final PsiModifierListOwner element,
                              final String fqn, final String toRemove) {
-    WriteCommandAction.runWriteCommandAction(project, () -> new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile()));
+    new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
   }
 
   public int getCount() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.ui.UI;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,6 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -46,7 +46,7 @@ public class LinkLabel<T> extends JLabel {
   private LinkListener<T> myLinkListener;
   private T myLinkData;
 
-  private static final Set<String> ourVisitedLinks = new HashSet<>();
+  private static final Set<String> ourVisitedLinks = new THashSet<>();
 
   private boolean myIsLinkActive;
 
@@ -67,6 +67,16 @@ public class LinkLabel<T> extends JLabel {
 
   public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
+  }
+
+  @NotNull
+  public static LinkLabel<?> create(@Nullable String text, @Nullable Runnable action) {
+    return new LinkLabel<>(text, null, action == null ? null : new LinkListener<Object>() {
+      @Override
+      public void linkSelected(LinkLabel source, Object linkData) {
+        action.run();
+      }
+    }, null, null);
   }
 
   public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
@@ -142,8 +152,12 @@ public class LinkLabel<T> extends JLabel {
 
     try {
       myClickIsBeingProcessed = true;
-      if (myLinkListener != null) myLinkListener.linkSelected(this, myLinkData);
-      ourVisitedLinks.add(myVisitedLinksKey);
+      if (myLinkListener != null) {
+        myLinkListener.linkSelected(this, myLinkData);
+      }
+      if (myVisitedLinksKey != null) {
+        ourVisitedLinks.add(myVisitedLinksKey);
+      }
       repaint();
     }
     finally {
@@ -222,7 +236,6 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected void onSetActive(boolean active) {
-
   }
 
   private final JBRectangle iconR = new JBRectangle();

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
  */
 class LiteralConstructorUsagesTest extends LightGroovyTestCase {
 
-  public void testList_AsCast() throws Exception {
+  void testList_AsCast() throws Exception {
     def foo = myFixture.addClass("""class Foo {
     Foo() {}
     }
@@ -33,7 +33,7 @@ class LiteralConstructorUsagesTest extends LightGroovyTestCase {
     assertOneElement(ReferencesSearch.search(foo.constructors[0]).findAll())
   }
 
-  public void testMap_AsCast() throws Exception {
+  void testMap_AsCast() throws Exception {
     def foo = myFixture.addClass("""class Foo {
     Foo() {}
     }

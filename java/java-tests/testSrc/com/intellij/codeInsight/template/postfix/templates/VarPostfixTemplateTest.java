@@ -34,4 +34,8 @@ public class VarPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testAdd() {
     doTest();
   }
+
+  public void testAnonymous() {
+    doTest();
+  }
 }

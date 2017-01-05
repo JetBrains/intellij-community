@@ -330,9 +330,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       EditorOptions editorOptions = options.getEditorOptions();
       ZoomOptions zoomOptions = editorOptions.getZoomOptions();
       if (zoomOptions.isWheelZooming() && e.isControlDown()) {
-        if (e.getWheelRotation() < 0) {
+        int rotation = e.getWheelRotation();
+        if (rotation < 0) {
           zoomModel.zoomOut();
-        } else {
+        }
+        else if (rotation > 0) {
           zoomModel.zoomIn();
         }
         e.consume();

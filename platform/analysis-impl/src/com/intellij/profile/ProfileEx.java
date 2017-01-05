@@ -15,10 +15,9 @@
  */
 package com.intellij.profile;
 
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerKt;
+import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,23 +25,15 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 01-Dec-2005
  */
-public abstract class ProfileEx implements Profile {
+public abstract class ProfileEx implements Comparable, ExternalizableScheme {
   public static final String SCOPE = "scope";
   public static final String NAME = "name";
+  public static final String PROFILE = "profile";
 
   private final SmartSerializer mySerializer;
 
   @NotNull
   protected String myName;
-
-  @SuppressWarnings("unused")
-  @OptionTag("myLocal")
-  // exists only to preserve compatibility
-  private boolean myLocal;
-
-  protected ProfileManager myProfileManager;
-
-  private boolean myIsProjectLevel;
 
   public ProfileEx(@NotNull String name) {
     this(name, SmartSerializer.skipEmptySerializer());
@@ -62,45 +53,16 @@ public abstract class ProfileEx implements Profile {
   }
 
   @Override
-  @Transient
-  public boolean isProjectLevel() {
-    return myIsProjectLevel;
-  }
-
-  @Override
-  public void setProjectLevel(boolean isProjectLevel) {
-    myIsProjectLevel = isProjectLevel;
-  }
-
-  @Override
   public void setName(@NotNull String name) {
     myName = name;
   }
 
-  @Override
-  @NotNull
-  @Transient
-  public ProfileManager getProfileManager() {
-    return myProfileManager;
-  }
-
-  @Override
-  public void setProfileManager(@NotNull ProfileManager profileManager) {
-    myProfileManager = profileManager;
-  }
-
-  @Override
   public void readExternal(Element element) {
     mySerializer.readExternal(this, element);
   }
 
-  public void serializeInto(@NotNull Element element, boolean preserveCompatibility) {
-    mySerializer.writeExternal(this, element, preserveCompatibility);
-  }
-
-  @Override
-  public final void writeExternal(Element element) {
-    serializeInto(element, true);
+  public void writeExternal(@NotNull Element element) {
+    mySerializer.writeExternal(this, element, false);
   }
 
   public boolean equals(Object o) {
@@ -113,21 +75,24 @@ public abstract class ProfileEx implements Profile {
 
   @Override
   public int compareTo(@NotNull Object o) {
-    if (o instanceof Profile) {
-      return getName().compareToIgnoreCase(((Profile)o).getName());
+    if (o instanceof ProfileEx) {
+      return getName().compareToIgnoreCase(((ProfileEx)o).getName());
     }
     return 0;
   }
 
-  @Override
-  public final void copyFrom(@NotNull Profile profile) {
-    readExternal(serializeProfile(profile));
+  public final void copyFrom(@NotNull ProfileEx profile) {
+    Element element = profile.writeScheme();
+    if (element.getName().equals("component")) {
+      element = element.getChild("profile");
+    }
+    readExternal(element);
   }
 
   @NotNull
-  public static Element serializeProfile(@NotNull Profile profile) {
-    Element result = new Element(ProjectInspectionProfileManagerKt.PROFILE);
-    profile.writeExternal(result);
-    return result;
+  public Element writeScheme() {
+    Element element = new Element(PROFILE);
+    writeExternal(element);
+    return element;
   }
 }

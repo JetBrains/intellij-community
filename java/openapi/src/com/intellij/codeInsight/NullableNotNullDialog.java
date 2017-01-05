@@ -27,6 +27,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class NullableNotNullDialog extends DialogWrapper {
       new AnnotationsPanel("Nullable", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
     splitter.setFirstComponent(myNullablePanel.getComponent());
     myNotNullPanel =
-      new AnnotationsPanel("NotNull", manager.getDefaultNotNull(), manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS);
+      new AnnotationsPanel("NotNull", manager.getDefaultNotNull(), manager.getNotNulls(), ArrayUtil.toStringArray(manager.getPredefinedNotNulls()));
     splitter.setSecondComponent(myNotNullPanel.getComponent());
     splitter.setHonorComponentsMinimumSize(true);
     splitter.setPreferredSize(JBUI.size(300, 400));

@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentation
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
 

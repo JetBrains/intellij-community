@@ -79,9 +79,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     }
     myInplaceEditorComponent = null;
     onHidden();
-    for (Runnable action : myRemoveActions) {
-      action.run();
-    }
+    myRemoveActions.forEach(Runnable::run);
     myRemoveActions.clear();
 
     Disposer.dispose(myDisposable);
@@ -97,10 +95,8 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   protected abstract Project getProject();
 
   private static void setInplaceEditorBounds(JComponent component, int x, int y, int width, int height) {
-    int preferredHeight = component.getPreferredSize().height;
-    int h = Math.max(height, preferredHeight);
-    int delta = Math.max(0, h - height) / 2;
-    component.setBounds(x, y - delta, width, Math.max(height, preferredHeight));
+    int h = Math.max(height, component.getPreferredSize().height);
+    component.setBounds(x, y - (h - height) / 2, width, h);
   }
 
   public final void show() {
@@ -271,7 +267,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   }
 
   @Nullable
-  private Rectangle getEditorBounds() {
+  protected Rectangle getEditorBounds() {
     final JTree tree = getTree();
     Rectangle bounds = tree.getVisibleRect();
     Rectangle nodeBounds = tree.getPathBounds(getNodePath());

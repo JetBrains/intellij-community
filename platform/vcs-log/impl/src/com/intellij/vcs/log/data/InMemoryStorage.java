@@ -20,16 +20,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.BiDirectionalEnumerator;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsRef;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.containers.ContainerUtil.canonicalStrategy;
+
 public class InMemoryStorage implements VcsLogStorage {
-  private final BiDirectionalEnumerator<CommitId> myCommitIdEnumerator =
-    new BiDirectionalEnumerator<>(1, TObjectHashingStrategy.CANONICAL);
-  private final BiDirectionalEnumerator<VcsRef> myRefsEnumerator = new BiDirectionalEnumerator<>(1, TObjectHashingStrategy.CANONICAL);
+  private final BiDirectionalEnumerator<CommitId> myCommitIdEnumerator = new BiDirectionalEnumerator<>(1, canonicalStrategy());
+  private final BiDirectionalEnumerator<VcsRef> myRefsEnumerator = new BiDirectionalEnumerator<>(1, canonicalStrategy());
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {

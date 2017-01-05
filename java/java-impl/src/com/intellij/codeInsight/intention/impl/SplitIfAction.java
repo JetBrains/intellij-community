@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -62,26 +61,19 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    try {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+    PsiJavaToken token = (PsiJavaToken)element;
+    LOG.assertTrue(token.getTokenType() == JavaTokenType.ANDAND || token.getTokenType() == JavaTokenType.OROR);
 
-      PsiJavaToken token = (PsiJavaToken)element;
-      LOG.assertTrue(token.getTokenType() == JavaTokenType.ANDAND || token.getTokenType() == JavaTokenType.OROR);
+    PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();
+    PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
 
-      PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();
-      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
+    LOG.assertTrue(PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false));
 
-      LOG.assertTrue(PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false));
-
-      if (token.getTokenType() == JavaTokenType.ANDAND) {
-        doAndSplit(ifStatement, expression, token, editor);
-      }
-      else if (token.getTokenType() == JavaTokenType.OROR) {
-        doOrSplit(ifStatement, expression, token, editor);
-      }
+    if (token.getTokenType() == JavaTokenType.ANDAND) {
+      doAndSplit(ifStatement, expression, token, editor);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    else if (token.getTokenType() == JavaTokenType.OROR) {
+      doOrSplit(ifStatement, expression, token, editor);
     }
   }
 

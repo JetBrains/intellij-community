@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ public abstract class PyStringLiteralReference extends BaseReference {
   @SuppressWarnings("RefusedBequest") // 1 instead of 1 in range and "-1" at the end because we do not need quotes
   @Override
   public final TextRange getRangeInElement() {
-    return PythonStringUtil.getTextRange(myElement);
+    return PyStringLiteralUtil.getTextRange(myElement);
   }
 
   @Override

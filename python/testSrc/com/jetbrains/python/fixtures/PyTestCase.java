@@ -60,6 +60,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -127,6 +128,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture.setUp();
 
     myFixture.setTestDataPath(getTestDataPath());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   /**

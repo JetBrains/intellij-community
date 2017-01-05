@@ -88,7 +88,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
   @Tag("console-settings")
   public static class PyConsoleSettings implements PythonRunParams {
-    public String myCustomStartScript = PydevConsoleRunner.CONSOLE_START_COMMAND;
+    public String myCustomStartScript = PydevConsoleRunnerImpl.CONSOLE_START_COMMAND;
     public String mySdkHome = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;

@@ -18,10 +18,7 @@ package org.jetbrains.idea.devkit.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
@@ -54,12 +51,10 @@ public class ShuffleNamesAction extends AnAction {
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
     Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
-      shuffleIds(file, editor);
+      WriteAction.run(() -> shuffleIds(file, editor));
     }
     finally {
-      token.finish();
       commandProcessor.finishCommand(project, commandToken, null);
     }
   }

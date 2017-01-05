@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -149,6 +150,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return result;
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     if (myCvsRevision != null) {
       return new CvsRevisionNumber(myCvsRevision.getNumber());

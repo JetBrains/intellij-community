@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.completion
 
-import com.intellij.JavaTestUtil;
+import com.intellij.JavaTestUtil
 
 /**
  * @author peter
@@ -23,23 +23,23 @@ import com.intellij.JavaTestUtil;
 class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
   }
   
-  void testCastInstanceofedQualifier() { doTest(); }
-  void testCastInstanceofedQualifierInForeach() { doTest(); }
-  void testCastComplexInstanceofedQualifier() { doTest(); }
-  void _testCastIncompleteInstanceofedQualifier() { doTest(); }
+  void testCastInstanceofedQualifier() { doTest() }
+  void testCastInstanceofedQualifierInForeach() { doTest() }
+  void testCastComplexInstanceofedQualifier() { doTest() }
+  void _testCastIncompleteInstanceofedQualifier() { doTest() }
 
   void testCastTooComplexInstanceofedQualifier() { doAntiTest() }
   
-  void testDontCastInstanceofedQualifier() { doTest(); }
-  void testDontCastPartiallyInstanceofedQualifier() { doAntiTest(); }
-  void testQualifierCastingWithUnknownAssignments() { doTest(); }
-  void testQualifierCastingBeforeLt() { doTest(); }
-  void testCastQualifierForPrivateFieldReference() { doTest(); }
-  void testOrAssignmentDfa() { doTest(); }
-  void testFieldWithCastingCaret() { doTest(); }
+  void testDontCastInstanceofedQualifier() { doTest() }
+  void testDontCastPartiallyInstanceofedQualifier() { doAntiTest() }
+  void testQualifierCastingWithUnknownAssignments() { doTest() }
+  void testQualifierCastingBeforeLt() { doTest() }
+  void testCastQualifierForPrivateFieldReference() { doTest() }
+  void testOrAssignmentDfa() { doTest() }
+  void testFieldWithCastingCaret() { doTest() }
 
   void testCastTwice() {
     configureByTestName()
@@ -68,7 +68,8 @@ public class FooImpl extends Foo {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testCastInstanceofedQualifierInLambda() { doTest() }
-  public void testCastInstanceofedQualifierInLambda2() { doTest() }
+  void testCastInstanceofedQualifierInLambda() { doTest() }
+
+  void testCastInstanceofedQualifierInLambda2() { doTest() }
 
 }

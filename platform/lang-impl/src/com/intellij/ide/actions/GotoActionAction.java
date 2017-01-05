@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                @NotNull final GotoActionModel model,
                                                String initialText,
                                                int initialIndex,
-                                               final Component component, 
+                                               final Component component,
                                                final AnActionEvent e) {
     ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
@@ -152,7 +153,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       @NotNull
       @Override
       protected Set<Object> filter(@NotNull Set<Object> elements) {
-        return super.filter(model.sort(elements));
+        return super.filter(model.sortItems(elements));
       }
 
       @Override
@@ -207,7 +208,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     });
 
     CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-    
+
     new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -267,7 +268,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
     }
     else {
-      performAction(element, component, e);
+      ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+        () -> performAction(element, component, e)));
     }
   }
 
@@ -291,7 +293,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-              event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, callback, -1);
+              event.getPresentation().getText(), (ActionGroup)action, context, false, callback, -1);
             Window window = SwingUtilities.getWindowAncestor(component);
             if (window != null) {
               popup.showInCenterOf(window);

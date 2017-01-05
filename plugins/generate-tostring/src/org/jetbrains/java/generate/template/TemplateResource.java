@@ -156,7 +156,7 @@ public class TemplateResource implements Serializable {
   /**
    * Gets the method signature
    * <p/>
-   * <code>public String toString()</code>
+   * {@code public String toString()}
    */
   public String getMethodSignature() {
     return getMethodSignature(template);

@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <id>com.intellij</id>
 

@@ -27,6 +27,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +42,11 @@ import java.util.Map;
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
 
-  private boolean myShowOnlyIncomplete;
-  private final PropertiesAnchorizer myAnchorizer;
+  private volatile boolean myShowOnlyIncomplete;
+  private final Map<String, ResourceBundlePropertyStructureViewElement> myElements = ContainerUtil.newLinkedHashMap();
 
-  public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle, PropertiesAnchorizer anchorizer) {
+  public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle) {
     myResourceBundle = resourceBundle;
-    myAnchorizer = anchorizer;
   }
 
   public void setShowOnlyIncomplete(boolean showOnlyIncomplete) {
@@ -64,15 +63,33 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   }
 
   @NotNull
-  public StructureViewTreeElement[] getChildren() {
+  public synchronized StructureViewTreeElement[] getChildren() {
     final MultiMap<String, IProperty> propertyNames = getPropertiesMap(myResourceBundle, myShowOnlyIncomplete);
-    List<StructureViewTreeElement> result = new ArrayList<>(propertyNames.size());
+
+    final HashSet<String> remains = new HashSet<>(myElements.keySet());
     for (Map.Entry<String, Collection<IProperty>> entry : propertyNames.entrySet()) {
-      final Collection<IProperty> properties = entry.getValue();
-      final PropertiesAnchorizer.PropertyAnchor anchor = myAnchorizer.createOrUpdate(properties);
-      result.add(new ResourceBundlePropertyStructureViewElement(anchor));
+      final String propKey = entry.getKey();
+      Collection<IProperty> properties = entry.getValue();
+      final ResourceBundlePropertyStructureViewElement oldPropertyNode = myElements.get(propKey);
+      if (oldPropertyNode != null && properties.contains(oldPropertyNode.getProperty())) {
+        remains.remove(propKey);
+        continue;
+      }
+      final IProperty representative = properties.iterator().next();
+      final ResourceBundlePropertyStructureViewElement node = new ResourceBundlePropertyStructureViewElement(representative);
+      myElements.put(propKey, node);
     }
-    return result.toArray(new StructureViewTreeElement[result.size()]);
+
+    for (String remain : remains) {
+      myElements.remove(remain);
+    }
+
+    StructureViewTreeElement[] result = new StructureViewTreeElement[propertyNames.size()];
+    int i = 0;
+    for (String key : propertyNames.keySet()) {
+      result[i++] = myElements.get(key);
+    }
+    return result;
   }
 
   public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {

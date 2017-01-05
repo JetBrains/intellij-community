@@ -71,11 +71,6 @@ public class ConvertAnnotationInspection extends BaseJavaLocalInspectionTool {
     private static final Logger LOG = Logger.getInstance("#" + ConvertAnnotationQuickFix.class.getName());
 
     @NotNull
-    public String getName() {
-      return DISPLAY_NAME;
-    }
-
-    @NotNull
     public String getFamilyName() {
       return DISPLAY_NAME;
     }

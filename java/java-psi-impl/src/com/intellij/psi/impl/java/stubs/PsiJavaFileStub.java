@@ -34,6 +34,5 @@ public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
   StubPsiFactory getPsiFactory();
 
   /** @deprecated override {@link #getPsiFactory()} instead (to be removed in IDEA 18) */
-  @SuppressWarnings("unused")
   void setPsiFactory(StubPsiFactory factory);
 }

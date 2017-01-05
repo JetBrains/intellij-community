@@ -30,8 +30,8 @@ public class ResponseProcessor<R extends AbstractResponse> {
   private Thread myThread;
   private final Alarm myTimeoutAlarm;
 
-  public ResponseProcessor(SocketConnection<?, R> connection) {
-    myTimeoutAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, connection);
+  public ResponseProcessor(@NotNull SocketConnection<?, R> connection) {
+    myTimeoutAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, connection);
   }
 
   public void startReading(final ResponseReader<R> reader) {

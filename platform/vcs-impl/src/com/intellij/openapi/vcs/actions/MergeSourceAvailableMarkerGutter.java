@@ -18,7 +18,10 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Consumer;
 
@@ -33,10 +36,9 @@ class MergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements 
   private boolean myTurnedOn;
 
   MergeSourceAvailableMarkerGutter(FileAnnotation annotation,
-                                   LineAnnotationAspect aspect,
                                    TextAnnotationPresentation highlighting,
                                    Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
-    super(annotation, aspect, highlighting, colorScheme);
+    super(annotation, highlighting, colorScheme);
   }
 
   @Override

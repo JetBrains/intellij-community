@@ -31,8 +31,8 @@ public class JUnitForkedSplitter extends ForkedSplitter {
 
   private IdeaTestRunner myTestRunner;
 
-  public JUnitForkedSplitter(String workingDirsPath, String forkMode, PrintStream out, PrintStream err, List newArgs) {
-    super(workingDirsPath, forkMode, out, err, newArgs);
+  public JUnitForkedSplitter(String workingDirsPath, String forkMode, List newArgs) {
+    super(workingDirsPath, forkMode, newArgs);
   }
 
 

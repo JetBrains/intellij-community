@@ -182,6 +182,11 @@ public class TestCaseLoader {
   private static final List<String> ourRankList = getTeamCityRankList();
 
   private static List<String> getTeamCityRankList() {
+    if (TestAll.isPerformanceTestsRun()) {
+      // let performance test order be stable to decrease the variation in their timings
+      return Collections.emptyList();
+    }
+
     String filePath = System.getProperty("teamcity.tests.recentlyFailedTests.file", null);
     if (filePath != null) {
       try {

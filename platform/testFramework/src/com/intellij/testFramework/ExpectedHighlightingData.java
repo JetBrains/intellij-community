@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -40,7 +41,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ConstantFunction;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -143,8 +143,6 @@ public class ExpectedHighlightingData {
     }
     registerHighlightingType(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));
     registerHighlightingType(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, false));
-
-    initAdditionalHighlightingTypes();
   }
 
   public void init() {
@@ -248,6 +246,7 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+effecttype=\"([A-Z]+)\")?" +
                                 "(?:\\s+fonttype=\"([0-9]+)\")?" +
                                 "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\\\])*)\")?" +
+                                "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
     final Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
@@ -272,6 +271,7 @@ public class ExpectedHighlightingData {
     final String effectType = matcher.group(groupIdx++);
     final String fontType = matcher.group(groupIdx++);
     final String attrKey = matcher.group(groupIdx++);
+    final String bundleMessage = matcher.group(groupIdx++);
     final boolean closed = matcher.group(groupIdx) != null;
 
     if (descr == null) {
@@ -337,6 +337,11 @@ public class ExpectedHighlightingData {
 
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
+      if (bundleMessage != null) {
+        final List<String> split = StringUtil.split(bundleMessage, "|");
+        final ResourceBundle bundle = ResourceBundle.getBundle(split.get(0));
+        descr = CommonBundle.message(bundle, split.get(1), split.stream().skip(2).toArray());
+      }
       if (descr != null) { builder.description(descr); builder.unescapedToolTip(descr); }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();
@@ -611,11 +616,4 @@ public class ExpectedHighlightingData {
     return String.format("(%d:%d..%d:%d)", startLine + 1, endLine + 1, startCol + 1, endCol + 1);
   }
 
-  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  protected final Map<String, ExpectedHighlightingSet> highlightingTypes = myHighlightingTypes;
-
-  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  protected void initAdditionalHighlightingTypes() { }
 }

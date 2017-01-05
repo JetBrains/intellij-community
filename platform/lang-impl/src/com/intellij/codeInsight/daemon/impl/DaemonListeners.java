@@ -21,6 +21,10 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetManagerAdapter;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.PowerSaveMode;
@@ -38,7 +42,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
@@ -52,11 +55,12 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,10 +71,8 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -125,8 +127,7 @@ public class DaemonListeners implements Disposable {
                          @NotNull CommandProcessor commandProcessor,
                          @NotNull EditorColorsManager editorColorsManager,
                          @NotNull final Application application,
-                         @NotNull InspectionProfileManager inspectionProfileManager,
-                         @NotNull InspectionProjectProfileManager inspectionProjectProfileManager,
+                         @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
                          @NotNull ActionManagerEx actionManagerEx,
                          @NotNull VirtualFileManager virtualFileManager,
@@ -159,9 +160,9 @@ public class DaemonListeners implements Disposable {
     MessageBus messageBus = myProject.getMessageBus();
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
     if (project.isDefault()) return;
-    MessageBusConnection connection = messageBus.connect();
+    MessageBusConnection connection = messageBus.connect(this);
 
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         stopDaemon(false, "App closing");
@@ -172,7 +173,6 @@ public class DaemonListeners implements Disposable {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(final DocumentEvent e) {
-        if (isUnderIgnoredAction(null)) return;
         Document document = e.getDocument();
         VirtualFile virtualFile = fileDocumentManager.getFile(document);
         Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
@@ -258,7 +258,7 @@ public class DaemonListeners implements Disposable {
     Disposer.register(this, changeHandler);
     psiManager.addPsiTreeChangeListener(changeHandler, changeHandler);
 
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
@@ -278,13 +278,10 @@ public class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
-
-    editorColorsManager.addEditorColorsListener(scheme -> stopDaemonAndRestartAllFiles("Global color scheme changed"), this);
+    connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
 
     commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
-    editorColorsManager.addEditorColorsListener(new MyEditorColorsListener(), this);
-    inspectionProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
@@ -325,8 +322,8 @@ public class DaemonListeners implements Disposable {
 
     ModalityStateListener modalityStateListener = entering -> {
       // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
-      boolean inModalContext = LaterInvocator.isInModalContext();
-      stopDaemon(inModalContext, "Modality change. Was modal: "+inModalContext);
+      boolean inModalContext = Registry.is("ide.perProjectModality") || LaterInvocator.isInModalContext();
+      stopDaemon(inModalContext, "Modality change. Was modal: " + inModalContext);
       myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
@@ -342,12 +339,28 @@ public class DaemonListeners implements Disposable {
         }
       });
     }
-  }
 
-  static boolean isUnderIgnoredAction(@Nullable Object action) {
-    return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
-           action == DocumentRunnable.IgnoreDocumentRunnable.class ||
-           ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
+    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
+      @Override
+      public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
+        stopDaemonAndRestartAllFiles("facet renamed: " + oldName + " -> " + facet.getName());
+      }
+
+      @Override
+      public void facetAdded(@NotNull Facet facet) {
+        stopDaemonAndRestartAllFiles("facet added: " + facet.getName());
+      }
+
+      @Override
+      public void facetRemoved(@NotNull Facet facet) {
+        stopDaemonAndRestartAllFiles("facet removed: " + facet.getName());
+      }
+
+      @Override
+      public void facetConfigurationChanged(@NotNull Facet facet) {
+        stopDaemonAndRestartAllFiles("facet changed: " + facet.getName());
+      }
+    });
   }
 
   private boolean worthBothering(final Document document, Project project) {
@@ -428,7 +441,6 @@ public class DaemonListeners implements Disposable {
     @Override
     public void commandStarted(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (isUnderIgnoredAction(null)) return;
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
@@ -457,7 +469,6 @@ public class DaemonListeners implements Disposable {
     @Override
     public void commandFinished(CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
-      if (isUnderIgnoredAction(null)) return;
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
       if (myEscPressed) {
@@ -475,14 +486,6 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyEditorColorsListener implements EditorColorsListener {
-    @Override
-    public void globalSchemeChange(EditorColorsScheme scheme) {
-      TodoConfiguration.getInstance().colorSettingsChanged();
-      stopDaemonAndRestartAllFiles("Editor color scheme changed");
-    }
-  }
-
   private class MyTodoListener implements PropertyChangeListener {
     @Override
     public void propertyChange(@NotNull PropertyChangeEvent evt) {
@@ -494,33 +497,30 @@ public class DaemonListeners implements Disposable {
 
   private class MyProfileChangeListener implements ProfileChangeAdapter {
     @Override
-    public void profileChanged(Profile profile) {
+    public void profileChanged(InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile changed");
     }
 
     @Override
-    public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
+    public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile activated");
     }
 
     @Override
     public void profilesInitialized() {
-      inspectionProfilesInitialized();
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (myProject.isDisposed()) return;
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
+        statusBar.addWidget(myTogglePopupHintsPanel, myProject);
+        updateStatusBar();
+
+        stopDaemonAndRestartAllFiles("Inspection profiles activated");
+      });
     }
   }
 
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
-  private void inspectionProfilesInitialized() {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed()) return;
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
-      statusBar.addWidget(myTogglePopupHintsPanel, myProject);
-      updateStatusBar();
-
-      stopDaemonAndRestartAllFiles("Inspection profiles activated");
-    });
-  }
 
   public void updateStatusBar() {
     if (myTogglePopupHintsPanel != null) myTogglePopupHintsPanel.updateStatus();
@@ -603,13 +603,15 @@ public class DaemonListeners implements Disposable {
   }
 
   private void stopDaemon(boolean toRestartAlarm, @NonNls @NotNull String reason) {
-    myDaemonEventPublisher.daemonCancelEventOccurred(reason);
-    myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason);
+    if (myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason)) {
+      myDaemonEventPublisher.daemonCancelEventOccurred(reason);
+    }
   }
 
   private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
-    myDaemonEventPublisher.daemonCancelEventOccurred(reason);
-    myDaemonCodeAnalyzer.restart();
+    if (myDaemonCodeAnalyzer.doRestart()) {
+      myDaemonEventPublisher.daemonCancelEventOccurred(reason);
+    }
   }
 
   static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {

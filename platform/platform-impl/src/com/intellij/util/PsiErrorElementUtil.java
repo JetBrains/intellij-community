@@ -17,7 +17,6 @@ package com.intellij.util;
 
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -37,48 +37,44 @@ public class PsiErrorElementUtil {
 
   private PsiErrorElementUtil() {}
 
-  public static boolean hasErrors(@NotNull final Project project, @NotNull final VirtualFile virtualFile) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (project.isDisposed() || !virtualFile.isValid()) {
-          return false;
-        }
-        PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);
-        PsiFile psiFile = psiManager.getFileManager().findFile(virtualFile);
-        return psiFile != null && hasErrors(psiFile);
-      }
+  public static boolean hasErrors(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      if (project.isDisposed() || !virtualFile.isValid()) return false;
+
+      PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);
+      PsiFile psiFile = psiManager.getFileManager().findFile(virtualFile);
+      return psiFile != null && hasErrors(psiFile);
     });
   }
 
-  private static boolean hasErrors(@NotNull final PsiFile psiFile) {
+  private static boolean hasErrors(@NotNull PsiFile psiFile) {
     CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(psiFile.getProject());
     return cachedValuesManager.getCachedValue(
-      psiFile,
-      CONTAINS_ERROR_ELEMENT,
-      () -> {
-        boolean error = hasErrorElements(psiFile);
-        return CachedValueProvider.Result.create(error, psiFile);
-      },
+      psiFile, CONTAINS_ERROR_ELEMENT,
+      () -> CachedValueProvider.Result.create(hasErrorElements(psiFile), psiFile),
       false
     );
   }
 
-  private static boolean hasErrorElements(@NotNull final PsiElement element) {
-    if (element instanceof PsiErrorElement) {
-      HighlightErrorFilter[] errorFilters = Extensions.getExtensions(HighlightErrorFilter.EP_NAME, element.getProject());
-      for (HighlightErrorFilter errorFilter : errorFilters) {
-        if (!errorFilter.shouldHighlightErrorElement((PsiErrorElement)element)) {
-          return false;
-        }
+  private static boolean hasErrorElements(@NotNull PsiElement element) {
+    HighlightErrorFilter[] filters = null;
+    for (PsiErrorElement error : SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class)) {
+      if (filters == null) {
+        filters = HighlightErrorFilter.EP_NAME.getExtensions(element.getProject());
       }
-      return true;
-    }
-    for (PsiElement child : element.getChildren()) {
-      if (hasErrorElements(child)) {
+      if (shouldHighlightErrorElement(error, filters)) {
         return true;
       }
     }
     return false;
+  }
+
+  private static boolean shouldHighlightErrorElement(@NotNull PsiErrorElement error, @NotNull HighlightErrorFilter[] filters) {
+    for (HighlightErrorFilter filter : filters) {
+      if (!filter.shouldHighlightErrorElement(error)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

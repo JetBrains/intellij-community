@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.*;
@@ -33,15 +32,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -50,23 +50,13 @@ import java.util.List;
 public class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CommandLineProcessor");
 
-  private CommandLineProcessor() {
-  }
-
-  public static void openFileOrProject(final String name) {
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      if (name != null) {
-        doOpenFileOrProject(name);
-      }
-    });
-  }
+  private CommandLineProcessor() { }
 
   @Nullable
   private static Project doOpenFileOrProject(String name) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(name);
     if (virtualFile == null) {
-      Messages.showErrorDialog("Cannot find file '" + name + "'", "Cannot find file");
+      Messages.showErrorDialog("Cannot find file '" + name + "'", "Cannot Find File");
       return null;
     }
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
@@ -74,40 +64,39 @@ public class CommandLineProcessor {
       // HACK: PlatformProjectOpenProcessor agrees to open anything
       provider = null;
     }
-    if (provider != null ||
-        name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        new File(name, Project.DIRECTORY_STORE_FOLDER).exists()) {
+    if (provider != null || ProjectKt.isValidProjectPath(name)) {
       final Project result = ProjectUtil.openOrImport(name, null, true);
       if (result == null) {
-        Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot open project");
+        Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot Open Project");
       }
       return result;
     }
     else {
-      return doOpenFile(virtualFile, -1);
+      return doOpenFile(virtualFile, -1, false);
     }
   }
 
   @Nullable
-  private static Project doOpenFile(VirtualFile virtualFile, int line) {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    if (projects.length == 0) {
-      final PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+  private static Project doOpenFile(VirtualFile file, int line, boolean tempProject) {
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 0 || tempProject) {
+      PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
       if (processor != null) {
-        return PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+        EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+        if (tempProject) {
+          options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
+          options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+        }
+        return PlatformProjectOpenProcessor.doOpenProject(file, null, line, null, options);
       }
-      Messages.showErrorDialog("No project found to open file in", "Cannot open file");
+      Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       return null;
     }
     else {
-      NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
-      Project project = findBestProject(virtualFile, projects);
-      if (line == -1) {
-        new OpenFileDescriptor(project, virtualFile).navigate(true);
-      }
-      else {
-        new OpenFileDescriptor(project, virtualFile, line-1, 0).navigate(true);
-      }
+      NonProjectFileWritingAccessProvider.allowWriting(file);
+      Project project = findBestProject(file, projects);
+      OpenFileDescriptor descriptor = line == -1 ? new OpenFileDescriptor(project, file) : new OpenFileDescriptor(project, file, line-1, 0);
+      descriptor.navigate(true);
       return project;
     }
   }
@@ -151,7 +140,7 @@ public class CommandLineProcessor {
         try {
           final String url = URLDecoder.decode(command, "UTF-8");
           JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-          ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand(), ModalityState.any());
+          ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
         }
         catch (UnsupportedEncodingException e) {
           LOG.error(e);
@@ -163,11 +152,14 @@ public class CommandLineProcessor {
 
     Project lastOpenedProject = null;
     int line = -1;
+    boolean tempProject = false;
+
     for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
       String arg = args.get(i);
       if (arg.equals(StartupUtil.NO_SPLASH)) {
         continue;
       }
+
       if (arg.equals("-l") || arg.equals("--line")) {
         //noinspection AssignmentToForLoopParameter
         i++;
@@ -180,27 +172,35 @@ public class CommandLineProcessor {
         catch (NumberFormatException e) {
           line = -1;
         }
+        continue;
       }
-      else {
-        if (StringUtil.isQuotedString(arg)) {
-          arg = StringUtil.stripQuotesAroundValue(arg);
-        }
-        if (!new File(arg).isAbsolute()) {
-          arg = currentDirectory != null ? new File(currentDirectory, arg).getAbsolutePath() : new File(arg).getAbsolutePath();
-        }
-        if (line != -1) {
-          final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
-          if (virtualFile != null) {
-            lastOpenedProject = doOpenFile(virtualFile, line);
-          }
-          else {
-            Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot find file");
-          }
+
+      if (arg.equals("--temp-project")) {
+        tempProject = true;
+        continue;
+      }
+
+      if (StringUtil.isQuotedString(arg)) {
+        arg = StringUtil.unquoteString(arg);
+      }
+      if (!new File(arg).isAbsolute()) {
+        arg = currentDirectory != null ? new File(currentDirectory, arg).getAbsolutePath() : new File(arg).getAbsolutePath();
+      }
+      if (line != -1 || tempProject) {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
+        if (virtualFile != null && !virtualFile.isDirectory()) {
+          lastOpenedProject = doOpenFile(virtualFile, line, tempProject);
         }
         else {
-          lastOpenedProject = doOpenFileOrProject(arg);
+          Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
         }
       }
+      else {
+        lastOpenedProject = doOpenFileOrProject(arg);
+      }
+
+      line = -1;
+      tempProject = false;
     }
     return lastOpenedProject;
   }

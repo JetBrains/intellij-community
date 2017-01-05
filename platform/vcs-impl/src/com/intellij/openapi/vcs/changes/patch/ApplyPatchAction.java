@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -58,6 +57,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +109,7 @@ public class ApplyPatchAction extends DumbAwareAction {
         public void consume(VirtualFile file) {
           final VirtualFile parent = file.getParent();
           if (parent != null) {
-            settings.PATCH_STORAGE_LOCATION = FileUtil.toSystemDependentName(parent.getPath());
+            settings.PATCH_STORAGE_LOCATION = parent.getPath();
           }
           showApplyPatch(project, file);
         }
@@ -241,9 +241,9 @@ public class ApplyPatchAction extends DumbAwareAction {
         @Override
         public boolean value(MergeTool.MergeViewer viewer) {
           int result = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
-                                                      "Would you like to (A)bort&Rollback applying patch action or (S)kip this file?",
-                                                      "Close Merge",
-                                                      "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
+                                                      XmlStringUtil.wrapInHtml(
+                                                        "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"),
+                                                      "Close Merge", "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
 
           if (result == Messages.YES) {
             applyPatchStatusReference.set(ApplyPatchStatus.ABORT);

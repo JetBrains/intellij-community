@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +116,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
       RefactoringUtil.fixJavadocsForParams(prototype, new HashSet<>(Arrays.asList(prototype.getParameterList().getParameters())));
-      TemplateBuilderImpl builder = new TemplateBuilderImpl(prototype);
+
 
       PsiCodeBlock body = prototype.getBody();
       final String callArgs =
@@ -135,29 +136,19 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       body.add(JavaPsiFacade.getElementFactory(project).createStatementFromText(methodCall + callArgs, method));
       body = (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body);
       final PsiStatement stmt = body.getStatements()[0];
-      PsiExpression expr = null;
+      final PsiExpression expr;
       if (stmt instanceof PsiReturnStatement) {
         expr = ((PsiReturnStatement)stmt).getReturnValue();
       } else if (stmt instanceof PsiExpressionStatement) {
         expr = ((PsiExpressionStatement)stmt).getExpression();
       }
+      else {
+        expr = null;
+      }
       if (expr instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression methodCallExp = (PsiMethodCallExpression)expr;
-        RangeMarker rangeMarker = editor.getDocument().createRangeMarker(prototype.getTextRange());
-        for (PsiParameter parameter : parameters) {
-          final PsiExpression exprToBeDefault =
-            methodCallExp.getArgumentList().getExpressions()[method.getParameterList().getParameterIndex(parameter)];
-          builder.replaceElement(exprToBeDefault, new TextExpression(""));
-        }
-        Template template = builder.buildTemplate();
-        editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
-
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-        editor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-
-        rangeMarker.dispose();
-
-        CreateFromUsageBaseFix.startTemplate(editor, template, project);
+        PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
+        PsiExpression[] toDefaults = ContainerUtil.map2Array(parameters, PsiExpression.class, (parameter -> args[method.getParameterList().getParameterIndex(parameter)]));
+        startTemplate(project, editor, toDefaults, prototype);
       }
     };
     if (startInWriteAction()) {
@@ -165,6 +156,26 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     } else {
       ApplicationManager.getApplication().runWriteAction(runnable);
     }
+  }
+
+  public static void startTemplate(@NotNull Project project,
+                                   Editor editor,
+                                   PsiExpression[] argsToBeDelegated,
+                                   PsiMethod delegateMethod) {
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(delegateMethod);
+    RangeMarker rangeMarker = editor.getDocument().createRangeMarker(delegateMethod.getTextRange());
+    for (final PsiExpression exprToBeDefault  : argsToBeDelegated) {
+      builder.replaceElement(exprToBeDefault, new TextExpression(""));
+    }
+    Template template = builder.buildTemplate();
+    editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    editor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+
+    rangeMarker.dispose();
+
+    CreateFromUsageBaseFix.startTemplate(editor, template, project);
   }
 
   @Nullable

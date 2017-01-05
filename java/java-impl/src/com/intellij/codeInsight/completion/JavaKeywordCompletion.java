@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,17 @@ public class JavaKeywordCompletion {
                   new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
                 )
               ),
-              new TextFilter("*/"),
+              new ElementFilter() {
+                @Override
+                public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+                  return ((PsiElement)element).getText().endsWith("*/");
+                }
+
+                @Override
+                public boolean isClassAcceptable(Class hintClass) {
+                  return true;
+                }
+              },
               new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
               new ClassFilter(OuterLanguageElement.class),
               new AndFilter(
@@ -129,12 +139,12 @@ public class JavaKeywordCompletion {
         not(START_SWITCH),
         not(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN));
 
-  private static final String[] PRIMITIVE_TYPES = new String[]{
+  static final Set<String> PRIMITIVE_TYPES = ContainerUtil.newLinkedHashSet(
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
     PsiKeyword.DOUBLE, PsiKeyword.LONG,
     PsiKeyword.INT, PsiKeyword.FLOAT,
     PsiKeyword.CHAR, PsiKeyword.BYTE
-  };
+  );
 
   private static final NotNullLazyValue<ElementFilter> CLASS_BODY = new AtomicNotNullLazyValue<ElementFilter>() {
     @NotNull
@@ -466,12 +476,6 @@ public class JavaKeywordCompletion {
     if (isSuitableForClass(position)) {
       for (String s : ModifierChooser.getKeywords(position)) {
         result.consume(new OverrideableSpace(createKeyword(position, s), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      }
-      if (PsiUtil.isLanguageLevel8OrHigher(position)) {
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class);
-        if (containingClass != null && containingClass.isInterface()) {
-          result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.HUMBLE_SPACE_BEFORE_WORD));
-        }
       }
 
       result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));

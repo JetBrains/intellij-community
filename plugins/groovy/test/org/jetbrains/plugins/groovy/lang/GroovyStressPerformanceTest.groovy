@@ -63,7 +63,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     } as ThrowableRunnable
   }
 
-  public void testDontWalkLongInferenceChain() throws Exception {
+  void testDontWalkLongInferenceChain() throws Exception {
     //RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     Map<Integer, PsiClass> classes = [:]
     myFixture.addFileToProject "Foo0.groovy", """class Foo0 {
@@ -101,7 +101,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
 
-  public void testQuickIncrementalReparse() {
+  void testQuickIncrementalReparse() {
     def story = '''scenario {
   given "some precondition", {
     // do something
@@ -129,7 +129,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     } as ThrowableRunnable).useLegacyScaling().assertTiming()
   }
 
-  public void testManyAnnotatedFields() {
+  void testManyAnnotatedFields() {
     String text = "class Foo {\n"
     for (i in 1..10) {
       text += "@Deprecated String foo$i\n"
@@ -143,7 +143,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
-  public void testDeeplyNestedClosures() {
+  void testDeeplyNestedClosures() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println 'hi'"
     String defs = ""
@@ -155,7 +155,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(defs + text, 10000)
   }
 
-  public void testDeeplyNestedClosuresInCompileStatic() {
+  void testDeeplyNestedClosuresInCompileStatic() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
 
     String text = "println 'hi'"
@@ -170,7 +170,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(defs + "\n @groovy.transform.CompileStatic def compiledStatically() {\ndef a = ''\n" + text + "\n}", 10000)
   }
 
-  public void testDeeplyNestedClosuresInGenericCalls() {
+  void testDeeplyNestedClosuresInGenericCalls() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
@@ -181,7 +181,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting("def <T> void foo(T t, Closure cl) {}\n$text", 10000)
   }
 
-  public void testDeeplyNestedClosuresInGenericCalls2() {
+  void testDeeplyNestedClosuresInGenericCalls2() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
@@ -191,17 +191,17 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n$text", 10000)
   }
 
-  public void testManyAnnotatedScriptVariables() {
+  void testManyAnnotatedScriptVariables() {
     measureHighlighting((0..100).collect { "@Anno String i$it = null" }.join("\n"), 10000)
   }
 
-  public void "test no recursion prevention when resolving supertype"() {
+  void "test no recursion prevention when resolving supertype"() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     myFixture.addClass("interface Bar {}")
     measureHighlighting("class Foo implements Bar {}", 200)
   }
 
-  public void "test no recursion prevention when contributing constructors"() {
+  void "test no recursion prevention when contributing constructors"() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     myFixture.addClass("interface Bar {}")
     def text = """
@@ -216,7 +216,7 @@ class Foo implements Bar {
     measureHighlighting(text, 200)
   }
 
-  public void "test using non-reassigned for loop parameters"() {
+  void "test using non-reassigned for loop parameters"() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     def text = """
 def foo(List<File> list) {
@@ -231,7 +231,7 @@ def bar(File file) { file.path }
     measureHighlighting(text, 2000)
   }
 
-  public void "test using SSA variables in a for loop"() {
+  void "test using SSA variables in a for loop"() {
     def text = """
 def foo(List<String> list, SomeClass sc) {
   List<String> result
@@ -258,7 +258,7 @@ class SomeClass {
     measureHighlighting(text, 8000)
   }
 
-  public void "test infer only the variable types that are needed"() {
+  void "test infer only the variable types that are needed"() {
     addGdsl '''contribute(currentType(String.name)) {
   println 'sleeping'
   Thread.sleep(1000)
@@ -277,7 +277,7 @@ while (true) {
     IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
-  public void testClosureRecursion() {
+  void testClosureRecursion() {
     def text = '''
 class AwsService {
     def grailsApplication
@@ -463,7 +463,7 @@ class AwsService {
   }
 
   @CompileStatic
-  public void "test performance of resolving methods with many siblings"() {
+  void "test performance of resolving methods with many siblings"() {
     int classMethodCount = 50000
     assert myFixture.addClass("""class Foo {
 ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
@@ -495,7 +495,7 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
   }
 
   @CompileStatic
-  public void testVeryLongDfaWithComplexGenerics() {
+  void testVeryLongDfaWithComplexGenerics() {
     def configure = { int i ->
       myFixture.configureByText "a${i}.groovy", """\
 class TroubleCase$i {

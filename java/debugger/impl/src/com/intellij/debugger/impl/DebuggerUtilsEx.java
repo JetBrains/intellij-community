@@ -25,6 +25,8 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -243,22 +245,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return false; //is array
     }
 
-    for (ClassFilter filter : classFilters) {
-      if (isFiltered(filter, qName)) {
-        return true;
-      }
-    }
-    return false;
+    return classFilters.stream().anyMatch(filter -> isFiltered(filter, qName));
   }
   
   public static int getEnabledNumber(ClassFilter[] classFilters) {
-    int res = 0;
-    for (ClassFilter filter : classFilters) {
-      if (filter.isEnabled()) {
-        res++;
-      }
-    }
-    return res;
+    return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
   }
 
   public static ClassFilter[] readFilters(List<Element> children) throws InvalidDataException {
@@ -465,11 +456,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         return defaultFactory;
       }
       else {
-        fileType = context.getContainingFile().getFileType();
+        PsiFile file = context.getContainingFile();
+        fileType = file != null ? file.getFileType() : null;
       }
     }
     for (CodeFragmentFactory factory : ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME)) {
-      if (factory != defaultFactory && factory.getFileType().equals(fileType) && factory.isContextAccepted(context)) {
+      if (factory != defaultFactory && (fileType == null || factory.getFileType().equals(fileType)) && factory.isContextAccepted(context)) {
         return factory;
       }
     }
@@ -478,12 +470,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
-    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(new Computable<CodeFragmentFactory>() {
-      @Override
-      public CodeFragmentFactory compute() {
-        return getCodeFragmentFactory(context, text.getFileType());
-      }
-    });
+    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(
+      (Computable<CodeFragmentFactory>)() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
 
@@ -598,6 +586,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static String signatureToName(String s) {
     return new SigReader(s).getSignature();
+  }
+
+  @NotNull
+  public static List<Location> allLineLocations(Method method) {
+    try {
+      return method.allLineLocations();
+    }
+    catch (AbsentInformationException ignored) {
+      return Collections.emptyList();
+    }
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
@@ -802,6 +800,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return StringUtil.substringBefore(typeName, "$$Lambda$");
   }
 
+  public static boolean isLambdaName(@Nullable String name) {
+    return !StringUtil.isEmpty(name) && name.startsWith("lambda$");
+  }
+
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
@@ -811,6 +813,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return Collections.emptyList();
     }
     PsiElement element = position.getElementAt();
+    if (element == null) {
+      return Collections.emptyList();
+    }
     final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     do {
       PsiElement parent = element.getParent();
@@ -865,6 +870,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return PsiParameter.EMPTY_ARRAY;
   }
 
+  public static boolean evaluateBoolean(ExpressionEvaluator evaluator, EvaluationContextImpl context) throws EvaluateException {
+    Object value = UnBoxingEvaluator.unbox(evaluator.evaluate(context), context);
+    if (!(value instanceof BooleanValue)) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
+    }
+    return ((BooleanValue)value).booleanValue();
+  }
+
   public static boolean intersects(@NotNull TextRange range, @NotNull PsiElement elem) {
     TextRange elemRange = elem.getTextRange();
     return elemRange != null && elemRange.intersects(range);
@@ -878,21 +891,24 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     PsiElement body = lambda.getBody();
     if (body == null || !intersects(lineRange, body)) return null;
     if (body instanceof PsiCodeBlock) {
-      for (PsiStatement statement : ((PsiCodeBlock)body).getStatements()) {
-        // return first statement starting on the line
-        if (lineRange.contains(statement.getTextOffset())) {
-          return statement;
-        }
-        // otherwise check all children
-        else if (intersects(lineRange, statement)) {
-          for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
-            if (lineRange.contains(element.getTextOffset())) {
-              return element;
+      PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+      if (statements.length > 0) {
+        for (PsiStatement statement : statements) {
+          // return first statement starting on the line
+          if (lineRange.contains(statement.getTextOffset())) {
+            return statement;
+          }
+          // otherwise check all children
+          else if (intersects(lineRange, statement)) {
+            for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
+              if (lineRange.contains(element.getTextOffset())) {
+                return element;
+              }
             }
           }
         }
+        return null;
       }
-      return null;
     }
     return body;
   }
@@ -945,7 +961,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR =
-    (m1, m2) -> LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
+    Comparator.comparingInt(m -> LambdaMethodFilter.getLambdaOrdinal(m.name()));
 
   public static void disableCollection(ObjectReference reference) {
     try {

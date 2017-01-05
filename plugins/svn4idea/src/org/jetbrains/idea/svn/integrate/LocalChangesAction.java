@@ -15,15 +15,22 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-/**
-* Created with IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 3/27/13
-* Time: 12:37 PM
-*/
+import org.jetbrains.annotations.NotNull;
+
 public enum LocalChangesAction {
-  cancel,
-  continueMerge,
-  shelve,
-  inspect
+  cancel("Cancel"),
+  continueMerge("Continue merge"),
+  shelve("Shelve local changes"),
+  inspect("Inspect changes");
+
+  @NotNull private final String myTitle;
+
+  LocalChangesAction(@NotNull String title) {
+    myTitle = title;
+  }
+
+  @Override
+  public String toString() {
+    return myTitle;
+  }
 }

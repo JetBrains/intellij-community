@@ -431,7 +431,13 @@ public class ScrollingUtil {
     } else {
       return Math.min(row + 1, table.getRowCount() - 1); // just in case
     }
+  }
 
+  public static boolean isVisible(JTable table, int row) {
+    Rectangle visibleRect = table.getVisibleRect();
+    int start = getLeadingRow(table, visibleRect);
+    int end = getTrailingRow(table, visibleRect);
+    return row >= start && row <= end;
   }
 
   private static int getTrailingRow(JTable table, Rectangle visibleRect) {

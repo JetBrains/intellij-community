@@ -20,6 +20,7 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,6 +161,11 @@ public class ComparisonMergeUtil {
   public static CharSequence tryResolveConflict(@NotNull CharSequence leftText,
                                                 @NotNull CharSequence baseText,
                                                 @NotNull CharSequence rightText) {
-    return MergeResolveUtil.tryResolveConflict(leftText, baseText, rightText);
+    if (Registry.is("diff.merge.resolve.conflict.action.use.greedy.approach")) {
+      return MergeResolveUtil.tryGreedyResolve(leftText, baseText, rightText);
+    }
+    else {
+      return MergeResolveUtil.tryResolve(leftText, baseText, rightText);
+    }
   }
 }

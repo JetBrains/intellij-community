@@ -28,8 +28,8 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,12 +46,10 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
-  private final boolean myOnStartup;
 
-  public UnindexedFilesUpdater(final Project project, boolean onStartup) {
+  public UnindexedFilesUpdater(final Project project) {
     myProject = project;
-    myOnStartup = onStartup;
-    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         DumbService.getInstance(project).cancelTask(UnindexedFilesUpdater.this);
@@ -82,7 +80,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     List<VirtualFile> files = finder.getFiles();
 
-    if (myOnStartup && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       ((StartupManagerImpl)StartupManager.getInstance(myProject)).scheduleInitialVfsRefresh();
     }

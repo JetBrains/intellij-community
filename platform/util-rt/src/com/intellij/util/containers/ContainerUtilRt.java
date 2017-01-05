@@ -285,8 +285,8 @@ public class ContainerUtilRt {
   }
 
   /**
-   * A variant of {@link java.util.Collections#emptyList()},
-   * except that {@link #toArray()} here does not create garbage <code>new Object[0]</code> constantly.
+   * A variant of {@link Collections#emptyList()},
+   * except that {@link #toArray()} here does not create garbage {@code new Object[0]} constantly.
    */
   private static class EmptyList<T> extends AbstractList<T> implements RandomAccess, Serializable {
     private static final long serialVersionUID = 1L;

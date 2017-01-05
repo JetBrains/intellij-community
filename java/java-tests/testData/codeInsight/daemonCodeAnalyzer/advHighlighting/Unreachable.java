@@ -489,3 +489,18 @@ class ManyExitsFromTry {
     }
   }
 }
+
+class BreakFromCatchInPresenceOfFinally {
+  String f() {
+    while (true) {
+      try {
+        return "try";
+      }
+      catch (Exception e) {
+        break;
+      }
+      finally {}
+    }
+    return "end"; // reachable
+  }
+}

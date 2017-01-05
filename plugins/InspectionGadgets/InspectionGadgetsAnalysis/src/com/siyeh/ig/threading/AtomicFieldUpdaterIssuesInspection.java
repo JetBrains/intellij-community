@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,11 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
         }
         final PsiClassObjectAccessExpression objectAccessExpression = (PsiClassObjectAccessExpression)argument2;
         final PsiType type = objectAccessExpression.getOperand().getType();
-        if (!field.getType().equals(type)) {
+        final PsiType substFieldType = classType.resolveGenerics().getSubstitutor().substitute(field.getType());
+        if (substFieldType == null) {
+          return;
+        }
+        if (!substFieldType.isAssignableFrom(type)) {
           registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor",
                                                                       fieldName, type.getPresentableText()));
           return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -103,14 +102,13 @@ public class RunContentBuilder extends RunTab {
 
   @NotNull
   private static String getRunnerType(@Nullable ExecutionConsole console) {
-    String runnerType = JAVA_RUNNER;
     if (console instanceof ExecutionConsoleEx) {
       String id = ((ExecutionConsoleEx)console).getExecutionConsoleId();
       if (id != null) {
         return JAVA_RUNNER + '.' + id;
       }
     }
-    return runnerType;
+    return JAVA_RUNNER;
   }
 
   public static void buildConsoleUiDefault(RunnerLayoutUi ui, final ExecutionConsole console) {
@@ -146,10 +144,6 @@ public class RunContentBuilder extends RunTab {
 
 
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
-    if (myExecutionResult instanceof DefaultExecutionResult) {
-      actionGroup.addAll(((DefaultExecutionResult)myExecutionResult).getAdditionalStopActions());
-    }
-
     actionGroup.addAll(myExecutionResult.getActions());
 
     for (AnAction anAction : myRunnerActions) {

@@ -46,18 +46,21 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     public final Document myDocument;
     @NotNull
     public final UndoConfirmationPolicy myUndoConfirmationPolicy;
+    public final boolean myShouldRecordActionForActiveDocument;
 
     CommandDescriptor(@NotNull Runnable command,
-                             Project project,
-                             String name,
-                             Object groupId,
-                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
-                             Document document) {
+                      Project project,
+                      String name,
+                      Object groupId,
+                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
+                      boolean shouldRecordActionForActiveDocument,
+                      Document document) {
       myCommand = command;
       myProject = project;
       myName = name;
       myGroupId = groupId;
       myUndoConfirmationPolicy = undoConfirmationPolicy;
+      myShouldRecordActionForActiveDocument = shouldRecordActionForActiveDocument;
       myDocument = document;
     }
 
@@ -103,6 +106,26 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              final Object groupId,
                              @NotNull UndoConfirmationPolicy confirmationPolicy,
                              Document document) {
+    executeCommand(project, command, name, groupId, confirmationPolicy, true, document);
+  }
+
+  @Override
+  public void executeCommand(@Nullable Project project,
+                             @NotNull Runnable command,
+                             @Nullable String name,
+                             @Nullable Object groupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             boolean shouldRecordCommandForActiveDocument) {
+    executeCommand(project, command, name, groupId, confirmationPolicy, shouldRecordCommandForActiveDocument, null);
+  }
+
+  private void executeCommand(@Nullable Project project,
+                             @NotNull Runnable command,
+                             @Nullable String name,
+                             @Nullable Object groupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             boolean shouldRecordCommandForActiveDocument,
+                             @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (project != null && project.isDisposed()) {
@@ -120,7 +143,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
     Throwable throwable = null;
     try {
-      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, confirmationPolicy, document);
+      myCurrentCommand = new CommandDescriptor(command, project, name, groupId, confirmationPolicy,
+                                               shouldRecordCommandForActiveDocument, document);
       fireCommandStarted();
       command.run();
     }
@@ -131,6 +155,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       finishCommand(project, myCurrentCommand, throwable);
     }
   }
+
 
   @Override
   @Nullable
@@ -150,7 +175,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     Document document = groupId instanceof Ref && ((Ref)groupId).get() instanceof Document ? (Document)((Ref)groupId).get() : null;
-    myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, document);
+    myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy, true, document);
     fireCommandStarted();
     return myCurrentCommand;
   }
@@ -170,6 +195,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                                           currentCommand.myGroupId,
                                           currentCommand.myProject,
                                           currentCommand.myUndoConfirmationPolicy,
+                                          currentCommand.myShouldRecordActionForActiveDocument, 
                                           currentCommand.myDocument);
     try {
       for (CommandListener listener : myListeners) {
@@ -328,6 +354,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                                           currentCommand.myGroupId,
                                           currentCommand.myProject,
                                           currentCommand.myUndoConfirmationPolicy,
+                                          currentCommand.myShouldRecordActionForActiveDocument, 
                                           currentCommand.myDocument);
     for (CommandListener listener : myListeners) {
       try {

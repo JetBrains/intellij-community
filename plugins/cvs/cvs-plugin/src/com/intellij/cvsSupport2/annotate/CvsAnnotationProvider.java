@@ -180,6 +180,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       myDate = date;
     }
 
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myNumber;
     }

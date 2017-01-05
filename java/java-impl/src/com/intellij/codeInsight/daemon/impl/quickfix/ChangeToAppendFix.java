@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
@@ -74,7 +73,6 @@ public class ChangeToAppendFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiExpression appendExpression =
       ChangeToAppendUtil.buildAppendExpression(myAssignmentExpression.getLExpression(), myAssignmentExpression.getRExpression());
     if (appendExpression == null) return;

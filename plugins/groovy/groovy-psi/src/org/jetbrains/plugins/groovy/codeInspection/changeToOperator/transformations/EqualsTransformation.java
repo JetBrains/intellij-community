@@ -16,33 +16,27 @@
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mEQUAL;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNOT_EQUAL;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils.isNegation;
 
 class EqualsTransformation extends BinaryTransformation {
-  public EqualsTransformation() {
-    super(null);
-  }
 
+  @NotNull
   @Override
-  protected GrExpression getExpandedElement(GrMethodCallExpression callExpression) {
+  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
     PsiElement parent = callExpression.getParent();
-    return isNegation(parent) ? (GrExpression)parent
-                              : super.getExpandedElement(callExpression);
+    return isNegation(parent) ? (GrExpression)parent : super.getExpandedElement(callExpression);
   }
 
   @Override
   @Nullable
-  protected IElementType getOperator(MethodCallData methodInfo, OptionsData optionsData) {
-    return methodInfo.isNegated() ? mNOT_EQUAL
-                                  : mEQUAL;
+  protected String getOperator(MethodCallData methodInfo, OptionsData optionsData) {
+    return methodInfo.isNegated() ? "!=" : "==";
   }
 }

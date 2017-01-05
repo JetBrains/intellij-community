@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
@@ -358,11 +357,10 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       final LocalSearchScope derivedScope = new LocalSearchScope(inheritingClass);
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(ownerClass, inheritingClass, PsiSubstitutor.EMPTY);
       if (substitutor == null) return;
-      final LocalSearchScope baseScope = new LocalSearchScope(ownerClass);
-      ReferencesSearch.search(typeParameter, baseScope).forEach(ref -> {
-        final PsiElement element = ref.getElement();
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiTypeElement) {
+      ownerClass.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitTypeElement(PsiTypeElement parent) {
+          super.visitTypeElement(parent);
           final PsiElement pparent = parent.getParent();
           if (pparent instanceof PsiMethod && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {
             final PsiMethod method = (PsiMethod)pparent;
@@ -393,8 +391,6 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
             }
           }
         }
-
-        return true;
       });
     }
   }
@@ -535,9 +531,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReturnStatement) {
-      final PsiElement el = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
-      constrainingType = el instanceof PsiMethod ? ((PsiMethod)el).getReturnType() 
-                                                 : el instanceof PsiLambdaExpression ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)el) : null;
+      constrainingType = PsiTypesUtil.getMethodReturnType(parent);
     }
     else if (parent instanceof PsiAssignmentExpression) {
       constrainingType = ((PsiAssignmentExpression)parent).getLExpression().getType();
@@ -590,6 +584,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       public void linkInheritors(final PsiMethod[] methods) {
         for (final PsiMethod superMethod : methods) {
           final PsiTypeElement superType = superMethod.getReturnTypeElement();
+          if (superType == null) continue;
           addLink(superType, returnType);
           addLink(returnType, superType);
         }

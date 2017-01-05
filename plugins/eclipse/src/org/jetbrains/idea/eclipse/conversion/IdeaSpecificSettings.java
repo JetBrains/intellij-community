@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
 import java.io.File;
 import java.util.*;
@@ -127,7 +127,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       compilerModuleExtension.setCompilerOutputPathForTests(testOutputElement.getAttributeValue(IdeaXml.URL_ATTR));
     }
 
-    final String inheritedOutput = root.getAttributeValue(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR);
+    final String inheritedOutput = root.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE);
     if (inheritedOutput != null && Boolean.valueOf(inheritedOutput).booleanValue()) {
       compilerModuleExtension.inheritCompilerOutputPath(true);
     }
@@ -251,7 +251,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       isModified = true;
     }
     if (compilerModuleExtension.isCompilerOutputPathInherited()) {
-      root.setAttribute(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR, String.valueOf(true));
+      root.setAttribute(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE, String.valueOf(true));
       isModified = true;
     }
     if (compilerModuleExtension.isExcludeOutput()) {

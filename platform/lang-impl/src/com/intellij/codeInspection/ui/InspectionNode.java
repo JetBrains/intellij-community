@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,12 +26,10 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class InspectionNode extends InspectionTreeNode {
-  private final HighlightDisplayKey myKey;
-  @NotNull private final InspectionProfile myProfile;
+  @NotNull private final InspectionProfileImpl myProfile;
 
-  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfile profile) {
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfileImpl profile) {
     super(toolWrapper);
-    myKey = HighlightDisplayKey.find(toolWrapper.getShortName());
     myProfile = profile;
   }
 
@@ -47,11 +45,7 @@ public class InspectionNode extends InspectionTreeNode {
   @Nullable
   @Override
   public String getCustomizedTailText() {
-    return myProfile.isToolEnabled(myKey) ? null : "Disabled";
-  }
-
-  @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return myKey == null ? 0 : super.getProblemCount(allowSuppressed);
+    final ToolsImpl tools = myProfile.getTools(getToolWrapper().getShortName(), null);
+    return tools.isEnabled() ? null : "Disabled";
   }
 }

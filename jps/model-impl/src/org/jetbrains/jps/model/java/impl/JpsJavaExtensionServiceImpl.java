@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.jps.model.java.impl;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.java.impl.runConfiguration.JpsApplicationRunConfigurationPropertiesImpl;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState;
@@ -45,6 +46,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
+  private JavaModuleIndex myModuleIndex = null;
+
   @NotNull
   @Override
   public JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project) {
@@ -231,5 +234,15 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @Override
   protected JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module) {
     return new JpsJavaDependenciesEnumeratorImpl(Collections.singletonList(module));
+  }
+
+  @NotNull
+  @Override
+  public JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project, @NotNull File storageRoot) {
+    if (myModuleIndex == null) {
+      JpsCompilerExcludes excludes = getOrCreateCompilerConfiguration(project).getCompilerExcludes();
+      myModuleIndex = JavaModuleIndexImpl.load(storageRoot, excludes);
+    }
+    return myModuleIndex;
   }
 }

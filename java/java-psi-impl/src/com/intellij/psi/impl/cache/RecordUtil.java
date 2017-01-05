@@ -18,6 +18,9 @@ package com.intellij.psi.impl.cache;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.lang.java.lexer.JavaDocLexer;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
@@ -28,16 +31,16 @@ import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class RecordUtil {
-  @NonNls private static final String DEPRECATED_ANNOTATION_NAME = "Deprecated";
-  @NonNls private static final String DEPRECATED_TAG = "@deprecated";
+  private static final String DEPRECATED_ANNOTATION_NAME = "Deprecated";
+  private static final String DEPRECATED_TAG = "@deprecated";
 
   private RecordUtil() { }
 
@@ -59,9 +62,20 @@ public class RecordUtil {
   }
 
   public static boolean isDeprecatedByDocComment(@NotNull LighterAST tree, @NotNull LighterASTNode comment) {
-    // todo[r.sh] parse doc comments, implement tree lookup
     String text = LightTreeUtil.toFilteredString(tree, comment, null);
-    return text.contains(DEPRECATED_TAG);
+    if (text.contains(DEPRECATED_TAG)) {
+      JavaDocLexer lexer = new JavaDocLexer(LanguageLevel.HIGHEST);
+      lexer.start(text);
+      IElementType token;
+      while ((token = lexer.getTokenType()) != null) {
+        if (token == JavaDocTokenType.DOC_TAG_NAME && DEPRECATED_TAG.equals(lexer.getTokenText())) {
+          return true;
+        }
+        lexer.advance();
+      }
+    }
+
+    return false;
   }
 
   public static int packModifierList(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {

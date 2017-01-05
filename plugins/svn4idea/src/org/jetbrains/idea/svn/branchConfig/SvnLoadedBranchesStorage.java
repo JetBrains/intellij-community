@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
+import org.jetbrains.idea.svn.SmallMapSerializer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;

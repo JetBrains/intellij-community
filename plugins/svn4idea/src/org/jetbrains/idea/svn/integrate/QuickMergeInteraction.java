@@ -17,46 +17,33 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/26/13
- * Time: 8:29 PM
- */
 public interface QuickMergeInteraction {
-  void setTitle(@NotNull final String title);
-  QuickMergeContentsVariants selectMergeVariant();
-  boolean shouldContinueSwitchedRootFound();
-
-  boolean shouldReintegrate(@NotNull final String sourceUrl, @NotNull final String targetUrl);
 
   @NotNull
-  SelectMergeItemsResult selectMergeItems(final List<CommittedChangeList> lists, final String mergeTitle, final MergeChecker mergeChecker);
+  QuickMergeContentsVariants selectMergeVariant();
+
+  boolean shouldContinueSwitchedRootFound();
+
+  boolean shouldReintegrate(@NotNull String targetUrl);
+
+  @NotNull
+  SelectMergeItemsResult selectMergeItems(@NotNull List<SvnChangeList> lists,
+                                          @NotNull MergeChecker mergeChecker,
+                                          boolean allStatusesCalculated,
+                                          boolean allListsLoaded);
 
   @NotNull
   LocalChangesAction selectLocalChangesAction(boolean mergeAll);
 
-  void showIntersectedLocalPaths(final List<FilePath> paths);
+  void showIntersectedLocalPaths(@NotNull List<FilePath> paths);
 
-  void showError(@NotNull Exception exception);
-  void showErrors(final String message, final List<VcsException> exceptions);
-  void showErrors(final String message, final boolean isError);
+  void showErrors(@NotNull String message, @NotNull List<VcsException> exceptions);
 
-  List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                        @NotNull String mergeTitle,
-                                                        @NotNull MergeChecker mergeChecker,
-                                                        @NotNull PairConsumer<Long, MergeDialogI> loader, boolean everyThingLoaded);
-
-  interface SelectMergeItemsResult {
-    QuickMergeContentsVariants getResultCode();
-    List<CommittedChangeList> getSelectedLists();
-  }
+  void showErrors(@NotNull String message, boolean isError);
 }

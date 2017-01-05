@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +31,6 @@ import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -401,12 +401,10 @@ public class DuplicatesFinder {
       final PsiType type1 = ((PsiNewExpression)pattern).getType();
       final PsiType type2 = ((PsiNewExpression)candidate).getType();
       if (type1 == null || type2 == null) return false;
-      final PsiJavaCodeReferenceElement classReference1 = ((PsiNewExpression)pattern).getClassReference();
-      final PsiJavaCodeReferenceElement classReference2 = ((PsiNewExpression)candidate).getClassReference();
-      if (classReference1 != null && classReference2 != null) {
-        final PsiElement resolved1 = classReference1.resolve();
-        final PsiElement resolved2 = classReference2.resolve();
-        if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
+      final PsiMethod constructor1 = ((PsiNewExpression)pattern).resolveConstructor();
+      final PsiMethod constructor2 = ((PsiNewExpression)candidate).resolveConstructor();
+      if (constructor1 != null && constructor2 != null) {
+        if (!pattern.getManager().areElementsEquivalent(constructor1, constructor2)) return false;
       }
       else {
         if (!canTypesBeEquivalent(type1, type2)) return false;
@@ -558,24 +556,7 @@ public class DuplicatesFinder {
         }
       }
     }
-    final List<PsiAnnotation> annotations1 = ContainerUtil.newArrayList(modifierList1.getAnnotations());
-    final List<PsiAnnotation> annotations2 = ContainerUtil.newArrayList(modifierList2.getAnnotations());
-    annotations1.removeIf(a -> CommonClassNames.JAVA_LANG_OVERRIDE.equals(a.getQualifiedName()));
-    annotations2.removeIf(a -> CommonClassNames.JAVA_LANG_OVERRIDE.equals(a.getQualifiedName()));
-    if (annotations1.size() != annotations2.size()) {
-      return false;
-    }
-    for (final Iterator<PsiAnnotation> iterator = annotations1.iterator(); iterator.hasNext(); ) {
-      final PsiAnnotation annotation1 = iterator.next();
-      for (final Iterator<PsiAnnotation> iterator2 = annotations2.iterator(); iterator2.hasNext(); ) {
-        final PsiAnnotation annotation2 = iterator2.next();
-        if (PsiEquivalenceUtil.areElementsEquivalent(annotation1, annotation2)) {
-          iterator.remove();
-          iterator2.remove();
-        }
-      }
-    }
-    return true;
+    return AnnotationUtil.equal(modifierList1.getAnnotations(), modifierList2.getAnnotations());
   }
 
   private static boolean checkParameterModification(PsiExpression expression,

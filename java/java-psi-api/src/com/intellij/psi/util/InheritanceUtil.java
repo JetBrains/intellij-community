@@ -68,6 +68,12 @@ public class InheritanceUtil {
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
     }
 
+    if (type instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
+        if (isInheritor(conjunct, baseClassName)) return true;
+      }
+    }
+
     return false;
   }
 

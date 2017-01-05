@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -101,7 +101,7 @@ public interface MergeVersion {
     }
 
     public static void reportProjectFileChangeIfNeeded(@Nullable Project project, @Nullable VirtualFile file) {
-      if (project != null && file != null && !file.isDirectory() && (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file))) {
+      if (project != null && file != null && !file.isDirectory() && (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file))) {
         ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
       }
     }
@@ -111,7 +111,7 @@ public interface MergeVersion {
       final Set<VirtualFile> vfs = new THashSet<>();
       for (VirtualFile file : files) {
         if (file != null && !file.isDirectory()) {
-          if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
+          if (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
             vfs.add(file);
           }
         }

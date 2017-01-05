@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.run
 
 import com.intellij.application.options.PathMacrosCollector
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-public class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
-  public void testJunitConfiguration() {
+class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
+  void testJunitConfiguration() {
     String text = '''
   <component name="RunManager" selected="JUnit.FooWithComments.test$withDollar$2">
     <configuration default="false" name="FooWithComments.test$withDollar$2" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">

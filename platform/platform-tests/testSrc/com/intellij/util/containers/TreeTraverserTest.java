@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.Conditions.not;
-import static com.intellij.util.containers.JBIterable.SeparatorOption.*;
+import static com.intellij.util.containers.JBIterable.Split.*;
 
 /**
  * @author gregsh
@@ -172,14 +172,39 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(new Integer(1), it.current());
   }
 
-  public void testIteratorContractsCursor() {
+  public void testCursorIterableContract() {
     List<Integer> list = ContainerUtil.newArrayList();
-    for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(JBIterable.of(1, 2).iterator()))) {
+    JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
+    for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(orig.iterator()))) {
       it.current();
       it.hasNext();
       list.add(it.current());
     }
-    assertEquals(Arrays.asList(1, 2), list);
+    assertEquals(orig.toList(), list);
+  }
+
+  public void testCursorIteratorContract() {
+    JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
+    JBIterator<JBIterator<Integer>> it = JBIterator.from(JBIterator.cursor(
+      JBIterator.from(orig.iterator())).iterator());
+    List<Integer> list = ContainerUtil.newArrayList();
+    while (it.advance()) {
+      it.hasNext();
+      list.add(it.current().current());
+    }
+    assertEquals(orig.toList(), list);
+  }
+
+  public void testCursorTransform() {
+    JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
+
+    List<Integer> expected = ContainerUtil.newArrayList(1, 2, 3, 4, 5);
+    List<Integer> expectedOdd = ContainerUtil.newArrayList(1, 3, 5);
+    assertEquals(expected, JBIterator.cursor(JBIterator.from(orig.iterator())).transform(o -> o.current()).toList());
+    assertEquals(expected.size(), JBIterator.cursor(JBIterator.from(orig.iterator())).last().current().intValue());
+    assertEquals(expectedOdd, JBIterator.cursor(JBIterator.from(orig.iterator())).transform(o -> o.current()).filter(IS_ODD).toList());
+    assertEquals(expectedOdd, JBIterator.cursor(JBIterator.from(orig.iterator())).filter(o -> IS_ODD.value(o.current())).transform(o -> o.current()).toList());
+    assertEquals(expected.subList(0, 4), JBIterator.cursor(JBIterator.from(orig.iterator())).filter(o -> o.hasNext()).transform(o -> o.current()).toList());
   }
 
   public void testIteratorContractsSkipAndStop() {
@@ -300,27 +325,100 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(0, 1, 0, 2, 0, 3, 0, 4, 0, 5), it.flatMap(o -> ContainerUtil.list(0, o)).toList());
   }
 
-  public void testPartition() {
+  public void testSplits1() {
     JBIterable<Integer> it = JBIterable.of(1, 2, 3, 4, 5);
-    assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4)), it.partition(2, true).toList());
-    assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4), Arrays.asList(5)), it.partition(2, false).toList());
+    assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4)), it.split(2, true).toList());
+    assertEquals(Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4), Arrays.asList(5)), it.split(2, false).toList());
 
-    assertEquals("[[1, 2], [4, 5]]", it.partition(SKIP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1, 2], [3], [4, 5]]", it.partition(EXTRACT, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1, 2, 3], [4, 5]]", it.partition(HEAD, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1, 2], [3, 4, 5]]", it.partition(TAIL, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1, 2, 3, 4], [5]]", it.partition(EXTRACT, o -> o == 5).map(o -> o.toList()).toList().toString());
-    assertEquals("[[], [1], [2, 3, 4, 5]]", it.partition(EXTRACT, o -> o == 1).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [4, 5]]", it.split(OFF, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3], [4, 5]]", it.split(AROUND, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3], [4, 5]]", it.split(AFTER, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3, 4, 5]]", it.split(BEFORE, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4], [5], []]", it.split(AROUND, o -> o == 5).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [2, 3, 4, 5]]", it.split(AROUND, o -> o == 1).map(o -> o.toList()).toList().toString());
 
-    assertEquals("[[], [], [], [], []]", it.partition(SKIP, o -> true).map(o -> o.toList()).toList().toString());
-    assertEquals("[[1], [2], [3], [4], [5]]", it.partition(HEAD, o -> true).map(o -> o.toList()).toList().toString());
-    assertEquals("[[], [1], [2], [3], [4], [5]]", it.partition(TAIL, o -> true).map(o -> o.toList()).toList().toString());
-    assertEquals("[[], [1], [], [2], [], [3], [], [4], [], [5]]", it.partition(EXTRACT, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [], [], [], [], []]", it.split(OFF, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1], [2], [3], [4], [5], []]", it.split(AFTER, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [2], [3], [4], [5]]", it.split(BEFORE, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [1], [], [2], [], [3], [], [4], [], [5], []]", it.split(AROUND, o -> true).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.split(GROUP, o -> true).map(o -> o.toList()).toList().toString());
 
-    assertEquals(3, it.partition(EXTRACT, o -> o % 3 == 0).size());
-    assertEquals(10, it.partition(EXTRACT, o -> true).size());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.split(OFF, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.split(AFTER, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.split(BEFORE, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.split(AROUND, o -> false).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3, 4, 5]]", it.split(GROUP, o -> false).map(o -> o.toList()).toList().toString());
 
-    assertEquals(it.partition(2, false).toList(), it.partition(HEAD, o -> o % 2 == 0).map(o -> o.toList()).toList());
+    assertEquals(3, it.split(AROUND, o -> o % 3 == 0).size());
+    assertEquals(11, it.split(AROUND, o -> true).size());
+
+    assertEquals(it.split(2, false).toList(), it.split(AFTER, o -> o % 2 == 0).map(o -> o.toList()).toList());
+
+    JBIterable<JBIterable<Integer>> statePart = it.split(GROUP, new JBIterable.StatefulFilter<Integer>() {
+      int i = 4;
+
+      @Override
+      public boolean value(Integer integer) {
+        return (i = (i + 2) % 12) - 5 > 0; // 3 positive, 3 negative (+1 +3 +5 : -5 -3 -1)
+      }
+    });
+    assertEquals("[[1, 2, 3], [4, 5]]", statePart.map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3], [4, 5]]", statePart.map(o -> o.toList()).toList().toString());
+  }
+
+  public void testSplits2() {
+    JBIterable<Integer> it = JBIterable.empty();
+
+    assertEquals("[]", it.split(OFF, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.split(AROUND, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.split(AFTER, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.split(BEFORE, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[]", it.split(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    it = JBIterable.of(3);
+
+    assertEquals("[[], []]", it.split(OFF, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3], []]", it.split(AROUND, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3], []]", it.split(AFTER, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3]]", it.split(BEFORE, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3]]", it.split(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    it = JBIterable.of(1, 2, 3, 3, 4, 5);
+
+    assertEquals("[[1, 2], [], [4, 5]]", it.split(OFF, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3], [], [3], [4, 5]]", it.split(AROUND, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2, 3], [3], [4, 5]]", it.split(AFTER, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3], [3, 4, 5]]", it.split(BEFORE, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[1, 2], [3, 3], [4, 5]]", it.split(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    it = JBIterable.of(3, 3, 1, 2, 3, 3);
+
+    assertEquals("[[], [], [1, 2], [], []]", it.split(OFF, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3], [], [3], [1, 2], [3], [], [3], []]", it.split(AROUND, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3], [3], [1, 2, 3], [3], []]", it.split(AFTER, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[], [3], [3, 1, 2], [3], [3]]", it.split(BEFORE, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3, 3], [1, 2], [3, 3]]", it.split(GROUP, o -> o % 3 == 0).map(o -> o.toList()).toList().toString());
+
+    Function<JBIterable<Integer>, JBIterable<JBIterator<Integer>>> cursor = param -> JBIterator.cursor(JBIterator.from(param.iterator()));
+
+    assertEquals("[[], [], [1, 2], [], []]", cursor.fun(it).split(OFF, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[], [3], [], [3], [1, 2], [3], [], [3], []]", cursor.fun(it).split(AROUND, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[3], [3], [1, 2, 3], [3], []]", cursor.fun(it).split(AFTER, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[], [3], [3, 1, 2], [3], [3]]", cursor.fun(it).split(BEFORE, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[3, 3], [1, 2], [3, 3]]", cursor.fun(it).split(GROUP, o -> o.current() % 3 == 0).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+
+    assertEquals("[[3, 3], [1, 2], [3, 3]]", it.split(2, true).toList().toString());
+    assertEquals("[[3, 3], [1, 2], [3, 3]]", it.split(2).map(o -> o.toList()).toList().toString());
+    assertEquals("[[3, 3], [1, 2], [3, 3]]", cursor.fun(it).split(2).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+    assertEquals("[[3, 3, 1, 2], [3, 3]]", cursor.fun(it).split(4).map(o -> o.map(p -> p.current()).toList()).toList().toString());
+  }
+
+  public void testIterateUnique() {
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(30);
+    assertEquals(it.toList(), it.unique().toList());
+    JBIterable<Integer> uniqueMod5 = it.unique((o) -> o % 5);
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), uniqueMod5.toList());
+    assertEquals(Arrays.asList(1, 2, 3, 4, 5), uniqueMod5.toList()); // same results again
   }
 
   // TreeTraversal ----------------------------------------------
@@ -466,6 +564,20 @@ public class TreeTraverserTest extends TestCase {
 
     assertEquals(JBIterable.of(1, 2, 2, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 8, 8).toList(), result);
   }
+
+  public void testTraverseUnique() {
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), numTraverser(TreeTraversal.PRE_ORDER_DFS.unique()).fun(1).toList());
+    JBIterable<Integer> uniqueMod5 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5)).fun(1);
+    assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList());
+    assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList()); // same results again
+
+    JBIterable<Integer> uniqueMod7 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5).unique((Integer o) -> o % 7)).fun(1);
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 4), uniqueMod7.toList());
+
+    assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique()).fun(1).toList());
+    assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique().unique()).fun(1).toList());
+  }
+
   // GuidedTraversal ----------------------------------------------
 
   @NotNull

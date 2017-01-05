@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
@@ -58,8 +57,7 @@ public class MavenFoldersImporter {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     final MavenImportingSettings settings = manager.getImportingSettings();
 
-    AccessToken accessToken = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       List<ModifiableRootModel> rootModels = new ArrayList<>();
       for (Module each : ModuleManager.getInstance(project).getModules()) {
         MavenProject mavenProject = manager.findProject(each);
@@ -83,10 +81,7 @@ public class MavenFoldersImporter {
           ModifiableModelCommitter.multiCommit(modelsArray, ModuleManager.getInstance(modelsArray[0].getProject()).getModifiableModel());
         }
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public MavenFoldersImporter(MavenProject mavenProject, MavenImportingSettings settings, MavenRootModelAdapter model) {

@@ -27,8 +27,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
@@ -63,10 +61,9 @@ public class CreatePackageAction extends DumbAwareAction {
         }
       }
     };
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                            () -> Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
-                                                                                                               IdeBundle.message("title.new.package"),
-                                                                                                               Messages.getQuestionIcon(), "", validator));
+    Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
+                                                                       IdeBundle.message("title.new.package"),
+                                                                       Messages.getQuestionIcon(), "", validator);
     final PsiFileSystemItem result = validator.getCreatedElement();
     if (result != null) {
       view.selectElement(result);

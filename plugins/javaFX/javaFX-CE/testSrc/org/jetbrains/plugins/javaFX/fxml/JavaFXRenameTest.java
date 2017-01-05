@@ -219,6 +219,13 @@ public class JavaFXRenameTest extends AbstractJavaFXRenameTest {
     doTestProperty("newName", "model.Data", false);
   }
 
+  public void testResourceProperty() {
+    myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(true) + ".properties");
+    myFixture.renameElementAtCaret("new.name");
+    myFixture.checkResultByFile(getTestName(true) + "_after.fxml");
+    myFixture.checkResultByFile(getTestName(true) + ".properties", getTestName(true) + "_after.properties", false);
+  }
+
   public void doTestProperty(String name, boolean isBoolean) throws Exception {
     doTestProperty(name, null, isBoolean);
   }

@@ -111,7 +111,7 @@ trait DebuggerMethods extends CompilerMethods {
     process.managerThread.schedule {
       semaphore.up()
     }
-    def finished = semaphore.waitFor(ourTimeout);
+    def finished = semaphore.waitFor(ourTimeout)
     assert finished: 'Too long debugger actions'
 
     int i = 0
@@ -144,7 +144,7 @@ trait DebuggerMethods extends CompilerMethods {
   }
 
   void eval(final String codeText, String expected) throws EvaluateException {
-    eval(codeText, expected, null);
+    eval(codeText, expected, null)
   }
 
   void eval(final String codeText, String expected, FileType fileType) throws EvaluateException {

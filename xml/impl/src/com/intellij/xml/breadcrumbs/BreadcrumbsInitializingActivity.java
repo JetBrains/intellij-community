@@ -19,7 +19,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -46,15 +49,15 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
       return;
     }
 
-    MessageBusConnection connection = project.getMessageBus().connect(project);
+    MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener(project));
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(project), project);
-    UISettings.getInstance().addUISettingsListener(new MyUISettingsListener(project), project);
+    connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener(project));
   }
 
-  private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
+  private static class MyFileEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
       reinitBreadcrumbsComponent(source, file);
@@ -103,7 +106,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     }
 
     @Override
-    public void uiSettingsChanged(UISettings source) {
+    public void uiSettingsChanged(UISettings uiSettings) {
       if (!myProject.isDisposed()) {
         reinitBreadcrumbsInAllEditors(myProject);
       }
@@ -121,11 +124,14 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     if (isSuitable(fileEditorManager.getProject(), file)) {
       FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
       for (final FileEditor fileEditor : fileEditors) {
-        if (fileEditor instanceof TextEditor) {
+        if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
           Editor editor = ((TextEditor)fileEditor).getEditor();
-          if (BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor) != null) {
+          final BreadcrumbsXmlWrapper existingWrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
+          if (existingWrapper != null) {
+            existingWrapper.queueUpdate();
             continue;
           }
+
           final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(editor);
           final JComponent c = wrapper.getComponent();
           fileEditorManager.addTopComponent(fileEditor, c);

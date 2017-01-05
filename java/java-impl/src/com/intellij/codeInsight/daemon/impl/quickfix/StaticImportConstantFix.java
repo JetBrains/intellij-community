@@ -40,7 +40,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   @NotNull
   @Override
   protected String getBaseText() {
-    return "Static import constant";
+    return "Import static constant";
   }
 
   @NotNull

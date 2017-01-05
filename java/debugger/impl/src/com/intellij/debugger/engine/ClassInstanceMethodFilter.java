@@ -29,7 +29,7 @@ import com.sun.jdi.request.EventRequest;
 /**
  * @author egor
  */
-public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter implements ActionMethodFilter {
+public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter {
   private final BreakpointStepMethodFilter myMethodFilter;
 
   public ClassInstanceMethodFilter(PsiMethod psiMethod, Range<Integer> lines) {

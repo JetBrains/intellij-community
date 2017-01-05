@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,12 +136,9 @@ public class ConfigFilesTreeBuilder {
     return fileType.getName() + " context files" ;
   }
 
-  private boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
-    byte nonEmptyGroups = 0;
-    for (Map.Entry<FileType, Collection<PsiFile>> entry : filesByType.entrySet()) {
-      Collection<PsiFile> files = entry.getValue();
-      if (files != null && files.size() > 0) nonEmptyGroups++;
-    }
+  private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
+    long nonEmptyGroups = filesByType.entrySet().stream().map(Map.Entry::getValue)
+      .filter(files -> files != null && !files.isEmpty()).limit(2).count();
     return nonEmptyGroups > 1;
   }
 
@@ -184,25 +181,25 @@ public class ConfigFilesTreeBuilder {
       renderer.append(fileName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        String path = virtualFile.getPath();
-        final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-        if (i >= 0) {
-          path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
-        }
-        renderer.append(" (" + path + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderPath(renderer, virtualFile);
       }
     }
     else if (object instanceof VirtualFile) {
       VirtualFile file = (VirtualFile)object;
       renderer.setIcon(VirtualFilePresentation.getIcon(file));
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      String path = file.getPath();
-      final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-      if (i >= 0) {
-        path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
-      }
-      renderer.append(" (" + path + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderPath(renderer, file);
     }
+  }
+
+  private static void renderPath(ColoredTreeCellRenderer renderer, VirtualFile virtualFile) {
+    String path = virtualFile.getPath();
+    final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
+    if (i >= 0) {
+      path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
+    }
+    renderer.append(" (" + StringUtil.trimEnd(StringUtil.trimEnd(path, virtualFile.getName()), "/") + ")",
+                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   public static void installSearch(JTree tree) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -44,7 +45,7 @@ public class GrChangeVariableType extends GroovyFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     final PsiElement element = descriptor.getPsiElement();
     final PsiElement parent = element.getParent();
 
@@ -72,5 +73,12 @@ public class GrChangeVariableType extends GroovyFix {
   @Override
   public String getName() {
     return GroovyInspectionBundle.message("change.lvalue.type", myName, myType);
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Change variable type";
   }
 }

@@ -76,18 +76,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
         waitForTerminate();
 
         EdtTestUtil.runInEdtAndWait(() -> {
-          myFixture.configureByFile("dynamicTypes/" + scriptName);
-
-          try {
-            //copy signature attributes from real file to temporary test file
-            byte[] bytes = PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE
-              .readAttributeBytes(getVirtualFile());
-            PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(myFixture.getFile().getVirtualFile(),
-                                                                                      bytes);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+          myFixture.configureByFile(scriptName);
 
           EditorTestUtil.setCaretsAndSelection(myFixture.getEditor(), new EditorTestUtil.CaretAndSelectionState(
             Lists.newArrayList(new EditorTestUtil.CaretInfo(new LogicalPosition(0, 6), null)), null));

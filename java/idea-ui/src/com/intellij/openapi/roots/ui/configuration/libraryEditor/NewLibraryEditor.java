@@ -21,10 +21,9 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.ui.LightFilePointer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +115,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
       }
       result.add(file);
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
@@ -149,6 +148,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     myExcludedRoots.add(new LightFilePointer(url));
   }
 
+  @Override
   public void removeExcludedRoot(@NotNull String url) {
     myExcludedRoots.remove(new LightFilePointer(url));
   }

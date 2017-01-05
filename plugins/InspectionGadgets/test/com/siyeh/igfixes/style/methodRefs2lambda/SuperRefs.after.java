@@ -10,7 +10,7 @@ public class MyTest {
 
     static class B extends A {
         void m(int i1) {
-            I i = (i2) -> super.m(i2);
+            I i = i2 -> super.m(i2);
         }
     }
 }

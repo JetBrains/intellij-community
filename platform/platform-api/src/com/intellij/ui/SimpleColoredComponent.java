@@ -402,7 +402,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       width += myIcon.getIconWidth() + myIconTextGap;
     }
 
-    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : new Insets(0, 0, 0, 0);
+    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     width += borderInsets.left;
 
     Font font = getBaseFont();
@@ -415,7 +415,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     int height = myIpad.top + myIpad.bottom;
 
     final FontMetrics metrics = getFontMetrics(font);
-    int textHeight = metrics.getHeight();
+    int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
     textHeight += borderInsets.top + borderInsets.bottom;
 
     if (myIcon != null) {
@@ -830,18 +830,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       // 1. Strikeout effect
       if (attributes.isStrikeout() && !attributes.isSearchMatch()) {
-        EffectPainter.STRIKE_THROUGH.paint(g, offset, textBaseline, fragmentWidth, getCharHeight(g), null);
+        EffectPainter.STRIKE_THROUGH.paint(g, offset, textBaseline, fragmentWidth, getCharHeight(g), font);
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
         if (attributes.getWaveColor() != null) {
           g.setColor(attributes.getWaveColor());
         }
-        EffectPainter.WAVE_UNDERSCORE.paint(g, offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent()), null);
+        EffectPainter.WAVE_UNDERSCORE.paint(g, offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent()), font);
       }
       // 3. Underline
       if (attributes.isUnderline()) {
-        EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), null);
+        EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
       }
       // 4. Bold Dotted Line
       if (attributes.isBoldDottedLine()) {
@@ -885,7 +885,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.drawString(text, x1, baseline);
 
       if (((SimpleTextAttributes)info[5]).isStrikeout()) {
-        EffectPainter.STRIKE_THROUGH.paint(g, x1, baseline, x2 - x1, getCharHeight(g), null);
+        EffectPainter.STRIKE_THROUGH.paint(g, x1, baseline, x2 - x1, getCharHeight(g), g.getFont());
       }
     }
     return offset;
@@ -931,7 +931,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
     Rectangle area = computePaintArea();
-    icon.paintIcon(this, g, offset, area.y + (area.height - icon.getIconHeight()) / 2);
+    icon.paintIcon(this, g, offset, area.y + (area.height - icon.getIconHeight() + 1) / 2);
   }
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
@@ -996,7 +996,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     private Insets myInsets;
 
     public MyBorder() {
-      myInsets = new JBInsets(1, 1, 1, 1);
+      myInsets = JBUI.insets(1);
     }
 
     public void setInsets(final Insets insets) {
@@ -1005,8 +1005,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      g.setColor(Color.BLACK);
-      UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
     }
 
     @Override
@@ -1016,7 +1014,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public boolean isBorderOpaque() {
-      return true;
+      return false;
     }
   }
 

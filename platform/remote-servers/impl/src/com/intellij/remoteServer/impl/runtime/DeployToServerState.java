@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
-import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,12 +67,7 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
       debugConnector = null;
     }
     connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, debugConnector, myEnvironment),
-                      new ParameterizedRunnable<String>() {
-                        @Override
-                        public void run(String s) {
-                          RemoteServersView.getInstance(project).showDeployment(connection, s);
-                        }
-                      });
+                      s -> RemoteServersView.getInstance(project).showDeployment(connection, (String)s));
     return null;
   }
 }

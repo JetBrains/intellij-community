@@ -42,7 +42,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -82,12 +81,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Object[] entities = LaterInvocator.getCurrentModalEntities();
-    for (int i = entities.length - 1; i >= 0; i--) {
-      Object state = entities[i];
-      LaterInvocator.leaveModal(state);
+    try {
+      LaterInvocator.leaveAllModals();
     }
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testGetCachedPsiFile_NoFile() throws Exception {
@@ -120,19 +119,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     documentManager.commitAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
-    UIUtil.dispatchAllInvocationEvents();
     assertEmpty(documentManager.getUncommittedDocuments());
 
-    LeakHunter.checkLeak(documentManager, DocumentImpl.class);
-    LeakHunter.checkLeak(documentManager, PsiFileImpl.class,
-                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem);
+    LeakHunter.checkLeak(documentManager, DocumentImpl.class, doc -> id == System.identityHashCode(doc));
+    LeakHunter.checkLeak(documentManager, PsiFileImpl.class, psiFile -> vFile.equals(psiFile.getVirtualFile()));
 
-    for (int i = 0; i < 1000; i++) {
-      PlatformTestUtil.tryGcSoftlyReachableObjects();
-      UIUtil.dispatchAllInvocationEvents();
-      if (documentManager.getCachedDocument(findFile(vFile)) == null) break;
-      System.gc();
-    }
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
     Document newDoc = documentManager.getDocument(findFile(vFile));
@@ -394,7 +386,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(commitThread.isEnabled());
     WriteCommandAction.runWriteCommandAction(null, () -> {
       if (commitThread.isEnabled()) {
-        System.err.println("commitThread: "+commitThread + ";\n"+commitThread.log+";\n"+ThreadDumper.dumpThreadsToString());
+        System.err.println("commitThread: "+commitThread + ";\n"+ThreadDumper.dumpThreadsToString());
       }
       assertFalse(commitThread.isEnabled());
       WriteCommandAction.runWriteCommandAction(null, () -> assertFalse(commitThread.isEnabled()));
@@ -482,9 +474,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     });
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
-    // must not be committed until exit modal dialog
+    // may or may not be committed until exit modal dialog
     waitTenSecondsForCommit(document);
-    assertFalse(getPsiDocumentManager().isCommitted(document));
 
     LaterInvocator.leaveModal(dialog);
     assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
@@ -506,7 +497,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     waitTenSecondsForCommit(document);
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
-    LaterInvocator.leaveModal(dialog);
   }
 
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
@@ -532,9 +522,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
 
 
-    // must not commit in background by default when modality changed
+    // may or may not commit in background by default when modality changed
     waitTenSecondsForCommit(document);
-    assertFalse(getPsiDocumentManager().isCommitted(document));
 
     // but, when performWhenAllCommitted() in modal context called, should re-add documents into queue nevertheless
     boolean[] calledPerformWhenAllCommitted = new boolean[1];
@@ -544,9 +533,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     waitTenSecondsForCommit(document);
     assertTrue(getPsiDocumentManager().isCommitted(document));
     assertTrue(calledPerformWhenAllCommitted[0]);
-
-    LaterInvocator.leaveModal(dialog);
-    assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
   }
 
   private void waitTenSecondsForCommit(Document document) {

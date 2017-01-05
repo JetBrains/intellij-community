@@ -57,18 +57,6 @@ public class FCTSBackedLighterAST extends LighterAST {
     return new LighterASTNodeList(numKids, elements);
   }
 
-  @Override
-  public void disposeChildren(@NotNull List<LighterASTNode> children) {
-    if (children instanceof LighterASTNodeList) {
-      LighterASTNodeList nodes = (LighterASTNodeList)children;
-      myTreeStructure.disposeChildren(nodes.myElements, nodes.mySize);
-    }
-    else {
-      LighterASTNode[] astNodes = new LighterASTNode[children.size()];
-      myTreeStructure.disposeChildren(children.toArray(astNodes), astNodes.length);
-    }
-  }
-
   private static class LighterASTNodeList extends AbstractList<LighterASTNode> {
     private final int mySize;
     private final LighterASTNode[] myElements;

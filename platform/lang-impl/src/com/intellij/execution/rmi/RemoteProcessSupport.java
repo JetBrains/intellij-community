@@ -34,7 +34,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -350,7 +349,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           try {
             RemoteDeadHand.TwoMinutesTurkish.startCooking("localhost", result.port);
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.warn("The cook failed to start due to " + ExceptionUtil.getRootCause(e));
           }
         }

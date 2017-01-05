@@ -48,7 +48,6 @@ import java.util.List;
  */
 public class FileLevelIntentionComponent extends EditorNotificationPanel {
   private final Project myProject;
-  private final Color myBackground;
 
   public FileLevelIntentionComponent(final String description,
                                      @NotNull HighlightSeverity severity,
@@ -56,9 +55,9 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      @Nullable final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      @NotNull final Project project,
                                      @NotNull final PsiFile psiFile,
-                                     @NotNull final Editor editor) {
+                                     @NotNull final Editor editor, @Nullable String tooltip) {
+    super(getColor(project, severity));
     myProject = project;
-    myBackground = getColor(severity);
 
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
@@ -79,6 +78,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     myLabel.setText(description);
+    myLabel.setToolTipText(tooltip);
     if (gutterMark != null) {
       myLabel.setIcon(gutterMark.getIcon());
     }
@@ -105,18 +105,13 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
   }
 
-  @Override
-  public Color getBackground() {
-    return myBackground;
-  }
-
   @NotNull
-  private Color getColor(@NotNull HighlightSeverity severity) {
-    if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.ERROR) >= 0) {
+  private static Color getColor(@NotNull Project project, @NotNull HighlightSeverity severity) {
+    if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.ERROR) >= 0) {
       return LightColors.RED;
     }
 
-    if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
+    if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.WARNING) >= 0) {
       return LightColors.YELLOW;
     }
 

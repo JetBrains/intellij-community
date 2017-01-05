@@ -39,7 +39,6 @@ public class StoragePathMacros {
    * Points to the application-level options root directory.
    * @deprecated Not required anymore. See {@link State#storages()}. In short: specify relative path instead (without macro).
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static final String APP_CONFIG = "$APP_CONFIG$";
 
@@ -52,7 +51,6 @@ public class StoragePathMacros {
   /**
    * @deprecated Not required anymore. See {@link State#storages()}.
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
 

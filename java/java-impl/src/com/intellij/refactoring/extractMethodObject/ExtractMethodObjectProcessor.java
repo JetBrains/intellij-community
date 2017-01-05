@@ -346,6 +346,17 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
+      public void visitParameter(PsiParameter parameter) {
+        super.visitParameter(parameter);
+        final PsiElement declarationScope = parameter.getDeclarationScope();
+        for (PsiVariable variable : outputVariables) {
+          if (Comparing.strEqual(variable.getName(), parameter.getName())) {
+            replacementMap.put(parameter, myElementFactory.createStatementFromText(myInnerClassName + ".this." + var2FieldNames.get(variable.getName()) + " = " + parameter.getName() + ";", declarationScope));
+          }
+        }
+      }
+
+      @Override
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
@@ -368,16 +379,37 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    Map<PsiStatement, PsiForeachStatement> blocksToReplace = new LinkedHashMap<>();
     for (PsiElement statement : replacementMap.keySet()) {
       final PsiElement replacement = replacementMap.get(statement);
       if (replacement != null) {
-        if (statement instanceof PsiLocalVariable) {
+        if (statement instanceof PsiParameter) {
+          PsiCodeBlock codeBlock = null;
+          final PsiElement declarationScope = ((PsiParameter)statement).getDeclarationScope();
+          if (declarationScope instanceof PsiForeachStatement) {
+            final PsiStatement loopBody = ((PsiForeachStatement)declarationScope).getBody();
+            if (loopBody instanceof PsiBlockStatement) {
+              codeBlock = ((PsiBlockStatement)loopBody).getCodeBlock();
+            }
+            else {
+              blocksToReplace.put((PsiStatement)replacement, (PsiForeachStatement)declarationScope);
+            }
+          }
+          else if (declarationScope instanceof PsiCatchSection){
+            codeBlock = ((PsiCatchSection)declarationScope).getCatchBlock();
+          }
+          if (codeBlock != null) {
+            codeBlock.addBefore(replacement, codeBlock.getFirstBodyElement());
+          }
+        }
+        else if (statement instanceof PsiLocalVariable) {
           PsiLocalVariable variable = (PsiLocalVariable)statement;
           variable.normalizeDeclaration();
           PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(statement, PsiDeclarationStatement.class);
           LOG.assertTrue(declaration != null);
           declaration.replace(replacement);
-        } else {
+        }
+        else {
           if (statement instanceof PsiReturnStatement) {
             final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
             if (!(returnValue instanceof PsiReferenceExpression || returnValue == null || returnValue instanceof PsiLiteralExpression)) {
@@ -390,6 +422,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       } else {
         statement.delete();
       }
+    }
+
+    for (PsiStatement statement : blocksToReplace.keySet()) {
+      RefactoringUtil.putStatementInLoopBody(statement, blocksToReplace.get(statement), null);
     }
 
     myChangeReturnType = true;

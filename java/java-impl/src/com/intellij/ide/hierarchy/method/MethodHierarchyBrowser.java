@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,25 +40,26 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     super(project, method);
   }
 
+  @Override
   protected void createTrees(@NotNull Map<String, JTree> trees) {
     final JTree tree = createTree(false);
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
 
-    final BaseOnThisMethodAction baseOnThisMethodAction = new BaseOnThisMethodAction();
-    baseOnThisMethodAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
+    final BaseOnThisMethodAction action = new BaseOnThisMethodAction();
+    action.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
 
     trees.put(METHOD_TYPE, tree);
   }
 
+  @Override
   protected JPanel createLegendPanel() {
     return createStandardLegendPanel(IdeBundle.message("hierarchy.legend.method.is.defined.in.class"),
                                      IdeBundle.message("hierarchy.legend.method.defined.in.superclass"),
                                      IdeBundle.message("hierarchy.legend.method.should.be.defined"));
   }
 
-
+  @Override
   protected PsiElement getElementFromDescriptor(@NotNull final HierarchyNodeDescriptor descriptor) {
     if (descriptor instanceof MethodHierarchyNodeDescriptor) {
       return ((MethodHierarchyNodeDescriptor)descriptor).getTargetElement();
@@ -66,10 +67,12 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     return null;
   }
 
+  @Override
   protected boolean isApplicableElement(@NotNull final PsiElement psiElement) {
     return psiElement instanceof PsiMethod;
   }
 
+  @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
     if (!METHOD_TYPE.equals(typeName)) {
       LOG.error("unexpected type: " + typeName);
@@ -78,17 +81,17 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
     return new MethodHierarchyTreeStructure(myProject, (PsiMethod)psiElement);
   }
 
+  @Override
   protected Comparator<NodeDescriptor> getComparator() {
     return JavaHierarchyUtil.getComparator(myProject);
   }
 
   public PsiMethod getBaseMethod() {
-    final HierarchyTreeBuilder builder = myBuilders.get(myCurrentViewType);
+    final HierarchyTreeBuilder builder = getCurrentBuilder();
     final MethodHierarchyTreeStructure treeStructure = (MethodHierarchyTreeStructure)builder.getTreeStructure();
+    assert treeStructure != null : builder;
     return treeStructure.getBaseMethod();
   }
 
-  public static final class BaseOnThisMethodAction extends MethodHierarchyBrowserBase.BaseOnThisMethodAction {
-  }
-
+  public static final class BaseOnThisMethodAction extends MethodHierarchyBrowserBase.BaseOnThisMethodAction { }
 }

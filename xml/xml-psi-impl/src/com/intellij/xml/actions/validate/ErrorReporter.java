@@ -50,10 +50,6 @@ public abstract class ErrorReporter {
       return true;
     }
 
-    if (ex instanceof NullPointerException) {
-      return true; // workaround for NPE at org.apache.xerces.impl.dtd.XMLDTDProcessor.checkDeclaredElements
-    }
-
     return false;
   }
 

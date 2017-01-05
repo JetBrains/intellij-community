@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -387,10 +387,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
           uploadDeletedRenamedChildren();
           ContainerUtil.removeDuplicates(myDetailedList);
         }
-        catch (SVNException e) {
-          LOG.info(e);
-        }
-        catch (VcsException e) {
+        catch (SVNException | VcsException e) {
           LOG.info(e);
         }
       }
@@ -561,7 +558,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private SvnLazyPropertyContentRevision createPropertyRevision(@NotNull FilePath filePath,
                                                                 @Nullable ContentRevision revision,
                                                                 @NotNull SVNURL url) {
-    return revision == null ? null : new SvnLazyPropertyContentRevision(filePath, revision.getRevisionNumber(), myVcs.getProject(), url);
+    return revision == null ? null : new SvnLazyPropertyContentRevision(myVcs, filePath, revision.getRevisionNumber(), url);
   }
 
   @NotNull
@@ -795,13 +792,10 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     }
   }
 
-  public void forceReloadCachedInfo(final boolean reloadRoot) {
+  public void forceReloadCachedInfo() {
     myCachedInfoLoaded = false;
     myBranchUrl = null;
-
-    if (reloadRoot) {
-      myWcRoot = null;
-    }
+    myWcRoot = null;
   }
 
   @NotNull

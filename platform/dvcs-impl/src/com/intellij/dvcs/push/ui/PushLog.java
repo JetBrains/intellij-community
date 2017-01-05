@@ -20,7 +20,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
@@ -33,9 +32,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -53,16 +52,18 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static java.util.stream.Collectors.toCollection;
 
 public class PushLog extends JPanel implements DataProvider {
 
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
-  private static final String CANCEL_EDITING = "cancelEditing";
   private final ChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
@@ -161,12 +162,9 @@ public class PushLog extends JPanel implements DataProvider {
           else {
             if (mySyncStrategy) {
               resetEditSync();
-              ContainerUtil.process(getChildNodesByType(root, RepositoryNode.class, false), new Processor<RepositoryNode>() {
-                @Override
-                public boolean process(RepositoryNode node) {
-                  node.fireOnChange();
-                  return true;
-                }
+              ContainerUtil.process(getChildNodesByType(root, RepositoryNode.class, false), node1 -> {
+                node1.fireOnChange();
+                return true;
               });
             }
             else {
@@ -214,17 +212,15 @@ public class PushLog extends JPanel implements DataProvider {
       }
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
-    myTree.getActionMap().put(CANCEL_EDITING, new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myTree.cancelEditing();
-      }
-    });
-    myTree.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), CANCEL_EDITING);
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
+    myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "");
     MyShowCommitInfoAction showCommitInfoAction = new MyShowCommitInfoAction();
     showCommitInfoAction.registerCustomShortcutSet(quickDocAction.getShortcutSet(), myTree);
+    ExpandAllAction expandAllAction = new ExpandAllAction(myTree);
+    expandAllAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_EXPAND_ALL).getShortcutSet(), myTree);
+    CollapseAllAction collapseAll = new CollapseAllAction(myTree);
+    collapseAll.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_COLLAPSE_ALL).getShortcutSet(), myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
@@ -409,12 +405,9 @@ public class PushLog extends JPanel implements DataProvider {
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, new Function<CommitNode, VcsRevisionNumber>() {
-        @Override
-        public VcsRevisionNumber fun(CommitNode commitNode) {
-          Hash hash = commitNode.getUserObject().getId();
-          return new TextRevisionNumber(hash.asString(), hash.toShortString());
-        }
+      return ArrayUtil.toObjectArray(ContainerUtil.map(commitNodes, commitNode -> {
+        Hash hash = commitNode.getUserObject().getId();
+        return new TextRevisionNumber(hash.asString(), hash.toShortString());
       }), VcsRevisionNumber.class);
     }
     return null;
@@ -422,12 +415,14 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private List<CommitNode> getSelectedCommitNodes() {
+    List<DefaultMutableTreeNode> selectedNodes = getSelectedTreeNodes();
+    return selectedNodes.isEmpty() ? Collections.emptyList() : collectSelectedCommitNodes(selectedNodes);
+  }
+
+  @NotNull
+  private List<DefaultMutableTreeNode> getSelectedTreeNodes() {
     int[] rows = myTree.getSelectionRows();
-    if (rows != null && rows.length != 0) {
-      List<DefaultMutableTreeNode> selectedNodes = getNodesForRows(getSortedRows(rows));
-      return collectSelectedCommitNodes(selectedNodes);
-    }
-    return ContainerUtil.emptyList();
+    return (rows != null && rows.length != 0) ? getNodesForRows(getSortedRows(rows)) : emptyList();
   }
 
   @NotNull
@@ -461,7 +456,21 @@ public class PushLog extends JPanel implements DataProvider {
       startSyncEditing();
       return true;
     }
+    if (CheckboxTreeHelper.isToggleEvent(e, myTree) && pressed) {
+      toggleRepositoriesFromCommits();
+      return true;
+    }
     return super.processKeyBinding(ks, e, condition, pressed);
+  }
+
+  private void toggleRepositoriesFromCommits() {
+    LinkedHashSet<CheckedTreeNode> checkedNodes =
+      getSelectedTreeNodes().stream().map(n -> n instanceof CommitNode ? n.getParent() : n).filter(CheckedTreeNode.class::isInstance)
+        .map(CheckedTreeNode.class::cast).collect(toCollection(LinkedHashSet::new));
+    if (checkedNodes.isEmpty()) return;
+    // use new state from first lead node;
+    boolean newState = !checkedNodes.iterator().next().isChecked();
+    checkedNodes.forEach(n -> myTree.setNodeState(n, newState));
   }
 
   @Nullable
@@ -473,12 +482,7 @@ public class PushLog extends JPanel implements DataProvider {
     }
     List<RepositoryNode> repositoryNodes = getChildNodesByType((DefaultMutableTreeNode)myTree.getModel().getRoot(),
                                                                RepositoryNode.class, false);
-    RepositoryNode editableNode = ContainerUtil.find(repositoryNodes, new Condition<RepositoryNode>() {
-      @Override
-      public boolean value(RepositoryNode repositoryNode) {
-        return repositoryNode.isEditableNow();
-      }
-    });
+    RepositoryNode editableNode = ContainerUtil.find(repositoryNodes, repositoryNode -> repositoryNode.isEditableNow());
     if (editableNode != null) {
       TreeUtil.selectNode(myTree, editableNode);
     }
@@ -689,9 +693,9 @@ public class PushLog extends JPanel implements DataProvider {
         @Override
         public Rectangle getNodeDimensions(Object value, int row, int depth, boolean expanded, Rectangle size) {
           Rectangle dimensions = super.getNodeDimensions(value, row, depth, expanded, size);
-          dimensions.width = myScrollPane != null
-                             ? Math.max(myScrollPane.getViewport().getWidth() - getRowX(row, depth), dimensions.width)
-                             : Math.max(myTree.getMinimumSize().width, dimensions.width);
+          dimensions.width = Math.max(
+            myScrollPane != null ? myScrollPane.getViewport().getWidth() - getRowX(row, depth) : myTree.getMinimumSize().width,
+            dimensions.width);
           return dimensions;
         }
       };

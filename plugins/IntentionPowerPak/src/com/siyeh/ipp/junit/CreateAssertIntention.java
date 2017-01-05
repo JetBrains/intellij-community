@@ -23,6 +23,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,15 +46,7 @@ public class CreateAssertIntention extends Intention {
     else if (isNullComparison(expression)) {
       final PsiBinaryExpression binaryExpression =
         (PsiBinaryExpression)expression;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      final PsiExpression comparedExpression;
-      if (ExpressionUtils.isNullLiteral(lhs)) {
-        comparedExpression = rhs;
-      }
-      else {
-        comparedExpression = lhs;
-      }
+      final PsiExpression comparedExpression = ExpressionUtils.getValueComparedWithNull(binaryExpression);
       assert comparedExpression != null;
       if (JavaTokenType.EQEQ.equals(binaryExpression.getOperationTokenType())) {
         newStatement = buildNewStatement("assertNull", element, comparedExpression.getText());
@@ -194,20 +187,9 @@ public class CreateAssertIntention extends Intention {
     return JavaTokenType.EQEQ.equals(tokenType);
   }
 
+  @Contract("null -> false")
   private static boolean isNullComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-    final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (!JavaTokenType.EQEQ.equals(tokenType) && !JavaTokenType.NE.equals(tokenType)) {
-      return false;
-    }
-    final PsiExpression lhs = binaryExpression.getLOperand();
-    if (ExpressionUtils.isNullLiteral(lhs)) {
-      return true;
-    }
-    final PsiExpression rhs = binaryExpression.getROperand();
-    return ExpressionUtils.isNullLiteral(rhs);
+    return expression instanceof PsiBinaryExpression &&
+           ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null;
   }
 }

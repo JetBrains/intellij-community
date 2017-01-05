@@ -122,7 +122,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myProject = config.getProject();
   }
 
-  protected void resetEditorFrom(final RunConfigurationBase runConfiguration) {
+  protected void resetEditorFrom(@NotNull final RunConfigurationBase runConfiguration) {
     final boolean isJre50;
     if (runConfiguration instanceof CommonJavaRunConfigurationParameters && myVersionDetector.isJre50Configured((CommonJavaRunConfigurationParameters)runConfiguration)) {
       isJre50 = true;
@@ -171,7 +171,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     return CoverageEnabledConfiguration.getOrCreate(myConfig).canHavePerTestCoverage();
   }
 
-  protected void applyEditorTo(final RunConfigurationBase runConfiguration) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull final RunConfigurationBase runConfiguration) throws ConfigurationException {
     final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());
     configuration.setCoverageRunner(getSelectedRunner());

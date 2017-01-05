@@ -50,7 +50,6 @@ public class HgChangeProvider implements ChangeProvider {
   static {
     PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
     PROCESSORS.put(HgFileStatusEnum.DELETED, HgChangeProcessor.DELETED);
-    PROCESSORS.put(HgFileStatusEnum.IGNORED, HgChangeProcessor.IGNORED);
     PROCESSORS.put(HgFileStatusEnum.MISSING, HgChangeProcessor.MISSING);
     PROCESSORS.put(HgFileStatusEnum.COPY, HgChangeProcessor.COPIED);
     PROCESSORS.put(HgFileStatusEnum.MODIFIED, HgChangeProcessor.MODIFIED);
@@ -88,7 +87,7 @@ public class HgChangeProvider implements ChangeProvider {
       final HgRevisionNumber parentRevision = new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo);
       final Map<HgFile, HgResolveStatusEnum> list = new HgResolveCommand(myProject).getListSynchronously(repo);
 
-      hgChanges.addAll(new HgStatusCommand.Builder(true).build(myProject).executeInCurrentThread(repo, entry.getValue()));
+      hgChanges.addAll(new HgStatusCommand.Builder(true).ignored(false).build(myProject).executeInCurrentThread(repo, entry.getValue()));
       final HgRepository hgRepo = HgUtil.getRepositoryForFile(myProject, repo);
       if (hgRepo != null && hgRepo.hasSubrepos()) {
         hgChanges.addAll(ContainerUtil.mapNotNull(hgRepo.getSubrepos(), info -> findChange(hgRepo, info)));
@@ -212,15 +211,6 @@ public class HgChangeProvider implements ChangeProvider {
           builder,
           vcsKey
         );
-      }
-    },
-
-    IGNORED() {
-      @Override
-      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-        HgFile beforeFile, HgFile afterFile) {
-        builder.processIgnoredFile(VcsUtil.getVirtualFile(afterFile.getFile()));
       }
     },
 

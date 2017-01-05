@@ -74,7 +74,7 @@ class CompletionAutoPopupTester {
         println "\n\n----------------------------\n\n"
         if (SystemInfo.isLinux) {
           try {
-            Process process = new ProcessBuilder().command(["top", "-b", "-n", "1"] as String[]).redirectErrorStream(true).start();
+            Process process = new ProcessBuilder().command(["top", "-b", "-n", "1"] as String[]).redirectErrorStream(true).start()
             println FileUtil.loadTextAndClose(process.getInputStream())
           }
           catch (IOException e) {
@@ -85,32 +85,32 @@ class CompletionAutoPopupTester {
       }
       Thread.sleep(10)
     }
-    UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.phaseRaw)
+    UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.completionPhase)
   }
 
   final static AtomicInteger cnt = new AtomicInteger()
   def joinCommit(Closure c1={}) {
     final AtomicBoolean committed = new AtomicBoolean()
     final AtomicBoolean run = new AtomicBoolean()
-    boolean executed=true;
+    boolean executed=true
     def closureSeq = cnt.getAndIncrement()
     Runnable r = new Runnable() {
       @Override
-      public void run() {
+      void run() {
         run.set(true)
         ApplicationManager.application.invokeLater {
-          c1();
+          c1()
           committed.set(true)
-        };
+        }
       }
 
       @Override
-      public String toString() {
-        return "Closure "+closureSeq;
+      String toString() {
+        return "Closure "+closureSeq
       }
-    };
+    }
     EdtTestUtil.runInEdtAndWait {
-      executed = PsiDocumentManager.getInstance(myFixture.project).performWhenAllCommitted(r);
+      executed = PsiDocumentManager.getInstance(myFixture.project).performWhenAllCommitted(r)
     }
     assert !ApplicationManager.getApplication().isWriteAccessAllowed()
     assert !ApplicationManager.getApplication().isReadAccessAllowed()
@@ -121,7 +121,7 @@ class CompletionAutoPopupTester {
         UsefulTestCase.fail("too long waiting for documents to be committed. executed: $executed; r: $r; run: $run; ")
         UsefulTestCase.printThreadDump()
       }
-      UIUtil.pump();
+      UIUtil.pump()
     }
   }
 

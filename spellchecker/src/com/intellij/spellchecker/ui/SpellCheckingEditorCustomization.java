@@ -105,7 +105,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       return;
     }
 
-    Function<InspectionProfile, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
+    Function<InspectionProfileImpl, InspectionProfileWrapper> strategy = file.getUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY);
     if (strategy == null) {
       file.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, strategy = new MyInspectionProfileStrategy());
     }
@@ -127,13 +127,13 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     }
   }
 
-  private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
+  private static class MyInspectionProfileStrategy implements Function<InspectionProfileImpl, InspectionProfileWrapper> {
     private final Map<InspectionProfile, MyInspectionProfileWrapper> myWrappers = new WeakHashMap<>();
     private boolean myUseSpellCheck;
 
     @NotNull
     @Override
-    public InspectionProfileWrapper apply(@NotNull InspectionProfile inspectionProfile) {
+    public InspectionProfileWrapper apply(@NotNull InspectionProfileImpl inspectionProfile) {
       if (!READY) {
         return new InspectionProfileWrapper(inspectionProfile);
       }

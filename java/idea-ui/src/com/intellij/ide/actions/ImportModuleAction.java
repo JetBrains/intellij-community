@@ -24,6 +24,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -34,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -83,9 +85,15 @@ public class ImportModuleAction extends AnAction {
   }
 
   public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
+    Ref<List<Module>> result = Ref.create();
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> result.set(doCreateFromWizard(project, wizard)));
+    return result.get();
+  }
+
+  private static List<Module> doCreateFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
     if (project == null) {
       Project newProject = NewProjectUtil.createFromWizard(wizard, null);
-      return newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
+      return newProject == null ? Collections.emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
     }
 
     final ProjectBuilder projectBuilder = wizard.getProjectBuilder();
@@ -133,20 +141,16 @@ public class ImportModuleAction extends AnAction {
     }
 
     final VirtualFile file = files[0];
-    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectUtil.isSameProject(file.getPath(), p)) {
-        ProjectUtil.focusProjectWindow(p, false);
-        return null;
+    if (project == null) { // wizard will create a new project
+      for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+        if (ProjectUtil.isSameProject(file.getPath(), p)) {
+          ProjectUtil.focusProjectWindow(p, false);
+          return null;
+        }
       }
     }
     PropertiesComponent.getInstance().setValue(LAST_IMPORTED_LOCATION, file.getPath());
     return createImportWizard(project, dialogParent, file, providers);
-  }
-
-  /** @deprecated to be removed in IDEA 16 */
-  @SuppressWarnings("unused")
-  public static String getFileChooserDescription(@Nullable final Project project) {
-    return getFileChooserDescription(getProviders(project));
   }
 
   private static String getFileChooserDescription(List<ProjectImportProvider> providers) {

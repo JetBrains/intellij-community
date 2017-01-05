@@ -54,13 +54,8 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("ambiguous.method.call.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("ambiguous.method.call.quickfix");
     }
 
     @Override

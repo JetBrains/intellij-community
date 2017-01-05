@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,6 +192,20 @@ public class TestNGUtil {
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkHierarchy, boolean checkDisabled, boolean checkJavadoc) {
+    final PsiClass aClass;
+    if (element instanceof PsiClass) {
+      aClass = ((PsiClass)element);
+    }
+    else if (element instanceof PsiMethod) {
+      aClass = ((PsiMethod)element).getContainingClass();
+    }
+    else {
+      aClass = null;
+    }
+
+    if (aClass == null || !PsiClassUtil.isRunnableClass(aClass, true, false)) {
+      return false;
+    }
     //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
     //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
     boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, checkHierarchy, true);
@@ -309,8 +323,7 @@ public class TestNGUtil {
           annotation = AnnotationUtil.findAnnotation(method, test);
           if (annotation != null) {
             if (isAnnotatedWithParameter(annotation, parameter, values)) {
-              if (results.get(psiClass) == null) results.put(psiClass, new LinkedHashSet<>());
-              results.get(psiClass).add(method);
+              results.computeIfAbsent(psiClass, c -> new LinkedHashSet<>()).add(method);
             }
           }
           else {
@@ -475,7 +488,7 @@ public class TestNGUtil {
   }
 
   public static boolean isTestNGClass(PsiClass psiClass) {
-    return hasTest(psiClass, true, false, false);
+    return hasTest(psiClass);
   }
 
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {

@@ -17,12 +17,12 @@ package org.jetbrains.debugger
 
 import com.intellij.util.Consumer
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.rpc.LOG
 
 class RejectErrorReporter @JvmOverloads constructor(private val session: XDebugSession, private val description: String? = null) : Consumer<Throwable> {
   override fun consume(error: Throwable) {
-    if (Promise.logError(LOG, error)) {
+    if (LOG.errorIfNotMessage(error)) {
       session.reportError("${if (description == null) "" else "$description: "}${error.message}")
     }
   }

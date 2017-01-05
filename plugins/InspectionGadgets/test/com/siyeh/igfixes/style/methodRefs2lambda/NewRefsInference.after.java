@@ -11,6 +11,6 @@ public class MyTest<X> {
     }
 
     static {
-        I<String> s = (x) -> new MyTest<String>(x);
+        I<String> s = x -> new MyTest<String>(x);
     }
 }

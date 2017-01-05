@@ -32,14 +32,13 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public class ModuleWithDependenciesScope extends GlobalSearchScope {
-  public static final int COMPILE = 0x01;
+  public static final int COMPILE_ONLY = 0x01;
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
   public static final int TESTS = 0x08;
-  public static final int RUNTIME = 0x10;
   public static final int CONTENT = 0x20;
 
-  @MagicConstant(flags = {COMPILE, LIBRARIES, MODULES, TESTS, RUNTIME, CONTENT})
+  @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS, CONTENT})
   public @interface ScopeConstant {}
 
   private final Module myModule;
@@ -87,11 +86,8 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     OrderEnumerator en = ModuleRootManager.getInstance(myModule).orderEntries();
     en.recursively();
 
-    if (hasOption(COMPILE)) {
+    if (hasOption(COMPILE_ONLY)) {
       en.exportedOnly().compileOnly();
-    }
-    if (hasOption(RUNTIME)) {
-      en.runtimeOnly();
     }
     if (!hasOption(LIBRARIES)) en.withoutLibraries().withoutSdk();
     if (!hasOption(MODULES)) en.withoutDepModules();
@@ -129,8 +125,8 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @NotNull
   @Override
   public String getDisplayName() {
-    return hasOption(COMPILE) ? PsiBundle.message("search.scope.module", myModule.getName())
-                              : PsiBundle.message("search.scope.module.runtime", myModule.getName());
+    return hasOption(COMPILE_ONLY) ? PsiBundle.message("search.scope.module", myModule.getName())
+                                   : PsiBundle.message("search.scope.module.runtime", myModule.getName());
   }
 
   @Override
@@ -210,7 +206,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @Override
   public String toString() {
     return "Module with dependencies:" + myModule.getName() +
-           " compile:" + hasOption(COMPILE) +
+           " compile only:" + hasOption(COMPILE_ONLY) +
            " include libraries:" + hasOption(LIBRARIES) +
            " include other modules:" + hasOption(MODULES) +
            " include tests:" + hasOption(TESTS);

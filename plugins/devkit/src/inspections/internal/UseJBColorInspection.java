@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBColorConstantQuickFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBColorQuickFix;
 
@@ -34,7 +35,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class UseJBColorInspection extends InternalInspection {
+public class UseJBColorInspection extends DevKitInspectionBase {
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {

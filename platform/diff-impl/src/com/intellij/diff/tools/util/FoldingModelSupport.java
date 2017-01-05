@@ -24,7 +24,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -229,16 +228,14 @@ public class FoldingModelSupport {
   private void runBatchOperation(@NotNull Runnable runnable) {
     Runnable lastRunnable = runnable;
 
-    for (int i = 0; i < myCount; i++) {
-      final Editor editor = myEditors[i];
+    for (EditorEx editor : myEditors) {
       final Runnable finalRunnable = lastRunnable;
       lastRunnable = () -> {
-        Runnable operation = () -> finalRunnable.run();
         if (DiffUtil.isFocusedComponent(editor.getComponent())) {
-          editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+          editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(finalRunnable);
         }
         else {
-          editor.getFoldingModel().runBatchFoldingOperation(operation);
+          editor.getFoldingModel().runBatchFoldingOperation(finalRunnable);
         }
       };
     }

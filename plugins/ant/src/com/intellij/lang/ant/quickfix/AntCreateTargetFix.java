@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ant.AntBundle;
@@ -58,7 +57,7 @@ public class AntCreateTargetFix implements LocalQuickFix {
     if (containingFile instanceof XmlFile) {
       final XmlFile xmlFile = (XmlFile)containingFile;
       final XmlTag rootTag = xmlFile.getRootTag();
-      if (rootTag != null && FileModificationService.getInstance().prepareFileForWrite(xmlFile)) {
+      if (rootTag != null) {
         final XmlTag propTag = rootTag.createChildTag(TAG_NAME, rootTag.getNamespace(), "", false);
         propTag.setAttribute(NAME_ATTR, myCanonicalText);
         final DomElement contextElement = DomUtil.getDomElement(descriptor.getPsiElement());

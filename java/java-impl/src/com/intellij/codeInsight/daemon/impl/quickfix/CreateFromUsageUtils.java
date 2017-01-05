@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -119,7 +120,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupMethodBody(PsiMethod method) throws IncorrectOperationException {
+  public static void setupMethodBody(@NotNull PsiMethod method) throws IncorrectOperationException {
     PsiClass aClass = method.getContainingClass();
     setupMethodBody(method, aClass);
   }
@@ -300,13 +301,9 @@ public class CreateFromUsageUtils {
       qualifierName = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();
       qualifierElement = ((PsiJavaCodeReferenceElement)qualifier).resolve();
       if (qualifierElement instanceof PsiClass) {
-        return ApplicationManager.getApplication().runWriteAction(
-          new Computable<PsiClass>() {
-            @Override
-            public PsiClass compute() {
-              return createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement);
-            }
-          });
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(qualifierElement)) return null;
+
+        return WriteAction.compute(() -> createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement));
       }
     }
     else {
@@ -369,23 +366,15 @@ public class CreateFromUsageUtils {
                                                  CreateClassKind classKind,
                                                  String name,
                                                  PsiJavaCodeReferenceElement referenceElement) {
-    try {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiClass)) return null;
-
-      PsiManager manager = psiClass.getManager();
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
-                        classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
-                        classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
-                        elementFactory.createEnum(name);
-      CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
-      result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
-      return (PsiClass) psiClass.add(result);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
+    PsiManager manager = psiClass.getManager();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
+                      classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
+                      classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
+                      elementFactory.createEnum(name);
+    CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
+    result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
+    return (PsiClass) psiClass.add(result);
   }
 
   public static PsiClass createClass(final CreateClassKind classKind,
@@ -453,12 +442,7 @@ public class CreateFromUsageUtils {
             }
 
             if (superClassName != null && (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM))) {
-              final PsiClass superClass =
-                facade.findClass(superClassName, targetClass.getResolveScope());
-              final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
-              final PsiReferenceList list = classKind == CreateClassKind.INTERFACE || superClass == null || !superClass.isInterface() ?
-                targetClass.getExtendsList() : targetClass.getImplementsList();
-              list.add(superClassReference);
+              setupSuperClassReference(targetClass, superClassName);
             }
             if (contextElement instanceof PsiJavaCodeReferenceElement) {
               CreateFromUsageBaseFix.setupGenericParameters(targetClass, (PsiJavaCodeReferenceElement)contextElement);
@@ -471,6 +455,17 @@ public class CreateFromUsageUtils {
           }
         }
       });
+  }
+
+  public static void setupSuperClassReference(PsiClass targetClass, String superClassName) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(targetClass.getProject());
+    PsiElementFactory factory = facade.getElementFactory();
+    final PsiClass superClass =
+      facade.findClass(superClassName, targetClass.getResolveScope());
+    final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
+    final PsiReferenceList list = targetClass.isInterface() || superClass == null || !superClass.isInterface() ?
+                                  targetClass.getExtendsList() : targetClass.getImplementsList();
+    list.add(superClassReference);
   }
 
   public static void scheduleFileOrPackageCreationFailedMessageBox(final IncorrectOperationException e, final String name, final PsiDirectory directory,

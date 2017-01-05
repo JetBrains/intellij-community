@@ -46,7 +46,9 @@ public final class DataBindingWizardAction extends AnAction{
     final Project project;
     final VirtualFile formFile;
     GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
-    assert editor != null;
+    if (editor == null) {
+      return;
+    }
     project = editor.getProject();
     formFile = editor.getFile();
 

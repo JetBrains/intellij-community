@@ -30,8 +30,8 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
@@ -154,10 +154,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, getCurrentSide());
-    }
-    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getCurrentSide().select(myRequest.getContents());
     }
     return super.getData(dataId);
@@ -194,7 +191,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   // Actions
   //
 
-  protected enum PartialDiffMode {LEFT_BASE, BASE_RIGHT, LEFT_RIGHT}
+  protected enum PartialDiffMode {LEFT_MIDDLE, RIGHT_MIDDLE, MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_RIGHT}
   protected class ShowPartialDiffAction extends DumbAwareAction {
     @NotNull protected final ThreeSide mySide1;
     @NotNull protected final ThreeSide mySide2;
@@ -202,12 +199,22 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     public ShowPartialDiffAction(@NotNull PartialDiffMode mode) {
       String id;
       switch (mode) {
-        case LEFT_BASE:
+        case LEFT_MIDDLE:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Left";
           break;
-        case BASE_RIGHT:
+        case RIGHT_MIDDLE:
+          mySide1 = ThreeSide.RIGHT;
+          mySide2 = ThreeSide.BASE;
+          id = "Diff.ComparePartial.Base.Right";
+          break;
+        case MIDDLE_LEFT:
+          mySide1 = ThreeSide.BASE;
+          mySide2 = ThreeSide.LEFT;
+          id = "Diff.ComparePartial.Base.Left";
+          break;
+        case MIDDLE_RIGHT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Base.Right";
@@ -220,7 +227,10 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
         default:
           throw new IllegalArgumentException();
       }
-      ActionUtil.copyFrom(this, id);
+      String text = ActionsBundle.message("action.Diff.ComparePartial.Generic", mySide1.getIndex(), mySide2.getIndex());
+      getTemplatePresentation().setText(text);
+
+      ActionUtil.mergeFrom(this, id);
     }
 
     @Override

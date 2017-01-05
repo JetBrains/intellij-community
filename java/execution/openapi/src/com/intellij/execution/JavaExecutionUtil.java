@@ -29,6 +29,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -194,6 +195,7 @@ public class JavaExecutionUtil {
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
+    if (classes[0].getTextRange() == null) return location;
     return PsiLocation.fromPsiElement(classes[0]);
   }
 

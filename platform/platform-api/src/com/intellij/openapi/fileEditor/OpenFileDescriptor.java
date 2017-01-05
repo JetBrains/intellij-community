@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.*;
-import com.intellij.ide.FileEditorProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.*;
@@ -157,32 +156,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   }
 
   private void navigateInProjectView(boolean requestFocus) {
-    SelectInContext context = new SelectInContext() {
-      @Override
-      @NotNull
-      public Project getProject() {
-        return myProject;
-      }
-
-      @Override
-      @NotNull
-      public VirtualFile getVirtualFile() {
-        return myFile;
-      }
-
-      @Override
-      @Nullable
-      public Object getSelectorInFile() {
-        return null;
-      }
-
-      @Override
-      @Nullable
-      public FileEditorProvider getFileEditorProvider() {
-        return null;
-      }
-    };
-
+    SelectInContext context = new FileSelectInContext(myProject, myFile);
     for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargets()) {
       if (target.canSelect(context)) {
         target.selectIn(context, requestFocus);

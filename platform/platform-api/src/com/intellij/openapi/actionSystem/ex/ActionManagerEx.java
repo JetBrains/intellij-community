@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,17 +49,14 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract String getPrevPreformedActionId();
 
-
   /**
    * Comparator compares action ids (String) on order of action registration.
    *
-   * @return a negative integer if action that corresponds to the first id was registered earler than the action that corresponds
-   *         <p/>
-   *         to the second id; zero if both ids are equal; a positive number otherwise.
+   * @return a negative integer if action that corresponds to the first id was registered earlier than the action that corresponds
+   *  to the second id; zero if both ids are equal; a positive number otherwise.
    */
-
+  @NotNull
   public abstract Comparator<String> getRegistrationOrderComparator();
-
 
   /**
    * Similar to {@link KeyStroke#getKeyStroke(String)} but allows keys in lower case.
@@ -90,7 +87,7 @@ public abstract class ActionManagerEx extends ActionManager {
 
 
   @NotNull
-  public abstract String[] getPluginActions(PluginId pluginId);
+  public abstract String[] getPluginActions(@NotNull PluginId pluginId);
 
   public abstract void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event);
 

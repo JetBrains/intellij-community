@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.Reference;
 import java.net.URL;
 import java.util.ArrayList;
@@ -129,7 +128,6 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
         reader.close();
       }
     }
-    catch (UnsupportedEncodingException ignored) { }
     catch (IOException ignored) { }
   }
 
@@ -319,7 +317,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
+      PsiAnnotation annotation = !method.isConstructor() ? AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE) : null;
       if (annotation != null) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
         if (module != null) {

@@ -21,8 +21,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -129,14 +128,9 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
                      @NotNull final PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (isAvailable(project, null, file)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          final PsiDirectory directory = chooseDirectory(project, file);
-          if (directory == null) return;
-          ApplicationManager.getApplication().runWriteAction(() -> doCreate(directory, startElement));
-        }
-      }.execute();
+      PsiDirectory directory = chooseDirectory(project, file);
+      if (directory == null) return;
+      WriteAction.run(() -> doCreate(directory, startElement));
     }
   }
 

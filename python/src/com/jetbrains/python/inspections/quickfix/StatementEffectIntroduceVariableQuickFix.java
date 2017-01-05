@@ -35,14 +35,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.introduce.variable");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.introduce.variable");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

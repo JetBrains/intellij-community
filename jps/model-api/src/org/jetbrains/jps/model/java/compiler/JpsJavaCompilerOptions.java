@@ -19,6 +19,7 @@ package org.jetbrains.jps.model.java.compiler;
  * @author nik
  */
 public class JpsJavaCompilerOptions {
+  public boolean PREFER_TARGET_JDK_COMPILER = true;
   public boolean DEBUGGING_INFO = true;
   public boolean GENERATE_NO_WARNINGS = false;
   public boolean DEPRECATION = true;

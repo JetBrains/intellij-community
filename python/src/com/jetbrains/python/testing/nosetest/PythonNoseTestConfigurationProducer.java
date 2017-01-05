@@ -36,7 +36,7 @@ public class PythonNoseTestConfigurationProducer extends
     final PsiElement element = location.getPsiElement();
     Module module = location.getModule();
     if (module == null) {
-      final Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
+      final Module[] modules = ModuleManager.getInstance(location.getProject()).getModules();
       if (modules.length == 0) return false;
       module = modules[0];
     }

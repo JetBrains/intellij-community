@@ -196,7 +196,7 @@ public class SpacingBuilder {
 
   /**
    * Creates SpacingBuilder with given language code style settings.
-   * @param languageCodeStyleSettings The language code style settings. Note that <code>getLanguage()</code> method must not 
+   * @param languageCodeStyleSettings The language code style settings. Note that {@code getLanguage()} method must not
    *                                  return null!
    */
   public SpacingBuilder(@NotNull CommonCodeStyleSettings languageCodeStyleSettings) {
@@ -225,7 +225,11 @@ public class SpacingBuilder {
   }
 
   public RuleBuilder before(IElementType elementType) {
-    return new RuleBuilder(new RuleCondition(null, null, TokenSet.create(elementType)));
+    return before(TokenSet.create(elementType));
+  }
+
+  public RuleBuilder before(TokenSet tokenSet) {
+    return new RuleBuilder(new RuleCondition(null, null, tokenSet));
   }
 
   public RuleBuilder beforeInside(TokenSet tokenSet, IElementType parentType) {

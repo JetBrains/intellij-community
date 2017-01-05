@@ -144,7 +144,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
             root.insert(nodeManager.createNode(nodeManager.getThreadDescriptor(null, currentThread), evaluationContext), 0);
           }
           List<ThreadReferenceProxyImpl> allThreads = new ArrayList<>(vm.allThreads());
-          Collections.sort(allThreads, ThreadReferenceProxyImpl.ourComparator);
+          allThreads.sort(ThreadReferenceProxyImpl.ourComparator);
 
           for (ThreadReferenceProxyImpl threadProxy : allThreads) {
             if (threadProxy.equals(currentThread)) {

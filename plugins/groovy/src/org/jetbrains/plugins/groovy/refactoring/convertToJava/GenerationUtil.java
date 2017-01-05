@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
@@ -158,7 +157,7 @@ public class GenerationUtil {
       type = caller.getType();
     }
     if (type != null) {
-      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null, false);
+      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null);
       final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
       call = PsiImplUtil.extractUniqueResult(candidates);
     }
@@ -517,24 +516,18 @@ public class GenerationUtil {
     if (declared == null) return false;
 
     final CheckProcessElement checker = new CheckProcessElement(member);
-    final BaseScopeProcessor processor = new BaseScopeProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        return false;
-      }
-    };
 
     if (ResolveUtil.resolvesToClass(qualifier)) {
       PsiType type = ResolveUtil.unwrapClassType(declared);
       if (type != null) {
-        ResolveUtil.processAllDeclarationsSeparately(type, checker, processor, ResolveState.initial(), qualifier);
+        ResolveUtil.processAllDeclarations(type, checker, false, qualifier);
         if (checker.isFound()) {
           return false;
         }
       }
     }
 
-    ResolveUtil.processAllDeclarationsSeparately(declared, checker, processor, ResolveState.initial(), qualifier);
+    ResolveUtil.processAllDeclarations(declared, checker, false, qualifier);
     return !checker.isFound();
   }
 

@@ -76,23 +76,11 @@ public class RefreshWorker {
   }
 
   public void scan() {
-    NewVirtualFile root = myRefreshQueue.pullFirst().first;
-    boolean rootDirty = root.isDirty();
-    if (LOG.isDebugEnabled()) LOG.debug("root=" + root + " dirty=" + rootDirty);
-    if (!rootDirty) return;
-
+    NewVirtualFile root = myRefreshQueue.peekFirst().first;
     NewVirtualFileSystem fs = root.getFileSystem();
-    FileAttributes rootAttributes = fs.getAttributes(root);
-    if (rootAttributes == null) {
-      scheduleDeletion(root);
-      root.markClean();
-      return;
-    }
-    else if (rootAttributes.isDirectory()) {
+    if (root.isDirectory()) {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
-
-    myRefreshQueue.addLast(pair(root, rootAttributes));
     try {
       processQueue(fs, PersistentFS.getInstance());
     }
@@ -116,6 +104,7 @@ public class RefreshWorker {
       FileAttributes attributes = pair.second != null ? pair.second : fs.getAttributes(file);
       if (attributes == null) {
         scheduleDeletion(file);
+        file.markClean();
         continue;
       }
 
@@ -352,6 +341,7 @@ public class RefreshWorker {
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) {
     if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
+      if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
       while (!myRefreshQueue.isEmpty()) {
         NewVirtualFile next = myRefreshQueue.pullFirst().first;

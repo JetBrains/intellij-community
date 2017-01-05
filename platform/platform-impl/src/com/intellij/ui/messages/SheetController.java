@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,6 @@ public class SheetController {
 
   private static final Logger LOG = Logger.getInstance(SheetController.class);
   private static final int SHEET_MINIMUM_HEIGHT = 143;
-  private static final String fontName = "Lucida Grande";
-  private static final Font regularFont = new Font(fontName, Font.PLAIN, 10);
-  private static final Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
   private final DialogWrapper.DoNotAskOption myDoNotAskOption;
   private boolean myDoNotAskResult;
 
@@ -265,7 +262,7 @@ public class SheetController {
 
 
     headerLabel.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-    headerLabel.setFont(boldFont);
+    headerLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     headerLabel.setEditable(false);
 
     headerLabel.setContentType("text/html");
@@ -281,7 +278,8 @@ public class SheetController {
     headerLabel.repaint();
 
     messageTextPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-    messageTextPane.setFont(regularFont);
+    Font font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
+    messageTextPane.setFont(font);
     messageTextPane.setEditable(false);
 
     messageTextPane.setContentType("text/html");
@@ -299,10 +297,7 @@ public class SheetController {
                 LOG.warn("URL is null; HyperlinkEvent: " + he.toString());
               }
             }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-            catch (URISyntaxException e) {
+            catch (IOException | URISyntaxException e) {
               LOG.error(e);
             }
           }
@@ -310,7 +305,7 @@ public class SheetController {
       }
     });
 
-    FontMetrics fontMetrics = sheetPanel.getFontMetrics(regularFont);
+    FontMetrics fontMetrics = sheetPanel.getFontMetrics(font);
 
     int widestWordWidth = 250;
 

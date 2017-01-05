@@ -16,7 +16,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.CCStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +48,7 @@ public class CCPushTask extends DumbAwareAction {
     if (lesson != null && lesson.getId() > 0 && course.getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
       final com.jetbrains.edu.learning.courseFormat.Task task = lesson.getTask(taskDir.getName());
-      if (task.getStepicId() <= 0) {
+      if (task.getStepId() <= 0) {
         e.getPresentation().setText("Upload Task to Stepik");
       }
     }
@@ -81,11 +81,11 @@ public class CCPushTask extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText("Uploading task to " + EduStepicNames.STEPIC_URL);
-        if (task.getStepicId() <= 0) {
-          EduStepicConnector.postTask(project, task, lesson.getId());
+        if (task.getStepId() <= 0) {
+          CCStepicConnector.postTask(project, task, lesson.getId());
         }
         else {
-          EduStepicConnector.updateTask(project, task);
+          CCStepicConnector.updateTask(project, task);
         }
       }
     });

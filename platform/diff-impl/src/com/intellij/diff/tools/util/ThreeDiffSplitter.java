@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ThreeDiffSplitter extends JPanel {
-  private static final int DIVIDER_WIDTH = 30;
-
   @NotNull private final List<? extends JComponent> myContents;
   @NotNull private final Divider myDivider1;
   @NotNull private final Divider myDivider2;
@@ -115,12 +114,12 @@ public class ThreeDiffSplitter extends JPanel {
 
   @NotNull
   private static int[] calcComponentsWidths(int width, float proportion1, float proportion2) {
-    int dividersTotalWidth = DIVIDER_WIDTH * 2;
+    int dividersTotalWidth = getDividerWidth() * 2;
     int contentsTotalWidth = Math.max(width - dividersTotalWidth, 0);
 
     int[] contentWidths = new int[5];
-    contentWidths[1] = DIVIDER_WIDTH; // divider1
-    contentWidths[3] = DIVIDER_WIDTH; // divider2
+    contentWidths[1] = getDividerWidth(); // divider1
+    contentWidths[3] = getDividerWidth(); // divider2
     contentWidths[0] = (int)(contentsTotalWidth * proportion1); // content1
     contentWidths[4] = (int)(contentsTotalWidth * proportion2); // content3
     contentWidths[2] = Math.max(contentsTotalWidth - contentWidths[0] - contentWidths[4], 0); // content2
@@ -129,7 +128,7 @@ public class ThreeDiffSplitter extends JPanel {
 
   @Override
   public Dimension getMinimumSize() {
-    int width = DIVIDER_WIDTH * 2;
+    int width = getDividerWidth() * 2;
     int height = 0;
     for (JComponent content : myContents) {
       Dimension size = content.getMinimumSize();
@@ -141,7 +140,7 @@ public class ThreeDiffSplitter extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    int width = DIVIDER_WIDTH * 2;
+    int width = getDividerWidth() * 2;
     int height = 0;
     for (JComponent content : myContents) {
       Dimension size = content.getPreferredSize();
@@ -149,6 +148,10 @@ public class ThreeDiffSplitter extends JPanel {
       height = Math.max(height, size.height);
     }
     return new Dimension(width, height);
+  }
+
+  private static int getDividerWidth() {
+    return JBUI.scale(30);
   }
 
   private class Divider extends JPanel {

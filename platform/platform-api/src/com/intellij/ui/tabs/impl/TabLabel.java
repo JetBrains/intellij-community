@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nullable;
@@ -204,9 +205,9 @@ public class TabLabel extends JPanel implements Accessible {
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 2) : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getShadowInstance().HIDE_TABS_IF_NEED ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
-    label.setIpad(new Insets(0, 0, 0, 0));
+    label.setIpad(JBUI.emptyInsets());
 
     return label;
   }
@@ -214,7 +215,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && UISettings.getInstance().SHOW_CLOSE_BUTTON) {
+    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().SHOW_CLOSE_BUTTON) {
         insets.right = 3;
     }
     return insets;
@@ -462,6 +463,10 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   public void apply(UiDecorator.UiDecoration decoration) {
+    if (decoration == null) {
+      return;
+    }
+
     if (decoration.getLabelFont() != null) {
       setFont(decoration.getLabelFont());
       getLabelComponent().setFont(decoration.getLabelFont());
@@ -671,23 +676,19 @@ public class TabLabel extends JPanel implements Accessible {
     @Override
     public String getAccessibleName() {
       String name = super.getAccessibleName();
-      if (name == null) {
-        if (myLabel instanceof Accessible){
+      if (name == null && myLabel != null) {
           name = myLabel.getAccessibleContext().getAccessibleName();
-        }
       }
       return name;
     }
 
     @Override
     public String getAccessibleDescription() {
-      String name = super.getAccessibleDescription();
-      if (name == null) {
-        if (myLabel instanceof Accessible){
-          name = myLabel.getAccessibleContext().getAccessibleDescription();
-        }
+      String description = super.getAccessibleDescription();
+      if (description == null && myLabel != null) {
+          description = myLabel.getAccessibleContext().getAccessibleDescription();
       }
-      return name;
+      return description;
     }
 
     @Override

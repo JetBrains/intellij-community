@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -60,7 +61,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
       }
       if (myLiteralTokenSet.contains(iterator.getTokenType())) {
         int start = iterator.getStart();
-        if (offset - start <= 2) {
+        if (offset - start <= PyStringLiteralUtil.MAX_PREFIX_LENGTH) {
           if (getLiteralStartOffset(text, start) == offset) return true;
         }
       }
@@ -88,15 +89,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   }
 
   private static int getLiteralStartOffset(CharSequence text, int start) {
-    char c = Character.toUpperCase(text.charAt(start));
-    if (c == 'U' || c == 'B') {
-      start++;
-      c = Character.toUpperCase(text.charAt(start));
-    }
-    if (c == 'R') {
-      start++;
-    }
-    return start;
+    return PyStringLiteralUtil.getPrefixEndOffset(text, start);
   }
 
   @Override

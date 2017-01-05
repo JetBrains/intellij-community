@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,6 +28,7 @@ public class GroovyRunnerPsiUtil {
   @Nullable
   public static PsiClass getRunningClass(@Nullable PsiElement element) {
     if (element == null) return null;
+    if (DumbService.isDumb(element.getProject())) return null;
 
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof GroovyFile)) return null;

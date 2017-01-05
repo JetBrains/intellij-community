@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,14 +59,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private String[] mySuppressions = null;
 
   private boolean myIsDeleted ;
-  private final Module myModule;
   protected static final int IS_REACHABLE_MASK = 0x40;
 
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
     myID = null;
     myFlags = 0;
-    myModule = ModuleUtilCore.findModuleForPsiElement(owner.getElement());
   }
 
   protected RefElementImpl(PsiFile file, RefManager manager) {
@@ -79,7 +75,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     super(name, manager);
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
     myFlags = 0;
-    myModule = ModuleUtilCore.findModuleForPsiElement(element);
   }
 
   @Override
@@ -114,7 +109,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   public RefModule getModule() {
-    return myManager.getRefModule(myModule);
+    final RefEntity owner = getOwner();
+    return owner instanceof RefElement ? ((RefElement)owner).getModule() : null;
   }
 
   @Override

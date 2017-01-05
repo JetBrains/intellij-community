@@ -103,8 +103,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
 
   private static final UsageNode MORE_USAGES_SEPARATOR_NODE = UsageViewImpl.NULL_NODE;
-  private static final UsageNode USAGES_OUTSIDE_SCOPE_NODE =
-    new UsageNode(USAGES_OUTSIDE_SCOPE_SEPARATOR, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
+  private static final UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, USAGES_OUTSIDE_SCOPE_SEPARATOR);
 
   private static final Comparator<UsageNode> USAGE_NODE_COMPARATOR = (c1, c2) -> {
     if (c1 instanceof StringNode || c2 instanceof StringNode) {
@@ -165,6 +164,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     myUsageViewSettings.GROUP_BY_PACKAGE = false;
     myUsageViewSettings.GROUP_BY_USAGE_TYPE = false;
     myUsageViewSettings.GROUP_BY_SCOPE = false;
+  }
+
+  @Override
+  public boolean startInTransaction() {
+    return true;
   }
 
   @Override
@@ -246,7 +250,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final UsageViewPresentation presentation = findUsagesManager.createPresentation(handler, options);
     presentation.setDetachedMode(true);
-    final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
+    UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);
       if (reference != null) {
@@ -318,12 +322,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       synchronized (usages) {
         if (visibleNodes.size() >= maxUsages) return false;
         if(UsageViewManager.isSelfUsage(usage, myUsageTarget)) return true;
-        UsageNode node = ApplicationManager.getApplication().runReadAction(new Computable<UsageNode>() {
-          @Override
-          public UsageNode compute() {
-            return usageView.doAppendUsage(usage);
-          }
-        });
+        UsageNode node = ApplicationManager.getApplication().runReadAction((Computable<UsageNode>)() -> usageView.doAppendUsage(usage));
         usages.add(usage);
         if (node != null) {
           visibleNodes.add(node);
@@ -730,6 +729,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
 
         @Override
+        public boolean startInTransaction() {
+          return true;
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           hideHints();
           cancel(popup[0]);
@@ -813,11 +817,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
-    int count=0;
-    for (Usage usage : usages) {
-      if (!usageView.isVisible(usage)) count++;
-    }
-    return count;
+    return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
   private static int getUsageOffset(@NotNull Usage usage) {
@@ -1096,6 +1096,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                         @NotNull FindUsagesOptions options,
                         boolean isWarning) {
     Runnable runnable = () -> {
+      if (!handler.getPsiElement().isValid()) return;
+
       JComponent label = createHintComponent(hint, handler, popupPosition, editor, ShowUsagesAction::hideHints, maxUsages, options, isWarning);
       if (editor == null || editor.isDisposed() || !editor.getComponent().isShowing()) {
         HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY |
@@ -1202,7 +1204,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     @NotNull private final Object myString;
 
     StringNode(@NotNull Object string) {
-      super(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
+      super(null, NullUsage.INSTANCE);
       myString = string;
     }
 

@@ -172,7 +172,7 @@ class JavaPredefinedConfigurations {
       // Add comments and metadata
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments"),"/* 'CommentContent */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.class"),"/** @'_Tag+ '_TagValue* */\nclass '_Class {\n}", METADATA_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),"/** @'_Tag+ '_TagValue* */\n'_Type+ '_Method+('_ParameterType '_Parameter*);", METADATA_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.methods"),"/** @'_Tag+ '_TagValue* */\n'_Type '_Method('_ParameterType '_Parameter*);", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.annotated.fields"),"class '_Class {\n  /** @'_Tag+ '_TagValue* */\n  '_Type+ 'Field+ = '_Init*;\n}", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.javadoc.tags"),"/** @'Tag+ '_TagValue* */", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.xdoclet.metadata"),"/** @'Tag \n  '_Property+\n*/", METADATA_TYPE),
@@ -187,10 +187,10 @@ class JavaPredefinedConfigurations {
                                "  '_FieldType 'Field+ = '_Init?;\n" +
                                "}", METADATA_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotated.methods"),
-                               "@'_Annotation+( )\n'_MethodType '_Method+('_ParameterType '_Parameter*);", METADATA_TYPE),
+                               "@'_Annotation+( )\n'_MethodType '_Method('_ParameterType '_Parameter*);", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.not.annotated.methods"),
-                               "@'_Annotation{0,0}\n'_MethodType '_Method+('_ParameterType '_Parameter*);", METADATA_TYPE),
+                               "@'_Annotation{0,0}\n'_MethodType '_Method('_ParameterType '_Parameter*);", METADATA_TYPE),
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotation.declarations"),
                                "@interface 'Interface {}", METADATA_TYPE),
@@ -264,7 +264,7 @@ class JavaPredefinedConfigurations {
                                                                                         "  }\n"+
                                                                                         "}",MISC_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.similar.methods.structure"),
-                               "'_RetType '_Method+('_ParameterType '_Parameter) throws 'ExceptionType {\n" +
+                               "'_RetType '_Method('_ParameterType '_Parameter*) throws 'ExceptionType {\n" +
                                "  try {\n" +
                                "    '_OtherStatements+;\n" +
                                "  } catch('_SomeException '_Exception) {\n" +

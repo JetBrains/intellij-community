@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -52,8 +51,6 @@ public class PushConditionInCallAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-
     final PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(element, PsiConditionalExpression.class);
     if (conditionalExpression == null) return;
     PsiExpression thenExpression = conditionalExpression.getThenExpression();

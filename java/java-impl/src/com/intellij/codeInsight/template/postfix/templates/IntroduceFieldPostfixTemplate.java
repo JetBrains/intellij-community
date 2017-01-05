@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     IntroduceFieldHandler handler =
       ApplicationManager.getApplication().isUnitTestMode() ? getMockHandler(expression) : new IntroduceFieldHandler();
-    handler.invoke(expression.getProject(), new PsiElement[]{expression}, null);
+    handler.invoke(expression.getProject(), expression, editor);
   }
 
   @NotNull
@@ -55,5 +55,11 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
           null, false, containingClass, false, false);
       }
     };
+  }
+
+  @Override
+  protected void prepareAndExpandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
+    //no write action
+    expandForChooseExpression(expression, editor);
   }
 }

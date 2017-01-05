@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,47 +21,41 @@ import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
-
 /**
  * @author peter
  */
 public class PsiFileSystemItemUtil {
   @Nullable
   static PsiFileSystemItem getCommonAncestor(PsiFileSystemItem file1, PsiFileSystemItem file2) {
-    PsiFileSystemItem[] path1 = getPathComponents(file1);
-    PsiFileSystemItem[] path2 = getPathComponents(file2);
+    if (file1 == file2) return file1;
 
-    PsiFileSystemItem[] minLengthPath;
-    PsiFileSystemItem[] maxLengthPath;
-    if (path1.length < path2.length) {
-      minLengthPath = path1;
-      maxLengthPath = path2;
-    }
-    else {
-      minLengthPath = path2;
-      maxLengthPath = path1;
-    }
+    int depth1 = getDepth(file1);
+    int depth2 = getDepth(file2);
 
-    int lastEqualIdx = -1;
-    for (int i = 0; i < minLengthPath.length; i++) {
-      if (minLengthPath[i].equals(maxLengthPath[i])) {
-        lastEqualIdx = i;
-      }
-      else {
-        break;
-      }
+    PsiFileSystemItem parent1 = file1;
+    PsiFileSystemItem parent2 = file2;
+    while(depth1 > depth2 && parent1 != null) {
+      parent1 = parent1.getParent();
+      depth1--;
     }
-    return lastEqualIdx != -1 ? minLengthPath[lastEqualIdx] : null;
+    while(depth2 > depth1 && parent2 != null) {
+      parent2 = parent2.getParent();
+      depth2--;
+    }
+    while(parent1 != null && parent2 != null && !parent1.equals(parent2)) {
+      parent1 = parent1.getParent();
+      parent2 = parent2.getParent();
+    }
+    return parent1;
   }
 
-  static PsiFileSystemItem[] getPathComponents(PsiFileSystemItem file) {
-    LinkedList<PsiFileSystemItem> componentsList = new LinkedList<PsiFileSystemItem>();
+  private static int getDepth(PsiFileSystemItem file) {
+    int depth = 0;
     while (file != null) {
-      componentsList.addFirst(file);
+      depth++;
       file = file.getParent();
     }
-    return componentsList.toArray(new PsiFileSystemItem[componentsList.size()]);
+    return depth;
   }
 
   @NotNull

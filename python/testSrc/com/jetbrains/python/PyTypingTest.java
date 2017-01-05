@@ -711,7 +711,58 @@ public class PyTypingTest extends PyTestCase {
            "    sublist = x[0]\n" +
            "    expr = sublist[0]\n");
   }
-  
+
+  public void testLocalVariableAnnotation() {
+    doTest("int",
+           "def f():\n" +
+           "    x: int = undefined()\n" +
+           "    expr = x");
+  }
+
+  public void testInstanceAttributeAnnotation() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "    \n" +
+           "expr = C().attr");
+  }
+
+  public void testIllegalAnnotationTargets() {
+    doTest("Tuple[Any, int, Any, Any]", 
+           "(w, _): Tuple[int, Any]\n" +
+           "((x)): int\n" +
+           "y: bool = z = undefined()\n" +
+           "expr = (w, x, y, z)\n");
+  }
+
+  // PY-19723
+  public void testAnnotatedPositionalArgs() {
+    doTest("Tuple[str, ...]",
+           "def foo(*args: str):\n" +
+           "    expr = args\n");
+  }
+
+  // PY-19723
+  public void testAnnotatedKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs: int):\n" +
+           "    expr = kwargs\n");
+  }
+
+  // PY-19723
+  public void testTypeCommentedPositionalArgs() {
+    doTest("Tuple[str, ...]",
+           "def foo(*args  # type: str\n):\n" +
+           "    expr = args\n");
+  }
+
+  // PY-19723
+  public void testTypeCommentedKeywordArgs() {
+    doTest("Dict[str, int]",
+           "def foo(**kwargs  # type: int\n):\n" +
+           "    expr = kwargs\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

@@ -1,0 +1,12 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>interface</title>
+  <circle cx="8" cy="7.99999" r="7" fill="#62b543" opacity="0.5"/>
+  <g opacity="0.6">
+    <path d="M7.05273,5H8v6H7.05273V5Z" fill="#231f20" opacity="0.8" style="isolation: isolate"/>
+    <path d="M8,5H8.94727v6H8V5Z" fill="#231f20"/>
+    <rect x="6" y="4.99999" width="1" height="1" fill="#231f20" opacity="0.8" style="isolation: isolate"/>
+    <polygon points="10 6 9 6 8 5 10 5 10 6" fill="#231f20" opacity="0.5" style="isolation: isolate"/>
+    <rect x="6" y="9.99999" width="1" height="1" fill="#231f20" opacity="0.7" style="isolation: isolate"/>
+    <polygon points="10 11 8 11 9 10 10 10 10 11" fill="#231f20" opacity="0.5" style="isolation: isolate"/>
+  </g>
+</svg>

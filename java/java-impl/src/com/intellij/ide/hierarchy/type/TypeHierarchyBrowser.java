@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import java.util.Map;
 public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
 
-
   public TypeHierarchyBrowser(final Project project, final PsiClass psiClass) {
     super(project, psiClass);
   }
@@ -55,7 +54,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     super.prependActions(actionGroup);
     actionGroup.add(new ChangeScopeAction() {
       protected boolean isEnabled() {
-        return !Comparing.strEqual(myCurrentViewType, SUPERTYPES_HIERARCHY_TYPE);
+        return !Comparing.strEqual(getCurrentViewType(), SUPERTYPES_HIERARCHY_TYPE);
       }
     });
   }

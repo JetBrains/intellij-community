@@ -18,7 +18,6 @@ package git4idea.commands;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -120,18 +119,13 @@ public class GitTask {
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
-        @Override public void onError(@NotNull Exception error) {
-          super.onError(error);
+        @Override public void onThrowable(@NotNull Throwable error) {
+          super.onThrowable(error);
           commonOnCancel(LOCK, resultHandler);
           completed.set(true);
         }
       };
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          ProgressManager.getInstance().run(task);
-        }
-      }, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(task));
     } else {
       final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
         @Override public void onSuccess() {

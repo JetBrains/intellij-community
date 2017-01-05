@@ -60,18 +60,18 @@ public interface FormattingDocumentModel {
   Document getDocument();
 
   /**
-   * Allows to answer if all document symbols from <code>[startOffset; endOffset)</code> region are treated as white spaces by formatter.
+   * Allows to answer if all document symbols from {@code [startOffset; endOffset)} region are treated as white spaces by formatter.
    *
    * @param startOffset     target start document offset (inclusive)
    * @param endOffset       target end document offset (exclusive)
-   * @return                <code>true</code> if all document symbols from <code>[startOffset; endOffset)</code> region are treated
-   *                        as white spaces by formatter; <code>false</code> otherwise
+   * @return                {@code true} if all document symbols from {@code [startOffset; endOffset)} region are treated
+   *                        as white spaces by formatter; {@code false} otherwise
    */
   boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset);
 
   /**
    * There is a possible case that white space to apply should be additionally adjusted because of formatter processing. That is
-   * true, for example, for Python where it may be mandatory to use <code>'\'</code> symbol at multi-line expression.
+   * true, for example, for Python where it may be mandatory to use {@code '\'} symbol at multi-line expression.
    * <p/>
    * Current method adjusts given white space text if necessary.
    *
@@ -82,7 +82,7 @@ public interface FormattingDocumentModel {
    * @param endOffset         end offset of the document text that is intended to be replaced by the given white space text (exclusive)
    * @param nodeAfter         the AST node following the block, if known
    * @param changedViaPsi     flag that identifies whether formatter introduces changes via PSI tree or directly via the document
-   * @return                  white space to use for replacing document symbols at <code>[startOffset; endOffset)</code> region
+   * @return                  white space to use for replacing document symbols at {@code [startOffset; endOffset)} region
    */
   @NotNull
   CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,

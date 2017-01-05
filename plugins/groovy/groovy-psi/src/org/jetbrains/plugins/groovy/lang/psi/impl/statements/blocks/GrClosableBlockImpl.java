@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
@@ -76,12 +78,11 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Override
   public boolean processClosureDeclarations(@NotNull final PsiScopeProcessor plainProcessor,
-                                            @NotNull final PsiScopeProcessor nonCodeProcessor,
                                             @NotNull final ResolveState state,
                                             @Nullable final PsiElement lastParent,
                                             @NotNull final PsiElement place) {
     if (!processDeclarations(plainProcessor, state, lastParent, place)) return false;
-    if (!processOwnerAndDelegate(plainProcessor, nonCodeProcessor, state, place)) return false;
+    if (!processOwnerAndDelegate(plainProcessor, state, place)) return false;
 
     return true;
   }
@@ -102,40 +103,38 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private boolean processOwnerAndDelegate(@NotNull PsiScopeProcessor processor,
-                                          @NotNull PsiScopeProcessor nonCodeProcessor,
                                           @NotNull ResolveState state,
                                           @NotNull PsiElement place) {
-    Boolean result = processDelegatesTo(processor, nonCodeProcessor, state, place);
+    Boolean result = processDelegatesTo(processor, state, place);
     if (result != null) return result.booleanValue();
 
-    if (!processOwner(processor, nonCodeProcessor, state, place)) return false;
+    if (!processOwner(processor, state, place)) return false;
     return true;
   }
 
   @Nullable
   private Boolean processDelegatesTo(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiScopeProcessor nonCodeProcessor,
                                      @NotNull ResolveState state,
                                      @NotNull PsiElement place) {
-    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegatesToInfo(place, this);
+    DelegatesToInfo info = GrDelegatesToUtilKt.getDelegatesToInfo(this);
     if (info == null) {
       return null;
     }
 
     switch (info.getStrategy()) {
       case Closure.OWNER_FIRST:
-        if (!processOwner(processor, nonCodeProcessor, state, place)) return false;
-        if (!processDelegate(processor, nonCodeProcessor, state, place, info.getTypeToDelegate())) return false;
+        if (!processOwner(processor, state, place)) return false;
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
         return true;
       case Closure.DELEGATE_FIRST:
-        if (!processDelegate(processor, nonCodeProcessor, state, place, info.getTypeToDelegate())) return false;
-        if (!processOwner(processor, nonCodeProcessor, state, place)) return false;
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
+        if (!processOwner(processor, state, place)) return false;
         return true;
       case Closure.OWNER_ONLY:
-        if (!processOwner(processor, nonCodeProcessor, state, place)) return false;
+        if (!processOwner(processor, state, place)) return false;
         return true;
       case Closure.DELEGATE_ONLY:
-        if (!processDelegate(processor, nonCodeProcessor, state, place, info.getTypeToDelegate())) return false;
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
         return true;
       case Closure.TO_SELF:
         return true;
@@ -145,14 +144,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private boolean processDelegate(@NotNull PsiScopeProcessor processor,
-                                  @NotNull PsiScopeProcessor nonCodeProcessor,
                                   @NotNull ResolveState state,
                                   @NotNull PsiElement place,
                                   @Nullable final PsiType classToDelegate) {
     if (classToDelegate == null) return true;
 
-    return ResolveUtil.processAllDeclarationsSeparately(classToDelegate, processor, nonCodeProcessor,
-                                            state.put(ClassHint.RESOLVE_CONTEXT, this), place);
+    return ResolveUtil.processAllDeclarations(classToDelegate, processor, state.put(ClassHint.RESOLVE_CONTEXT, this), place);
   }
 
   private boolean processClosureClassMembers(@NotNull PsiScopeProcessor processor,
@@ -185,7 +182,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private boolean processOwner(@NotNull PsiScopeProcessor processor,
-                               @NotNull PsiScopeProcessor nonCodeProcessor,
                                @NotNull ResolveState state,
                                @NotNull PsiElement place) {
     final PsiElement parent = getParent();
@@ -193,7 +189,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
     if (!ResolveUtil.processStaticImports(processor, getContainingFile(), state, place)) return false;
 
-    return ResolveUtil.doTreeWalkUp(parent, place, processor, nonCodeProcessor, state);
+    return ResolveUtil.treeWalkUp(parent, place, processor, state);
   }
 
   private boolean isItAlreadyDeclared(@Nullable PsiElement place) {

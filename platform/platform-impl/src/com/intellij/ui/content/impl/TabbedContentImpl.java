@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
+  private final List<Pair<String, JComponent>> myTabs = new ArrayList<Pair<String, JComponent>>();
   private String myPrefix;
 
   public TabbedContentImpl(JComponent component, String displayName, boolean isPinnable, String titlePrefix) {
@@ -85,25 +85,6 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   }
 
   @Override
-  public void renameContent(@NotNull JComponent tab, @NotNull String newTabName) {
-    Pair<String, JComponent> toRemove = null;
-    for (Pair<String, JComponent> existingTab : myTabs) {
-      if (existingTab.second == tab) {
-        toRemove = existingTab;
-        break;
-      }
-    }
-    int index = myTabs.indexOf(toRemove);
-    if (index != -1) {
-      myTabs.remove(index);
-    }
-    myTabs.add(Pair.create(newTabName, tab));
-    if (getComponent() == tab) {
-      super.setDisplayName(newTabName);
-    }
-  }
-
-  @Override
   public String getDisplayName() {
     return getTabName();
   }
@@ -113,6 +94,14 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     Pair<String, JComponent> tab = myTabs.get(index);
     setDisplayName(tab.first);
     setComponent(tab.second);
+  }
+  
+  public int getSelectedContent() {
+    JComponent selected = getComponent();
+    for (int i = 0; i < myTabs.size(); i++) {
+      if (myTabs.get(i).second == selected) return i;
+    }
+    return -1;
   }
 
   public boolean findAndSelectContent(@NotNull JComponent contentComponent) {
@@ -160,7 +149,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public void split() {
-    List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
+    List<Pair<String, JComponent>> copy = new ArrayList<Pair<String, JComponent>>(myTabs);
     int selectedTab = ContentUtilEx.getSelectedTab(this);
     ContentManager manager = getManager();
     String prefix = getTitlePrefix();
@@ -172,7 +161,6 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       final String tabName = copy.get(i).first;
       ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
     }
-    setShouldDisposeContent(false);
     Disposer.dispose(this);
   }
 

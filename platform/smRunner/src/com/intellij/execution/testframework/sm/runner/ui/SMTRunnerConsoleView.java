@@ -128,7 +128,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param info          HyperlinkInfo
    */
   @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {
     myResultsViewer.getRoot().addLast(new HyperLink(hyperlinkText, info));
   }
 

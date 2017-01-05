@@ -16,7 +16,9 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,5 +33,11 @@ public class TestMethodIsPublicVoidNoArgInspection extends TestMethodIsPublicVoi
   public JComponent createOptionsPanel() {
     return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.parameter.if.annotated.by"));
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiMethod method = (PsiMethod)infos[1];
+    return new MakePublicStaticVoidFix(method, false);
   }
 }

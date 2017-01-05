@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -76,7 +77,7 @@ public class FixDocCommentAction extends EditorAction {
 
   private static void process(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Project project, int offset) {
     PsiElement elementAtOffset = file.findElementAt(offset);
-    if (elementAtOffset == null) {
+    if (elementAtOffset == null || !FileModificationService.getInstance().preparePsiElementForWrite(elementAtOffset)) {
       return;
     }
     generateOrFixComment(elementAtOffset, project, editor);

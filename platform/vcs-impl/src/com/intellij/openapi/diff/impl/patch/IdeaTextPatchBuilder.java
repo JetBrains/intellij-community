@@ -22,18 +22,22 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.vcsUtil.VcsUtil.groupByRoots;
 
 public class IdeaTextPatchBuilder {
   private IdeaTextPatchBuilder() {
@@ -41,14 +45,8 @@ public class IdeaTextPatchBuilder {
 
   public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(final Project project, final List<Change> changes) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
-
-    final Convertor<Change, FilePath> beforePrefferingConvertor = new Convertor<Change, FilePath>() {
-      public FilePath convert(Change o) {
-        final FilePath before = ChangesUtil.getBeforePath(o);
-        return before == null ? ChangesUtil.getAfterPath(o) : before;
-      }
-    };
-    final MultiMap<VcsRoot,Change> byRoots = new SortByVcsRoots<>(project, beforePrefferingConvertor).sort(changes);
+    Map<VcsRoot, List<Change>> byRoots =
+      groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
 
     for (VcsRoot root : byRoots.keySet()) {
       final Collection<Change> rootChanges = byRoots.get(root);
@@ -78,12 +76,6 @@ public class IdeaTextPatchBuilder {
 
   @NotNull
   public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
-    return buildPatch(project, changes, basePath, reversePatch, false);
-  }
-
-  @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath,
-                                           final boolean reversePatch, final boolean includeBaseText) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes));
@@ -93,11 +85,8 @@ public class IdeaTextPatchBuilder {
         revisions.add(new BeforeAfter<>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, new Runnable() {
-      public void run() {
-        ProgressManager.checkCanceled();
-      }
-    }, includeBaseText);
+    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive,
+                                       () -> ProgressManager.checkCanceled());
   }
 
   @Nullable
@@ -112,53 +101,9 @@ public class IdeaTextPatchBuilder {
     final StaticPathDescription description = new StaticPathDescription(fp.isDirectory(),
                                                                         ts == null ? fp.getIOFile().lastModified() : ts, fp.getPath());
     if (cr instanceof BinaryContentRevision) {
-      return new AirContentRevision() {
-        public boolean isBinary() {
-          return true;
-        }
-        public String getContentAsString() {
-          throw new IllegalStateException();
-        }
-        public byte[] getContentAsBytes() throws VcsException {
-          return ((BinaryContentRevision) cr).getBinaryContent();
-        }
-        public String getRevisionNumber() {
-          return ts != null ? null : cr.getRevisionNumber().asString();
-        }
-        @NotNull
-        public PathDescription getPath() {
-          return description;
-        }
-
-        @Override
-        public Charset getCharset() {
-          return null;
-        }
-      };
+      return new BinaryAirContentRevision((BinaryContentRevision)cr, description, ts);
     } else {
-      return new AirContentRevision() {
-        public boolean isBinary() {
-          return false;
-        }
-        public String getContentAsString() throws VcsException {
-          return cr.getContent();
-        }
-        public byte[] getContentAsBytes() throws VcsException {
-          throw new IllegalStateException();
-        }
-        public String getRevisionNumber() {
-          return ts != null ? null : cr.getRevisionNumber().asString();
-        }
-        @NotNull
-        public PathDescription getPath() {
-          return description;
-        }
-
-        @Override
-        public Charset getCharset() {
-          return fp.getCharset();
-        }
-      };
+      return new TextAirContentRevision(cr, description, ts);
     }
   }
 
@@ -168,5 +113,93 @@ public class IdeaTextPatchBuilder {
     final Date date = provider.getRevisionDate(cr.getRevisionNumber(), cr.getFile());
     final Long ts = date == null ? null : date.getTime();
     return convertRevisionToAir(cr, ts);
+  }
+
+  private static class BinaryAirContentRevision implements AirContentRevision {
+    @NotNull private final BinaryContentRevision myRevision;
+    @NotNull private final StaticPathDescription myDescription;
+    @Nullable private final Long myTimestamp;
+
+    public BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
+                                    @NotNull StaticPathDescription description,
+                                    @Nullable Long timestamp) {
+      myRevision = revision;
+      myDescription = description;
+      myTimestamp = timestamp;
+    }
+
+    public boolean isBinary() {
+      return true;
+    }
+
+    public String getContentAsString() {
+      throw new IllegalStateException();
+    }
+
+    public byte[] getContentAsBytes() throws VcsException {
+      return myRevision.getBinaryContent();
+    }
+
+    public String getRevisionNumber() {
+      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+    }
+
+    @NotNull
+    public PathDescription getPath() {
+      return myDescription;
+    }
+  }
+
+  private static class TextAirContentRevision implements AirContentRevision {
+    @NotNull private final ContentRevision myRevision;
+    @NotNull private final StaticPathDescription myDescription;
+    @Nullable private final Long myTimestamp;
+
+    public TextAirContentRevision(@NotNull ContentRevision revision,
+                                  @NotNull StaticPathDescription description,
+                                  @Nullable Long timestamp) {
+      myRevision = revision;
+      myDescription = description;
+      myTimestamp = timestamp;
+    }
+
+    public boolean isBinary() {
+      return false;
+    }
+
+    public String getContentAsString() throws VcsException {
+      return myRevision.getContent();
+    }
+
+    public byte[] getContentAsBytes() throws VcsException {
+      if (myRevision instanceof ByteBackedContentRevision) {
+        return ((ByteBackedContentRevision)myRevision).getContentAsBytes();
+      }
+
+      String textContent = getContentAsString();
+      if (textContent == null) return null;
+      return textContent.getBytes(getCharset());
+    }
+
+    public String getRevisionNumber() {
+      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+    }
+
+    @NotNull
+    public PathDescription getPath() {
+      return myDescription;
+    }
+
+    @Override
+    public Charset getCharset() {
+      return myRevision.getFile().getCharset();
+    }
+
+    @Nullable
+    @Override
+    public String getLineSeparator() {
+      VirtualFile virtualFile = myRevision.getFile().getVirtualFile();
+      return virtualFile != null ? virtualFile.getDetectedLineSeparator() : null;
+    }
   }
 }

@@ -28,10 +28,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 
 /**
- * Ant task to facilitate building NSIS installer.
- *
- * @author  max
- * @since Jan 11, 2005
+ * @deprecated replaced by {@link org.jetbrains.intellij.build.impl.NsisFileListGenerator}; this class will be removed together with {@link org.jetbrains.intellij.build.WinInstallerBuilder}
  */
 @SuppressWarnings("UnusedDeclaration")
 public class NsiFiles extends MatchingTask {

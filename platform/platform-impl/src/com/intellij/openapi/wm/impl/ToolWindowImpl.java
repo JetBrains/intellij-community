@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -399,6 +399,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   @Override
   public ContentManager getContentManager() {
+    ensureContentInitialized();
     return myContentManager;
   }
 
@@ -555,16 +556,16 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public void setContentFactory(ToolWindowFactory contentFactory) {
     myContentFactory = contentFactory;
-    if (contentFactory instanceof ToolWindowFactoryEx) {
-      ((ToolWindowFactoryEx)contentFactory).init(this);
-    }
+    contentFactory.init(this);
   }
 
   public void ensureContentInitialized() {
     if (myContentFactory != null) {
-      getContentManager().removeAllContents(false);
-      myContentFactory.createToolWindowContent(myToolWindowManager.getProject(), this);
+      ToolWindowFactory contentFactory = myContentFactory;
+      // clear it first to avoid SOE
       myContentFactory = null;
+      myContentManager.removeAllContents(false);
+      contentFactory.createToolWindowContent(myToolWindowManager.getProject(), this);
     }
   }
 

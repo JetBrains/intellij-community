@@ -22,8 +22,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
@@ -89,25 +87,23 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final LibraryCompositionSettings settings = myPanel.apply();
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
-      if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
-        if (myModifiableRootModel == null) {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          new WriteAction() {
-            @Override
-            protected void run(@NotNull final Result result) {
-              addLibraries(model, settings);
-              model.commit();
-            }
-          }.execute();
-        }
-        else {
-          addLibraries(myModifiableRootModel, settings);
-        }
-
+    if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
+      if (myModifiableRootModel == null) {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        new WriteAction() {
+          @Override
+          protected void run(@NotNull final Result result) {
+            addLibraries(model, settings);
+            model.commit();
+          }
+        }.execute();
       }
-      super.doOKAction();
-    });
+      else {
+        addLibraries(myModifiableRootModel, settings);
+      }
+
+    }
+    super.doOKAction();
   }
 
   private void addLibraries(ModifiableRootModel model, final LibraryCompositionSettings settings) {

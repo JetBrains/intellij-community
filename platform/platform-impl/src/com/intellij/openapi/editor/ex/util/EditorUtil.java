@@ -18,28 +18,34 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +76,7 @@ public final class EditorUtil {
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
-    if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+    if (editor instanceof EditorImpl) {
       LogicalPosition lineEndPosition = editor.visualToLogicalPosition(new VisualPosition(line, Integer.MAX_VALUE));
       int lineEndOffset = editor.logicalPositionToOffset(lineEndPosition);
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
@@ -165,15 +171,9 @@ public final class EditorUtil {
       return result;
     }
 
-    CharSequence editorInfo;
-    if (editor instanceof EditorImpl) {
-      editorInfo = ((EditorImpl)editor).dumpState();
-    }
-    else {
-      editorInfo = "editor's class: " + editor.getClass()
-                   + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
-                   + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
-    }
+    CharSequence editorInfo = "editor's class: " + editor.getClass()
+                              + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
+                              + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
     LogMessageEx.error(LOG, "Can't calculate last visual column", String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
       + "the target logical line: %s. Editor info: %s",
@@ -273,30 +273,23 @@ public final class EditorUtil {
     // if tab size is four and current column is one etc. So, first of all we check if there are tabulation symbols at the target
     // text fragment.
     boolean useOptimization = true;
-    boolean hasTabs;
-    if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
-      hasTabs = false;
-      useOptimization = true;
-    }
-    else {
-      hasTabs = false;
-      int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
-      boolean hasNonTabs = false;
-      for (int i = start; i < scanEndOffset; i++) {
-        char c = text.charAt(i);
-        if (debugBuffer != null) {
-          debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
+    boolean hasTabs = false;
+    int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
+    boolean hasNonTabs = false;
+    for (int i = start; i < scanEndOffset; i++) {
+      char c = text.charAt(i);
+      if (debugBuffer != null) {
+        debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
+      }
+      if (c == '\t') {
+        hasTabs = true;
+        if (hasNonTabs) {
+          useOptimization = false;
+          break;
         }
-        if (c == '\t') {
-          hasTabs = true;
-          if (hasNonTabs) {
-            useOptimization = false;
-            break;
-          }
-        }
-        else {
-          hasNonTabs = true;
-        }
+      }
+      else {
+        hasNonTabs = true;
       }
     }
 
@@ -366,7 +359,7 @@ public final class EditorUtil {
     // hence, we need to perform special calculations to get know that.
     EditorEx editorImpl = (EditorEx)editor;
     int offset = start;
-    IterationState state = new IterationState(editorImpl, start, end, false);
+    IterationState state = new IterationState(editorImpl, start, end, null, false, false, true, false);
     int fontType = state.getMergedAttributes().getFontType();
     int column = currentColumn[0];
     int plainSpaceSize = getSpaceWidth(Font.PLAIN, editorImpl);
@@ -431,23 +424,17 @@ public final class EditorUtil {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
       useOptimization = softWrap == null;
     }
-    boolean hasTabs = true;
     if (useOptimization) {
-      if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
-        hasTabs = false;
-      }
-      else {
-        boolean hasNonTabs = false;
-        for (int i = start; i < offset; i++) {
-          if (text.charAt(i) == '\t') {
-            if (hasNonTabs) {
-              useOptimization = false;
-              break;
-            }
+      boolean hasNonTabs = false;
+      for (int i = start; i < offset; i++) {
+        if (text.charAt(i) == '\t') {
+          if (hasNonTabs) {
+            useOptimization = false;
+            break;
           }
-          else {
-            hasNonTabs = true;
-          }
+        }
+        else {
+          hasNonTabs = true;
         }
       }
     }
@@ -470,12 +457,10 @@ public final class EditorUtil {
     }
 
     int shift = 0;
-    if (hasTabs) {
-      for (int i = start; i < offset; i++) {
-        char c = text.charAt(i);
-        if (c == '\t') {
-          shift += getTabLength(i + shift - start, tabSize) - 1;
-        }
+    for (int i = start; i < offset; i++) {
+      char c = text.charAt(i);
+      if (c == '\t') {
+        shift += getTabLength(i + shift - start, tabSize) - 1;
       }
     }
     return offset - start + shift;
@@ -492,7 +477,8 @@ public final class EditorUtil {
   @NotNull
   public static FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences());
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences(),
+                                                           FontInfo.getFontRenderContext(editor.getContentComponent()));
   }
 
   public static Icon scaleIconAccordingEditorFont(Icon icon, Editor editor) {
@@ -670,6 +656,10 @@ public final class EditorUtil {
     return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
   }
 
+  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Caret caret) {
+    return calcSurroundingRange(caret.getEditor(), caret.getVisualPosition(), caret.getVisualPosition());
+  }
+
   /**
    * Calculates logical positions that surround given visual positions and conform to the following criteria:
    * <pre>
@@ -794,6 +784,7 @@ public final class EditorUtil {
   }
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
+    if (e.getWheelRotation() == 0) return false;
     return SystemInfo.isMac
            ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
@@ -896,6 +887,44 @@ public final class EditorUtil {
   public static boolean isCurrentCaretPrimary(@NotNull Editor editor) {
     return editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret();
   }
+
+  public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (Disposer.isDisposed(disposable)) return;
+    if (editor.isDisposed()) {
+      Disposer.dispose(disposable);
+      return;
+    }
+    // for injected editors disposal will happen only when host editor is disposed,
+    // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
+    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        if (event.getEditor() == hostEditor) {
+          Disposer.dispose(disposable);
+        }
+      }
+    }, disposable);
+  }
+
+  public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
+    DocumentEx document = ObjectUtils.tryCast(editor.getDocument(), DocumentEx.class);
+    if (document != null && document.isInBulkUpdate()) {
+      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+      disposeWithEditor(editor, connection);
+      connection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+        @Override
+        public void updateFinished(@NotNull Document doc) {
+          if (doc == editor.getDocument()) {
+            editor.getFoldingModel().runBatchFoldingOperation(operation);
+            connection.disconnect();
+          }
+        }
+      });
+    }
+    else {
+      editor.getFoldingModel().runBatchFoldingOperation(operation);
+    }
+  }
 }
-
-

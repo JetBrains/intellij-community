@@ -74,11 +74,14 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract void updateFilePresentation(@NotNull VirtualFile file);
 
   /**
-   *
+   * Synchronous version of {@link #getActiveWindow()}. Will return <code>null</code> if invoked not from EDT.
    * @return current window in splitters
    */
   public abstract EditorWindow getCurrentWindow();
 
+  /**
+   * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settle down. Can be invoked on any thread.
+   */
   @NotNull
   public abstract AsyncResult<EditorWindow> getActiveWindow();
 

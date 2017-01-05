@@ -18,18 +18,17 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -55,14 +54,9 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     }
   }
 
-  private boolean hasText() {
-    JTextComponent component = getComponent();
-    return (component != null) && !StringUtil.isEmpty(component.getText());
-  }
-
-  public SearchAction getActionUnder(MouseEvent e) {
+  public SearchAction getActionUnder(@NotNull Point p) {
     int off = JBUI.scale(8);
-    Point point = new Point(e.getX() - off, e.getY() - off);
+    Point point = new Point(p.x - off, p.y - off);
     return point.distance(getSearchIconCoord()) <= off
            ? SearchAction.POPUP
            : hasText() && point.distance(getClearIconCoord()) <= off
@@ -74,7 +68,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     final JTextComponent c = myTextField;
     final JBInsets i = JBInsets.create(c.getInsets());
     final int x = i.right - JBUI.scale(4) - JBUI.scale(16);
-    final int y = i.top - 3;
+    final int y = i.top - JBUI.scale(3);
     final int w = c.getWidth() - i.width() + JBUI.scale(16*2 +7*2  - 5);
     int h = c.getBounds().height - i.height() + JBUI.scale(4*2 - 3);
     if (h%2==1) h++;
@@ -140,7 +134,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     else if (c.hasFocus()) {
       g.setColor(c.getBackground());
       RectanglePainter.FILL.paint(g, r.x, r.y, r.width, r.height, radius);
-      DarculaUIUtil.paintSearchFocusRing(g, r);
+      DarculaUIUtil.paintSearchFocusRing(g, r, c);
     }
     else {
       RectanglePainter.paint(g, r.x, r.y, r.width, r.height, radius, c.getBackground(), c.isEnabled() ? Gray._100 : Gray._83);

@@ -28,15 +28,9 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix");
   }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
-    }
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {

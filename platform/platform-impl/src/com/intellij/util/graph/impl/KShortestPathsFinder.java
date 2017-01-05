@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * Algorithm to search k shortest paths between to vertices in unweighted directed graph.
+ * Algorithm to search k shortest paths between two vertices in unweighted directed graph.
  * Based on article "Finding the k shortest paths" by D. Eppstein, 1997.
  *
  * @author nik

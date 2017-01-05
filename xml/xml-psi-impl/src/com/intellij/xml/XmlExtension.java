@@ -171,4 +171,8 @@ public abstract class XmlExtension {
   public boolean useXmlTagInsertHandler() {
     return true;
   }
+
+  public boolean isCollapsibleTag(XmlTag tag) {
+    return false;
+  }
 }

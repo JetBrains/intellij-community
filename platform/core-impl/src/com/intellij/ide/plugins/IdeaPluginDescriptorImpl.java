@@ -120,7 +120,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    * @deprecated 
    * use {@link JDOMUtil#internElement(Element, StringInterner)}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static void internJDOMElement(@NotNull Element rootElement) {
   }
@@ -196,7 +195,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // used in upsource
   protected void readExternal(@NotNull Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
-
+    if (pluginBean == null) throw new InvalidDataException("Invalid plugin element");
     url = pluginBean.url;
     myName = pluginBean.name;
     String idString = pluginBean.id;
@@ -351,7 +350,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myChangeNotes;
   }
 
-  @NotNull
   @Override
   public String getName() {
     return myName;

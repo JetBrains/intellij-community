@@ -31,6 +31,8 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 @SkipSlowTestLocally
 public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -349,5 +351,26 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     mutated[2] = null;
 
     assertOrderedEquals(psiClass.getMethods(), golden);
+  }
+
+  public void testRecoverAfterPsiDocSyncError() throws IOException {
+    VirtualFile vFile = myFixture.addFileToProject("a.java", "class A{}").getVirtualFile();
+
+    try {
+      myFixture.findClass("A").replace(JavaPsiFacade.getElementFactory(getProject()).createClassFromText("class B {\r\n}", null));
+      fail("Should fail");
+    }
+    catch (Throwable e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Wrong line separators"));
+    }
+    
+    assertEquals("class A{}", getPsiManager().findFile(vFile).getText());
+
+    VfsUtil.saveText(vFile, "class C {}");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    PsiClass c = myFixture.findClass("C");
+    assertNotNull(c);
+    assertEquals(vFile, c.getContainingFile().getVirtualFile());
   }
 }

@@ -39,6 +39,7 @@ import java.util.List;
 
 public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
 
+  @Override
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
@@ -56,6 +57,7 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof ResourceBundle) {
       ResourceBundle bundle = (ResourceBundle)element;
@@ -71,14 +73,17 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     return false;
   }
 
+  @Override
   public int getElementWeight(final Object element, final boolean isSortByType) {
     return -1;
   }
 
+  @Override
   public String getElementLocation(final Object element) {
     return null;
   }
 
+  @Override
   public boolean isInvalidElement(final Object element) {
     if (element instanceof ResourceBundle) {
       ResourceBundle resourceBundle = (ResourceBundle)element;
@@ -91,11 +96,13 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     return false;
   }
 
+  @Override
   @NotNull
   public String getFavoriteTypeId() {
     return "resource_bundle";
   }
 
+  @Override
   public String getElementUrl(final Object element) {
     if (element instanceof ResourceBundleImpl) {
       return ((ResourceBundleImpl)element).getUrl();
@@ -103,10 +110,12 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
   public String getElementModuleName(final Object element) {
     return null;
   }
 
+  @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     return new Object[]{PropertiesImplUtil.createByUrl(url, project)};
   }

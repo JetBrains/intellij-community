@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
@@ -320,7 +321,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
           IntentionAction insertRequiredAttributeIntention = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName);
           final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getCurrentProfile();
+          final InspectionProfile profile = InspectionProfileManager.getInstance(tag.getProject()).getCurrentProfile();
           RequiredAttributesInspectionBase inspection =
             (RequiredAttributesInspectionBase)profile.getUnwrappedTool(XmlEntitiesInspection.REQUIRED_ATTRIBUTES_SHORT_NAME, tag);
           if (inspection != null) {

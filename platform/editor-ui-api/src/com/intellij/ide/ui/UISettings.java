@@ -27,11 +27,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -40,7 +39,6 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -58,7 +56,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
   private static UISettings ourSettings;
 
-  @Nullable
   public static UISettings getInstance() {
     return ourSettings = ServiceManager.getService(UISettings.class);
   }
@@ -71,11 +68,16 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
     UISettings settings = application == null ? null : getInstance();
-    return settings == null ? new UISettings() : settings;
+    return settings == null ? new UISettings().withDefFont() : settings;
   }
 
+  // These font properties should not be set in the default ctor,
+  // so that to make the serialization logic judge if a property
+  // should be stored or shouldn't by the provided filter only.
   @Property(filter = FontFilter.class) public String FONT_FACE;
   @Property(filter = FontFilter.class) public int FONT_SIZE;
+  @Property(filter = FontFilter.class) private float FONT_SCALE;
+
   public int RECENT_FILES_LIMIT = 50;
   public int CONSOLE_COMMAND_HISTORY_LIMIT = 300;
   public boolean OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false;
@@ -139,17 +141,20 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SORT_BOOKMARKS = false;
   public boolean MERGE_EQUAL_STACKTRACES = true;
 
-  private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
   private final ComponentTreeEventDispatcher<UISettingsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
     tweakPlatformDefaults();
-    setSystemFontFaceAndSize();
 
     Boolean scrollToSource = WelcomeWizardUtil.getAutoScrollToSource();
     if (scrollToSource != null) {
       DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
     }
+  }
+
+  private UISettings withDefFont() {
+    initDefFont();
+    return this;
   }
 
   private void tweakPlatformDefaults() {
@@ -162,47 +167,36 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   /**
-   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
+   * @deprecated Please use {@link UISettingsListener#TOPIC}
    */
-  public void addUISettingsListener(UISettingsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+  @Deprecated
+  public void addUISettingsListener(@NotNull UISettingsListener listener, @NotNull Disposable parentDisposable) {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener);
   }
 
   /**
    * Notifies all registered listeners that UI settings has been changed.
    */
   public void fireUISettingsChanged() {
-    incModificationCount();
-    myDispatcher.getMulticaster().uiSettingsChanged(this);
+    ColorBlindnessSupport support = ColorBlindnessSupport.get(COLOR_BLINDNESS);
+    IconLoader.setFilter(support == null ? null : support.getFilter());
+
+    if (incAndGetModificationCount() == 1) {
+      return;
+    }
 
     if (ourSettings == this) {
       // if this is the main UISettings instance push event to bus and to all current components
       myTreeDispatcher.getMulticaster().uiSettingsChanged(this);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
     }
-
-    IconLoader.setFilter(Registry.is("color.blindness.daltonization")
-                         ? DaltonizationFilter.get(COLOR_BLINDNESS)
-                         : MatrixFilter.get(COLOR_BLINDNESS));
   }
 
-  /**
-   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
-   */
-  public void removeUISettingsListener(UISettingsListener listener) {
-    myDispatcher.removeListener(listener);
-  }
-
-  private void setSystemFontFaceAndSize() {
-    if (FONT_FACE == null || FONT_SIZE <= 0) {
-      final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
-      FONT_FACE = fontData.first;
-      FONT_SIZE = fontData.second;
-    }
+  private void initDefFont() {
+    Pair<String, Integer> fontData = getSystemFontFaceAndSize();
+    if (FONT_FACE == null) FONT_FACE = fontData.first;
+    if (FONT_SIZE <= 0) FONT_SIZE = fontData.second;
+    if (FONT_SCALE <= 0) FONT_SCALE = JBUI.scale(1f);
   }
 
   private static Pair<String, Integer> getSystemFontFaceAndSize() {
@@ -218,13 +212,13 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     @Override
     public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
       UISettings settings = (UISettings)bean;
-      return !hasDefaultFontSetting(settings);
+      final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
+      if ("FONT_FACE".equals(accessor.getName())) {
+        return !fontData.first.equals(settings.FONT_FACE);
+      }
+      // store only in pair
+      return !(fontData.second.equals(settings.FONT_SIZE) && 1f == settings.FONT_SCALE);
     }
-  }
-
-  private static boolean hasDefaultFontSetting(final UISettings settings) {
-    final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
-    return fontData.first.equals(settings.FONT_FACE) && fontData.second.equals(settings.FONT_SIZE);
   }
 
   @Override
@@ -253,7 +247,15 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
       ALPHA_MODE_RATIO = 0.5f;
     }
 
-    setSystemFontFaceAndSize();
+    if (FONT_SCALE <= 0) {
+      if (UIUtil.isJDKManagedHiDPI()) FONT_SIZE = (int)UIUtil.DEF_SYSTEM_FONT_SIZE;
+    }
+    else {
+      FONT_SIZE = (int)JBUI.scale(FONT_SIZE / FONT_SCALE);
+    }
+    FONT_SCALE = JBUI.scale(1f);
+    initDefFont();
+
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
     // find any other suitable font withing "preferred" fonts first.
     boolean fontIsValid = isValidFont(new Font(FONT_FACE, Font.PLAIN, FONT_SIZE));
@@ -327,5 +329,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static void setupComponentAntialiasing(JComponent component) {
     component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+  }
+
+  public static void setupEditorAntialiasing(JComponent component) {
+    component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, getInstance().EDITOR_AA_TYPE.getTextInfo());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,22 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public interface NodeStructure<T> {
   NodeStructure<LighterASTNode> LIGHTER_NODE_STRUCTURE = new NodeStructure<LighterASTNode>() {
     @Override
-    public int getStartOffset(LighterASTNode node) {
+    public int getStartOffset(@NotNull LighterASTNode node) {
       return node.getStartOffset();
     }
 
     @Override
-    public int getEndOffset(LighterASTNode node) {
+    public int getEndOffset(@NotNull LighterASTNode node) {
       return node.getEndOffset();
     }
 
     @Override
-    public IElementType getTokenType(LighterASTNode node) {
+    public IElementType getTokenType(@NotNull LighterASTNode node) {
       return node.getTokenType();
     }
   };
@@ -42,22 +43,22 @@ public interface NodeStructure<T> {
 
   NodeStructure<ASTNode> AST_NODE_STRUCTURE = new NodeStructure<ASTNode>() {
     @Override
-    public int getStartOffset(ASTNode node) {
+    public int getStartOffset(@NotNull ASTNode node) {
       return node.getTextRange().getStartOffset();
     }
 
     @Override
-    public int getEndOffset(ASTNode node) {
+    public int getEndOffset(@NotNull ASTNode node) {
       return node.getTextRange().getEndOffset();
     }
 
     @Override
-    public IElementType getTokenType(ASTNode node) {
+    public IElementType getTokenType(@NotNull ASTNode node) {
       return node.getElementType();
     }
   };
 
-  int getStartOffset(T node);
-  int getEndOffset(T node);
-  IElementType getTokenType(T node);
+  int getStartOffset(@NotNull T node);
+  int getEndOffset(@NotNull T node);
+  IElementType getTokenType(@NotNull T node);
 }

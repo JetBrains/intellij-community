@@ -27,7 +27,10 @@ class FileStatusColorsPageFactory implements ColorAndFontPanelFactory {
   @Override
   @NotNull
   public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-    return NewColorAndFontPanel.create(new PreviewPanel.Empty(), ColorAndFontOptions.FILE_STATUS_GROUP, options, collectFileTypes(), null);
+    NewColorAndFontPanel panel =
+      NewColorAndFontPanel.create(new PreviewPanel.Empty(), ColorAndFontOptions.FILE_STATUS_GROUP, options, collectFileTypes(), null);
+    panel.setEmptyText("Not available", "File status options are not available for the scheme.\nChoose 'Default' or 'Darcula'.");
+    return panel;
   }
 
   @Override

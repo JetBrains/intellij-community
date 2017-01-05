@@ -25,18 +25,18 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
-public class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixtureTestCase {
+class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "/refactoring/introduceParameterObjectForJava/"
 
-  public void testSimple() throws Exception {
+  void testSimple() throws Exception {
     doTest()
   }
 
   protected void doTest() {
     def psiClass = myFixture.addClass("class MyTest {\n" +
                                       "  void foo(String a, String b) {}\n" +
-                                      "}");
-    final PsiMethod method = psiClass.findMethodsByName("foo", false)[0];
+                                      "}")
+    final PsiMethod method = psiClass.findMethodsByName("foo", false)[0]
     assertNotNull method
 
     myFixture.configureByFile(getTestName(true) + ".groovy")
@@ -45,14 +45,14 @@ public class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixture
 
     final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
       new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, true, null, infos.toArray(new ParameterInfoImpl[0]), method,
-                                                      false);
-    final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
+                                                      false)
+    final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters()
     IntroduceParameterObjectProcessor processor =
       new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
         method, classDescriptor,
         parameters,
-        false);
-    processor.run();
+        false)
+    processor.run()
 
     myFixture.checkResultByFile(getTestName(true) + "_after.groovy")
   }

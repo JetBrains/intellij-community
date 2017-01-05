@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,25 +24,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 
 public class PrintAction extends AnAction implements DumbAware {
-  public PrintAction() {
-    super();
-
-  }
-
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      return;
-    }
-    PrintManager.executePrint(dataContext);
+    PrintManager.executePrint(e.getDataContext());
   }
 
   @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      presentation.setEnabled(false);
+      return;
+    }
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if(file != null && file.isDirectory()) {
       presentation.setEnabled(true);
@@ -50,7 +45,7 @@ public class PrintAction extends AnAction implements DumbAware {
     }
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-    presentation.setEnabled(psiFile != null || editor != null);
+    presentation.setEnabled(psiFile != null || editor != null || !PrintManager.getSelectedPsiFiles(dataContext).isEmpty());
   }
 
 }

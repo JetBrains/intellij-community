@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -68,6 +69,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
@@ -507,14 +509,7 @@ public class GitUtil {
    * @return a set of git roots
    */
   public static Set<VirtualFile> gitRoots(final Collection<FilePath> filePaths) {
-    HashSet<VirtualFile> rc = new HashSet<>();
-    for (FilePath path : filePaths) {
-      final VirtualFile root = getGitRootOrNull(path);
-      if (root != null) {
-        rc.add(root);
-      }
-    }
-    return rc;
+    return filePaths.stream().map(GitUtil::getGitRootOrNull).filter(Objects::nonNull).collect(Collectors.toSet());
   }
 
   /**
@@ -1009,7 +1004,7 @@ public class GitUtil {
   @Nullable
   public static GitRemote getDefaultRemote(@NotNull Collection<GitRemote> remotes) {
     for (GitRemote remote : remotes) {
-      if (remote.getName().equals(GitRemote.ORIGIN_NAME)) {
+      if (remote.getName().equals(GitRemote.ORIGIN)) {
         return remote;
       }
     }
@@ -1088,5 +1083,20 @@ public class GitUtil {
   @Nullable
   public static String getRelativePath(@NotNull String root, @NotNull ContentRevision after) {
     return FileUtil.getRelativePath(root, after.getFile().getPath(), File.separatorChar);
+  }
+
+  /**
+   * <p>Finds the local changes which are "the same" as the given changes.</p>
+   * <p>The purpose of this method is to get actual local changes after some other changes were applied to the working tree
+   * (e.g. if they were cherry-picked from a commit). Working with the original non-local changes is limited, in particular,
+   * the difference between content revisions may be not the same as the local change.</p>
+   * <p>"The same" here means the changes made in the same files. It is possible that there was a change made in file A in the original
+   * commit, but there are no local changes made in file A. Such situations are ignored.</p>
+   */
+  @NotNull
+  public static Collection<Change> findCorrespondentLocalChanges(@NotNull ChangeListManager changeListManager,
+                                                                 @NotNull Collection<Change> originalChanges) {
+    OpenTHashSet<Change> allChanges = new OpenTHashSet<>(changeListManager.getAllChanges());
+    return ContainerUtil.mapNotNull(originalChanges, allChanges::get);
   }
 }

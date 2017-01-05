@@ -69,12 +69,7 @@ public class SuspendManagerUtil {
   @Nullable
   public static SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
-      if (suspendContext.suspends(thread)) {
-        return suspendContext;
-      }
-    }
-    return null;
+    return suspendManager.getEventContexts().stream().filter(suspendContext -> suspendContext.suspends(thread)).findFirst().orElse(null);
   }
 
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {

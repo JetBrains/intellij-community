@@ -15,5 +15,7 @@
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
     <orderEntry type="module" module-name="common-javaFX-plugin" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
+    <orderEntry type="module" module-name="structuralsearch-groovy" scope="TEST" />
+    <orderEntry type="module" module-name="compiler-openapi" scope="TEST" />
   </component>
 </module>

@@ -3,12 +3,15 @@ REGEXP_FILE
     RegExpBranchImpl: <a\p{*}b>
       RegExpCharImpl: <a>
         PsiElement(CHARACTER)('a')
-      RegExpPropertyImpl: <\p{*}>
-        PsiElement(PROPERTY)('\p')
-        PsiElement(LBRACE)('{')
-        PsiErrorElement:Character family name expected
-          <empty list>
-        PsiElement(BAD_CHARACTER)('*')
-        PsiElement(RBRACE)('}')
+      RegExpClosureImpl: <\p{*>
+        RegExpPropertyImpl: <\p{>
+          PsiElement(PROPERTY)('\p')
+          PsiElement(LBRACE)('{')
+          PsiErrorElement:Property name expected
+            <empty list>
+        RegExpQuantifierImpl: <*>
+          PsiElement(STAR)('*')
+      RegExpCharImpl: <}>
+        PsiElement(CHARACTER)('}')
       RegExpCharImpl: <b>
         PsiElement(CHARACTER)('b')

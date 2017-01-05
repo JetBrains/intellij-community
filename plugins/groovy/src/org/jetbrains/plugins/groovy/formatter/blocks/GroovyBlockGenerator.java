@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -69,7 +69,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -516,11 +515,17 @@ public class GroovyBlockGenerator {
   }
 
   private static List<LeafPsiElement> getSpockTable(GrStatement statement) {
-    LinkedList<LeafPsiElement> result = new LinkedList<>();
-    while (isTablePart(statement)) {
-      result.addFirst((LeafPsiElement)((GrBinaryExpression)statement).getOperationToken());
-      statement = ((GrBinaryExpression)statement).getLeftOperand();
-    }
+    List<LeafPsiElement> result = new ArrayList<>();
+    statement.accept(new GroovyElementVisitor() {
+      @Override
+      public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
+        if (isTablePart(expression)) {
+          result.add((LeafPsiElement)expression.getOperationToken());
+          expression.acceptChildren(this);
+        }
+      }
+    });
+    result.sort((l1, l2) -> l1.getStartOffset() - l2.getStartOffset());
     return result;
   }
 

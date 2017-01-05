@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a Java <code>if</code> or <code>if ... else</code> statement.
+ * Represents a Java {@code if} or {@code if ... else} statement.
  */
 public interface PsiIfStatement extends PsiStatement {
   /**
@@ -42,16 +42,16 @@ public interface PsiIfStatement extends PsiStatement {
   /**
    * Returns the statement which is executed when the condition is true.
    *
-   * @return the statement instance, or null if the statement has no <code>else</code>
+   * @return the statement instance, or null if the statement has no {@code else}
    * part or is incomplete.
    */
   @Nullable
   PsiStatement getElseBranch();
 
   /**
-   * Returns the <code>else</code> keyword of the statement.
+   * Returns the {@code else} keyword of the statement.
    *
-   * @return the keyword instance, or null if the statement has no <code>else</code>
+   * @return the keyword instance, or null if the statement has no {@code else}
    * part.
    */
   @Nullable
@@ -59,7 +59,7 @@ public interface PsiIfStatement extends PsiStatement {
 
   /**
    * Sets the statement which is executed when the condition is false to the specified value.
-   * Adds the <code>else</code> keyword if required.
+   * Adds the {@code else} keyword if required.
    *
    * @param statement the statement to use as the else branch.
    * @throws IncorrectOperationException if the modification fails for some reason (for example,

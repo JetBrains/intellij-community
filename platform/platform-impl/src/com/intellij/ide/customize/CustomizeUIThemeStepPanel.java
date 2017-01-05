@@ -17,6 +17,7 @@ package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.LafManagerImpl;
@@ -26,7 +27,9 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,7 +92,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     myColumnMode = myThemes.size() > 2;
     JPanel buttonsPanel = new JPanel(new GridLayout(myColumnMode ? myThemes.size() : 1, myColumnMode ? 1 : myThemes.size(), 5, 5));
     ButtonGroup group = new ButtonGroup();
-    final ThemeInfo myDefaultTheme = myThemes.iterator().next();
+    final ThemeInfo myDefaultTheme = getDefaultTheme();
 
     for (final ThemeInfo theme : myThemes) {
       final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
@@ -144,6 +147,21 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       result.add(DARCULA);
       result.add(GTK);
     }
+  }
+
+  @NotNull
+  private ThemeInfo getDefaultTheme() {
+    CloudConfigProvider provider = CloudConfigProvider.getProvider();
+    if (provider != null) {
+      String lafClassName = provider.getLafClassName();
+      if (lafClassName != null) {
+        ThemeInfo result = ContainerUtil.find(myThemes, theme -> lafClassName.equals(theme.laf));
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return myThemes.iterator().next();
   }
 
   @Override

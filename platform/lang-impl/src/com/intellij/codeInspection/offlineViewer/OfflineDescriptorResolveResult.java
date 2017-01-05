@@ -189,13 +189,6 @@ class OfflineDescriptorResolveResult {
       @Nls
       @NotNull
       @Override
-      public String getName() {
-        return getFamilyName();
-      }
-
-      @Nls
-      @NotNull
-      @Override
       public String getFamilyName() {
         return "Rerun \'" + wrapper.getDisplayName() + "\' inspection";
       }

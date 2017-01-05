@@ -24,7 +24,7 @@ public class ThrowableNeverThrownInspectionMerger extends InspectionElementsMerg
 
   @Override
   public String getMergedToolName() {
-    return "ThrowableNeverThrown";
+    return "ThrowableNotThrown";
   }
 
   @Override

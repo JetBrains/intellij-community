@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
 
   public ShowExternalSystemSettingsAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.open.settings.text", "external"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("action.open.settings.text", "External"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.open.settings.description", "external"));
   }
 

@@ -372,7 +372,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return null;
   }
 
-  private int importPlaces(final List<BaseInjection> injections) {
+  private void importPlaces(final List<BaseInjection> injections) {
     final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), new Convertor<BaseInjection, String>() {
       @Override
       public String convert(final BaseInjection o) {
@@ -388,7 +388,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
     if (!newInjections.isEmpty()) configurationModified();
     replaceInjections(newInjections, originalInjections, true);
-    return newInjections.size();
   }
 
   static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
@@ -661,29 +660,34 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       return myInstrumentationType;
     }
 
-    private void writeState(final Element element) {
-      JDOMExternalizerUtil.writeField(element, INSTRUMENTATION_TYPE_NAME, myInstrumentationType.toString());
-      JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
-      JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
-      JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
+    private void writeState(@NotNull Element element) {
+      AdvancedConfiguration defaults = new AdvancedConfiguration();
+      if (myInstrumentationType != defaults.myInstrumentationType) {
+        JDOMExternalizerUtil.writeField(element, INSTRUMENTATION_TYPE_NAME, myInstrumentationType.toString());
+      }
+
+      JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation, defaults.myLanguageAnnotation);
+      JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation, defaults.myPatternAnnotation);
+      JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation, defaults.mySubstAnnotation);
       if (myIncludeUncomputablesAsLiterals) {
         JDOMExternalizerUtil.writeField(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, "true");
       }
       if (mySourceModificationAllowed) {
         JDOMExternalizerUtil.writeField(element, SOURCE_MODIFICATION_ALLOWED, "true");
       }
-      switch (myDfaOption) {
-        case OFF:
-          break;
-        case RESOLVE:
-          JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, Boolean.TRUE.toString());
-          break;
-        case ASSIGNMENTS:
-          JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
-          break;
-        case DFA:
-          JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
-          break;
+
+      if (myDfaOption != DfaOption.RESOLVE) {
+        //noinspection EnumSwitchStatementWhichMissesCases
+        switch (myDfaOption) {
+          case OFF:
+            break;
+          case ASSIGNMENTS:
+            JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
+            break;
+          case DFA:
+            JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
+            break;
+        }
       }
     }
 

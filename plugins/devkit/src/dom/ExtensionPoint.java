@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,4 +90,11 @@ public interface ExtensionPoint extends DomElement {
    */
   @Nullable
   String getNamePrefix();
+
+  /**
+   * Returns EP fields missing {@code <with>} declaration to specify type.
+   *
+   * @return Fields.
+   */
+  List<PsiField> collectMissingWithTags();
 }

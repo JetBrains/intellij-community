@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,27 @@ import static org.jetbrains.plugins.groovy.intentions.conversions.strings.Conver
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertGStringToStringTest extends GrIntentionTestCase {
+class ConvertGStringToStringTest extends GrIntentionTestCase {
 
   final String basePath = TestUtils.testDataPath + "intentions/convertGStringToString/"
 
-  public void testSimpleCase() {
-    doTest(INTENTION_NAME, true);
+  void testSimpleCase() {
+    doTest(INTENTION_NAME, true)
   }
 
-  public void testComplicatedCase() {
-    doTest(INTENTION_NAME, true);
+  void testComplicatedCase() {
+    doTest(INTENTION_NAME, true)
   }
 
-  public void testEscaping() {
-    doTest(INTENTION_NAME, true);
+  void testEscaping() {
+    doTest(INTENTION_NAME, true)
   }
 
-  public void testSlashBeforeNewLine() {
-    doTest(INTENTION_NAME, true);
+  void testSlashBeforeNewLine() {
+    doTest(INTENTION_NAME, true)
   }
 
-  public void testGStringWithComplicatedInjection() {
+  void testGStringWithComplicatedInjection() {
     doTest(INTENTION_NAME, false)
   }
 }

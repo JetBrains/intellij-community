@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.testing;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -26,10 +25,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
@@ -40,6 +39,7 @@ import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -85,11 +85,16 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
-    return new PythonTRunnerConsoleProperties(myConfiguration, executor, false);
+    return new PythonTRunnerConsoleProperties(myConfiguration, executor, false, getTestLocator());
+  }
+
+  @Nullable
+  protected SMTestLocator getTestLocator() {
+    return null;  // by default, the IDE will use a "file://" protocol locator
   }
 
   @Override
-  public GeneralCommandLine generateCommandLine()  {
+  public GeneralCommandLine generateCommandLine() {
     GeneralCommandLine cmd = super.generateCommandLine();
 
     setWorkingDirectory(cmd);
@@ -103,14 +108,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
-    final String workingDirectory = myConfiguration.getWorkingDirectory();
-    if (!StringUtil.isEmptyOrSpaces(workingDirectory)) {
-      cmd.withWorkDirectory(workingDirectory);
+    String workingDirectory = myConfiguration.getWorkingDirectory();
+    if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
+      workingDirectory = myConfiguration.getWorkingDirectorySafe();
     }
-    else if (myConfiguration instanceof AbstractPythonTestRunConfiguration) {
-      final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)myConfiguration;
-      cmd.withWorkDirectory(configuration.getWorkingDirectorySafe());
-    }
+    cmd.withWorkDirectory(workingDirectory);
   }
 
   @Override
@@ -118,11 +120,8 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     final ProcessHandler processHandler = startProcess(patchers);
     final ConsoleView console = createAndAttachConsole(myConfiguration.getProject(), processHandler, executor);
 
-    List<AnAction> actions = Lists
-      .newArrayList(createActions(console, processHandler));
-
     DefaultExecutionResult executionResult =
-      new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
+      new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
 
     PyRerunFailedTestsAction rerunFailedTestsAction = new PyRerunFailedTestsAction(console);
     if (console instanceof SMTRunnerConsoleView) {
@@ -134,10 +133,11 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return executionResult;
   }
 
-  protected void addBeforeParameters(GeneralCommandLine cmd)  {}
+  protected void addBeforeParameters(GeneralCommandLine cmd) {}
+
   protected void addAfterParameters(GeneralCommandLine cmd) {}
 
-  protected void addTestRunnerParameters(GeneralCommandLine cmd)  {
+  protected void addTestRunnerParameters(GeneralCommandLine cmd) {
     ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert scriptParams != null;
     getRunner().addToGroup(scriptParams, cmd);
@@ -153,6 +153,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected abstract HelperPackage getRunner();
+
   @NotNull
   protected abstract List<String> getTestSpecs();
 }

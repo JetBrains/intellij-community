@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
  * A char sequence based on a char array. May be used for performance optimizations.
  * 
  * @author Maxim.Mossienko
- * @see com.intellij.util.text.CharArrayExternalizable
- * @see com.intellij.util.text.CharArrayUtil#getChars(CharSequence, char[], int) 
- * @see com.intellij.util.text.CharArrayUtil#fromSequenceWithoutCopying(CharSequence)  
+ * @see CharArrayExternalizable
+ * @see CharArrayUtil#getChars(CharSequence, char[], int)
+ * @see CharArrayUtil#fromSequenceWithoutCopying(CharSequence)
  */
 public interface CharSequenceBackedByArray extends CharSequence {
   // NOT guaranteed to return the array of the length of the original charSequence.length() - may be more for performance reasons.

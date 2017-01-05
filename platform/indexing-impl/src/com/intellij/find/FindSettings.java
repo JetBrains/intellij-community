@@ -79,15 +79,33 @@ public abstract class FindSettings{
 
   public abstract void setLocalRegularExpressions(boolean regularExpressions);
 
+  /**
+   * FindInProjectSettings.addDirectory
+   */
+  @Deprecated
   public abstract void addStringToFind(@NotNull String s);
 
+  /**
+   * Use FindInProjectSettings.addDirectory
+   */
+  @Deprecated
   public abstract void addStringToReplace(@NotNull String s);
 
+  /**
+   * Use FindInProjectSettings.addDirectory
+   */
+  @Deprecated
   public abstract void addDirectory(@NotNull String s);
 
+  /**
+   * FindInProjectSettings.addDirectory
+   */
   @NotNull
   public abstract String[] getRecentFindStrings();
 
+  /**
+   * FindInProjectSettings.addDirectory
+   */
   @NotNull
   public abstract String[] getRecentReplaceStrings();
 
@@ -101,6 +119,10 @@ public abstract class FindSettings{
   @NotNull
   public abstract String[] getRecentFileMasks();
 
+  /**
+   * Use FindInProjectSettings.getRecentDirectories
+   */
+  @Deprecated
   @NotNull
   public abstract List<String> getRecentDirectories();
 

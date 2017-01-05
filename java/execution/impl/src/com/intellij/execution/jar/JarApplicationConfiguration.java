@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -66,7 +66,6 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     XmlSerializer.deserializeInto(myBean, element);
@@ -115,10 +114,15 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   }
 
   @NotNull
-  @Override
   public Module[] getModules() {
     Module module = myConfigurationModule.getModule();
-    return module != null ? new Module[] {module}: Module.EMPTY_ARRAY;
+    return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getSearchScope() {
+    return SearchScopeProvider.createSearchScope(getModules());
   }
 
   @Nullable

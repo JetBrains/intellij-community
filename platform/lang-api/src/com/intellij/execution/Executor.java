@@ -41,6 +41,7 @@ public abstract class Executor {
    * {@link com.intellij.openapi.wm.ToolWindowId#DEBUG}).
    */
   public abstract String getToolWindowId();
+
   public abstract Icon getToolWindowIcon();
 
   /**
@@ -70,6 +71,7 @@ public abstract class Executor {
 
   /**
    * Returns the unique ID of the executor.
+   *
    * @return the ID of the executor.
    */
   @NotNull

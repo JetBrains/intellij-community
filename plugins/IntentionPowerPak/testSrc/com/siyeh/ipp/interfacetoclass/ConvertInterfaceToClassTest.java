@@ -31,7 +31,7 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
       fail("Conflict not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Functional expression in Test will not compile after converting class <b><code>FunctionalExpressions</code></b> to a class", e.getMessage());
+      assertEquals("() -> {...} in Test will not compile after converting class <b><code>FunctionalExpressions</code></b> to a class", e.getMessage());
     }
   }
 

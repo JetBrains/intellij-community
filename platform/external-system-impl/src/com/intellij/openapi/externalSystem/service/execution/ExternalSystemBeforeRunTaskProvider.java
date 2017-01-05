@@ -33,7 +33,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -97,15 +96,12 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
     }
     if (tasks.isEmpty()) return true;
 
-    final Pair<ProgramRunner, ExecutionEnvironment> pair =
-      ExternalSystemUtil.createRunner(executionSettings, DefaultRunExecutor.EXECUTOR_ID, myProject, mySystemId);
 
-    if (pair == null) return false;
+    ExecutionEnvironment environment =
+      ExternalSystemUtil.createExecutionEnvironment(myProject, mySystemId, executionSettings, DefaultRunExecutor.EXECUTOR_ID);
+    if (environment == null) return false;
 
-    final ProgramRunner runner = pair.first;
-    final ExecutionEnvironment environment = pair.second;
-
-    return runner.canRun(DefaultRunExecutor.EXECUTOR_ID, environment.getRunProfile());
+    return environment.getRunner().canRun(DefaultRunExecutor.EXECUTOR_ID, environment.getRunProfile());
   }
 
   @Override
@@ -122,13 +118,11 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
     }
     if (tasks.isEmpty()) return true;
 
-    final Pair<ProgramRunner, ExecutionEnvironment> pair =
-      ExternalSystemUtil.createRunner(executionSettings, DefaultRunExecutor.EXECUTOR_ID, myProject, mySystemId);
+    ExecutionEnvironment environment =
+      ExternalSystemUtil.createExecutionEnvironment(myProject, mySystemId, executionSettings, DefaultRunExecutor.EXECUTOR_ID);
+    if (environment == null) return false;
 
-    if (pair == null) return false;
-
-    final ProgramRunner runner = pair.first;
-    final ExecutionEnvironment environment = pair.second;
+    final ProgramRunner runner = environment.getRunner();
     environment.setExecutionId(env.getExecutionId());
 
     return RunConfigurationBeforeRunProvider.doRunTask(DefaultRunExecutor.getRunExecutorInstance().getId(), environment, runner);

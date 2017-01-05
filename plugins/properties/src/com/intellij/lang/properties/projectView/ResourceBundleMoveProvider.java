@@ -40,6 +40,7 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
     return ResourceBundle.ARRAY_DATA_KEY.getData(dataContext) != null;
   }
 
+  @Override
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     return false;
   }

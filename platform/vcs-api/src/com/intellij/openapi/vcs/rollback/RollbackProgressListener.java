@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * {@link RollbackEnvironment} implementation should notify about starting change processing
- * using this interface; change processing can be reported using any <code>accept()</code> method signature,
+ * using this interface; change processing can be reported using any {@code accept()} method signature,
  * should be reported once per change
  */
 public interface RollbackProgressListener {

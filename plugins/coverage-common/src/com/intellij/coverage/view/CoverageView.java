@@ -150,6 +150,9 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
   @Override
   public void dispose() {
+    if (!myProject.isDisposed()) {
+      CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
+    }
   }
 
   private static ActionGroup createPopupGroup() {

@@ -73,6 +73,7 @@ public class PyStringFormatParser {
     @Nullable private String myWidth;
     @Nullable private String myPrecision;
     @Nullable private Integer myPosition;
+    @Nullable private Integer myAutoPosition;
     private char myLengthModifier;
     private char myConversionType;
     private boolean myUnclosedMapping;
@@ -81,7 +82,7 @@ public class PyStringFormatParser {
       super(startIndex, startIndex);
     }
 
-    private void setEndIndex(int endIndex) {
+    protected void setEndIndex(int endIndex) {
       myEndIndex = endIndex;
     }
 
@@ -98,7 +99,7 @@ public class PyStringFormatParser {
       return myMappingKey;
     }
 
-    private void setMappingKey(@Nullable String mappingKey) {
+    protected void setMappingKey(@Nullable String mappingKey) {
       myMappingKey = mappingKey;
     }
 
@@ -150,14 +151,32 @@ public class PyStringFormatParser {
       return myPosition;
     }
 
-    private void setPosition(@Nullable Integer position) {
+    protected void setPosition(@Nullable Integer position) {
       myPosition = position;
+    }
+
+    /**
+     * Automatic index of the field if neither mapping key nor explicit index was given, {@code null} otherwise.
+     * <p/>
+     * Basically, it's the number of automatically numbered fields preceding the current one.
+     * Note that this is somewhat unreliable because it's an error to use fields with both explicit
+     * and implicit indexing.
+     *
+     */
+    @Nullable
+    public Integer getAutoPosition() {
+      return myAutoPosition;
+    }
+
+    protected void setAutoPosition(@Nullable Integer autoPosition) {
+      myAutoPosition = autoPosition;
     }
   }
 
   @NotNull private final String myLiteral;
   @NotNull private final List<FormatStringChunk> myResult = new ArrayList<>();
   private int myPos;
+  private int mySubstitutionsCount = 0;
 
   private static final String CONVERSION_FLAGS = "#0- +";
   private static final String DIGITS = "0123456789";
@@ -177,6 +196,7 @@ public class PyStringFormatParser {
   public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
     final List<FormatStringChunk> results = new ArrayList<>();
     final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(s);
+    int autoPositionedFieldsCount = 0;
     while (matcher.find()) {
       final String group = matcher.group();
       final int start = matcher.start();
@@ -197,6 +217,10 @@ public class PyStringFormatParser {
           } catch (NumberFormatException e) {
             chunk.setMappingKey(name);
           }
+        }
+        else {
+          chunk.setAutoPosition(autoPositionedFieldsCount);
+          autoPositionedFieldsCount++;
         }
         // TODO: Parse substitution details
         results.add(chunk);
@@ -245,6 +269,10 @@ public class PyStringFormatParser {
       }
       chunk.setMappingKey(myLiteral.substring(myPos+1, mappingEnd));
       myPos = mappingEnd+1;
+    }
+    else  {
+      chunk.setAutoPosition(mySubstitutionsCount);
+      mySubstitutionsCount++;
     }
     chunk.setConversionFlags(parseWhileCharacterInSet(CONVERSION_FLAGS));
     chunk.setWidth(parseWidth());

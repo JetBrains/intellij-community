@@ -126,7 +126,7 @@ public class WorkingContextManager {
       }
       JBZipEntry entry = archive.getOrCreateEntry("/" + entryName);
       if (comment != null) {
-        entry.setComment(comment);
+        entry.setComment(StringUtil.first(comment, 200, true));
       }
       Element element = new Element("context");
       saveContext(element);

@@ -44,7 +44,7 @@ class GrBindableSupportTest {
   }
 
   @Parameterized.Parameters(name = "{0}")
-  public static Collection<Object[]> data() {
+  static Collection<Object[]> data() {
     [
       '@Bindable on class'               : '@groovy.beans.Bindable class Person {}',
       '@Bindable on class @CompileStatic': '@groovy.transform.CompileStatic @groovy.beans.Bindable class Person {}',

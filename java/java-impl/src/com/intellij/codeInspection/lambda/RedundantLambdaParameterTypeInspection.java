@@ -132,13 +132,6 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalIn
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Remove redundant parameter types";
     }

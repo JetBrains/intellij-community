@@ -26,8 +26,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
@@ -388,7 +386,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
       final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> SdkConfigurationUtil.removeSdk(sdk));
+      SdkConfigurationUtil.removeSdk(sdk);
 
       myProjectSdksModel.removeSdk(sdk);
       myProjectSdksModel.removeSdk(currentSdk);

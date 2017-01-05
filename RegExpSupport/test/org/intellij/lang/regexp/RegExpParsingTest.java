@@ -147,6 +147,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharclasses66() throws IOException { doCodeTest("\\X"); }
   public void testCharclasses67() throws IOException { doCodeTest("\\-[\\*\\-\\[\\]\\\\\\+]"); }
   public void testCharclasses68() throws IOException { doCodeTest("[\\b]"); }
+  public void testCharClasses69() throws IOException { doCodeTest("\\p{^L}"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }
@@ -183,6 +184,11 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testGroups33() throws IOException { doCodeTest("(?<asdf>[a-c])\\1"); }
   public void testGroups34() throws IOException { doCodeTest("(?<asdf>[a-c])\\k<asdf>"); }
   public void testGroups35() throws IOException { doCodeTest("\\k<adsf>"); }
+  public void testGroups36() throws IOException { doCodeTest("(?P<name>{"); }
+  public void testGroups37() throws IOException { doCodeTest("(?P=name)"); }
+  public void testGroups38() throws IOException { doCodeTest("\\g'name'"); }
+  public void testGroups39() throws IOException { doCodeTest("(?(name)yes-pattern|no-pattern)"); }
+  public void testGroups40() throws IOException { doCodeTest("(?(name)yes-pattern|{"); }
 
   public void testEscapes1() throws IOException { doCodeTest("\\q"); }
   public void testEscapes2() throws IOException { doCodeTest("\\#"); }
@@ -236,6 +242,9 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testNamedchars9() throws IOException { doCodeTest("[:xdigit:]+"); }
   public void testNamedchars10() throws IOException { doCodeTest("\\p{unknown}+"); }
   public void testNamedchars11() throws IOException { doCodeTest("[:^xdigit:]+"); }
+  public void testNamedchars12() throws IOException { doCodeTest("\\p{InArabic Extended-A}"); }
+  public void testNamedchars13() throws IOException { doCodeTest("\\N{Mahjong Tile Winter}"); }
+  public void testNamedchars14() throws IOException { doCodeTest("[\\N{Mahjong Tile Winter}]"); }
 
   public void testBackrefs1() throws IOException { doCodeTest("(ac*)c*d[ac]*\\1"); }
   public void testBackrefs2() throws IOException { doCodeTest("(.)=\\1"); }
@@ -328,4 +337,6 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testParse1() throws IOException { doCodeTest("123 | 456"); }
   public void testParse2() throws IOException { doCodeTest("1**"); }
   public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
+
+  public void testCategoryShorthand1() throws IOException { doCodeTest("\\pL"); }
 }

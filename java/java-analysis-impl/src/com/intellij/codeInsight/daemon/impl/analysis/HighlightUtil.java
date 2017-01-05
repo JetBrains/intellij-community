@@ -32,10 +32,14 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
+import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -119,7 +123,7 @@ public class HighlightUtil extends HighlightUtilBase {
     ourMethodIncompatibleModifiers.put(PsiModifier.PUBLIC, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE, PsiModifier.PROTECTED));
     ourMethodIncompatibleModifiers.put(PsiModifier.PROTECTED, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PRIVATE));
     ourMethodIncompatibleModifiers.put(PsiModifier.STATIC, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.DEFAULT, PsiModifier.FINAL));
-    ourMethodIncompatibleModifiers.put(PsiModifier.DEFAULT, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.FINAL));
+    ourMethodIncompatibleModifiers.put(PsiModifier.DEFAULT, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE));
     ourMethodIncompatibleModifiers.put(PsiModifier.SYNCHRONIZED, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT));
     ourMethodIncompatibleModifiers.put(PsiModifier.STRICTFP, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT));
     ourMethodIncompatibleModifiers.put(PsiModifier.FINAL, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT));
@@ -354,9 +358,10 @@ public class HighlightUtil extends HighlightUtilBase {
           }
         }
       } else {
+        String description = extendUnsupportedLanguageLevelDescription("Intersection types in cast are not supported at this language level", expression, languageLevel, expression.getContainingFile(), LanguageLevel.JDK_1_8);
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(expression)
-          .descriptionAndTooltip("Intersection types in cast are not supported at this language level").create();
+          .descriptionAndTooltip(description).create();
       }
     }
     return null;
@@ -1345,9 +1350,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (prevCatchParameter == null) continue;
         for (PsiTypeElement prevCatchTypeElement : PsiUtil.getParameterTypeElements(prevCatchParameter)) {
           final PsiType prevCatchType = prevCatchTypeElement.getType();
-          for (Iterator<PsiClassType> iterator = caught.iterator(); iterator.hasNext(); ) {
-            if (prevCatchType.isAssignableFrom(iterator.next())) iterator.remove();
-          }
+          caught.removeIf(prevCatchType::isAssignableFrom);
           if (caught.isEmpty()) break;
         }
       }
@@ -1536,7 +1539,7 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
 
-    if (qualifier != null && aClass.isInterface() && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+    if (qualifier != null && aClass.isInterface() && expr instanceof PsiSuperExpression && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       //15.12.1 for method invocation expressions; 15.13 for method references
       //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
       //It is a compile-time error if I is not a direct superinterface of T,
@@ -1565,7 +1568,7 @@ public class HighlightUtil extends HighlightUtilBase {
           }
         }
 
-        if (expr instanceof PsiSuperExpression && !classT.isInheritor(aClass, false)) {
+        if (!classT.isInheritor(aClass, false)) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(qualifier)
             .descriptionAndTooltip(JavaErrorMessages.message("no.enclosing.instance.in.scope", format(aClass))).create();
@@ -1803,7 +1806,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
         if (!arrayTypeFixChecked) {
           final PsiType checkResult = JavaHighlightUtil.sameType(initializers);
-          fix = checkResult != null ? new VariableArrayTypeFix(arrayInitializer, checkResult) : null;
+          fix = checkResult != null ? VariableArrayTypeFix.createFix(arrayInitializer, checkResult) : null;
           arrayTypeFixChecked = true;
         }
         if (fix != null) {
@@ -2602,7 +2605,7 @@ public class HighlightUtil extends HighlightUtilBase {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
       }
-      importedClasses.put(name, Pair.create((PsiImportStaticReferenceElement)null, (PsiClass)element));
+      importedClasses.put(name, Pair.create(null, (PsiClass)element));
     }
     return null;
   }
@@ -2995,6 +2998,8 @@ public class HighlightUtil extends HighlightUtilBase {
                                     @NotNull PsiFile file) {
     if (file.getManager().isInProject(file) && !level.isAtLeast(feature.level)) {
       String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
+
+      message = extendUnsupportedLanguageLevelDescription(message, element, level, file, feature.level);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createShowModulePropertiesFix(element));
@@ -3002,5 +3007,27 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return null;
+  }
+
+  static String extendUnsupportedLanguageLevelDescription(@NotNull String message,
+                                                          @NotNull PsiElement element,
+                                                          @NotNull LanguageLevel fileLanguageLevel,
+                                                          @NotNull PsiFile file,
+                                                          @NotNull LanguageLevel featureLevel) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module != null) {
+      LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      if (moduleLanguageLevel.isAtLeast(featureLevel)) {
+        for (FilePropertyPusher pusher : FilePropertyPusher.EP_NAME.getExtensions()) {
+          if (pusher instanceof JavaLanguageLevelPusher) {
+            String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, element, fileLanguageLevel, file);
+            if (newMessage != null) {
+              return newMessage;
+            }
+          }
+        }
+      }
+    }
+    return message;
   }
 }

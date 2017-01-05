@@ -22,9 +22,9 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
@@ -47,6 +47,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
   private LibraryCompositionSettings myLibraryCompositionSettings;
   @Nullable
   private final MvcFramework myFramework;
+  private final Disposable myDisposable;
 
   public GroovySdkWizardStepBase(@Nullable final MvcFramework framework, WizardContext wizardContext, String basePath) {
     myBasePath = basePath;
@@ -54,6 +55,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
                            ? LibrariesContainerFactory.createContainer(wizardContext.getProject())
                            : LibrariesContainerFactory.createContainer(wizardContext, wizardContext.getModulesProvider());
     myFramework = framework;
+    myDisposable = wizardContext.getDisposable();
   }
 
   protected ModuleBuilder.ModuleConfigurationUpdater createModuleConfigurationUpdater() {
@@ -66,13 +68,6 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
         module.putUserData(MvcFramework.CREATE_APP_STRUCTURE, Boolean.TRUE);
       }
     };
-  }
-
-  @Override
-  public void disposeUIResources() {
-    if (myPanel != null) {
-      Disposer.dispose(myPanel);
-    }
   }
 
   @Override
@@ -104,6 +99,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
       final GroovyLibraryDescription libraryDescription = myFramework == null ? new GroovyLibraryDescription() : myFramework.createLibraryDescription();
       final String baseDirPath = myBasePath != null ? FileUtil.toSystemIndependentName(myBasePath) : "";
       myPanel = new LibraryOptionsPanel(libraryDescription, baseDirPath, FrameworkLibraryVersionFilter.ALL, myLibrariesContainer, false);
+      Disposer.register(myDisposable, myPanel);
     }
     return myPanel;
   }

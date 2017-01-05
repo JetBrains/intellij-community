@@ -218,16 +218,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
                                                                 PsiPackage aPackage,
                                                                 boolean searchInComments,
                                                                 boolean searchForTextOccurences) {
-    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
-    if (sourceRoot == null) {
-      Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
-                               RefactoringBundle.message("cannot.move"));
-      return null;
-    }
-    final JavaRefactoringFactory factory = JavaRefactoringFactory.getInstance(project);
-    final MoveDestination destination = myPreserveSourceRoot.isSelected() && myPreserveSourceRoot.isVisible()
-                                        ? factory.createSourceFolderPreservingMoveDestination(aPackage.getQualifiedName())
-                                        : factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
+    final MoveDestination destination = createDestination(aPackage, directory);
 
     MoveClassesOrPackagesProcessor processor = createMoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
         searchInComments, searchForTextOccurences, myMoveCallback);
@@ -237,6 +228,21 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
       return processor;
     }
     return null;
+  }
+
+  protected MoveDestination createDestination(PsiPackage aPackage, PsiDirectory directory) {
+    final Project project = aPackage.getProject();
+    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
+    if (sourceRoot == null) {
+      Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
+                               RefactoringBundle.message("cannot.move"));
+      return null;
+    }
+
+    final JavaRefactoringFactory factory = JavaRefactoringFactory.getInstance(project);
+    return myPreserveSourceRoot.isSelected() && myPreserveSourceRoot.isVisible()
+           ? factory.createSourceFolderPreservingMoveDestination(aPackage.getQualifiedName())
+           : factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
   }
 
   @Override

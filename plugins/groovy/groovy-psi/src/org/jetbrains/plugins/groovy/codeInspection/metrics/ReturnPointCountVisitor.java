@@ -25,7 +25,7 @@ class ReturnPointCountVisitor extends GroovyRecursiveElementVisitor {
   private int m_count = 0;
 
   @Override
-  public void visitClosure(GrClosableBlock grClosableBlock) {
+  public void visitClosure(@NotNull GrClosableBlock grClosableBlock) {
     //so as not to drill down
   }
 

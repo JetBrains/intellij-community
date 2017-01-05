@@ -49,14 +49,8 @@ public class PyAddImportFix implements LocalQuickFix {
 
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.add.import.add.import", myImportToAdd);
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.add.import.add.import", myImportToAdd);
   }
 
   @Override

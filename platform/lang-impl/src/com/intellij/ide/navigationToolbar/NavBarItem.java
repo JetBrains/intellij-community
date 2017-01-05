@@ -22,6 +22,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
       NavBarPresentation presentation = myPanel.getPresentation();
       myText = presentation.getPresentableText(object);
       Icon icon = presentation.getIcon(object);
-      myIcon = icon != null ? icon : EmptyIcon.create(5);
+      myIcon = icon != null ? icon : JBUI.scale(EmptyIcon.create(5));
       myAttributes = presentation.getTextAttributes(object, false);
     }
     else {

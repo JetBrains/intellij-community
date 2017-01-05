@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -80,11 +81,6 @@ public class QuickfixUtil {
     if (resolvedElement instanceof PsiClass) return true;
 
     return false;
-  }
-
-
-  public static boolean ensureFileWritable(Project project, PsiFile file) {
-    return FileModificationService.getInstance().preparePsiElementsForWrite(file);
   }
 
   public static List<ParamInfo> swapArgumentsAndTypes(String[] names, PsiType[] types) {

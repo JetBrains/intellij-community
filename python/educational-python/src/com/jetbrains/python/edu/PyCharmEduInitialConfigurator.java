@@ -127,7 +127,7 @@ public class PyCharmEduInitialConfigurator {
                                                                              "Goto Error/Bookmark Actions", "GoToEditPointGroup",
                                                                              "Change Navigation Actions", "Method Navigation Actions",
                                                                              "EvaluateExpression", "Pause", "ViewBreakpoints",
-                                                                             "XDebugger.MuteBreakpoints", "SaveAs");
+                                                                             "XDebugger.MuteBreakpoints", "SaveAs", "XDebugger.SwitchWatchesInVariables");
 
   public static class First {
 
@@ -187,7 +187,7 @@ public class PyCharmEduInitialConfigurator {
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
 
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void welcomeScreenDisplayed() {
 

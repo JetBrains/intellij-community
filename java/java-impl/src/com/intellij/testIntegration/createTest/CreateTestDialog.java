@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -345,6 +344,7 @@ public class CreateTestDialog extends DialogWrapper {
       public void customize(JList list, TestFramework value, int index, boolean selected, boolean hasFocus) {
         if (value != null) {
           setText(value.getName());
+          setIcon(value.getIcon());
         }
       }
     });
@@ -352,8 +352,14 @@ public class CreateTestDialog extends DialogWrapper {
     final List<TestFramework> attachedLibraries = new ArrayList<>();
     final String defaultLibrary = getDefaultLibraryName();
     TestFramework defaultDescriptor = null;
+
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myLibrariesCombo.getModel();
-    for (final TestFramework descriptor : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+
+    final List<TestFramework> descriptors = new ArrayList<>();
+    descriptors.addAll(Arrays.asList(Extensions.getExtensions(TestFramework.EXTENSION_NAME)));
+    descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
+
+    for (final TestFramework descriptor : descriptors) {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
@@ -393,14 +399,13 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                () -> ApplicationManager.getApplication().runWriteAction(() -> {
-                                                  if (mySelectedFramework instanceof JavaTestFramework) {
-                                                    ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
-                                                  } else {
-                                                    OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
-                                                  }
-                                                }));
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (mySelectedFramework instanceof JavaTestFramework) {
+            ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
+          } else {
+            OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
+          }
+        });
         myFixLibraryPanel.setVisible(false);
       }
     });
@@ -486,7 +491,6 @@ public class CreateTestDialog extends DialogWrapper {
       final int result = Messages
         .showOkCancelDialog(myProject, errorMessage + ". Update existing class?", CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       if (result == Messages.CANCEL) {
-        super.close(CANCEL_EXIT_CODE);
         return;
       }
     }

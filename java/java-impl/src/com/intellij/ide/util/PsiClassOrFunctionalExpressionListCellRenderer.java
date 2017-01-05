@@ -17,15 +17,14 @@ package com.intellij.ide.util;
 
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
 
 public class PsiClassOrFunctionalExpressionListCellRenderer extends PsiElementListCellRenderer<NavigatablePsiElement> {
   @Override
   public String getElementText(NavigatablePsiElement element) {
-    return element instanceof PsiClass ? ClassPresentationUtil.getNameForClass((PsiClass)element, false) 
-                                       : PsiExpressionTrimRenderer.render((PsiExpression)element);
+    return element instanceof PsiClass ? ClassPresentationUtil.getNameForClass((PsiClass)element, false)
+                                       : ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)element, false);
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +166,14 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public ExecutionEnvironment build() {
-    if (myRunner == null) {
+    ExecutionEnvironment environment = null;
+    ExecutionEnvironmentProvider environmentProvider = ServiceManager.getService(myProject, ExecutionEnvironmentProvider.class);
+    if (environmentProvider != null) {
+      environment = environmentProvider.createExecutionEnvironment(
+        myProject, myRunProfile, myExecutor, myTarget, myRunnerSettings, myConfigurationSettings, myRunnerAndConfigurationSettings);
+    }
+
+    if (environment == null && myRunner == null) {
       if (myRunnerId == null) {
         myRunner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), myRunProfile);
       }
@@ -174,12 +182,15 @@ public final class ExecutionEnvironmentBuilder {
       }
     }
 
-    if (myRunner == null) {
+    if (environment == null && myRunner == null) {
       throw new IllegalStateException("Runner must be specified");
     }
 
-    ExecutionEnvironment environment = new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                                                                myRunnerAndConfigurationSettings, myRunner);
+    if (environment == null) {
+      environment = new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings,
+                                             myConfigurationSettings, myContentToReuse, myRunnerAndConfigurationSettings, myRunner);
+    }
+
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

@@ -49,6 +49,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testOptionalOfNullable() { doTest(); }
   public void testPrimitiveInVoidLambda() { doTest(); }
   public void testNotNullLambdaParameter() { doTest(); }
+  public void testNotNullOptionalLambdaParameter() { doTest(); }
 
   public void testNullArgumentIsFailingMethodCall() {
     doTest();
@@ -66,6 +67,13 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testDontSuggestToMakeLambdaNullable() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
@@ -92,4 +100,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
       nnnManager.setNullables();
     });
   }
+
+  public void testCapturedWildcardNotNull() { doTest(); }
 }

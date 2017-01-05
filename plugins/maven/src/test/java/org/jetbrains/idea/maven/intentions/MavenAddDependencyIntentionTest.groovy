@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class MavenAddDependencyIntentionTest extends MavenDomTestCase {
 """)
   }
 
-  public void testAddDependencyVariableDeclaration() {
+  void testAddDependencyVariableDeclaration() {
     doTest("""
 class A {
   void foo() {
@@ -46,7 +46,7 @@ class A {
 """, "Foo")
   }
 
-  public void testAddDependencyWithQualifier() {
+  void testAddDependencyWithQualifier() {
     doTest("""
 class A {
   void foo() {
@@ -56,7 +56,7 @@ class A {
 """, "java.xxxx.Foo")
   }
 
-  public void testAddDependencyNotAClass() {
+  void testAddDependencyNotAClass() {
     doTest("""
 class A {
   void foo() {
@@ -66,7 +66,7 @@ class A {
 """, null)
   }
 
-  public void testAddDependencyFromExtendsWithGeneric() {
+  void testAddDependencyFromExtendsWithGeneric() {
     doTest("""
 class A extends Fo<caret>o<String> {
   void foo() { }
@@ -74,7 +74,7 @@ class A extends Fo<caret>o<String> {
 """, "Foo")
   }
 
-  public void testAddDependencyFromClassInsideGeneric() {
+  void testAddDependencyFromClassInsideGeneric() {
     doTest("""
 class A extends List<Fo<caret>o> {
   void foo() { }
@@ -82,7 +82,7 @@ class A extends List<Fo<caret>o> {
 """, "Foo")
   }
 
-  public void testAddDependencyFromClassInsideGenericWithExtends() {
+  void testAddDependencyFromClassInsideGenericWithExtends() {
     doTest("""
 class A extends List<? extends Fo<caret>o> {
   void foo() { }

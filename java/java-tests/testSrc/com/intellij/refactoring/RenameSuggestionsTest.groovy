@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase
  * User: anna
  */
 class RenameSuggestionsTest extends LightCodeInsightTestCase {
-  public void "test by parameter name"() {
+  void "test by parameter name"() {
     def text = """\
      class Test {
          void foo(int foo) {}
@@ -42,7 +42,7 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo")
   }
 
-  public void "test foreach scope"() {
+  void "test foreach scope"() {
     def text = """\
      class Foo {
         {
@@ -55,7 +55,7 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo")
   }
 
-  public void "test by super parameter name"() {
+  void "test by super parameter name"() {
     def text = """\
      class Test {
          void foo(int foo) {}
@@ -71,7 +71,7 @@ class RenameSuggestionsTest extends LightCodeInsightTestCase {
   }
 
 
-  public void "test by Optional_of initializer"() {
+  void "test by Optional_of initializer"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{
@@ -82,7 +82,7 @@ class Foo {{
     assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
   }
 
-  public void "test by Optional_ofNullable initializer"() {
+  void "test by Optional_ofNullable initializer"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{
@@ -93,7 +93,7 @@ class Foo {{
     assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
   }
 
-  public void "test by Optional_of initializer with constructor"() {
+  void "test by Optional_of initializer with constructor"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{
@@ -102,8 +102,8 @@ class Foo {{
 """)
     assert suggestions == ["foo", "fooOptional", "optional", "o"]
   }
-  
-  public void "test by Optional_flatMap"() {
+
+  void "test by Optional_flatMap"() {
     def suggestions = getNameSuggestions("""
 import java.util.*;
 class Foo {{
@@ -127,7 +127,7 @@ class Car {}
     configure text
     def oldPreselectSetting = myEditor.settings.preselectRename
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
       final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
 
       assertNotNull(element)
@@ -135,7 +135,7 @@ class Car {}
       VariableInplaceRenameHandler handler = new VariableInplaceRenameHandler()
 
 
-      handler.doRename(element, editor, null);
+      handler.doRename(element, editor, null)
       
       LookupEx lookup = LookupManager.getActiveLookup(editor)
       assertNotNull(lookup)

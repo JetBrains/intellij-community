@@ -95,6 +95,9 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
       if (returnType != null && !InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue)) {
         return "Method returns " + returnType.getPresentableText() + " but the contract specifies " + contract.returnValue;
       }
+      if (method.isConstructor() && contract.returnValue != MethodContract.ValueConstraint.THROW_EXCEPTION) {
+        return "Invalid contract return value for a constructor: " + contract.returnValue;
+      }
     }
     return null;
   }

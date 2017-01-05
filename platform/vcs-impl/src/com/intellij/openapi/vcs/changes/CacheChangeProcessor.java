@@ -241,7 +241,19 @@ public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<Cac
 
     @Override
     public int hashCode() {
-      return change.hashCode();
+      return ChangeDiffRequestProducer.hashCode(change);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("CacheChangeProcessor.ChangeWrapper: %s (%s - %s)",
+                           change.getClass(), toString(change.getBeforeRevision()), toString(change.getAfterRevision()));
+    }
+
+    @NotNull
+    private static String toString(@Nullable ContentRevision revision) {
+      if (revision == null) return "null";
+      return revision.getClass() + ":" + revision.toString();
     }
   }
 }

@@ -3,30 +3,31 @@ package com.jetbrains.edu.learning.checker;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyPluginConfigurator;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
+import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
 
@@ -40,7 +41,9 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private final Ref<Boolean> myCheckInProcess;
   private final Process myTestProcess;
   private final String myCommandLine;
-  private final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
+  private boolean myRunTestFile = true;
+  private static final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
+  private static final String DO_NOT_RUN_ON_CHECK = "DO_NOT_RUN_ON_CHECK";
 
   public StudyCheckTask(Project project, StudyState studyState, Ref<Boolean> checkInProcess, Process testProcess, String commandLine) {
     super(project, "Checking Task");
@@ -58,7 +61,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   @Override
   public void onSuccess() {
     StudyUtils.updateToolWindows(myProject);
-    StudyCheckUtils.drawAllPlaceholders(myProject, myTask, myTaskDir);
+    StudyCheckUtils.drawAllPlaceholders(myProject, myTask);
     ProjectView.getInstance(myProject).refresh();
     clearState();
   }
@@ -89,7 +92,9 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
 
   private void checkForEduCourse(@NotNull ProgressIndicator indicator) {
     final StudyTestsOutputParser.TestsOutput testsOutput = getTestOutput(indicator);
-
+    if (myRunTestFile) {
+      ApplicationManager.getApplication().invokeLater(() -> runTask(myProject));
+    }
     if (testsOutput != null) {
       if (testsOutput.isSuccess()) {
         onTaskSolved(testsOutput.getMessage());
@@ -100,9 +105,19 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-        postAttemptToStepic(testsOutput);
+        if (StepicUpdateSettings.getInstance().getUser().getAccessToken() != null) {
+          EduStepicConnector.postSolution(myTask, testsOutput.isSuccess(), myProject);
+        }
       }
     }
+  }
+
+  private static void runTask(@NotNull Project project) {
+    final StudyRunAction runAction = (StudyRunAction)ActionManager.getInstance().getAction(StudyRunAction.ACTION_ID);
+    if (runAction == null) {
+      return;
+    }
+    runAction.run(project);
   }
 
   @Nullable
@@ -113,7 +128,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       ApplicationManager.getApplication().invokeLater(
         () -> StudyCheckUtils.showTestResultPopUp("Check cancelled", MessageType.WARNING.getPopupBackground(), myProject));
     }
-
+    myRunTestFile = !output.getStdout().contains(DO_NOT_RUN_ON_CHECK);
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course != null) {
       final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive());
@@ -128,40 +143,50 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     return null;
   }
 
-  private void checkForAdaptiveCourse(ProgressIndicator indicator) {
-    final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
-    if (testOutput != null) {
-      // As tests in adaptive courses are created from
-      // samples and stored in task, to disable it we should ignore local testing results
-      if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
-        onTaskFailed(testOutput.getMessage());
-      }
-      else {
-        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
-        if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
-          if (pair.getFirst()) {
-            onTaskSolved("Congratulations! Remote tests passed.");
-            if (myStatusBeforeCheck != StudyStatus.Solved) {
-              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
-            }
-          }
-          else {
-            final String checkMessage = pair.getSecond();
-            onTaskFailed(checkMessage);
-          }
-          runAfterTaskCheckedActions();
+  private void checkForAdaptiveCourse(@NotNull ProgressIndicator indicator) {
+    if (myTask.isChoiceTask()) {
+      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
+      processStepicCheckOutput(indicator, result);
+    }
+    else {
+      final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
+      if (testOutput != null) {
+        // As tests in adaptive courses are created from
+        // samples and stored in task, to disable it we should ignore local testing results
+        if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+          onTaskFailed(testOutput.getMessage());
         }
         else {
-          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
-                                                                                                    MessageType.WARNING
-                                                                                                      .getPopupBackground(),
-                                                                                                    myProject));
+          final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkCodeTask(myProject, myTask);
+          processStepicCheckOutput(indicator, pair);
         }
       }
     }
   }
 
-  protected void onTaskFailed(String message) {
+  private void processStepicCheckOutput(@NotNull ProgressIndicator indicator, @Nullable Pair<Boolean, String> pair) {
+    if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
+      if (pair.getFirst()) {
+        onTaskSolved("Congratulations! Remote tests passed.");
+        if (myStatusBeforeCheck != StudyStatus.Solved) {
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, 2);
+        }
+      }
+      else {
+        final String checkMessage = pair.getSecond();
+        onTaskFailed(checkMessage);
+      }
+      runAfterTaskCheckedActions();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
+                                                                                                MessageType.WARNING
+                                                                                                  .getPopupBackground(),
+                                                                                                myProject));
+    }
+  }
+
+  protected void onTaskFailed(@NotNull String message) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     myTask.setStatus(StudyStatus.Failed);
     if (course != null) {
@@ -179,20 +204,64 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  protected void onTaskSolved(String message) {
+  protected void onTaskSolved(@NotNull String message) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     myTask.setStatus(StudyStatus.Solved);
     if (course != null) {
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
           () -> {
-            StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
-            StudyCheckUtils.showTestResultsToolWindow(myProject, message, true);
+            if (myTask.isChoiceTask()) {
+              StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
+            }
+            else {
+              StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
+              StudyCheckUtils.showTestResultsToolWindow(myProject, message, true);
+            }
           });
       }
       else {
-        ApplicationManager.getApplication()
-          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+        boolean hasMoreSubtasks = myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != myTask.getLastSubtaskIndex();
+        int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          int subtaskSize = myTask.getLastSubtaskIndex() + 1;
+          String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + subtaskSize + " solved";
+          StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
+          if (hasMoreSubtasks) {
+            int nextSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+            StudySubtaskUtils.switchStep(myProject, myTask, nextSubtaskIndex);
+            rememberAnswers(nextSubtaskIndex);
+          }
+        });
+      }
+    }
+  }
+
+  private void rememberAnswers(int nextSubtaskIndex) {
+    VirtualFile taskDir = myTask.getTaskDir(myProject);
+    if (taskDir == null) {
+      return;
+    }
+    VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
+    if (srcDir != null) {
+      taskDir = srcDir;
+    }
+    for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
+      TaskFile taskFile = entry.getValue();
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(entry.getKey());
+      if (virtualFile == null) {
+        continue;
+      }
+      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      if (document == null) {
+        continue;
+      }
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
+        if (placeholder.getSubtaskInfos().containsKey(nextSubtaskIndex - 1)) {
+          int offset = placeholder.getOffset();
+          String answer = document.getText(TextRange.create(offset, offset + placeholder.getRealLength()));
+          placeholder.getSubtaskInfos().get(nextSubtaskIndex - 1).setAnswer(answer);
+        }
       }
     }
   }
@@ -210,13 +279,5 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     else {
       LOG.warn("No configurator is provided for the plugin");
     }
-  }
-
-  protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
-    final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
-    final StepicUser user = studySettings.getUser();
-    final String login = user.getEmail();
-    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
-    EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);
   }
 }

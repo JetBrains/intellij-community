@@ -20,8 +20,10 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -41,13 +43,15 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Map<RefEntity, CommonProblemDescriptor[]> getIgnoredElements();
 
-  @NotNull
-  InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
-                                @NotNull InspectionNode node,
-                                @NotNull InspectionRVContentProvider provider,
-                                @NotNull InspectionTreeNode parentNode,
-                                final boolean showStructure,
-                                final boolean groupBySeverity);
+  void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
+                      @NotNull InspectionNode node,
+                      @NotNull InspectionRVContentProvider provider,
+                      @NotNull InspectionTreeNode parentNode,
+                      final boolean showStructure,
+                      final boolean groupBySeverity);
+
+  @Nullable
+  InspectionNode getToolNode();
 
   @NotNull
   default RefElementNode createRefNode(@Nullable RefEntity entity) {
@@ -80,7 +84,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Set<RefModule> getModuleProblems();
   @Nullable
-  QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable CommonProblemDescriptor[] descriptors);
+  QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree);
   @NotNull
   Map<RefEntity, CommonProblemDescriptor[]> getProblemElements();
   @NotNull
@@ -114,4 +118,10 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   default boolean isDummy() {
     return false;
   }
+
+  default int getProblemsCount(InspectionTree tree) {
+    return tree.getSelectedDescriptors().length;
+  }
+
+  HighlightSeverity getSeverity(RefElement element);
 }

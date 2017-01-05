@@ -5,5 +5,5 @@ REGEXP_FILE
         PsiElement(CHARACTER)('a')
       RegExpPropertyImpl: <\p>
         PsiElement(PROPERTY)('\p')
-        PsiErrorElement:Character category expected
+        PsiErrorElement:'{' or category shorthand expected
           <empty list>

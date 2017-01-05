@@ -174,7 +174,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   @Override
   @NotNull
   public String getName() {
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -194,7 +194,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public boolean isDeprecated() {
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.isDeprecated();
     }

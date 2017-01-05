@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
@@ -52,7 +55,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     super(project);
     myDocumentManager = documentManager;
     myEditorNotifications = editorNotifications;
-    myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.SHARED_THREAD);
+    myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
   }
 
   @Override
@@ -88,13 +91,13 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
         }
       }
     });
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         myEditedGeneratedFiles.remove(file);
       }
     });
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myFilesToCheck.addAll(myEditedGeneratedFiles);

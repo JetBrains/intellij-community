@@ -27,8 +27,10 @@ public abstract class UsageViewManager {
     return ServiceManager.getService(project, UsageViewManager.class);
   }
 
+  @NotNull
   public abstract Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable);
 
+  @NotNull
   public abstract Content addContent(String contentName,
                                      String tabName,
                                      String toolwindowTitle,

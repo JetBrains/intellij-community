@@ -55,8 +55,8 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    * @param id unique instance of {@link FacetTypeId}
    * @param stringId unique string id of the facet type
    * @param presentableName name of this facet type which will be shown in UI
-   * @param underlyingFacetType if this parameter is not <code>null</code> then you will be able to add facets of this type only as
-   * subfacets to a facet of the specified type. If this parameter is <code>null</code> it will be possible to add facet of this type
+   * @param underlyingFacetType if this parameter is not {@code null} then you will be able to add facets of this type only as
+   * subfacets to a facet of the specified type. If this parameter is {@code null} it will be possible to add facet of this type
    * directly to a module
    */
   public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName,
@@ -130,7 +130,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
 
   /**
-   * @return <code>true</code> if only one facet of this type is allowed within the containing module (if this type doesn't have the underlying
+   * @return {@code true} if only one facet of this type is allowed within the containing module (if this type doesn't have the underlying
    * facet type) or within the underlying facet
    */
   public boolean isOnlyOneFacetAllowed() {
@@ -139,7 +139,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
 
   /**
    * @param moduleType type of module
-   * @return <code>true</code> if facet of this type are allowed in module of type <code>moduleType</code>
+   * @return {@code true} if facet of this type are allowed in module of type {@code moduleType}
    */
   public abstract boolean isSuitableModuleType(ModuleType moduleType);
 

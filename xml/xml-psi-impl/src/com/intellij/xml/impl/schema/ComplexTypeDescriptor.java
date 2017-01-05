@@ -360,8 +360,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       XmlTag descriptorTag = tag;
 
       if (ref != null) {
-        final PsiElement psiElement = SchemaReferencesProvider.createTypeOrElementOrAttributeReference(ref.getValueElement()).resolve();
-        if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
+        XmlAttributeValue element = ref.getValueElement();
+        final PsiElement psiElement;
+        if (element != null) {
+          psiElement = SchemaReferencesProvider.createTypeOrElementOrAttributeReference(element).resolve();
+          if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
+        }
       }
 
       if (TRUE_ATTR_VALUE.equals(descriptorTag.getAttributeValue("abstract"))) {

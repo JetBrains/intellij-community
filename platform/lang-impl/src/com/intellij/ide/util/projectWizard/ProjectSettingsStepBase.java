@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
@@ -47,6 +45,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
+
+import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
 public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware {
   protected final DirectoryProjectGenerator myProjectGenerator;
@@ -89,6 +89,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
+    bottomPanel.setName(BOTTOM_PANEL);
 
     bottomPanel.add(label, BorderLayout.NORTH);
     bottomPanel.add(button, BorderLayout.EAST);
@@ -124,8 +125,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                  () -> myCallback.consume(ProjectSettingsStepBase.this));
+          myCallback.consume(ProjectSettingsStepBase.this);
         }
       }
     };
@@ -299,7 +299,8 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand("&Location"), BorderLayout.WEST);
   }
 
-  private static File findSequentNonExistingUntitled() {
+  @NotNull
+  protected File findSequentNonExistingUntitled() {
     return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
   }
 }

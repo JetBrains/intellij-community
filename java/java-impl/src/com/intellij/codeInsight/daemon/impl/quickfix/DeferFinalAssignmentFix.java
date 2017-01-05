@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,10 +56,14 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     return QuickFixBundle.message("defer.final.assignment.with.temp.text", variable.getName());
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return variable;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(variable.getContainingFile())) return;
-
     if (variable instanceof PsiField) {
       deferField((PsiField)variable);
     }
@@ -154,7 +158,10 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     PsiElement element = null; //controlFlow.getEndOffset(codeBlock) == offset ? getEnclosingStatement(controlFlow.getElement(offset)) : null;
     while (offset < controlFlow.getSize()) {
       element = controlFlow.getElement(offset);
-      if (element != null) element = PsiUtil.getEnclosingStatement(element);
+      while (element != null) {
+        if (element.getParent() == codeBlock) break;
+        element = element.getParent();
+      }
       int startOffset = controlFlow.getStartOffset(element);
       if (startOffset != -1 && startOffset >= minOffset && element instanceof PsiStatement) break;
       offset++;

@@ -27,6 +27,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
@@ -38,7 +40,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
@@ -221,5 +222,14 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   @Nullable
   String getEmptySelectionString() {
     return "Select an SDK to view or edit its details here";
+  }
+
+  public void selectJdkVersion(JavaSdkVersion requiredJdkVersion) {
+    for (Sdk sdk : myProjectJdksModel.getSdks()) {
+      if (JavaSdk.getInstance().isOfVersionOrHigher(sdk, requiredJdkVersion)) {
+        selectJdk(sdk);
+        break;
+      }
+    }
   }
 }

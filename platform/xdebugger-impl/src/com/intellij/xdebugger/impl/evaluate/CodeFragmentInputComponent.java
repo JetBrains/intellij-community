@@ -55,6 +55,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new HistoryNavigationAction(false, IdeActions.ACTION_PREVIOUS_OCCURENCE, parentDisposable));
     group.add(new HistoryNavigationAction(true, IdeActions.ACTION_NEXT_OCCURENCE, parentDisposable));
+    group.add(new ToggleSoftWrapAction());
     editorPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent(), BorderLayout.EAST);
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.label.text.code.fragment")), BorderLayout.NORTH);
     myMainPanel.add(editorPanel, BorderLayout.CENTER);
@@ -81,6 +82,22 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     contentPanel.add(splitter, BorderLayout.CENTER);
     splitter.setFirstComponent(myMainPanel);
     splitter.setSecondComponent(resultPanel);
+  }
+
+  private class ToggleSoftWrapAction extends ToggleAction {
+    public ToggleSoftWrapAction() {
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myMultilineEditor.isUseSoftWraps();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myMultilineEditor.setUseSoftWraps(state);
+    }
   }
 
   private class HistoryNavigationAction extends AnAction {

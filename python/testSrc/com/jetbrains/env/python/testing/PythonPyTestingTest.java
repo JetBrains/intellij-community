@@ -50,7 +50,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull String stdout,
                                       @NotNull String stderr,
                                       @NotNull String all) {
-        Assert.assertThat("Import error is not marked as error", runner.getFailedTestsCount(), Matchers.equalTo(1));
+        Assert.assertThat("Import error is not marked as error", runner.getFailedTestsCount(), Matchers.greaterThanOrEqualTo(1));
       }
     });
   }

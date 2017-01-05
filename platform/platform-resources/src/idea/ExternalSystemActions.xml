@@ -1,101 +1,102 @@
 <idea-plugin>
   <actions>
+    <group id="ExternalSystem.Actions">
+      <action id="ExternalSystem.RefreshAllProjects"
+              class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction"
+              icon="AllIcons.Actions.Refresh"/>
+      <action id="ExternalSystem.RefreshProject"
+              class="com.intellij.openapi.externalSystem.action.RefreshExternalProjectAction"
+              icon="AllIcons.Actions.Refresh"/>
+      <action id="ExternalSystem.AttachProject"
+              class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
+      <action id="ExternalSystem.DetachProject"
+              class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"
+              use-shortcut-of="$Delete"/>
+      <action id="ExternalSystem.IgnoreProject"
+              class="com.intellij.openapi.externalSystem.action.IgnoreExternalProjectAction"/>
+      <action id="ExternalSystem.OpenConfig"
+              class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"
+              use-shortcut-of="EditSource"/>
+      <action id="ExternalSystem.ShowSettings"
+              class="com.intellij.openapi.externalSystem.action.ShowExternalSystemSettingsAction"
+              icon="AllIcons.General.ProjectSettings">
+      </action>
 
-    <action id="ExternalSystem.RefreshAllProjects"
-            class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction"
-            icon="AllIcons.Actions.Refresh"/>
-    <action id="ExternalSystem.RefreshProject"
-            class="com.intellij.openapi.externalSystem.action.RefreshExternalProjectAction"
-            icon="AllIcons.Actions.Refresh"/>
-    <action id="ExternalSystem.AttachProject"
-            class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
-    <action id="ExternalSystem.DetachProject"
-            class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"
-            use-shortcut-of="$Delete"/>
-    <action id="ExternalSystem.IgnoreProject"
-            class="com.intellij.openapi.externalSystem.action.IgnoreExternalProjectAction"/>
-    <action id="ExternalSystem.OpenConfig"
-            class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"
-            use-shortcut-of="EditSource"/>
-    <action id="ExternalSystem.ShowSettings"
-            class="com.intellij.openapi.externalSystem.action.ShowExternalSystemSettingsAction"
-            icon="AllIcons.General.ProjectSettings">
-    </action>
+      <action id="ExternalSystem.ToggleAutoImport"
+              class="com.intellij.openapi.externalSystem.action.ToggleAutoImportAction">
+      </action>
 
-    <action id="ExternalSystem.ToggleAutoImport"
-            class="com.intellij.openapi.externalSystem.action.ToggleAutoImportAction">
-    </action>
+      <action id="ExternalSystem.OpenTasksActivationManager"
+              class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
+      </action>
 
-    <action id="ExternalSystem.OpenTasksActivationManager"
-            class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
-    </action>
+      <action id="ExternalSystem.ExpandAll" class="com.intellij.openapi.externalSystem.action.ExternalSystemTreeAction$ExpandAll"
+              text="Expand All"
+              icon="AllIcons.Actions.Expandall"
+              use-shortcut-of="ExpandAll"/>
+      <action id="ExternalSystem.CollapseAll" class="com.intellij.openapi.externalSystem.action.ExternalSystemTreeAction$CollapseAll"
+              text="Collapse All"
+              icon="AllIcons.Actions.Collapseall"
+              use-shortcut-of="CollapseAll"/>
+      <action id="ExternalSystem.SelectProjectDataToImport" class="com.intellij.openapi.externalSystem.action.ExternalSystemSelectProjectDataToImportAction"
+              text="Select Project Data To Import"
+              icon="AllIcons.Modules.ModulesNode"/>
 
-    <action id="ExternalSystem.ExpandAll" class="com.intellij.openapi.externalSystem.action.ExternalSystemTreeAction$ExpandAll"
-            text="Expand All"
-            icon="AllIcons.Actions.Expandall"
-            use-shortcut-of="ExpandAll"/>
-    <action id="ExternalSystem.CollapseAll" class="com.intellij.openapi.externalSystem.action.ExternalSystemTreeAction$CollapseAll"
-            text="Collapse All"
-            icon="AllIcons.Actions.Collapseall"
-            use-shortcut-of="CollapseAll"/>
-    <action id="ExternalSystem.SelectProjectDataToImport" class="com.intellij.openapi.externalSystem.action.ExternalSystemSelectProjectDataToImportAction"
-            text="Select Project Data To Import"
-            icon="AllIcons.Modules.ModulesNode"/>
+      <action id="ExternalSystem.RunTask"
+              class="com.intellij.openapi.externalSystem.action.task.RunExternalSystemTaskAction"
+              text="_Run Task"
+              description="Execute selected tasks"
+              icon="AllIcons.Actions.Execute">
+      </action>
+      <action id="ExternalSystem.AssignShortcut"
+              class="com.intellij.openapi.externalSystem.action.task.AssignShortcutAction" text="Assign Shortcut..."
+              description="Assign shortcut to the selected task">
+      </action>
+      <action id="ExternalSystem.AssignRunConfigurationShortcut"
+              class="com.intellij.openapi.externalSystem.action.task.AssignRunConfigurationShortcutAction" text="Assign Shortcut..."
+              description="Assign shortcut to the selected Run Configuration">
+      </action>
 
-    <action id="ExternalSystem.RunTask"
-            class="com.intellij.openapi.externalSystem.action.task.RunExternalSystemTaskAction"
-            text="_Run Task"
-            description="Execute selected tasks"
-            icon="AllIcons.Actions.Execute">
-    </action>
-    <action id="ExternalSystem.AssignShortcut"
-            class="com.intellij.openapi.externalSystem.action.task.AssignShortcutAction" text="Assign Shortcut..."
-            description="Assign shortcut to the selected task">
-    </action>
-    <action id="ExternalSystem.AssignRunConfigurationShortcut"
-            class="com.intellij.openapi.externalSystem.action.task.AssignRunConfigurationShortcutAction" text="Assign Shortcut..."
-            description="Assign shortcut to the selected Run Configuration">
-    </action>
+      <action id="ExternalSystem.BeforeSync"
+              class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeSyncTaskAction" text="Execute Before Sync"
+              description="Execute selected task before the project import">
+      </action>
+      <action id="ExternalSystem.AfterSync"
+              class="com.intellij.openapi.externalSystem.action.task.ToggleAfterSyncTaskAction" text="Execute After Sync"
+              description="Execute selected task after the project import">
+      </action>
+      <action id="ExternalSystem.BeforeCompile"
+              class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeCompileTasksAction" text="Execute Before Build"
+              description="Execute selected task before Build">
+      </action>
+      <action id="ExternalSystem.AfterCompile"
+              class="com.intellij.openapi.externalSystem.action.task.ToggleAfterCompileTasksAction" text="Execute After Build"
+              description="Execute selected task after Build">
+      </action>
+      <action id="ExternalSystem.BeforeRebuild"
+              class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
+              description="Execute selected task before full rebuild">
+      </action>
+      <action id="ExternalSystem.AfterRebuild"
+              class="com.intellij.openapi.externalSystem.action.task.ToggleAfterRebuildTasksAction" text="Execute After Rebuild"
+              description="Execute selected task after full rebuild">
+      </action>
+      <action id="ExternalSystem.BeforeRun"
+              class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeRunTaskAction" text="Execute Before Run/Debug..."
+              description="Execute selected task before launching Run/Debug configuration">
+      </action>
 
-    <action id="ExternalSystem.BeforeSync"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeSyncTaskAction" text="Execute Before Sync"
-            description="Execute selected task before the project import">
-    </action>
-    <action id="ExternalSystem.AfterSync"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterSyncTaskAction" text="Execute After Sync"
-            description="Execute selected task after the project import">
-    </action>
-    <action id="ExternalSystem.BeforeCompile"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeCompileTasksAction" text="Execute Before Make"
-            description="Execute selected task before Make">
-    </action>
-    <action id="ExternalSystem.AfterCompile"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterCompileTasksAction" text="Execute After Make"
-            description="Execute selected task after Make">
-    </action>
-    <action id="ExternalSystem.BeforeRebuild"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
-            description="Execute selected task before full rebuild">
-    </action>
-    <action id="ExternalSystem.AfterRebuild"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterRebuildTasksAction" text="Execute After Rebuild"
-            description="Execute selected task after full rebuild">
-    </action>
-    <action id="ExternalSystem.BeforeRun"
-            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeRunTaskAction" text="Execute Before Run/Debug..."
-            description="Execute selected task before launching Run/Debug configuration">
-    </action>
+      <action id="ExternalSystem.GroupTasks"
+              class="com.intellij.openapi.externalSystem.action.task.GroupTasksAction" text="Group Tasks">
+      </action>
+      <action id="ExternalSystem.ShowInheritedTasks"
+              class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display tasks inherited from sub-projects">
+      </action>
 
-    <action id="ExternalSystem.GroupTasks"
-            class="com.intellij.openapi.externalSystem.action.task.GroupTasksAction" text="Group Tasks">
-    </action>
-    <action id="ExternalSystem.ShowInheritedTasks"
-            class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display tasks inherited from sub-projects">
-    </action>
-
-    <action id="ExternalSystem.ShowIgnored"
-            class="com.intellij.openapi.externalSystem.action.task.ShowIgnoredAction" text="Show Ignored">
-    </action>
+      <action id="ExternalSystem.ShowIgnored"
+              class="com.intellij.openapi.externalSystem.action.task.ShowIgnoredAction" text="Show Ignored">
+      </action>
+    </group>
 
     <group id="ExternalSystemView.BaseProjectMenu">
       <reference ref="ExternalSystem.OpenConfig"/>

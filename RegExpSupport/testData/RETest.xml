@@ -37,7 +37,11 @@
   </quantifiers>
   <charclasses>
     <test verify="false">
-      <pattern><![CDATA[[<warning descr="Redundant character range">\w-\w</warning>]]]></pattern>
+      <pattern><![CDATA[[\w-<warning descr="Duplicate predefined character class '\w' inside character class">\w</warning>]]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>[\w-a]</pattern>
       <expected>OK</expected>
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
@@ -79,6 +83,14 @@
       <pattern><![CDATA[\k<<error descr="Unresolved named group reference">adsf</error>>]]></pattern>
       <expected>OK</expected>
     </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;<error descr="Invalid group name">important_value1</error>&gt;\d\d)</pattern>
+      <expected>ERR</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>(?&lt;importantValue1&gt;\d\d)</pattern>
+      <expected>OK</expected>
+    </test>
   </groups>
   <escapes>
     <test verify="false">
@@ -98,7 +110,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' in character class">)</warning>]<warning descr="Duplicate character ']' in character class">]</warning>[<warning descr="Duplicate character ']' in character class">]</warning>\E]]]></pattern>
+      <pattern><![CDATA[[\Qabc?*+.)<warning descr="Duplicate character ')' inside character class">)</warning>]<warning descr="Duplicate character ']' inside character class">]</warning>[<warning descr="Duplicate character ']' inside character class">]</warning>\E]]]></pattern>
       <expected>OK</expected>
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
@@ -107,6 +119,30 @@
     </test>
     <test host="com.intellij.psi.impl.JavaRegExpHost">
       <pattern><![CDATA[<weak_warning descr="Redundant character escape">\]</weak_warning><weak_warning descr="Redundant character escape">\}</weak_warning>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false">
+      <pattern><![CDATA[<error descr="Illegal/unsupported escape sequence">\q</error>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false">
+      <pattern>a<![CDATA[<error descr="Illegal/unsupported escape sequence">\</error>]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false">
+      <pattern><![CDATA[<error descr="Illegal/unsupported escape sequence">\E</error>]]]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test>
+      <pattern>\x08</pattern><!-- backspace character -->
+      <expected>OK</expected>
+    </test>
+    <test host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern>\x{100000}</pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false" host="com.intellij.psi.impl.JavaRegExpHost">
+      <pattern><![CDATA[<error descr="Illegal unicode escape sequence">\x{1000000}</error>]]></pattern>
       <expected>OK</expected>
     </test>
   </escapes>
@@ -125,7 +161,7 @@
       <expected>OK</expected>
     </test>
     <test>
-      <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' in character class">i</warning>t<warning descr="Duplicate character ':' in character class">:</warning>]+]]></pattern>
+      <pattern><![CDATA[[:xdig<warning descr="Duplicate character 'i' inside character class">i</warning>t<warning descr="Duplicate character ':' inside character class">:</warning>]+]]></pattern>
       <expected>OK</expected>
     </test>
   </namedchars>

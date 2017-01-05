@@ -187,10 +187,13 @@ public class UpdateRequestsQueue {
     }
   }
 
-  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
-                                @Nullable final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
+  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
+                                @NotNull InvokeAfterUpdateMode mode,
+                                @Nullable String title,
+                                @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller,
+                                @Nullable ModalityState state) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final CallbackData data = CallbackData.create(afterUpdate, title, state, mode, myProject);
+    final CallbackData data = CallbackData.create(myProject, mode, afterUpdate, title, state);
 
     if (dirtyScopeManagerFiller != null) {
       VcsDirtyScopeManagerProxy managerProxy = new VcsDirtyScopeManagerProxy();
@@ -220,9 +223,7 @@ public class UpdateRequestsQueue {
       return;
     }
     // invoke progress if needed
-    if (data.getWrapperStarter() != null) {
-      data.getWrapperStarter().run();
-    }
+    data.getWrapperStarter().run();
     LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
   }
 

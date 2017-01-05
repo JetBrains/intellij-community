@@ -87,4 +87,7 @@ public interface MavenServerEmbedder extends Remote {
   void clearCaches() throws RemoteException;
 
   void clearCachesFor(MavenId projectId) throws RemoteException;
+
+  @Nullable
+  MavenModel readModel(File file) throws RemoteException;
 }

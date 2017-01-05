@@ -15,14 +15,11 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -86,17 +83,15 @@ public abstract class PerformFixesModalTask implements SequentialTask {
       }
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myDocumentManager.commitAllDocuments();
-        if (!runInReadAction[0]) {
-          applyFix(myProject, descriptor);
-        }
-      });
-      if (runInReadAction[0]) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      myDocumentManager.commitAllDocuments();
+      if (!runInReadAction[0]) {
         applyFix(myProject, descriptor);
       }
     });
+    if (runInReadAction[0]) {
+      applyFix(myProject, descriptor);
+    }
     return isDone();
   }
 

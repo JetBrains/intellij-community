@@ -16,16 +16,14 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.Conditions.*;
-
 public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectionTool {
-  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
-    and(instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), notInstanceOf(PsiTypeParameter.class));
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), Conditions.notInstanceOf(PsiTypeParameter.class));
 
   /**
    * Override this to report problems at method level.
@@ -33,7 +31,7 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
    * @param method     to check.
    * @param manager    InspectionManager to ask for ProblemDescriptors from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-   * @return <code>null</code> if no problems found or not applicable at method level.
+   * @return {@code null} if no problems found or not applicable at method level.
    */
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -46,7 +44,7 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
    * @param aClass     to check.
    * @param manager    InspectionManager to ask for ProblemDescriptors from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-   * @return <code>null</code> if no problems found or not applicable at class level.
+   * @return {@code null} if no problems found or not applicable at class level.
    */
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -59,24 +57,10 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
    * @param field      to check.
    * @param manager    InspectionManager to ask for ProblemDescriptors from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-   * @return <code>null</code> if no problems found or not applicable at field level.
+   * @return {@code null} if no problems found or not applicable at field level.
    */
   @Nullable
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return null;
-  }
-
-  /**
-   * Override this to report problems at file level.
-   *
-   * @param file       to check.
-   * @param manager    InspectionManager to ask for ProblemDescriptors from.
-   * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-   * @return <code>null</code> if no problems found or not applicable at file level.
-   */
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 

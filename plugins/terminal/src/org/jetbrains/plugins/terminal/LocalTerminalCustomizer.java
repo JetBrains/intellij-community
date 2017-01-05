@@ -16,17 +16,28 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public interface LocalTerminalCustomizer {
-  ExtensionPointName<LocalTerminalCustomizer> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
+public abstract class LocalTerminalCustomizer {
+  public static ExtensionPointName<LocalTerminalCustomizer> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.terminal.localTerminalCustomizer");
 
-  void setupEnvironment(@NotNull Project project, @NotNull Map<String, String> envs);
+  public String[] customizeCommandAndEnvironment(Project project, String[] command, Map<String, String> envs) {
+    return command;
+  }
 
   @Nullable
-  String getDefaultFolder();
+  public UnnamedConfigurable getConfigurable(Project project) {
+    return null;
+  }
+
+  @Nullable
+  protected String getDefaultFolder() {
+    return null;
+  }
+
 }

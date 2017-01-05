@@ -15,14 +15,24 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class RedundantCast18Test extends InspectionTestCase {
-  private void doTest() throws Exception {
-    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new RedundantCastInspection());
-    doTest("redundantCast/lambda/" + getTestName(false), tool, "java 1.5");
+public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
+  @NonNls static final String BASE_PATH = "/inspection/redundantCast/lambda";
+
+  @NotNull
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new RedundantCastInspection()
+    };
+  }
+
+  private void doTest() {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 
   public void testLambdaContext() throws Exception { doTest(); }
@@ -31,4 +41,5 @@ public class RedundantCast18Test extends InspectionTestCase {
   public void testForeachValue() throws Exception { doTest(); }
   public void testConditional() throws Exception { doTest(); }
   public void testInferApplicabilityError() throws Exception { doTest(); }
+  public void testCastToRawType() throws Exception { doTest(); }
 }

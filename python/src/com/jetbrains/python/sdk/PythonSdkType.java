@@ -303,12 +303,16 @@ public final class PythonSdkType extends SdkType {
       });
   }
 
-  public static boolean isVirtualEnv(Sdk sdk) {
+  public static boolean isVirtualEnv(@NotNull Sdk sdk) {
     final String path = sdk.getHomePath();
+    return isVirtualEnv(path);
+  }
+
+  public static boolean isVirtualEnv(String path) {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
-  public static boolean isCondaVirtualEnv(Sdk sdk) {
+  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
     final String path = sdk.getHomePath();
     return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
   }

@@ -51,7 +51,11 @@ public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testSimple() {
     doTest();
   }
-  
+
+  public void testExpressionContext() {
+    doTest();
+  }
+
   public void testDoNotExpandOnJavaLess8() {
     LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
     doTest();

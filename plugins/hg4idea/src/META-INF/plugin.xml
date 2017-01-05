@@ -26,10 +26,12 @@
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
     <vcsRepositoryCreator implementation="org.zmlx.hg4idea.repo.HgRepositoryCreator"/>
     <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
+    <vcsChangesViewRefresher implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder"/>
     <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
     <vcs.taskHandler implementation="org.zmlx.hg4idea.HgTaskHandler"/>
+    <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>

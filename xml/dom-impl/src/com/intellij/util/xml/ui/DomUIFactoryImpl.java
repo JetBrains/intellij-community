@@ -71,6 +71,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   @Override
   protected TableCellEditor createCellEditor(DomElement element, Class type) {
     if (Enum.class.isAssignableFrom(type)) {
+      //noinspection unchecked
       return new ComboTableCellEditor((Class<? extends Enum>)type, false);
     }
 
@@ -159,8 +160,6 @@ public class DomUIFactoryImpl extends DomUIFactory {
         if (document == null) return HighlightingPass.EMPTY_ARRAY;
 
         editor.commit();
-
-        psiDocumentManager.commitAllDocuments();
 
         GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(),
                                                                   true, new ProperTextRange(0, document.getTextLength()), null, new DefaultHighlightInfoProcessor());

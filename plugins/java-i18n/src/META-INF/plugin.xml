@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>com.intellij.java-i18n</id>
   <name>I18n for Java</name>
   <depends>com.intellij.properties</depends>

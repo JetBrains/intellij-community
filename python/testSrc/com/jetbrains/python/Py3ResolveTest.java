@@ -21,10 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
@@ -356,5 +353,16 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-13734
   public void testDunderClassInDeclarationInsideFunction() {
     assertUnresolved();
+  }
+  
+  // PY-20864
+  public void testTopLevelVariableAnnotationFromTyping() {
+    myFixture.copyDirectoryToProject("typing", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyClass.class, "List"));
+  }
+
+  // PY-20864
+  public void testLocalVariableAnnotationWithInnerClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyClass.class, "MyType"));
   }
 }

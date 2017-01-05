@@ -25,19 +25,19 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-public class CodeBlockGenerationTest extends LightGroovyTestCase {
+class CodeBlockGenerationTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'refactoring/convertGroovyToJava/codeBlock'
 
   private void doTest() {
     final String testName = getTestName(true)
-    final PsiFile file = myFixture.configureByFile(testName + '.groovy');
+    final PsiFile file = myFixture.configureByFile(testName + '.groovy')
     assertInstanceOf file, GroovyFile
 
     GrTopStatement[] statements = file.topStatements
     final StringBuilder builder = new StringBuilder()
-    def generator = new CodeBlockGenerator(builder, new ExpressionContext(project));
+    def generator = new CodeBlockGenerator(builder, new ExpressionContext(project))
     for (def statement : statements) {
-      statement.accept(generator);
+      statement.accept(generator)
       builder.append('\n')
     }
 

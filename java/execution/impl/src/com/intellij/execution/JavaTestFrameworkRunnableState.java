@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -153,6 +154,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       @Override
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = () -> {
+          root.flushOutputFile();
           deleteTempFiles();
           clear();
         };
@@ -167,6 +169,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction() {
+      @Override
+      public boolean isDelayApplicable() {
+        return false;
+      }
+
       @Override
       public AbstractAutoTestManager getAutoTestManager(Project project) {
         return JavaAutoRunManager.getInstance(project);
@@ -212,6 +219,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
+    }
+
+    if (ConsoleBuffer.useCycleBuffer()) {
+      javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
 
     return javaParameters;
@@ -369,12 +380,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
-      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp");
-      myWorkingDirsFile.deleteOnExit();
+      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
       javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
       
-      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp");
-      myTempFile.deleteOnExit();
+      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
       passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
     }
     catch (Exception e) {

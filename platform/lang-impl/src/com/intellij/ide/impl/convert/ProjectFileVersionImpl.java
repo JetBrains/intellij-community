@@ -17,7 +17,6 @@
 package com.intellij.ide.impl.convert;
 
 import com.intellij.conversion.ConversionService;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -25,6 +24,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
       return;
     }
 
-    String path = ProjectUtil.isDirectoryBased(myProject) ? myProject.getBasePath() : myProject.getProjectFilePath();
+    String path = ProjectKt.isDirectoryBased(myProject) ? myProject.getBasePath() : myProject.getProjectFilePath();
     if (path == null) {
       LOG.info("Cannot save conversion result: filePath == null");
     }

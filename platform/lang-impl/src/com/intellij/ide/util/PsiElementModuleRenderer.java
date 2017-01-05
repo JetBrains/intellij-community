@@ -41,8 +41,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     int index,
     boolean isSelected,
     boolean cellHasFocus) {
-    final Component listCellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected,
-                                                                                   cellHasFocus);
+    final Component listCellRendererComponent = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
     customizeCellRenderer(value, index, isSelected, cellHasFocus);
     return listCellRendererComponent;
   }

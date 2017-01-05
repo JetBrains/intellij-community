@@ -20,10 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -35,7 +32,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -598,14 +594,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         ((BackgroundOperatingDiffElement)source).copyTo(myTrg, errorMessage, diff, onFinish, element.getTarget(), path);
       }
       else {
-        final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-        try {
+        WriteAction.run(() -> {
           final DiffElement<?> diffElement = source.copyTo(myTrg, path);
           refreshElementAfterCopyTo(diffElement, element);
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
     }
   }
@@ -647,14 +639,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         ((BackgroundOperatingDiffElement)target).copyTo(mySrc, errorMessage, diff, onFinish, element.getSource(), path);
       }
       else {
-        final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-        try {
+        WriteAction.run(() -> {
           final DiffElement<?> diffElement = target.copyTo(mySrc, path);
           refreshElementAfterCopyFrom(element, diffElement);
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
     }
   }
@@ -736,18 +724,14 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       if (myElements.indexOf(element) != -1) {
         removeElement(element, true);
       }
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-      try {
+      WriteAction.run(() -> {
         if (source != null) {
           source.delete();
         }
         if (target != null) {
           target.delete();
         }
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
   }
 

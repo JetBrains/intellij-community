@@ -236,8 +236,7 @@ public class UpdateHighlightersUtil {
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
-    DaemonCodeAnalyzerEx
-      .processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
         if (info.getGroup() == group) {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
@@ -409,13 +408,9 @@ public class UpdateHighlightersUtil {
     return layer;
   }
 
+  @NotNull
   private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Map<TextRange, RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
-    RangeMarker marker = ranges2markersCache.get(textRange);
-    if (marker == null) {
-      marker = document.createRangeMarker(textRange);
-      ranges2markersCache.put(textRange, marker);
-    }
-    return marker;
+    return ranges2markersCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(textRange));
   }
 
   private static final Key<Boolean> TYPING_INSIDE_HIGHLIGHTER_OCCURRED = Key.create("TYPING_INSIDE_HIGHLIGHTER_OCCURRED");
@@ -439,28 +434,24 @@ public class UpdateHighlightersUtil {
     assertMarkupConsistent(markup, project);
 
     final int start = e.getOffset() - 1;
-    final int end = start + Math.max(e.getOldLength(), e.getNewLength());
+    final int end = start + e.getOldLength();
 
     final List<HighlightInfo> toRemove = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, start, end, info -> {
+      if (!info.needUpdateOnTyping()) return true;
+
       RangeHighlighter highlighter = info.highlighter;
-      boolean remove = false;
-      if (info.needUpdateOnTyping()) {
-        int highlighterStart = highlighter.getStartOffset();
-        int highlighterEnd = highlighter.getEndOffset();
-        if (info.isAfterEndOfLine()) {
-          if (highlighterStart < document.getTextLength()) {
-            highlighterStart += 1;
-          }
-          if (highlighterEnd < document.getTextLength()) {
-            highlighterEnd += 1;
-          }
+      int highlighterStart = highlighter.getStartOffset();
+      int highlighterEnd = highlighter.getEndOffset();
+      if (info.isAfterEndOfLine()) {
+        if (highlighterStart < document.getTextLength()) {
+          highlighterStart += 1;
         }
-        if (!highlighter.isValid() || start < highlighterEnd && highlighterStart <= end) {
-          remove = true;
+        if (highlighterEnd < document.getTextLength()) {
+          highlighterEnd += 1;
         }
       }
-      if (remove) {
+      if (!highlighter.isValid() || start < highlighterEnd && highlighterStart <= end) {
         toRemove.add(info);
       }
       return true;

@@ -25,35 +25,29 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author gregsh
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
-  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.vfs.ex.dummy.DummyCachingFileSystem");
+  private static final Logger LOG = Logger.getInstance(DummyCachingFileSystem.class);
 
   private final String myProtocol;
 
-  private final BidirectionalMap<Project, String> myProject2Id = new BidirectionalMap<>();
+  private final ConcurrentMap<String, Project> myProjectMap = ContainerUtil.newConcurrentMap();
 
   private final FactoryMap<String, T> myCachedFiles = new ConcurrentFactoryMap<String, T>() {
     @Override
     protected T create(String key) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        //noinspection TestOnlyProblems
-        cleanup();
-        initProjectMap();
-      }
       return findFileByPathInner(key);
     }
 
@@ -116,9 +110,18 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   @Nullable
-  public Project getProject(String projectId) {
-    List<Project> list = myProject2Id.getKeysByValue(projectId);
-    return list == null || list.size() > 1 ? null : list.get(0);
+  public Project getProject(@Nullable String projectId) {
+    return myProjectMap.get(projectId);
+  }
+
+  @NotNull
+  public Project getProjectOrFail(String projectId) {
+    Project project = myProjectMap.get(projectId);
+    if (project == null) {
+      throw new AssertionError(String.format("'%s' project not found among %s", projectId,
+                                             ContainerUtil.newArrayList(myProjectMap.keySet())));
+    }
+    return project;
   }
 
   @NotNull
@@ -126,28 +129,39 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     return myCachedFiles.notNullValues();
   }
 
-  public void onProjectClosed(Project project) {
-    myProject2Id.remove(project);
+  public void onProjectClosed(@NotNull Project project) {
+    String projectId = project.getLocationHash();
+    Project mapped = myProjectMap.remove(projectId);
     clearCache();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      cleanup();
+    }
+    if (mapped == null) {
+      LOG.warn(String.format("'%s' project not mapped", projectId));
+    }
   }
 
   public void onProjectOpened(final Project project) {
-    // use Disposer instead of ProjectManagerListener#projectClosed() because Disposer.dispose(project)
-    // is called later and some cached files should stay valid till the last moment
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        onProjectClosed(project);
-      }
-    });
-
     clearCache();
     String projectId = project.getLocationHash();
-    myProject2Id.put(project, projectId);
+    Project mapped = myProjectMap.put(projectId, project);
 
-    List<Project> projects = myProject2Id.getKeysByValue(projectId);
-    if (projects != null && projects.size() > 1) {
-      LOG.error("project " + projectId + " already registered: " + projects);
+    if (mapped != project) {
+      // use Disposer instead of ProjectManagerListener#projectClosed() because Disposer.dispose(project)
+      // is called later and some cached files should stay valid till the last moment
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          onProjectClosed(project);
+        }
+      });
+    }
+
+    if (mapped == project) {
+      LOG.warn(String.format("'%s' project already bound", projectId));
+    }
+    else if (mapped != null) {
+      LOG.error(String.format("'%s' project rebound, was %s", projectId, mapped));
     }
   }
 
@@ -169,10 +183,9 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     while (myCachedFiles.removeValue(null)) ;
   }
 
-  @TestOnly
-  public void cleanup() {
+  private void cleanup() {
     myCachedFiles.clear();
-    myProject2Id.clear();
+    myProjectMap.clear();
   }
 
   @Override

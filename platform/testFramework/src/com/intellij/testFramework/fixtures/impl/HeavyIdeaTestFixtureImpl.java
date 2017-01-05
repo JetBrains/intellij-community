@@ -22,7 +22,7 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -35,7 +35,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -47,9 +46,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +59,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -102,49 +99,39 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   @Override
   public void tearDown() throws Exception {
     final Project project = getProject();
-    final List<Throwable> exceptions = new SmartList<>();
-    try {
-      LightPlatformTestCase.doTearDown(project, myApplication, false, exceptions);
 
-      for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
-        moduleFixtureBuilder.getFixture().tearDown();
-      }
-
-      EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project, exceptions));
-      myProject = null;
-
-      for (File fileToDelete : myFilesToDelete) {
-        if (!FileUtil.delete(fileToDelete)) {
-          exceptions.add(new IOException("Can't delete " + fileToDelete));
+    RunAll runAll = new RunAll()
+      .append(() -> LightPlatformTestCase.doTearDown(project, myApplication, false))
+      .append(() -> {
+        for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+          moduleFixtureBuilder.getFixture().tearDown();
         }
-      }
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
+      })
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(project)))
+      .append(() -> myProject = null);
+
+    for (File fileToDelete : myFilesToDelete) {
+      runAll = runAll.append(() -> {
+        if (!FileUtil.delete(fileToDelete)) {
+          throw new IOException("Can't delete " + fileToDelete);
+        }
+      });
     }
 
-    try {
-      super.tearDown();
-    }
-    catch (Throwable e) {
-      exceptions.add(e);
-    }
-
-    try {
-      myEditorListenerTracker.checkListenersLeak();
-      myThreadTracker.checkLeak();
-      LightPlatformTestCase.checkEditorsReleased(exceptions);
-      PlatformTestCase.cleanupApplicationCaches(project);
-      InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-    }
-    finally {
-      CompoundRuntimeException.throwIfNotEmpty(exceptions);
-    }
+    runAll
+      .append(super::tearDown)
+      .append(() -> myEditorListenerTracker.checkListenersLeak())
+      .append(() -> myThreadTracker.checkLeak())
+      .append(() -> LightPlatformTestCase.checkEditorsReleased())
+      .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
+      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
+      .run();
   }
 
   private void setUpProject() throws IOException {
     File tempDirectory = FileUtil.createTempDirectory(myName, "");
-    PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
+    PlatformTestCase
+      .synchronizeTempDirVfs(ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory)));
     myFilesToDelete.add(tempDirectory);
 
     String projectPath = FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + ProjectFileType.DOT_DEFAULT_EXTENSION;
@@ -239,11 +226,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }
     }.execute();
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-            @Override
-            public PsiFile compute() {
-              return PsiManager.getInstance(getProject()).findFile(virtualFile[0]);
-            }
-          });
+    return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(virtualFile[0]));
   }
 }

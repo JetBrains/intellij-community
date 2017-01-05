@@ -215,6 +215,29 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
+  @Override
+  public PyAnnotation getAnnotation() {
+    PsiElement topTarget = this;
+    while (topTarget.getParent() instanceof PyParenthesizedExpression) {
+      topTarget = topTarget.getParent();
+    }
+    final PsiElement parent = topTarget.getParent();
+    if (parent != null) {
+      final PyAssignmentStatement assignment = as(parent, PyAssignmentStatement.class);
+      if (assignment != null) {
+        final PyExpression[] targets = assignment.getRawTargets();
+        if (targets.length == 1 && targets[0] == topTarget) {
+          return assignment.getAnnotation();
+        }
+      }
+      else if (parent instanceof PyTypeDeclarationStatement) {
+        return ((PyTypeDeclarationStatement)parent).getAnnotation();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private static PyType getWithItemVariableType(TypeEvalContext context, PyWithItem item) {
     final PyExpression expression = item.getExpression();
     if (expression != null) {
@@ -297,7 +320,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     final PyComprehensionElement comprh = PsiTreeUtil.getParentOfType(this, PyComprehensionElement.class);
     if (comprh != null) {
-      for (ComprhForComponent c : comprh.getForComponents()) {
+      for (PyComprehensionForComponent c : comprh.getForComponents()) {
         final PyExpression expr = c.getIteratorVariable();
         if (PsiTreeUtil.isAncestor(expr, this, false)) {
           target = expr;
@@ -323,11 +346,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                         @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)iterableType;
-      final List<PyType> memberTypes = new ArrayList<>();
-      for (int i = 0; i < (tupleType.isHomogeneous() ? 1 : tupleType.getElementCount()); i++) {
-        memberTypes.add(tupleType.getElementType(i));
-      }
-      return PyUnionType.union(memberTypes);
+      return tupleType.getIteratedItemType();
     }
     else if (iterableType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
@@ -341,41 +360,33 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.ITER, context);
       if (iterateMethod != null) {
         final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
-        final PyType type = getCollectionElementType(iterateReturnType, context);
-        if (!isTrivialType(type)) {
-          return type;
-        }
+        return getCollectionElementType(iterateReturnType);
       }
       final String nextMethodName = LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) ?
                                     PyNames.DUNDER_NEXT : PyNames.NEXT;
       final PyFunction next = findMethodByName(iterableType, nextMethodName, context);
       if (next != null) {
-        final PyType type = getContextSensitiveType(next, context, source);
-        if (!isTrivialType(type)) {
-          return type;
-        }
+        return getContextSensitiveType(next, context, source);
       }
       final PyFunction getItem = findMethodByName(iterableType, PyNames.GETITEM, context);
       if (getItem != null) {
-        final PyType type = getContextSensitiveType(getItem, context, source);
-        if (!isTrivialType(type)) {
-          return type;
-        }
+        return getContextSensitiveType(getItem, context, source);
+      }
+    }
+    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ASYNC_ITERABLE, context)) {
+      final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.AITER, context);
+      if (iterateMethod != null) {
+        final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
+        return getCollectionElementType(iterateReturnType);
       }
     }
     return null;
   }
 
-  private static boolean isTrivialType(@Nullable PyType type) {
-    return type == null || type instanceof PyNoneType;
-  }
-
   @Nullable
-  private static PyType getCollectionElementType(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  private static PyType getCollectionElementType(@Nullable PyType type) {
     if (type instanceof PyCollectionType) {
-      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(context);
-      // TODO: Select the parameter type that matches T in Iterable[T]
-      return elementTypes.isEmpty() ? null : elementTypes.get(0);
+      return ((PyCollectionType)type).getIteratedItemType();
     }
     return null;
   }

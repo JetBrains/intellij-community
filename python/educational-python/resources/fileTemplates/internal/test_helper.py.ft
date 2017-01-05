@@ -139,12 +139,13 @@ def get_initial_text(path):
         Returns the initial task text
     """
     course_lib = sys.argv[-2]
-
+    test_dir = sys.argv[-3]
     import os
-    # path format is "project_root/lessonX/taskY/file.py"
-    task_index = path.rfind(os.sep, 0, path.rfind(os.sep))
-    index = path.rfind(os.sep, 0, task_index)
-    relative_path = path[index + 1:]
+    lesson_task = os.sep.join(test_dir.split(os.sep)[-3:-1])
+    task_dir = os.sep.join(test_dir.split(os.sep)[:-1])
+    relative_path = lesson_task + os.sep + path[len(task_dir):]
+
+    # path format is "project_root/lessonX/taskY/.../file.py"
     initial_file_path = os.path.join(course_lib, relative_path)
     return get_file_text(initial_file_path)
 
@@ -245,6 +246,13 @@ def check_samples(samples=()):
         set_congratulation_message("All test from samples passed. Now we are checking your solution on Stepic server.")
 
     passed()
+
+
+def do_not_run_on_check():
+    """
+    Do not execute task file on check
+    """
+    print("#educational_plugin DO_NOT_RUN_ON_CHECK")
 
 
 def run_common_tests(error_text="Please, reload file and try again"):

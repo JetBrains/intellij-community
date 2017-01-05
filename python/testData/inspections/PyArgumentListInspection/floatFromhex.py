@@ -1,0 +1,1 @@
+float.fromhex("0.5")

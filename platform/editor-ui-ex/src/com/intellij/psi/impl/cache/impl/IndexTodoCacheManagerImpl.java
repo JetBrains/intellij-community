@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -85,11 +86,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     }
     if (file instanceof VirtualFileWindow) return -1;
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    int count = 0;
-    for (IndexPattern indexPattern : patternProvider.getIndexPatterns()) {
-      count += fetchCount(fileBasedIndex, file, indexPattern);
-    }
-    return count;
+    return Arrays.stream(patternProvider.getIndexPatterns()).mapToInt(indexPattern -> fetchCount(fileBasedIndex, file, indexPattern)).sum();
   }
 
   @Override
@@ -105,12 +102,9 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     final int[] count = {0};
     fileBasedIndex.processValues(
       TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
-      new FileBasedIndex.ValueProcessor<Integer>() {
-        @Override
-        public boolean process(final VirtualFile file, final Integer value) {
-          count[0] += value.intValue();
-          return true;
-        }
+      (file1, value) -> {
+        count[0] += value.intValue();
+        return true;
       }, GlobalSearchScope.fileScope(myProject, file));
     return count[0];
   }

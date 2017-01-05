@@ -16,11 +16,10 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -58,10 +57,14 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    profile.modifyProfile(model -> {
+    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
       PyUnresolvedReferencesInspection inspection =
         (PyUnresolvedReferencesInspection)model.getUnwrappedTool(PyUnresolvedReferencesInspection.class.getSimpleName(), context);
       String name = myIdentifier.toString();

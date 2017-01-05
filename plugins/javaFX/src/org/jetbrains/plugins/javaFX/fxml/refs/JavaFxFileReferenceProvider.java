@@ -48,7 +48,7 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
         if (startsWithSlash || !directory.isValid()) {
           return super.getDefaultContexts();
         }
-        return Collections.<PsiFileSystemItem>singletonList(directory);
+        return Collections.singletonList(directory);
       }
 
       @Override

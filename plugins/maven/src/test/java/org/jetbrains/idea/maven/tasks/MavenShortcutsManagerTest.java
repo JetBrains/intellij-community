@@ -39,6 +39,16 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     initProjectsManager(true);
   }
 
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      MavenKeymapExtension.clearActions(myProject);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   public void testRefreshingActionsOnImport() throws Exception {
     assertTrue(getProjectActions().isEmpty());
 

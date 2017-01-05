@@ -15,40 +15,38 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.util.exists
-import com.intellij.util.isFile
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.exists
+import com.intellij.util.io.isFile
 import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
-import java.nio.file.Files
 import java.nio.file.Path
-
-private fun getChildrenStream(path: Path, excludes: Array<out String>? = null) = Files.list(path)
-  .filter { !it.endsWith(Constants.DOT_GIT) && (excludes == null || !excludes.contains(it.fileName.toString())) }
-  .sorted()
 
 fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
   assertThat(path1).isDirectory()
   assertThat(path2).isDirectory()
 
   val notFound = THashSet<Path>()
-  for (path in getChildrenStream(path1, localExcludes)) {
-    notFound.add(path)
+  path1.directoryStreamIfExists({ !it.endsWith(Constants.DOT_GIT) && !localExcludes.contains(it.fileName.toString()) }) {
+    notFound.addAll(it)
   }
 
-  for (child2 in getChildrenStream(path2)) {
-    val childName = child2.fileName.toString()
-    val child1 = path1.resolve(childName)
-    if (child1.isFile()) {
-      assertThat(child2).hasSameContentAs(child1)
+  path2.directoryStreamIfExists({ !it.endsWith(Constants.DOT_GIT) }) {
+    for (child2 in it) {
+      val childName = child2.fileName.toString()
+      val child1 = path1.resolve(childName)
+      if (child1.isFile()) {
+        assertThat(child2).hasSameContentAs(child1)
+      }
+      else if (!child1.exists()) {
+        throw AssertionError("Path '$path2' must not contain '$childName'")
+      }
+      else {
+        compareFiles(child1, child2, *localExcludes)
+      }
+      notFound.remove(child1)
     }
-    else if (!child1.exists()) {
-      throw AssertionError("Path '$path2' must not contain '$childName'")
-    }
-    else {
-      compareFiles(child1, child2, *localExcludes)
-    }
-    notFound.remove(child1)
   }
 
   if (notFound.isNotEmpty()) {

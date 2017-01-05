@@ -108,7 +108,7 @@ public class ExtractLightMethodObjectHandler {
       }
     }
 
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(originalAnchor, PsiClass.class);
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(originalAnchor, PsiClass.class, false);
     if (containingClass == null) {
       return null;
     }

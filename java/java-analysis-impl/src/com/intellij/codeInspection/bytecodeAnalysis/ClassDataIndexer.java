@@ -18,16 +18,21 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileContent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.VirtualFileGist;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
@@ -40,33 +45,23 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  *
  * @author lambdamix
  */
-public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileContent> {
+public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Bytes, HEquations>> {
 
-  private static final int STABLE_FLAGS = Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
   public static final Final FINAL_TOP = new Final(Value.Top);
   public static final Final FINAL_BOT = new Final(Value.Bot);
   public static final Final FINAL_NOT_NULL = new Final(Value.NotNull);
   public static final Final FINAL_NULL = new Final(Value.Null);
 
-  @NotNull
+  @Nullable
   @Override
-  public Map<Bytes, HEquations> map(@NotNull FileContent inputData) {
+  public Map<Bytes, HEquations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
     HashMap<Bytes, HEquations> map = new HashMap<>();
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      Map<Key, List<Equation>> allEquations = processClass(new ClassReader(inputData.getContent()), inputData.getFile().getPresentableUrl());
+      Map<Key, List<Equation>> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
       for (Map.Entry<Key, List<Equation>> entry: allEquations.entrySet()) {
-
         Key methodKey = entry.getKey();
-        // method equations with raw (not-compressed keys)
-        List<Equation> rawMethodEquations = entry.getValue();
-        //
-        List<DirectionResultPair> compressedMethodEquations =
-          new ArrayList<>(rawMethodEquations.size());
-        for (Equation equation : rawMethodEquations) {
-          compressedMethodEquations.add(BytecodeAnalysisConverter.convert(equation, md));
-        }
-        map.put(new Bytes(BytecodeAnalysisConverter.asmKey(methodKey, md).key), new HEquations(compressedMethodEquations, methodKey.stable));
+        map.put(compressKey(md, methodKey), convertEquations(md, methodKey, entry.getValue()));
       }
     }
     catch (ProcessCanceledException e) {
@@ -80,6 +75,18 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
     return map;
   }
 
+  @NotNull
+  static Bytes compressKey(MessageDigest md, Key methodKey) {
+    return new Bytes(BytecodeAnalysisConverter.asmKey(methodKey, md).key);
+  }
+
+  @NotNull
+  private static HEquations convertEquations(MessageDigest md, Key methodKey, List<Equation> rawMethodEquations) {
+    List<DirectionResultPair> compressedMethodEquations =
+      ContainerUtil.map(rawMethodEquations, equation -> BytecodeAnalysisConverter.convert(equation, md));
+    return new HEquations(compressedMethodEquations, methodKey.stable);
+  }
+
   public static Map<Key, List<Equation>> processClass(final ClassReader classReader, final String presentableUrl) {
 
     // It is OK to share pending states, actions and results for analyses.
@@ -91,20 +98,9 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
     final Map<Key, List<Equation>> equations = new HashMap<>();
 
-    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-      private String className;
-      private boolean stableClass;
+    classReader.accept(new KeyedMethodVisitor() {
 
-      @Override
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        className = name;
-        stableClass = (access & Opcodes.ACC_FINAL) != 0;
-        super.visit(version, access, name, signature, superName, interfaces);
-      }
-
-      @Override
-      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        final MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
+      protected MethodVisitor visitMethod(final MethodNode node, final Key key) {
         return new MethodVisitor(Opcodes.API_VERSION, node) {
           private boolean jsr;
 
@@ -119,8 +115,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           @Override
           public void visitEnd() {
             super.visitEnd();
-            Pair<Key, List<Equation>> methodEquations = processMethod(node, jsr);
-            equations.put(methodEquations.first, methodEquations.second);
+            equations.put(key, processMethod(node, jsr, key.method, key.stable));
           }
         };
       }
@@ -130,20 +125,14 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
        *
        * @param methodNode asm node for method
        * @param jsr whether a method has jsr instruction
-       * @return pair of (primaryKey, equations)
        */
-      private Pair<Key, List<Equation>> processMethod(final MethodNode methodNode, boolean jsr) {
+      private List<Equation> processMethod(final MethodNode methodNode, boolean jsr, Method method, boolean stable) {
         ProgressManager.checkCanceled();
         final Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
         final Type resultType = Type.getReturnType(methodNode.desc);
         final boolean isReferenceResult = ASMUtils.isReferenceType(resultType);
         final boolean isBooleanResult = ASMUtils.isBooleanType(resultType);
         final boolean isInterestingResult = isReferenceResult || isBooleanResult;
-
-        final Method method = new Method(className, methodNode.name, methodNode.desc);
-        final boolean stable = stableClass || (methodNode.access & STABLE_FLAGS) != 0 || "<init>".equals(methodNode.name);
-
-        Key primaryKey = new Key(method, Out, stable);
 
         // 4*n: for each reference parameter: @NotNull IN, @Nullable, null -> ... contract, !null -> contract
         // 3: @NotNull OUT, @Nullable OUT, purity analysis
@@ -152,7 +141,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
 
         if (argumentTypes.length == 0 && !isInterestingResult) {
           // no need to continue analysis
-          return Pair.create(primaryKey, equations);
+          return equations;
         }
 
         try {
@@ -173,17 +162,17 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
               if (richControlFlow.reducible()) {
                 NegationAnalysis negated = tryNegation(method, argumentTypes, graph, isBooleanResult, dfs, jsr);
                 processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isBooleanResult, stable, jsr, equations, negated);
-                return Pair.create(primaryKey, equations);
+                return equations;
               }
               LOG.debug(method + ": CFG is not reducible");
             }
             // simple
             else {
               processNonBranchingMethod(method, argumentTypes, graph, isReferenceResult, isBooleanResult, stable, equations);
-              return Pair.create(primaryKey, equations);
+              return equations;
             }
           }
-          return Pair.create(primaryKey, topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable));
+          return topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -192,7 +181,7 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           // incorrect bytecode may result in Runtime exceptions during analysis
           // so here we suppose that exception is due to incorrect bytecode
           LOG.debug("Unexpected Error during processing of " + method + " in " + presentableUrl, e);
-          return Pair.create(primaryKey, topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable));
+          return topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable);
         }
       }
 

@@ -148,15 +148,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     public IfCanBeSwitchFix() {}
 
-    @NotNull
     @Override
+    @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionGadgetsBundle.message("if.can.be.switch.quickfix");
     }
 
@@ -259,6 +253,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
+  @SafeVarargs
   @Nullable
   public static <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement element, @NotNull Class<T> aClass,
                                                               @NotNull Class<? extends PsiElement>... stopAt) {

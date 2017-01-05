@@ -19,7 +19,6 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
@@ -43,7 +42,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -464,17 +466,17 @@ public class ExternalSystemApiUtil {
     }
     
     if (synchronous) {
-      app.invokeAndWait(task, ModalityState.defaultModalityState());
+      app.invokeAndWait(task);
     }
     else {
-      app.invokeLater(task, ModalityState.defaultModalityState());
+      app.invokeLater(task);
     }
   }
 
   public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
     final Ref<T> result = Ref.create();
-    app.invokeAndWait(() -> result.set(task.compute()), ModalityState.defaultModalityState());
+    app.invokeAndWait(() -> result.set(task.compute()));
     return result.get();
   }
 

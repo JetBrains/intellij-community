@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
 public class KeymapUtil {
 
-  @NonNls private static final String APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
-  @NonNls private static final String GET_KEY_MODIFIERS_TEXT_METHOD = "getKeyModifiersText";
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
   @NonNls private static final String BREAK_KEY_TEXT = "Break";
   @NonNls private static final String SHIFT = "shift";
@@ -246,7 +241,6 @@ public class KeymapUtil {
    * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
    */
   public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
-
     if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
       return new PressureShortcut(2);
     }
@@ -298,7 +292,7 @@ public class KeymapUtil {
           buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
       }
       if ((modifiers & InputEvent.ALT_MASK) != 0) {
-          buf.append("\2325");
+          buf.append("\u2325");
       }
       if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
           buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
@@ -429,26 +423,20 @@ public class KeymapUtil {
     if (keymap == null) {
       return false;
     }
+
     int button = MouseShortcut.getButton(e);
     int modifiers = e.getModifiersEx();
     if (button == MouseEvent.NOBUTTON && e.getID() == MouseEvent.MOUSE_DRAGGED) {
       // mouse drag events don't have button field set due to some reason
       if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
         button = MouseEvent.BUTTON1;
-      } else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0) {
+      }
+      else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0) {
         button = MouseEvent.BUTTON2;
       }
     }
-    String[] actionIds = keymap.getActionIds(new MouseShortcut(button, modifiers, 1));
-    if (actionIds == null) {
-      return false;
-    }
-    for (String id : actionIds) {
-      if (actionId.equals(id)) {
-        return true;
-      }
-    }
-    return false;
+
+    return keymap.hasActionId(actionId, new MouseShortcut(button, modifiers, 1));
   }
 
   /**
@@ -468,12 +456,55 @@ public class KeymapUtil {
                                        @NotNull KeyStroke oldKeyStroke,
                                        @Nullable KeyStroke newKeyStroke,
                                        int condition) {
+    return reassignAction(component, oldKeyStroke, newKeyStroke, condition, true);
+  }
+  /**
+   * @param component    target component to reassign previously mapped action (if any)
+   * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
+   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param condition    one of
+   *                     <ul>
+   *                     <li>JComponent.WHEN_FOCUSED,</li>
+   *                     <li>JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT</li>
+   *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
+   *                     <li>JComponent.UNDEFINED_CONDITION</li>
+   *                     </ul>
+   * @param muteOldKeystroke if <code>true</code> old keystroke wouldn't work anymore
+   * @return <code>true</code> if the action is reassigned successfully
+   */
+  public static boolean reassignAction(@NotNull JComponent component,
+                                       @NotNull KeyStroke oldKeyStroke,
+                                       @Nullable KeyStroke newKeyStroke,
+                                       int condition, boolean muteOldKeystroke) {
     ActionListener action = component.getActionForKeyStroke(oldKeyStroke);
     if (action == null) return false;
     if (newKeyStroke != null) {
       component.registerKeyboardAction(action, newKeyStroke, condition);
     }
-    component.unregisterKeyboardAction(oldKeyStroke);
+    if (muteOldKeystroke) {
+      component.registerKeyboardAction(new RedispatchEventAction(component), oldKeyStroke, condition);
+    }
     return true;
+  }
+
+  private static final class RedispatchEventAction extends AbstractAction {
+    private final Component myComponent;
+
+    public RedispatchEventAction(Component component) {
+      myComponent = component;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      AWTEvent event = EventQueue.getCurrentEvent();
+      if (event instanceof KeyEvent && event.getSource() == myComponent) {
+        Container parent = myComponent.getParent();
+        if (parent != null) {
+          KeyEvent keyEvent = (KeyEvent)event;
+          parent.dispatchEvent(new KeyEvent(parent, event.getID(), ((KeyEvent)event).getWhen(), keyEvent.getModifiers(), keyEvent.getKeyCode(), keyEvent.getKeyChar(), keyEvent
+            .getKeyLocation()));
+        }
+      }
+    }
   }
 }

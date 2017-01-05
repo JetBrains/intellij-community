@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -35,4 +36,13 @@ public interface EditorCustomElementRenderer {
    * Implements painting for the custom region. Rectangle passed as a parameter defines target region where painting should be performed.
    */
   void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r);
+
+  /**
+   * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.
+   * If <code>null</code> is returned, standard editor's context menu will be displayed upon corresponding mouse event.
+   */
+  @Nullable
+  default String getContextMenuGroupId() {
+    return null;
+  }
 }

@@ -119,12 +119,12 @@ public class MacUtil {
   public static boolean isFullKeyboardAccessEnabled() {
     if (!SystemInfo.isMacOSSnowLeopard) return false;
     final AtomicBoolean result = new AtomicBoolean();
-    Foundation.executeOnMainThread(new Runnable() {
+    Foundation.executeOnMainThread(true, true, new Runnable() {
       @Override
       public void run() {
           result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1);
       }
-    }, true, true);
+    });
     return result.get();
   }
 

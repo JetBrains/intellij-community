@@ -18,7 +18,7 @@ package com.intellij.openapi.components;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Application-level component's implementation class may implement the <code>ApplicationComponent</code> interface.<br>
+ * Application-level component's implementation class may implement the {@code ApplicationComponent} interface.<br>
  * It may have constructor with parameters that are also application components.
  * <p>
  * <strong>Note that if you register a class as an application component it will be loaded, its instance will be created and

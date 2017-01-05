@@ -26,12 +26,13 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBInsetsQuickFix;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UseDPIAwareInsetsInspection extends InternalInspection {
+public class UseDPIAwareInsetsInspection extends DevKitInspectionBase {
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {

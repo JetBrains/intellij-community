@@ -267,7 +267,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirctory</code>.
+   *         and which are located under specified {@code psiDirctory}.
    */
   public Iterator<PsiFile> getFiles(PackageElement packageElement) {
     ArrayList<PsiFile> psiFileList = new ArrayList<>();

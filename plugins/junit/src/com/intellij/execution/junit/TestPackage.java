@@ -24,18 +24,16 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -43,7 +41,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 
 public class TestPackage extends TestObject {
-  private boolean myFoundTests = true;
 
   public TestPackage(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
@@ -65,15 +62,20 @@ public class TestPackage extends TestObject {
       @Override
       protected void search() {
         myClasses.clear();
-        try {
-          ConfigurationUtil.findAllTestClasses(getClassFilter(data), myClasses);
+        final SourceScope sourceScope = getSourceScope();
+        final Module module = getConfiguration().getConfigurationModule().getModule();
+        if (sourceScope != null && !ReadAction.compute(() -> isJUnit5(module, sourceScope, myProject))) {
+          try {
+            final TestClassFilter classFilter = getClassFilter(data);
+            LOG.assertTrue(classFilter.getBase() != null);
+            ConfigurationUtil.findAllTestClasses(classFilter, myClasses);
+          }
+          catch (CantRunException ignored) {}
         }
-        catch (CantRunException ignored) {}
       }
 
       @Override
       protected void onFound() {
-        myFoundTests = !myClasses.isEmpty();
 
         try {
           addClassesListToJavaParameters(myClasses,
@@ -101,7 +103,7 @@ public class TestPackage extends TestObject {
     try {
       dumbService.setAlternativeResolveEnabled(true);
       final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
-      if (sourceScope == null || !JUnitUtil.isJUnit5(sourceScope.getLibrariesScope(), project)) { //check for junit 5
+      if (sourceScope == null || !isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) { //check for junit 5
         getClassFilter(data);//check if junit 4 found
       }
     }
@@ -130,16 +132,13 @@ public class TestPackage extends TestObject {
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
     final Ref<CantRunException> ref = new Ref<>();
-    final GlobalSearchScope aPackage = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
-      @Override
-      public GlobalSearchScope compute() {
-        try {
-          return PackageScope.packageScope(getPackage(data), true);
-        }
-        catch (CantRunException e) {
-          ref.set(e);
-          return null;
-        }
+    final GlobalSearchScope aPackage = ReadAction.compute(() -> {
+      try {
+        return PackageScope.packageScope(getPackage(data), true);
+      }
+      catch (CantRunException e) {
+        ref.set(e);
+        return null;
       }
     });
     final CantRunException exception = ref.get();

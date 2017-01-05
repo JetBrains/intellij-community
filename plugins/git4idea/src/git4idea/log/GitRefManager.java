@@ -6,9 +6,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import git4idea.GitBranch;
@@ -18,6 +20,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.DataInput;
@@ -41,6 +44,8 @@ public class GitRefManager implements VcsLogRefManager {
   private static final String MASTER = "master";
   private static final String ORIGIN_MASTER = "origin/master";
   private static final Logger LOG = Logger.getInstance(GitRefManager.class);
+  private static final String REMOTE_TABLE_SEPARATOR = " & ";
+  private static final String SEPARATOR = "/";
 
   protected enum RefType {
     OTHER,
@@ -78,7 +83,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> group(Collection<VcsRef> refs) {
+  public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
     List<RefGroup> simpleGroups = ContainerUtil.newArrayList();
     List<VcsRef> localBranches = ContainerUtil.newArrayList();
     List<VcsRef> trackedBranches = ContainerUtil.newArrayList();
@@ -110,11 +115,9 @@ public class GitRefManager implements VcsLogRefManager {
           localBranches.add(ref);
         }
         else if (allRemote.containsKey(refName)) {
+          remoteRefGroups.putValue(allRemote.get(refName), ref);
           if (tracked.contains(refName)) {
             trackedBranches.add(ref);
-          }
-          else {
-            remoteRefGroups.putValue(allRemote.get(refName), ref);
           }
         }
         else {
@@ -133,6 +136,110 @@ public class GitRefManager implements VcsLogRefManager {
       result.add(new RemoteRefGroup(remote, branches));
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references, boolean compact, boolean showTagNames) {
+    List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
+    MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
+
+    List<RefGroup> result = ContainerUtil.newArrayList();
+    if (groupedRefs.isEmpty()) return result;
+
+    VcsRef head = null;
+    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ObjectUtils.notNull(ContainerUtil.getFirstItem(groupedRefs.entrySet()));
+    if (firstGroup.getKey().equals(HEAD)) {
+      head = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+      groupedRefs.remove(HEAD, head);
+    }
+
+    GitRepository repository = getRepository(references);
+    if (repository != null) {
+      result.addAll(getTrackedRefs(groupedRefs, repository));
+    }
+    result.forEach(refGroup -> {
+      groupedRefs.remove(LOCAL_BRANCH, refGroup.getRefs().get(0));
+      groupedRefs.remove(REMOTE_BRANCH, refGroup.getRefs().get(1));
+    });
+
+    SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
+
+    if (head != null) {
+      if (repository != null && !repository.isOnBranch()) {
+        result.add(0, new SimpleRefGroup("!", Collections.singletonList(head)));
+      }
+      else {
+        if (!result.isEmpty()) {
+          RefGroup first = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(result));
+          first.getRefs().add(0, head);
+        }
+        else {
+          result.add(0, new SimpleRefGroup("", Collections.singletonList(head)));
+        }
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static List<RefGroup> getTrackedRefs(@NotNull MultiMap<VcsRefType, VcsRef> groupedRefs,
+                                               @NotNull GitRepository repository) {
+    List<RefGroup> result = ContainerUtil.newArrayList();
+
+    Collection<VcsRef> locals = groupedRefs.get(LOCAL_BRANCH);
+    Collection<VcsRef> remotes = groupedRefs.get(REMOTE_BRANCH);
+
+    for (VcsRef localRef : locals) {
+      SimpleRefGroup group = createTrackedGroup(repository, remotes, localRef);
+      if (group != null) {
+        result.add(group);
+      }
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static SimpleRefGroup createTrackedGroup(@NotNull GitRepository repository,
+                                                   @NotNull Collection<VcsRef> references,
+                                                   @NotNull VcsRef localRef) {
+    List<VcsRef> remoteBranches = ContainerUtil.filter(references, ref -> ref.getType().equals(REMOTE_BRANCH));
+
+    GitBranchTrackInfo trackInfo =
+      ContainerUtil.find(repository.getBranchTrackInfos(), info -> info.getLocalBranch().getName().equals(localRef.getName()));
+    if (trackInfo != null) {
+      VcsRef trackedRef = ContainerUtil.find(remoteBranches, ref -> ref.getName().equals(trackInfo.getRemoteBranch().getName()));
+      if (trackedRef != null) {
+        return new SimpleRefGroup(trackInfo.getRemote().getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
+                                  ContainerUtil.newArrayList(localRef, trackedRef));
+      }
+    }
+
+    List<VcsRef> trackingCandidates = ContainerUtil.filter(remoteBranches, ref -> ref.getName().endsWith(SEPARATOR + localRef.getName()));
+    for (GitRemote remote : repository.getRemotes()) {
+      for (VcsRef candidate : trackingCandidates) {
+        if (candidate.getName().equals(remote.getName() + SEPARATOR + localRef.getName())) {
+          return new SimpleRefGroup(remote.getName() + REMOTE_TABLE_SEPARATOR + localRef.getName(),
+                                    ContainerUtil.newArrayList(localRef, candidate));
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private GitRepository getRepository(@NotNull Collection<VcsRef> references) {
+    if (references.isEmpty()) return null;
+
+    VcsRef ref = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references));
+    GitRepository repository = myRepositoryManager.getRepositoryForRoot(ref.getRoot());
+    if (repository == null) {
+      LOG.warn("No repository for root: " + ref.getRoot());
+    }
+    return repository;
   }
 
   @Override
@@ -241,6 +348,19 @@ public class GitRefManager implements VcsLogRefManager {
     public String toString() {
       return myName;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      SimpleRefType type = (SimpleRefType)o;
+      return myIsBranch == type.myIsBranch && Objects.equals(myName, type.myName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myIsBranch, myName);
+    }
   }
 
   private static class LogicalRefGroup implements RefGroup {
@@ -271,8 +391,8 @@ public class GitRefManager implements VcsLogRefManager {
 
     @NotNull
     @Override
-    public Color getBgColor() {
-      return VcsLogStandardColors.Refs.TIP;
+    public List<Color> getColors() {
+      return Collections.singletonList(VcsLogStandardColors.Refs.TIP);
     }
   }
 
@@ -304,8 +424,8 @@ public class GitRefManager implements VcsLogRefManager {
 
     @NotNull
     @Override
-    public Color getBgColor() {
-      return VcsLogStandardColors.Refs.BRANCH_REF;
+    public List<Color> getColors() {
+      return Collections.singletonList(VcsLogStandardColors.Refs.BRANCH_REF);
     }
   }
 

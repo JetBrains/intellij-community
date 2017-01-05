@@ -16,12 +16,12 @@
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +33,7 @@ public abstract class ProfilesChooser extends JPanel {
   private static final String COMBO_CARD = "combo.card";
   private static final String EDIT_CARD = "edit.card";
 
-  private final ProfilesComboBox myProfilesComboBox;
+  private final ProfilesComboBox<InspectionProfileModifiableModel> myProfilesComboBox;
   private final CardLayout myCardLayout;
   private final ValidatedTextField mySubmitNameComponent;
   private final SaveInputComponentValidator.Wrapper mySaveListener;
@@ -47,21 +47,10 @@ public abstract class ProfilesChooser extends JPanel {
     myCardLayout = new CardLayout();
     myComboBoxPanel.setLayout(myCardLayout);
     setBorder(IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0)));
-    myProfilesComboBox = new ProfilesComboBox() {
+    myProfilesComboBox = new ProfilesComboBox<InspectionProfileModifiableModel>() {
       @Override
       protected void onProfileChosen(InspectionProfileImpl inspectionProfile) {
         ProfilesChooser.this.onProfileChosen(inspectionProfile);
-      }
-
-      @Override
-      protected boolean isProjectLevel(InspectionProfileImpl p) {
-        return ProfilesChooser.this.isProjectLevel(p);
-      }
-
-      @NotNull
-      @Override
-      protected String getProfileName(InspectionProfileImpl p) {
-        return ProfilesChooser.this.getProfileName(p);
       }
     };
     myComboBoxPanel.add(myProfilesComboBox, COMBO_CARD);
@@ -78,16 +67,11 @@ public abstract class ProfilesChooser extends JPanel {
     showComboBoxCard();
   }
 
-  ProfilesComboBox getProfilesComboBox() {
+  ProfilesComboBox<InspectionProfileModifiableModel> getProfilesComboBox() {
     return myProfilesComboBox;
   }
 
   protected abstract void onProfileChosen(InspectionProfileImpl profile);
-
-  protected abstract boolean isProjectLevel(final InspectionProfileImpl p);
-
-  @NotNull
-  protected abstract String getProfileName(final InspectionProfileImpl p);
 
   void showEditCard(final String initialValue, final SaveInputComponentValidator inputValidator) {
     mySaveListener.setDelegate(inputValidator);

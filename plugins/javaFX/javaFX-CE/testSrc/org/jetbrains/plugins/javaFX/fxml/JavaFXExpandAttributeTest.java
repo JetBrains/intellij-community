@@ -18,11 +18,10 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -66,7 +65,7 @@ public class JavaFXExpandAttributeTest extends DaemonAnalyzerTestCase {
 
     if (available) {
       assertNotNull(actionName, intentionAction);
-      assertTrue(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, intentionAction, actionName));
+      assertTrue(CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, actionName));
       checkResultByFile(getTestName(true) + "_after.fxml");
     } else {
       assertNull(intentionAction);

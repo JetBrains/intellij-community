@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,6 +139,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void addFilesToIgnore(final IgnoredFileBean... ignoredFiles);
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull String path);
+  public abstract void removeImplicitlyIgnoredDirectory(@NotNull String path);
   public abstract void setFilesToIgnore(final IgnoredFileBean... ignoredFiles);
   public abstract IgnoredFileBean[] getFilesToIgnore();
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);

@@ -45,7 +45,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
       myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
       myFixture.checkHighlighting(true, false, false);
@@ -57,7 +57,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   }
 
   private void doMultiFileTest(@NotNull final String filename, @NotNull List<String> sourceRoots) {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       final String testName = getTestName(false);
       myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
       final Module module = myFixture.getModule();
@@ -92,6 +92,16 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-10208
   public void testMetaclassMethods() {
+    doTest();
+  }
+
+  // PY-19702
+  public void testMetaclassAttribute() {
+    doTest();
+  }
+
+  // PY-19702
+  public void testNonexistentMetaclassAttribute() {
     doTest();
   }
 
@@ -174,5 +184,15 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   // PY-19691
   public void testNestedPackageNamedAsSourceRoot() {
     doMultiFileTest("a.py", Collections.singletonList("lib1"));
+  }
+  
+  // PY-18972
+  public void testReferencesInFStringLiterals() {
+    doTest();
+  }
+
+  // PY-11208
+  public void testMockPatchObject() {
+    doMultiFileTest(getTestName(true) + ".py");
   }
 }

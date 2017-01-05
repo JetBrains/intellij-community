@@ -37,9 +37,10 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -57,6 +58,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class ScopeEditorPanel {
 
@@ -75,7 +79,7 @@ public class ScopeEditorPanel {
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
   private String myErrorMessage;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
   private JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
@@ -153,8 +157,8 @@ public class ScopeEditorPanel {
         cancelCurrentProgress();
       }
     });
-    myPartiallyIncluded.setIcon(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED));
-    myRecursivelyIncluded.setIcon(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED));
+    myPartiallyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
+    myRecursivelyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
   }
 
   private void updateCaretPositionText() {
@@ -186,7 +190,7 @@ public class ScopeEditorPanel {
 
   private void onTextChange() {
     if (!myIsInUpdate) {
-      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm.cancel(false);
       cancelCurrentProgress();
       final String text = myPatternField.getText();
       myCurrentScope = new InvalidPackageSet(text);
@@ -421,7 +425,7 @@ public class ScopeEditorPanel {
   }
 
   private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis){
-    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.cancel(false);
     final Runnable request = () -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (updateText) {
         final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
@@ -448,7 +452,7 @@ public class ScopeEditorPanel {
         runnable.run();
       }
     });
-    myUpdateAlarm.addRequest(request, delayMillis);
+    myUpdateAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(request, delayMillis, TimeUnit.MILLISECONDS);
   }
 
   private void rebuild(final boolean updateText) {

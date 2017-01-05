@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -31,7 +32,7 @@ public final class MethodCallData {
 
   private boolean isNegated;
   private GrExpression base;
-  private GrExpression[] arguments;
+  private String[] arguments;
   private IElementType comparison;
 
   @Nullable
@@ -57,10 +58,9 @@ public final class MethodCallData {
     return base.getText();
   }
 
-  @Nullable
-  public String getArgument(int i) {
-    return (i >= arguments.length) ? null
-                                   : arguments[i].getText();
+  @NotNull
+  public String[] getArguments() {
+    return arguments;
   }
 
   @Nullable
@@ -114,7 +114,10 @@ public final class MethodCallData {
       if (qualifierExpression == null) return null;
 
       result.base = addParenthesesIfNeeded(qualifierExpression);
-      result.arguments = addParenthesesIfNeeded(methodCall.getExpressionArguments());
+      result.arguments = ContainerUtil.map2Array(
+        addParenthesesIfNeeded(methodCall.getExpressionArguments()),
+        String.class, it -> it.getText()
+      );
 
       return element;
     }

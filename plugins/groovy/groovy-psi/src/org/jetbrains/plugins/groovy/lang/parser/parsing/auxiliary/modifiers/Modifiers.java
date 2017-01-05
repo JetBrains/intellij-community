@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -30,40 +31,41 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 /*
- * Modifiers ::= "def" nls
- *              | {modifier nls}+
- *              | {annotation nls}+
+ * Modifiers ::= {modifier|annotation} (nls? {modifier|annotation})+
  */
 
 public class Modifiers {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-    boolean endsWithNewLine;
+
     PsiBuilder.Marker modifiersMarker = builder.mark();
+    boolean hasModifiers = false;
 
-    if (!Annotation.parse(builder, parser) && !parseModifier(builder)) {
-      modifiersMarker.done(GroovyElementTypes.MODIFIERS);
-      return false;
+    do {
+      final PsiBuilder.Marker modifierListItem = builder.mark();
+
+      if (hasModifiers) ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      final boolean parsed = Annotation.parse(builder, parser) || parseModifier(builder);
+
+      if (parsed) {
+        if (PathExpression.isQualificationDot(builder)) {
+          modifierListItem.rollbackTo();
+          break;
+        }
+        else {
+          modifierListItem.drop();
+          hasModifiers = true;
+        }
+      }
+      else {
+        modifierListItem.rollbackTo();
+        break;
+      }
     }
+    while (true);
 
-    PsiBuilder.Marker newLineMarker = builder.mark();
-    while (true) {
-      newLineMarker.drop();
-      newLineMarker = builder.mark();
-      endsWithNewLine = ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-
-      if (!Annotation.parse(builder, parser) && !parseModifier(builder)) break;
-    }
-
-    // Do not include last newline
-    if (endsWithNewLine) {
-      newLineMarker.rollbackTo();
-    } else {
-      newLineMarker.drop();
-    }
     modifiersMarker.done(GroovyElementTypes.MODIFIERS);
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-    return true;
-
+    return hasModifiers;
   }
 
   public static boolean parseModifier(PsiBuilder builder) {

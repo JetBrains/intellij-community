@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,13 +75,8 @@ public class StaticImportInspectionBase extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("static.import.replace.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("static.import.replace.quickfix");
     }
 
     @Override
@@ -104,6 +99,7 @@ public class StaticImportInspectionBase extends BaseInspection {
       final Map<PsiJavaCodeReferenceElement, PsiMember> referenceTargetMap = new HashMap<>();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement target = reference.resolve();
+        if (target instanceof PsiEnumConstant && reference.getParent() instanceof PsiSwitchLabelStatement) continue;
         if (target instanceof PsiMember) {
           final PsiMember member = (PsiMember)target;
           referenceTargetMap.put(reference, member);

@@ -297,7 +297,7 @@ public class GradleExecutionHelper {
   private static List<String> mergeJvmArgs(String serviceDirectory, Iterable<String> jvmArgs1, Iterable<String> jvmArgs2) {
     File gradleUserHomeDir = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
     LOG.debug("Gradle home: " + gradleUserHomeDir);
-    NativeServices.initialize(gradleUserHomeDir, false);
+    NativeServices.initialize(gradleUserHomeDir);
     JvmOptions jvmOptions = new JvmOptions(null);
     jvmOptions.setAllJvmArgs(ContainerUtil.concat(jvmArgs1, jvmArgs2));
     return jvmOptions.getAllJvmArgs();

@@ -34,13 +34,8 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(RedundantParenthesesQuickFix.class);
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.redundant.parentheses");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.redundant.parentheses");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

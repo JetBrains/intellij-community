@@ -28,9 +28,9 @@ import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -109,7 +109,10 @@ public class MavenEditGoalDialog extends DialogWrapper {
         @Override
         public boolean isFileSelectable(VirtualFile file) {
           if (!super.isFileSelectable(file)) return false;
-          return file.findChild(MavenConstants.POM_XML) != null;
+          for (VirtualFile child : file.getChildren()) {
+            if(MavenUtil.isPomFileName(child.getName())) return true;
+          }
+          return false;
         }
       });
   }

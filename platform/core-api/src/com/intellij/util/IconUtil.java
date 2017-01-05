@@ -21,10 +21,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
@@ -82,7 +79,7 @@ public class IconUtil {
     icon.paintIcon(new JPanel(), g, 0, 0);
     g.dispose();
 
-    final BufferedImage img = UIUtil.createImage(w, h, Transparency.TRANSLUCENT);
+    final BufferedImage img = UIUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
     final int offX = icon.getIconWidth() > maxWidth ? (icon.getIconWidth() - maxWidth) / 2 : 0;
     final int offY = icon.getIconHeight() > maxHeight ? (icon.getIconHeight() - maxHeight) / 2 : 0;
     for (int col = 0; col < w; col++) {
@@ -201,7 +198,7 @@ public class IconUtil {
     if (baseIcon == null) {
       return EmptyIcon.ICON_16;
     }
-    return new EmptyIcon(baseIcon.getIconWidth(), baseIcon.getIconHeight());
+    return EmptyIcon.create(baseIcon);
   }
 
   private static class FileIconProviderHolder {
@@ -439,28 +436,55 @@ public class IconUtil {
     };
   }
 
+  /**
+   * Returns a scaled icon instance.
+   *
+   * @param icon the icon to scale
+   * @param scale the scale factor
+   * @param smartScale whether to scale via {@link ScalableIcon#scale(float)} when applicable
+   * @return the scaled icon
+   */
+  @NotNull
+  public static Icon scale(@NotNull Icon icon, float scale, boolean smartScale) {
+    if (smartScale && icon instanceof ScalableIcon) {
+      return ((ScalableIcon)icon).scale(scale);
+    }
+    return scale(icon, scale);
+  }
+
   @NotNull
   public static Icon colorize(@NotNull Icon source, @NotNull Color color) {
     return colorize(source, color, false);
   }
 
   @NotNull
-  public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    return filterIcon(source, new ColorFilter(color, keepGray));
+  public static Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
+    return colorize(g, source, color, false);
   }
 
+  @NotNull
+  public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
+    return filterIcon(null, source, new ColorFilter(color, keepGray));
+  }
+
+  @NotNull
+  public static Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color, boolean keepGray) {
+    return filterIcon(g, source, new ColorFilter(color, keepGray));
+  }
   @NotNull
   public static Icon desaturate(@NotNull Icon source) {
-    return filterIcon(source, new DesaturationFilter());
+    return filterIcon(null, source, new DesaturationFilter());
   }
 
   @NotNull
-  private static Icon filterIcon(@NotNull Icon source, @NotNull Filter filter) {
-    BufferedImage src = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
-    Graphics2D g = src.createGraphics();
-    source.paintIcon(null, g, 0, 0);
-    g.dispose();
-    BufferedImage img = UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull Filter filter) {
+    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+    Graphics2D g2d = src.createGraphics();
+    source.paintIcon(null, g2d, 0, 0);
+    g2d.dispose();
+    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
     int[] rgba = new int[4];
     for (int y = 0; y < src.getRaster().getHeight(); y++) {
       for (int x = 0; x < src.getRaster().getWidth(); x++) {

@@ -1,2 +1,6 @@
 PsiJavaFileStub []
   PsiJavaModuleStub:M.N
+    PsiRequiresStatementStub:0:java.desktop
+    PsiRequiresStatementStub:1:java.logging
+    PsiExportsStatementStub:pkg.d1
+    PsiExportsStatementStub:pkg.d2:java.desktop

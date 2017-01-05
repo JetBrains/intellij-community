@@ -6,7 +6,7 @@
     <module>testInsideField</module>
     <package>&lt;default&gt;</package>
     <entry_point TYPE="method" FQNAME="A$2 void run()"/>
-    <description>Test-only method is called in production code</description>
+    <description>Test-only field is referenced in production code</description>
   </problem>
 </problems>
 

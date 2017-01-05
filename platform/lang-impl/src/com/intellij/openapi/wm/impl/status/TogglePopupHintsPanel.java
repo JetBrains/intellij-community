@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,12 +48,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
   public TogglePopupHintsPanel(@NotNull final Project project) {
     super(project);
     myCurrentIcon = AllIcons.Ide.HectorNo;
-    myConnection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
-      @Override
-      public void powerSaveStateChanged() {
-        updateStatus();
-      }
-    });
+    myConnection.subscribe(PowerSaveMode.TOPIC, this::updateStatus);
   }
 
   @Override
@@ -115,10 +111,11 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
   }
 
   public void updateStatus() {
-    updateStatus(getCurrentFile());
+    UIUtil.invokeLaterIfNeeded(() -> updateStatus(getCurrentFile()));
   }
 
   private void updateStatus(PsiFile file) {
+    if (isDisposed()) return;
     if (isStateChangeable(file)) {
       if (PowerSaveMode.isEnabled()) {
         myCurrentIcon = AllIcons.Ide.HectorNo;

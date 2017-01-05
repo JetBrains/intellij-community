@@ -110,7 +110,6 @@ public abstract class PropertiesComponent {
    * @deprecated Use {@link #getInt(String, int)}
    * Init was never performed and in any case is not recommended.
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public final int getOrInitInt(@NotNull String name, int defaultValue) {
     return getInt(name, defaultValue);

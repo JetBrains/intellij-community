@@ -24,7 +24,7 @@ import javax.swing.tree.TreePath;
  * @author Sergey.Malenkov
  */
 public abstract class AbstractTreeModel implements TreeModel {
-  private final TreeModelListenerList listeners = new TreeModelListenerList();
+  protected final TreeModelListenerList listeners = new TreeModelListenerList();
 
   /**
    * Notifies all added listeners that a tree hierarchy was changed.

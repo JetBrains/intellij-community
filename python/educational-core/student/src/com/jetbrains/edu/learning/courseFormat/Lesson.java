@@ -93,7 +93,7 @@ public class Lesson implements StudyItem {
 
   public Task getTask(int id) {
     for (Task task : taskList) {
-      if (task.getStepicId() == id) {
+      if (task.getStepId() == id) {
         return task;
       }
     }

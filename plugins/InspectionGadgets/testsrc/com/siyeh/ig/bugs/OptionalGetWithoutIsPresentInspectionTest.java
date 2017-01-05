@@ -111,6 +111,24 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
            "}");
   }
 
+  public void testNested() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  void test(Optional<String> opt, String action) {" +
+           "    if(!opt.isPresent()) {" +
+           "      throw new IllegalArgumentException();" +
+           "    }" +
+           "    switch(action) {" +
+           "      case \"case\":" +
+           "        System.out.println(opt.get());" +
+           "        break;" +
+           "      default:" +
+           "        System.err.println(opt.get());" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
   public void testOptionalGetWithoutIsPresent() {
     doTest();
   }
@@ -125,12 +143,17 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util;" +
+      "import java.util.function.Consumer;" +
       "public final class Optional<T> {" +
+      "  private final T value;" +
       "  public T get() {" +
-      "    return null;" +
+      "    if (value == null) {" +
+      "      throw new NoSuchElementException(\"No value present\");" +
+      "    }" +
+      "    return value;" +
       "  }" +
       "  public boolean isPresent() {" +
-      "    return true;" +
+      "    return value != null;" +
       "  }" +
       "  public static<T> Optional<T> empty() {" +
       "    return new Optional<>();" +

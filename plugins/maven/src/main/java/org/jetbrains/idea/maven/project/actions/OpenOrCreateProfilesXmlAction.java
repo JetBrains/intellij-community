@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -28,7 +29,7 @@ public class OpenOrCreateProfilesXmlAction extends MavenOpenOrCreateFilesAction 
   protected List<File> getFiles(AnActionEvent e) {
     List<File> result = new ArrayList<>();
     for (MavenProject each : MavenActionUtil.getMavenProjects(e.getDataContext())) {
-      result.add(each.getProfilesXmlIoFile());
+      ContainerUtil.addIfNotNull(result, each.getProfilesXmlIoFile());
     }
     return result;
   }

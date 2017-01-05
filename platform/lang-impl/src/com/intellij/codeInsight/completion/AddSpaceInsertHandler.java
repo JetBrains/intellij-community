@@ -38,13 +38,17 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
         EditorModificationUtil.insertStringAtCaret(editor, " ");
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       }
-      else {
+      else if (shouldOverwriteExistingSpace(editor)) {
         editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
       }
       if (myTriggerAutoPopup) {
         AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
       }
     }
+  }
+
+  protected boolean shouldOverwriteExistingSpace(Editor editor) {
+    return true;
   }
 
   private static boolean isCharAtSpace(Editor editor) {

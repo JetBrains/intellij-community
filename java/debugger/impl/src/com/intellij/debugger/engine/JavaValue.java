@@ -50,6 +50,7 @@ import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
+import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -69,7 +70,7 @@ import java.util.Set;
 /**
 * @author egor
 */
-public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider {
+public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider, XValueWithInlinePresentation {
   private static final Logger LOG = Logger.getInstance(JavaValue.class);
 
   private final JavaValue myParent;
@@ -226,7 +227,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     }
   }
 
-  private static String truncateToMaxLength(String value) {
+  private static String truncateToMaxLength(@NotNull String value) {
     return value.substring(0, Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH));
   }
 
@@ -306,9 +307,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
         }
         if (lastRenderer instanceof ToStringRenderer) {
-          if (!StringUtil.isEmpty(value)) {
-            value = StringUtil.wrapWithDoubleQuote(value);
-          }
+          value = StringUtil.wrapWithDoubleQuote(value);
         }
         renderer.renderValue(value);
       }
@@ -618,5 +617,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);
     });
+  }
+
+  @Nullable
+  @Override
+  public String computeInlinePresentation() {
+    ValueDescriptorImpl descriptor = getDescriptor();
+    return descriptor.isNull() || descriptor.isPrimitive() ? descriptor.getValueText() : null;
   }
 }

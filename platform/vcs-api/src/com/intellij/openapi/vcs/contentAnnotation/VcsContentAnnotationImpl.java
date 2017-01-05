@@ -87,7 +87,7 @@ public class VcsContentAnnotationImpl implements VcsContentAnnotation {
 
     final FileAnnotation fileAnnotation;
     try {
-      fileAnnotation = vcs.getCachingAnnotationProvider().annotate(file);
+      fileAnnotation = vcs.getAnnotationProvider().annotate(file);
     }
     catch (VcsException e) {
       LOG.info(e);

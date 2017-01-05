@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -49,7 +48,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <small>User: dcheryasov
  * Date: Sep 22, 2009 1:42:52 AM</small>
  */
-public class ImportToImportFromIntention implements IntentionAction {
+public class ImportToImportFromIntention extends PyBaseIntentionAction {
 
   private static class IntentionState {
     private String myModuleName = null;
@@ -221,13 +220,6 @@ public class ImportToImportFromIntention implements IntentionAction {
     }
   }
 
-  private String myText;
-
-  @NotNull
-  public String getText() {
-    return myText;
-  }
-
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.Family.convert.import.unqualify");
@@ -253,18 +245,15 @@ public class ImportToImportFromIntention implements IntentionAction {
 
     final IntentionState state = new IntentionState(editor, file);
     if (state.isAvailable()) {
-      myText = state.getText();
+      setText(state.getText());
       return true;
     }
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final IntentionState state = new IntentionState(editor, file);
     state.invoke();
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

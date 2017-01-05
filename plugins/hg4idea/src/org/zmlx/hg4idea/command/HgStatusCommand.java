@@ -168,6 +168,7 @@ public class HgStatusCommand {
     if (myCleanStatus) {
       options.add("--clean");
     }
+    executor.setOutputAlwaysSuppressed(myCleanStatus || myIncludeUnknown || myIncludeIgnored);
     if (myBaseRevision != null && (!myBaseRevision.getRevision().isEmpty() || !myBaseRevision.getChangeset().isEmpty())) {
       options.add("--rev");
       options.add(StringUtil.isEmptyOrSpaces(myBaseRevision.getChangeset()) ? myBaseRevision.getRevision() : myBaseRevision.getChangeset());
@@ -202,7 +203,7 @@ public class HgStatusCommand {
       return changes;
     }
     List<String> errors = result.getErrorLines();
-    if (errors != null && !errors.isEmpty()) {
+    if (!errors.isEmpty()) {
       if (result.getExitValue() != 0 && !myProject.isDisposed()) {
         String title = "Could not execute hg status command ";
         LOG.warn(title + errors.toString());
@@ -237,13 +238,12 @@ public class HgStatusCommand {
   }
 
   @NotNull
-  public Collection<VirtualFile> getHgUntrackedFiles(@NotNull VirtualFile repo, @NotNull List<VirtualFile> files) throws VcsException {
-    Collection<VirtualFile> untrackedFiles = new HashSet<>();
-    List<FilePath> filePaths = ObjectsConvertor.vf2fp(files);
-    Set<HgChange> change = executeInCurrentThread(repo, filePaths);
+  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) throws VcsException {
+    Collection<VirtualFile> resultFiles = new HashSet<>();
+    Set<HgChange> change = executeInCurrentThread(repo, files != null ? ObjectsConvertor.vf2fp(files) : null);
     for (HgChange hgChange : change) {
-      untrackedFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
+      resultFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
     }
-    return untrackedFiles;
+    return resultFiles;
   }
 }

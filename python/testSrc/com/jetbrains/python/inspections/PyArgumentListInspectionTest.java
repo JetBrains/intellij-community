@@ -95,6 +95,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19412
+  public void testReassignedViaClassMethodInAnotherModule() {
+    doMultiFileTest();
+  }
+
   // PY-2294
   public void testTuples() {
     doTest();
@@ -200,5 +205,29 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   // PY-18275
   public void testStrFormat() {
     doTest();
+  }
+
+  // PY-19716
+  public void testMethodsForLoggingExceptions() {
+    doMultiFileTest();
+  }
+
+  // PY-19522
+  public void testCsvRegisterDialect() {
+    doMultiFileTest();
+  }
+
+  // PY-21083
+  public void testFloatFromhex() {
+    doTest();
+  }
+
+  private void doMultiFileTest() {
+    final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
+
+    myFixture.copyDirectoryToProject(folderPath, "");
+    myFixture.configureFromTempProjectFile("b.py");
+    myFixture.enableInspections(PyArgumentListInspection.class);
+    myFixture.checkHighlighting(true, false, false);
   }
 }

@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitRepository;
@@ -43,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 
@@ -66,9 +64,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot,
-                         final Set<VirtualFile> affectedRoots,
-                         final List<VcsException> exceptions) throws VcsException {
+                         @NotNull final VirtualFile defaultRoot) {
     final DialogState dialogState = displayDialog(project, gitRoots, defaultRoot);
     if (dialogState == null) {
       return;
@@ -90,17 +86,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
         AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
         try {
-          GitCommandResult result = git.runCommand(new Computable<GitLineHandler>() {
-            @Override
-            public GitLineHandler compute() {
-              GitLineHandler handler = handlerProvider.compute();
-              handler.addLineListener(localChangesDetector);
-              handler.addLineListener(untrackedFilesDetector);
-              handler.addLineListener(mergeConflict);
-              return handler;
-            }
+          GitCommandResult result = git.runCommand(() -> {
+            GitLineHandler handler = handlerProvider.compute();
+            handler.addLineListener(localChangesDetector);
+            handler.addLineListener(untrackedFilesDetector);
+            handler.addLineListener(mergeConflict);
+            return handler;
           });
-          affectedRoots.add(selectedRoot);
 
           GitRepository repository = repositoryManager.getRepositoryForRoot(selectedRoot);
           assert repository != null : "Repository can't be null for root " + selectedRoot;
@@ -110,7 +102,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           }
           final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
           handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector,
-                       repository, currentRev, affectedRoots, beforeLabel);
+                       repository, currentRev, beforeLabel);
         }
         finally {
           DvcsUtil.workingTreeChangeFinished(project, token);
@@ -127,16 +119,15 @@ abstract class GitMergeAction extends GitRepositoryAction {
                             GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector,
                             GitRepository repository,
                             GitRevisionNumber currentRev,
-                            Set<VirtualFile> affectedRoots,
                             Label beforeLabel) {
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
     VirtualFile root = repository.getRoot();
     if (result.success() || mergeConflictDetector.hasHappened()) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
       List<VcsException> exceptions = new ArrayList<>();
-      GitMergeUtil.showUpdates(this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+      GitMergeUtil.showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
       repositoryManager.updateRepository(root);
-      runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
+      showErrors(project, getActionName(), exceptions);
     }
     else if (localChangesDetector.wasMessageDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, repository.getRoot(), getActionName(),
@@ -151,10 +142,4 @@ abstract class GitMergeAction extends GitRepositoryAction {
       repositoryManager.updateRepository(root);
     }
   }
-
-  @Override
-  protected boolean executeFinalTasksSynchronously() {
-    return false;
-  }
-
 }

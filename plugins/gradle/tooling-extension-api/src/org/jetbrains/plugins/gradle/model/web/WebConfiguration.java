@@ -34,6 +34,8 @@ public interface WebConfiguration extends Serializable {
     @NotNull
     String getWarName();
 
+    File getArchivePath();
+
     String getWebAppDirName();
 
     File getWebAppDir();

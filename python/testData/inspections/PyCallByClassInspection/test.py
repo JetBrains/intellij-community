@@ -17,3 +17,7 @@ class B(A):
         A.__init__(self) # pass
 
 A.method(<weak_warning descr="Passing inspections.PyCallByClassInspection.test.B instead of inspections.PyCallByClassInspection.test.A. Is this intentional?">B()</weak_warning>)
+
+
+# PY-21083
+float.fromhex('A')

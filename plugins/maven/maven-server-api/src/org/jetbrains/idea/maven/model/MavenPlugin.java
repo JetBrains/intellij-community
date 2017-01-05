@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.idea.maven.model.MavenId.append;
@@ -167,7 +169,7 @@ public class MavenPlugin implements Serializable {
     }
 
     public Execution(String executionId, String phase, List<String> goals, Element configuration) {
-      myGoals = goals;
+      myGoals = goals == null ? Collections.<String>emptyList() : new ArrayList<String>(goals);
       myConfiguration = configuration;
       myExecutionId = executionId;
       myPhase = phase;
@@ -197,7 +199,7 @@ public class MavenPlugin implements Serializable {
 
       Execution that = (Execution)o;
 
-      if (myGoals != null ? !myGoals.equals(that.myGoals) : that.myGoals != null) return false;
+      if (!myGoals.equals(that.myGoals)) return false;
       if (myExecutionId != null ? !myExecutionId.equals(that.myExecutionId) : that.myExecutionId != null) return false;
       if (myPhase != null ? !myPhase.equals(that.myPhase) : that.myPhase != null) return false;
       if (!JDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
@@ -207,7 +209,7 @@ public class MavenPlugin implements Serializable {
 
     @Override
     public int hashCode() {
-      int result = myGoals != null ? myGoals.hashCode() : 0;
+      int result = myGoals.hashCode();
       if (myExecutionId != null) {
         result = 31 * result + myExecutionId.hashCode();
       }

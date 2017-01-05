@@ -73,12 +73,11 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }
 
-  @Override
   public boolean equals(Object anObject) {
     if (this == anObject) {
       return true;
     }
-    if (anObject == null || getClass() != anObject.getClass()) {
+    if (anObject == null || getClass() != anObject.getClass() || length() != ((CharSequence)anObject).length()) {
       return false;
     }
     return CharArrayUtil.regionMatches(myChars, myStart, myEnd, (CharSequence)anObject);

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +47,12 @@ public class LiveTemplateLookupElementImpl extends LiveTemplateLookupElement {
 
   @Override
   public void handleInsert(InsertionContext context) {
+    startTemplate(context, myTemplate);
+  }
+
+  public static void startTemplate(InsertionContext context, @NotNull Template template) {
     context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
     context.setAddCompletionChar(false);
-    TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), myTemplate);
+    TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), template);
   }
 }

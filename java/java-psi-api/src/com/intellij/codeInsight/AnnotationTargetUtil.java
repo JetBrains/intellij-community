@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.Set;
  * @author peter
  */
 public class AnnotationTargetUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.AnnotationUtil");
+  private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 
   public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
@@ -66,6 +66,9 @@ public class AnnotationTargetUtil {
         return PACKAGE_TARGETS;
       }
       if (element instanceof PsiClass) {
+        if (((PsiClass)element).getModifierList() != owner){
+          return TargetType.EMPTY_ARRAY;
+        }
         if (((PsiClass)element).isAnnotationType()) {
           return ANNOTATION_TARGETS;
         }
@@ -91,11 +94,11 @@ public class AnnotationTargetUtil {
         if (scope instanceof PsiForeachStatement) {
           return LOCAL_VARIABLE_TARGETS;
         }
-        if (scope instanceof PsiParameterList && scope.getParent() instanceof PsiLambdaExpression && 
+        if (scope instanceof PsiParameterList && scope.getParent() instanceof PsiLambdaExpression &&
             ((PsiParameter)element).getTypeElement() == null) {
           return TargetType.EMPTY_ARRAY;
         }
-        
+
         return PARAMETER_TARGETS;
       }
       if (element instanceof PsiLocalVariable) {

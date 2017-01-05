@@ -34,7 +34,7 @@ import java.util.Map;
  *
  * @author Konstantin Bulenkov
  */
-class CurrentRevisionAnnotationFieldGutter extends AnnotationFieldGutter implements Consumer<AnnotationSource> {
+class CurrentRevisionAnnotationFieldGutter extends AspectAnnotationFieldGutter implements Consumer<AnnotationSource> {
   // merge source showing is turned on
   private boolean myTurnedOn;
 

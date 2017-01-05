@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -281,7 +282,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    if (DiffDataKeys.NAVIGATABLE.is(dataId)) {
       return getNavigatable();
     }
     else if (CommonDataKeys.PROJECT.is(dataId)) {

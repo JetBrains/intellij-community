@@ -130,8 +130,7 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
         applyContent = myLocalContent;
         break;
       case RIGHT:
-        applyContent = PatchChangeBuilder.getPatchedContent(myAppliedPatch, myLocalContent);
-        break;
+        throw new UnsupportedOperationException();
       case RESOLVED:
         applyContent = null;
         break;

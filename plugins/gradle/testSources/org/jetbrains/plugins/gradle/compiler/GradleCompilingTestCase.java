@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -72,6 +74,11 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
     super.assertArtifactOutputPath(artifactName, basePath + expected);
   }
 
+  protected void assertArtifactOutputPath(Module module, String artifactName, String expected) {
+    final String basePath = getArtifactBaseOutputPath(module);
+    super.assertArtifactOutputPath(artifactName, basePath + expected);
+  }
+
   protected void assertArtifactOutputFile(String artifactName, String path, String content) {
     final String basePath = getArtifactBaseOutputPath(myProject);
     assertSameLinesWithFile(basePath + path, content);
@@ -84,6 +91,11 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
 
   private static String getArtifactBaseOutputPath(Project project) {
     String outputUrl = project.getBaseDir().getUrl() + "/out/artifacts";
+    return FileUtil.toSystemIndependentName(VfsUtilCore.urlToPath(outputUrl));
+  }
+
+  private static String getArtifactBaseOutputPath(Module module) {
+    String outputUrl = ExternalSystemApiUtil.getExternalProjectPath(module) + "/build/libs";
     return FileUtil.toSystemIndependentName(VfsUtilCore.urlToPath(outputUrl));
   }
 }

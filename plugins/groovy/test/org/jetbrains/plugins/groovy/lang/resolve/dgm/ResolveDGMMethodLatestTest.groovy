@@ -27,7 +27,7 @@ class ResolveDGMMethodLatestTest extends GroovyResolveTestCase {
   LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   void testCloseable() {
-    myFixture.addClass('package java.io; class Closeable {}');
+    myFixture.addClass('package java.io; class Closeable {}')
     def resolved = resolveByText('''\
 class A implements Closeable {}
 new A().withC<caret>loseable {}

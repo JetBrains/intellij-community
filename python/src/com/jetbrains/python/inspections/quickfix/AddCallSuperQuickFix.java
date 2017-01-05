@@ -46,14 +46,8 @@ import java.util.*;
 public class AddCallSuperQuickFix implements LocalQuickFix {
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.add.super");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.add.super");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

@@ -321,6 +321,11 @@
       <option name="m_minLength" value="8" />
       <option name="m_maxLength" value="64" />
     </inspection_tool>
+    <inspection_tool class="Java8CollectionRemoveIf" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="Java8CollectionsApi" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="Java8ListSort" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="Java8MapApi" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="Java8ReplaceMapGet" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="JavaDoc" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Tests" level="WARNING" enabled="false">
         <option name="TOP_LEVEL_CLASS_OPTIONS">
@@ -513,6 +518,12 @@
     </inspection_tool>
     <inspection_tool class="ObjectEqualsNull" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ObjectNotify" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ObjectToString" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="IGNORE_NONNLS" value="true" />
+      <option name="IGNORE_EXCEPTION" value="true" />
+      <option name="IGNORE_ASSERT" value="true" />
+      <option name="IGNORE_TOSTRING" value="true" />
+    </inspection_tool>
     <inspection_tool class="ObsoleteCollection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreRequiredObsoleteCollectionTypes" value="false" />
     </inspection_tool>

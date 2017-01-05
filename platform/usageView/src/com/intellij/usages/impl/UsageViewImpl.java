@@ -27,10 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -46,7 +43,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -59,15 +55,21 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,18 +87,20 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author max
  */
-public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
+public class UsageViewImpl implements UsageView {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
   private final MyPanel myRootPanel;
   @NotNull
   private final JTree myTree;
+  private final ScheduledFuture<?> myFireEventsFuture;
   private Content myContent;
 
   private final UsageViewPresentation myPresentation;
@@ -109,9 +113,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
-  private final UsageModelTracker myModelTracker;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
-  public static final UsageNode NULL_NODE = new UsageNode(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
+  public static final UsageNode NULL_NODE = new UsageNode(null, NullUsage.INSTANCE);
   private final ButtonPanel myButtonPanel = new ButtonPanel();
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
@@ -121,6 +124,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (o1 == NULL_NODE) return -1;
     if (o2 == NULL_NODE) return 1;
     if (o1 instanceof Comparable && o2 instanceof Comparable) {
+      //noinspection unchecked
       final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
       if (selfcompared != 0) return selfcompared;
 
@@ -164,14 +168,28 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                 @NotNull UsageViewPresentation presentation,
                 @NotNull UsageTarget[] targets,
                 Factory<UsageSearcher> usageSearcherFactory) {
+    // fire events every 50 ms, not more often to batch requests
+    myFireEventsFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::fireEvents, 50, 50, TimeUnit.MILLISECONDS);
+    Disposer.register(this, ()-> myFireEventsFuture.cancel(false));
+
     myPresentation = presentation;
     myTargets = targets;
     myUsageSearcherFactory = usageSearcherFactory;
     myProject = project;
-    myTree = new Tree() {
+
+    myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
+    myRoot = (GroupNode)myModel.getRoot();
+
+    myTree = new Tree(myModel) {
       {
         ToolTipManager.sharedInstance().registerComponent(this);
       }
+
+      @Override
+      public boolean isRootVisible() {
+        return false;  // to avoid re-building model when it calls setRootVisible(true)
+      }
+
       @Override
       public String getToolTipText(MouseEvent e) {
         TreePath path = getPathForLocation(e.getX(), e.getY());
@@ -194,13 +212,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         return expandingAll ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
       }
     };
+
     myRootPanel = new MyPanel(myTree);
     Disposer.register(this, myRootPanel);
-    myModelTracker = new UsageModelTracker(project);
+    UsageModelTracker myModelTracker = new UsageModelTracker(project);
     Disposer.register(this, myModelTracker);
 
-    myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
-    myRoot = (GroupNode)myModel.getRoot();
     myBuilder = new UsageNodeTreeBuilder(myTargets, getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot, myProject);
 
     final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
@@ -233,7 +250,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
           collapseAll();
 
-          myModelTracker.addListener(this);
+          myModelTracker.addListener(isPropertyChange-> {
+            if (!isPropertyChange) {
+              myChangesDetected = true;
+            }
+            updateLater();
+          }, this);
 
           if (myPresentation.isShowCancelButton()) {
             addButtonToLowerPane(this::close, UsageViewBundle.message("usage.view.cancel.button"));
@@ -248,13 +270,19 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
               });
             }
           });
+
+          myTree.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+              if (rulesChanged) {
+                rulesChanged = false;
+                rulesChanged();
+              }
+            }
+          });
         }
       });
     }
-    myTransferToEDTQueue = new TransferToEDTQueue<>("Insert usages", runnable -> {
-      runnable.run();
-      return true;
-    }, o -> isDisposed || project.isDisposed(), 200);
     myExclusionHandler = new ExclusionHandler<DefaultMutableTreeNode>() {
       @Override
       public boolean isNodeExclusionAvailable(@NotNull DefaultMutableTreeNode node) {
@@ -292,12 +320,108 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
   }
 
-  protected boolean searchHasBeenCancelled() {
+  // nodes just changed: parent node -> changed child
+  // this collection is needed for firing javax.swing.tree.DefaultTreeModel.nodesChanged() events in batch
+  // has to be linked because events for child nodes should be fired after events for parent nodes
+  private final MultiMap<Node, Node> changedNodesToFire = new LinkedMultiMap<>(); // guarded by changedNodesToFire
+
+  private final Consumer<Node> edtNodeChangedQueue = node -> {
+    if (!getPresentation().isDetachedMode()) {
+      synchronized (changedNodesToFire) {
+        changedNodesToFire.putValue((Node)node.getParent(), node);
+      }
+    }
+  };
+
+  // parent nodes under which the child node was just inserted.
+  // it is needed for firing javax.swing.tree.DefaultTreeModel.fireTreeNodesInserted() events in batch
+  // has to be linked because events for child nodes should be fired after events for parent nodes
+  private final Set<Node> nodesInsertedUnder = new LinkedHashSet<>(); // guarded by nodesInsertedUnder
+
+  private final Consumer<Node> edtNodeInsertedUnderQueue = (@NotNull Node parent) -> {
+    if (!getPresentation().isDetachedMode()) {
+      synchronized (nodesInsertedUnder) {
+        nodesInsertedUnder.add(parent);
+      }
+    }
+  };
+
+  // this method is called regularly every 50ms to fire events in batch
+  private void fireEvents() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    List<Node> insertedUnder;
+    synchronized (nodesInsertedUnder) {
+      insertedUnder = new ArrayList<>(nodesInsertedUnder);
+      nodesInsertedUnder.clear();
+    }
+    // for each node synchronize its Swing children (javax.swing.tree.DefaultMutableTreeNode.children)
+    // and its model children (com.intellij.usages.impl.GroupNode.getChildren())
+    // by issuing corresponding javax.swing.tree.DefaultMutableTreeNode.insert() and then javax.swing.tree.DefaultTreeModel.nodesWereInserted()
+    TIntArrayList indicesToFire = new TIntArrayList();
+    List<Node> nodesToFire = new ArrayList<>();
+    for (Node parentNode : insertedUnder) {
+      List<Node> swingChildren = ((GroupNode)parentNode).getSwingChildren();
+      synchronized (parentNode) {
+        List<Node> modelChildren = ((GroupNode)parentNode).getChildren();
+        assert modelChildren.size() >= swingChildren.size();
+
+        int k = 0; // index in swingChildren
+        for (int i = 0; i < modelChildren.size(); i++) {
+          Node modelNode = modelChildren.get(i);
+          Node swingNode = k >= swingChildren.size() ? null : swingChildren.get(k);
+          if (swingNode == modelNode) {
+            k++;
+            continue;
+          }
+          parentNode.insertNewNode(modelNode, i);
+          indicesToFire.add(i);
+          nodesToFire.add(modelNode);
+          if (k==i) k++; // ignore just inserted node
+          if (modelNode instanceof UsageNode) {
+            Node parent = (Node)modelNode.getParent();
+            if (parent instanceof GroupNode) {
+              ((GroupNode)parent).incrementUsageCount();
+            }
+          }
+        }
+      }
+
+      myModel.fireTreeNodesInserted(parentNode, myModel.getPathToRoot(parentNode), indicesToFire.toNativeArray(), nodesToFire.toArray(new Node[0]));
+      nodesToFire.clear();
+      indicesToFire.clear();
+    }
+
+    // group nodes from changedNodesToFire by their parents and issue corresponding javax.swing.tree.DefaultTreeModel.fireTreeNodesChanged()
+    List<Map.Entry<Node, Collection<Node>>> changed;
+    synchronized (changedNodesToFire) {
+      changed = new ArrayList<>(changedNodesToFire.entrySet());
+      changedNodesToFire.clear();
+    }
+    for (Map.Entry<Node, Collection<Node>> entry : changed) {
+      Node parentNode = entry.getKey();
+      Set<Node> childrenToUpdate = new THashSet<>(entry.getValue());
+
+      for (int i = 0; i < parentNode.getChildCount(); i++) {
+        Node childNode = (Node)parentNode.getChildAt(i);
+        if (childrenToUpdate.contains(childNode)) {
+          nodesToFire.add(childNode);
+          indicesToFire.add(i);
+        }
+      }
+
+      myModel.fireTreeNodesChanged(parentNode, myModel.getPathToRoot(parentNode), indicesToFire.toNativeArray(), nodesToFire.toArray(new Node[0]));
+      nodesToFire.clear();
+      indicesToFire.clear();
+    }
+  }
+
+
+  boolean searchHasBeenCancelled() {
     ProgressIndicator progress = associatedProgress;
     return progress != null && progress.isCanceled();
   }
 
-  protected void cancelCurrentSearch() {
+  void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
       ProgressWrapper.unwrap(progress).cancel();
@@ -305,6 +429,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void clearRendererCache() {
+    if (expandingAll) return; // to avoid quadratic row enumeration
     // clear renderer cache of node preferred size
     TreeUI ui = myTree.getUI();
     if (ui instanceof BasicTreeUI) {
@@ -338,18 +463,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     // add reaction to scrolling:
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
     // and we need to recalculate them when the node scrolled into the visible rectangle
-    treePane.getViewport().addChangeListener(e -> clearRendererCache());
-    myTree.addTreeExpansionListener(new TreeExpansionListener() {
-      @Override
-      public void treeExpanded(TreeExpansionEvent event) {
-        clearRendererCache();
-      }
-
-      @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-        clearRendererCache();
-      }
-    });
+    treePane.getViewport().addChangeListener(__ -> clearRendererCache());
     myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
@@ -452,16 +566,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return list.toArray(new UsageGroupingRule[list.size()]);
   }
 
-  @Override
-  public void modelChanged(boolean isPropertyChange) {
-    if (!isPropertyChange) {
-      myChangesDetected = true;
-    }
-    updateLater();
-  }
-
   private void initTree() {
-    myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     SmartExpander.installOn(myTree);
     TreeUtil.installActions(myTree);
@@ -495,17 +600,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
       @Override
       public void treeExpanded(TreeExpansionEvent event) {
+        clearRendererCache();
+
         TreePath path = event.getPath();
         Object component = path.getLastPathComponent();
-        if (!(component instanceof Node)) return;
-        Node node = (Node)component;
-        if (!expandingAll && node.needsUpdate()) {
-          checkNodeValidity(node, path);
+        if (component instanceof Node) {
+          Node node = (Node)component;
+          if (!expandingAll && node.needsUpdate()) {
+            checkNodeValidity(node, path);
+          }
         }
       }
 
       @Override
       public void treeCollapsed(TreeExpansionEvent event) {
+        clearRendererCache();
       }
     });
 
@@ -704,8 +813,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return list.toArray(new AnAction[list.size()]);
   }
 
+  private boolean shouldTreeReactNowToRuleChanges() {
+    return myPresentation.isDetachedMode() || myTree.isShowing();
+  }
+
+  private boolean rulesChanged;
   private void rulesChanged() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!shouldTreeReactNowToRuleChanges()) {
+      rulesChanged = true;
+      return;
+    }
+
     final List<UsageState> states = new ArrayList<>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     final List<Usage> allUsages = new ArrayList<>(myUsageNodes.keySet());
@@ -772,6 +891,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public void expandAll() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    fireEvents();  // drain all remaining insertion events in the queue
+
     expandingAll = true;
     try {
       TreeUtil.expandAll(myTree);
@@ -779,18 +900,24 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     finally {
       expandingAll = false;
     }
+    clearRendererCache();
   }
 
   private void collapseAll() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    fireEvents();
     TreeUtil.collapseAll(myTree, 3);
     TreeUtil.expand(myTree, 2);
   }
 
-  public DefaultMutableTreeNode getModelRoot() {
+  @NotNull
+  DefaultMutableTreeNode getModelRoot() {
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
   public void select() {
+    // can be null during ctr execution
+    //noinspection ConstantConditions
     if (myTree != null) {
       myTree.requestFocusInWindow();
     }
@@ -851,48 +978,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void doReRun() {
-    final AtomicInteger usageCountWithoutDefinition = new AtomicInteger(0);
-    final Project project = myProject;
-    Task.Backgroundable task = new Task.Backgroundable(project, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
-        setSearchInProgress(true);
-        associateProgress(indicator);
-
-        Processor<Usage> processor = usage -> {
-          if (searchHasBeenCancelled()) return false;
-          tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
-
-          boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
-
-          if (incrementCounter) {
-            final int usageCount = usageCountWithoutDefinition.incrementAndGet();
-            if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
-              if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-                UsageViewManagerImpl
-                  .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(),
-                                            UsageViewImpl.this);
-              }
-            }
-            ApplicationManager.getApplication().runReadAction(() -> appendUsage(usage));
-          }
-          return !indicator.isCanceled();
-        };
-
-        myChangesDetected = false;
-        PsiManager.getInstance(project).startBatchFilesProcessingMode();
-        try {
-          myUsageSearcherFactory.create().generate(processor);
-          drainQueuedUsageNodes();
-        }
-        finally {
-          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
-        }
-        setSearchInProgress(false);
-      }
-    };
-    ProgressManager.getInstance().run(task);
+    close();
+    com.intellij.usages.UsageViewManager.getInstance(getProject()).
+      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, true, myPresentation, null);
   }
 
   private void reset() {
@@ -907,30 +995,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   void drainQueuedUsageNodes() {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myTransferToEDTQueue.drain();
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)this::fireEvents);
   }
-  private final Consumer<Runnable> edtQueue = new Consumer<Runnable>() {
-    @Override
-    public void consume(Runnable runnable) {
-      myTransferToEDTQueue.offer(runnable);
-    }
-  };
-
 
   @Override
   public void appendUsage(@NotNull Usage usage) {
     doAppendUsage(usage);
   }
 
-  @Nullable
   public UsageNode doAppendUsage(@NotNull Usage usage) {
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -938,13 +1012,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       // because the view is built incrementally, the usage may be already invalid, so need to filter such cases
       return null;
     }
-    UsageNode node = myBuilder.appendUsage(usage, edtQueue);
-    if (node != null) {
-      // update and cache flags while the node is still hot
-      node.update(this, edtQueue);
+
+    UsageNode child = myBuilder.appendUsage(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
+    myUsageNodes.put(usage, child == null ? NULL_NODE : child);
+
+    if (child != null) {
+      for (Node node = child; node != myRoot; node = (Node)node.getParent()) {
+        node.update(this, edtNodeChangedQueue);
+      }
     }
-    myUsageNodes.put(usage, node == null ? NULL_NODE : node);
-    return node;
+
+    return child;
   }
 
   @Override
@@ -953,9 +1031,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (node != NULL_NODE && node != null && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (isDisposed) return;
-        TreeModel treeModel = myTree.getModel();
-        ((DefaultTreeModel)treeModel).removeNodeFromParent(node);
-        ((GroupNode)myTree.getModel().getRoot()).removeUsage(node);
+        DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
+        treeModel.removeNodeFromParent(node);
+        ((GroupNode)myTree.getModel().getRoot()).removeUsage(node, treeModel);
       });
     }
   }
@@ -980,7 +1058,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             parent.remove(childIndex);
           }
         }
-        ((GroupNode)myTree.getModel().getRoot()).removeUsagesBulk(nodes);
+        ((GroupNode)myTree.getModel().getRoot()).removeUsagesBulk(nodes, treeModel);
 
         treeModel.reload();
       });
@@ -1059,7 +1137,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (int i=0; i<nodes.size(); i++) {
       TreeNode node = nodes.get(i);
       if (node instanceof Node) {
-        ((Node)node).update(this, edtQueue);
+        ((Node)node).update(this, edtNodeChangedQueue);
         TreeNode parent = node.getParent();
         if (parent != root && parent != null) {
           nodes.add(parent);
@@ -1104,7 +1182,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     // call update last, to let children a chance to update their cache first
     if (node instanceof Node && node != getModelRoot() && isVisible == UsageViewTreeCellRenderer.RowLocation.INSIDE_VISIBLE_RECT) {
       try {
-        ((Node)node).update(this, edtQueue);
+        ((Node)node).update(this, edtNodeChangedQueue);
       }
       catch (IndexNotReadyException ignore) {
       }
@@ -1136,7 +1214,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     synchronized (lock) {
       isDisposed = true;
       ToolTipManager.sharedInstance().unregisterComponent(myTree);
-      myModelTracker.removeListener(this);
       myUpdateAlarm.cancelAllRequests();
     }
     disposeSmartPointers();
@@ -1160,7 +1237,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {
-      myTransferToEDTQueue.offer(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
         if (isDisposed) return;
         final UsageNode firstUsageNode = myModel.getFirstUsageNode();
         if (firstUsageNode == null) return;
@@ -1183,13 +1260,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void showNode(@NotNull final UsageNode node) {
-    if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (isDisposed) return;
-        TreePath usagePath = new TreePath(node.getPath());
-        myTree.expandPath(usagePath.getParentPath());
-        TreeUtil.selectPath(myTree, usagePath);
-      });
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!isDisposed && !myPresentation.isDetachedMode()) {
+      fireEvents();
+      TreePath usagePath = new TreePath(node.getPath());
+      myTree.expandPath(usagePath.getParentPath());
+      TreeUtil.selectPath(myTree, usagePath);
     }
   }
 
@@ -1233,9 +1309,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     addButtonToLowerPane(newPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus), shortDescription);
   }
 
-  public MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
-                                                                String commandName,
-                                                                String cannotMakeString, boolean checkReadOnlyStatus) {
+  @NotNull
+  private MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
+                                                                 String commandName,
+                                                                 String cannotMakeString, boolean checkReadOnlyStatus) {
     return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName, checkReadOnlyStatus);
   }
 
@@ -1443,11 +1520,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return result.toArray(new Navigatable[result.size()]);
   }
 
-  public boolean areTargetsValid() {
+  boolean areTargetsValid() {
     return myModel.areTargetsValid();
   }
 
-  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable{
+  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator, Disposable{
     @Nullable private OccurenceNavigatorSupport mySupport;
     private final CopyProvider myCopyProvider;
 
@@ -1732,4 +1809,20 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       usage instanceof UsageInfo2UsageAdapter &&
       ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(((UsageInfo2UsageAdapter)myOriginUsage).getUsageInfo());
   }
+
+  private boolean isFilterDuplicateLines() {
+    return myPresentation.isMergeDupLinesAvailable() && UsageViewSettings.getInstance().isFilterDuplicatedLine();
+  }
+
+  public Usage getNextToSelect(@NotNull Usage toDelete) {
+    UsageNode usageNode = myUsageNodes.get(toDelete);
+    if (usageNode == null) return null;
+
+    DefaultMutableTreeNode node = myRootPanel.mySupport.findNode(myTree, usageNode, true, null);
+    if (node == null) node = myRootPanel.mySupport.findNode(myTree, usageNode, false, null); // last node
+
+    return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
+  }
+
+
 }

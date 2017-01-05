@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,13 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +35,10 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -46,7 +46,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -69,14 +68,13 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
+    checkSignalBlocking();
+    checkLauncherScript();
     startDiskSpaceMonitoring();
   }
 
   private void checkJvm() {
-    if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
-      showNotification("unsupported.jvm.openjdk.message");
-    }
-    else if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
+    if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
       showNotification("unsupported.jvm.ea.message");
     }
   }
@@ -99,6 +97,30 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
   }
 
+  private void checkSignalBlocking() {
+    if (SystemInfo.isUnix) {
+      try {
+        LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
+        Memory buf = new Memory(1024);
+        if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
+          long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);
+          if (handler == LibC.SIG_IGN) {
+            showNotification("ide.sigint.ignored.message");
+          }
+        }
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
+      }
+    }
+  }
+
+  private void checkLauncherScript() {
+    if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
+      showNotification("ide.launcher.script.outdated");
+    }
+  }
+
   private void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
     final String ignoreKey = "ignore." + key;
     boolean ignored = myProperties.isValueSet(ignoreKey);
@@ -108,7 +130,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     final String message = IdeBundle.message(key) + IdeBundle.message("sys.health.acknowledge.link");
 
     final Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         app.invokeLater(() -> {
@@ -185,7 +207,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             ourFreeSpaceCalculation.set(null);
 
             if (fileUsableSpace < LOW_DISK_SPACE_THRESHOLD) {
-              if (!notificationsComponentIsLoaded()) {
+              if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
                 ourFreeSpaceCalculation.set(future);
                 JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
                 return;
@@ -220,18 +242,16 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
         }
       }
 
-      private boolean notificationsComponentIsLoaded() {
-        return ApplicationManager.getApplication().runReadAction(new Computable<NotificationsConfiguration>() {
-          @Override
-          public NotificationsConfiguration compute() {
-            return NotificationsConfiguration.getNotificationsConfiguration();
-          }
-        }) != null;
-      }
-
       private void restart(long timeout) {
         JobScheduler.getScheduler().schedule(this, timeout, TimeUnit.SECONDS);
       }
     }, 1, TimeUnit.SECONDS);
+  }
+
+  @SuppressWarnings({"SpellCheckingInspection", "SameParameterValue"})
+  private interface LibC extends Library {
+    int SIGINT = 2;
+    long SIG_IGN = 1L;
+    int sigaction(int signum, Pointer act, Pointer oldact);
   }
 }

@@ -71,6 +71,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -80,11 +81,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
     NotificationGroup.balloonGroup(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
 
+  private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
-  private final Alarm myInitializationAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myProject);
+  private final Alarm myInitializationAlarm;
 
   private final MavenEmbeddersManager myEmbeddersManager;
 
@@ -112,16 +114,22 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
+  private MavenMergingUpdateQueue mySaveQueue;
+  private static final int SAVE_DELAY = 1000;
+
   public static MavenProjectsManager getInstance(Project p) {
     return p.getComponent(MavenProjectsManager.class);
   }
 
   public MavenProjectsManager(Project project) {
     super(project);
-    myEmbeddersManager = new MavenEmbeddersManager(myProject);
+    myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
+    myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), null);
   }
 
+  @Override
   public MavenProjectsManagerState getState() {
     if (isInitialized()) {
       applyTreeToState();
@@ -129,12 +137,19 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return myState;
   }
 
+  @Override
   public void loadState(MavenProjectsManagerState state) {
     myState = state;
     if (isInitialized()) {
       applyStateToTree();
       scheduleUpdateAllProjects(false);
     }
+  }
+
+  @Override
+  public void disposeComponent() {
+    super.disposeComponent();
+    Disposer.dispose(mySaveQueue);
   }
 
   public ModificationTracker getModificationTracker() {
@@ -266,7 +281,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void doInit(final boolean isNew) {
-    synchronized (isInitialized) {
+    initLock.lock();
+    try {
       if (isInitialized.getAndSet(true)) return;
 
       initProjectsTree(!isNew);
@@ -275,15 +291,16 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       listenForSettingsChanges();
       listenForProjectsTreeChanges();
 
-      MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-        public void run() {
-          if (!isUnitTestMode()) {
-            fireActivated();
-            listenForExternalChanges();
-          }
-          scheduleUpdateAllProjects(isNew);
+      MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+        if (!isUnitTestMode()) {
+          fireActivated();
+          listenForExternalChanges();
         }
+        scheduleUpdateAllProjects(isNew);
       });
+    }
+    finally {
+      initLock.unlock();
     }
   }
 
@@ -292,7 +309,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       File file = getProjectsTreeFile();
       try {
         if (file.exists()) {
-          myProjectsTree = MavenProjectsTree.read(file);
+          myProjectsTree = MavenProjectsTree.read(myProject, file);
         }
       }
       catch (IOException e) {
@@ -300,7 +317,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
     }
 
-    if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree();
+    if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
     applyStateToTree();
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster());
   }
@@ -319,14 +336,20 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsTree.setIgnoredFilesPatterns(myState.ignoredPathMasks);
   }
 
+  @Override
   public void save() {
     if (myProjectsTree != null) {
-      try {
-        myProjectsTree.save(getProjectsTreeFile());
-      }
-      catch (IOException e) {
-        MavenLog.LOG.info(e);
-      }
+      mySaveQueue.queue(new Update(MavenProjectsManager.this) {
+        @Override
+        public void run() {
+          try {
+            myProjectsTree.save(getProjectsTreeFile());
+          }
+          catch (IOException e) {
+            MavenLog.LOG.info(e);
+          }
+        }
+      });
     }
   }
 
@@ -488,7 +511,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void projectClosed() {
-    synchronized (isInitialized) {
+    initLock.lock();
+    try {
       if (!isInitialized.getAndSet(false)) return;
 
       Disposer.dispose(myImportingQueue);
@@ -501,10 +525,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       myFoldersResolvingProcessor.stop();
       myArtifactsDownloadingProcessor.stop();
       myPostProcessor.stop();
+      mySaveQueue.flush();
 
       if (isUnitTestMode()) {
         FileUtil.delete(getProjectsTreesDir());
       }
+    } finally {
+      initLock.unlock();
     }
   }
 
@@ -513,7 +540,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private boolean isInitialized() {
-    return isInitialized.get();
+    return !initLock.isLocked() && isInitialized.get();
   }
 
   public boolean isMavenizedProject() {
@@ -707,9 +734,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   @Nullable
   private static VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      final VirtualFile virtualFile = root.findChild(MavenConstants.POM_XML);
-      if (virtualFile != null) {
-        return virtualFile;
+      for (VirtualFile child : root.getChildren()) {
+        if (MavenUtil.isPomFileName(child.getName())) return child;
       }
     }
     return null;
@@ -809,17 +835,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-      public void run() {
-        if (projects == null) {
-          myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
-        }
-        else {
-          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),
-                                   Collections.<VirtualFile>emptyList(),
-                                   forceUpdate,
-                                   forceImportAndResolve).processed(promise);
-        }
+    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+      if (projects == null) {
+        myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
+      }
+      else {
+        myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),
+                                 Collections.emptyList(),
+                                 forceUpdate,
+                                 forceImportAndResolve).processed(promise);
       }
     });
     return promise;
@@ -851,7 +875,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           scheduleImport().processed(result);
         }
         else {
-          result.setResult(Collections.<Module>emptyList());
+          result.setResult(Collections.emptyList());
         }
       };
 
@@ -923,7 +947,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       Iterator<MavenProject> it = projects.iterator();
       while (it.hasNext()) {
         MavenProject each = it.next();
-        Runnable onCompletion = it.hasNext() ? null : (Runnable)() -> {
+        Runnable onCompletion = it.hasNext() ? null : () -> {
           if (hasScheduledProjects()) scheduleImport();
         };
         myFoldersResolvingProcessor.scheduleTask(
@@ -1193,10 +1217,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private List<VirtualFile> collectAllAvailablePomFiles() {
     List<VirtualFile> result = new ArrayList<>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
-
-    VirtualFile pom = myProject.getBaseDir().findChild(MavenConstants.POM_XML);
-    if (pom != null) result.add(pom);
-
+    for (VirtualFile child : myProject.getBaseDir().getChildren()) {
+      if (MavenUtil.isPomFileName(child.getName())) {
+        result.add(child);
+      }
+    }
     return result;
   }
 

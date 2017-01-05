@@ -203,6 +203,11 @@ public class PackageFileWorker {
 
   private static JBZipFile getOrCreateZipFile(File archiveFile) throws IOException {
     FileUtil.createIfDoesntExist(archiveFile);
-    return new JBZipFile(archiveFile);
+    try {
+      return new JBZipFile(archiveFile);
+    }
+    catch (IllegalArgumentException e) {
+      throw new IOException(e);
+    }
   }
 }

@@ -38,6 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -492,7 +493,8 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isAnimatedScrolling() {
-    return myIsAnimatedScrolling != null
+    return !SystemProperties.isTrueSmoothScrollingEnabled() && // uses its own interpolation
+           myIsAnimatedScrolling != null
            ? myIsAnimatedScrolling.booleanValue()
            : EditorSettingsExternalizable.getInstance().isSmoothScrolling();
   }

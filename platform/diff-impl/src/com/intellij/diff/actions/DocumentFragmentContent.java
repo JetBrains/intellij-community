@@ -28,11 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.nio.charset.Charset;
 
 /**
  * Represents sub text of other content.
@@ -91,18 +88,6 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
     int originalOffset = offset + myRangeMarker.getStartOffset();
     LineCol originalPosition = LineCol.fromOffset(myOriginal.getDocument(), originalOffset);
     return myOriginal.getNavigatable(originalPosition);
-  }
-
-  @Nullable
-  @Override
-  public LineSeparator getLineSeparator() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public Charset getCharset() {
-    return null;
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Base64Converter;
+import com.intellij.util.Base64;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +66,7 @@ public class Attachment {
 
   @NotNull
   public String getEncodedBytes() {
-    return Base64Converter.encode(myBytes);
+    return Base64.encode(myBytes);
   }
 
   @NotNull

@@ -27,13 +27,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -76,6 +79,10 @@ public abstract class JvmSmartStepIntoHandler {
         ListPopupImpl popup = new ListPopupImpl(popupStep);
         DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
         popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO));
+
+        UIUtil.maybeInstall(popup.getList().getInputMap(JComponent.WHEN_FOCUSED),
+                            "selectNextRow",
+                            KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
 
         popup.addListSelectionListener(new ListSelectionListener() {
           public void valueChanged(ListSelectionEvent e) {

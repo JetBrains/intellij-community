@@ -5,5 +5,5 @@ class A {
     return 1;
   }
 
-  Comparator<A> comparator = Comparator.comparingInt((a) -> a.get());
+  Comparator<A> comparator = Comparator.comparingInt(a -> a.get());
 }

@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
+import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * User: anna
@@ -115,6 +117,16 @@ public class CoverageSuitesBundle {
   @NotNull
   public CoverageEngine getCoverageEngine() {
     return myEngine;
+  }
+
+  public LineMarkerRendererWithErrorStripe getLineMarkerRenderer(int lineNumber,
+                                                                 @Nullable final String className,
+                                                                 final TreeMap<Integer, LineData> lines,
+                                                                 final boolean coverageByTestApplicable,
+                                                                 @NotNull final CoverageSuitesBundle coverageSuite,
+                                                                 final Function<Integer, Integer> newToOldConverter,
+                                                                 final Function<Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
+    return myEngine.getLineMarkerRenderer(lineNumber, className, lines, coverageByTestApplicable, coverageSuite, newToOldConverter, oldToNewConverter, subCoverageActive);
   }
 
   public CoverageAnnotator getAnnotator(Project project) {

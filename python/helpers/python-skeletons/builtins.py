@@ -1,6 +1,9 @@
 """Skeletons for Python 3 built-in symbols."""
 
 
+import os
+
+
 def abs(number):
     """Return the absolute value of the argument.
 
@@ -186,31 +189,55 @@ def locals():
     return {}
 
 
-def max(*args, key=None, default=None):
-    """Return the largest item in an iterable or the largest of two or more
-    arguments.
+class map(object):
+    def __init__(self, function, sequence, *sequence_1):
+        """Return an iterable of the results of applying the function to the items of
+        the argument sequence(s).
 
-    :rtype: object | unknown
-    """
-    pass
+        :type function: None | (T) -> V
+        :type sequence: collections.Iterable[T]
+        :rtype: map[T, V]
+        """
+        pass
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[V]
+        """
+        return self
 
-def map(function, sequence, *sequence_1):
-    """Return a list of the results of applying the function to the items of
-    the argument sequence(s).
-
-    :type function: ((T) -> V) | None
-    :type sequence: collections.Iterable[T]
-    :rtype: list[V] | bytes | str
-    """
-    pass
-
+    def __next__(self):
+        """
+        :rtype: V
+        """
+        pass
 
 def min(*args, key=None, default=None):
     """Return the smallest item in an iterable or the smallest of two or more
     arguments.
 
-    :rtype: object | unknown
+    :type args: T
+    :rtype: T
+    """
+    pass
+
+
+def max(*args, key=None, default=None):
+    """Return the largest item in an iterable or the largest of two or more
+    arguments.
+
+    :type args: T
+    :rtype: T
+    """
+    pass
+
+
+def sum(iterable, start=0):
+    """Sums start and the items of an iterable from left to right and returns
+    the total.
+
+    :type iterable: collections.Iterable[T]
+    :rtype: T
     """
     pass
 
@@ -237,7 +264,7 @@ def open(name, mode='r', buffering=-1, encoding=None, errors=None, newline=None,
          closefd=None, opener=None):
     """Open a file, returns a file object.
 
-    :type name: str
+    :type name: str | os.PathLike
     :type mode: str
     :type buffering: numbers.Integral
     :type encoding: str | None
@@ -792,6 +819,15 @@ class float(object):
         """
         return 0.0
 
+    @staticmethod
+    def fromhex(string):
+        """Create a floating-point number from a hexadecimal string.
+
+        :type string: str
+        :rtype: float
+        """
+        pass
+
 
 class complex(object):
     """Complex numeric type."""
@@ -985,9 +1021,9 @@ class bytes(object):
         return b''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: int | bytes
         """
         return 0
@@ -1359,9 +1395,9 @@ class str(object):
         return ''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: str
         """
         return ''
@@ -2039,6 +2075,12 @@ class set(object):
         """
         return False
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
 
 class frozenset(object):
     """frozenset object."""
@@ -2178,6 +2220,12 @@ class frozenset(object):
         """
         return False
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
 
 
 class tuple(object):
@@ -2232,6 +2280,12 @@ class tuple(object):
         :rtype: int
         """
         return 0
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[object | unknown]
+        """
+        pass
 
 
 class dict(object):
@@ -2437,12 +2491,6 @@ class __coroutine(object):
         """
         return []
 
-    def __iter__(self):
-        """
-        :rtype: collections.Iterable[unknown]
-        """
-        return []
-
     def close(self):
         """
         :rtype: None
@@ -2458,6 +2506,59 @@ class __coroutine(object):
     def throw(self, type, value=None, traceback=None):
         """
         :rtype: None
+        """
+        pass
+
+
+class __asyncgenerator(object):
+    """A mock class representing the async generator function type."""
+    def __init__(self):
+        """Create an async generator object.
+
+        :rtype: __asyncgenerator[T, U]
+        """
+        self.__name__ = ''
+        self.__qualname__ = ''
+        self.ag_await = None
+        self.ag_frame = None
+        self.ag_running = False
+        self.ag_code = None
+
+    def __aiter__(self):
+        """Defined to support iteration over container.
+
+        :rtype: collections.AsyncIterator[T]
+        """
+        pass
+
+    def __anext__(self):
+        """Returns an awaitable, that performs one asynchronous generator
+        iteration when awaited.
+
+        :rtype: collections.Awaitable[T]
+        """
+        pass
+
+    def aclose(self):
+        """Returns an awaitable, that throws a GeneratorExit exception
+        into generator.
+
+        :rtype: collections.Awaitable[T]
+        """
+        pass
+
+    def asend(self, value):
+        """Returns an awaitable, that pushes the value object in generator.
+
+        :type value: U
+        :rtype: collections.Awaitable[T]
+        """
+        pass
+
+    def athrow(self, type, value=None, traceback=None):
+        """Returns an awaitable, that throws an exception into generator.
+
+        :rtype: collections.Awaitable[T]
         """
         pass
 
@@ -2487,3 +2588,11 @@ class __method(object):
     def __init__(self):
         self.__func__ = None
         self.__self__ = None
+
+
+def input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: str
+    """
+    pass

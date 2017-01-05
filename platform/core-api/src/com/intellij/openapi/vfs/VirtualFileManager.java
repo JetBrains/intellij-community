@@ -41,14 +41,18 @@ public abstract class VirtualFileManager implements ModificationTracker {
     }
   };
 
+  private static class InstanceHolder {
+    static final VirtualFileManager ourInstance = ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+  }
+
   /**
-   * Gets the instance of <code>VirtualFileManager</code>.
+   * Gets the instance of {@code VirtualFileManager}.
    *
-   * @return <code>VirtualFileManager</code>
+   * @return {@code VirtualFileManager}
    */
   @NotNull
   public static VirtualFileManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+    return InstanceHolder.ourInstance;
   }
 
   /**
@@ -85,7 +89,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * file systems.
    *
    * @param url the URL to find file by
-   * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
    * @see #refreshAndFindFileByUrl
@@ -100,11 +104,10 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
    * corresponding to it.<p>
    * <p/>
-   * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.
    *
    * @param url the URL
-   * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFileSystem#findFileByPath
    * @see VirtualFileSystem#refreshAndFindFileByPath
    */
@@ -145,7 +148,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * Extracts protocol from the given URL. Protocol is a substring from the beginning of the URL till "://".
    *
    * @param url the URL
-   * @return protocol or <code>null</code> if there is no "://" in the URL
+   * @return protocol or {@code null} if there is no "://" in the URL
    * @see VirtualFileSystem#getProtocol
    */
   @Nullable

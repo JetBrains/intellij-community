@@ -54,6 +54,10 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     doJavaCallTypeHierarchyTest("A", "main", "B.java", "A.java");
   }
 
+  public void testDefaultConstructor() throws Exception {
+    doJavaCallTypeHierarchyTest("A", "A", "A.java", "B.java");
+  }
+
   public void testAnonymous2() throws Exception {
     doJavaCallTypeHierarchyTest("A", "doIt", "A.java");
   }

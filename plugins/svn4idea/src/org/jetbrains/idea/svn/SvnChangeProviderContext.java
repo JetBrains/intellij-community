@@ -30,12 +30,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.history.SimplePropertyRevision;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
@@ -45,6 +43,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnChangeProviderContext");
@@ -380,17 +380,12 @@ class SvnChangeProviderContext implements StatusReceiver {
     ContentRevision contentRevision = isBeforeRevision ? change.getBeforeRevision() : change.getAfterRevision();
     SVNRevision revision = isBeforeRevision ? SVNRevision.BASE : SVNRevision.WORKING;
 
-    return new SimplePropertyRevision(getProperties(file, revision), path, getRevisionNumber(contentRevision));
+    return new SimplePropertyRevision(getPropertyList(myVcs, file, revision), path, getRevisionNumber(contentRevision));
   }
 
   @Nullable
   private static String getRevisionNumber(@Nullable ContentRevision revision) {
     return revision != null ? revision.getRevisionNumber().asString() : null;
-  }
-
-  @NotNull
-  private List<PropertyData> getProperties(@NotNull File file, @NotNull SVNRevision revision) throws SVNException {
-    return AbstractShowPropertiesDiffAction.getPropertyList(myVcs, file, revision);
   }
 
   @NotNull

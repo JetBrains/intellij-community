@@ -18,11 +18,12 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
@@ -31,11 +32,9 @@ import java.util.List;
  */
 public class RenameShelvedChangeListAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
-    assert (changes != null) || (recycledChanges != null);
-    final ShelvedChangeList changeList = (changes != null && changes.length == 1) ? changes [0] : recycledChanges[0];
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final List<ShelvedChangeList> changelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    final ShelvedChangeList changeList = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(changelists));
     String newName = Messages.showInputDialog(project, VcsBundle.message("shelve.changes.rename.prompt"),
                                               VcsBundle.message("shelve.changes.rename.title"),
                                               Messages.getQuestionIcon(), changeList.DESCRIPTION,
@@ -46,7 +45,7 @@ public class RenameShelvedChangeListAction extends AnAction {
                                                   }
                                                   final List<ShelvedChangeList> list =
                                                     ShelveChangesManager.getInstance(project).getShelvedChangeLists();
-                                                  for(ShelvedChangeList oldList: list) {
+                                                  for (ShelvedChangeList oldList : list) {
                                                     if (oldList != changeList && oldList.DESCRIPTION.equals(inputString)) {
                                                       return false;
                                                     }
@@ -64,10 +63,6 @@ public class RenameShelvedChangeListAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
-    e.getPresentation().setEnabled((project != null) && ((changes != null && changes.length == 1) ||
-      ((recycledChanges != null) && (recycledChanges.length == 1))));
+    e.getPresentation().setEnabled(getEventProject(e) != null && ShelvedChangesViewManager.getShelvedLists(e.getDataContext()).size() == 1);
   }
 }

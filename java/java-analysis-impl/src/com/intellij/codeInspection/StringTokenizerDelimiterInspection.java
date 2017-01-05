@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
     @NotNull
     @Override
     public String getFamilyName() {
+      //noinspection DialogTitleCapitalization
       return "Replace StringTokenizer delimiters parameter with unique symbols";
     }
 
@@ -98,12 +99,14 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       final Set<Character> uniqueChars = new LinkedHashSet<>();
       final PsiLiteralExpression delimiterArgument = (PsiLiteralExpression)startElement;
-      for (char c : ((String)delimiterArgument.getValue()).toCharArray()) {
+      final Object literal = delimiterArgument.getValue();
+      if(!(literal instanceof String)) return;
+      for (char c : ((String)literal).toCharArray()) {
         uniqueChars.add(c);
       }
       final String newDelimiters = StringUtil.join(uniqueChars, "");
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, null).fun(
+      delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, "\"").fun(
         newDelimiters)), null));
     }
   }

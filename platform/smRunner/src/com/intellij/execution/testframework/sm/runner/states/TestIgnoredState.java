@@ -33,7 +33,7 @@ public class TestIgnoredState extends AbstractState {
       myText = null;
     }
     else {
-      myText = CompositePrintable.NEW_LINE + ignoredMsg;
+      myText = CompositePrintable.NEW_LINE + ignoredMsg + CompositePrintable.NEW_LINE;
     }
     myStacktrace = stackTrace == null ? null : stackTrace + CompositePrintable.NEW_LINE;
   }

@@ -74,6 +74,11 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
       val annotations = parse(output.stdoutLines)
       return if (annotations.isNotEmpty()) Result(annotations) else null
     }
+    catch (e: Exception) {
+      val log = Logger.getInstance(JavadocHtmlLintAnnotator::class.java)
+      log.debug(file.path, e)
+      return null
+    }
     finally {
       FileUtil.delete(copy)
     }

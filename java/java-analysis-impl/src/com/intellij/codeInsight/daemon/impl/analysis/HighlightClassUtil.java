@@ -39,16 +39,15 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class HighlightClassUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -163,7 +162,7 @@ public class HighlightClassUtil {
     Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
     if (module == null) return null;
 
-    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module));
+    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope()));
     if (classes.length < numOfClassesToFind) return null;
     final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
@@ -237,7 +236,7 @@ public class HighlightClassUtil {
     if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile)) return null;
     PsiJavaFile file = (PsiJavaFile)containingFile;
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null || aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+    if (virtualFile == null || virtualFile.getNameWithoutExtension().equals(aClass.getName())) {
       return null;
     }
     String message = JavaErrorMessages.message("public.class.should.be.named.after.file", aClass.getName());
@@ -255,7 +254,7 @@ public class HighlightClassUtil {
     for (PsiClass otherClass : classes) {
       if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
           otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-          otherClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+          virtualFile.getNameWithoutExtension().equals(otherClass.getName())) {
         return errorResult;
       }
     }
@@ -280,7 +279,7 @@ public class HighlightClassUtil {
       if (directory instanceof PsiDirectory) {
         String simpleName = aClass.getName();
         PsiDirectory subDirectory = ((PsiDirectory)directory).findSubdirectory(simpleName);
-        if (subDirectory != null && simpleName.equals(subDirectory.getName())) {
+        if (subDirectory != null && simpleName.equals(subDirectory.getName()) && PsiTreeUtil.findChildOfType(subDirectory, PsiJavaFile.class) != null) {
           String message = JavaErrorMessages.message("class.clashes.with.package", name);
           TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
@@ -528,24 +527,46 @@ public class HighlightClassUtil {
     PsiMethod[] constructors = baseClass.getConstructors();
     if (constructors.length == 0) return null;
 
-    for (PsiMethod constructor : constructors) {
-      if (resolveHelper.isAccessible(constructor, aClass, null)) {
-        if (constructor.getParameterList().getParametersCount() == 0 ||
-            constructor.getParameterList().getParametersCount() == 1 && constructor.isVarArgs()
-          ) {
-          // it is an error if base ctr throws exceptions
-          String description = checkDefaultConstructorThrowsException(constructor, handledExceptions);
-          if (description != null) {
-            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description).create();
-            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCreateConstructorMatchingSuperFix(aClass));
-            return info;
-          }
-          if (refCountHolder != null) {
-            refCountHolder.registerLocallyReferenced(constructor);
-          }
-          return null;
-        }
+    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(aClass, aClass.getProject(), baseClass);
+    List<PsiMethod> constructorCandidates = (resolved != null ? Collections.singletonList((PsiMethod)resolved)
+                                                              : Arrays.asList(constructors))
+      .stream()
+      .filter(constructor -> {
+        PsiParameter[] parameters = constructor.getParameterList().getParameters();
+        return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
+               resolveHelper.isAccessible(constructor, aClass, null);
+      })
+      .limit(2).collect(Collectors.toList());
+
+    if (constructorCandidates.size() >= 2) {// two ambiguous var-args-only constructors
+      final String m1 = PsiFormatUtil.formatMethod(constructorCandidates.get(0), PsiSubstitutor.EMPTY,
+                                                   PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                   PsiFormatUtilBase.SHOW_NAME |
+                                                   PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                   PsiFormatUtilBase.SHOW_TYPE);
+      final String m2 = PsiFormatUtil.formatMethod(constructorCandidates.get(1), PsiSubstitutor.EMPTY,
+                                                   PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                   PsiFormatUtilBase.SHOW_NAME |
+                                                   PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                   PsiFormatUtilBase.SHOW_TYPE);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(range)
+        .descriptionAndTooltip(JavaErrorMessages.message("ambiguous.method.call", m1, m2))
+        .create();
+    }
+
+    if (!constructorCandidates.isEmpty()) {
+      PsiMethod constructor = constructorCandidates.get(0);
+      String description = checkDefaultConstructorThrowsException(constructor, handledExceptions);
+      if (description != null) {
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCreateConstructorMatchingSuperFix(aClass));
+        return info;
       }
+      if (refCountHolder != null) {
+        refCountHolder.registerLocallyReferenced(constructor);
+      }
+      return null;
     }
 
     String description = JavaErrorMessages.message("no.default.constructor.available", HighlightUtil.formatClass(baseClass));

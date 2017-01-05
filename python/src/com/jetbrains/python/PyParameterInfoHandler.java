@@ -65,7 +65,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       final PyCallExpression callExpr = argumentList.getCallExpression();
       if (callExpr != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
         final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(resolveContext);
         if (mapping.getMarkedCallee() != null) {
           context.setItemsToShow(new Object[] { mapping });
@@ -152,7 +152,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     PyPsiUtils.assertValid(callExpression);
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
     final PyCallExpression.PyArgumentsMapping mapping = callExpression.mapArguments(resolveContext);
     final PyMarkedCallee marked = mapping.getMarkedCallee();
     if (marked == null) return; // resolution failed

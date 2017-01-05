@@ -81,15 +81,15 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   void setWhitespaceSkippedCallback(@Nullable WhitespaceSkippedCallback callback);
 
   /**
-   * See what token type is in <code>steps</code> ahead
+   * See what token type is in {@code steps} ahead
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
-   * @return type element which getTokenType() will return if we call advance <code>steps</code> times in a row
+   * @return type element which getTokenType() will return if we call advance {@code steps} times in a row
    */
   @Nullable
   IElementType lookAhead(int steps);
 
   /**
-   * See what token type is in <code>steps</code> ahead / behind
+   * See what token type is in {@code steps} ahead / behind
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
    * @return type element ahead or behind, including whitespace / comment tokens
    */
@@ -97,7 +97,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   IElementType rawLookup(int steps);
 
   /**
-   * See what token type is in <code>steps</code> ahead / behind current position
+   * See what token type is in {@code steps} ahead / behind current position
    * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
    * @return offset type element ahead or behind, including whitespace / comment tokens, -1 if first token,
    * getOriginalText().getLength() at end

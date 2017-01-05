@@ -44,7 +44,7 @@ public abstract class FileIncludeProvider {
   public abstract FileIncludeInfo[] getIncludeInfos(FileContent content);
 
   /**
-   * If all providers return <code>null</code> then <code>FileIncludeInfo</code> is resolved in a standard way using <code>FileReferenceSet</code>
+   * If all providers return {@code null} then {@code FileIncludeInfo} is resolved in a standard way using {@code FileReferenceSet}
    */
   @Nullable
   public PsiFileSystemItem resolveIncludedFile(@NotNull final FileIncludeInfo info, @NotNull final PsiFile context) {

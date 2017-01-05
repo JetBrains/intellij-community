@@ -48,7 +48,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.*;
 import com.intellij.util.BitUtil;
@@ -255,7 +254,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   public void rebuild() {
     if (myProject.isDisposed()) return;
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
     Dimension referenceSize = null;
 
     if (myStructureView != null) {

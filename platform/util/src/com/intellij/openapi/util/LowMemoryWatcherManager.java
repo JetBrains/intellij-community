@@ -17,7 +17,9 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
@@ -27,14 +29,18 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LowMemoryWatcherManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
+  @NotNull private final ExecutorService myExecutorService;
 
   private Future<?> mySubmitted; // guarded by ourJanitor
+  private final AtomicBoolean myProcessing = new AtomicBoolean();
   private final Runnable myJanitor = new Runnable() {
     @Override
     public void run() {
@@ -47,7 +53,8 @@ public class LowMemoryWatcherManager implements Disposable {
     }
   };
 
-  public LowMemoryWatcherManager() {
+  public LowMemoryWatcherManager(@NotNull ExecutorService executorService) {
+    myExecutorService = new SequentialTaskExecutor("LowMemoryWatcherManager", executorService);
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
@@ -71,14 +78,30 @@ public class LowMemoryWatcherManager implements Disposable {
     public void handleNotification(Notification notification, Object __) {
       if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType()) ||
           MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType())) {
+        if (Registry.is("low.memory.watcher.sync", true)) {
+          handleEventImmediately();
+          return;
+        }
+
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = AppExecutorUtil.getAppExecutorService().submit(myJanitor);
+            mySubmitted = myExecutorService.submit(myJanitor);
           }
         }
       }
     }
   };
+
+  private void handleEventImmediately() {
+    if (myProcessing.compareAndSet(false, true)) {
+      try {
+        myJanitor.run();
+      }
+      finally {
+        myProcessing.set(false);
+      }
+    }
+  }
 
   @Override
   public void dispose() {

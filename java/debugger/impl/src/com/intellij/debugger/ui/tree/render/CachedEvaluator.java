@@ -22,7 +22,6 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,13 +66,12 @@ public abstract class CachedEvaluator {
   protected Cache initEvaluatorAndChildrenExpression(final Project project) {
     final Cache cache = new Cache();
     try {
-      Pair<PsiClass, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(getClassName(), project);
+      Pair<PsiElement, PsiType> psiClassAndType = DebuggerUtilsImpl.getPsiClassAndType(getClassName(), project);
       if (psiClassAndType.first == null) {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }
       cache.myPsiChildrenExpression = null;
       JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, psiClassAndType.first, project);
-      codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
       codeFragment.setThisType(psiClassAndType.second);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;

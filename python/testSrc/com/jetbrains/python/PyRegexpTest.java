@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,11 @@ import java.util.List;
  * @author yole
  */
 public class PyRegexpTest extends PyTestCase {
+
+  public void testNotEmptyGroup() { // PY-14381
+    doTestHighlighting();
+  }
+
   public void testNestedCharacterClasses() {  // PY-2908
     doTestHighlighting();
   }
@@ -87,7 +92,7 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
-  public void _testDoubleOpenCurly() {  // PY-8252
+  public void testDoubleOpenCurly() {  // PY-8252
     doTestHighlighting();
   }
 
@@ -168,7 +173,7 @@ public class PyRegexpTest extends PyTestCase {
                          ".* # <caret>comment\n" +
                          "\"\"\", re.I | re.M | re.X)",
                          "\n.* # comment\n");
-    assertEquals(element.getLanguage(), PythonVerboseRegexpLanguage.INSTANCE);
+    assertEquals(PythonVerboseRegexpLanguage.INSTANCE, element.getLanguage());
   }
 
   // PY-16404

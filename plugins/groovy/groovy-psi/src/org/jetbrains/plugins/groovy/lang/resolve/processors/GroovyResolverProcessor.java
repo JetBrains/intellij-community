@@ -97,7 +97,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     myThisType = PsiImplUtil.getQualifierType(ref);
     myTypeArguments = ref.getTypeArguments();
     if (kinds.contains(GroovyResolveKind.METHOD) || myIsLValue) {
-      myArgumentTypesNonErased = PsiUtil.getArgumentTypes(ref, false, myUpToArgument, false);
+      myArgumentTypesNonErased = PsiUtil.getArgumentTypes(ref, false, myUpToArgument);
       myArgumentTypes = eraseTypes(myArgumentTypesNonErased);
     }
     else {

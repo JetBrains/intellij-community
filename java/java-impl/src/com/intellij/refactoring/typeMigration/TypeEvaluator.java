@@ -348,14 +348,14 @@ public class TypeEvaluator {
   }
 
   public String getReport() {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
 
     final String[] t = new String[myTypeMap.size()];
     int k = 0;
 
     for (final TypeMigrationUsageInfo info : myTypeMap.keySet()) {
       final LinkedList<PsiType> types = myTypeMap.get(info);
-      final StringBuffer b = new StringBuffer();
+      final StringBuilder b = new StringBuilder();
 
       if (types != null) {
         b.append(info.getElement()).append(" : ");

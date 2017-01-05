@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.resolve
 
 
 import com.intellij.psi.JavaResolveResult
@@ -31,48 +31,48 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
-public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
+class JavaToGroovyResolveTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}resolve/javaToGroovy/";
+    return "${TestUtils.testDataPath}resolve/javaToGroovy/"
   }
 
-  public void testField1() throws Exception {
-    PsiReference ref = configureByFile("field1/A.java");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrField);
+  void testField1() throws Exception {
+    PsiReference ref = configureByFile("field1/A.java")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrField)
   }
 
-  public void testAccessorRefToProperty() throws Exception {
-    PsiReference ref = configureByFile("accessorRefToProperty/A.java");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrAccessorMethod);
+  void testAccessorRefToProperty() throws Exception {
+    PsiReference ref = configureByFile("accessorRefToProperty/A.java")
+    PsiElement resolved = ref.resolve()
+    assertTrue(resolved instanceof GrAccessorMethod)
   }
 
-  public void testMethod1() throws Exception {
-    PsiJavaReference ref = (PsiJavaReference) configureByFile("method1/A.java");
-    JavaResolveResult resolveResult = ref.advancedResolve(false);
-    assertTrue(resolveResult.element instanceof GrMethod);
-    assertTrue(resolveResult.validResult);
+  void testMethod1() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference) configureByFile("method1/A.java")
+    JavaResolveResult resolveResult = ref.advancedResolve(false)
+    assertTrue(resolveResult.element instanceof GrMethod)
+    assertTrue(resolveResult.validResult)
   }
 
-  public void testScriptMain() throws Exception {
-    PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMain/A.java");
-    JavaResolveResult resolveResult = ref.advancedResolve(false);
-    assertInstanceOf(resolveResult.element, LightMethodBuilder.class);
-    assertTrue(resolveResult.validResult);
+  void testScriptMain() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMain/A.java")
+    JavaResolveResult resolveResult = ref.advancedResolve(false)
+    assertInstanceOf(resolveResult.element, LightMethodBuilder.class)
+    assertTrue(resolveResult.validResult)
   }
 
-  public void testScriptMethod() throws Exception {
-    PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMethod/A.java");
-    JavaResolveResult resolveResult = ref.advancedResolve(false);
-    assertTrue(resolveResult.element instanceof GrMethod);
-    assertTrue(resolveResult.validResult);
+  void testScriptMethod() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference) configureByFile("scriptMethod/A.java")
+    JavaResolveResult resolveResult = ref.advancedResolve(false)
+    assertTrue(resolveResult.element instanceof GrMethod)
+    assertTrue(resolveResult.validResult)
   }
 
-  public void testNoDGM() throws Exception {
-    PsiJavaReference ref = (PsiJavaReference) configureByFile("noDGM/A.java");
-    assertNull(ref.advancedResolve(false).element);
+  void testNoDGM() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference) configureByFile("noDGM/A.java")
+    assertNull(ref.advancedResolve(false).element)
   }
   
   void testPrivateTopLevelClass() {

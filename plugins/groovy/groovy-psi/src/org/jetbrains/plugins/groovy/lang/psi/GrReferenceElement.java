@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -56,6 +55,4 @@ public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiEleme
 
   @NotNull
   String getClassNameText();
-
-  PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException;
 }

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PsiLocalVariable extends PsiVariable {
   /**
-   * Adds initializer to the variable declaration statement or, if <code>initializer</code>
+   * Adds initializer to the variable declaration statement or, if {@code initializer}
    * parameter is null, removes initializer from variable.
    *
    * @param initializer the initializer to add.

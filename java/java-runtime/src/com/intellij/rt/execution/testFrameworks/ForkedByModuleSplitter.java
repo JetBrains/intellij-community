@@ -27,17 +27,13 @@ public abstract class ForkedByModuleSplitter {
   protected final ForkedDebuggerHelper myForkedDebuggerHelper = new ForkedDebuggerHelper();
   protected final String myWorkingDirsPath;
   protected final String myForkMode;
-  protected final PrintStream myOut;
-  protected final PrintStream myErr;
   protected final List   myNewArgs;
   protected String myDynamicClasspath;
   protected List myVMParameters;
 
-  public ForkedByModuleSplitter(String workingDirsPath, String forkMode, PrintStream out, PrintStream err, List newArgs) {
+  public ForkedByModuleSplitter(String workingDirsPath, String forkMode, List newArgs) {
     myWorkingDirsPath = workingDirsPath;
     myForkMode = forkMode;
-    myOut = out;
-    myErr = err;
     myNewArgs = newArgs;
   }
 
@@ -66,15 +62,10 @@ public abstract class ForkedByModuleSplitter {
   }
 
   //read output from wrappers
-  protected int startChildFork(List args, File workingDir, String classpath, String repeatCount) throws IOException, InterruptedException {
+  protected int startChildFork(final List args, File workingDir, String classpath, String repeatCount) throws IOException, InterruptedException {
     List vmParameters = new ArrayList(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
-    //noinspection SSBasedInspection
-    final File tempFile = File.createTempFile("fork", "test");
-    tempFile.deleteOnExit();
-    final String testOutputPath = tempFile.getAbsolutePath();
-
     final ProcessBuilder builder = new ProcessBuilder();
     builder.add(vmParameters);
     builder.add("-classpath");
@@ -91,7 +82,6 @@ public abstract class ForkedByModuleSplitter {
     }
 
     builder.add(getStarterName());
-    builder.add(testOutputPath);
     builder.add(args);
     if (repeatCount != null) {
       builder.add(repeatCount);
@@ -99,9 +89,46 @@ public abstract class ForkedByModuleSplitter {
     builder.setWorkingDir(workingDir);
 
     final Process exec = builder.createProcess();
-    final int result = exec.waitFor();
-    ForkedVMWrapper.readWrapped(testOutputPath, myOut, myErr);
-    return result;
+    final boolean[] stopped = new boolean[1];
+
+    new Thread(createInputReader(exec.getErrorStream(), System.err, stopped), "Read forked error output").start();
+    new Thread(createInputReader(exec.getInputStream(), System.out, stopped), "Read forked output").start();
+    final int i = exec.waitFor();
+    stopped[0] = true;
+    return i;
+  }
+
+  private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream, final boolean[] stopped) {
+    return new Runnable() {
+      char[] buf = new char[8192];
+
+      public void run() {
+        final InputStreamReader inputReader = new InputStreamReader(inputStream);
+        try {
+          while (true) {
+            if (stopped[0]) break;
+
+            int n;
+            try {
+              while (inputReader.ready() && (n = inputReader.read(buf)) > 0) {
+                outputStream.print(new String(buf, 0, n));
+              }
+            }
+            catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        }
+        finally {
+          try {
+            inputReader.close();
+          }
+          catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    };
   }
 
   //read file with classes grouped by module

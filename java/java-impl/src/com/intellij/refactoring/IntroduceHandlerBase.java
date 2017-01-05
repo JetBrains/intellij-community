@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /**
@@ -64,11 +65,15 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
     else {
       editor = null;
     }
-    if (tempExpr instanceof PsiExpression) {
-      invokeImpl(project, (PsiExpression)tempExpr, editor);
+    invoke(project, tempExpr, editor);
+  }
+
+  public void invoke(@NotNull Project project, PsiElement element, @Nullable Editor editor) {
+    if (element instanceof PsiExpression) {
+      invokeImpl(project, (PsiExpression)element, editor);
     }
-    else if(tempExpr instanceof PsiLocalVariable) {
-      invokeImpl(project, (PsiLocalVariable)tempExpr, editor);
+    else if(element instanceof PsiLocalVariable) {
+      invokeImpl(project, (PsiLocalVariable)element, editor);
     }
     else {
       LOG.error("elements[0] should be PsiExpression or PsiLocalVariable");
@@ -78,7 +83,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   /**
    * @param project
    * @param tempExpr
-   * @param editor editor to highlight stuff in. Should accept <code>null</code>
+   * @param editor editor to highlight stuff in. Should accept {@code null}
    * @return
    */
   protected abstract boolean invokeImpl(Project project, PsiExpression tempExpr,
@@ -87,7 +92,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   /**
    * @param project
    * @param localVariable
-   * @param editor editor to highlight stuff in. Should accept <code>null</code>
+   * @param editor editor to highlight stuff in. Should accept {@code null}
    * @return
    */
   protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable,

@@ -30,6 +30,7 @@ public class DiffSettingsPanel {
   private ContextRangePanel myContextRangeComponent;
   private JCheckBox myGoToNextFileOnNextDifferenceCheckbox;
   private JCheckBox myAutoApplyNonConflictedChangesCheckbox;
+  private JCheckBox myMergeLstGutterMarkers;
 
   @NotNull private TextDiffSettings myTextSettings = TextDiffSettings.getSettings();
   @NotNull private DiffSettings myDiffSettings = DiffSettings.getSettings();
@@ -43,6 +44,7 @@ public class DiffSettingsPanel {
     if (myContextRangeComponent.isModified()) return true;
     if (myGoToNextFileOnNextDifferenceCheckbox.isSelected() != myDiffSettings.isGoToNextFileOnNextDifference()) return true;
     if (myAutoApplyNonConflictedChangesCheckbox.isSelected() != myTextSettings.isAutoApplyNonConflictedChanges()) return true;
+    if (myMergeLstGutterMarkers.isSelected() != myTextSettings.isEnableLstGutterMarkersInMerge()) return true;
     return false;
   }
 
@@ -50,12 +52,14 @@ public class DiffSettingsPanel {
     myContextRangeComponent.apply();
     myDiffSettings.setGoToNextFileOnNextDifference(myGoToNextFileOnNextDifferenceCheckbox.isSelected());
     myTextSettings.setAutoApplyNonConflictedChanges(myAutoApplyNonConflictedChangesCheckbox.isSelected());
+    myTextSettings.setEnableLstGutterMarkersInMerge(myMergeLstGutterMarkers.isSelected());
   }
 
   public void reset() {
     myContextRangeComponent.reset();
     myGoToNextFileOnNextDifferenceCheckbox.setSelected(myDiffSettings.isGoToNextFileOnNextDifference());
     myAutoApplyNonConflictedChangesCheckbox.setSelected(myTextSettings.isAutoApplyNonConflictedChanges());
+    myMergeLstGutterMarkers.setSelected(myTextSettings.isEnableLstGutterMarkersInMerge());
   }
 
   private void createUIComponents() {

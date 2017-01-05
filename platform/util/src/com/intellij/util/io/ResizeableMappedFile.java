@@ -125,6 +125,8 @@ public class ResizeableMappedFile implements Forceable {
     final File lengthFile = getLengthFile();
     DataOutputStream stream = null;
     try {
+      File parentFile = lengthFile.getParentFile();
+      if (!parentFile.exists()) parentFile.mkdirs();
       stream = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, IOException>() {
         @Nullable
         @Override
@@ -133,7 +135,7 @@ public class ResizeableMappedFile implements Forceable {
             return new DataOutputStream(new FileOutputStream(lengthFile));
           } catch (FileNotFoundException ex) {
             if (!lengthFile.getParentFile().exists()) {
-              throw new IOException("Parent file doesn't exist:" + lengthFile);
+              throw new IOException("Parent file still doesn't exist:" + lengthFile);
             }
             if (!lastAttempt) return null;
             throw ex;

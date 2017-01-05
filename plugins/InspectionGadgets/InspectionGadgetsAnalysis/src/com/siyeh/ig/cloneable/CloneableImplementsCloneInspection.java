@@ -67,13 +67,8 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
   private static class CreateCloneMethodFix extends InspectionGadgetsFix {
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("cloneable.class.without.clone.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("cloneable.class.without.clone.quickfix");
     }
 
     @Override

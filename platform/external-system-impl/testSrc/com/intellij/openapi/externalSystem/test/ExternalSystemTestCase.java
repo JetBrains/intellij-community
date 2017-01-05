@@ -492,9 +492,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   protected void assertArtifactOutput(String artifactName, TestFileSystemItem fs) {
     final Artifact artifact = ArtifactsTestUtil.findArtifact(myProject, artifactName);
-    final VirtualFile outputFile = artifact.getOutputFile();
+    final String outputFile = artifact.getOutputFilePath();
     assert outputFile != null;
-    final File file = VfsUtilCore.virtualToIoFile(outputFile);
+    final File file = new File(outputFile);
+    assert file.exists();
     fs.assertFileEqual(file);
   }
 

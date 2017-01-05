@@ -48,6 +48,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ public class UpdateCacheTest extends PsiTestCase {
     final PsiFile finalFile = file;
     file = new WriteAction<PsiFile>() {
       @Override
-      protected void run(Result<PsiFile> result) throws Throwable {
+      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
         PsiFile res = (PsiFile)root.add(finalFile);
         result.setResult(res);
       }

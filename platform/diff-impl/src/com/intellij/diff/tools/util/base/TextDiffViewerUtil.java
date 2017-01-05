@@ -52,7 +52,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TextDiffViewerUtil {
-  public static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
+  private static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
 
   @NotNull
   public static List<AnAction> createEditorPopupActions() {
@@ -142,7 +142,9 @@ public class TextDiffViewerUtil {
   }
 
   public static boolean areEqualCharsets(@NotNull List<? extends DiffContent> contents) {
-    return areEqualDocumentContentProperties(contents, DocumentContent::getCharset);
+    boolean sameCharset = areEqualDocumentContentProperties(contents, DocumentContent::getCharset);
+    boolean sameBOM = areEqualDocumentContentProperties(contents, DocumentContent::hasBom);
+    return sameCharset && sameBOM;
   }
 
   private static <T> boolean areEqualDocumentContentProperties(@NotNull List<? extends DiffContent> contents,

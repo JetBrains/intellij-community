@@ -23,8 +23,22 @@ import javax.swing.*;
  */
 public interface ScalableIcon extends Icon {
   /**
+   * @return the scale of the icon relative to its origin
+   */
+  float getScale();
+
+  /**
+   * Creates and returns a scaled instance of the icon.
+   * The icon is scaled relative to its origin, that is {@code scale(1f)} will
+   * return the icon in its original scale.
+   *
+   * To scale this instance by {@code n} times: {@code scale(n * getScale())}.
+   *
+   * Note that the methods {@link #getIconWidth()} and {@link #getIconHeight()}
+   * should return the scaled size of the icon.
+   *
    * @param scaleFactor scale
-   * @return scaled icon with width getIconWidth() * scaleFactor and height getIconHeight() * scaleFactor
+   * @return scaled icon instance
    */
   Icon scale(float scaleFactor);
 }

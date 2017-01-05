@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.RecursionManager;
@@ -75,7 +76,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   @Nullable
   public ObjectStubTree readFromVFile(Project project, final VirtualFile vFile) {
-    if (DumbService.getInstance(project).isDumb()) {
+    if (DumbService.getInstance(project).isDumb() || NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       return null;
     }
 
@@ -98,7 +99,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       
       if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
         return processError(vFile,
-                            "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+                            "Outdated stub in index: " + vFile + " " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
                             ", doc=" + document +
                             ", docSaved=" + saved +
                             ", wasIndexedAlready=" + wasIndexedAlready +

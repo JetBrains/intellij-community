@@ -25,8 +25,8 @@ import java.util.Set;
 
 /**
  * PermanentGraph is created once per repository, and forever until the log is refreshed. <br/>
- * An instance can be achieved by {@link PermanentGraphBuilder}. <br/>
- * This graph contains all commits in the log and may occupy a lot.
+ * An instance can be created by {@link PermanentGraphBuilder}. <br/>
+ * This graph contains all commits in the log and may occupy a lot of memory.
  *
  * @see VisibleGraph
  */

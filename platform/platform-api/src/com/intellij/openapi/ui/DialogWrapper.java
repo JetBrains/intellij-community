@@ -36,6 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
@@ -46,10 +47,11 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -213,7 +215,11 @@ public abstract class DialogWrapper {
   }
 
   protected DialogWrapper(@Nullable Project project, boolean canBeParent, @NotNull IdeModalityType ideModalityType) {
-    myPeer = createPeer(project, canBeParent, ideModalityType);
+    this(project, null, canBeParent, ideModalityType);
+  }
+
+  protected DialogWrapper(@Nullable Project project, @Nullable Component parentComponent, boolean canBeParent, @NotNull IdeModalityType ideModalityType) {
+    myPeer = parentComponent == null ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType) : createPeer(parentComponent, canBeParent);
     final Window window = myPeer.getWindow();
     if (window != null) {
       myResizeListener = new ComponentAdapter() {
@@ -435,7 +441,7 @@ public abstract class DialogWrapper {
   }
 
   protected static boolean isMoveHelpButtonLeft() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"));
+    return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
   }
 
   /**
@@ -445,144 +451,73 @@ public abstract class DialogWrapper {
    *
    * @return south panel
    */
-  @Nullable
   protected JComponent createSouthPanel() {
-    Action[] actions = filter(createActions());
-    Action[] leftSideActions = createLeftSideActions();
-    Map<Action, JButton> buttonMap = new LinkedHashMap<>();
+    List<Action> actions = ContainerUtil.filter(createActions(), Condition.NOT_NULL);
+    List<Action> leftSideActions = ContainerUtil.newArrayList(createLeftSideActions());
+
+    if (!ApplicationInfo.contextHelpAvailable()) {
+      actions.remove(getHelpAction());
+    }
 
     boolean hasHelpToMoveToLeftSide = false;
-    if (isMoveHelpButtonLeft() && Arrays.asList(actions).contains(getHelpAction())) {
+    if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
-      actions = ArrayUtil.remove(actions, getHelpAction());
+      actions.remove(getHelpAction());
     } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
-      actions = ArrayUtil.remove(actions, getHelpAction());
+      actions.remove(getHelpAction());
     }
 
     if (SystemInfo.isMac) {
-      for (Action action : actions) {
-        if (action instanceof MacOtherAction) {
-          leftSideActions = ArrayUtil.append(leftSideActions, action);
-          actions = ArrayUtil.remove(actions, action);
-          break;
-        }
+      Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
+      if (macOtherAction != null) {
+        leftSideActions.add(macOtherAction);
+        actions.remove(macOtherAction);
+      }
+
+      // move ok action to the right
+      int okNdx = actions.indexOf(getOKAction());
+      if (okNdx >= 0 && okNdx != actions.size() - 1) {
+        actions.remove(getOKAction());
+        actions.add(getOKAction());
+      }
+
+      // move cancel action to the left
+      int cancelNdx = actions.indexOf(getCancelAction());
+      if (cancelNdx > 0) {
+        actions.remove(getCancelAction());
+        actions.add(0, getCancelAction());
       }
     }
-    else if (UIUtil.isUnderGTKLookAndFeel() && Arrays.asList(actions).contains(getHelpAction())) {
-      leftSideActions = ArrayUtil.append(leftSideActions, getHelpAction());
-      actions = ArrayUtil.remove(actions, getHelpAction());
+    else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
+      leftSideActions.add(getHelpAction());
+      actions.remove(getHelpAction());
     }
 
-    JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      public Color getBackground() {
-        final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
-        if (getStyle() == DialogStyle.COMPACT && bg != null) {
-          return bg;
-        }
-        return super.getBackground();
-      }
-    };
-    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    //noinspection UseDPIAwareInsets
-    final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
-
-    if (actions.length > 0 || leftSideActions.length > 0) {
-      int gridX = 0;
-      if (leftSideActions.length > 0) {
-        JPanel buttonsPanel = createButtons(leftSideActions, buttonMap);
-        if (actions.length > 0) {
-          buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
-        }
-        lrButtonsPanel.add(buttonsPanel,
-                           new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
-                                                  0));
-      }
-      lrButtonsPanel.add(Box.createHorizontalGlue(),    // left strut
-                         new GridBagConstraints(gridX++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
-                                                0));
-      if (actions.length > 0) {
-        if (SystemInfo.isMac) {
-          // move ok action to the right
-          int okNdx = ArrayUtil.indexOf(actions, getOKAction());
-          if (okNdx >= 0 && okNdx != actions.length - 1) {
-            actions = ArrayUtil.append(ArrayUtil.remove(actions, getOKAction()), getOKAction());
-          }
-
-          // move cancel action to the left
-          int cancelNdx = ArrayUtil.indexOf(actions, getCancelAction());
-          if (cancelNdx > 0) {
-            actions = ArrayUtil.mergeArrays(new Action[]{getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
-          }
-
-          /*if (!hasFocusedAction(actions)) {
-            int ndx = ArrayUtil.find(actions, getCancelAction());
-            if (ndx >= 0) {
-              actions[ndx].putValue(FOCUSED_ACTION, Boolean.TRUE);
-            }
-          }*/
-        }
-
-        JPanel buttonsPanel = createButtons(actions, buttonMap);
-        if (shouldAddErrorNearButtons()) {
-          lrButtonsPanel.add(myErrorText, new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                                 insets, 0, 0));
-          lrButtonsPanel.add(Box.createHorizontalStrut(10), new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
-                                                                                   GridBagConstraints.NONE, insets, 0, 0));
-        }
-        lrButtonsPanel.add(buttonsPanel,
-                           new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
-                                                  0));
-      }
-      if (SwingConstants.CENTER == myButtonAlignment) {
-        lrButtonsPanel.add(Box.createHorizontalGlue(),    // right strut
-                           new GridBagConstraints(gridX, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
-                                                  0));
-      }
-      myButtonMap.clear();
-      myButtonMap.putAll(buttonMap);
+    if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
+      actions = flattenOptionsActions(actions);
+      leftSideActions = flattenOptionsActions(leftSideActions);
     }
 
-    if (hasHelpToMoveToLeftSide) {
-      if (!(SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
-        JButton helpButton = createHelpButton(insets);
-        panel.add(helpButton, BorderLayout.WEST);
+
+    List<JButton> leftSideButtons = createButtons(leftSideActions);
+    List<JButton> rightSideButtons = createButtons(actions);
+
+    myButtonMap.clear();
+    for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
+      myButtonMap.put(button.getAction(), button);
+      if (button instanceof JBOptionButton) {
+        myOptionsButtons.add((JBOptionButton)button);
       }
     }
 
 
-    panel.add(lrButtonsPanel, BorderLayout.CENTER);
-
-    final DoNotAskOption askOption = myDoNotAsk;
-    if (askOption != null) {
-      myCheckBoxDoNotShowDialog = new JCheckBox(askOption.getDoNotShowMessage());
-      JComponent southPanel = panel;
-
-      if (!askOption.canBeHidden()) {
-        return southPanel;
-      }
-
-      final JPanel withCB = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
-      myCheckBoxDoNotShowDialog.setSelected(!askOption.isToBeShown());
-      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
-
-      panel = withCB;
-    }
-
-    if (getStyle() == DialogStyle.COMPACT) {
-      final Color color = UIManager.getColor("DialogWrapper.southPanelDivider");
-      Border line = new CustomLineBorder(color != null ? color : OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
-      panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
-    } else {
-      panel.setBorder(JBUI.Borders.emptyTop(8));
-    }
-    return panel;
+    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide, myDoNotAsk);
   }
 
   @NotNull
   protected JButton createHelpButton(Insets insets) {
     final JButton helpButton;
-    if ((SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
+    if ((UIUtil.isUnderWin10LookAndFeel())) {
       helpButton = new JButton(getHelpAction()) {
         @Override
         public void paint(Graphics g) {
@@ -605,6 +540,18 @@ public abstract class DialogWrapper {
     return helpButton;
   }
 
+  @NotNull
+  private static List<Action> flattenOptionsActions(@NotNull List<Action> actions) {
+    List<Action> newActions = new ArrayList<>();
+    for (Action action : actions) {
+      newActions.add(action);
+      if (action instanceof OptionAction) {
+        ContainerUtil.addAll(newActions, ((OptionAction)action).getOptions());
+      }
+    }
+    return newActions;
+  }
+
   protected boolean shouldAddErrorNearButtons() {
     return false;
   }
@@ -613,18 +560,6 @@ public abstract class DialogWrapper {
   protected DialogStyle getStyle() {
     return DialogStyle.NO_STYLE;
   }
-
-  @NotNull
-  private Action[] filter(@NotNull Action[] actions) {
-    ArrayList<Action> answer = new ArrayList<>();
-    for (Action action : actions) {
-      if (action != null && (ApplicationInfo.contextHelpAvailable() || action != getHelpAction())) {
-        answer.add(action);
-      }
-    }
-    return answer.toArray(new Action[answer.size()]);
-  }
-
 
   protected boolean toBeShown() {
     return !myCheckBoxDoNotShowDialog.isSelected();
@@ -635,77 +570,109 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  public static JPanel addDoNotShowCheckBox(@NotNull JComponent southPanel, @NotNull JCheckBox checkBox) {
-    final JPanel panel = new JPanel(new BorderLayout());
+  private List<JButton> createButtons(@NotNull List<Action> actions) {
+    List<JButton> buttons = new ArrayList<>();
+    for (Action action : actions) {
+      buttons.add(createJButtonForAction(action));
+    }
+    return buttons;
+  }
 
-    JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(checkBox);
-    panel.add(wrapper, BorderLayout.WEST);
-    panel.add(southPanel, BorderLayout.EAST);
-    checkBox.setBorder(JBUI.Borders.emptyRight(20));
-    if (SystemInfo.isMac || (SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
-      JButton helpButton = null;
-      for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
-        if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
-          helpButton = button;
-          break;
+  @NotNull
+  private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
+                                  @NotNull List<JButton> rightSideButtons,
+                                  boolean hasHelpToMoveToLeftSide,
+                                  @Nullable DoNotAskOption doNotAsk) {
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
+        if (getStyle() == DialogStyle.COMPACT && bg != null) {
+          return bg;
         }
+        return super.getBackground();
       }
-      if (helpButton != null) {
-        return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
+    };
+    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    //noinspection UseDPIAwareInsets
+    final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+
+    if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
+      GridBag bag = new GridBag().setDefaultInsets(insets);
+
+      if (leftSideButtons.size() > 0) {
+        JPanel buttonsPanel = createButtonsPanel(leftSideButtons);
+        if (rightSideButtons.size() > 0) {
+          buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
+        }
+        lrButtonsPanel.add(buttonsPanel, bag.next());
       }
+      lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
+      if (rightSideButtons.size() > 0) {
+        JPanel buttonsPanel = createButtonsPanel(rightSideButtons);
+        if (shouldAddErrorNearButtons()) {
+          lrButtonsPanel.add(myErrorText, bag.next());
+          lrButtonsPanel.add(Box.createHorizontalStrut(10), bag.next());
+        }
+        lrButtonsPanel.add(buttonsPanel, bag.next());
+      }
+      if (SwingConstants.CENTER == myButtonAlignment) {
+        lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());    // right strut
+      }
+    }
+
+    JComponent helpButton = null;
+    if (hasHelpToMoveToLeftSide) {
+      if (!(SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration"))) {
+        helpButton = createHelpButton(insets);
+      }
+    }
+
+    if (doNotAsk != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
+      myCheckBoxDoNotShowDialog.setVisible(doNotAsk.canBeHidden());
+      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
+      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
+    }
+    JComponent doNotAskCheckbox = createDoNotAskCheckbox();
+
+
+    if (helpButton != null || doNotAskCheckbox != null) {
+      JPanel leftPanel = new JPanel(new BorderLayout());
+
+      if (helpButton != null) leftPanel.add(helpButton, BorderLayout.WEST);
+
+      if (doNotAskCheckbox != null) {
+        doNotAskCheckbox.setBorder(JBUI.Borders.emptyRight(20));
+        leftPanel.add(doNotAskCheckbox, BorderLayout.CENTER);
+      }
+
+      panel.add(leftPanel, BorderLayout.WEST);
+    }
+    panel.add(lrButtonsPanel, BorderLayout.CENTER);
+
+    if (getStyle() == DialogStyle.COMPACT) {
+      final Color color = UIManager.getColor("DialogWrapper.southPanelDivider");
+      Border line = new CustomLineBorder(color != null ? color : OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
+    }
+    else {
+      panel.setBorder(JBUI.Borders.emptyTop(8));
     }
 
     return panel;
   }
 
-  private boolean hasFocusedAction(@NotNull Action[] actions) {
-    for (Action action : actions) {
-      if (action.getValue(FOCUSED_ACTION) != null && (Boolean)action.getValue(FOCUSED_ACTION)) {
-        return true;
-      }
-    }
-
-    return false;
+  @Nullable
+  protected JComponent createDoNotAskCheckbox() {
+    return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
   @NotNull
-  private JPanel createButtons(@NotNull Action[] actions, @NotNull Map<Action, JButton> buttons) {
-    if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
-      final List<Action> actionList = new ArrayList<>();
-      for (Action action : actions) {
-        actionList.add(action);
-        if (action instanceof OptionAction) {
-          final Action[] options = ((OptionAction)action).getOptions();
-          actionList.addAll(Arrays.asList(options));
-        }
-      }
-      if (actionList.size() != actions.length) {
-        actions = actionList.toArray(actionList.toArray(new Action[actionList.size()]));
-      }
-    }
-
-    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5, 0));
-    for (final Action action : actions) {
-      JButton button = createJButtonForAction(action);
-      final Object value = action.getValue(Action.MNEMONIC_KEY);
-      if (value instanceof Integer) {
-        final int mnemonic = ((Integer)value).intValue();
-        final Object name = action.getValue(Action.NAME);
-        if (mnemonic == 'Y' && "Yes".equals(name)) {
-          myYesAction = action;
-        }
-        else if (mnemonic == 'N' && "No".equals(name)) {
-          myNoAction = action;
-        }
-        button.setMnemonic(mnemonic);
-      }
-
-      if (action.getValue(FOCUSED_ACTION) != null) {
-        myPreferredFocusedComponent = button;
-      }
-
-      buttons.put(action, button);
+  private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
+    int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
+    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, buttons.size(), hgap, 0));
+    for (final JButton button : buttons) {
       buttonsPanel.add(button);
     }
     return buttonsPanel;
@@ -733,81 +700,101 @@ public abstract class DialogWrapper {
   protected JButton createJButtonForAction(Action action) {
     JButton button;
     if (action instanceof OptionAction && UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
-      final Action[] options = ((OptionAction)action).getOptions();
-      button = new JBOptionButton(action, options);
-      final JBOptionButton eachOptionsButton = (JBOptionButton)button;
-      eachOptionsButton.setOkToProcessDefaultMnemonics(false);
-      eachOptionsButton.setOptionTooltipText(
-        "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
-      myOptionsButtons.add(eachOptionsButton);
-
-      final Set<JBOptionButton.OptionInfo> infos = eachOptionsButton.getOptionInfos();
-      for (final JBOptionButton.OptionInfo eachInfo : infos) {
-        if (eachInfo.getMnemonic() >= 0) {
-          final char mnemonic = (char)eachInfo.getMnemonic();
-          JRootPane rootPane = getPeer().getRootPane();
-          if (rootPane != null) {
-            new DumbAwareAction() {
-              @Override
-              public void actionPerformed(AnActionEvent e) {
-                final JBOptionButton buttonToActivate = eachInfo.getButton();
-                buttonToActivate.showPopup(eachInfo.getAction(), true);
-              }
-            }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
-          }
-        }
-      }
+      button = createJOptionsButton((OptionAction)action);
     }
     else {
       button = new JButton(action);
     }
 
-    String text = button.getText();
-
     if (SystemInfo.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
-    if (text != null) {
-      int mnemonic = 0;
-      StringBuilder plainText = new StringBuilder();
-      for (int i = 0; i < text.length(); i++) {
-        char ch = text.charAt(i);
-        if (ch == '_' || ch == '&') {
-          i++;
-          if (i >= text.length()) {
-            break;
-          }
-          ch = text.charAt(i);
-          if (ch != '_' && ch != '&') {
-            // Mnemonic is case insensitive.
-            int vk = ch;
-            if (vk >= 'a' && vk <= 'z') {
-              vk -= 'a' - 'A';
-            }
-            mnemonic = vk;
-          }
-        }
-        plainText.append(ch);
-      }
-      button.setText(plainText.toString());
-      final Object name = action.getValue(Action.NAME);
-      if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
-        myYesAction = action;
-      }
-      else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
-        myNoAction = action;
-      }
+    Pair<Integer, String> pair = extractMnemonic(button.getText());
+    button.setText(pair.second);
+    int mnemonic = pair.first;
 
-      button.setMnemonic(mnemonic);
+    final Object value = action.getValue(Action.MNEMONIC_KEY);
+    if (value instanceof Integer) {
+      mnemonic = (Integer)value;
     }
+    button.setMnemonic(mnemonic);
+
+    final Object name = action.getValue(Action.NAME);
+    if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
+      myYesAction = action;
+    }
+    else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
+      myNoAction = action;
+    }
+
     setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
       if (!myPeer.isHeadless()) {
         getRootPane().setDefaultButton(button);
       }
     }
+
+    if (action.getValue(FOCUSED_ACTION) != null) {
+      myPreferredFocusedComponent = button;
+    }
+
     return button;
+  }
+
+  @NotNull
+  private JButton createJOptionsButton(@NotNull OptionAction action) {
+    JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
+    optionButton.setOkToProcessDefaultMnemonics(false);
+    optionButton.setOptionTooltipText(
+      "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
+
+    final Set<JBOptionButton.OptionInfo> infos = optionButton.getOptionInfos();
+    for (final JBOptionButton.OptionInfo eachInfo : infos) {
+      if (eachInfo.getMnemonic() >= 0) {
+        final char mnemonic = (char)eachInfo.getMnemonic();
+        JRootPane rootPane = getPeer().getRootPane();
+        if (rootPane != null) {
+          new DumbAwareAction("Show JBOptionButton popup") {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              final JBOptionButton buttonToActivate = eachInfo.getButton();
+              buttonToActivate.showPopup(eachInfo.getAction(), true);
+            }
+          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
+        }
+      }
+    }
+
+    return optionButton;
+  }
+
+  @NotNull
+  private static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+    if (text == null) return Pair.create(0, null);
+
+    int mnemonic = 0;
+    StringBuilder plainText = new StringBuilder();
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '_' || ch == '&') {
+        i++;
+        if (i >= text.length()) {
+          break;
+        }
+        ch = text.charAt(i);
+        if (ch != '_' && ch != '&') {
+          // Mnemonic is case insensitive.
+          int vk = ch;
+          if (vk >= 'a' && vk <= 'z') {
+            vk -= 'a' - 'A';
+          }
+          mnemonic = vk;
+        }
+      }
+      plainText.append(ch);
+    }
+    return Pair.create(mnemonic, plainText.toString());
   }
 
   private void setMargin(@NotNull JButton button) {
@@ -926,12 +913,11 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     myValidationAlarm.cancelAllRequests();
     myDisposed = true;
-    if (myButtonMap != null) {
-      for (JButton button : myButtonMap.values()) {
-        button.setAction(null); // avoid memory leak via KeyboardManager
-      }
-      myButtonMap.clear();
+
+    for (JButton button : myButtonMap.values()) {
+      button.setAction(null); // avoid memory leak via KeyboardManager
     }
+    myButtonMap.clear();
 
     final JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
@@ -944,25 +930,56 @@ public abstract class DialogWrapper {
     }
   }
 
-  public static void unregisterKeyboardActions(final JRootPane rootPane) {
+  public static void cleanupRootPane(@Nullable JRootPane rootPane) {
+    if (rootPane == null) return;
+    // Must be preserved:
+    //   Component#appContext, Component#appContext, Container#component
+    //   JRootPane#contentPane due to popup recycling & our border styling
+    // Must be cleared:
+    //   JComponent#clientProperties, contentPane children
+    RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
+    unregisterKeyboardActions(rootPane);
+    Container contentPane = rootPane.getContentPane();
+    if (contentPane != null) contentPane.removeAll();
+    if (rootPane.getGlassPane() instanceof IdeGlassPane && rootPane.getClass() == JRootPane.class) {
+      rootPane.setGlassPane(new JPanel()); // resizeable AbstractPopup but not DialogWrapperPeer
+    }
+    Disposer.clearOwnFields(rootPane, field -> {
+      String clazz = field.getDeclaringClass().getName();
+      // keep AWT and Swing fields intact, except some
+      if (!clazz.startsWith("java.") && !clazz.startsWith("javax.")) return true;
+      String name = field.getName();
+      return "clientProperties".equals(name);
+    });
+  }
+
+  public static void unregisterKeyboardActions(@Nullable Component rootPane) {
+    int[] flags = {JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW};
     for (JComponent eachComp : UIUtil.uiTraverser(rootPane).traverse().filter(JComponent.class)) {
       ActionMap actionMap = eachComp.getActionMap();
-      KeyStroke[] strokes = eachComp.getRegisteredKeyStrokes();
-      for (KeyStroke eachStroke : strokes) {
+      if (actionMap == null) continue;
+      for (KeyStroke eachStroke : eachComp.getRegisteredKeyStrokes()) {
         boolean remove = true;
-        if (actionMap != null) {
-          for (int i : new int[]{JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW}) {
-            final InputMap inputMap = eachComp.getInputMap(i);
-            final Object key = inputMap.get(eachStroke);
-            if (key != null) {
-              final Action action = actionMap.get(key);
-              if (action instanceof UIResource) remove = false;
-            }
-          }
+        for (int i : flags) {
+          Object key = eachComp.getInputMap(i).get(eachStroke);
+          Action action = key == null ? null : actionMap.get(key);
+          if (action instanceof UIResource) remove = false;
         }
         if (remove) eachComp.unregisterKeyboardAction(eachStroke);
       }
     }
+  }
+
+  public static void cleanupWindowListeners(@Nullable Window window) {
+    if (window == null) return;
+    SwingUtilities.invokeLater(() -> {
+      for (WindowListener listener : window.getWindowListeners()) {
+        if (listener.getClass().getName().startsWith("com.intellij.")) {
+          LOG.warn("Stale listener: " + listener);
+          window.removeWindowListener(listener);
+        }
+      }
+    });
   }
 
 
@@ -1049,19 +1066,7 @@ public abstract class DialogWrapper {
    */
   @NotNull
   protected Action[] createActions() {
-    if (getHelpId() == null) {
-      if (SystemInfo.isMac) {
-        return new Action[]{getCancelAction(), getOKAction()};
-      }
-
-      return new Action[]{getOKAction(), getCancelAction()};
-    }
-    else {
-      if (SystemInfo.isMac) {
-        return new Action[]{getHelpAction(), getCancelAction(), getOKAction()};
-      }
-      return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-    }
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   @NotNull
@@ -1481,7 +1486,11 @@ public abstract class DialogWrapper {
     return myPeer.isModal();
   }
 
-  protected void setOKActionEnabled(boolean isEnabled) {
+  public boolean isOKActionEnabled() {
+    return myOKAction.isEnabled();
+  }
+
+  public void setOKActionEnabled(boolean isEnabled) {
     myOKAction.setEnabled(isEnabled);
   }
 
@@ -1537,10 +1546,6 @@ public abstract class DialogWrapper {
 
   public boolean isOK() {
     return getExitCode() == OK_EXIT_CODE;
-  }
-
-  public boolean isOKActionEnabled() {
-    return myOKAction.isEnabled();
   }
 
   /**
@@ -1663,13 +1668,6 @@ public abstract class DialogWrapper {
 
   @NotNull
   private AsyncResult<Boolean> invokeShow() {
-    Window window = myPeer.getWindow();
-    if (window instanceof JDialog && ((JDialog)window).getModalityType() == Dialog.ModalityType.DOCUMENT_MODAL) {
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        LOG.error("Project-modal dialogs should not be shown under a write action.");
-      }
-    }
-
     final AsyncResult<Boolean> result = new AsyncResult<>();
 
     ensureEventDispatchThread();
@@ -1723,20 +1721,18 @@ public abstract class DialogWrapper {
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
-    if (myButtonMap != null) {
-      rootPane.registerKeyboardAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          focusPreviousButton();
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      rootPane.registerKeyboardAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          focusNextButton();
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    }
+    rootPane.registerKeyboardAction(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        focusPreviousButton();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    rootPane.registerKeyboardAction(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        focusNextButton();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     if (myYesAction != null) {
       rootPane.registerKeyboardAction(myYesAction, KeyStroke.getKeyStroke(KeyEvent.VK_Y, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -1861,7 +1857,7 @@ public abstract class DialogWrapper {
         if (info.component != null && info.component.isVisible()) {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
-        DialogEarthquakeShaker.shake((JDialog)getPeer().getWindow());
+        DialogEarthquakeShaker.shake(getPeer().getWindow());
         startTrackingValidation();
         return;
       }

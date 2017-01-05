@@ -48,8 +48,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     this(null);
   }
 
-  public abstract boolean contains(@NotNull VirtualFile file);
-
   @Nullable
   @Override
   public Project getProject() {
@@ -89,8 +87,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return this;
-    if (scope instanceof IntersectionScope) {
-      return scope.intersectWith(this);
+    if (scope instanceof IntersectionScope && ((IntersectionScope)scope).containsScope(this)) {
+      return scope;
     }
     return new IntersectionScope(this, scope, null);
   }
@@ -194,9 +192,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
+  public static GlobalSearchScope everythingScope(@NotNull Project project) {
+    return ProjectScope.getEverythingScope(project);
+  }
+
+  @NotNull
   public static GlobalSearchScope notScope(@NotNull final GlobalSearchScope scope) {
     return new NotScope(scope);
   }
+
   private static class NotScope extends DelegatingGlobalSearchScope {
     private NotScope(@NotNull GlobalSearchScope scope) {
       super(scope);
@@ -322,8 +326,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   /**
    * Optimization. By default FilesScope makes a decision about searching in libraries by checking that
-   * at least one file is placed out of module roots. So if you're sure about files placement you can explicitly say FilesScope whether 
-   * it should include libraries or not in order to avoid checking each file. 
+   * at least one file is placed out of module roots. So if you're sure about files placement you can explicitly say FilesScope whether
+   * it should include libraries or not in order to avoid checking each file.
    * Also, if you have a lot of files it might be faster to always search in libraries.
    */
   @NotNull
@@ -331,7 +335,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (files.isEmpty()) return EMPTY_SCOPE;
     return new FilesScope(project, files, false);
   }
-  
+
   @NotNull
   public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     if (files.isEmpty()) return EMPTY_SCOPE;
@@ -368,10 +372,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @NotNull
     @Override
     public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-      if (myScope1.equals(scope) || myScope2.equals(scope) || equals(scope)) {
-        return this;
-      }
-      return new IntersectionScope(this, scope, null);
+      return containsScope(scope) ? this : new IntersectionScope(this, scope, null);
+    }
+
+    private boolean containsScope(@NotNull GlobalSearchScope scope) {
+      if (myScope1.equals(scope) || myScope2.equals(scope) || equals(scope)) return true;
+      if (myScope1 instanceof IntersectionScope && ((IntersectionScope)myScope1).containsScope(scope)) return true;
+      if (myScope2 instanceof IntersectionScope && ((IntersectionScope)myScope2).containsScope(scope)) return true;
+      return false;
     }
 
     @NotNull
@@ -586,6 +594,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
+  @Contract(pure=true)
   public static GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, @NotNull FileType... fileTypes) {
     if (scope == EMPTY_SCOPE) {
       return EMPTY_SCOPE;
@@ -660,7 +669,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      return "(" + myBaseScope + " restricted by file types: "+Arrays.asList(myFileTypes)+")";
+      return "(restricted by file types: "+Arrays.asList(myFileTypes)+" in "+ myBaseScope + ")";
     }
   }
 
@@ -743,6 +752,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return "File :"+myVirtualFile;
     }
 
+    @NotNull
     @Override
     public Iterator<VirtualFile> iterator() {
       return Collections.singletonList(myVirtualFile).iterator();
@@ -801,7 +811,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public int hashCode() {
       return myFiles.hashCode();
     }
-    
+
     private boolean hasFilesOutOfProjectRoots() {
       if (myHasFilesOutOfProjectRoots == null) {
         myHasFilesOutOfProjectRoots = false;
@@ -824,6 +834,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return "Files: ("+ files +"); search in libraries: " + (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
     }
 
+    @NotNull
     @Override
     public Iterator<VirtualFile> iterator() {
       return myFiles.iterator();

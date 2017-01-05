@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.util.PlatformIcons;
+import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,5 +69,9 @@ public class JBComboBoxLabel extends JPanel {
     if (myText != null) {
       myText.setForeground(color);
     }
+  }
+
+  public void setHorizontalAlignment(@MagicConstant(valuesFromClass = SwingConstants.class) int alignment) {
+     myText.setHorizontalAlignment(alignment);
   }
 }

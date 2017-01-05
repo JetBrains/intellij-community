@@ -76,7 +76,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean WARN_ABOUT_CRLF = true;
     public boolean WARN_ABOUT_DETACHED_HEAD = true;
     public GitResetMode RESET_MODE = null;
-    public boolean FORCE_PUSH_ALLOWED = false;
+    public boolean FORCE_PUSH_ALLOWED = true;
     public GitPushTagMode PUSH_TAGS = null;
     public boolean SIGN_OFF_COMMIT = false;
 

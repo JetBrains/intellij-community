@@ -19,8 +19,6 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -51,8 +49,8 @@ import java.util.Set;
 public class FontOptions extends JPanel implements OptionsPanel{
   private static final FontInfoRenderer RENDERER = new FontInfoRenderer() {
     @Override
-    protected AntialiasingType getAntialiasingType() {
-      return UISettings.getShadowInstance().EDITOR_AA_TYPE;
+    protected boolean isEditorFont() {
+      return true;
     }
   };
 
@@ -65,7 +63,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
-  private final FontComboBox mySecondaryCombo = new FontComboBox();
+  private final FontComboBox mySecondaryCombo = new FontComboBox(false, false);
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
     new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
@@ -73,19 +71,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
   private boolean myIsInSchemeChange;
 
 
-  public FontOptions(ColorAndFontOptions options) {
-    this(options, ApplicationBundle.message("group.editor.font"));
-  }
-
-  protected FontOptions(@NotNull ColorAndFontOptions options, final String title) {
+  public FontOptions(@NotNull ColorAndFontOptions options) {
     setLayout(new MigLayout("ins 0, gap 5, flowx"));
-    Insets borderInsets = new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
-                                     IdeBorderFactory.TITLED_BORDER_LEFT_INSET,
-                                     0,
-                                     IdeBorderFactory.TITLED_BORDER_RIGHT_INSET);
-    setBorder(IdeBorderFactory.createTitledBorder(title, false, borderInsets));
     myOptions = options;
-    add(myOnlyMonospacedCheckBox, "sgx b, sx 2");
+    add(myOnlyMonospacedCheckBox, "newline 10, sgx b, sx 2");
 
     add(new JLabel(ApplicationBundle.message("primary.font")), "newline, ax right");
     add(myPrimaryCombo, "sgx b");
@@ -147,8 +136,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         if (myIsInSchemeChange || !SwingUtilities.isEventDispatchThread()) return;
         String selectedFont = myPrimaryCombo.getFontName();
         if (selectedFont != null) {
-          FontPreferences fontPreferences = getFontPreferences();
-          fontPreferences.register(selectedFont, getFontSizeFromField());
+          setFontSize(getFontSizeFromField());
         }
         updateDescription(true);
       }
@@ -296,6 +284,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
     return getCurrentScheme().getFontPreferences();
   }
 
+  protected void setFontSize(int fontSize) {
+    getCurrentScheme().setEditorFontSize(fontSize);
+  }
+
   protected float getLineSpacing() {
     return getCurrentScheme().getLineSpacing();
   }
@@ -325,7 +317,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   public boolean updateDescription(boolean modified) {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
-    if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
+    if (modified && ColorAndFontOptions.isReadOnly(scheme)) {
       return false;
     }
 

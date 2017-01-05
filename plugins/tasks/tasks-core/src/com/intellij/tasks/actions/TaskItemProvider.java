@@ -89,11 +89,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
         }
         catch (TimeoutException ignore) {
         }
-        if (base.hasPostponedAction()) {
-            future.cancel(true);
-            return true;
-          }
-        }
+      }
       myFutureReference.compareAndSet(future, null);
 
       // Exclude *all* cached and local issues, not only those returned by TaskSearchSupport.getLocalAndCachedTasks().

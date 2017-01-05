@@ -22,17 +22,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyCreatePropertyQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * Checks that properties are accessed correctly.
@@ -75,7 +71,6 @@ public class PyPropertyAccessInspection extends PyInspection {
     public void visitPyTargetExpression(PyTargetExpression node) {
       super.visitPyTargetExpression(node);
       checkPropertyExpression(node);
-      checkAttributeExpression(node);
     }
 
     private void checkPropertyExpression(PyQualifiedExpression node) {
@@ -125,60 +120,6 @@ public class PyPropertyAccessInspection extends PyInspection {
         }
         registerProblem(node, message, new PyCreatePropertyQuickFix(dir));
       }
-    }
-
-    private void checkAttributeExpression(@NotNull PyTargetExpression target) {
-      final String targetName = target.getName();
-      final PyExpression qualifier = target.getQualifier();
-
-      if (targetName == null || qualifier == null) {
-        return;
-      }
-
-      final PyType qualifierType = myTypeEvalContext.getType(qualifier);
-
-      if (qualifierType instanceof PyClassType) {
-        final PyClassType qualifierClassType = (PyClassType)qualifierType;
-
-        if (!qualifierClassType.isDefinition()) {
-          final PyClass qualifierClass = qualifierClassType.getPyClass();
-
-          PyUtil
-            .multiResolveTopPriority(target.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)))
-            .stream()
-            .filter(PyTargetExpression.class::isInstance)
-            .map(declaration -> ((PyTargetExpression)declaration).getContainingClass())
-            .filter(declaringClass -> declaringClass != null && !attributeIsWritable(qualifierClass, declaringClass, targetName))
-            .findFirst()
-            .ifPresent(
-              cls -> registerProblem(target, String.format("'%s' object attribute '%s' is read-only", qualifierClass.getName(), targetName))
-            );
-        }
-      }
-    }
-
-    private boolean attributeIsWritable(@NotNull PyClass qualifierClass, @NotNull PyClass declaringClass, @NotNull String targetName) {
-      return attributeIsWritableInClass(qualifierClass, declaringClass, targetName) ||
-             qualifierClass
-               .getAncestorClasses(myTypeEvalContext)
-               .stream()
-               .filter(ancestorClass -> !PyUtil.isObjectClass(ancestorClass))
-               .anyMatch(ancestorClass -> attributeIsWritableInClass(ancestorClass, declaringClass, targetName));
-    }
-
-    private boolean attributeIsWritableInClass(@NotNull PyClass cls, @NotNull PyClass declaringClass, @NotNull String targetName) {
-      final List<String> ownSlots = cls.getOwnSlots();
-
-      if (ownSlots == null || ownSlots.contains(PyNames.DICT)) {
-        return true;
-      }
-
-      if (!cls.equals(declaringClass) || !ownSlots.contains(targetName)) {
-        return false;
-      }
-
-      return LanguageLevel.forElement(declaringClass).isAtLeast(LanguageLevel.PYTHON30) ||
-             declaringClass.findClassAttribute(targetName, false, myTypeEvalContext) == null;
     }
   }
 }

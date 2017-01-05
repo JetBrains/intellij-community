@@ -85,6 +85,11 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
       return MavenDomBundle.message("inspection.group");
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       new OpenFileDescriptor(project, myFile).navigate(true);
     }

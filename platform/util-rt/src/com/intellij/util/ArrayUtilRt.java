@@ -54,9 +54,9 @@ public class ArrayUtilRt {
   /**
    * @param src source array.
    * @param obj object to be found.
-   * @return index of <code>obj</code> in the <code>src</code> array.
-   *         Returns <code>-1</code> if passed object isn't found. This method uses
-   *         <code>equals</code> of arrays elements to compare <code>obj</code> with
+   * @return index of {@code obj} in the {@code src} array.
+   *         Returns {@code -1} if passed object isn't found. This method uses
+   *         {@code equals} of arrays elements to compare {@code obj} with
    *         these elements.
    */
   @Contract(pure=true)

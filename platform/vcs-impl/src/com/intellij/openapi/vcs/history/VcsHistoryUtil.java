@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.diff.DiffContentFactoryImpl;
+import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.contents.DiffContent;
@@ -163,7 +163,7 @@ public class VcsHistoryUtil {
   @NotNull
   private static DiffContent createContent(@NotNull Project project, @NotNull byte[] content, @NotNull VcsFileRevision revision,
                                            @NotNull FilePath filePath) throws IOException {
-    DiffContentFactoryImpl contentFactory = DiffContentFactoryImpl.getInstanceImpl();
+    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
     if (isCurrent(revision)) {
       VirtualFile file = filePath.getVirtualFile();
       if (file != null) return contentFactory.create(project, file);
@@ -171,7 +171,7 @@ public class VcsHistoryUtil {
     if (isEmpty(revision)) {
       return contentFactory.createEmpty();
     }
-    return contentFactory.createFromBytes(project, filePath, content);
+    return contentFactory.createFromBytes(project, content, filePath);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {

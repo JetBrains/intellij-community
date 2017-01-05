@@ -29,8 +29,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -83,8 +86,7 @@ public class ReferenceChainLink {
     List<PsiMember> candidates = new ArrayList<>();
     AtomicInteger count = new AtomicInteger();
     Processor<PsiMember> processor = member -> {
-      if (canBeAccessible(placeFile, member) && (!(member instanceof PsiMethod) ||
-                                                 ApproximateResolver.canHaveArgCount((PsiMethod)member, argCount))) {
+      if (!(member instanceof PsiMethod && !ApproximateResolver.canHaveArgCount((PsiMethod)member, argCount))) {
         candidates.add(member);
       }
       return count.incrementAndGet() < 42;
@@ -101,13 +103,18 @@ public class ReferenceChainLink {
       PsiPackage pkg = JavaPsiFacade.getInstance(project).findPackage(referenceName);
       if (pkg != null && pkg.getDirectories(scope).length > 0) return null;
 
-      if (!cache.processFieldsWithName(referenceName, processor, scope, null) ||
-          !cache.processClassesWithName(referenceName, processor, scope, null)) {
+      if (!cache.processFieldsWithName(referenceName, processor, scope, null)) {
         markExpensive(project);
         return null;
       }
     }
-    return candidates;
+
+    if (!cache.processClassesWithName(referenceName, processor, scope, null)) {
+      markExpensive(project);
+      return null;
+    }
+
+    return candidates.stream().filter(candidate -> canBeAccessible(placeFile, candidate)).collect(Collectors.toList());
   }
 
   private static boolean canBeAccessible(VirtualFile placeFile, PsiMember member) {

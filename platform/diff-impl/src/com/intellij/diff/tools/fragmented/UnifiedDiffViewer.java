@@ -66,8 +66,6 @@ import java.util.*;
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
-  public static final Logger LOG = Logger.getInstance(UnifiedDiffViewer.class);
-
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull private final UnifiedDiffPanel myPanel;
@@ -899,7 +897,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Nullable
   @Override
   protected Navigatable getNavigatable() {
-    return getNavigatable(myEditor.getCaretModel().getOffset());
+    return getNavigatable(LineCol.fromCaret(myEditor));
   }
 
   @CalledInAwt
@@ -936,8 +934,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @CalledInAwt
   @Nullable
-  protected Navigatable getNavigatable(int offset) {
-    LogicalPosition position = myEditor.offsetToLogicalPosition(offset);
+  protected Navigatable getNavigatable(@NotNull LineCol position) {
     Pair<int[], Side> pair = transferLineFromOneside(position.line);
     int line1 = pair.first[0];
     int line2 = pair.first[1];
@@ -991,7 +988,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     protected Navigatable getNavigatable(@NotNull Editor editor, int line) {
       if (editor != myEditor) return null;
 
-      return getNavigatable(myEditor, line);
+      return UnifiedDiffViewer.this.getNavigatable(new LineCol(line));
     }
   }
 
@@ -1130,9 +1127,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, myMasterSide);
     }
     else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return myEditor;

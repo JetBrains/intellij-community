@@ -20,7 +20,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiNameValuePairStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,10 +37,10 @@ public class PsiNameValuePairStubImpl extends StubBase<PsiNameValuePair> impleme
     myValue = value;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getName() {
-    return myName == null ? "value" : myName;
+    return myName;
   }
 
   @Nullable

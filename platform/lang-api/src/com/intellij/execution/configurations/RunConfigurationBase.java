@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Standard base class for run configuration implementations.
@@ -196,16 +195,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myLogFiles.clear();
-    for (final Object o : element.getChildren(LOG_FILE)) {
+    for (Element o : element.getChildren(LOG_FILE)) {
       LogFileOptions logFileOptions = new LogFileOptions();
-      logFileOptions.readExternal((Element)o);
+      logFileOptions.readExternal(o);
       myLogFiles.add(logFileOptions);
     }
     myPredefinedLogFiles.clear();
-    final List list = element.getChildren(PREDEFINED_LOG_FILE_ELEMENT);
-    for (Object fileElement : list) {
+    for (Element fileElement : element.getChildren(PREDEFINED_LOG_FILE_ELEMENT)) {
       final PredefinedLogFile logFile = new PredefinedLogFile();
-      logFile.readExternal((Element)fileElement);
+      logFile.readExternal(fileElement);
       myPredefinedLogFiles.add(logFile);
     }
     final Element fileOutputElement = element.getChild(FILE_OUTPUT);

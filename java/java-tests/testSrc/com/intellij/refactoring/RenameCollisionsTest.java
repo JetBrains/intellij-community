@@ -242,6 +242,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     doTest("T");
   }
 
+  public void testInnerClassNameCollisionWithSuperClassOfContainer() throws Exception {
+    doTest("handleAction");
+  }
+
   private void doTestImpossibleToRename() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtil

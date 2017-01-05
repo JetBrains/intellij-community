@@ -53,7 +53,7 @@
     <attribute name="script" />
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
-        <jvmarg line="-Xmx612m -XX:MaxPermSize=152m"/>
+        <jvmarg line="-Xmx812m -XX:MaxPermSize=152m"/>
         <sysproperty key="jna.nosys" value="true" />
         <sysproperty key="out" value="${out.dir}" />
         <sysproperty key="buildNumber" value="${build.number}" />

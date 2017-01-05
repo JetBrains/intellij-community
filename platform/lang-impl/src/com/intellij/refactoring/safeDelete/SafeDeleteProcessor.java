@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -51,7 +49,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -244,7 +241,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     presentation.setTargetsNodeText(RefactoringBundle.message("attempting.to.delete.targets.node.text"));
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
-    presentation.setCodeUsagesString(RefactoringBundle.message("references.found.in.code"));
+    presentation.setCodeUsagesString(RefactoringBundle.message("safe.delete.conflict.title"));
     presentation.setUsagesInGeneratedCodeString(RefactoringBundle.message("references.found.in.generated.code"));
     presentation.setNonCodeUsagesString(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
@@ -385,17 +382,15 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
-        for (PsiElement element : myElements) {
-          for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
-            if (delegate.handlesElement(element)) {
-              delegate.prepareForDeletion(element);
-            }
+      for (PsiElement element : myElements) {
+        for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+          if (delegate.handlesElement(element)) {
+            delegate.prepareForDeletion(element);
           }
-
-          element.delete();
         }
-      });
+
+        element.delete();
+      }
     } catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }

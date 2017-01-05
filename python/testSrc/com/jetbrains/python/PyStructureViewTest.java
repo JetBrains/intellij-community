@@ -15,9 +15,13 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.util.Consumer;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.structureView.PyStructureViewElement;
+
+import javax.swing.*;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
 
@@ -94,6 +98,21 @@ public class PyStructureViewTest extends PyTestCase {
            "  __doc__\n" +
            "  __module__\n",
            true);
+  }
+
+  // EA-83566
+  public void testInvalidatedElement() {
+    myFixture.configureByText("a.py",
+                              "def f():\n" +
+                              "    pass");
+    final PyFunction function = myFixture.findElementByText("f", PyFunction.class);
+    final PyStructureViewElement node = new PyStructureViewElement(function);
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), function::delete);
+    assertNull(node.getValue());
+    final ItemPresentation presentation = node.getPresentation();
+    assertNotNull(presentation);
+    final Icon icon = presentation.getIcon(false);
+    assertNull(icon);
   }
 
   private void doTest(final String expected, final boolean inherited) {

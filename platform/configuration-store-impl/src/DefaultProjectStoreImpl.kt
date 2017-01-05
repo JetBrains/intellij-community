@@ -17,7 +17,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
@@ -53,7 +52,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 
     override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
       override fun saveLocally(element: Element?) {
-        super.saveLocally(Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(element)))
+        super.saveLocally(element?.let { Element("application").addContent(Element("component").setAttribute("name", "ProjectManager").addContent(it))})
       }
     }
   }
@@ -62,13 +61,11 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
     override fun rename(path: String, newName: String) {
     }
 
-    override fun getMacroSubstitutor() = null
-
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun startExternalization() = storage.startExternalization()?.let { MyExternalizationSession(it) }
+    override fun startExternalization() = storage.startExternalization()?.let(::MyExternalizationSession)
 
-    override fun expandMacros(file: String) = throw UnsupportedOperationException()
+    override fun expandMacros(path: String) = throw UnsupportedOperationException()
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
@@ -86,7 +83,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
   }
 
   private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
-    override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
+    override fun setState(storageSpecs: Array<out Storage>, component: Any, componentName: String, state: Any) {
       externalizationSession.setState(component, componentName, state)
     }
 

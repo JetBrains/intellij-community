@@ -40,12 +40,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -219,22 +217,19 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
       for (final PsiFile file : psiFilesWithDuplicates) {
         CharSequence text = file.getViewProvider().getContents();
-        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, progress, new TIntProcedure() {
-          @Override
-          public boolean execute(int offset) {
-            PsiElement element = file.findElementAt(offset);
-            if (element != null && element.getParent() instanceof Property) {
-              final Property property = (Property)element.getParent();
-              if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
-                if (duplicatesCount[0] == 0){
-                  message.append(InspectionsBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
-                }
-                surroundWithHref(message, element, true);
-                duplicatesCount[0]++;
+        LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, progress, offset -> {
+          PsiElement element = file.findElementAt(offset);
+          if (element != null && element.getParent() instanceof Property) {
+            final Property property = (Property)element.getParent();
+            if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
+              if (duplicatesCount[0] == 0){
+                message.append(InspectionsBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
               }
+              surroundWithHref(message, element, true);
+              duplicatesCount[0]++;
             }
-            return true;
           }
+          return true;
         });
       }
       if (duplicatesCount[0] > 1) {

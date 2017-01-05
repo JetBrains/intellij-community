@@ -71,10 +71,8 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxNose/", 1,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py26", new InterpreterExpectations("", true)),
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
                                                        // Does not support 3.4
-                                                       Pair.create("py32", new InterpreterExpectations("SyntaxError", false)),
                                                        Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
@@ -125,10 +123,10 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxOneInterpreter/", 0,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py26", new InterpreterExpectations("", true)),
+                                                       Pair.create("py26", new InterpreterExpectations("", false)),
                                                        Pair.create("py27", new InterpreterExpectations("ython 2.7", true)),
-                                                       Pair.create("py32", new InterpreterExpectations("", true)),
-                                                       Pair.create("py34", new InterpreterExpectations("", true))
+                                                       Pair.create("py32", new InterpreterExpectations("", false)),
+                                                       Pair.create("py34", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -175,6 +173,9 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxConcreteEnv/", 0,
                                                      () -> new MyTestProcessRunner(1),
                                                      Arrays.asList(
+                                                       //26 and 27 only used for first time, they aren't used after rerun
+                                                       Pair.create("py26", new InterpreterExpectations("", true, 1)),
+                                                       Pair.create("py27", new InterpreterExpectations("", true, 1)),
                                                        Pair.create("py32", new InterpreterExpectations("", false)),
                                                        Pair.create("py34", new InterpreterExpectations("", false))
                                                      ),
@@ -197,6 +198,7 @@ public final class PyToxTest extends PyEnvTestCase {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
+              PyToxTestTools.setArguments(configuration, "-v");
               PyToxTestTools.setRunOnlyEnvs(configuration, envsToRun);
             }
           };
@@ -209,6 +211,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                         @NotNull final String all) {
           final Set<String> environments = runner.getTestProxy().getChildren().stream().map(t -> t.getName()).collect(Collectors.toSet());
           Assert.assertThat("Wrong environments launched", environments, Matchers.equalTo(Sets.newHashSet(envsToRun)));
+          Assert.assertThat("Argument not passed", all, Matchers.containsString("-v"));
         }
 
         @NotNull
@@ -257,8 +260,11 @@ public final class PyToxTest extends PyEnvTestCase {
                                     @NotNull final String all) {
 
       final Set<String> expectedInterpreters =
-        myInterpreters.entrySet().stream().filter(intAndExp -> intAndExp.getValue() != null).map(intAndExp -> intAndExp.getKey()).collect(
-          Collectors.toSet());
+        myInterpreters.entrySet().stream()
+          .filter(intAndExp -> intAndExp.getValue() != null)
+          .filter(o -> o.getValue().myUntilStep > runner.getCurrentRerunStep()) // Remove interp. which shouldn't be launched on this step
+          .map(intAndExp -> intAndExp.getKey())
+          .collect(Collectors.toSet());
 
       // Interpreters are used in tox.ini, so there should be such text
       for (final String interpreterName : expectedInterpreters) {
@@ -272,10 +278,12 @@ public final class PyToxTest extends PyEnvTestCase {
 
 
       final Set<String> checkedInterpreters = new HashSet<>();
-      final Set<String> skippedInterpreters = new HashSet<>();
+      final Collection<String> skippedMissingInterpreters = new HashSet<>();
       // Interpreter should either run tests or mentioned as NotFound
       for (final SMTestProxy interpreterSuite : runner.getTestProxy().getChildren()) {
         final String interpreterName = interpreterSuite.getName();
+        assert interpreterName.startsWith("py") : String
+          .format("Bad interpreter name: %s. Tree is %s \n", interpreterName, getTestTree(interpreterSuite, 0));
         checkedInterpreters.add(interpreterName);
 
         final InterpreterExpectations expectations = myInterpreters.get(interpreterName);
@@ -291,7 +299,7 @@ public final class PyToxTest extends PyEnvTestCase {
           if (testOutput.contains("InterpreterNotFound")) {
             // Skipped with out of "skip_missing_interpreters = True"
             Logger.getInstance(PyToxTest.class).warn(String.format("Interpreter %s does not exit", interpreterName));
-            skippedInterpreters.add(interpreterName); // Interpreter does not exit
+            skippedMissingInterpreters.add(interpreterName); // Interpreter does not exit
             continue;
           }
           // Some other error?
@@ -322,6 +330,7 @@ public final class PyToxTest extends PyEnvTestCase {
         // Check expected output
         final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
                                String.format("All: %s \n", all) +
+                               String.format("Test tree: %s \n", getTestTree(interpreterSuite, 0)) +
                                String.format("Error: %s \n", stderr);
 
 
@@ -330,10 +339,26 @@ public final class PyToxTest extends PyEnvTestCase {
                       getTestOutput(interpreterSuite), Matchers.containsString(expectations.myExpectedOutput));
       }
 
+      // Skipped interpreters should not be checked since we do not know which interpreters used on environemnt
+      // But if all interpreters are skipped, we can't say we tested something.
+      assert !skippedMissingInterpreters.equals(checkedInterpreters) : "All interpreters skipped (they do not exist on platform), " +
+                                                                       "we test nothing";
+      expectedInterpreters.removeAll(skippedMissingInterpreters);
+      checkedInterpreters.removeAll(skippedMissingInterpreters);
+
+
       Assert
-        .assertThat("No all interpreters from tox.ini used", expectedInterpreters, Matchers.everyItem(Matchers.isIn(checkedInterpreters)));
-      assert !skippedInterpreters.equals(expectedInterpreters) : "All interpreters skipped (they do not exist on platform), " +
-                                                                 "we test nothing";
+        .assertThat(String.format("No all interpreters from tox.ini used (test tree \n%s\n )", getTestTree(runner.getTestProxy(), 0)),
+                    checkedInterpreters, Matchers.everyItem(Matchers.isIn(expectedInterpreters)));
+    }
+
+    @NotNull
+    private static String getTestTree(@NotNull final SMTestProxy root, final int level) {
+      final StringBuilder result = new StringBuilder();
+      result.append(StringUtil.repeat(".", level)).append(root.getPresentableName()).append('\n');
+      final Optional<String> children = root.getChildren().stream().map(o -> getTestTree(o, level + 1)).reduce((s, s2) -> s + s2);
+      children.ifPresent(result::append);
+      return result.toString();
     }
 
     @NotNull
@@ -394,14 +419,24 @@ public final class PyToxTest extends PyEnvTestCase {
     @NotNull
     private final String myExpectedOutput;
     private final boolean myExpectedSuccess;
+    private final int myUntilStep;
 
     /**
      * @param expectedOutput  expected test output
      * @param expectedSuccess if test should be success
+     * @param untilStep       in case of rerun, expectation works only until this step and not checked after it
      */
-    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess) {
+    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess, final int untilStep) {
       myExpectedOutput = expectedOutput;
       myExpectedSuccess = expectedSuccess;
+      myUntilStep = untilStep;
+    }
+
+    /**
+     * @see #InterpreterExpectations(String, boolean, int)
+     */
+    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess) {
+      this(expectedOutput, expectedSuccess, Integer.MAX_VALUE);
     }
   }
 }

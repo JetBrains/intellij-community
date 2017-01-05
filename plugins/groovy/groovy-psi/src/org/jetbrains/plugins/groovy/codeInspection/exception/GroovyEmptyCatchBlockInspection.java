@@ -71,7 +71,7 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   private class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitCatchClause(GrCatchClause catchClause) {
+    public void visitCatchClause(@NotNull GrCatchClause catchClause) {
       super.visitCatchClause(catchClause);
       final GrOpenBlock body = catchClause.getBody();
       if (body == null || !isEmpty(body)) {

@@ -17,13 +17,12 @@ package com.intellij.credentialStore.kdbx
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.SmartList
-import com.intellij.util.inputStream
+import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.loadElement
 import org.bouncycastle.crypto.engines.Salsa20Engine
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
 import org.jdom.Element
-import org.linguafranca.pwdb.kdbx.KdbxSerializer
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
@@ -33,7 +32,7 @@ import java.time.format.DateTimeParseException
 import java.util.*
 import javax.xml.bind.DatatypeConverter
 
-internal fun loadKdbx(file: Path, credentials: KeePassCredentials) = file.inputStream().use {
+internal fun loadKdbx(file: Path, credentials: KeePassCredentials) = file.inputStreamIfExists()?.use {
   KeePassDatabase(KdbxStreamFormat().load(credentials, it))
 }
 
@@ -164,18 +163,16 @@ internal interface KdbxEncryption {
 
 private val SALSA20_IV = DatatypeConverter.parseHexBinary("E830094B97205D2A")
 
-private fun createSalsa20(key: ByteArray): Salsa20Engine {
-  val keyParameter = KeyParameter(sha256MessageDigest().digest(key))
-  val engine = Salsa20Engine()
-  engine.init(true, ParametersWithIV(keyParameter, SALSA20_IV))
-  return engine
-}
-
 /**
  * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption, i.e. in document order and at the same time.
  */
 internal class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
-  private val salsa20 = createSalsa20(key)
+  private val salsa20 = Salsa20Engine()
+
+  init {
+    val keyParameter = KeyParameter(sha256MessageDigest().digest(key))
+    salsa20.init(true, ParametersWithIV(keyParameter, SALSA20_IV))
+  }
 
   override fun decrypt(encryptedText: ByteArray): ByteArray {
     val output = ByteArray(encryptedText.size)

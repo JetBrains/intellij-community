@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMemberFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -126,7 +125,7 @@ public abstract class StaticMemberProcessor {
 
 
   private boolean isStaticallyImportable(final PsiMember member) {
-    return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !StaticImportMethodFix.isExcluded(member);
+    return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !StaticImportMemberFix.isExcluded(member);
   }
 
   protected boolean isAccessible(PsiMember member) {

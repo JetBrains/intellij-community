@@ -41,12 +41,10 @@ import java.util.*;
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
-  @NonNls static final String VALUE_ATTR = "value";
-
   @NonNls public static final String PATCH = "patch";
   @NonNls public static final String DIFF = "diff";
 
-  public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
+  public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = false;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine();
   public boolean CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT = false;
   public boolean CHECK_NEW_TODO = true;
@@ -59,7 +57,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean PERFORM_ROLLBACK_IN_BACKGROUND = false;
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = false;
   @OptionTag(tag = "confirmMoveToFailedCommit", nameAttribute = "")
-  public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+  public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
   @OptionTag(tag = "confirmRemoveEmptyChangelist", nameAttribute = "")
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
@@ -74,7 +72,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
   public String UPDATE_FILTER_SCOPE_NAME = null;
-  public boolean USE_COMMIT_MESSAGE_MARGIN = false;
+  public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
@@ -142,10 +140,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
-  @Deprecated
-  public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f; // to remove after 2016.3
+
   private static final int MAX_STORED_MESSAGES = 25;
-  @NonNls static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
 
   private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
   private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();
@@ -303,4 +299,9 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     IGNORED_UNREGISTERED_ROOTS = unregisteredRoots;
   }
 
+  public void removeFromIgnoredUnregisteredRoots(@NotNull Collection<String> roots) {
+    List<String> unregisteredRoots = new ArrayList<>(IGNORED_UNREGISTERED_ROOTS);
+    unregisteredRoots.removeAll(roots);
+    IGNORED_UNREGISTERED_ROOTS = unregisteredRoots;
+  }
 }

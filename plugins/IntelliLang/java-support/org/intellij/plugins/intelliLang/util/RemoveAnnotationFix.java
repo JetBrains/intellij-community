@@ -15,14 +15,10 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.IncorrectOperationException;
-import org.intellij.plugins.intelliLang.inject.java.validation.InjectionNotApplicable;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveAnnotationFix implements LocalQuickFix {
@@ -43,13 +39,6 @@ public class RemoveAnnotationFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) {
-      try {
-        descriptor.getPsiElement().delete();
-      }
-      catch (IncorrectOperationException e) {
-        Logger.getInstance(InjectionNotApplicable.class.getName()).error(e);
-      }
-    }
+    descriptor.getPsiElement().delete();
   }
 }

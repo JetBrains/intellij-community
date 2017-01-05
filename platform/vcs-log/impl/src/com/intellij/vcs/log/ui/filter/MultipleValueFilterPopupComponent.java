@@ -26,28 +26,26 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.data.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> extends FilterPopupComponent<Filter> {
 
   private static final int MAX_FILTER_VALUE_LENGTH = 30;
 
-  @NotNull protected final VcsLogUiProperties myUiProperties;
+  @NotNull protected final MainVcsLogUiProperties myUiProperties;
 
   MultipleValueFilterPopupComponent(@NotNull String filterName,
-                                    @NotNull VcsLogUiProperties uiProperties,
+                                    @NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull FilterModel<Filter> filterModel) {
     super(filterName, filterModel);
     myUiProperties = uiProperties;
   }
-
-  @NotNull
-  protected abstract Collection<String> getTextValues(@Nullable Filter filter);
 
   @NotNull
   protected abstract List<List<String>> getRecentValuesFromSettings();
@@ -56,9 +54,6 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
 
   @NotNull
   protected abstract List<String> getAllValues();
-
-  @NotNull
-  protected abstract Filter createFilter(@NotNull Collection<String> values);
 
   @NotNull
   protected ActionGroup createRecentItemsActionGroup() {
@@ -90,11 +85,6 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  protected AnAction createPredefinedValueAction(@NotNull Collection<String> values) {
-    return new PredefinedValueAction(values);
-  }
-
-  @NotNull
   protected AnAction createSelectMultipleValuesAction() {
     return new SelectMultipleValuesAction();
   }
@@ -108,9 +98,13 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
 
   protected class PredefinedValueAction extends DumbAwareAction {
 
-    @NotNull protected final Collection<String> myValues;
+    @NotNull protected final List<String> myValues;
 
-    public PredefinedValueAction(@NotNull Collection<String> values) {
+    public PredefinedValueAction(@NotNull String value) {
+      this(Collections.singletonList(value));
+    }
+
+    public PredefinedValueAction(@NotNull List<String> values) {
       super(null, tooltip(values), null);
       getTemplatePresentation().setText(displayableText(values), false);
       myValues = values;
@@ -118,7 +112,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myFilterModel.setFilter(createFilter(myValues));
+      myFilterModel.setFilter(myFilterModel.createFilter(myValues));
       rememberValuesInSettings(myValues);
     }
   }
@@ -140,19 +134,23 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       }
 
       Filter filter = myFilterModel.getFilter();
-      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(getTextValues(filter)),
+      List<String> values = filter == null
+                            ? Collections.emptyList()
+                            : myFilterModel.getFilterValues(filter);
+      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants,
+                                                                           getPopupText(values),
                                                                            supportsNegativeValues());
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {
           if (event.isOk()) {
-            Collection<String> selectedValues = popupBuilder.getSelectedValues();
+            List<String> selectedValues = popupBuilder.getSelectedValues();
             if (selectedValues.isEmpty()) {
               myFilterModel.setFilter(null);
             }
             else {
-              myFilterModel.setFilter(createFilter(selectedValues));
+              myFilterModel.setFilter(myFilterModel.createFilter(selectedValues));
               rememberValuesInSettings(selectedValues);
             }
           }

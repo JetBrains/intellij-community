@@ -34,15 +34,16 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.PromiseKt;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
  * @author nik
@@ -63,16 +64,11 @@ public class XBreakpointUtil {
 
   @Nullable
   public static XBreakpointType<?, ?> findType(@NotNull @NonNls String id) {
-    for (XBreakpointType breakpointType : getBreakpointTypes()) {
-      if (id.equals(breakpointType.getId())) {
-        return breakpointType;
-      }
-    }
-    return null;
+    return breakpointTypes().filter(breakpointType -> id.equals(breakpointType.getId())).findFirst().orElse(null);
   }
 
-  public static XBreakpointType<?, ?>[] getBreakpointTypes() {
-    return XBreakpointType.EXTENSION_POINT_NAME.getExtensions();
+  public static StreamEx<XBreakpointType> breakpointTypes() {
+    return StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.getExtensions());
   }
 
   @NotNull
@@ -103,7 +99,7 @@ public class XBreakpointUtil {
     for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
       panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }
-    Collections.sort(panelProviders, (o1, o2) -> o2.getPriority() - o1.getPriority());
+    panelProviders.sort((o1, o2) -> o2.getPriority() - o1.getPriority());
     return panelProviders;
   }
 
@@ -127,11 +123,12 @@ public class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static Promise toggleLineBreakpoint(@NotNull Project project,
+  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
                                              @NotNull XSourcePosition position,
                                              @Nullable Editor editor,
                                              boolean temporary,
-                                             boolean moveCarret) {
+                                             boolean moveCaret,
+                                             boolean canRemove) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority
@@ -151,15 +148,11 @@ public class XBreakpointUtil {
       int maxPriority = 0;
       for (XLineBreakpointType<?> type : lineTypes) {
         maxPriority = Math.max(maxPriority, type.getPriority());
-        final XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
-        if (breakpoint != null && temporary && !breakpoint.isTemporary()) {
-          breakpoint.setTemporary(true);
-        }
-        else if (type.canPutAt(file, line, project) || breakpoint != null) {
-          if (typeWinner == null || type.getPriority() > typeWinner.getPriority()) {
-            typeWinner = type;
-            lineWinner = line;
-          }
+        XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+        if ((type.canPutAt(file, line, project) || breakpoint != null) &&
+            (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
+          typeWinner = type;
+          lineWinner = line;
         }
       }
       // already found max priority type - stop
@@ -171,12 +164,13 @@ public class XBreakpointUtil {
     if (typeWinner != null) {
       XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(file, lineWinner);
       if (winPosition != null) {
-        Promise<XLineBreakpoint> res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor);
+        Promise<XLineBreakpoint> res =
+          XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor, canRemove);
 
         if (editor != null && lineStart != lineWinner) {
           int offset = editor.getDocument().getLineStartOffset(lineWinner);
           ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
-          if (moveCarret) {
+          if (moveCaret) {
             editor.getCaretModel().moveToOffset(offset);
           }
         }
@@ -184,6 +178,6 @@ public class XBreakpointUtil {
       }
     }
 
-    return PromiseKt.rejectedPromise();
+    return rejectedPromise();
   }
 }

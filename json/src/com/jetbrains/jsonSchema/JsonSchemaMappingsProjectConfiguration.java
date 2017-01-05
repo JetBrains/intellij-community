@@ -1,6 +1,8 @@
 package com.jetbrains.jsonSchema;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -70,6 +72,8 @@ public class JsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsCo
   }
 
   private void recalculateSchemaFiles() {
+    ApplicationManager
+      .getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged()));
     mySchemaFiles.clear();
     if (myProject == null || myProject.getBaseDir() == null) return;
 

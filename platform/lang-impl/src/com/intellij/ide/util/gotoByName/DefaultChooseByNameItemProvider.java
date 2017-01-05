@@ -98,7 +98,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     indicator.checkCanceled();
     started = System.currentTimeMillis();
     List<MatchResult> results = (List<MatchResult>)collect.getResult();
-    sortNamesList(matchingPattern, results);
+    sortNamesList(namePattern, results);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + results.size());
@@ -109,6 +109,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final Map<Object, MatchResult> qualifierMatchResults = ContainerUtil.newIdentityTroveMap();
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
+      @SuppressWarnings("unchecked")
       Comparator<Object> modelComparator = model instanceof Comparator
                                            ? (Comparator<Object>)model
                                            : new PathProximityComparator(myContext == null ? null :myContext.getElement());
@@ -186,8 +187,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return true;
   }
 
-  protected void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
-    Collections.sort(namesList);
+  private static void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
+    Collections.sort(namesList, (mr1, mr2) -> {
+      boolean exactPrefix1 = namePattern.equalsIgnoreCase(mr1.elementName);
+      boolean exactPrefix2 = namePattern.equalsIgnoreCase(mr2.elementName);
+      if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
+      return mr1.compareTo(mr2);
+    });
   }
 
   @NotNull

@@ -91,6 +91,14 @@ public class AbstractTreeBuilder implements Disposable {
     return new AbstractTreeUi();
   }
 
+  public final void scrollTo(Object element) {
+    scrollTo(element, null);
+  }
+
+  public final void scrollTo(Object element, Runnable onDone) {
+    if (!isDisposed()) getUi().userScrollTo(element, onDone == null ? null : new UserRunnable(onDone));
+  }
+
   public final void select(final Object element) {
     if (isDisposed()) return;
 
@@ -688,5 +696,10 @@ public class AbstractTreeBuilder implements Disposable {
   public boolean isSelectionBeingAdjusted() {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isSelectionBeingAdjusted();
+  }
+
+  public boolean isToBuildChildrenInBackground(Object element) {
+    AbstractTreeUi ui = getUi();
+    return ui != null && ui.isToBuildChildrenInBackground(element);
   }
 }

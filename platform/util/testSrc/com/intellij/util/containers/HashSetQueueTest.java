@@ -23,6 +23,8 @@ import junit.framework.TestCase;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class HashSetQueueTest extends TestCase {
   private final Assertion CHECK = new Assertion();
   private final HashSetQueue<String> myQueue = new HashSetQueue<>();
@@ -150,15 +152,15 @@ public class HashSetQueueTest extends TestCase {
     }
 
     HashSetQueue.PositionalIterator.IteratorPosition<String> nextPos = position.next();
-    assertTrue(position.compareTo(nextPos) < 0);
-    assertTrue(position.compareTo(position) == 0);
-    assertTrue(nextPos.compareTo(position) > 0);
+    assertThat(position).isLessThan(nextPos);
+    assertThat(position).isEqualByComparingTo(position);
+    assertThat(nextPos).isGreaterThan(position);
     assertSame(o, nextPos.peek());
 
     assertNull(nextPos.next());
 
     HashSetQueue.PositionalIterator.IteratorPosition<String> nextPos2 = position.next();
-    assertTrue(nextPos2.compareTo(nextPos) == 0);
+    assertThat(nextPos2).isEqualByComparingTo(nextPos);
     assertSame(o, nextPos2.peek());
 
     assertTrue(iterator.hasNext());

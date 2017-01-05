@@ -60,7 +60,6 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     return PeriodicalTasksCloser.getInstance().safeGetService(project, RemoteRevisionsCache.class);
   }
 
-  @SuppressWarnings("UnusedDeclaration") // initialized as a Service
   private RemoteRevisionsCache(final Project project) {
     myProject = project;
     myLock = new Object();

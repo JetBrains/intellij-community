@@ -93,7 +93,10 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     List<UsageInfo> infos = new ArrayList<>();
     final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
     for (ChangeSignatureUsageProcessor processor : processors) {
-      ContainerUtil.addAll(infos, processor.findUsages(changeInfo));
+      for (UsageInfo info : processor.findUsages(changeInfo)) {
+        LOG.assertTrue(info != null, processor);
+        infos.add(info);
+      }
     }
     infos = filterUsages(infos);
     return infos.toArray(new UsageInfo[infos.size()]);

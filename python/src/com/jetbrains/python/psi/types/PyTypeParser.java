@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBa
  * @author vlan
  */
 public class PyTypeParser {
-  private static final ParseResult EMPTY_RESULT = new ParseResult(null, null, Collections.<TextRange, PyType>emptyMap(), Collections.<PyType, TextRange>emptyMap(),
-                                                                  Collections.<PyType, PyImportElement>emptyMap());
+  private static final ParseResult EMPTY_RESULT = new ParseResult(null, null, Collections.emptyMap(), Collections.emptyMap(),
+                                                                  Collections.emptyMap());
 
   public static class ParseResult {
     @Nullable private final PsiElement myElement;
@@ -78,7 +78,7 @@ public class PyTypeParser {
     }
 
     ParseResult(@Nullable PsiElement element, @NotNull PyType type, @NotNull TextRange range) { 
-      this(element, type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
+      this(element, type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.of());
     }
 
     @Nullable
@@ -165,7 +165,7 @@ public class PyTypeParser {
             result = result.merge(r);
             types.add(r.getType());
           }
-          return result.withType(PyTupleType.create(anchor, types.toArray(new PyType[types.size()])));
+          return result.withType(PyTupleType.create(anchor, types));
         })
         .named("tuple-type");
 
@@ -411,19 +411,16 @@ public class PyTypeParser {
             return paramResult;
           }
           else if (starCount == 1) {
-            final PyClassType tupleType = PyTupleType.createHomogeneous(anchor, type);
-            if (tupleType != null) {
-              return paramResult.withType(tupleType);
+            final PyTupleType positionalType = PyTypeUtil.toPositionalContainerType(anchor, type);
+            if (positionalType != null) {
+              return paramResult.withType(positionalType);
             }
             return EMPTY_RESULT;
           }
           else if (starCount == 2) {
-            final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-            final PyClassType dictType = builtinCache.getDictType();
-            if (dictType != null) {
-              final PyClass pyClass = dictType.getPyClass();
-              return paramResult.withType(new PyCollectionTypeImpl(pyClass, false,
-                                                                   Arrays.asList(builtinCache.getStrType(), type)));
+            final PyCollectionType keywordType = PyTypeUtil.toKeywordContainerType(anchor, type);
+            if (keywordType != null) {
+              return paramResult.withType(keywordType);
             }
             return EMPTY_RESULT;
           }
@@ -728,10 +725,7 @@ public class PyTypeParser {
         tokens.add(token);
       }
     }
-    catch (IOException e) {
-      return Collections.emptyList();
-    }
-    catch (Error e) {
+    catch (IOException | Error e) {
       return Collections.emptyList();
     }
     return tokens;

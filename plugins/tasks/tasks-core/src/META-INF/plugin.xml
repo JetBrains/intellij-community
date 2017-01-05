@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
   <description>Enables task and context management</description>

@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ReflectionUtil;
@@ -47,13 +46,8 @@ public class DefaultStateSerializer {
       }
 
       T t = ReflectionUtil.newInstance(stateClass);
-      try {
-        ((JDOMExternalizable)t).readExternal(stateElement);
-        return t;
-      }
-      catch (InvalidDataException e) {
-        throw new RuntimeException(e);
-      }
+      ((JDOMExternalizable)t).readExternal(stateElement);
+      return t;
     }
     else if (mergeInto == null) {
       return XmlSerializer.deserialize(stateElement, stateClass);

@@ -43,13 +43,15 @@ public class BlockIndentOptions {
 
   @NotNull
   public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull AbstractBlockWrapper block) {
-    final Language language = block.getLanguage();
-    if (language != null) {
-      final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(language);
-      if (commonSettings != null) {
-        final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
-        if (result != null) {
-          return result;
+    if (!myIndentOptions.isOverrideLanguageOptions()) {
+      final Language language = block.getLanguage();
+      if (language != null) {
+        final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(language);
+        if (commonSettings != null) {
+          final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
+          if (result != null) {
+            return result;
+          }
         }
       }
     }

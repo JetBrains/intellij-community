@@ -95,13 +95,6 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
       myFilesToSort = toSort;
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @NotNull
     @Override
     public String getFamilyName() {

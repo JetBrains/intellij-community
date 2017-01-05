@@ -67,7 +67,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     updateStatus();
   }
 

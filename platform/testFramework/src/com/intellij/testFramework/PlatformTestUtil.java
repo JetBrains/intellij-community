@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -294,7 +295,8 @@ public class PlatformTestUtil {
                                  "; invokeLater passed=" + runnableInvoked.get() +
                                  "; app.disposed=" + app.isDisposed() +
                                  "; alarm.disposed=" + alarm.isDisposed() +
-                                 "; alarm.requests=" + alarm.getActiveRequestCount()
+                                 "; alarm.requests=" + alarm.getActiveRequestCount() +
+                                 "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
         );
       }
     }
@@ -436,7 +438,7 @@ public class PlatformTestUtil {
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
-    action.update(event);
+    action.beforeActionPerformedUpdate(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
   }
@@ -846,7 +848,7 @@ public class PlatformTestUtil {
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      Assert.assertEquals(printElement(expected), printElement(actual));
+      Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
@@ -857,12 +859,6 @@ public class PlatformTestUtil {
     catch (IOException | JDOMException e) {
       throw new AssertionError(e);
     }
-  }
-
-  public static String printElement(final Element element) throws IOException {
-    final StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(element, writer, "\n");
-    return writer.getBuffer().toString();
   }
 
   public static String getCommunityPath() {
@@ -876,7 +872,6 @@ public class PlatformTestUtil {
   public static String getPlatformTestDataPath() {
     return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
   }
-
 
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
     return (o1, o2) -> {

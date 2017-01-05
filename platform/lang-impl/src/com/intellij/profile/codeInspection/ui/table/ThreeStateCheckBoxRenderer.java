@@ -55,7 +55,9 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
 
   @Override
   public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column) {
-    return tune(value, isSelected, row, table, false);
+    JCheckBox checkBox = tune(value, isSelected, row, table, false);
+    checkBox.setOpaque(true);
+    return checkBox;
   }
 
   @Override

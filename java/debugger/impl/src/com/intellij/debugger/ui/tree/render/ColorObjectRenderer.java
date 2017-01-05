@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.sun.jdi.*;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ class ColorObjectRenderer extends CompoundReferenceRenderer {
           if (rgbValue instanceof IntegerValue) {
             @SuppressWarnings("UseJBColor")
             final Color color = new Color(((IntegerValue)rgbValue).value(), true);
-            return new ColorIcon(16, 12, color, true);
+            return JBUI.scale(new ColorIcon(16, 12, color, true));
           }
         }
       }

@@ -23,11 +23,12 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import org.jetbrains.builtInWebServer.BuiltInServerOptions;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -111,14 +113,13 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
    public String getExternalDocInfoForElement(@NotNull String docURL, final PsiElement element) throws Exception {
     String externalDoc = null;
     myElement = element;
-    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + "/" + myProject.getName() + "/";
+    String projectPath = "/" + myProject.getName() + "/";
+    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + projectPath;
     if (docURL.startsWith(builtInServer)) {
-      int refPosition = docURL.lastIndexOf('#');
-      VirtualFile file = WebServerPathToFileManager.getInstance(myProject).findVirtualFile(
-        docURL.substring(builtInServer.length(), refPosition < builtInServer.length() ? docURL.length() : refPosition)
-      );
+      Url url = Urls.parseFromIdea(docURL);
+      VirtualFile file = url == null ? null : WebServerPathToFileManager.getInstance(myProject).findVirtualFile(url.getPath().substring(projectPath.length()));
       if (file != null) {
-        InputStreamReader reader = new InputStreamReader(file.getInputStream(), CharsetToolkit.UTF8_CHARSET);
+        InputStreamReader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
         StringBuilder result = new StringBuilder();
         try {
           doBuildFromStream(docURL, reader, result);

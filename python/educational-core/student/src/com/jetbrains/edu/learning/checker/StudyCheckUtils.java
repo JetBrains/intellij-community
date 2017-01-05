@@ -48,18 +48,22 @@ public class StudyCheckUtils {
   private StudyCheckUtils() {
   }
 
-  public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
+  public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task) {
+    VirtualFile taskDir = task.getTaskDir(project);
+    if (taskDir == null) {
+      return;
+    }
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }
       FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
       if (fileEditor instanceof StudyEditor) {
         StudyEditor studyEditor = (StudyEditor)fileEditor;
-        StudyUtils.drawAllWindows(studyEditor.getEditor(), taskFile);
+        StudyUtils.drawAllAnswerPlaceholders(studyEditor.getEditor(), taskFile);
       }
     }
   }
@@ -79,7 +83,7 @@ public class StudyCheckUtils {
         TaskFile taskFile = entry.getValue();
         if (taskManager.hasFailedAnswerPlaceholders(taskFile)) {
           taskFileToNavigate = taskFile;
-          VirtualFile virtualFile = taskDir.findChild(name);
+          VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
           if (virtualFile == null) {
             continue;
           }
@@ -114,17 +118,20 @@ public class StudyCheckUtils {
 
   public static void runSmartTestProcess(@NotNull final VirtualFile taskDir,
                                          @NotNull final StudyTestRunner testRunner,
-                                         final String taskFileName,
+                                         @NotNull final String taskFileName,
                                          @NotNull final TaskFile taskFile,
                                          @NotNull final Project project) {
-    final TaskFile answerTaskFile = new TaskFile();
-    answerTaskFile.name = taskFileName;
-    final VirtualFile virtualFile = taskDir.findChild(taskFileName);
+    final VirtualFile virtualFile = taskDir.findFileByRelativePath(taskFileName);
     if (virtualFile == null) {
       return;
     }
-    final VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
-    for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getAnswerPlaceholders()) {
+    Pair<VirtualFile, TaskFile> pair = getCopyWithAnswers(taskDir, virtualFile, taskFile);
+    if (pair == null) {
+      return;
+    }
+    VirtualFile answerFile = pair.getFirst();
+    TaskFile answerTaskFile = pair.getSecond();
+    for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
       final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
         continue;
@@ -136,33 +143,34 @@ public class StudyCheckUtils {
   }
 
 
-  private static VirtualFile getCopyWithAnswers(@NotNull final VirtualFile taskDir,
+  private static Pair<VirtualFile, TaskFile> getCopyWithAnswers(@NotNull final VirtualFile taskDir,
                                                 @NotNull final VirtualFile file,
-                                                @NotNull final TaskFile source,
-                                                @NotNull final TaskFile target) {
-    VirtualFile copy = null;
+                                                @NotNull final TaskFile source) {
     try {
-
-      copy = file.copy(taskDir, taskDir, file.getNameWithoutExtension() + EduNames.ANSWERS_POSTFIX + "." + file.getExtension());
+      VirtualFile answerFile = file.copy(taskDir, taskDir, file.getNameWithoutExtension() + EduNames.ANSWERS_POSTFIX + "." + file.getExtension());
       final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      final Document document = documentManager.getDocument(copy);
+      final Document document = documentManager.getDocument(answerFile);
       if (document != null) {
-        TaskFile.copy(source, target);
-        EduDocumentListener listener = new EduDocumentListener(target);
+        TaskFile answerTaskFile = source.getTask().copy().getTaskFile(StudyUtils.pathRelativeToTask(file));
+        if (answerTaskFile == null) {
+          return null;
+        }
+        EduDocumentListener listener = new EduDocumentListener(answerTaskFile);
         document.addDocumentListener(listener);
-        for (AnswerPlaceholder answerPlaceholder : target.getAnswerPlaceholders()) {
+        for (AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
           final int start = answerPlaceholder.getOffset();
           final int end = start + answerPlaceholder.getRealLength();
           final String text = answerPlaceholder.getPossibleAnswer();
           document.replaceString(start, end, text);
         }
         ApplicationManager.getApplication().runWriteAction(() -> documentManager.saveDocument(document));
+        return Pair.create(answerFile, answerTaskFile);
       }
     }
     catch (IOException e) {
       LOG.error(e);
     }
-    return copy;
+    return null;
   }
 
 
@@ -181,7 +189,7 @@ public class StudyCheckUtils {
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
-      VirtualFile virtualFile = taskDir.findChild(name);
+      VirtualFile virtualFile = taskDir.findFileByRelativePath(name);
       if (virtualFile == null) {
         continue;
       }

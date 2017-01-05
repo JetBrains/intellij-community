@@ -42,7 +42,7 @@ public class ResourceBundleUtil {
    *
    * @param dataContext   target context
    * @return              {@link ResourceBundle resource bundle} related to the given context if any;
-   *                      <code>null</code> otherwise
+   *                      {@code null} otherwise
    */
   @Nullable
   public static ResourceBundle getResourceBundleFromDataContext(@NotNull DataContext dataContext) {

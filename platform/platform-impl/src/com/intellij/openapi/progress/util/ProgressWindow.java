@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -120,6 +119,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
     });
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
+
+    if (myProject != null) {
+      Disposer.register(myProject, this);
+    }
   }
 
   @Override
@@ -205,17 +208,21 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     init.run();
 
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, object -> {
-      if (myShouldShowCancel &&
-          object instanceof KeyEvent &&
-          object.getID() == KeyEvent.KEY_PRESSED &&
-          ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
-          ((KeyEvent)object).getModifiers() == 0) {
-        SwingUtilities.invokeLater(() -> cancel());
+      if (isCancellationEvent(object)) {
+        cancel();
       }
       return isStarted() && !isRunning();
     });
 
     exitModality();
+  }
+
+  protected final boolean isCancellationEvent(AWTEvent event) {
+    return myShouldShowCancel &&
+           event instanceof KeyEvent &&
+           event.getID() == KeyEvent.KEY_PRESSED &&
+           ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE &&
+           ((KeyEvent)event).getModifiers() == 0;
   }
 
   @NotNull
@@ -268,7 +275,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     if (isDialogShowing()) {
       if (myFocusTrackback != null) {
-        myFocusTrackback.setWillBeSheduledForRestore();
+        myFocusTrackback.setWillBeScheduledForRestore();
       }
     }
 
@@ -283,7 +290,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           myFocusTrackback.restoreFocus();
         }
         else {
-          myFocusTrackback.consume();
+          myFocusTrackback.dispose();
         }
       }
 
@@ -299,6 +306,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private boolean isDialogShowing() {
     return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
+  }
+
+  @Nullable
+  protected ProgressDialog getDialog() {
+    return myDialog;
   }
 
   public void background() {
@@ -389,6 +401,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public void dispose() {
     stopSystemActivity();
+    if (isRunning()) {
+      cancel();
+    }
   }
 
   @Override

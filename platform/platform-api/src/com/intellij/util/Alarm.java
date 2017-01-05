@@ -71,7 +71,7 @@ public class Alarm implements Disposable {
       myDisposed = true;
       cancelAllRequests();
 
-      if (myThreadToUse != ThreadToUse.SWING_THREAD) {
+      if (myExecutorService != EdtExecutorService.getScheduledExecutorInstance()) {
         myExecutorService.shutdownNow();
       }
     }
@@ -121,8 +121,6 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse) {
     this(threadToUse, null);
-    LOG.assertTrue(threadToUse != ThreadToUse.POOLED_THREAD && threadToUse != ThreadToUse.OWN_THREAD,
-                   "You must provide parent Disposable for ThreadToUse.POOLED_THREAD and ThreadToUse.OWN_THREAD Alarm");
   }
 
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
@@ -137,7 +135,18 @@ public class Alarm implements Disposable {
                         // "addRequests with the same delay are executed in order" will be broken
                         AppExecutorUtil.createBoundedScheduledExecutorService("Alarm pool",1);
 
-    if (parentDisposable != null) {
+    if (parentDisposable == null) {
+      if (threadToUse == ThreadToUse.POOLED_THREAD || threadToUse != ThreadToUse.SWING_THREAD) {
+        boolean crash = threadToUse == ThreadToUse.POOLED_THREAD || ApplicationManager.getApplication().isUnitTestMode();
+        IllegalArgumentException t = new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm");
+        if (crash) {
+          throw t;
+        }
+        // do not crash yet in case of deprecated SHARED_THREAD
+        LOG.warn(t);
+      }
+    }
+    else {
       Disposer.register(parentDisposable, this);
     }
   }
@@ -163,7 +172,7 @@ public class Alarm implements Disposable {
     if (myThreadToUse != ThreadToUse.SWING_THREAD) return null;
     Application application = ApplicationManager.getApplication();
     if (application == null) return null;
-    return application.getCurrentModalityState();
+    return application.getDefaultModalityState();
   }
 
   public void addRequest(@NotNull Runnable request, long delayMillis) {
@@ -242,18 +251,17 @@ public class Alarm implements Disposable {
     }
   }
 
+  // returns number of requests canceled
   public int cancelAllRequests() {
     synchronized (LOCK) {
-      int count = cancelAllRequests(myRequests);
+      return cancelAllRequests(myRequests) +
       cancelAllRequests(myPendingRequests);
-      return count;
     }
   }
 
   private int cancelAllRequests(@NotNull List<Request> list) {
-    int count = 0;
+    int count = list.size();
     for (Request request : list) {
-      count++;
       request.cancel();
     }
     list.clear();

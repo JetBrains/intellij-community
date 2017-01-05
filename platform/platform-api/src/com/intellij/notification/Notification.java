@@ -15,6 +15,7 @@
  */
 package com.intellij.notification;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +36,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Notification bean class contains <b>title:</b>subtitle, content (plain text or HTML) and actions.
+ * <br><br>
+ * The notifications, generally, are shown in the balloons that appear on the screen when the corresponding events take place.<br>
+ * Notification balloon is of two types: two or three lines.<br>
+ * Two lines: title and content line; title and actions; content line and actions; contents on two lines.<br>
+ * Three lines: title and content line and actions; contents on two lines and actions; contents on three lines or more; etc.
+ * <br><br>
+ * Warning: be careful not to use the links in HTML content, use {@link #addAction(AnAction)}
+ *
  * @author spleaner
+ * @author Alexander Lobas
  */
 public class Notification {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
@@ -64,6 +75,16 @@ public class Notification {
     this(groupDisplayId, icon, null, null, null, type, null);
   }
 
+  /**
+   * @param groupDisplayId this should be a human-readable, capitalized string like "Facet Detector".
+   *                       It will appear in "Notifications" configurable.
+   * @param icon           notification icon, if <b>null</b> used icon from type
+   * @param title          notification title
+   * @param subtitle       notification subtitle
+   * @param content        notification content
+   * @param type           notification type
+   * @param listener       notification lifecycle listener
+   */
   public Notification(@NotNull String groupDisplayId,
                       @NotNull Icon icon,
                       @Nullable String title,
@@ -81,7 +102,8 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(isTitle() || isContent(), "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
+    LOG.assertTrue(isTitle() || isContent(),
+                   "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
 
     id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(this));
   }
@@ -218,6 +240,16 @@ public class Notification {
     }
   }
 
+  public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
+    DataManager.registerDataProvider(component, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return KEY.getName().equals(dataId) ? notification : null;
+      }
+    });
+  }
+
   @NotNull
   public String getDropDownText() {
     if (myDropDownText == null) {
@@ -226,6 +258,9 @@ public class Notification {
     return myDropDownText;
   }
 
+  /**
+   * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
+   */
   @NotNull
   public Notification setDropDownText(@NotNull String dropDownText) {
     myDropDownText = dropDownText;
@@ -251,6 +286,10 @@ public class Notification {
   }
 
   public void expire() {
+    if (myExpired) {
+      return;
+    }
+
     NotificationsManager.getNotificationsManager().expire(this);
     hideBalloon();
     myExpired = true;

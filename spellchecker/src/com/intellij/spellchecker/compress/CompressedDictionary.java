@@ -85,7 +85,6 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public List<String> getWords(char first, int minLength, int maxLength) {
     List<String> result = new ArrayList<>();
     getWords(first, minLength, maxLength, result);
@@ -93,7 +92,6 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public List<String> getWords(char first) {
     List<String> result = new ArrayList<>();
     getWords(first, 0, Integer.MAX_VALUE, result);

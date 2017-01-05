@@ -28,14 +28,15 @@ import java.util.List;
 
 public class ChangesBrowser extends ChangesBrowserBase<Change> {
 
-  public ChangesBrowser(Project project,
-                        List<? extends ChangeList> changeLists,
-                        List<Change> changes,
-                        ChangeList initialListSelection,
+  public ChangesBrowser(@NotNull Project project,
+                        @Nullable List<? extends ChangeList> changeLists,
+                        @NotNull List<Change> changes,
+                        @Nullable ChangeList initialListSelection,
                         boolean capableOfExcludingChanges,
                         boolean highlightProblems,
                         @Nullable Runnable inclusionListener,
-                        MyUseCase useCase, @Nullable VirtualFile toSelect) {
+                        @NotNull MyUseCase useCase,
+                        @Nullable VirtualFile toSelect) {
     super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase, toSelect, Change.class);
 
     init();
@@ -45,8 +46,7 @@ public class ChangesBrowser extends ChangesBrowserBase<Change> {
 
   @NotNull
   protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, showFlatten);
-    return builder.buildModel(changes, changeNodeDecorator);
+    return TreeModelBuilder.buildFromChanges(myProject, showFlatten, changes, changeNodeDecorator);
   }
 
   @NotNull

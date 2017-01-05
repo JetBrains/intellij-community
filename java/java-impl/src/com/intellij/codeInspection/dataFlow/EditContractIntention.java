@@ -17,19 +17,18 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.JBTextField;
@@ -59,8 +58,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   @Nullable
   private static PsiMethod getTargetMethod(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
-    if (owner instanceof PsiMethod &&
-        (!owner.getManager().isInProject(owner) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS)) {
+    if (owner instanceof PsiMethod && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       PsiElement original = owner.getOriginalElement();
       return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;
     }
@@ -122,15 +120,16 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   private static void updateContract(PsiMethod method, String contract, boolean pure) {
     Project project = method.getProject();
-    WriteAction.run(() -> {
-      ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
-      manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-      PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract);
-      if (mockAnno != null) {
+    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
+    manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract);
+    if (mockAnno != null) {
+      try {
         manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
                                    mockAnno.getParameterList().getAttributes());
       }
-    });
+      catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
+    }
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 

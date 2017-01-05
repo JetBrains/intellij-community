@@ -31,22 +31,35 @@ public interface MouseShortcut extends DomElement {
 
 	/**
 	 * Returns the value of the keymap child.
-	 * Attribute keymap
+	 * Attribute {@code keymap}
 	 * @return the value of the keymap child.
 	 */
 	@NotNull
 	@Required
 	GenericAttributeValue<String> getKeymap();
 
-
 	/**
 	 * Returns the value of the keystroke child.
-	 * Attribute keystroke
+	 * Attribute {@code keystroke}
 	 * @return the value of the keystroke child.
 	 */
 	@NotNull
 	@Required
 	GenericAttributeValue<String> getKeystroke();
 
+        /**
+         * Returns the value of the should current shortcut be removed or not.
+         * Attribute {@code remove}
+         * @return the value of the should current shortcut be removed or not.
+         */
+        @NotNull
+        GenericAttributeValue<String> getRemove();
 
+        /**
+         * Returns the value of the should all previous shortcuts be removed by that one or not.
+         * Attribute {@code replace-all}
+         * @return the value of the should all previous shortcuts be removed by that one or not.
+         */
+        @NotNull
+        GenericAttributeValue<String> getReplaceAll();
 }

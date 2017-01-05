@@ -27,7 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
                             @NotNull PermanentGraph.SortType initialSortType) {
     myLogData = logData;
     myVisiblePackBuilder = myLogData.createVisiblePackBuilder();
-    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
+    myFilters = new VcsLogFilterCollectionBuilder().build();
     mySortType = initialSortType;
 
     myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePack -> {
@@ -131,7 +131,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
           throw reThrown;
         }
         catch (Throwable t) {
-          LOG.error("Error while filtering log", t);
+          LOG.error("Error while filtering log by " + requests, t);
         }
       }
 
@@ -234,6 +234,10 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   private static final class RefreshRequest implements Request {
+    @Override
+    public String toString() {
+      return "RefreshRequest";
+    }
   }
 
   private static final class ValidateRequest implements Request {
@@ -241,6 +245,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     private ValidateRequest(boolean validate) {
       this.validate = validate;
+    }
+
+    @Override
+    public String toString() {
+      return "ValidateRequest " + validate;
     }
   }
 
@@ -250,6 +259,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     FilterRequest(VcsLogFilterCollection filters) {
       this.filters = filters;
     }
+
+    @Override
+    public String toString() {
+      return "FilterRequest by " + filters;
+    }
   }
 
   private static final class SortTypeRequest implements Request {
@@ -257,6 +271,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     SortTypeRequest(PermanentGraph.SortType sortType) {
       this.sortType = sortType;
+    }
+
+    @Override
+    public String toString() {
+      return "SortTypeRequest " + sortType;
     }
   }
 

@@ -58,4 +58,9 @@ public class EmptyColorScheme extends DefaultColorsScheme {
   public String getName() {
     return NAME;
   }
+
+  @Override
+  public boolean hasEditableCopy() {
+    return false;
+  }
 }

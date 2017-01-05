@@ -33,11 +33,11 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private boolean myCurrentSelection = true;
   private boolean myUsageView = true;
   private Condition<ScopeDescriptor> myScopeFilter;
-  private boolean myShowEmptyScopes = false;
+  private boolean myShowEmptyScopes;
 
   public ScopeChooserCombo() {
     super(new IgnoringComboBox(){
@@ -84,14 +84,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     myProject = project;
-    myScopeListener = new NamedScopesHolder.ScopeListener() {
-      @Override
-      public void scopesChanged() {
-        final SearchScope selectedScope = getSelectedScope();
-        rebuildModel();
-        if (selectedScope != null) {
-          selectScope(selectedScope.getDisplayName());
-        }
+    myScopeListener = () -> {
+      final SearchScope selectedScope = getSelectedScope();
+      rebuildModel();
+      if (selectedScope != null) {
+        selectScope(selectedScope.getDisplayName());
       }
     };
     myScopeFilter = scopeFilter;
@@ -101,7 +98,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     myValidationManager.addScopeListener(myScopeListener);
     addActionListener(createScopeChooserListener());
 
-    final JComboBox combo = getComboBox();
+    final JComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer());
 
     rebuildModel();
@@ -156,17 +153,14 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   private ActionListener createScopeChooserListener() {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final String selection = getSelectedScopeName();
-        final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
-        if (dlg.isOK()){
-          rebuildModel();
-          final NamedScope namedScope = dlg.getSelectedScope();
-          if (namedScope != null) {
-            selectScope(namedScope.getName());
-          }
+    return e -> {
+      final String selection = getSelectedScopeName();
+      final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
+      if (dlg.isOK()){
+        rebuildModel();
+        final NamedScope namedScope = dlg.getSelectedScope();
+        if (namedScope != null) {
+          selectScope(namedScope.getName());
         }
       }
     };
@@ -176,8 +170,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     getComboBox().setModel(createModel());
   }
 
-  private DefaultComboBoxModel createModel() {
-    final DefaultComboBoxModel model = new DefaultComboBoxModel();
+  @NotNull
+  private DefaultComboBoxModel<ScopeDescriptor> createModel() {
+    final DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
 
     createPredefinedScopeDescriptors(model);
 
@@ -227,7 +222,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return new Dimension(Math.min(200, minimumSize.width), minimumSize.height);
   }
 
-  private void createPredefinedScopeDescriptors(DefaultComboBoxModel model) {
+  private void createPredefinedScopeDescriptors(@NotNull DefaultComboBoxModel<ScopeDescriptor> model) {
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     for (SearchScope scope : PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(myProject, context, mySuggestSearchInLibs,
                                                                                              myPrevSearchFiles, myCurrentSelection,
@@ -243,7 +238,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
   }
 
-  private void addScopeDescriptor(DefaultComboBoxModel model, ScopeDescriptor scopeDescriptor) {
+  private void addScopeDescriptor(DefaultComboBoxModel<ScopeDescriptor> model, ScopeDescriptor scopeDescriptor) {
     if (myScopeFilter == null || myScopeFilter.value(scopeDescriptor)) {
       model.addElement(scopeDescriptor);
     }
@@ -270,7 +265,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private static class ScopeSeparator extends ScopeDescriptor {
     private final String myText;
 
-    public ScopeSeparator(final String text) {
+    ScopeSeparator(@NotNull String text) {
       super(null);
       myText = text;
     }

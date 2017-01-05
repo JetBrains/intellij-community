@@ -49,8 +49,4 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
     applyFix();
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

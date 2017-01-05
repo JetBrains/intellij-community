@@ -34,6 +34,8 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final long serialVersionUID = 1L;
 
+  @NotNull private final GradleExecutionWorkspace myExecutionWorkspace = new GradleExecutionWorkspace();
+
   @NotNull private final List<ClassHolder<? extends GradleProjectResolverExtension>> myResolverExtensions = ContainerUtilRt.newArrayList();
   @Nullable private final String myGradleHome;
 
@@ -132,6 +134,11 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @NotNull
   public DistributionType getDistributionType() {
     return myDistributionType;
+  }
+
+  @NotNull
+  public GradleExecutionWorkspace getExecutionWorkspace() {
+    return myExecutionWorkspace;
   }
 
   @Override

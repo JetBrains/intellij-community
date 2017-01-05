@@ -85,8 +85,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author peter
+ * Please don't use this class directly from plugins
  */
+@Deprecated
 public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
   private final Editor myEditor;
@@ -729,10 +730,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
-    if (!Registry.is("ide.completion.autopopup.choose.by.enter")) {
-      return false;
-    }
-
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
       for (CompletionPreselectionBehaviourProvider provider : Extensions.getExtensions(CompletionPreselectionBehaviourProvider.EP_NAME)) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {

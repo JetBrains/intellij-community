@@ -74,7 +74,7 @@ public abstract class JavaCodeFragmentFactory {
 
   /**
    * Creates a Java type code fragment from the text of the name of a Java type (the name
-   * of a primitive type, array type or class), with <code>void</code> and ellipsis
+   * of a primitive type, array type or class), with {@code void} and ellipsis
    * not treated as a valid type.
    *
    * @param text       the text of the Java type to create.

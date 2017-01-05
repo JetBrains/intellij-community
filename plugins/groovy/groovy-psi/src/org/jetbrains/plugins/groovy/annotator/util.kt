@@ -40,6 +40,12 @@ internal fun checkVariableModifiers(holder: AnnotationHolder, variableDeclaratio
 
 internal fun checkModifierIsNotAllowed(modifierList: GrModifierList,
                                        @GrModifierConstant modifier: String,
+                                       holder: AnnotationHolder) {
+  checkModifierIsNotAllowed(modifierList, modifier, GroovyBundle.message("modifier.0.not.allowed", modifier), holder)
+}
+
+internal fun checkModifierIsNotAllowed(modifierList: GrModifierList,
+                                       @GrModifierConstant modifier: String,
                                        message: String?,
                                        holder: AnnotationHolder) {
   val modifierElement = modifierList.getModifier(modifier) ?: return

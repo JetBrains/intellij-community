@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.transformations.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.PairConsumer;
@@ -31,13 +32,12 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.Arrays;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Set;
 
 public class TraitTransformationSupport implements AstTransformationSupport {
-
-  private static final Logger LOG = Logger.getInstance(TraitTransformationSupport.class);
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
@@ -49,63 +49,53 @@ public class TraitTransformationSupport implements AstTransformationSupport {
       }
     }
 
-    List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(context.getSuperTypes());
-    if (traits.isEmpty()) return;
-
-    for (PsiClassType.ClassResolveResult resolveResult : traits) {
-      PsiClass superTrait = resolveResult.getElement();
-      LOG.assertTrue(superTrait != null);
-
-      process(superTrait, resolveResult.getSubstitutor(), ContainerUtil.newHashSet(), (trait, substitutor) -> {
-        if (trait instanceof GrTypeDefinition) {
-          for (PsiMethod method : trait.getMethods()) {
-            if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
-              context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
-            }
-          }
-          for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
-            context.addField(new GrTraitField(field, context.getCodeClass(), substitutor));
-          }
-        }
-        else if (trait instanceof ClsClassImpl) {
-          for (PsiMethod method : GrTraitUtil.getCompiledTraitConcreteMethods((ClsClassImpl)trait)) {
+    process(context, (trait, substitutor) -> {
+      if (trait instanceof GrTypeDefinition) {
+        for (PsiMethod method : trait.getMethods()) {
+          if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
             context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
           }
-          for (GrField field : GrTraitUtil.getCompiledTraitFields((ClsClassImpl)trait)) {
-            context.addField(new GrTraitField(field, context.getCodeClass(), substitutor));
-          }
         }
-      });
-    }
+        for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
+          context.addField(new GrTraitField(field, context.getCodeClass(), substitutor));
+        }
+      }
+      else if (trait instanceof ClsClassImpl) {
+        for (PsiMethod method : GrTraitUtil.getCompiledTraitConcreteMethods((ClsClassImpl)trait)) {
+          context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
+        }
+        for (GrField field : GrTraitUtil.getCompiledTraitFields((ClsClassImpl)trait)) {
+          context.addField(new GrTraitField(field, context.getCodeClass(), substitutor));
+        }
+      }
+    });
   }
 
-  private static void process(@NotNull PsiClass trait,
-                              @NotNull PsiSubstitutor substitutor,
-                              @NotNull Set<PsiClass> visited,
-                              @NotNull PairConsumer<PsiClass, PsiSubstitutor> consumer) {
-    consumer.consume(trait, substitutor);
-    List<PsiClassType.ClassResolveResult> traits = getSuperTraitsByCorrectOrder(Arrays.asList(trait.getSuperTypes()));
-    for (PsiClassType.ClassResolveResult resolveResult : traits) {
-      PsiClass superClass = resolveResult.getElement();
-      if (superClass != null && visited.add(superClass)) {
-        final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, trait, substitutor);
-        process(superClass, superSubstitutor, visited, consumer);
+  private static void process(@NotNull TransformationContext context, @NotNull PairConsumer<PsiClass, PsiSubstitutor> consumer) {
+    Deque<Pair<PsiClass, PsiSubstitutor>> stack = new ArrayDeque<>();
+
+    for (PsiClassType superType : context.getSuperTypes()) {
+      ClassResolveResult result = superType.resolveGenerics();
+      PsiClass superClass = result.getElement();
+      if (superClass == null) continue;
+      stack.push(Pair.create(superClass, result.getSubstitutor()));
+    }
+
+    Set<PsiClass> visited = ContainerUtil.newHashSet();
+
+    while (!stack.isEmpty()) {
+      Pair<PsiClass, PsiSubstitutor> current = stack.pop();
+      PsiClass currentClass = current.first;
+      PsiSubstitutor currentSubstitutor = current.second;
+      if (!visited.add(currentClass)) continue;
+      if (GrTraitUtil.isTrait(currentClass)) {
+        consumer.consume(currentClass, currentSubstitutor);
+      }
+      for (PsiClass superClass : currentClass.getSupers()) {
+        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, currentClass, currentSubstitutor);
+        stack.push(Pair.create(superClass, superSubstitutor));
       }
     }
-  }
-
-  @NotNull
-  private static List<PsiClassType.ClassResolveResult> getSuperTraitsByCorrectOrder(@NotNull List<PsiClassType> types) {
-    List<PsiClassType.ClassResolveResult> traits = ContainerUtil.newSmartList();
-    for (int i = types.size() - 1; i >= 0; i--) {
-      PsiClassType.ClassResolveResult resolveResult = types.get(i).resolveGenerics();
-      PsiClass superClass = resolveResult.getElement();
-
-      if (GrTraitUtil.isTrait(superClass)) {
-        traits.add(resolveResult);
-      }
-    }
-    return traits;
   }
 
   @NotNull

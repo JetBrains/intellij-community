@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -26,17 +28,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class QuickList extends ExternalizableSchemeAdapter {
+public class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
   public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
   private static final String ID_TAG = "id";
   private static final String ACTION_TAG = "action";
-  private static final String DISPLAY_NAME_TAG = "display";
+  static final String DISPLAY_NAME_TAG = "display";
   private static final String DESCRIPTION_TAG = "description";
 
   private String myDescription;
   private String[] myActionIds = ArrayUtil.EMPTY_STRING_ARRAY;
+  private SchemeState schemeState;
 
   /**
    * With read external to be called immediately after in mind
@@ -58,6 +61,7 @@ public class QuickList extends ExternalizableSchemeAdapter {
 
   public void setDescription(@Nullable String value) {
     myDescription = StringUtil.nullize(value);
+    schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
   public String[] getActionIds() {
@@ -66,6 +70,7 @@ public class QuickList extends ExternalizableSchemeAdapter {
 
   public void setActionIds(@NotNull String[] value) {
     myActionIds = value;
+    schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
   public boolean equals(Object o) {
@@ -95,17 +100,6 @@ public class QuickList extends ExternalizableSchemeAdapter {
     return QUICK_LIST_PREFIX + getName();
   }
 
-  public void writeExternal(@NotNull Element groupElement) {
-    groupElement.setAttribute(DISPLAY_NAME_TAG, getName());
-    if (myDescription != null) {
-      groupElement.setAttribute(DESCRIPTION_TAG, myDescription);
-    }
-
-    for (String actionId : getActionIds()) {
-      groupElement.addContent(new Element(ACTION_TAG).setAttribute(ID_TAG, actionId));
-    }
-  }
-
   public void readExternal(@NotNull Element element) {
     setName(element.getAttributeValue(DISPLAY_NAME_TAG));
     myDescription = StringUtil.nullize(element.getAttributeValue(DESCRIPTION_TAG));
@@ -115,5 +109,28 @@ public class QuickList extends ExternalizableSchemeAdapter {
     for (int i = 0, n = actionElements.size(); i < n; i++) {
       myActionIds[i] = actionElements.get(i).getAttributeValue(ID_TAG);
     }
+  }
+
+  @NotNull
+  @Override
+  public Element writeScheme() {
+    Element element = new Element("list");
+    element.setAttribute(DISPLAY_NAME_TAG, getName());
+    if (myDescription != null) {
+      element.setAttribute(DESCRIPTION_TAG, myDescription);
+    }
+
+    for (String actionId : getActionIds()) {
+      element.addContent(new Element(ACTION_TAG).setAttribute(ID_TAG, actionId));
+    }
+
+    schemeState = SchemeState.UNCHANGED;
+    return element;
+  }
+
+  @Nullable
+  @Override
+  public SchemeState getSchemeState() {
+    return schemeState;
   }
 }

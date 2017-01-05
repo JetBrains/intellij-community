@@ -61,6 +61,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
@@ -251,8 +252,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private static Gradient getGradientColors() {
     return new Gradient(
-      new JBColor(new Color(101, 147, 242), new Color(64, 80, 94)),
-      new JBColor(new Color(46, 111, 205), new Color(53, 65, 87)));
+      new JBColor(0x6593f2, 0x40505e),
+      new JBColor(0x2e6fcd, 0x354157));
   }
 
   private void updateComponents() {
@@ -371,14 +372,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           mySkipFocusGain = false;
           return;
         }
-        String text = "";
-        //if (myEditor != null) {
-        //  text = myEditor.getSelectionModel().getSelectedText();
-        //  text = text == null ? "" : text.trim();
-        //}
+        String text = GotoActionBase.getInitialTextForNavigation(myEditor);
+        text = text != null ? text.trim() : "";
 
         search.setText(text);
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
+        search.selectText();
         //titleIndex = new TitleIndexes();
         editor.setColumns(SEARCH_FIELD_COLUMNS);
         myFocusComponent = e.getOppositeComponent();
@@ -1918,12 +1917,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                                 myActionEvent.getActionManager(),
                                                 myActionEvent.getModifiers());
 
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          ActionUtil.performDumbAwareUpdate(action, e, false);
-        }
-      });
+      ApplicationManager.getApplication().invokeAndWait(() -> ActionUtil.performDumbAwareUpdate(action, e, false), ModalityState.NON_MODAL);
       final Presentation presentation = e.getPresentation();
       final boolean enabled = presentation.isEnabled() && presentation.isVisible() && !StringUtil.isEmpty(presentation.getText());
       if (!enabled) {
@@ -2007,6 +2001,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 return size;
               }
             };
+            content.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             content.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
               .createComponentPopupBuilder(content, null);

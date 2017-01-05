@@ -64,8 +64,7 @@ public class JsonSchemaReader {
     return object;
   }
 
-  public static boolean isJsonSchema(@NotNull JsonSchemaExportedDefinitions definitions,
-                                     @NotNull VirtualFile key,
+  public static boolean isJsonSchema(@NotNull VirtualFile key,
                                      @NotNull final String string,
                                      Consumer<String> errorConsumer) throws IOException {
     final JsonSchemaReader reader = new JsonSchemaReader(key);
@@ -77,16 +76,6 @@ public class JsonSchemaReader {
       errorConsumer.consume(e.getMessage());
       return false;
     }
-    // have two stages so that just syntax errors do not clear cache
-    stringReader = new java.io.StringReader(string);
-    try {
-      reader.read(stringReader, definitions);
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      errorConsumer.consume(e.getMessage());
-      throw e;
-    }
     return true;
   }
 
@@ -95,7 +84,7 @@ public class JsonSchemaReader {
                                                         @NotNull final JsonSchemaObject object) {
     String id = object.getId();
     if (!StringUtil.isEmptyOrSpaces(id)) {
-      id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+      id = JsonSchemaExportedDefinitions.normalizeId(id);
       final BiFunction<String, Map<String, JsonSchemaObject>, Map<String, JsonSchemaObject>> convertor =
         (s, map) -> {
           final Map<String, JsonSchemaObject> converted = new HashMap<>();
@@ -138,6 +127,7 @@ public class JsonSchemaReader {
                                  Set<JsonSchemaObject> objects,
                                  @Nullable JsonSchemaExportedDefinitions definitions) {
     final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
+    queue.add(root);
     queue.addAll(objects);
     int control = 10000;
 
@@ -175,21 +165,51 @@ public class JsonSchemaReader {
   private static JsonSchemaObject findAbsoluteDefinition(@Nullable VirtualFile key,
                                                          @NotNull String ref,
                                                          @Nullable JsonSchemaExportedDefinitions definitions) {
-    if (!ref.startsWith("#/")) {
-      if (definitions == null || key == null) return null;
-      int idx = ref.indexOf("#/");
-      final String url;
-      final String relative;
-      if (idx == -1) {
-        url = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
-        relative = "";
-      } else {
-        url = ref.substring(0, idx);
-        relative = ref.substring(idx);
-      }
-      return definitions.findDefinition(key, url, relative);
+    if (definitions == null || key == null) return null;
+
+    final SchemaUrlSplitter splitter = new SchemaUrlSplitter(ref);
+    if (splitter.isAbsolute()) {
+      //noinspection ConstantConditions
+      return definitions.findDefinition(key, splitter.getSchemaId(), splitter.getRelativePath());
     }
     return null;
+  }
+
+  public static class SchemaUrlSplitter {
+    @Nullable
+    private final String mySchemaId;
+    @NotNull
+    private final String myRelativePath;
+
+    public SchemaUrlSplitter(@NotNull final String ref) {
+      if (!ref.startsWith("#/")) {
+        int idx = ref.indexOf("#/");
+        if (idx == -1) {
+          mySchemaId = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
+          myRelativePath = "";
+        } else {
+          mySchemaId = ref.substring(0, idx);
+          myRelativePath = ref.substring(idx);
+        }
+      } else {
+        mySchemaId = null;
+        myRelativePath = ref;
+      }
+    }
+
+    public boolean isAbsolute() {
+      return mySchemaId != null;
+    }
+
+    @Nullable
+    public String getSchemaId() {
+      return mySchemaId;
+    }
+
+    @NotNull
+    public String getRelativePath() {
+      return myRelativePath;
+    }
   }
 
   @Nullable

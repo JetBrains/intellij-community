@@ -67,21 +67,18 @@ public abstract class UsageViewManager {
 
   public static boolean isSelfUsage(@NotNull final Usage usage, @NotNull final UsageTarget[] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final PsiElement element = ((PsiElementUsage)usage).getElement();
-        if (element == null) return false;
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      final PsiElement element = ((PsiElementUsage)usage).getElement();
+      if (element == null) return false;
 
-        for (UsageTarget ut : searchForTarget) {
-          if (ut instanceof PsiElementUsageTarget) {
-            if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
-              return true;
-            }
+      for (UsageTarget ut : searchForTarget) {
+        if (ut instanceof PsiElementUsageTarget) {
+          if (isSelfUsage(element, ((PsiElementUsageTarget)ut).getElement())) {
+            return true;
           }
         }
-        return false;
       }
+      return false;
     });
   }
 

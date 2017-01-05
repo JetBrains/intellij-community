@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.passwordSafe;
 
+@SuppressWarnings("unused")
 @Deprecated
 public class PasswordSafeException extends RuntimeException {
   public PasswordSafeException(String message, Throwable cause) {

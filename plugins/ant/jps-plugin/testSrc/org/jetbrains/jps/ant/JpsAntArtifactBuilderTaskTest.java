@@ -49,7 +49,7 @@ public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
     JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), getTestDataRootPath() + "/config/options");
     addJdk("1.6");
     loadProject("ant-project");
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
 
     assertOutput(new File(myArtifactsOutput, "dir").getAbsolutePath(),
                  fs().file("file.txt").file("echo.txt", "post"));

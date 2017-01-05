@@ -491,7 +491,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         try {
           buildVariables(stackDescriptor, evaluationContext);
           if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
-            Collections.sort(myChildren, NodeManagerImpl.getNodeComparator());
+            myChildren.sort(NodeManagerImpl.getNodeComparator());
           }
         }
         catch (EvaluateException e) {
@@ -686,7 +686,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       ThreadGroupReferenceProxyImpl threadGroup = groupDescriptor.getThreadGroupReference();
 
       List<ThreadReferenceProxyImpl> threads = new ArrayList<>(threadGroup.threads());
-      Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
+      threads.sort(ThreadReferenceProxyImpl.ourComparator);
 
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
       final SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();

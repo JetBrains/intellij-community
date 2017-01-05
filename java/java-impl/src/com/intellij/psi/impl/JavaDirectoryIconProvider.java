@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;

@@ -36,10 +36,11 @@ Cedric Beust & Alexandru Popescu
 <!--
 @attr  name        The name of this suite (as it will appear in the reports)
 @attr  junit       Whether to run in JUnit mode.
-@attr  verbose     How verbose the output on the console will be. 
+@attr  verbose     How verbose the output on the console will be.
                 This setting has no impact on the HTML reports.
 @attr  parallel   Whether TestNG should use different threads
                 to run your tests (might speed up the process)
+                Do not use "true" and "false" values, they are now deprecated.
 @attr  parent-module A module used to create the parent injector of all guice injectors used
        in tests of the suite
 @attr  guice-stage The stage with which the parent injector is created
@@ -63,7 +64,7 @@ Cedric Beust & Alexandru Popescu
     name CDATA #REQUIRED
     junit (true | false) "false"
     verbose CDATA #IMPLIED
-    parallel (false | methods | tests | classes | instances) "false"
+    parallel (false | true | none | methods | tests | classes | instances) "none"
     parent-module CDATA #IMPLIED
     guice-stage (DEVELOPMENT | PRODUCTION | TOOL) "DEVELOPMENT"
     configfailurepolicy (skip | continue) "skip"
@@ -126,6 +127,7 @@ A test contains parameters and classes.  Additionally, you can define additional
                 Default value: suite level verbose.
 @attr  parallel     Whether TestNG should use different threads
                 to run your tests (might speed up the process)
+                Do not use "true" and "false" values, they are now deprecated.
 @attr  thread-count An integer giving the size of the thread pool to be used if
                 parallel mode is used. Overrides the suite level value.
 @attr  annotations  If "javadoc", TestNG will look for
@@ -143,11 +145,11 @@ found in the XML file.
     name CDATA #REQUIRED
     junit (true | false) "false"
     verbose  CDATA #IMPLIED
-    parallel  CDATA #IMPLIED
+    parallel  (false | true | none | methods | tests | classes | instances) #IMPLIED
     thread-count CDATA #IMPLIED
     annotations  CDATA #IMPLIED
     time-out CDATA #IMPLIED
-    enabled CDATA #IMPLIED
+    enabled (true | false) #IMPLIED
     skipfailedinvocationcounts (true | false) "false"
     preserve-order (true | false) "true"
     group-by-instances (true | false) "false"
@@ -187,7 +189,7 @@ Defines additional groups ("groups of groups") and also which groups to include 
 
 <!-- The list of classes to include in this test                            -->
 <!ELEMENT classes (class*,parameter*) >
-<!ELEMENT class (methods*) >
+<!ELEMENT class (methods|parameter)* >
 <!ATTLIST class
     name CDATA #REQUIRED >
 

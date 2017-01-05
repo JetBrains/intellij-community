@@ -24,16 +24,19 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 class ResourceBundleFileType extends FakeFileType {
+  @Override
   @NotNull
   public String getName() {
     return "ResourceBundle";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return PropertiesBundle.message("resourcebundle.fake.file.type.description");
   }
 
+  @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
     return file instanceof ResourceBundleAsVirtualFile;
   }

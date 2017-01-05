@@ -101,6 +101,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   private boolean myExecuting;
   private PythonDebugConsoleCommunication myDebugCommunication;
+  private boolean myNeedsMore = false;
+
+  private PythonConsoleView myConsoleView;
 
   /**
    * Initializes the xml-rpc communication.
@@ -137,7 +140,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   public synchronized void close() {
     if (this.myClient != null) {
-      new Task.Backgroundable(myProject, "Close console communication", true) {
+      new Task.Backgroundable(myProject, "Close Console Communication", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -184,6 +187,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     else if ("NotifyAboutMagic".equals(method)) {
       return execNotifyAboutMagic(params);
     }
+    else if ("ShowConsole".equals(method)) {
+      myConsoleView.setConsoleEnabled(true);
+      return "";
+    }
     else {
       throw new UnsupportedOperationException();
     }
@@ -227,6 +234,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   private Object execNotifyFinished(boolean more) {
+    myNeedsMore = more;
     setExecuting(false);
     notifyCommandExecuted(more);
     return true;
@@ -326,7 +334,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return myClient.execute(GET_DESCRIPTION, new Object[]{text}).toString();
+    return myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
   }
 
   /**
@@ -438,6 +446,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
             }
           }
         }
+        if (nextResponse.more) {
+          myNeedsMore = true;
+          notifyCommandExecuted(true);
+        }
         onResponseReceived.fun(nextResponse);
       }, "Waiting for REPL response", true, myProject);
     }
@@ -456,6 +468,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @Override
   public boolean isExecuting() {
     return myExecuting;
+  }
+
+  public boolean needsMore() {
+    return myNeedsMore;
   }
 
   @Override
@@ -665,5 +681,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       }
       return true;
     }
+  }
+
+  public void setConsoleView(PythonConsoleView consoleView) {
+    myConsoleView = consoleView;
   }
 }

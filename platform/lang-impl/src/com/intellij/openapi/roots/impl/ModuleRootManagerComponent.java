@@ -17,10 +17,15 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -33,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
-                                                                      PersistentStateComponent<ModuleRootManagerImpl.ModuleRootManagerState>,
+                                                                      PersistentStateComponentWithModificationTracker<ModuleRootManagerImpl.ModuleRootManagerState>,
                                                                       StateStorageChooserEx {
   public ModuleRootManagerComponent(Module module,
                                     ProjectRootManagerImpl projectRootManager,
@@ -53,5 +58,26 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
       // IDEA-133480 Eclipse integration: .iml content is not reduced on setting Dependencies Storage Format = Eclipse
       return isEffectiveStorage ? Resolution.DO : (isDefault ? Resolution.CLEAR : Resolution.SKIP);
     }
+  }
+
+  @Override
+  public long getStateModificationCount() {
+    Module module = getModule();
+    if (!module.isLoaded() || !(module instanceof ModuleEx)) {
+      return myModificationCount;
+    }
+
+    final long[] result = {myModificationCount};
+    result[0] += ((ModuleEx)module).getOptionsModificationCount();
+    final List<String> handledLibraryTables = new SmartList<>();
+    getRootModel().orderEntries().forEachLibrary(library -> {
+      LibraryTable table = library.getTable();
+      if (table instanceof PersistentStateComponentWithModificationTracker && !handledLibraryTables.contains(table.getTableLevel())) {
+        handledLibraryTables.add(table.getTableLevel());
+        result[0] += ((PersistentStateComponentWithModificationTracker)table).getStateModificationCount();
+      }
+      return true;
+    });
+    return result[0];
   }
 }

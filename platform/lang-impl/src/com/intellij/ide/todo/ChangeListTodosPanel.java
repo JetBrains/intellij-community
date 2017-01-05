@@ -48,7 +48,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
         ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListManagerListener);
       }
     });
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   }
 
   private final class MyChangeListManagerListener extends ChangeListAdapter {

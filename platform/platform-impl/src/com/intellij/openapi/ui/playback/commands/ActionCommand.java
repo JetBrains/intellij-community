@@ -17,13 +17,14 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TimedOutCallback;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -31,11 +32,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 public class ActionCommand extends TypeCommand {
-
-  public static String PREFIX = CMD_PREFIX + "action";
+  public static final String PREFIX = CMD_PREFIX + "action";
 
   public ActionCommand(String text, int line) {
-    super(text, line);
+    super(text, line, true);
   }
 
   protected ActionCallback _execute(final PlaybackContext context) {
@@ -75,13 +75,13 @@ public class ActionCommand extends TypeCommand {
 
         final KeyStroke finalStroke = stroke;
 
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        inWriteSafeContext(() -> {
           final Ref<AnActionListener> listener = new Ref<>();
           listener.set(new AnActionListener.Adapter() {
 
             @Override
             public void beforeActionPerformed(final AnAction action, DataContext dataContext, AnActionEvent event) {
-              SwingUtilities.invokeLater(() -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 if (context.isDisposed()) {
                   am.removeAnActionListener(listener.get());
                   return;
@@ -92,7 +92,7 @@ public class ActionCommand extends TypeCommand {
                   am.removeAnActionListener(listener.get());
                   result.setDone();
                 }
-              });
+              }, ModalityState.any());
             }
           });
           am.addAnActionListener(listener.get());
@@ -109,8 +109,8 @@ public class ActionCommand extends TypeCommand {
     final ActionCallback result = new ActionCallback();
 
     context.getRobot().delay(Registry.intValue("actionSystem.playback.delay"));
-    SwingUtilities.invokeLater(
-      () -> am.tryToExecute(targetAction, input, null, null, false).doWhenProcessed(result.createSetDoneRunnable()));
+    ApplicationManager.getApplication().invokeLater(
+      () -> am.tryToExecute(targetAction, input, null, null, false).doWhenProcessed(result.createSetDoneRunnable()), ModalityState.any());
 
     return result;
   }

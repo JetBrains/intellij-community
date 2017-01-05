@@ -67,6 +67,13 @@ public class TestMethods extends TestMethod {
     return javaParameters;
   }
 
+  @Nullable
+  @Override
+  public SourceScope getSourceScope() {
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    return data.getScope().getSourceScope(getConfiguration());
+  }
+
   @Override
   protected boolean configureByModule(Module module) {
     return super.configureByModule(module) && getConfiguration().getPersistentData().getScope() != TestSearchScope.WHOLE_PROJECT;
@@ -83,7 +90,8 @@ public class TestMethods extends TestMethod {
       if (containingClass != null) {
         final String proxyName = testInfo.getName();
         final String methodName = ((PsiMethod)element).getName();
-        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," + proxyName.substring(proxyName.indexOf(methodName));
+        return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," +
+               (proxyName.contains(methodName) ? proxyName.substring(proxyName.indexOf(methodName)) : methodName);
       }
     }
     return null;

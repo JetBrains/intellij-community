@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.DumbAware;
 
 /**
@@ -34,6 +35,6 @@ public class NonTrivialActionGroup extends DefaultActionGroup implements DumbAwa
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e));
+    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
   }
 }

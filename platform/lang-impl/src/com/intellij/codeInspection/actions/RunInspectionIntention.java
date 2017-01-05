@@ -135,13 +135,12 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
   public static InspectionProfileImpl createProfile(@NotNull InspectionToolWrapper toolWrapper,
                                                     @NotNull InspectionManagerEx managerEx,
                                                     @Nullable PsiElement psiElement) {
-    InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getCurrentProfile();
-    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<>();
+    InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance().getCurrentProfile();
+    LinkedHashSet<InspectionToolWrapper<?, ?>> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);
     rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());
-    List<InspectionToolWrapper> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
-    InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(),
-                                                                     toolWrappers);
+    List<InspectionToolWrapper<?, ?>> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
+    InspectionProfileImpl model = InspectionProfileKt.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(), toolWrappers);
     try {
       Element element = new Element("toCopy");
       for (InspectionToolWrapper wrapper : toolWrappers) {
@@ -151,9 +150,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
         tw.getTool().readSettings(element);
       }
     }
-    catch (WriteExternalException ignored) {
-    }
-    catch (InvalidDataException ignored) {
+    catch (WriteExternalException | InvalidDataException ignored) {
     }
     model.setSingleTool(toolWrapper.getShortName());
     return model;

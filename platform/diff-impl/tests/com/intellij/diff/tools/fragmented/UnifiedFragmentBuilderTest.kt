@@ -15,15 +15,14 @@
  */
 package com.intellij.diff.tools.fragmented
 
-import com.intellij.diff.comparison.ComparisonManagerImpl
+import com.intellij.diff.DiffTestCase
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.progress.DumbProgressIndicator
-import com.intellij.testFramework.UsefulTestCase
 
-class UnifiedFragmentBuilderTest : UsefulTestCase() {
+class UnifiedFragmentBuilderTest : DiffTestCase() {
   fun testEquals() {
     val document1 = DocumentImpl("A\nB\nC")
     val document2 = DocumentImpl("A\nB\nC")
@@ -60,9 +59,5 @@ class UnifiedFragmentBuilderTest : UsefulTestCase() {
     assertEquals(block.range1.end, 3)
     assertEquals(block.range2.start, 3)
     assertEquals(block.range2.end, 3)
-  }
-
-  companion object {
-    private val MANAGER = ComparisonManagerImpl()
   }
 }

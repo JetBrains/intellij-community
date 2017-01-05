@@ -54,7 +54,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement psiElement, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement psiElement, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     GrCodeReferenceElement ref = (GrCodeReferenceElement)psiElement;

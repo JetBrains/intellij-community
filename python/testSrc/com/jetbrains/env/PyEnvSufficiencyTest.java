@@ -23,9 +23,9 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testSufficiency() {
-    checkStaging();
-    
     if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
+      checkStaging();
+
       Set<String> tags = Sets.newHashSet();
       List<String> roots = getPythonRoots();
       if (roots.size() == 0) {

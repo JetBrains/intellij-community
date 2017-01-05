@@ -48,10 +48,7 @@ public class CodeStyleSettingsLoader {
       inputStream.close();
       return root;
     }
-    catch (IOException e) {
-      throw new SchemeImportException(getErrorMessage(e, file));
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       throw new SchemeImportException(getErrorMessage(e, file));
     }
     finally {

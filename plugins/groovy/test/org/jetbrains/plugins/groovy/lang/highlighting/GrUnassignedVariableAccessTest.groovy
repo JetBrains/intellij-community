@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,15 @@ class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
     [new UnassignedVariableAccessInspection()] as InspectionProfileEntry[]
   }
 
-  public void testUnassigned1() { doTest() }
+  void testUnassigned1() { doTest() }
 
-  public void testUnassigned2() { doTest() }
+  void testUnassigned2() { doTest() }
 
-  public void testUnassigned3() { doTest() }
+  void testUnassigned3() { doTest() }
 
-  public void testUnassigned4() { doTest() }
+  void testUnassigned4() { doTest() }
 
-  public void testUnassignedTryFinally() { doTest() }
+  void testUnassignedTryFinally() { doTest() }
 
 
   void testVarIsNotInitialized() {
@@ -78,9 +78,9 @@ if (<warning descr="Variable 'baz' might not be assigned">baz</warning> + 2) pri
     myFixture.testHighlighting(true, false, true)
   }
 
-  public void testVarNotAssigned() { doTest() }
+  void testVarNotAssigned() { doTest() }
 
-  public void testMultipleVarNotAssigned() { doTest() }
+  void testMultipleVarNotAssigned() { doTest() }
 
-  public void testForLoopWithNestedEndlessLoop() {doTest()}
+  void testForLoopWithNestedEndlessLoop() { doTest() }
 }

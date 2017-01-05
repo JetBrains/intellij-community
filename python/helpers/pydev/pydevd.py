@@ -400,6 +400,23 @@ class PyDB:
                                          "matplotlib.pyplot": activate_pyplot,
                                          "pylab": activate_pylab }
 
+    def _activate_mpl_if_needed(self):
+        if len(self.mpl_modules_for_patching) > 0:
+            for module in dict_keys(self.mpl_modules_for_patching):
+                if module in sys.modules:
+                    activate_function = dict_pop(self.mpl_modules_for_patching, module)
+                    activate_function()
+                    self.mpl_in_use = True
+
+    def _call_mpl_hook(self):
+        try:
+            from pydev_ipython.inputhook import get_inputhook
+            inputhook = get_inputhook()
+            if inputhook:
+                inputhook()
+        except:
+            pass
+
     def suspend_all_other_threads(self, thread_suspended_at_bp):
         all_threads = threadingEnumerate()
         for t in all_threads:
@@ -682,6 +699,13 @@ class PyDB:
         self.process_internal_commands()
 
 
+    def send_process_created_message(self):
+        """Sends a message that a new process has been created.
+        """
+        cmd = self.cmd_factory.make_process_created_message()
+        self.writer.add_command(cmd)
+
+
     def do_wait_suspend(self, thread, frame, event, arg): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
@@ -709,30 +733,16 @@ class PyDB:
         finally:
             CustomFramesContainer.custom_frames_lock.release()  # @UndefinedVariable
 
-        imported = False
         info = thread.additional_info
 
         if info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             # before every stop check if matplotlib modules were imported inside script code
-            if len(self.mpl_modules_for_patching) > 0:
-                for module in dict_keys(self.mpl_modules_for_patching):
-                    if module in sys.modules:
-                        activate_function = dict_pop(self.mpl_modules_for_patching, module)
-                        activate_function()
-                        self.mpl_in_use = True
+            self._activate_mpl_if_needed()
 
         while info.pydev_state == STATE_SUSPEND and not self._finish_debugging_session:
             if self.mpl_in_use:
                 # call input hooks if only matplotlib is in use
-                try:
-                    if not imported:
-                        from pydev_ipython.inputhook import get_inputhook
-                        imported = True
-                    inputhook = get_inputhook()
-                    if inputhook:
-                        inputhook()
-                except:
-                    pass
+                self._call_mpl_hook()
 
             self.process_internal_commands()
             time.sleep(0.01)
@@ -962,6 +972,7 @@ class PyDB:
             traceback.print_exc()
 
         pydev_imports.execfile(file, globals, locals)  # execute the script
+        return globals
 
     def exiting(self):
         sys.stdout.flush()
@@ -971,6 +982,8 @@ class PyDB:
         self.writer.add_command(cmd)
 
     def wait_for_commands(self, globals):
+        self._activate_mpl_if_needed()
+
         thread = threading.currentThread()
         from _pydevd_bundle import pydevd_frame_utils
         frame = pydevd_frame_utils.Frame(None, -1, pydevd_frame_utils.FCode("Console",
@@ -983,6 +996,9 @@ class PyDB:
         self.writer.add_command(cmd)
 
         while True:
+            if self.mpl_in_use:
+                # call input hooks if only matplotlib is in use
+                self._call_mpl_hook()
             self.process_internal_commands()
             time.sleep(0.01)
 
@@ -1003,7 +1019,7 @@ def process_command_line(argv):
     """ parses the arguments.
         removes our arguments from the command line """
     setup = {}
-    setup['client'] = ''
+    setup['client'] = None
     setup['server'] = False
     setup['port'] = 0
     setup['file'] = ''
@@ -1178,10 +1194,6 @@ def _locked_settrace(
             pass
         else:
             pydev_monkey.patch_new_process_functions()
-
-    if host is None:
-        from _pydev_bundle import pydev_localhost
-        host = pydev_localhost.get_localhost()
 
     global connected
     global bufferStdOutToServer
@@ -1540,7 +1552,11 @@ if __name__ == '__main__':
         from _pydevd_bundle import pydevd_stackless
         pydevd_stackless.patch_stackless()
     except:
-        pass  # It's ok not having stackless there...
+        # It's ok not having stackless there...
+        try:
+            sys.exc_clear()  # the exception information should be cleaned in Python 2
+        except:
+            pass
 
     is_module = setup['module']
     patch_stdin(debugger)

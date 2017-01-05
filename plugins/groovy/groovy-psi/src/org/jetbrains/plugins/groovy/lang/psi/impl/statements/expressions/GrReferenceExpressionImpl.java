@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -52,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
+import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder;
@@ -84,7 +86,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
           final String name = containingClass.getQualifiedName();
           if (name != null && name.startsWith("java.")) continue;
           if (containingClass.getLanguage() != GroovyLanguage.INSTANCE &&
-              !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)) {
+              !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.GROOVY_OBJECT)) {
             continue;
           }
         }
@@ -148,6 +150,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    if (!PsiUtil.isValidReferenceName(newElementName)) {
+      final PsiElement old = getReferenceNameElement();
+      if (old == null) throw new IncorrectOperationException("ref has no name element");
+
+      PsiElement element = GroovyPsiElementFactory.getInstance(getProject()).createStringLiteralForReference(newElementName);
+      old.replace(element);
+      return this;
+    }
+
+    if (PsiUtil.isThisOrSuperRef(this)) return this;
+
     final GroovyResolveResult result = advancedResolve();
     if (result.isInvokedOnProperty()) {
       final String name = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
@@ -155,9 +168,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         newElementName = name;
       }
     }
-    if (PsiUtil.isThisOrSuperRef(this)) return this;
 
-    return handleElementRenameSimple(newElementName);
+    return super.handleElementRename(newElementName);
   }
 
   @Override
@@ -178,20 +190,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final GrExpression qualifier = getQualifier();
     if (!(qualifier instanceof GrReferenceExpressionImpl)) return false;
     return ((GrReferenceExpressionImpl)qualifier).isFullyQualified();
-  }
-
-  @Override
-  public PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException {
-    if (!PsiUtil.isValidReferenceName(newElementName)) {
-      final PsiElement old = getReferenceNameElement();
-      if (old == null) throw new IncorrectOperationException("ref has no name element");
-
-      PsiElement element = GroovyPsiElementFactory.getInstance(getProject()).createStringLiteralForReference(newElementName);
-      old.replace(element);
-      return this;
-    }
-
-    return super.handleElementRenameSimple(newElementName);
   }
 
   public String toString() {
@@ -264,7 +262,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
           PsiClassType[] superTypes = ArrayUtil.mergeArrays(implementsTypes, extendsTypes, PsiClassType.ARRAY_FACTORY);
 
-          return PsiIntersectionType.createIntersection(ArrayUtil.reverseArray(superTypes));
+          if (superTypes.length > 0) {
+            return PsiIntersectionType.createIntersection(ArrayUtil.reverseArray(superTypes));
+          }
         }
         return factory.createType((PsiClass)resolved);
       }
@@ -385,6 +385,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         final PsiType type;
         if (resolvedF instanceof GrField) {
           type = ((GrField)resolvedF).getType();
+        }
+        else if (resolvedF instanceof GrVariable && !(resolvedF instanceof GrParameter)) {
+          type = ((GrVariable)resolvedF).getDeclaredType();
         }
         else if (resolvedF instanceof GrAccessorMethod) {
           type = ((GrAccessorMethod)resolvedF).getProperty().getType();
@@ -511,7 +514,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       .setAllVariants(allVariants)
       .setUpToArgument(upToArgument)
       .build(this);
-    GrReferenceResolveRunnerKt.resolveReferenceExpression(this, processor);
+    new GrReferenceResolveRunner(this, processor).resolveReferenceExpression();
     return processor.getCandidatesArray();
   }
 

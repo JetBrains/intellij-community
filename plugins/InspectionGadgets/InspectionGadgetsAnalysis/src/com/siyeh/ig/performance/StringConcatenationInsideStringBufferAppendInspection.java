@@ -64,15 +64,10 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
   }
 
   private static class ReplaceWithChainedAppendFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "string.concatenation.inside.string.buffer.append.replace.quickfix");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 
-public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
+class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
@@ -31,19 +31,25 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
     return JAVA_LATEST
   }
 
-  public void testOnlyExceptionsInMultiCatch1() { doTest() }
-  public void testOnlyExceptionsInMultiCatch2() { doTest() }
+  void testOnlyExceptionsInMultiCatch1() { doTest() }
 
-  public void testOnlyResourcesInResourceList1() { doTest() }
-  public void testOnlyResourcesInResourceList2() { doTest() }
-  public void testOnlyResourcesInResourceList3() { doTest() }
-  public void testOnlyResourcesInResourceList4() { doTest() }
-  public void testOnlyResourcesInResourceList5() { doTest() }
+  void testOnlyExceptionsInMultiCatch2() { doTest() }
 
-  public void testMethodReferenceNoStatic() { doTest() }
-  public void testMethodReferenceCallContext() { doTest() }
+  void testOnlyResourcesInResourceList1() { doTest() }
 
-  public void testResourceParentInResourceList() {
+  void testOnlyResourcesInResourceList2() { doTest() }
+
+  void testOnlyResourcesInResourceList3() { doTest() }
+
+  void testOnlyResourcesInResourceList4() { doTest() }
+
+  void testOnlyResourcesInResourceList5() { doTest() }
+
+  void testMethodReferenceNoStatic() { doTest() }
+
+  void testMethodReferenceCallContext() { doTest() }
+
+  void testResourceParentInResourceList() {
     configureByFile(getTestName(false) + ".java")
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
     assert 'MyClass' in myFixture.lookupElementStrings
@@ -57,7 +63,7 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
-  public void testAfterTryWithResources() {
+  void testAfterTryWithResources() {
     configureByFile(getTestName(false) + ".java")
     def strings = myFixture.lookupElementStrings
     assert strings.containsAll(['final', 'finally', 'int', 'Util'])

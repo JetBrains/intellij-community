@@ -281,7 +281,8 @@ abstract class FoldRegionsTree {
     return region.getStartOffset() < offset && region.getEndOffset() > offset;
   }
 
-  public FoldRegion[] fetchCollapsedAt(int offset) {
+  @NotNull
+  FoldRegion[] fetchCollapsedAt(int offset) {
     if (myCachedData.isUnavailable()) return FoldRegion.EMPTY_ARRAY;
     ArrayList<FoldRegion> allCollapsed = new ArrayList<>();
     for (FoldRegion region : myRegions) {
@@ -329,7 +330,7 @@ abstract class FoldRegionsTree {
     return foldedLines[foldedLines.length - 1];
   }
 
-  public int getLastTopLevelIndexBefore(int offset) {
+  int getLastTopLevelIndexBefore(int offset) {
     return getLastTopLevelIndexBefore(myCachedData, offset);
   }
   
@@ -357,7 +358,7 @@ abstract class FoldRegionsTree {
   }
 
   @Nullable
-  public FoldRegion getRegionAt(int startOffset, int endOffset) {
+  FoldRegion getRegionAt(int startOffset, int endOffset) {
     int index = Collections.binarySearch(myRegions, new DummyFoldRegion(startOffset, endOffset), RangeMarker.BY_START_OFFSET);
     return index < 0 ? null : myRegions.get(index);
   }
@@ -378,14 +379,18 @@ abstract class FoldRegionsTree {
     private final int[] foldedLines;
 
     private CachedData() {
-      this.visibleRegions = null;
-      this.topLevelRegions = null;
-      this.startOffsets = null;
-      this.endOffsets = null;
-      this.foldedLines = null;
+      visibleRegions = null;
+      topLevelRegions = null;
+      startOffsets = null;
+      endOffsets = null;
+      foldedLines = null;
     }
 
-    private CachedData(FoldRegion[] visibleRegions, FoldRegion[] topLevelRegions, int[] startOffsets, int[] endOffsets, int[] foldedLines) {
+    private CachedData(@NotNull FoldRegion[] visibleRegions,
+                       @NotNull FoldRegion[] topLevelRegions,
+                       @NotNull int[] startOffsets,
+                       @NotNull int[] endOffsets,
+                       @NotNull int[] foldedLines) {
       this.visibleRegions = visibleRegions;
       this.topLevelRegions = topLevelRegions;
       this.startOffsets = startOffsets;

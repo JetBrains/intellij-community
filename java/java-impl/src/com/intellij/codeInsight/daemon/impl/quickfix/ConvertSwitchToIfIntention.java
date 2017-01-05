@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,12 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     doProcessIntention(mySwitchExpression);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return mySwitchExpression;
   }
 
   @Override

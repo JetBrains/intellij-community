@@ -50,6 +50,11 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer implements Colored
     myColored = colored;
   }
 
+  @Override
+  public boolean getColored() {
+    return myColored;
+  }
+
   public Component getTableCellRendererComponent(JTable table, Object value,
                                                  boolean isSelected, boolean hasFocus, int row, int col) {
     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);

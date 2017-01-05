@@ -82,12 +82,15 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
       myComponent.getSliceTextField().setText(chunk.getSlicePresentation());
       myComponent.getFormatTextField().setText(chunk.getFormat());
       myDialog.setTitle(getTitlePresentation(chunk.getSlicePresentation()));
+      boolean shouldSetColored = myTableCellRenderer == null || myTableCellRenderer.getColored();
       myTableCellRenderer = createCellRenderer(Double.MIN_VALUE, Double.MIN_VALUE, chunk);
       if (!isNumeric()) {
         disableColor();
       }
       else {
         myComponent.getColoredCheckbox().setEnabled(true);
+        myComponent.getColoredCheckbox().setSelected(shouldSetColored);
+        myTableCellRenderer.setColored(shouldSetColored);
       }
 
       if (!inPlace) {
@@ -201,7 +204,7 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
       PyDebugValue parent = value.getParent();
       final PyDebugValue slicedValue =
         new PyDebugValue(slice, value.getType(), null, value.getValue(), value.isContainer(), value.isReturnedVal(), value.isErrorOnEval(),
-                         parent, value.getFrameAccessor());
+                         value.isIPythonHidden(), parent, value.getFrameAccessor());
 
       final String format = getFormat().isEmpty() ? "%" : getFormat();
 
@@ -224,10 +227,11 @@ public abstract class NumericContainerViewTable implements TableChunkDatasource 
   public ArrayChunk getChunk(int rowOffset, int colOffset, int rows, int cols) throws PyDebuggerException {
     final PyDebugValue slicedValue =
       new PyDebugValue(getSliceText(), myValue.getType(), myValue.getTypeQualifier(), myValue.getValue(), myValue.isContainer(),
-                       myValue.isErrorOnEval(), myValue.isReturnedVal(),
-                       myValue.getParent(), myValue.getFrameAccessor());
+                       myValue.isErrorOnEval(), myValue.isReturnedVal(), myValue.isIPythonHidden(), myValue.getParent(),
+                       myValue.getFrameAccessor());
 
-    return myValue.getFrameAccessor().getArrayItems(slicedValue, rowOffset, colOffset, rows, cols, getFormat());
+    final String format = getFormat().isEmpty() ? "%" : getFormat();
+    return myValue.getFrameAccessor().getArrayItems(slicedValue, rowOffset, colOffset, rows, cols, format);
   }
 
   public abstract boolean isNumeric();

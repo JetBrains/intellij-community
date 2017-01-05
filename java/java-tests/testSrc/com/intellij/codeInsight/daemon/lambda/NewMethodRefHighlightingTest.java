@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -518,6 +518,26 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testMethodReferenceSecondSearchDontInfluenceTopSiteSubstitutor() throws Exception {
+    doTest();
+  }
+
+  public void testCheckReturnTypeOfMethodReferenceWhenTheRestIsGood() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureResolveToClassInConstructorRefs() throws Exception {
+    doTest();
+  }
+
+  public void testReturnTypeCompatibilityConstraintForSecondSearchCase() throws Exception {
+    doTest();
+  }
+
+  public void testNonExactMethodReferenceOnRawClassType() throws Exception {
+    doTest();
+  }
+
+  public void testMethodREfToContainingMethodWithGenericParam() throws Exception {
     doTest();
   }
 

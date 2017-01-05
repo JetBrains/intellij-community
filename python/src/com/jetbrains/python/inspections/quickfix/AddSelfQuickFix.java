@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -54,9 +53,6 @@ public class AddSelfQuickFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     if (element instanceof PyParameterList) {
       final PyParameterList parameterList = (PyParameterList)element;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
-        return;
-      }
       PyNamedParameter newParameter = PyElementGenerator.getInstance(project).createParameter(myParamName);
       parameterList.addParameter(newParameter);
     }

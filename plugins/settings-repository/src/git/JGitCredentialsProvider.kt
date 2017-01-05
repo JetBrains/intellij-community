@@ -19,10 +19,10 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
-import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
+import com.intellij.credentialStore.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.nullize
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
@@ -37,7 +37,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
   private val credentialsFromGit = CacheBuilder.newBuilder()
       .expireAfterAccess(5, TimeUnit.MINUTES)
       .build(object : CacheLoader<URIish, Credentials>() {
-        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null, null)
+        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null)
       })
 
   override fun isInteractive() = true
@@ -114,17 +114,17 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
       }
     }
 
-    userNameItem?.value = credentials?.user
+    userNameItem?.value = credentials?.userName
     if (passwordItem != null) {
       if (passwordItem is CredentialItem.Password) {
         passwordItem.value = credentials?.password?.toCharArray()
       }
       else {
-        (passwordItem as CredentialItem.StringType).value = credentials?.password
+        (passwordItem as CredentialItem.StringType).value = credentials?.password?.toString()
       }
     }
 
-    return credentials != null
+    return credentials.isFulfilled()
   }
 
   override fun reset(uri: URIish) {

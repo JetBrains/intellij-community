@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
@@ -179,6 +180,10 @@ public class RootIndex {
   }
 
   private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container) {
+    if (!(file instanceof VirtualFileWithId)) {
+      //skip roots from unsupported file systems (e.g. http)
+      return false;
+    }
     if (!file.isValid()) {
       LOG.error("Invalid root " + file + " in " + container);
       return false;
@@ -367,7 +372,7 @@ public class RootIndex {
       @Nullable VirtualFile librarySourceRoot = myRootInfo.findLibraryRootInfo(roots, true);
       result.addAll(myRootInfo.getLibraryOrderEntries(roots, libraryClassRoot, librarySourceRoot, myLibClassRootEntries, myLibSourceRootEntries));
 
-      VirtualFile moduleContentRoot = myRootInfo.findModuleRootInfo(roots);
+      VirtualFile moduleContentRoot = myRootInfo.findNearestContentRoot(roots);
       if (moduleContentRoot != null) {
         ContainerUtil.addIfNotNull(result, myRootInfo.getModuleSourceEntry(roots, moduleContentRoot, myLibClassRootEntries));
       }
@@ -541,16 +546,39 @@ public class RootIndex {
       return result;
     }
 
+    /**
+     * Returns nearest content root for a file by its parent directories hierarchy. If the file is excluded (i.e. located under an excluded
+     * root and there are no source roots on the path to the excluded root) returns {@code null}.
+     */
     @Nullable
-    private VirtualFile findModuleRootInfo(@NotNull List<VirtualFile> hierarchy) {
+    private VirtualFile findNearestContentRoot(@NotNull List<VirtualFile> hierarchy) {
+      Collection<Module> sourceRootOwners = null;
+      boolean underExcludedSourceRoot = false;
       for (VirtualFile root : hierarchy) {
         Module module = contentRootOf.get(root);
         Module excludedFrom = excludedFromModule.get(root);
-        if (module != null && excludedFrom != module) {
+        if (module != null && (excludedFrom != module || underExcludedSourceRoot && sourceRootOwners.contains(module))) {
           return root;
         }
         if (excludedFrom != null || excludedFromProject.contains(root)) {
-          return null;
+          if (sourceRootOwners != null) {
+            underExcludedSourceRoot = true;
+          }
+          else {
+            return null;
+          }
+        }
+
+        if (!underExcludedSourceRoot && sourceRootOf.containsKey(root)) {
+          Collection<Module> modulesForSourceRoot = sourceRootOf.get(root);
+          if (!modulesForSourceRoot.isEmpty()) {
+            if (sourceRootOwners == null) {
+              sourceRootOwners = modulesForSourceRoot;
+            }
+            else {
+              sourceRootOwners = ContainerUtil.union(sourceRootOwners, modulesForSourceRoot);
+            }
+          }
         }
       }
       return null;
@@ -662,7 +690,7 @@ public class RootIndex {
   private static Pair<DirectoryInfo, String> calcDirectoryInfo(@NotNull final VirtualFile root,
                                                                @NotNull final List<VirtualFile> hierarchy,
                                                                @NotNull RootInfo info) {
-    VirtualFile moduleContentRoot = info.findModuleRootInfo(hierarchy);
+    VirtualFile moduleContentRoot = info.findNearestContentRoot(hierarchy);
     VirtualFile libraryClassRoot = info.findLibraryRootInfo(hierarchy, false);
     VirtualFile librarySourceRoot = info.findLibraryRootInfo(hierarchy, true);
     boolean inProject = moduleContentRoot != null || libraryClassRoot != null || librarySourceRoot != null;

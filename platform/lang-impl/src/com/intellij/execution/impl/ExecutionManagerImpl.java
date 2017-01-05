@@ -114,6 +114,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   }
 
   private static void start(@NotNull ExecutionEnvironment environment) {
+    //start() can be called during restartRunProfile() after pretty long 'awaitTermination()' so we have to check if the project is still here
+    if (environment.getProject().isDisposed()) return;
+
     RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
     ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
   }
@@ -421,7 +424,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         LOG.info(e);
       }
       catch (ExecutionException e) {
-        ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, e);
+        ExecutionUtil.handleExecutionError(project,
+                                           ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
+                                           profile, e);
         LOG.info(e);
       }
       finally {
@@ -567,11 +572,22 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   public List<RunContentDescriptor> getRunningDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
     List<RunContentDescriptor> result = new SmartList<>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
-      if (condition.value(trinity.getSecond())) {
+      if (trinity.getSecond() != null && condition.value(trinity.getSecond())) {
         ProcessHandler processHandler = trinity.getFirst().getProcessHandler();
         if (processHandler != null /*&& !processHandler.isProcessTerminating()*/ && !processHandler.isProcessTerminated()) {
           result.add(trinity.getFirst());
         }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public List<RunContentDescriptor> getDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
+    List<RunContentDescriptor> result = new SmartList<>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (trinity.getSecond() != null && condition.value(trinity.getSecond())) {
+        result.add(trinity.getFirst());
       }
     }
     return result;
@@ -619,13 +635,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         }
       }, ModalityState.any());
 
-      //noinspection ConstantConditions
-      int exitCode = myProcessHandler.getExitCode();
-      
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myExecutorId,
                                                                                  myEnvironment,
                                                                                  myProcessHandler,
-                                                                                 exitCode);
+                                                                                 event.getExitCode());
 
       SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
       if (saveAndSyncHandler != null) {

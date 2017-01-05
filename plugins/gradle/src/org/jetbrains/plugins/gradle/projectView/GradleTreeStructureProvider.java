@@ -19,10 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleGroupNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -40,6 +37,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collection;
@@ -184,7 +182,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
                                                                     @NotNull ProjectViewModuleNode moduleNode,
                                                                     ViewSettings settings) {
     Module module = moduleNode.getValue();
-    String sourceSetName = getSourceSetName(module);
+    String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
     if (sourceSetName == null) return null;
     return new GradleProjectViewModuleNode(project, module, settings);
   }
@@ -202,22 +200,9 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(virtualFile);
-    String sourceSetName = getSourceSetName(module);
+    String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
     if (sourceSetName == null) return null;
-    return new GradleSourceSetDirectoryNode(project, psiDirectory, settings, module, sourceSetName);
-  }
-
-  @Nullable
-  private static String getSourceSetName(final Module module) {
-    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
-    if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) return null;
-
-    String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
-    if (externalProjectId == null) return null;
-    int i = externalProjectId.lastIndexOf(':');
-    if (i == -1 || externalProjectId.length() < i + 1) return null;
-
-    return externalProjectId.substring(i + 1);
+    return new GradleSourceSetDirectoryNode(project, psiDirectory, settings, module, sourceSetName, directoryNode.getFilter());
   }
 
   private static class GradleSourceSetDirectoryNode extends PsiDirectoryNode {
@@ -228,8 +213,9 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
                                         PsiDirectory psiDirectory,
                                         ViewSettings settings,
                                         Module module,
-                                        String sourceSetName) {
-      super(project, psiDirectory, settings);
+                                        String sourceSetName,
+                                        PsiFileSystemItemFilter filter) {
+      super(project, psiDirectory, settings, filter);
       mySourceSetName = sourceSetName;
       myModule = module;
     }
@@ -262,7 +248,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
     @Override
     public void update(PresentationData presentation) {
       super.update(presentation);
-      String sourceSetName = getSourceSetName(getValue());
+      String sourceSetName = GradleProjectResolverUtil.getSourceSetName(getValue());
       if (sourceSetName != null) {
         presentation.setPresentableText(sourceSetName);
         presentation.addText(sourceSetName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

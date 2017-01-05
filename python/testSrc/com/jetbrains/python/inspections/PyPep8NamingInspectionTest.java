@@ -112,6 +112,10 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testNamedTupleInsideFunction() {
+    doTest();
+  }
+
   public void testOverrideFromModule() {
     myFixture.configureByFiles("inspections/PyPep8NamingInspection/" + getTestName(true) + ".py",
                                "inspections/PyPep8NamingInspection/tmp1.py");

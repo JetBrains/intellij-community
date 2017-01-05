@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -31,9 +32,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -51,9 +50,6 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -141,7 +137,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Alarm.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DependencyScope.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExtensionPointName.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtil.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtilKt.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StdModuleTypes.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(JavaModuleType.class));
@@ -163,7 +159,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         params.setMainClass(MAIN_CLASS_NAME);
         params.getVMParametersList().addParametersString("-Djava.awt.headless=true");
 
-        // It may take a while for gradle api to resolve external dependencies. Default RMI timeout
+        // It may take a while for external system api to resolve external dependencies. Default RMI timeout
         // is 15 seconds (http://download.oracle.com/javase/6/docs/technotes/guides/rmi/sunrmiproperties.html#connectionTimeout),
         // we don't want to get EOFException because of that.
         params.getVMParametersList().addParametersString(
@@ -192,19 +188,14 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       @NotNull
       public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         ProcessHandler processHandler = startProcess();
-        return new DefaultExecutionResult(null, processHandler, AnAction.EMPTY_ARRAY);
+        return new DefaultExecutionResult(processHandler);
       }
 
+      @Override
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
-        Sdk sdk = params.getJdk();
-        if (sdk == null) {
-          throw new ExecutionException("No sdk is defined. Params: " + params);
-        }
-
-        String executablePath = ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk);
-        GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(executablePath, params, false);
+        GeneralCommandLine commandLine = params.toCommandLine();
         OSProcessHandler processHandler = new OSProcessHandler(commandLine);
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;

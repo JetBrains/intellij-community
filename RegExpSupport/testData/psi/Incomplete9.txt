@@ -7,5 +7,9 @@ REGEXP_FILE
         PsiElement(CHARACTER)('b')
       RegExpCharImpl: <c>
         PsiElement(CHARACTER)('c')
-      RegExpCharImpl: <\u22>
-        PsiElement(INVALID_UNICODE_ESCAPE_TOKEN)('\u22')
+      RegExpCharImpl: <\u>
+        PsiElement(INVALID_UNICODE_ESCAPE_TOKEN)('\u')
+      RegExpCharImpl: <2>
+        PsiElement(CHARACTER)('2')
+      RegExpCharImpl: <2>
+        PsiElement(CHARACTER)('2')

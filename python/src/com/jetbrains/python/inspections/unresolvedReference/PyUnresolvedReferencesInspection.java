@@ -41,7 +41,6 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
-import com.jetbrains.python.codeInsight.PyFunctionTypeCommentReferenceContributor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
@@ -292,13 +291,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super.visitComment(comment);
       if (comment instanceof PsiLanguageInjectionHost) {
         processInjection((PsiLanguageInjectionHost)comment);
-      }
-      if (PyFunctionTypeCommentReferenceContributor.TYPE_COMMENT_PATTERN.accepts(comment)) {
-        for (PsiReference reference : comment.getReferences()) {
-          if (reference instanceof PsiPolyVariantReference) {
-            markTargetImportsAsUsed((PsiPolyVariantReference)reference);
-          }
-        }
       }
     }
 

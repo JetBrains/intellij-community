@@ -23,7 +23,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
  */
 class AddImportActionHeavyTest extends JavaCodeInsightFixtureTestCase {
 
-  public void "test prefer junit in tests"() {
+  void "test prefer junit in tests"() {
     myFixture.addClass 'package org.junit; public @interface Before {}'
     myFixture.addClass 'package org.aspectj.lang.annotation; public @interface Before {}'
     PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir('tests'), true)

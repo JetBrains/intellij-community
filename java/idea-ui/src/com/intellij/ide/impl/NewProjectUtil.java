@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,7 @@ public class NewProjectUtil {
       LOG.assertTrue(projectDir != null, "Cannot create project in '" + projectFilePath + "': no parent file exists");
       FileUtil.ensureExists(projectDir);
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
-        final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
-        FileUtil.ensureExists(ideaDir);
+        FileUtil.ensureExists(new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER));
       }
 
       final Project newProject;

@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -52,6 +51,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteDialog;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
@@ -139,7 +139,7 @@ public class DeleteHandler {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
 
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, processor);
+          processor.run();
         }
       }) {
         @Override
@@ -289,7 +289,7 @@ public class DeleteHandler {
     if (elements == null || elements.length == 0) return false;
     for (PsiElement element : elements) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-      if (virtualFile == null) {
+      if (virtualFile == null || virtualFile instanceof LightVirtualFile) {
         return false;
       }
       if (!WritingAccessProvider.isPotentiallyWritable(virtualFile, element.getProject())) {

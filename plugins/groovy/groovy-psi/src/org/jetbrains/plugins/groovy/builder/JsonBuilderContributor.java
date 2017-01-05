@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.builder.JsonDelegateContributor.DELEGATE_FQN;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_KEY;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_KEY;
 
 public class JsonBuilderContributor extends BuilderMethodsContributor {
 

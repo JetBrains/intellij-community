@@ -1,8 +1,8 @@
 <idea-plugin>
   <extensionPoints>
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
     <extensionPoint name="appStarter"
@@ -68,7 +68,7 @@
     <extensionPoint name="cutElementMarker"
                     interface="com.intellij.openapi.ide.CutElementMarker"/>
 
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
 
     <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" area="IDEA_PROJECT"/>
@@ -141,7 +141,7 @@
     <extensionPoint name="customFileDropHandler" area="IDEA_PROJECT" interface="com.intellij.openapi.editor.CustomFileDropHandler"/>
 
     <extensionPoint name="additionalTextAttributes" beanClass="com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP" />
-    <extensionPoint name="bundledColorScheme" beanClass="com.intellij.openapi.editor.colors.impl.BundledColorSchemeEP"/>
+    <extensionPoint name="bundledColorScheme" beanClass="com.intellij.configurationStore.BundledSchemeEP"/>
     <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
     <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
 
@@ -163,6 +163,8 @@
     <extensionPoint name="statisticsService" beanClass="com.intellij.internal.statistic.connect.StatisticsServiceEP">
       <with attribute="implementationClass" implements="com.intellij.internal.statistic.connect.StatisticsService"/>
     </extensionPoint>
+
+    <extensionPoint name="uiDropperActions" interface="com.intellij.internal.inspector.UiDropperActionExtension"/>
 
     <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
@@ -217,6 +219,8 @@
 
     <extensionPoint name="search.optionContributor" interface="com.intellij.ide.ui.search.SearchableOptionContributor"/>
 
+    <extensionPoint name="pluginReplacement" interface="com.intellij.ide.plugins.PluginReplacement"/>
+
     <extensionPoint name="ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider"/>
 
     <extensionPoint name="schemeImporter" beanClass="com.intellij.openapi.options.SchemeImporterEP">
@@ -270,5 +274,12 @@
     <extensionPoint name="settingsSummaryFactory" interface="com.intellij.settingsSummary.ProblemType"/>
 
     <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory"/>
+
+    <extensionPoint name="protanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="deuteranopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="tritanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="achromatopsiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+
+    <extensionPoint name="bundledInspectionProfile" beanClass="com.intellij.configurationStore.BundledSchemeEP"/>
   </extensionPoints>
 </idea-plugin>

@@ -17,10 +17,9 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -41,11 +40,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, Disposable {
+public abstract class LibraryTableBase implements PersistentStateComponentWithModificationTracker<Element>, LibraryTable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.libraries.LibraryTableBase");
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private LibraryModel myModel = new LibraryModel();
   private boolean myFirstLoad = true;
+
+  private volatile long myModificationCount;
 
   @NotNull
   @Override
@@ -73,14 +74,10 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
       else {
         LibraryModel model = new LibraryModel(myModel);
-        AccessToken token = WriteAction.start();
-        try {
+        WriteAction.run(() -> {
           model.readExternal(element);
           commit(model);
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
 
       myFirstLoad = false;
@@ -88,6 +85,11 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     catch (InvalidDataException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public long getStateModificationCount() {
+    return myModificationCount;
   }
 
   @Override
@@ -123,6 +125,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   private void fireLibraryAdded (Library library) {
+    myModificationCount++;
     if (LOG.isDebugEnabled()) {
       LOG.debug("fireLibraryAdded: " + library);
     }
@@ -130,6 +133,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   private void fireBeforeLibraryRemoved (Library library) {
+    myModificationCount++;
     if (LOG.isDebugEnabled()) {
       LOG.debug("fireBeforeLibraryRemoved: " + library);
     }
@@ -150,6 +154,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   public void fireLibraryRenamed(@NotNull LibraryImpl library) {
+    myModificationCount++;
     myDispatcher.getMulticaster().afterLibraryRenamed(library);
   }
 
@@ -175,6 +180,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       Disposer.dispose(model);
       return;
     }
+
+    myModificationCount++;
     //todo[nik] remove LibraryImpl#equals method instead of using identity sets
     Set<Library> addedLibraries = ContainerUtil.newIdentityTroveSet(model.myLibraries);
     addedLibraries.removeAll(myModel.myLibraries);
@@ -295,6 +302,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void removeLibrary(@NotNull Library library) {
+      myModificationCount++;
+
       assertWritable();
       myLibraries.remove(library);
       myLibraryByNameCache = null;
@@ -327,21 +336,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     @Override
-    public void afterLibraryAdded(Library newLibrary) {
-    }
-
-    @Override
     public void afterLibraryRenamed(Library library) {
       myLibraryByNameCache = null;
-    }
-
-    @Override
-    public void beforeLibraryRemoved(Library library) {
-    }
-
-    @Override
-    public void afterLibraryRemoved(Library library) {
-
     }
 
     @Override

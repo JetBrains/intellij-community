@@ -15,24 +15,24 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
  */
 class RemovePropertyFix implements IntentionAction {
-  private final Property myProperty;
+  private final SmartPsiElementPointer<Property> myProperty;
 
   RemovePropertyFix(@NotNull final Property origProperty) {
-    myProperty = origProperty;
+    myProperty = SmartPointerManager.getInstance(origProperty.getProject()).createSmartPsiElementPointer(origProperty);
   }
 
   @Override
@@ -51,14 +51,19 @@ class RemovePropertyFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return file != null &&
            file.isValid() &&
-           myProperty.isValid() &&
-           PsiManager.getInstance(project).isInProject(myProperty);
+           PsiManager.getInstance(project).isInProject(file) &&
+           myProperty.getElement() != null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return myProperty.getElement();
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    myProperty.delete();
+    ObjectUtils.notNull(myProperty.getElement()).delete();
   }
 
   @Override

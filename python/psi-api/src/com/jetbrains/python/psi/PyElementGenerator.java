@@ -90,7 +90,7 @@ public abstract class PyElementGenerator {
   @NotNull
   public abstract PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
 
-  public abstract PyImportElement createImportElement(final LanguageLevel languageLevel, String name);
+  public abstract PyImportElement createImportElement(@NotNull LanguageLevel languageLevel, @NotNull String name, @Nullable String alias);
 
   public abstract PyFunction createProperty(final LanguageLevel languageLevel,
                                             String propertyName,

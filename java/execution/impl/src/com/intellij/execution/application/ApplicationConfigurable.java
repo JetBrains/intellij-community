@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myCommonProgramParameters, myJrePathEditor, myModule);
   }
 
-  public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
+  public void applyEditorTo(@NotNull final ApplicationConfiguration configuration) throws ConfigurationException {
     myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
     final String className = getMainClassField().getText();
@@ -81,7 +81,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     updateShowSwingInspector(configuration);
   }
 
-  public void resetEditorFrom(final ApplicationConfiguration configuration) {
+  public void resetEditorFrom(@NotNull final ApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME != null ? configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\.") : "");

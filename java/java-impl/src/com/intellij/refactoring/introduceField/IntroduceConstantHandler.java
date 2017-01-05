@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -254,7 +253,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       if (!myCheckThrowables) return;
-      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{callExpression});
+      final List<PsiClassType> checkedExceptions = ExceptionUtil.getThrownCheckedExceptions(callExpression);
       if (!checkedExceptions.isEmpty()) {
         myElementReference = callExpression;
       }

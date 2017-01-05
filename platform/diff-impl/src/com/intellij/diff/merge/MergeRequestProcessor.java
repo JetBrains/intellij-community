@@ -180,9 +180,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     toolbar.setTargetComponent(toolbar.getComponent());
 
     myToolbarPanel.setContent(toolbar.getComponent());
-    for (AnAction action : group.getChildren(null)) {
-      DiffUtil.registerAction(action, myMainPanel);
-    }
+    ActionUtil.recursiveRegisterShortcutSet(group, myMainPanel, null);
   }
 
   @NotNull

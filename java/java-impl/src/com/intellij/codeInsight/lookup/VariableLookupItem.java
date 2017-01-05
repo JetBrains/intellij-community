@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.RecursionManager;
@@ -30,19 +29,17 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFieldImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collection;
 
 /**
 * @author peter
@@ -157,7 +154,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       myHelper.renderElement(presentation, qualify, true, getSubstitutor());
     }
     if (myColor != null) {
-      presentation.setTypeText("", new ColorIcon(12, myColor));
+      presentation.setTypeText("", JBUI.scale(new ColorIcon(12, myColor)));
     } else {
       presentation.setTypeText(getType().getPresentableText());
     }
@@ -218,7 +215,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN && isTernaryCondition(ref)) {
       context.setAddCompletionChar(false);
       TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
     }
@@ -232,6 +229,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         document.insertString(ref.getTextRange().getStartOffset(), "!");
       }
     }
+  }
+
+  private static boolean isTernaryCondition(PsiReferenceExpression ref) {
+    PsiElement parent = ref == null ? null : ref.getParent();
+    return parent instanceof PsiConditionalExpression && ref == ((PsiConditionalExpression)parent).getThenExpression();
   }
 
   public static void makeFinalIfNeeded(@NotNull InsertionContext context, @NotNull PsiVariable variable) {
@@ -271,9 +273,8 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
     PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && containingClass.getName() != null) {
-      OffsetKey oldStart = context.trackOffset(context.getStartOffset(), true);
+      context.getDocument().insertString(context.getStartOffset(), ".");
       JavaCompletionUtil.insertClassReference(containingClass, file, context.getStartOffset());
-      context.getDocument().insertString(context.getOffsetMap().getOffset(oldStart), ".");
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
     }
   }

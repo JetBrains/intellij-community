@@ -368,8 +368,8 @@ public class JDParser {
   }
 
   /**
-   * Processes given string and produces on its basis set of pairs like <code>'(string; flag)'</code> where <code>'string'</code>
-   * is interested line and <code>'flag'</code> indicates if it is wrapped to {@code <pre>} tag.
+   * Processes given string and produces on its basis set of pairs like {@code '(string; flag)'} where {@code 'string'}
+   * is interested line and {@code 'flag'} indicates if it is wrapped to {@code <pre>} tag.
    *
    * @param s   string to process
    * @return    processing result

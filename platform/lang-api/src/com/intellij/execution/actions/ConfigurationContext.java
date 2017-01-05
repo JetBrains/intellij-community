@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class ConfigurationContext {
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized = false;
+  private boolean myMultipleSelection = false;
   private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
@@ -91,6 +92,8 @@ public class ConfigurationContext {
     final Location<PsiElement> location = (Location<PsiElement>)Location.DATA_KEY.getData(dataContext);
     if (location != null) {
       myLocation = location;
+      Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
+      myMultipleSelection = locations != null && locations.length > 1;
       return;
     }
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -104,6 +107,14 @@ public class ConfigurationContext {
       return;
     }
     myLocation = new PsiLocation<>(project, myModule, element);
+    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (elements != null) {
+      myMultipleSelection = elements.length > 1;
+    }
+    else {
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      myMultipleSelection = files != null && files.length > 1;
+    }
   }
 
   public ConfigurationContext(PsiElement element) {
@@ -111,6 +122,10 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
     myContextComponent = null;
+  }
+
+  public boolean containsMultipleSelection() {
+    return myMultipleSelection;
   }
 
   /**
@@ -280,6 +295,20 @@ public class ConfigurationContext {
       return myRuntimeConfiguration;
     }
     return null;
+  }
+
+  /**
+   * Checks if the original run configuration matches the passed type.
+   * If the original run configuration is undefined, the check is passed too.
+   * An original run configuration is a run configuration associated with given context.
+   * For example, it could be a test framework run configuration that had been launched
+   * and that had brought a result test tree on which a right-click action was performed (and this context was created). In this case, other run configuration producers might want to not work on such elements.
+   *
+   * @param type {@link ConfigurationType} instance to match the original run configuration
+   * @return true if the original run configuration is of the same type or it's undefined; false otherwise
+   */
+  public boolean isCompatibleWithOriginalRunConfiguration(@NotNull ConfigurationType type) {
+    return myRuntimeConfiguration == null || ConfigurationTypeUtil.equals(myRuntimeConfiguration.getType(), type);
   }
 
   @Deprecated

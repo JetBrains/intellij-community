@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.embedder.Maven2ServerEmbedderImpl;
@@ -35,9 +36,9 @@ public class Maven2ServerImpl extends MavenRemoteObject implements MavenServer {
     }
   }
 
-  public MavenServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException {
+  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     try {
-      Maven2ServerEmbedderImpl result = Maven2ServerEmbedderImpl.create(settings);
+      Maven2ServerEmbedderImpl result = Maven2ServerEmbedderImpl.create(settings.getSettings());
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -57,6 +58,7 @@ public class Maven2ServerImpl extends MavenRemoteObject implements MavenServer {
     }
   }
 
+  @NotNull
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
     try {
       return Maven2ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);

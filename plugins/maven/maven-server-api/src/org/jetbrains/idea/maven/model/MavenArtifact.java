@@ -160,14 +160,17 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
 
   public String getFileNameWithBaseVersion(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     StringBuilder res = new StringBuilder();
-    appendFileName(res, extraArtifactClassifier, customExtension);
+    appendFileName(res, extraArtifactClassifier, customExtension, true);
     return res.toString();
   }
 
-  private void appendFileName(StringBuilder result, @Nullable String extraArtifactClassifier, @Nullable String customExtension) {
+  private void appendFileName(StringBuilder result,
+                              @Nullable String extraArtifactClassifier,
+                              @Nullable String customExtension,
+                              boolean useBaseVersion) {
     result.append(myArtifactId);
     result.append('-');
-    result.append(myVersion);
+    result.append(useBaseVersion ? myBaseVersion : myVersion);
 
     String fullClassifier = getFullClassifier(extraArtifactClassifier);
     if (fullClassifier != null) {
@@ -187,7 +190,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     result.append(myBaseVersion);
     result.append('/');
 
-    appendFileName(result, extraArtifactClassifier, customExtension);
+    appendFileName(result, extraArtifactClassifier, customExtension, false);
     return result.toString();
   }
 

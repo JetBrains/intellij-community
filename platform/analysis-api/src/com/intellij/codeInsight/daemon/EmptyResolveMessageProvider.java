@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public interface EmptyResolveMessageProvider {
 
   /**
-   * Returns custom unresolved message pattern. First, returned value is used as pattern in <code>MessageFormat.format()</code> call.
+   * Returns custom unresolved message pattern. First, returned value is used as pattern in {@code MessageFormat.format()} call.
    * If the call fails, returned value is used as is.
    * @return pattern or message
    * @see XmlHighlightVisitor#getErrorDescription()

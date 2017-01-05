@@ -39,14 +39,14 @@ class ContentHashesSupport {
     if (ourHashesWithFileType != null) return;
     synchronized (ContentHashesSupport.class) {
       if (ourHashesWithFileType != null) return;
-      ContentHashesUtil.HashEnumerator hashEnumerator = null;
       final File hashEnumeratorFile = new File(IndexInfrastructure.getPersistentIndexRoot(), "hashesWithFileType");
       try {
-        hashEnumerator = new ContentHashesUtil.HashEnumerator(hashEnumeratorFile, null);
-        FlushingDaemon.everyFiveSeconds(() -> flushContentHashes());
-        ShutDownTracker.getInstance().registerShutdownTask(() -> flushContentHashes());
+        ContentHashesUtil.HashEnumerator hashEnumerator = new ContentHashesUtil.HashEnumerator(hashEnumeratorFile, null);
+        FlushingDaemon.everyFiveSeconds(ContentHashesSupport::flushContentHashes);
+        ShutDownTracker.getInstance().registerShutdownTask(ContentHashesSupport::flushContentHashes);
         ourHashesWithFileType = hashEnumerator;
-      } catch (IOException ex) {
+      }
+      catch (IOException ex) {
         IOUtil.deleteAllFilesStartingWith(hashEnumeratorFile);
         throw ex;
       }
@@ -57,7 +57,7 @@ class ContentHashesSupport {
     if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
-  static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
+  static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
 
     Charset defaultCharset = Charset.defaultCharset();
@@ -81,7 +81,7 @@ class ContentHashesSupport {
     return ourHashesWithFileType.enumerate(digest);
   }
 
-  static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) throws IOException {
+  static byte[] calcContentHashWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
 
     Charset defaultCharset = Charset.defaultCharset();

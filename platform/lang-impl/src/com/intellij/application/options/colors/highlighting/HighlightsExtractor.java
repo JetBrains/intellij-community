@@ -18,6 +18,8 @@ package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 public class HighlightsExtractor {
-
   private final Map<String,TextAttributesKey> myTags;
+  private final Map<String,TextAttributesKey> myInlineElements;
   private int myStartOffset;
   private int myEndOffset;
 
@@ -38,18 +40,29 @@ public class HighlightsExtractor {
   private List<TextRange> mySkipped = new ArrayList<>();
 
   public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags) {
+    this(tags, null);
+  }
+
+  public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags, @Nullable Map<String, TextAttributesKey> inlineElements) {
     myTags = tags;
+    myInlineElements = inlineElements;
   }
 
   public String extractHighlights(String text, List<HighlightData> highlights) {
     mySkipped.clear();
-    if (myTags == null || myTags.isEmpty()) return text;
+    if (ContainerUtil.isEmpty(myTags) && ContainerUtil.isEmpty(myInlineElements)) return text;
     resetIndices();
     Stack<HighlightData> highlightsStack = new Stack<>();
     while (true) {
       String tagName = findTagName(text);
       if (tagName == null || myIndex < 0) break;
-      if (myTags.containsKey(tagName)) {
+      String tagNameWithoutParameters = StringUtil.substringBefore(tagName, " ");
+      if (myInlineElements != null && tagNameWithoutParameters != null && myInlineElements.containsKey(tagNameWithoutParameters)) {
+        mySkippedLen += tagName.length() + 2;
+        String hintText = tagName.substring(tagNameWithoutParameters.length()).trim();
+        highlights.add(new InlineElementData(myStartOffset - mySkippedLen, myInlineElements.get(tagNameWithoutParameters), hintText));
+      }
+      else if (myTags != null && myTags.containsKey(tagName)) {
         if (myIsOpeningTag) {
           mySkippedLen += tagName.length() + 2;
           HighlightData highlightData = new HighlightData(myStartOffset - mySkippedLen, myTags.get(tagName));
@@ -95,12 +108,13 @@ public class HighlightsExtractor {
 
     if (myIsOpeningTag) {
       myStartOffset = openTag + tagName.length() + 2;
-      if (myTags.containsKey(tagName)) {
+      if (myTags != null && myTags.containsKey(tagName) ||
+          myInlineElements != null && myInlineElements.containsKey(StringUtil.substringBefore(tagName, " "))) {
         mySkipped.add(TextRange.from(openTag, tagName.length() + 2));
       }
     } else {
       myEndOffset = openTag - 1;
-      if (myTags.containsKey(tagName)) {
+      if (myTags != null && myTags.containsKey(tagName)) {
         mySkipped.add(TextRange.from(openTag - 1, tagName.length() + 3));
       }
     }

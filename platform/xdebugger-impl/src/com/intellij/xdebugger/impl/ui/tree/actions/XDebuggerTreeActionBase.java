@@ -21,11 +21,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -65,14 +65,7 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
     if (paths == null || paths.length == 0) {
       return Collections.emptyList();
     }
-    List<XValueNodeImpl> nodes = new ArrayList<>(paths.length);
-    for (TreePath path : paths) {
-      Object component = path.getLastPathComponent();
-      if (component instanceof XValueNodeImpl) {
-        nodes.add((XValueNodeImpl) component);
-      }
-    }
-    return nodes;
+    return StreamEx.of(paths).map(TreePath::getLastPathComponent).select(XValueNodeImpl.class).toList();
   }
 
   @Nullable

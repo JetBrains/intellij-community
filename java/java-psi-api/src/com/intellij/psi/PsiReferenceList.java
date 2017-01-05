@@ -18,8 +18,8 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a list of Java classes referenced by the <code>implements</code>,
- * <code>extends</code> or <code>throws</code> clause.
+ * Represents a list of Java classes referenced by the {@code implements},
+ * {@code extends} or {@code throws} clause.
  *
  * @see PsiClass#getExtendsList()
  * @see PsiClass#getImplementsList()

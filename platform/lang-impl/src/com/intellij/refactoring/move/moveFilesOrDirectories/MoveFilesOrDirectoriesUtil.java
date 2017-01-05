@@ -22,7 +22,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
@@ -38,7 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 public class MoveFilesOrDirectoriesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil");
@@ -50,7 +52,7 @@ public class MoveFilesOrDirectoriesUtil {
    * Moves the specified directory to the specified parent directory. Does not process non-code usages!
    *
    * @param dir          the directory to move.
-   * @param newParentDir the directory to move <code>dir</code> into.
+   * @param newParentDir the directory to move {@code dir} into.
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException {
@@ -67,23 +69,25 @@ public class MoveFilesOrDirectoriesUtil {
   }
 
   /**
-   * Moves the specified file to the specified directory. Does not process non-code usages!
+   * Moves the specified file to the specified directory. Does not process non-code usages! file may be invalidated, need to be refreshed before use, like {@code newDirectory.findFile(file.getName())}
    *
    * @param file         the file to move.
    * @param newDirectory the directory to move the file into.
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
-  public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException {
-    PsiManager manager = file.getManager();
+  public static void doMoveFile(@NotNull PsiFile file, @NotNull PsiDirectory newDirectory) throws IncorrectOperationException {
     // the class is already there, this is true when multiple classes are defined in the same file
     if (!newDirectory.equals(file.getContainingDirectory())) {
       // do actual move
       checkMove(file, newDirectory);
 
+      VirtualFile vFile = file.getVirtualFile();
+      if (vFile == null) {
+        throw new IncorrectOperationException("Non-physical file: " + file + " (" + file.getClass() + ")");
+      }
+
       try {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        LOG.assertTrue(virtualFile != null, file);
-        virtualFile.move(manager, newDirectory.getVirtualFile());
+        vFile.move(file.getManager(), newDirectory.getVirtualFile());
       }
       catch (IOException e) {
         throw new IncorrectOperationException(e);
@@ -150,13 +154,7 @@ public class MoveFilesOrDirectoriesUtil {
             for (final PsiElement psiElement : newElements) {
               if (psiElement instanceof PsiFile) {
                 final PsiFile file = (PsiFile)psiElement;
-                final boolean fileExist = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-                  @Override
-                  public Boolean compute() {
-                    return CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory1, choice, file, file.getName(), "Move");
-                  }
-                });
-                if (fileExist) continue;
+                if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory1, choice, file, file.getName(), "Move")) continue;
               }
               checkMove(psiElement, targetDirectory1);
               els.add(psiElement);

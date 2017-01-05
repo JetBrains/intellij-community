@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PyDemorganIntention extends BaseIntentionAction {
+public class PyDemorganIntention extends PyBaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
@@ -62,7 +61,7 @@ public class PyDemorganIntention extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
                                                                       PyBinaryExpression.class);
     assert expression != null;

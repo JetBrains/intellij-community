@@ -30,10 +30,10 @@ public abstract class CCRenameHandler implements RenameHandler {
       return false;
     }
     VirtualFile directory = ((PsiDirectory)element).getVirtualFile();
-    return isAvailable(directory.getName());
+    return isAvailable(directory);
   }
 
-  protected abstract boolean isAvailable(String name);
+  protected abstract boolean isAvailable(VirtualFile directory);
 
   @Override
   public boolean isRenaming(DataContext dataContext) {

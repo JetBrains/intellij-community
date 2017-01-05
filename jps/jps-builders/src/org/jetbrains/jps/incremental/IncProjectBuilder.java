@@ -352,9 +352,9 @@ public class IncProjectBuilder {
     //Deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
-      public void filesGenerated(Collection<Pair<String, String>> paths) {
+      public void filesGenerated(FileGeneratedEvent event) {
         final Set<File> outputs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-        for (Pair<String, String> pair : paths) {
+        for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
         }
         for (File root : outputs) {
@@ -364,7 +364,7 @@ public class IncProjectBuilder {
       }
 
       @Override
-      public void filesDeleted(Collection<String> paths) {
+      public void filesDeleted(FileDeletedEvent event) {
       }
     });
 
@@ -579,8 +579,15 @@ public class IncProjectBuilder {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
     for (BuildTarget<?> target : allTargets) {
-      for (File file : target.getOutputRoots(context)) {
-        rootsToDelete.putValue(file, target);
+      if (target instanceof ModuleBasedTarget) {
+        for (File file : target.getOutputRoots(context)) {
+          rootsToDelete.putValue(file, target);
+        }
+      }
+      else {
+        if (context.getScope().isBuildForced(target)) {
+          clearOutputFilesUninterruptibly(context, target);
+        }
       }
     }
 
@@ -592,7 +599,7 @@ public class IncProjectBuilder {
           File rootFile = descriptor.getRootFile();
           //some roots aren't marked by as generated but in fact they are produced by some builder and it's safe to remove them.
           //However if a root isn't excluded it means that its content will be shown in 'Project View' and an user can create new files under it so it would be dangerous to clean such roots
-          if (moduleIndex.isInContent(rootFile) && !moduleIndex.isExcluded(rootFile)) {
+          if (moduleIndex.isInContent(rootFile)) {
             allSourceRoots.add(rootFile);
           }
         }
@@ -1062,7 +1069,7 @@ public class IncProjectBuilder {
             final Collection<String> paths = entry.getValue();
             if (paths != null) {
               for (String path : paths) {
-                fsState.registerDeleted(target, new File(path), null);
+                fsState.registerDeleted(context, target, new File(path), null);
               }
             }
           }
@@ -1074,8 +1081,8 @@ public class IncProjectBuilder {
       }
       finally {
         Utils.REMOVED_SOURCES_KEY.set(context, null);
+        sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
       }
-      sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
     }
   }
 

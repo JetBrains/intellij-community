@@ -28,7 +28,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -433,26 +432,22 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return new LocalQuickFix() {
       @Override
       @NotNull
-      public String getName() {
+      public String getFamilyName() {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
 
       @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        //do it later because it is invoked from write action
-        ApplicationManager.getApplication().invokeLater(() -> {
-          PsiElement element = descriptor.getPsiElement();
-          if (!(element instanceof PsiExpression)) return;
-
-          PsiExpression[] expressions = {(PsiExpression)element};
-          new IntroduceConstantHandler().invoke(project, expressions);
-        }, project.getDisposed());
+      public boolean startInWriteAction() {
+        return false;
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
-        return getName();
+      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+        PsiElement element = descriptor.getPsiElement();
+        if (!(element instanceof PsiExpression)) return;
+
+        PsiExpression[] expressions = {(PsiExpression)element};
+        new IntroduceConstantHandler().invoke(project, expressions);
       }
     };
   }

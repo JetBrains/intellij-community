@@ -55,4 +55,12 @@ public abstract class StubPsiFactory {
   public PsiJavaModule createModule(PsiJavaModuleStub stub) {
     return null;
   }
+
+  public PsiRequiresStatement createRequiresStatement(PsiRequiresStatementStub stub) {
+    return null;
+  }
+
+  public PsiExportsStatement createExportsStatement(PsiExportsStatementStub stub) {
+    return null;
+  }
 }

@@ -15,12 +15,14 @@
  */
 package com.intellij.refactoring.typeMigration.rules;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
+import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,10 +45,11 @@ public class VoidConversionRule extends TypeConversionRule {
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
           final PsiElement parent = expression.getParent();
+          final Project project = expression.getProject();
           if (parent instanceof PsiReturnStatement) {
-            expression.delete();
-            if (UnnecessaryReturnInspection.isReturnRedundant((PsiReturnStatement)parent, false, null)) {
-              parent.delete();
+            final PsiReturnStatement replaced = (PsiReturnStatement)parent.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText("return;", null));
+            if (UnnecessaryReturnInspection.isReturnRedundant(replaced, false, null)) {
+              DeleteUnnecessaryStatementFix.deleteUnnecessaryStatement(replaced);
             }
           }
           return null;

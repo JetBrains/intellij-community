@@ -201,13 +201,9 @@ public class ChangesUtil {
 
   public static FilePath getLocalPath(@NotNull Project project, FilePath filePath) {
     // check if the file has just been renamed (IDEADEV-15494)
-    Change change = ApplicationManager.getApplication().runReadAction(new Computable<Change>() {
-      @Override
-      @Nullable
-      public Change compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return ChangeListManager.getInstance(project).getChange(filePath);
-      }
+    Change change = ApplicationManager.getApplication().runReadAction((Computable<Change>)() -> {
+      if (project.isDisposed()) throw new ProcessCanceledException();
+      return ChangeListManager.getInstance(project).getChange(filePath);
     });
     if (change != null) {
       ContentRevision beforeRevision = change.getBeforeRevision();
@@ -242,20 +238,17 @@ public class ChangesUtil {
 
   @Nullable
   private static VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        VirtualFile result = null;
-        FilePath parent = filePath;
-        LocalFileSystem lfs = LocalFileSystem.getInstance();
+    return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> {
+      VirtualFile result = null;
+      FilePath parent = filePath;
+      LocalFileSystem lfs = LocalFileSystem.getInstance();
 
-        while (result == null && parent != null) {
-          result = lfs.findFileByPath(parent.getPath());
-          parent = parent.getParentPath();
-        }
-
-        return result;
+      while (result == null && parent != null) {
+        result = lfs.findFileByPath(parent.getPath());
+        parent = parent.getParentPath();
       }
+
+      return result;
     });
   }
 
@@ -297,13 +290,10 @@ public class ChangesUtil {
                                            @NotNull VcsSeparator<T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
     Map<AbstractVcs, List<T>> changesByVcs = ApplicationManager.getApplication().runReadAction(
-      new NotNullComputable<Map<AbstractVcs, List<T>>>() {
-        @NotNull
-        @Override
-        public Map<AbstractVcs, List<T>> compute() {
-          return items.stream().collect(groupingBy(separator::getVcsFor));
-        }
-      });
+      (NotNullComputable<Map<AbstractVcs, List<T>>>)() -> 
+        items.stream()
+          .filter(it -> separator.getVcsFor(it) != null)
+          .collect(groupingBy(separator::getVcsFor)));
 
     changesByVcs.forEach((vcs, vcsItems) -> {
       if (vcs != null) {

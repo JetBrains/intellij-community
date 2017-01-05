@@ -11,9 +11,12 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -31,41 +34,65 @@ public class EduAnswerPlaceholderPainter {
                                            @NotNull final JBColor color) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
-                                                                    EffectType.BOXED, Font.PLAIN);
+                                                             EffectType.BOXED, Font.PLAIN);
     textAttributes.setEffectColor(color);
-    drawAnswerPlaceholder(editor, placeholder, textAttributes, PLACEHOLDERS_LAYER);
+    if (placeholder.isActive()) {
+      drawAnswerPlaceholder(editor, placeholder, textAttributes, PLACEHOLDERS_LAYER);
+    }
+    else if (!placeholder.getUseLength()) {
+      int offset = placeholder.getOffset();
+      drawAnswerPlaceholderFromPrevStep(editor, offset, offset + placeholder.getVisibleLength(placeholder.getActiveSubtaskIndex()));
+    }
   }
 
   public static void drawAnswerPlaceholder(@NotNull Editor editor,
                                            @NotNull AnswerPlaceholder placeholder,
-                                           TextAttributes textAttributes,
+                                           @Nullable TextAttributes textAttributes,
                                            int placeholdersLayer) {
-    final Project project = editor.getProject();
-    assert project != null;
-    final int startOffset = placeholder.getOffset();
-    if (startOffset == - 1) {
+    int startOffset = placeholder.getOffset();
+    if (startOffset == -1) {
       return;
     }
     final int length = placeholder.getRealLength();
-    final int endOffset = startOffset + length;
-    RangeHighlighter
-      highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, placeholdersLayer,
-                                                                textAttributes, HighlighterTargetArea.EXACT_RANGE);
+    int delta = 0;
+    AnswerPlaceholderSubtaskInfo info = placeholder.getActiveSubtaskInfo();
+    if (info != null && info.isNeedInsertText()) {
+      Document document = editor.getDocument();
+      int nonSpaceCharOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, startOffset, startOffset + length);
+      if (nonSpaceCharOffset != startOffset) {
+        delta = startOffset - nonSpaceCharOffset;
+        startOffset = nonSpaceCharOffset;
+      }
+    }
+    final int endOffset = startOffset + length + delta;
+    drawAnswerPlaceholder(editor, startOffset, endOffset, textAttributes, placeholdersLayer);
+  }
+
+  public static void drawAnswerPlaceholder(@NotNull Editor editor,
+                                           int start,
+                                           int end,
+                                           @Nullable TextAttributes textAttributes,
+                                           int placeholdersLayer) {
+    final Project project = editor.getProject();
+    assert project != null;
+    if (start == -1) {
+      return;
+    }
+    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(start, end, placeholdersLayer,
+                                                                               textAttributes, HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }
 
-  public static void drawAnswerPlaceholderFromPrevStep(@NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
-    if (placeholder.getUseLength()) {
-      return;
-    }
+
+  public static void drawAnswerPlaceholderFromPrevStep(@NotNull Editor editor, int start, int end) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(EditorColors.TEARLINE_COLOR);
     SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
     final TextAttributes textAttributes = new TextAttributes(attributes.getFgColor(), color, null,
                                                              null, attributes.getFontStyle());
 
-    drawAnswerPlaceholder(editor, placeholder, textAttributes, HighlighterLayer.LAST);
+    drawAnswerPlaceholder(editor, start, end, textAttributes, HighlighterLayer.LAST);
   }
 
   public static void createGuardedBlock(Editor editor, List<RangeMarker> blocks, int start, int end) {
@@ -76,7 +103,7 @@ public class EduAnswerPlaceholderPainter {
 
 
   public static void createGuardedBlocks(@NotNull final Editor editor, TaskFile taskFile) {
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       createGuardedBlocks(editor, answerPlaceholder);
     }
   }
@@ -97,5 +124,4 @@ public class EduAnswerPlaceholderPainter {
       }
     }
   }
-
 }

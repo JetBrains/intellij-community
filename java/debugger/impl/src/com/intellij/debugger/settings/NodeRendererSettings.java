@@ -53,16 +53,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 18, 2003
- * Time: 8:00:25 PM
- */
-@State(
-  name="NodeRendererSettings",
-  storages= {
-    @Storage("debugger.renderers.xml")}
-)
+@State(name = "NodeRendererSettings", storages = @Storage("debugger.renderers.xml"))
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
   @NonNls public static final String RENDERER_TAG = "Renderer";
@@ -131,11 +122,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     myDispatcher.addListener(listener, disposable);
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     final Element element = new Element("NodeRendererSettings");
-    JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, myHexRenderer.isEnabled()? "true" : "false");
-    JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, areAlternateCollectionViewsEnabled()? "true" : "false");
+    if (myHexRenderer.isEnabled()) {
+      JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, "true");
+    }
+    if (!areAlternateCollectionViewsEnabled()) {
+      JDOMExternalizerUtil
+        .writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, "false");
+    }
+
     try {
       element.addContent(writeRenderer(myArrayRenderer));
       element.addContent(writeRenderer(myToStringRenderer));
@@ -153,6 +151,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return element;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
@@ -165,9 +164,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       setAlternateCollectionViewsEnabled("true".equalsIgnoreCase(alternativeEnabled));
     }
 
-    final List rendererElements = root.getChildren(RENDERER_TAG);
-    for (final Object rendererElement : rendererElements) {
-      final Element elem = (Element)rendererElement;
+    for (final Element elem : root.getChildren(RENDERER_TAG)) {
       final String id = elem.getAttributeValue(RENDERER_ID);
       if (id == null) {
         continue;
@@ -244,6 +241,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     // user defined renderers must come first
     myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
+      @Override
       public boolean visit(final NodeRenderer renderer) {
         allRenderers.add(renderer);
         return true;
@@ -371,6 +369,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   private static LabelRenderer createLabelRenderer(@NonNls final String prefix, @NonNls final String expressionText, @NonNls final String postfix) {
     final LabelRenderer labelRenderer = new LabelRenderer() {
+      @Override
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
         final String evaluated = super.calcLabel(descriptor, evaluationContext, labelListener);
         if (prefix == null && postfix == null) {
@@ -401,10 +400,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       myValueExpression.setReferenceExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "this.getValue()", "", StdFileTypes.JAVA));
     }
 
+    @Override
     public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
       return null;
     }
 
+    @Override
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
       final DescriptorUpdater descriptorUpdater = new DescriptorUpdater(descriptor, listener);
 
@@ -434,6 +435,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return new Pair<>(NULL_LABEL_COMPUTABLE, null);
     }
 
+    @Override
     public String getUniqueId() {
       return "MapEntry renderer";
     }
@@ -458,10 +460,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     private class MyCachedEvaluator extends CachedEvaluator {
+      @Override
       protected String getClassName() {
         return MapEntryLabelRenderer.this.getClassName();
       }
 
+      @Override
       public ExpressionEvaluator getEvaluator(Project project) throws EvaluateException {
         return super.getEvaluator(project);
       }
@@ -511,6 +515,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       myValueDescriptor = valueDescriptor;
     }
 
+    @Override
     public void labelChanged() {
       myTargetDescriptor.setValueLabel(constructLabelText(getDescriptorLabel(myKeyDescriptor), getDescriptorLabel(myValueDescriptor)));
       myDelegate.labelChanged();

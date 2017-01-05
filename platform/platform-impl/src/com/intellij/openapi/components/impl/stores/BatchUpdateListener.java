@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.intellij.util.messages.Topic;
 public interface BatchUpdateListener {
   Topic<BatchUpdateListener> TOPIC = new Topic<>("batch update listener", BatchUpdateListener.class);
 
-  void onBatchUpdateStarted();
-  void onBatchUpdateFinished();
+  default void onBatchUpdateStarted() {
+  }
+
+  default void onBatchUpdateFinished() {
+  }
 }

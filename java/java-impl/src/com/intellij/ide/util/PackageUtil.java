@@ -16,6 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -393,10 +394,6 @@ public class PackageUtil {
 
   @NotNull
   public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory directory, @NotNull String directoryName) {
-    PsiDirectory subDirectory = directory.findSubdirectory(directoryName);
-    if (subDirectory == null) {
-      subDirectory = directory.createSubdirectory(directoryName);
-    }
-    return subDirectory;
+    return CreateFileAction.findOrCreateSubdirectory(directory, directoryName);
   }
 }

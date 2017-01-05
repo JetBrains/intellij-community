@@ -450,6 +450,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> union(@NotNull Set<T> set, @NotNull Set<T> set2) {
+    return union((Collection<T>)set, set2);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Set<T> union(@NotNull Collection<T> set, @NotNull Collection<T> set2) {
     Set<T> result = new THashSet<T>(set.size() + set2.size());
     result.addAll(set);
     result.addAll(set2);
@@ -1542,7 +1548,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+  public static <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
     List<T> result = new ArrayList<T>();
     for (T t : collection1) {
       if (collection2.contains(t)) {
@@ -2045,6 +2051,15 @@ public class ContainerUtil extends ContainerUtilRt {
       if (condition.value(t)) return true;
     }
     return false;
+  }
+
+  @Contract(pure=true)
+  public static <T> int count(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+    int count = 0;
+    for (final T t : iterable) {
+      if (condition.value(t)) count++;
+    }
+    return count;
   }
 
   @NotNull
@@ -2905,6 +2920,12 @@ public class ContainerUtil extends ContainerUtilRt {
     @Override
     protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
       return new TreeMap<K, Collection<V>>();
+    }
+
+    @NotNull
+    public NavigableSet<K> navigableKeySet() {
+      //noinspection unchecked
+      return ((TreeMap)myMap).navigableKeySet();
     }
   }
 

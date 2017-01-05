@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -31,6 +32,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EqualityOperatorComparesObjectsInspection extends BaseInspection {
 
@@ -208,9 +210,26 @@ public class EqualityOperatorComparesObjectsInspection extends BaseInspection {
       if (rhsType == null || rhsType instanceof PsiPrimitiveType || TypeConversionUtil.isEnumType(rhsType)) {
         return;
       }
+      if (lhs instanceof PsiThisExpression || rhs instanceof PsiThisExpression) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+        if (method != null && "equals".equals(method.getName()) && method.getParameterList().getParametersCount() == 1) {
+          final PsiClass containingClass = method.getContainingClass();
+          if (isThisQualifier(lhs, containingClass) || isThisQualifier(rhs, containingClass)) {
+            return;
+          }
+        }
+      }
       final String operationText = expression.getOperationSign().getText();
       final String prefix = tokenType.equals(JavaTokenType.NE) ? "!" : "";
       registerError(expression, operationText, prefix);
+    }
+
+    private static boolean isThisQualifier(@Nullable PsiExpression expression, @Nullable PsiClass psiClass) {
+      if (expression instanceof PsiThisExpression) {
+        final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)expression).getQualifier();
+        return qualifier == null || psiClass != null && qualifier.isReferenceTo(psiClass);
+      }
+      return false;
     }
   }
 }

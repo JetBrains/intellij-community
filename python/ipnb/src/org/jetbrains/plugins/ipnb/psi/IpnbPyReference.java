@@ -41,7 +41,8 @@ public class IpnbPyReference extends PyReferenceImpl {
       for (IpnbEditablePanel editablePanel : panels) {
         if (!(editablePanel instanceof IpnbCodePanel)) continue;
         final Editor editor = ((IpnbCodePanel)editablePanel).getEditor();
-        final IpnbPyFragment psiFile = (IpnbPyFragment)PsiDocumentManager.getInstance(myElement.getProject()).getPsiFile(editor.getDocument());
+        final IpnbPyFragment psiFile =
+          (IpnbPyFragment)PsiDocumentManager.getInstance(myElement.getProject()).getPsiFile(editor.getDocument());
         if (psiFile == null) continue;
         final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(myElement);
         PyResolveUtil.scopeCrawlUp(processor, psiFile, null, null);
@@ -67,7 +68,8 @@ public class IpnbPyReference extends PyReferenceImpl {
         for (IpnbEditablePanel editablePanel : panels) {
           if (!(editablePanel instanceof IpnbCodePanel)) continue;
           final Editor editor = ((IpnbCodePanel)editablePanel).getEditor();
-          final IpnbPyFragment psiFile = (IpnbPyFragment)PsiDocumentManager.getInstance(myElement.getProject()).getPsiFile(editor.getDocument());
+          final IpnbPyFragment psiFile =
+            (IpnbPyFragment)PsiDocumentManager.getInstance(myElement.getProject()).getPsiFile(editor.getDocument());
           if (psiFile == null) continue;
           final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
 
@@ -82,5 +84,4 @@ public class IpnbPyReference extends PyReferenceImpl {
     }
     return results;
   }
-
 }

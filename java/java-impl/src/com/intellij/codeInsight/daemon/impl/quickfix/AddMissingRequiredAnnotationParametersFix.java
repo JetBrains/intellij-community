@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,9 +81,9 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
     final PsiNameValuePair[] addedParameters = myAnnotation.getParameterList().getAttributes();
 
     final TObjectIntHashMap<String> annotationsOrderMap = getAnnotationsOrderMap();
-    final SortedSet<Pair<String, PsiAnnotationMemberValue>>
-      newParameters = new TreeSet<>(
-      (o1, o2) -> annotationsOrderMap.get(o1.getFirst()) - annotationsOrderMap.get(o2.getFirst()));
+    final SortedSet<Pair<String, PsiAnnotationMemberValue>> newParameters =
+      new TreeSet<>(Comparator.comparingInt(o -> annotationsOrderMap.get(o.getFirst())));
+
     final boolean order = isAlreadyAddedOrdered(annotationsOrderMap, addedParameters);
     if (order) {
       if (addedParameters.length != 0) {
@@ -104,7 +103,7 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
 
     final PsiExpression nullValue = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeyword.NULL, null);
     for (final String misssedParameter : myMissedElements) {
-      newParameters.add(Pair.<String, PsiAnnotationMemberValue>create(misssedParameter, nullValue));
+      newParameters.add(Pair.create(misssedParameter, nullValue));
     }
 
     TemplateBuilderImpl builder = null;

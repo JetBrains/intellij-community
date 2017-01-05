@@ -9,10 +9,11 @@
     <extensionPoint name="generalCodeStyleOptionsProvider" beanClass="com.intellij.application.options.GeneralCodeStyleOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.application.options.GeneralCodeStyleOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
+    <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP"
+                    area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
     <extensionPoint name="moduleConfigurable"
@@ -88,6 +89,8 @@
 
     <extensionPoint name="daemon.highlightInfoFilter"
                     interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
+    <extensionPoint name="daemon.intentionActionFilter"
+                    interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter"/>
 
     <extensionPoint name="daemon.externalAnnotatorsFilter"
                     interface="com.intellij.lang.ExternalAnnotatorsFilter"/>
@@ -259,7 +262,8 @@
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
-    <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.UseScopeOptimizer"/>
+    <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer"/>
+    <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer"/>
 
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
     <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
@@ -411,6 +415,9 @@
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
 
     <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
+    <extensionPoint name="commentTokenSetProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.CommentTokenSetProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="configurationType"
                     interface="com.intellij.execution.configurations.ConfigurationType"/>
@@ -451,6 +458,9 @@
     <extensionPoint name="runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
     </extensionPoint>
+
+    <extensionPoint name="runtimeDashboardContributor"
+                    interface="com.intellij.execution.dashboard.RuntimeDashboardContributor"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -574,6 +584,9 @@
     <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.parameterInfo.ParameterInfoHandler"/>
     </extensionPoint>
+    <extensionPoint name="codeInsight.parameterNameHints" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayParameterHintsProvider"/>
+    </extensionPoint>
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
@@ -652,7 +665,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
-    <!--suppress ExtensionPointBeanClass -->
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="stubElementTypeHolder"
                     beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP"/>
 
@@ -818,7 +831,7 @@
     <extensionPoint name="stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean"/>
     <extensionPoint name="changeSignatureDetector"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.LanguageChangeSignatureDetector"/>
+      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.inplace.LanguageChangeSignatureDetector"/>
     </extensionPoint>
 
     <extensionPoint name="preserveIndentOnPaste" beanClass="com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean"/>
@@ -864,7 +877,8 @@
 
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier"/>
-    <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider" interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
+    <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
+                    interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
 
     <extensionPoint name="previewPanelProvider" interface="com.intellij.openapi.preview.PreviewPanelProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger"/>
@@ -880,7 +894,9 @@
     </extensionPoint>
 
     <extensionPoint name="projectViewNestingRulesProvider"
-                    interface="com.intellij.ide.projectView.impl.NestingTreeStructureProvider$NestingRulesProvider"/>
+                    interface="com.intellij.ide.projectView.ProjectViewNestingRulesProvider"/>
+    <extensionPoint name="importTestOutput"
+                    interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension"/>
   </extensionPoints>
 </idea-plugin>
 

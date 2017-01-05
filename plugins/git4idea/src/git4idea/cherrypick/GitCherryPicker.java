@@ -36,8 +36,10 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -483,6 +485,8 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Nullable
   private LocalChangeList moveChanges(@NotNull Collection<Change> originalChanges, @NotNull final LocalChangeList targetChangeList) {
+    Collection<Change> localChanges = GitUtil.findCorrespondentLocalChanges(myChangeListManager, originalChanges);
+
     // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
     // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
     final CountDownLatch moveChangesWaiter = new CountDownLatch(1);
@@ -498,7 +502,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     };
     try {
       myChangeListManager.addChangeListListener(listener);
-      myChangeListManager.moveChangesTo(targetChangeList, originalChanges.toArray(new Change[originalChanges.size()]));
+      myChangeListManager.moveChangesTo(targetChangeList, ArrayUtil.toObjectArray(localChanges, Change.class));
       boolean success = moveChangesWaiter.await(100, TimeUnit.SECONDS);
       if (!success) {
         LOG.error("Couldn't await for changes move.");
@@ -545,26 +549,27 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean isEnabled(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
-    if (commits.isEmpty()) {
-      return false;
-    }
+  public boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots) {
+    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
+  }
 
+  @Override
+  public String getInfo(@NotNull VcsLog log, @NotNull Map<VirtualFile, List<Hash>> commits) {
+    int commitsNum = commits.values().size();
     for (VirtualFile root : commits.keySet()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null) {
-        return false;
-      }
+      // all these roots already related to this cherry-picker
+      GitRepository repository = ObjectUtils.assertNotNull(myRepositoryManager.getRepositoryForRoot(root));
       for (Hash commit : commits.get(root)) {
         GitLocalBranch currentBranch = repository.getCurrentBranch();
         Collection<String> containingBranches = log.getContainingBranches(commit, root);
         if (currentBranch != null && containingBranches != null && containingBranches.contains(currentBranch.getName())) {
-          // already is contained in the current branch
-          return false;
+          // already in the current branch
+          return String.format("The current branch already contains %s the selected %s", commitsNum > 1 ? "one of" : "",
+                               pluralize("commit", commitsNum));
         }
       }
     }
-    return true;
+    return null;
   }
 
   private static class CherryPickData {

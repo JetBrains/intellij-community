@@ -89,18 +89,19 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     DumbService.getInstance(p.getProject()).runReadActionInSmartMode(()-> {
       final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
+
+      short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
+      for (PsiMethod m : methods) {
+        collector.searchWord(methodName[0], searchScope.intersectWith(m.getUseScope()), searchContext, true, m,
+                             getTextOccurrenceProcessor(new PsiMethod[] {m}, aClass, strictSignatureSearch));
+      }
+
       SearchScope accessScope = methods[0].getUseScope();
       for (int i = 1; i < methods.length; i++) {
         PsiMethod method1 = methods[i];
         accessScope = accessScope.union(method1.getUseScope());
       }
-
       SearchScope restrictedByAccessScope = searchScope.intersectWith(accessScope);
-
-      short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
-      collector.searchWord(methodName[0], restrictedByAccessScope, searchContext, true, method,
-                           getTextOccurrenceProcessor(methods, aClass, strictSignatureSearch));
-
       SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccessScope, collector);
       return null;
     });

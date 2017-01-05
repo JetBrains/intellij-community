@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
-  private boolean myLayingOut = false;
+  private boolean myLayingOut;
   private int myMinLength = 20;
 
   public ComboBoxWithWidePopup() { }
@@ -54,6 +54,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     return myMinLength;
   }
 
+  @Override
   public void doLayout() {
     try {
       myLayingOut = true;
@@ -64,6 +65,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     }
   }
 
+  @Override
   public Dimension getSize() {
     Dimension size = super.getSize();
     if (!myLayingOut) {

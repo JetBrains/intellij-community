@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>Bytecode Viewer</name>
   <id>ByteCodeViewer</id>
   <version>0.1</version>

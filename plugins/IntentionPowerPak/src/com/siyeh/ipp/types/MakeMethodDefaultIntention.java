@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.types;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +52,6 @@ public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionActio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (psiMethod != null) {
       final PsiModifierList modifierList = psiMethod.getModifierList();

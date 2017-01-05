@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,21 +32,33 @@ public class Task implements StudyItem {
   private StudyStatus myStatus = StudyStatus.Unchecked;
 
   @SerializedName("stepic_id")
-  @Expose private int myStepicId;
-  
+  @Expose private int myStepId;
+
   @SerializedName("task_files")
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
   private String text;
   private Map<String, String> testsText = new HashMap<>();
+  private Map<String, String> taskTexts = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
+
+  @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters;
+  private int myActiveSubtaskIndex = 0;
+  @SerializedName("last_subtask_index")
+  @Expose private int myLastSubtaskIndex = 0;
 
   public Task() {}
 
   public Task(@NotNull final String name) {
     this.name = name;
+  }
+  
+  public static Task createChoiceTask(@NotNull String name) {
+    final Task task = new Task(name);
+    task.setChoiceParameters(new ChoiceParameters());
+    return task;
   }
 
   /**
@@ -89,8 +102,16 @@ public class Task implements StudyItem {
     return testsText;
   }
 
+  public Map<String, String> getTaskTexts() {
+    return taskTexts;
+  }
+
   public void addTestsTexts(String name, String text) {
     testsText.put(name, text);
+  }
+
+  public void addTaskText(String name, String text) {
+    taskTexts.put(name, text);
   }
 
   public Map<String, TaskFile> getTaskFiles() {
@@ -141,7 +162,12 @@ public class Task implements StudyItem {
     if (courseDir != null) {
       VirtualFile lessonDir = courseDir.findChild(lessonDirName);
       if (lessonDir != null) {
-        return lessonDir.findChild(taskDirName);
+        VirtualFile taskDir = lessonDir.findChild(taskDirName);
+        if (taskDir == null) {
+          return null;
+        }
+        VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
+        return srcDir != null ? srcDir : taskDir;
       }
     }
     return null;
@@ -152,7 +178,7 @@ public class Task implements StudyItem {
     if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(taskDir);
+      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -204,25 +230,28 @@ public class Task implements StudyItem {
     return result;
   }
 
-  public void setStepicId(int stepicId) {
-    myStepicId = stepicId;
+  public void setStepId(int stepId) {
+    myStepId = stepId;
   }
 
-  public int getStepicId() {
-    return myStepicId;
+  public int getStepId() {
+    return myStepId;
   }
 
   public StudyStatus getStatus() {
     return myStatus;
   }
-  
+
   public void setStatus(StudyStatus status) {
-    myStatus = status;
     for (TaskFile taskFile : taskFiles.values()) {
-      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
         placeholder.setStatus(status);
       }
     }
+    if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
+      return;
+    }
+    myStatus = status;
   }
 
   public Task copy() {
@@ -244,10 +273,91 @@ public class Task implements StudyItem {
   }
 
   public boolean isUpToDate() {
-    if (getStepicId() == 0) return true;
-    final Date date = EduStepicConnector.getTaskUpdateDate(getStepicId());
+    if (getStepId() == 0) return true;
+    final Date date = EduStepicConnector.getTaskUpdateDate(getStepId());
     if (date == null) return true;
     if (myUpdateDate == null) return false;
     return !date.after(myUpdateDate);
+  }
+
+  public int getActiveSubtaskIndex() {
+    return myActiveSubtaskIndex;
+  }
+
+  public void setActiveSubtaskIndex(int activeSubtaskIndex) {
+    myActiveSubtaskIndex = activeSubtaskIndex;
+  }
+
+  public int getLastSubtaskIndex() {
+    return myLastSubtaskIndex;
+  }
+
+  public void setLastSubtaskIndex(int lastSubtaskIndex) {
+    myLastSubtaskIndex = lastSubtaskIndex;
+  }
+
+  public boolean hasSubtasks() {
+    return myLastSubtaskIndex > 0;
+  }
+
+  @Transient
+  @NotNull
+  public List<String> getChoiceVariants() {
+    return myChoiceParameters.getChoiceVariants();
+  }
+
+  @Transient
+  public void setChoiceVariants(List<String> choiceVariants) {
+    myChoiceParameters.setChoiceVariants(choiceVariants);
+  }
+
+  @Transient
+  public boolean isMultipleChoice() {
+    return myChoiceParameters.isMultipleChoice();
+  }
+
+  @Transient
+  public void setMultipleChoice(boolean multipleChoice) {
+    myChoiceParameters.setMultipleChoice(multipleChoice);
+  }
+
+  @Transient
+  public List<Integer> getSelectedVariants() {
+    return myChoiceParameters.getSelectedVariants();
+  }
+
+  @Transient
+  public void setSelectedVariants(List<Integer> selectedVariants) {
+    myChoiceParameters.setSelectedVariants(selectedVariants);
+  }
+  
+  public boolean isChoiceTask() {
+    return myChoiceParameters != null;
+  }
+
+  // used for serialization
+  @SuppressWarnings("unused")
+  public ChoiceParameters getChoiceParameters() {
+    return myChoiceParameters;
+  }
+
+  // used for serialization
+  @SuppressWarnings("unused")
+  public void setChoiceParameters(ChoiceParameters choiceParameters) {
+    myChoiceParameters = choiceParameters;
+  }
+
+  public void copyParametersOf(@NotNull Task task) {
+    setName(task.getName());
+    setStepId(task.getStepId());
+    setText(task.getText());
+    getTestsText().clear();
+    setStatus(StudyStatus.Unchecked);
+    setChoiceVariants(task.getChoiceVariants());
+    setMultipleChoice(task.isMultipleChoice());
+    final Map<String, String> testsText = task.getTestsText();
+    for (String testName : testsText.keySet()) {
+      addTestsTexts(testName, testsText.get(testName));
+    }
   }
 }

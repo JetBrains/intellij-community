@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -103,14 +102,10 @@ public class CompilerTester {
   }
 
   public void deleteClassFile(final String className) throws IOException {
-    AccessToken token = WriteAction.start();
-    try {
-        //noinspection ConstantConditions
-        touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
-    }
-    finally {
-      token.finish();
-    }
+    WriteAction.run(() -> {
+      //noinspection ConstantConditions
+      touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
+    });
   }
 
   @Nullable
@@ -174,7 +169,7 @@ public class CompilerTester {
     return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
-  private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
+  public List<CompilerMessage> runCompiler(final Consumer<CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
@@ -234,7 +229,7 @@ public class CompilerTester {
             final String text = message.getMessage();
             if (category != CompilerMessageCategory.INFORMATION ||
                 !(text.contains("Compilation completed successfully") ||
-                  text.startsWith("Using javac") ||
+                  text.contains("used to compile") ||
                   text.startsWith("Using Groovy-Eclipse"))) {
               myMessages.add(message);
             }

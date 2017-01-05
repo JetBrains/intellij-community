@@ -46,14 +46,8 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
-    return XmlErrorMessages.message("declare.id.in.comment.quickfix");
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return XmlErrorMessages.message("declare.id.in.comment.quickfix");
   }
 
   @Nullable

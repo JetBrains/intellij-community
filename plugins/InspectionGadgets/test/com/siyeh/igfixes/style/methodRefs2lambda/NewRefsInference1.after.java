@@ -10,6 +10,6 @@ public class MyTest {
     static void m(I s) {}
 
     static {
-        m((x) -> new Foo<Integer>(x));
+        m(x -> new Foo<Integer>(x));
     }
 }

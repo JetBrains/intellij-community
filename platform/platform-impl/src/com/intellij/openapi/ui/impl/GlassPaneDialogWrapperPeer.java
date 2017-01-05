@@ -43,7 +43,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +123,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       myWindowManager = (WindowManagerEx) WindowManager.getInstance();
     }
 
-    Window owner = parent instanceof Window ? (Window) parent : (Window) SwingUtilities.getAncestorOfClass(Window.class, parent);
+    Window owner = UIUtil.getWindow(parent);
     if (!(owner instanceof Dialog) && !(owner instanceof Frame)) {
       owner = JOptionPane.getRootFrame();
     }
@@ -306,19 +306,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     SwingUtilities.convertPointFromScreen(_p, pane);
 
-    final Insets insets = myDialog.getInsets();
-
-    // todo: fix coords to include shadow (border) paddings
-    // todo: reimplement dragging in every client to calculate window position properly
-    int _x = _p.x - insets.left;
-    int _y = _p.y - insets.top;
-
-    final Container container = myDialog.getTransparentPane();
-
-    _x = _x > 0 ? (_x + myDialog.getWidth() < container.getWidth() ? _x : container.getWidth() - myDialog.getWidth()) : 0;
-    _y = _y > 0 ? (_y + myDialog.getHeight() < container.getHeight() ? _y : container.getHeight() - myDialog.getHeight()) : 0;
-
-    myDialog.setLocation(_x, _y);
+    myDialog.setLocation(_p.x, _p.y);
   }
 
   @Override
@@ -394,9 +382,10 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     private JComponent myContentPane;
     private MyRootPane myRootPane;
     private BufferedImage shadow;
+    private int shadowWidth;
+    private int shadowHeight;
     private final JLayeredPane myTransparentPane;
     private JButton myDefaultButton;
-    private Dimension myShadowSize = null;
     private final Container myWrapperPane;
     private Component myPreviouslyFocusedComponent;
     private Dimension myCachedSize = null;
@@ -477,10 +466,6 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       });
 
       return result;
-    }
-
-    public Container getTransparentPane() {
-      return myTransparentPane;
     }
 
     private TransparentLayeredPane getExistingTransparentPane() {
@@ -570,49 +555,32 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     }
 
     @Override
-    public void setBounds(final int x, final int y, final int width, final int height) {
-      super.setBounds(x, y, width, height);
-
-      if (myShadowSize == null || !myShadowSize.equals(getSize())) {
-        createShadow();
-        myShadowSize = getSize();
-      }
-    }
-
-    @Override
-    public void setLocation(final int x, final int y) {
+    public void setBounds(int x, int y, int width, int height) {
       final Container p = myTransparentPane;
       if (p != null) {
-        final Dimension s = p.getSize();
+        Rectangle bounds = new Rectangle(p.getWidth() - width, p.getHeight() - height);
+        JBInsets.removeFrom(bounds, getInsets());
 
-        final int _x = (int) (x + getWidth() > s.getWidth() ? s.getWidth() - getWidth() : x);
-        final int _y = (int) (y + getHeight() > s.getHeight() ? s.getHeight() - getHeight() : y);
-        super.setLocation(_x, _y);
-      } else {
-        super.setLocation(x, y);
+        x = bounds.width < 0 ? bounds.width / 2 : Math.min(bounds.x + bounds.width, Math.max(bounds.x, x));
+        y = bounds.height < 0 ? bounds.height / 2 : Math.min(bounds.y + bounds.height, Math.max(bounds.y, y));
       }
-    }
+      super.setBounds(x, y, width, height);
 
-    private void createShadow() {
-      if (!RemoteDesktopDetector.isRemoteSession() && !JBUI.isHiDPI()) {
-        shadow = ShadowBorderPainter.createShadow(this, getWidth(), getHeight());
+      if (RemoteDesktopDetector.isRemoteSession()) {
+        shadow = null;
+      }
+      else if (shadow == null || shadowWidth != width || shadowHeight != height) {
+        shadow = ShadowBorderPainter.createShadow(this, width, height);
+        shadowWidth = width;
+        shadowHeight = height;
       }
     }
 
     @Override
     public void dispose() {
+      setVisible(false);
       remove(getContentPane());
-      repaint();
-
-      final Runnable disposer = () -> setVisible(false);
-
-      if (EventQueue.isDispatchThread()) {
-        disposer.run();
-      } else {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(disposer);
-      }
-
+      DialogWrapper.unregisterKeyboardActions(myWrapperPane);
       myRootPane = null;
     }
 
@@ -710,6 +678,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     @Override
     public void dispose() {
+      DialogWrapper.cleanupRootPane(this);
       myDialog = null;
     }
 

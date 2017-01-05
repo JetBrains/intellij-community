@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBInsets;
+
 import javax.swing.Icon;
 import java.awt.*;
 
@@ -39,54 +41,94 @@ public class WindowResizeListener extends WindowMouseListener {
     myCorner = corner;
   }
 
+  /**
+   * @param content the window content to find a window, or {@code null} to use a component from a mouse event
+   * @param corner  the corner icon that specifies a Mac-specific area to resize
+   */
+  public WindowResizeListener(Component content, Icon corner) {
+    super(content);
+    myBorder = null;
+    myCorner = corner;
+  }
+
+  /**
+   * @param view the component to resize
+   * @return an insets indicating inactive outer area
+   */
+  protected Insets getResizeOffset(Component view) {
+    return null;
+  }
+
+  /**
+   * @param view the component to resize
+   * @return an insets indicating active inner area
+   */
+  protected Insets getResizeBorder(Component view) {
+    return myBorder;
+  }
+
+  @Override
+  protected boolean isDisabled(Component view) {
+    if (view instanceof Dialog && !((Dialog)view).isResizable()) return true;
+    if (view instanceof Frame && !((Frame)view).isResizable()) return true;
+    return super.isDisabled(view);
+  }
+
   @Override
   int getCursorType(Component view, Point location) {
     Component parent = view instanceof Window ? null : view.getParent();
     if (parent != null) {
       convertPointFromScreen(location, parent);
     }
-    int top = location.y - view.getY();
-    if (top < 0) {
-      return CUSTOM_CURSOR;
-    }
-    int left = location.x - view.getX();
-    if (left < 0) {
-      return CUSTOM_CURSOR;
-    }
-    int right = view.getWidth() - left;
-    if (right < 0) {
-      return CUSTOM_CURSOR;
-    }
-    int bottom = view.getHeight() - top;
-    if (bottom < 0) {
-      return CUSTOM_CURSOR;
-    }
+    Rectangle bounds = view.getBounds();
+    JBInsets.removeFrom(bounds, getResizeOffset(view));
+
+    int top = location.y - bounds.y;
+    if (top < 0) return CUSTOM_CURSOR;
+
+    int left = location.x - bounds.x;
+    if (left < 0) return CUSTOM_CURSOR;
+
+    int right = bounds.width - left;
+    if (right < 0) return CUSTOM_CURSOR;
+
+    int bottom = bounds.height - top;
+    if (bottom < 0) return CUSTOM_CURSOR;
+
     if (myCorner != null && right < myCorner.getIconWidth() && bottom < myCorner.getIconHeight()) {
       return DEFAULT_CURSOR;
     }
-    if (myBorder != null) {
-      if (top < myBorder.top) {
-        if (left < myBorder.left) {
-          return NW_RESIZE_CURSOR;
+    Insets expected = getResizeBorder(view);
+    if (expected != null) {
+      if (view instanceof Frame) {
+        int state = ((Frame)view).getExtendedState();
+        if (isStateSet(Frame.MAXIMIZED_HORIZ, state)) {
+          left = Integer.MAX_VALUE;
+          right = Integer.MAX_VALUE;
         }
-        if (right < myBorder.right) {
-          return NE_RESIZE_CURSOR;
+        if (isStateSet(Frame.MAXIMIZED_VERT, state)) {
+          top = Integer.MAX_VALUE;
+          bottom = Integer.MAX_VALUE;
         }
+      }
+      if (top < expected.top) {
+        if (left < expected.left * 2) return NW_RESIZE_CURSOR;
+        if (right < expected.right * 2) return NE_RESIZE_CURSOR;
         return N_RESIZE_CURSOR;
       }
-      if (bottom < myBorder.bottom) {
-        if (left < myBorder.left) {
-          return SW_RESIZE_CURSOR;
-        }
-        if (right < myBorder.right) {
-          return SE_RESIZE_CURSOR;
-        }
+      if (bottom < expected.bottom) {
+        if (left < expected.left * 2) return SW_RESIZE_CURSOR;
+        if (right < expected.right * 2) return SE_RESIZE_CURSOR;
         return S_RESIZE_CURSOR;
       }
-      if (left < myBorder.left) {
+      if (left < expected.left) {
+        if (top < expected.top * 2) return NW_RESIZE_CURSOR;
+        if (bottom < expected.bottom * 2) return SW_RESIZE_CURSOR;
         return W_RESIZE_CURSOR;
       }
-      if (right < myBorder.right) {
+      if (right < expected.right) {
+        if (top < expected.top * 2) return NE_RESIZE_CURSOR;
+        if (bottom < expected.bottom * 2) return SE_RESIZE_CURSOR;
         return E_RESIZE_CURSOR;
       }
     }

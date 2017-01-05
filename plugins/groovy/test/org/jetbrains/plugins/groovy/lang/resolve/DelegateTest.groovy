@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class DelegateTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}resolve/delegate/";
+    return "${TestUtils.testDataPath}resolve/delegate/"
   }
 
   private PsiMirrorElement doTest(String text) {

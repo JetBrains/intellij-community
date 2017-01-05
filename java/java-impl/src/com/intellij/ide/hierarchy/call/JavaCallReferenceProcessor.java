@@ -18,6 +18,7 @@ package com.intellij.ide.hierarchy.call;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMemberReference;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
           return true;
         }
       }
-      else {
+      else if (!(reference instanceof LightMemberReference)) {
         return true;
       }
     }

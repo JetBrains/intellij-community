@@ -30,7 +30,10 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -76,6 +79,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   }
 
+  /**
+   * @deprecated Use {@link #setTemplateTesting(Project, Disposable)} instead
+   */
   @TestOnly
   @Deprecated
   public void setTemplateTesting(final boolean templateTesting) {
@@ -519,6 +525,16 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public Template getActiveTemplate(@NotNull Editor editor) {
     final TemplateState templateState = getTemplateState(editor);
     return templateState != null ? templateState.getTemplate() : null;
+  }
+
+  @Override
+  public boolean finishTemplate(@NotNull Editor editor) {
+    TemplateState state = getTemplateState(editor);
+    if (state != null) {
+      state.gotoEnd();
+      return true;
+    }
+    return false;
   }
 
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -79,6 +80,12 @@ public class ConfigImportHelper {
       doImport(newConfigDir, oldConfigDir, settings, installationHome);
       settings.importFinished(newConfigPath);
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+
+      CloudConfigProvider provider = CloudConfigProvider.getProvider();
+      if (provider != null) {
+        provider.importFinished(newConfigDir);
+      }
+
       break;
     }
   }
@@ -107,8 +114,7 @@ public class ConfigImportHelper {
         return ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (ClassNotFoundException ignored) { }
-    catch (RuntimeException ignored) { }
+    catch (ClassNotFoundException | RuntimeException ignored) { }
     return new ConfigImportSettings();
   }
 
@@ -230,7 +236,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
+  public static File getOldConfigDir(@Nullable File oldInstallHome, ConfigImportSettings settings) {
     if (oldInstallHome == null) {
       return null;
     }

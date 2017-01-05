@@ -56,7 +56,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,8 +133,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
           if (!acceptLocation(debugProcess, classType, loc)) {
             continue;
           }
-          final BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
-          debugProcess.getRequestsManager().enableRequest(request);
+          createLocationBreakpointRequest(this, loc, debugProcess);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());
           }
@@ -190,9 +188,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     if (isAnonymousClass(classType)) {
       if ((method.isConstructor() && loc.codeIndex() == 0) || method.isBridge()) return false;
     }
+    SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+    if (position == null) return false;
+
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
-      SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
-      if (position == null) return false;
       JavaLineBreakpointType type = getXBreakpointType();
       if (type == null) return true;
       return type.matchesPosition(this, position);
@@ -240,12 +239,11 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         if (LOG.isDebugEnabled()) {
           final GlobalSearchScope scope = debugProcess.getSearchScope();
           final boolean contains = scope.contains(breakpointFile);
-          final Project project = getProject();
           List<VirtualFile> files = ContainerUtil.map(
-            JavaFullClassNameIndex.getInstance().get(className.hashCode(), project, scope),
+            JavaFullClassNameIndex.getInstance().get(className.hashCode(), myProject, scope),
             aClass -> aClass.getContainingFile().getVirtualFile());
           List<VirtualFile> allFiles = ContainerUtil.map(
-            JavaFullClassNameIndex.getInstance().get(className.hashCode(), project, new EverythingGlobalScope(project)),
+            JavaFullClassNameIndex.getInstance().get(className.hashCode(), myProject, new EverythingGlobalScope(myProject)),
             aClass -> aClass.getContainingFile().getVirtualFile());
           final VirtualFile contentRoot = fileIndex.getContentRootForFile(breakpointFile);
           final Module module = fileIndex.getModuleForFile(breakpointFile);

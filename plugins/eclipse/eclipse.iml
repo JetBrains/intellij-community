@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="eclipse-jps-plugin" />
     <orderEntry type="module" module-name="common-eclipse-util" />
+    <orderEntry type="module" module-name="testExtensions" scope="TEST" />
   </component>
 </module>

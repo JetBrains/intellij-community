@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +84,10 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   @Override
   public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
+    if (!canAffectPsi(event)) {
+      return;
+    }
+
     myModificationCount.getAndIncrement();
     if (event.getParent() instanceof PsiDirectory 
         || event.getOldParent() instanceof PsiDirectory /* move events */) {
@@ -90,6 +95,10 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     }
 
     fireEvent();
+  }
+
+  public static boolean canAffectPsi(@NotNull PsiTreeChangeEventImpl event) {
+    return !PsiTreeChangeEvent.PROP_WRITABLE.equals(event.getPropertyName());
   }
 
   @Override

@@ -122,7 +122,7 @@ public class AnnotateLocalFileAction {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     if (vcs == null) return;
 
-    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     assert annotationProvider != null;
 
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();

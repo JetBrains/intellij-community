@@ -84,6 +84,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return mySuspendThreadSupported;
   }
 
+  public SuspendPolicy getDefaultSuspendPolicy() {
+    return SuspendPolicy.ALL;
+  }
+
   public enum StandardPanels {SUSPEND_POLICY, ACTIONS, DEPENDENCY}
 
   public EnumSet<StandardPanels> getVisibleStandardPanels() {

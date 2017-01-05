@@ -20,18 +20,19 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.apache.tools.ant.filters.StringInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.io.StringReader;
 
 public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
 
@@ -57,7 +58,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     try {
       DocumentBuilder builder = factory.newDocumentBuilder();
       try {
-        Document document = builder.parse(new StringInputStream(mavenDependency));
+        Document document = builder.parse(new InputSource(new StringReader(mavenDependency)));
         String gradleDependency = extractGradleDependency(document);
         return gradleDependency != null ? gradleDependency : mavenDependency;
       }

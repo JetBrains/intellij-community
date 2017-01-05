@@ -23,6 +23,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
+// unless stated otherwise, the behavior described in cases is true for 162+
 class UpdateStrategyTest {
   @Test fun `channel contains no builds`() {
     val result = check("IU-145.258", ChannelStatus.RELEASE, """<channel id="IDEA_Release" status="release" licensing="release"/>""")
@@ -117,7 +118,7 @@ class UpdateStrategyTest {
     assertBuild("145.595", result.newBuild)
   }
 
-  @Test fun `updates can be targeted for specific builds`() {
+  @Test fun `updates can be targeted for specific builds (different builds)`() {
     val channels = """
       <channel id="IDEA_EAP" status="eap" licensing="eap">
         <build number="145.596" version="2016.1.1 EAP" targetSince="145.595" targetUntil="145.*"/> <!-- this build is not for everyone -->
@@ -127,10 +128,42 @@ class UpdateStrategyTest {
     assertBuild("145.596", check("IU-145.595", ChannelStatus.EAP, channels).newBuild)
   }
 
-  @Test fun `updates from the same baseline are preferred`() {
-    val result = check("IU-143.2287", ChannelStatus.RELEASE, """
+  @Test fun `updates can be targeted for specific builds (same build)`() {
+    val channels = """
+      <channel id="IDEA_EAP" status="release" licensing="release">
+        <build number="163.101" version="2016.3.1" targetSince="163.0" targetUntil="163.*"><message>bug fix</message></build>
+        <build number="163.101" version="2016.3.1"><message>new release</message></build>
+      </channel>"""
+    assertEquals("new release", check("IU-145.258", ChannelStatus.RELEASE, channels).newBuild?.message)
+    assertEquals("bug fix", check("IU-163.50", ChannelStatus.RELEASE, channels).newBuild?.message)
+  }
+
+  @Test fun `updates from the same baseline are preferred (unified channels)`() {
+    val result = check("IU-143.2287", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="143.2330" version="15.0.5 EAP"/>
+        <build number="145.600" version="2016.1.2 EAP"/>
+      </channel>
       <channel id="IDEA_Release" status="release" licensing="release">
         <build number="143.2332" version="15.0.5"/>
+        <build number="145.597" version="2016.1.1"/>
+      </channel>""")
+    assertBuild("143.2332", result.newBuild)
+  }
+
+  // since 163
+  @Test fun `updates from the same baseline are preferred (per-release channels)`() {
+    val result = check("IU-143.2287", ChannelStatus.EAP, """
+      <channel id="IDEA_143_EAP" status="eap" licensing="eap">
+        <build number="143.2330" version="15.0.5 EAP"/>
+      </channel>
+      <channel id="IDEA_143_Release" status="release" licensing="release">
+        <build number="143.2332" version="15.0.5"/>
+      </channel>
+      <channel id="IDEA_145_EAP" status="eap" licensing="eap">
+        <build number="145.600" version="2016.1.2 EAP"/>
+      </channel>
+      <channel id="IDEA_Release_145" status="release" licensing="release">
         <build number="145.597" version="2016.1.1"/>
       </channel>""")
     assertBuild("143.2332", result.newBuild)
@@ -159,6 +192,30 @@ class UpdateStrategyTest {
         <build number="162.48" version="2016.2.1 EAP"/>
       </channel>""")
     assertBuild("162.48", result.newBuild)
+  }
+
+  @Test fun `for duplicate builds, first matching channel is preferred`() {
+    val build = """<build number="163.9166" version="2016.3.1"/>"""
+    val eap15 = """<channel id="IDEA15_EAP" status="eap" licensing="eap" majorVersion="15">$build</channel>"""
+    val eap = """<channel id="IDEA_EAP" status="eap" licensing="eap" majorVersion="2016">$build</channel>"""
+    val beta15 = """<channel id="IDEA15_Beta" status="beta" licensing="release" majorVersion="15">$build</channel>"""
+    val beta = """<channel id="IDEA_Beta" status="beta" licensing="release" majorVersion="2016">$build</channel>"""
+    val release15 = """<channel id="IDEA15_Release" status="release" licensing="release" majorVersion="15">$build</channel>"""
+    val release = """<channel id="IDEA_Release" status="release" licensing="release" majorVersion="2016">$build</channel>"""
+
+    // note: this is a test; in production, release builds should never be proposed via channels with EAP licensing
+    assertEquals("IDEA15_EAP", check("IU-163.1", ChannelStatus.EAP, (eap15 + eap + beta15 + beta + release15 + release)).updatedChannel?.id)
+    assertEquals("IDEA_EAP", check("IU-163.1", ChannelStatus.EAP, (eap + eap15 + beta + beta15 + release + release15)).updatedChannel?.id)
+    assertEquals("IDEA15_EAP", check("IU-163.1", ChannelStatus.EAP, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_EAP", check("IU-163.1", ChannelStatus.EAP, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+
+    assertEquals("IDEA15_Beta", check("IU-163.1", ChannelStatus.BETA, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_Beta", check("IU-163.1", ChannelStatus.BETA, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+
+    assertEquals("IDEA15_Release", check("IU-163.1", ChannelStatus.RELEASE, (eap15 + eap + beta15 + beta + release15 + release)).updatedChannel?.id)
+    assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (eap + eap15 + beta + beta15 + release + release15)).updatedChannel?.id)
+    assertEquals("IDEA15_Release", check("IU-163.1", ChannelStatus.RELEASE, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
   }
 
   private fun check(currentBuild: String,

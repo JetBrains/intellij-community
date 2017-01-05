@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PySubscriptionExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
 
   /**
-   * @return For <code>spam[x][y][n]</code> will return <code>spam</code> regardless number of its dimensions
+   * @return For {@code spam[x][y][n]} will return {@code spam} regardless number of its dimensions
    */
   @NotNull
   PyExpression getRootOperand();

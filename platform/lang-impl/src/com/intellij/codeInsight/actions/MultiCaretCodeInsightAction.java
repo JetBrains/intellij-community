@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -55,6 +56,8 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
     if (hostEditor == null) {
       return;
     }
+    PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
+    if (hostFile != null && !FileModificationService.getInstance().prepareFileForWrite(hostFile)) return;
 
     actionPerformedImpl(project, hostEditor);
   }
@@ -71,6 +74,15 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
     }), getCommandName(), DocCommandGroupId.noneGroupId(hostEditor.getDocument()));
 
     hostEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
+    super.beforeActionPerformedUpdate(e);
   }
 
   @Override
@@ -104,16 +116,14 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
   private static void iterateOverCarets(@NotNull final Project project,
                                  @NotNull final Editor hostEditor,
                                  @NotNull final MultiCaretCodeInsightActionHandler handler) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final PsiFile psiFile = documentManager.getCachedPsiFile(hostEditor.getDocument());
-    documentManager.commitAllDocuments();
+    PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
 
     hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
       @Override
       public void perform(Caret caret) {
         Editor editor = hostEditor;
-        if (psiFile != null) {
-          Caret injectedCaret = InjectedLanguageUtil.getCaretForInjectedLanguageNoCommit(caret, psiFile);
+        if (hostFile != null) {
+          Caret injectedCaret = InjectedLanguageUtil.getCaretForInjectedLanguageNoCommit(caret, hostFile);
           if (injectedCaret != null) {
             caret = injectedCaret;
             editor = caret.getEditor();
@@ -129,7 +139,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
 
   /**
    * During action status update this method is invoked for each caret in editor. If at least for a single caret it returns
-   * <code>true</code>, action is considered enabled.
+   * {@code true}, action is considered enabled.
    */
   protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     return true;

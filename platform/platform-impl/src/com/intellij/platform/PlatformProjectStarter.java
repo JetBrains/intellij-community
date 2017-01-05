@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PlatformProjectStarter implements ApplicationComponent {
   public PlatformProjectStarter(MessageBus bus) {
-    bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
         for (String arg : commandLineArgs) {
           if (!arg.equals(StartupUtil.NO_SPLASH)) {

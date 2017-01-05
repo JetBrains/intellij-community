@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>Comparing References Inspection</name>
   <description>Inspection for (probably) inappropriate use of equality relation operation.</description>
   <version>1.0</version>

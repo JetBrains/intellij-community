@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -83,8 +82,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       myDependencies.put(target, realDependencies);
     }
 
-    GraphGenerator<BuildTarget<?>>
-      graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<BuildTarget<?>>() {
+    Graph<BuildTarget<?>> graph = GraphGenerator.generate(new InboundSemiGraph<BuildTarget<?>>() {
       @Override
       public Collection<BuildTarget<?>> getNodes() {
         return realTargets;
@@ -94,26 +92,14 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       public Iterator<BuildTarget<?>> getIn(BuildTarget<?> n) {
         return myDependencies.get(n).iterator();
       }
-    }));
-
-    final DFSTBuilder<BuildTarget<?>> builder = new DFSTBuilder<BuildTarget<?>>(graph);
-    final TIntArrayList sccs = builder.getSCCs();
-
-    myTargetChunks = new ArrayList<BuildTargetChunk>(sccs.size());
-    sccs.forEach(new TIntProcedure() {
-      int myTNumber = 0;
-      public boolean execute(int size) {
-        final Set<BuildTarget<?>> chunkNodes = new LinkedHashSet<BuildTarget<?>>();
-        for (int j = 0; j < size; j++) {
-          final BuildTarget<?> node = builder.getNodeByTNumber(myTNumber + j);
-          chunkNodes.add(node);
-        }
-        myTargetChunks.add(new BuildTargetChunk(chunkNodes));
-
-        myTNumber += size;
-        return true;
-      }
     });
+
+    DFSTBuilder<BuildTarget<?>> builder = new DFSTBuilder<BuildTarget<?>>(graph);
+    Collection<Collection<BuildTarget<?>>> components = builder.getComponents();
+    myTargetChunks = new ArrayList<BuildTargetChunk>(components.size());
+    for (Collection<BuildTarget<?>> component : components) {
+      myTargetChunks.add(new BuildTargetChunk(ContainerUtil.newLinkedHashSet(component)));
+    }
   }
 
   private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<BuildTarget<?>> dependencies,

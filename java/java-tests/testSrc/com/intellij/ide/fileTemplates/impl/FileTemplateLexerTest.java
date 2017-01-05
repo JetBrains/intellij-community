@@ -29,6 +29,12 @@ public class FileTemplateLexerTest extends LexerTestCase {
                                   "MACRO ('$bar')");
   }
 
+  public void testLiveTemplates() {
+    doTest("#[[$FOO$]]#", "ESCAPE ('#[[')\n" +
+                          "MACRO ('$FOO$')\n" +
+                          "ESCAPE (']]#')");
+  }
+
   @Override
   protected Lexer createLexer() {
     return FileTemplateConfigurable.createDefaultLexer();

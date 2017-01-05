@@ -83,18 +83,8 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isAccessedForWriting(@NotNull PsiExpression expr) {
     if (isOnAssignmentLeftHand(expr)) return true;
-    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
-    if (parent instanceof PsiPrefixExpression) {
-      IElementType tokenType = ((PsiPrefixExpression) parent).getOperationTokenType();
-      return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
-    }
-    else if (parent instanceof PsiPostfixExpression) {
-      IElementType tokenType = ((PsiPostfixExpression) parent).getOperationTokenType();
-      return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
-    }
-    else {
-      return false;
-    }
+    PsiElement parent = skipParenthesizedExprUp(expr.getParent());
+    return isIncrementDecrementOperation(parent);
   }
 
   public static boolean isAccessedForReading(@NotNull PsiExpression expr) {
@@ -116,6 +106,19 @@ public final class PsiUtil extends PsiUtilCore {
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
     if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
+    final JavaResolveResult accessObject = getAccessObjectClass(type, expression.getProject());
+    if (accessObject != null) return accessObject;
+
+    if (type == null && expression instanceof PsiReferenceExpression) {
+      JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
+      if (resolveResult.getElement() instanceof PsiClass) {
+        return resolveResult;
+      }
+    }
+    return JavaResolveResult.EMPTY;
+  }
+
+  private static JavaResolveResult getAccessObjectClass(PsiType type, Project project) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
     }
@@ -132,22 +135,19 @@ public final class PsiUtil extends PsiUtilCore {
         final PsiClass resolved = ((PsiClassType)upperBound).resolve();
         final PsiFile containingFile = resolved != null ? resolved.getContainingFile() : null;
         final String packageName = containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : null;
-        String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " +packageName + ";\n ";
+        String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " + packageName + ";\n ";
         classText += "class I<T extends " + upperBound.getCanonicalText() + "> {}";
         final PsiJavaFile file =
-          (PsiJavaFile)PsiFileFactory.getInstance(expression.getProject()).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
+          (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
         final PsiTypeParameter freshParameter = file.getClasses()[0].getTypeParameters()[0];
         return new ClassCandidateInfo(freshParameter, PsiSubstitutor.EMPTY);
       }
     }
 
-    if (type == null && expression instanceof PsiReferenceExpression) {
-      JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
-      if (resolveResult.getElement() instanceof PsiClass) {
-        return resolveResult;
-      }
+    if (type instanceof PsiArrayType) {
+      return getAccessObjectClass(((PsiArrayType)type).getComponentType(), project);
     }
-    return JavaResolveResult.EMPTY;
+    return null;
   }
 
   public static boolean isConstantExpression(@Nullable PsiExpression expression) {
@@ -330,7 +330,8 @@ public final class PsiUtil extends PsiUtilCore {
     return codeBlock;
   }
 
-  public static boolean isIncrementDecrementOperation(@NotNull PsiElement element) {
+  @Contract("null -> false")
+  public static boolean isIncrementDecrementOperation(@Nullable PsiElement element) {
     if (element instanceof PsiPostfixExpression) {
       final IElementType sign = ((PsiPostfixExpression)element).getOperationTokenType();
       if (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)
@@ -624,7 +625,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   /**
    * Compares types with respect to type parameter bounds: e.g. for
-   * <code>class Foo&lt;T extends Number&gt;{}</code> types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
+   * {@code class Foo<T extends Number>{}} types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
    * would be equivalent
    */
   public static boolean equalOnEquivalentClasses(PsiClassType thisClassType,
@@ -668,7 +669,6 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /** @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead */
-  @SuppressWarnings("unused")
   public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
     return isCompileTimeConstant((PsiVariable)field);
   }
@@ -1276,5 +1276,25 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isModuleFile(@NotNull PsiFile file) {
     return file instanceof PsiJavaFile && ((PsiJavaFile)file).getModuleDeclaration() != null;
+  }
+
+  public static boolean isPackageEmpty(@NotNull PsiDirectory[] directories, @NotNull String packageName) {
+    for (PsiDirectory directory : directories) {
+      for (PsiFile file : directory.getFiles()) {
+        if (file instanceof PsiClassOwner &&
+            packageName.equals(((PsiClassOwner)file).getPackageName()) &&
+            ((PsiClassOwner)file).getClasses().length > 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  @NotNull
+  public static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
+    PsiElement original = element.getOriginalElement();
+    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
   }
 }

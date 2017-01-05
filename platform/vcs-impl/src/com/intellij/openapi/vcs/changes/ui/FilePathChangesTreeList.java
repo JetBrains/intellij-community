@@ -32,7 +32,7 @@ public class FilePathChangesTreeList extends ChangesTreeList<FilePath> {
   }
 
   protected DefaultTreeModel buildTreeModel(final List<FilePath> changes, ChangeNodeDecorator changeNodeDecorator) {
-    return new TreeModelBuilder(myProject, isShowFlatten()).buildModelFromFilePaths(changes);
+    return TreeModelBuilder.buildFromFilePaths(myProject, isShowFlatten(), changes);
   }
 
   protected List<FilePath> getSelectedObjects(final ChangesBrowserNode<FilePath> node) {

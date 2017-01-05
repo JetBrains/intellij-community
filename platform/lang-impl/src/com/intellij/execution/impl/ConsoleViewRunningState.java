@@ -44,7 +44,8 @@ public class ConsoleViewRunningState extends ConsoleState {
     }
   };
 
-  public ConsoleViewRunningState(final ConsoleViewImpl console, final ProcessHandler processHandler,
+  public ConsoleViewRunningState(final ConsoleViewImpl console,
+                                 final ProcessHandler processHandler,
                                  final ConsoleState finishedStated,
                                  final boolean attachToStdOut,
                                  final boolean attachToStdIn) {
@@ -61,7 +62,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     // attach to process stdin
     if (attachToStdIn) {
       final OutputStream processInput = myProcessHandler.getProcessInput();
-      myUserInputWriter = processInput != null ? createOutputStreamWriter(processInput, processHandler) : null;
+      myUserInputWriter = processInput == null ? null : createOutputStreamWriter(processInput, processHandler);
     }
     else {
       myUserInputWriter = null;
@@ -99,7 +100,7 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   @Override
-  public void sendUserInput(final String input) throws IOException {
+  public void sendUserInput(@NotNull final String input) throws IOException {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
     }
@@ -107,8 +108,9 @@ public class ConsoleViewRunningState extends ConsoleState {
     myUserInputWriter.flush();
   }
 
+  @NotNull
   @Override
-  public ConsoleState attachTo(final ConsoleViewImpl console, final ProcessHandler processHandler) {
+  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

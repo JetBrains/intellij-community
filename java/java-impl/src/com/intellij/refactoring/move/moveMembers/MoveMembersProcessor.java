@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -282,11 +282,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final UsageInfo[] usages = refUsages.get();
 
-    String newVisibility = myNewVisibility;
-    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { // still need to check for access object
-      newVisibility = PsiModifier.PUBLIC;
-    }
-
+    String newVisibility = myOptions.getExplicitMemberVisibility(); // still need to check for access object
     final Map<PsiMember, PsiModifierList> modifierListCopies = new HashMap<>();
     for (PsiMember member : myMembersToMove) {
       PsiModifierList modifierListCopy = member.getModifierList();
@@ -304,7 +300,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       modifierListCopies.put(member, modifierListCopy);
     }
 
-    analyzeConflictsOnUsages(usages, myMembersToMove, newVisibility, myTargetClass, modifierListCopies, conflicts);
+    analyzeConflictsOnUsages(usages, myMembersToMove, myTargetClass, modifierListCopies, myOptions, conflicts);
     analyzeConflictsOnMembers(myMembersToMove, newVisibility, myTargetClass, modifierListCopies, conflicts);
 
     RefactoringConflictsUtil.analyzeModuleConflicts(myProject, myMembersToMove, usages, myTargetClass, conflicts);
@@ -314,9 +310,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private static void analyzeConflictsOnUsages(UsageInfo[] usages,
                                                Set<PsiMember> membersToMove,
-                                               String newVisibility,
                                                @NotNull PsiClass targetClass,
                                                Map<PsiMember, PsiModifierList> modifierListCopies,
+                                               MoveMembersOptions options,
                                                MultiMap<PsiElement, String> conflicts) {
     for (UsageInfo usage : usages) {
       if (!(usage instanceof MoveMembersUsageInfo)) continue;
@@ -324,7 +320,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       final PsiMember member = usageInfo.member;
       final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
       if (handler != null) {
-        handler.checkConflictsOnUsage(usageInfo, newVisibility, modifierListCopies.get(member), targetClass, membersToMove, conflicts);
+        handler.checkConflictsOnUsage(usageInfo, modifierListCopies.get(member), targetClass, membersToMove, options, conflicts);
       }
     }
   }

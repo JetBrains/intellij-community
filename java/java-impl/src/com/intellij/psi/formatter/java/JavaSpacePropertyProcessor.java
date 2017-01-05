@@ -534,7 +534,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   /**
-   * Initializes {@link #myResult} property with {@link Spacing} which <code>'min line feeds'</code> property is defined
+   * Initializes {@link #myResult} property with {@link Spacing} which {@code 'min line feeds'} property is defined
    * from {@link CodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
    */
   private void setAroundClassSpacing() {
@@ -576,11 +576,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   /**
-   * Allows to calculate <code>'min line feed'</code> setting of the {@link Spacing} to be used between two closing braces
+   * Allows to calculate {@code 'min line feed'} setting of the {@link Spacing} to be used between two closing braces
    * (assuming that left AST node that ends with closing brace is given to this method).
    *
    * @param leftNode    left AST node that ends with closing brace
-   * @return            <code>'min line feed'</code> setting of {@link Spacing} object to use for the given AST node and
+   * @return            {@code 'min line feed'} setting of {@link Spacing} object to use for the given AST node and
    *                    closing brace
    */
   private static int getMinLineFeedsBetweenRBraces(ASTNode leftNode) {

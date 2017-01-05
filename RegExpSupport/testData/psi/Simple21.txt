@@ -1,6 +1,6 @@
 REGEXP_FILE
-  RegExpPatternImpl: <a{1,>
-    RegExpBranchImpl: <a{1,>
+  RegExpPatternImpl: <a{1,foo}>
+    RegExpBranchImpl: <a{1,foo}>
       RegExpClosureImpl: <a{1,>
         RegExpCharImpl: <a>
           PsiElement(CHARACTER)('a')
@@ -10,7 +10,11 @@ REGEXP_FILE
           PsiElement(COMMA)(',')
           PsiErrorElement:'}' or number expected
             <empty list>
-  PsiElement(NAME)('foo')
-  PsiErrorElement:Pattern expected
-    <empty list>
-  PsiElement(RBRACE)('}')
+      RegExpCharImpl: <f>
+        PsiElement(CHARACTER)('f')
+      RegExpCharImpl: <o>
+        PsiElement(CHARACTER)('o')
+      RegExpCharImpl: <o>
+        PsiElement(CHARACTER)('o')
+      RegExpCharImpl: <}>
+        PsiElement(CHARACTER)('}')

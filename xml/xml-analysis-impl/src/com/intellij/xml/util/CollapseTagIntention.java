@@ -48,7 +48,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return XmlBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
   }
 
@@ -56,12 +56,6 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return getName();
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
     return getName();
   }
 
@@ -79,7 +73,10 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    applyFix(project, getTag(editor, file));
+    XmlTag tag = getTag(editor, file);
+    if (tag != null) {
+      applyFix(project, tag);
+    }
   }
 
   private static XmlTag getTag(Editor editor, PsiFile file) {

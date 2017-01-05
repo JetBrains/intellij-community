@@ -1,0 +1,1 @@
+f'{create_dict()["spam"]["foo"][10]} {(42).baz["bar"]}'

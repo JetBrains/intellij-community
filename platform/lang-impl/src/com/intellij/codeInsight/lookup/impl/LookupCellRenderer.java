@@ -26,8 +26,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -58,7 +60,7 @@ import java.util.Set;
 public class LookupCellRenderer implements ListCellRenderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupCellRenderer");
   //TODO[kb]: move all these awesome constants to Editor's Fonts & Colors settings
-  private Icon myEmptyIcon = EmptyIcon.create(5);
+  private Icon myEmptyIcon = JBUI.scale(EmptyIcon.create(5));
   private final Font myNormalFont;
   private final Font myBoldFont;
   private final FontMetrics myNormalMetrics;
@@ -151,10 +153,7 @@ public class LookupCellRenderer implements ListCellRenderer {
           presentation.setItemTextForeground(JBColor.RED);
           presentation.setItemText("Error occurred, see the log in Help | Show Log");
         }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        catch (Error e) {
+        catch (Exception | Error e) {
           LOG.error(e);
         }
       } else {
@@ -457,8 +456,9 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     // assume a single font can display all lookup item chars
     Set<Font> fonts = ContainerUtil.newHashSet();
+    FontPreferences fontPreferences = myLookup.getFontPreferences();
     for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(EditorUtil.fontForChar(sampleString.charAt(i), Font.PLAIN, myLookup.getTopLevelEditor()).getFont());
+      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences, null).getFont());
     }
 
     eachFont: for (Font font : fonts) {
@@ -478,7 +478,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   int updateMaximumWidth(final LookupElementPresentation p, LookupElement item) {
     final Icon icon = p.getIcon();
     if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
-      myEmptyIcon = new EmptyIcon(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
+      myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
     }
 
     return RealLookupElementPresentation.calculateWidth(p, getRealFontMetrics(item, false), getRealFontMetrics(item, true)) +

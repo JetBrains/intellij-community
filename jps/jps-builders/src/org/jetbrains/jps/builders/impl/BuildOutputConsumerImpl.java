@@ -46,7 +46,7 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
   public BuildOutputConsumerImpl(BuildTarget<?> target, CompileContext context) {
     myTarget = target;
     myContext = context;
-    myFileGeneratedEvent = new FileGeneratedEvent();
+    myFileGeneratedEvent = new FileGeneratedEvent(target);
     myOutputs = myTarget.getOutputRoots(context);
   }
 

@@ -76,7 +76,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

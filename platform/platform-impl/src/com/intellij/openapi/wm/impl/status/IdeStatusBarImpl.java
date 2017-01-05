@@ -693,6 +693,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return bean == null ? null : bean.widget;
   }
 
+  @Nullable
+  public JComponent getWidgetComponent(@NotNull String id) {
+    WidgetBean bean = myWidgetMap.get(id);
+    return bean == null ? null : bean.component;
+  }
+
   private interface StatusBarWrapper {
     void beforeUpdate();
   }

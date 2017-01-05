@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,8 +31,6 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class ReturnNullInspectionBase extends BaseInspection {
 
@@ -139,23 +136,6 @@ public class ReturnNullInspectionBase extends BaseInspection {
 
   protected int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod) {
     return 1;
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.ignore.private.option"),
-                             "m_ignorePrivateMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.arrays.option"), "m_reportArrayMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.collections.option"),
-                             "m_reportCollectionMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.objects.option"), "m_reportObjectMethods");
-    return optionsPanel;
   }
 
   @Override

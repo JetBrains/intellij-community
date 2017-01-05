@@ -219,30 +219,27 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       final PsiExpression expression;
       try {
         expression = factory.createExpressionFromText(toInsert + suffix, elementAtCaret);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = expression instanceof PsiMethodCallExpression
-                                                         ? ((PsiMethodCallExpression)expression).getMethodExpression()
-                                                         : expression instanceof PsiReferenceExpression
-                                                           ? (PsiReferenceExpression)expression
-                                                           : null;
-      if (referenceExpression == null || !referenceExpression.isValid()) {
-        toInsert = fqn;
-      }
-      else if (!isReferencedTo(referenceExpression, targetElement)) {
-        try {
-          referenceExpression.bindToElement(targetElement);
-        }
-        catch (IncorrectOperationException e) {
-          // failed to bind
-        }
-        if (!referenceExpression.isValid() || !isReferencedTo(referenceExpression, targetElement)) {
+        final PsiReferenceExpression referenceExpression = expression instanceof PsiMethodCallExpression
+                                                           ? ((PsiMethodCallExpression)expression).getMethodExpression()
+                                                           : expression instanceof PsiReferenceExpression
+                                                             ? (PsiReferenceExpression)expression
+                                                             : null;
+        if (referenceExpression == null || !referenceExpression.isValid()) {
           toInsert = fqn;
         }
+        else if (!isReferencedTo(referenceExpression, targetElement)) {
+          try {
+            referenceExpression.bindToElement(targetElement);
+          }
+          catch (IncorrectOperationException e) {
+            // failed to bind
+          }
+          if (!referenceExpression.isValid() || !isReferencedTo(referenceExpression, targetElement)) {
+            toInsert = fqn;
+          }
+        }
       }
+      catch (IncorrectOperationException ignored) {}
     }
     if (toInsert == null) toInsert = "";
 

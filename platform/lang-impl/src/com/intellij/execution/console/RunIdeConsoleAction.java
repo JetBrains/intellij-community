@@ -25,7 +25,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.ide.script.IdeScriptBindings;
+import com.intellij.ide.script.IdeConsoleScriptBindings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -156,7 +156,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   private static void prepareEngine(@NotNull Project project, @NotNull IdeScriptEngine engine, @NotNull RunContentDescriptor descriptor) {
-    IdeScriptBindings.ensureIdeIsBound(project, engine);
+    IdeConsoleScriptBindings.ensureIdeIsBound(project, engine);
     ensureOutputIsRedirected(engine, descriptor);
   }
 

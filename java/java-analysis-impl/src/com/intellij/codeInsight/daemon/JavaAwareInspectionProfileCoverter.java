@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,15 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvertor{
+public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvertor {
   private String myAdditionalJavadocTags;
   @NonNls private static final String ADDITONAL_JAVADOC_TAGS_OPTION = "ADDITIONAL_JAVADOC_TAGS";
 
@@ -48,11 +49,11 @@ public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvert
   }
 
   @Override
-  protected void fillErrorLevels(final ModifiableModel profile) {
+  protected void fillErrorLevels(InspectionProfileImpl profile) {
     super.fillErrorLevels(profile);
 
     //javadoc attributes
-    final InspectionToolWrapper toolWrapper = profile.getInspectionTool(JavaDocLocalInspectionBase.SHORT_NAME, null);
+    InspectionToolWrapper toolWrapper = profile.getInspectionTool(JavaDocLocalInspectionBase.SHORT_NAME, (PsiElement)null);
     JavaDocLocalInspectionBase inspection = (JavaDocLocalInspectionBase)toolWrapper.getTool();
     inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }

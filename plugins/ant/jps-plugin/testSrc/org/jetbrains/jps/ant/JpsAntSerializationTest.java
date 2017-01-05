@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.ant;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +29,7 @@ import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.util.List;
@@ -94,7 +94,7 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
   @Override
   protected Map<String, String> getPathVariables() {
     Map<String, String> pathVariables = super.getPathVariables();
-    pathVariables.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PlatformTestUtil.getCommunityPath());
+    pathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PlatformTestUtil.getCommunityPath());
     return pathVariables;
   }
 

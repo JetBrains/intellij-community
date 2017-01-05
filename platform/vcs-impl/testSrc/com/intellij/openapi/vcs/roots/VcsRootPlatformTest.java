@@ -120,6 +120,14 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
         delete(file);
       }
       myProjectFixture.tearDown();
+
+      myExtension = null;
+      myVcsManager = null;
+      myVcs = null;
+      myRepository = null;
+      myRootModel = null;
+      myProjectRoot = null;
+      myProject = null;
     }
     finally {
       super.tearDown();

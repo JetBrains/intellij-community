@@ -62,7 +62,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     myUndoHelper = new UndoHelper(project, this);
     myFile = file;
 
-    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerAdapter() {
+    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         if (!isValid()) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -73,8 +73,8 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
     final VirtualFile[] files = baseDir.getChildren();
     for (VirtualFile file : files) {
-      if (ModuleUtil.findModuleForFile(file, getProject()) == null) {
-        if (!file.isDirectory()) {
+      if (!file.isDirectory()) {
+        if (ProjectFileIndex.SERVICE.getInstance(getProject()).getModuleForFile(file, false) == null) {
           nodes.add(new PsiFileNode(getProject(), psiManager.findFile(file), getSettings()));
         }
       }
@@ -124,9 +124,9 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   @Override
   protected AbstractTreeNode createModuleGroup(final Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-    if (roots.length == 1) {
-      final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
+    List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
+    if (roots.size() == 1) {
+      final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
       if (psi != null) {
         return new PsiDirectoryNode(myProject, psi, getSettings());
       }

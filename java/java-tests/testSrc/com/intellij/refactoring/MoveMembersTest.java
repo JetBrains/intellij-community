@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,13 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   public void testEnumConstantFromCaseStatement() throws Exception {
-    doTest("B", "A", 0);
+    try {
+      doTest("B", "A", 0);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Enum type won't be applicable in the current context", e.getMessage());
+    }
   }
 
   public void testStringConstantFromCaseStatement() throws Exception {

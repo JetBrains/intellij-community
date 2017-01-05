@@ -81,7 +81,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final RefEntity[] refEntities = tree.getSelectedElements();
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
-    return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities, tree.getSelectedDescriptors());
+    return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities, tree);
   }
 
 
@@ -131,9 +131,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
           assert problem != null;
           elemNode
             .insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(refElement, problem, toolWrapper, presentation)), true);
-          if (problems.length == 1) {
-            elemNode.setProblem(problems[0]);
-          }
+          elemNode.setProblem(elemNode.getChildCount() == 1 ? problems[0] : null);
         }
     }
     else {

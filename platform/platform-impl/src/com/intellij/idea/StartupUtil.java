@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -83,6 +84,8 @@ public class StartupUtil {
 
   interface AppStarter {
     void start(boolean newConfigFolder);
+
+    default void beforeImportConfigs() {}
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
@@ -125,6 +128,7 @@ public class StartupUtil {
     }
 
     if (newConfigFolder) {
+      appStarter.beforeImportConfigs();
       ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
     }
 
@@ -327,12 +331,11 @@ public class StartupUtil {
   }
 
   private static void loadSystemLibraries(final Logger log) {
-    // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
+    // load JNA in own temp directory - to avoid collisions and work around no-exec /tmp
     File ideTempDir = new File(PathManager.getTempPath());
     if (!(ideTempDir.mkdirs() || ideTempDir.exists())) {
       throw new RuntimeException("Unable to create temp directory '" + ideTempDir + "'");
     }
-
     if (System.getProperty("jna.tmpdir") == null) {
       System.setProperty("jna.tmpdir", ideTempDir.getPath());
     }
@@ -343,7 +346,7 @@ public class StartupUtil {
       JnaLoader.load(log);
     }
     catch (Throwable t) {
-      logError(log, "Unable to load JNA library", t);
+      log.error("Unable to load JNA library (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")", t);
     }
 
     if (SystemInfo.isWin2kOrNewer) {
@@ -364,11 +367,6 @@ public class StartupUtil {
       // WinP should not unpack .dll files into parent directory
       System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     }
-  }
-
-  private static void logError(Logger log, String message, Throwable t) {
-    message = message + " (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")";
-    log.error(message, t);
   }
 
   private static void startLogging(final Logger log) {
@@ -422,8 +420,18 @@ public class StartupUtil {
         return;
       }
 
+      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+      if (configProvider != null) {
+        configProvider.beforeStartupWizard();
+      }
+
       new CustomizeIDEWizardDialog(provider).show();
+
       PluginManagerCore.invalidatePlugins();
+      if (configProvider != null) {
+        configProvider.startupWizardFinished();
+      }
+
       return;
     }
 

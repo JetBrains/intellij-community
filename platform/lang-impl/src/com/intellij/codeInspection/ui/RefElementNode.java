@@ -102,7 +102,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return super.insertByOrder(child, allowDuplication);
   }
 
-  public void setProblem(@NotNull CommonProblemDescriptor descriptor) {
+  public void setProblem(CommonProblemDescriptor descriptor) {
     mySingleDescriptor = descriptor;
   }
 

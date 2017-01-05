@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -103,14 +104,14 @@ class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
 
 
   @Override
-  public void visitClosure(GrClosableBlock closure) {
+  public void visitClosure(@NotNull GrClosableBlock closure) {
     grade++;
     super.visitClosure(closure);
     grade--;
   }
 
   @Override
-  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+  public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
     if (!(typeDefinition instanceof PsiAnonymousClass)) return;
     grade++;
     super.visitTypeDefinition(typeDefinition);
@@ -118,14 +119,14 @@ class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitVariable(GrVariable variable) {
+  public void visitVariable(@NotNull GrVariable variable) {
     super.visitVariable(variable);
     if (variable instanceof GrField) return;
     allVars.put(variable, grade);
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression ref) {
+  public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
     super.visitReferenceExpression(ref);
     PsiElement resolved = ref.resolve();
     if (!allVars.contains(resolved)) return;

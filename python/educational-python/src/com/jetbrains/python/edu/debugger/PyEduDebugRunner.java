@@ -111,11 +111,7 @@ public class PyEduDebugRunner extends PyDebugRunner {
     if (tab != null) {
       RunnerLayoutUi ui = tab.getUi();
       ContentManager contentManager = ui.getContentManager();
-      Content content = findContent(contentManager, XDebuggerBundle.message("debugger.session.tab.watches.title"));
-      if (content != null) {
-        contentManager.removeContent(content, true);
-      }
-      content = findContent(contentManager, XDebuggerBundle.message("debugger.session.tab.console.content.name"));
+      Content content = findContent(contentManager, XDebuggerBundle.message("debugger.session.tab.console.content.name"));
       if (content != null) {
         ExecutionConsole console = session.getDebugProcess().createConsole();
         PythonDebugLanguageConsoleView view = (PythonDebugLanguageConsoleView)console;
@@ -132,8 +128,7 @@ public class PyEduDebugRunner extends PyDebugRunner {
             view.enableConsole(!state);
           }
         };
-        content.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR,
-                              view.getPreferredFocusableComponent());
+        content.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR, view.getPreferredFocusableComponent());
       }
       patchLeftToolbar(session, ui);
     }

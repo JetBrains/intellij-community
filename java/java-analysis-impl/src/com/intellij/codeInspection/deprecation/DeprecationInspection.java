@@ -104,11 +104,11 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
     private final boolean myIgnoreImportStatements;
     private final boolean myIgnoreMethodsOfDeprecated;
 
-    public DeprecationElementVisitor(final ProblemsHolder holder,
-                                     boolean ignoreInsideDeprecated,
-                                     boolean ignoreAbstractDeprecatedOverrides,
-                                     boolean ignoreImportStatements, 
-                                     boolean ignoreMethodsOfDeprecated) {
+    DeprecationElementVisitor(@NotNull ProblemsHolder holder,
+                              boolean ignoreInsideDeprecated,
+                              boolean ignoreAbstractDeprecatedOverrides,
+                              boolean ignoreImportStatements,
+                              boolean ignoreMethodsOfDeprecated) {
       myHolder = holder;
       myIgnoreInsideDeprecated = ignoreInsideDeprecated;
       myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
@@ -254,13 +254,13 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
     checkDeprecated(refElement, elementToHighlight, rangeInElement, false, false, true, holder);
   }
 
-  public static void checkDeprecated(PsiElement refElement,
-                                     PsiElement elementToHighlight,
-                                     @Nullable TextRange rangeInElement,
-                                     boolean ignoreInsideDeprecated,
-                                     boolean ignoreImportStatements,
-                                     boolean ignoreMethodsOfDeprecated, 
-                                     ProblemsHolder holder) {
+  static void checkDeprecated(PsiElement refElement,
+                              PsiElement elementToHighlight,
+                              @Nullable TextRange rangeInElement,
+                              boolean ignoreInsideDeprecated,
+                              boolean ignoreImportStatements,
+                              boolean ignoreMethodsOfDeprecated,
+                              ProblemsHolder holder) {
     if (!(refElement instanceof PsiDocCommentOwner)) return;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) {
       if (!ignoreMethodsOfDeprecated) {

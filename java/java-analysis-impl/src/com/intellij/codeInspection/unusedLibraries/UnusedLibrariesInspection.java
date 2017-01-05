@@ -27,7 +27,6 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -133,41 +131,33 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final CommonProblemDescriptor descriptor) {
       final Module module = myRefModule.getModule();
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        for (OrderEntry entry : model.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
-            if (myFiles == null) {
-              model.removeOrderEntry(entry);
-            }
-            else {
-              final Library library = ((LibraryOrderEntry)entry).getLibrary();
-              if (library != null) {
-                final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-                for (VirtualFile file : myFiles) {
-                  modifiableModel.removeRoot(file.getUrl(), OrderRootType.CLASSES);
-                }
-                modifiableModel.commit();
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      for (OrderEntry entry : model.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
+          if (myFiles == null) {
+            model.removeOrderEntry(entry);
+          }
+          else {
+            final Library library = ((LibraryOrderEntry)entry).getLibrary();
+            if (library != null) {
+              final Library.ModifiableModel modifiableModel = library.getModifiableModel();
+              for (VirtualFile file : myFiles) {
+                modifiableModel.removeRoot(file.getUrl(), OrderRootType.CLASSES);
               }
+              modifiableModel.commit();
             }
           }
         }
-        model.commit();
-      });
+      }
+      model.commit();
     }
   }
 

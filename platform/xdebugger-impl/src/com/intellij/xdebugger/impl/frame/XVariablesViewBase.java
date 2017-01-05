@@ -28,7 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -37,6 +36,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -77,7 +77,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     createNewRootNode(stackFrame);
     final Project project = tree.getProject();
     project.putUserData(XVariablesView.DEBUG_VARIABLES, new XVariablesView.InlineVariablesInfo());
-    project.putUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS, new ObjectLongHashMap<>());
+    clearInlays(tree);
     Object newEqualityObject = stackFrame.getEqualityObject();
     if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject)
         && myTreeState != null) {
@@ -87,6 +87,10 @@ public abstract class XVariablesViewBase extends XDebugView {
     if (position != null && Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
       registerInlineEvaluator(stackFrame, position, project);
     }
+  }
+
+  protected static void clearInlays(XDebuggerTree tree) {
+    if (Registry.is("debugger.show.values.inplace")) XDebuggerInlayUtil.clearInlays(tree.getProject());
   }
 
   protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {

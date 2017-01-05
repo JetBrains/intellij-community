@@ -63,7 +63,7 @@ public class TestDataGuessByExistingFilesUtil {
    *
    * @param psiMethod      test method candidate
    * @return            collection of paths to the test data files for the given test if it's possible to guess them;
-   *                    <code>null</code> otherwise
+   *                    {@code null} otherwise
    */
   @Nullable
   static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
@@ -193,7 +193,7 @@ public class TestDataGuessByExistingFilesUtil {
           }
 
           final String filePath = file.getPath();
-          if (!filePath.contains(possibleFilePath) && !filePath.contains(test)) {
+          if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
             continue;
           }
           final String fileName = PathUtil.getFileName(filePath).toLowerCase();

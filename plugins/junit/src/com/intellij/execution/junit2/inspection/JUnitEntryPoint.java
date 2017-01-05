@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@
  */
 package com.intellij.execution.junit2.inspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,6 +76,9 @@ public class JUnitEntryPoint extends EntryPoint {
       }
       if (JUnitUtil.isTestMethodOrConfig(method)) return true;
     }
+    else if (psiElement instanceof PsiField) {
+      return AnnotationUtil.isAnnotated((PsiField)psiElement, JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, false);
+    }
     return false;
   }
 
@@ -103,6 +104,7 @@ public class JUnitEntryPoint extends EntryPoint {
   public String[] getIgnoreAnnotations() {
     return new String[]{"org.junit.Rule",
                         "org.junit.ClassRule",
-                        "org.junit.experimental.theories.DataPoint"};
+                        "org.junit.experimental.theories.DataPoint",
+                        "org.junit.experimental.theories.DataPoints"};
   }
 }

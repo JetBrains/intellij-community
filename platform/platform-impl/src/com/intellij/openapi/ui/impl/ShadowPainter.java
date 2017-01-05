@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,13 +38,13 @@ public class ShadowPainter {
   private Color myBorderColor;
 
   public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft) {
-    myTop = top;
+    myTop = IconUtil.cropIcon(top, 1, Integer.MAX_VALUE);
     myTopRight = topRight;
-    myRight = right;
+    myRight = IconUtil.cropIcon(right, Integer.MAX_VALUE, 1);
     myBottomRight = bottomRight;
-    myBottom = bottom;
+    myBottom = IconUtil.cropIcon(bottom, 1, Integer.MAX_VALUE);
     myBottomLeft = bottomLeft;
-    myLeft = left;
+    myLeft = IconUtil.cropIcon(left, Integer.MAX_VALUE, 1);
     myTopLeft = topLeft;
   }
 

@@ -28,6 +28,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -116,10 +117,11 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       // ... and for all exception parameters Ei declared by any catch clauses Ci, 1 <= i < j,
       //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
       final PsiParameter[] parameters = statement.getCatchBlockParameters();
+      final int currentIdx = ArrayUtil.find(parameters, parameter);
       List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, new NullableFunction<PsiClassType, PsiType>() {
         @Override
         public PsiType fun(final PsiClassType thrownType) {
-          for (int i = 0; i < parameters.length && parameters[i] != parameter; i++) {
+          for (int i = 0; i < currentIdx; i++) {
             final PsiType catchType = parameters[i].getType();
             if (catchType.isAssignableFrom(thrownType)) return null;
           }
@@ -129,7 +131,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       // ... and T is assignable to Ej ...
       boolean passed = true;
       for (PsiType type : uncaughtTypes) {
-        if (!declaredType.isAssignableFrom(type)) {
+        if (!declaredType.isAssignableFrom(type) && !(type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type))) {
           passed = false;
           break;
         }

@@ -55,11 +55,7 @@ public class ThreadInvocationHandler implements InvocationHandler {
       try {
         return method.invoke(myTarget, args);
       }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-        return null;
-      }
-      catch (InvocationTargetException e) {
+      catch (IllegalAccessException | InvocationTargetException e) {
         LOG.error(e);
         return null;
       }

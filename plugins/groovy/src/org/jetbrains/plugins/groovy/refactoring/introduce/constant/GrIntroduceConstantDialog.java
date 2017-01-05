@@ -16,8 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -437,15 +436,11 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       if (psiDirectory == null) return null;
       final String shortName = StringUtil.getShortName(qualifiedName);
       final String fileName = shortName + NewGroovyActionBase.GROOVY_EXTENSION;
-      final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GrIntroduceConstantDialog.class);
-      try {
+      return WriteAction.compute(() -> {
         final GroovyFile file =
           (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, GroovyTemplates.GROOVY_CLASS, true);
         return file.getTypeDefinitions()[0];
-      }
-      finally {
-        lock.finish();
-      }
+      });
     }
   }
 }

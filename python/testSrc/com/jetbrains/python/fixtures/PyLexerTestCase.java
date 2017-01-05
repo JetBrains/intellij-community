@@ -46,11 +46,12 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
     int tokenPos = 0;
     while (lexer.getTokenType() != null) {
       if (idx >= expectedTokens.length) {
-        StringBuilder remainingTokens = new StringBuilder("\"" + lexer.getTokenType().toString() + "\"");
-        lexer.advance();
+        final StringBuilder remainingTokens = new StringBuilder();
         while (lexer.getTokenType() != null) {
-          remainingTokens.append(",");
-          remainingTokens.append(" \"").append(checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString()).append("\"");
+          if (remainingTokens.length() != 0) {
+            remainingTokens.append(", ");
+          }
+          remainingTokens.append("\"").append(checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString()).append("\"");
           lexer.advance();
         }
         fail("Too many tokens. Following tokens: " + remainingTokens.toString());

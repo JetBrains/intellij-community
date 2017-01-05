@@ -22,7 +22,7 @@ import org.jetbrains.java.generate.config.DuplicatePolicy;
 import org.jetbrains.java.generate.config.ReplacePolicy;
 
 /**
- * This is a dialog when the <code>toString()</code> method already exists.
+ * This is a dialog when the {@code toString()} method already exists.
  * <p/>
  * The user now has the choices to either:
  * <ul>

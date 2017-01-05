@@ -10,8 +10,13 @@ def usage():
     exit(ERROR_WRONG_USAGE)
 
 def do_list_available_packages():
-    from conda.cli.main_search import common
-    index = common.get_index_trap()
+    try:
+        from conda.cli.main_search import common
+        index = common.get_index_trap()
+    except ImportError:
+        from conda.cli.main_search import get_index
+        index = get_index()
+
     for pkg in index.values():
         sys.stdout.write("\t".join([pkg["name"], pkg["version"], ":".join(pkg["depends"])])+chr(10))
         sys.stdout.flush()
@@ -19,9 +24,15 @@ def do_list_available_packages():
 
 def do_list_channels():
     import conda.config as config
-    for channel in config.get_channel_urls():
-        sys.stdout.write(channel+chr(10))
-        sys.stdout.flush()
+    if hasattr(config, "get_channel_urls"):
+        channels = config.get_channel_urls()
+    else:
+        channels = config.context.channels
+    for channel in channels:
+        if channel != 'defaults':
+            sys.stdout.write(channel+chr(10))
+            sys.stdout.flush()
+
 
 def main():
     retcode = 0

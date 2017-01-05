@@ -57,18 +57,42 @@ print(a);
 print(a); <caret>;;
 {->}
 print(a);; ;{->}
+print(a);; /*asd*/;
+{->}
 ''', '''\
 print(a);
 {->print 3}
 print(a); 
 {->}
 print(a); {->}
+print(a); /*asd*/
+{->}
 '''
   }
 
   void 'test traditional for'() {
     doTest 'for(int i = 0; i < 5; i++);<caret>',
            'for(int i = 0; i < 5; i++)'
+  }
+
+  void 'test traditional for without update'() {
+    doTest 'for (int i = 0; i < 10;) {}'
+  }
+
+  void 'test traditional for without condition'() {
+    doTest 'for (int i = 0; ; i++) {}'
+  }
+
+  void 'test within method'() {
+    doTest 'def foo() {; ;1;;/*asd*/;54; ;<caret>;; }', 'def foo() { 1;/*asd*/54  }'
+  }
+
+  void 'test within closure'() {
+    doTest 'foo {; ;1;;/*asd*/;54; ;<caret>;; }', 'foo { 1;/*asd*/54  }'
+  }
+
+  void 'test within closure with arrow' () {
+    doTest 'foo { -> ; ;1;;/*asd*/;54; ;<caret>;; }', 'foo { ->  1;/*asd*/54  }'
   }
 
   void 'test class members'() {
@@ -91,9 +115,16 @@ class A {
     fixture.with {
       enableInspections GrUnnecessarySemicolonInspection
       configureByText '_.groovy', before
-//      checkHighlighting()
       launchAction findSingleIntention("Fix all 'Unnecessary semicolon'")
       checkResult after
+    }
+  }
+
+  private doTest(String text) {
+    fixture.with {
+      enableInspections GrUnnecessarySemicolonInspection
+      configureByText '_.groovy', text
+      checkHighlighting()
     }
   }
 

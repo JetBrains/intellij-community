@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,24 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.AbstractList;
 import java.util.Collection;
 
@@ -215,6 +217,16 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
+  public void testMethodReferencePointingToDifferentJdk() throws Exception {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
+    final String testName = getTestName(false);
+    myFixture.copyFileToProject("java3/p/" + testName + ".java");
+    myFixture.copyFileToProject("java8/p/" + testName + ".java");
+
+    myFixture.configureByFiles("java8/p/" + testName + ".java", "java3/p/" + testName + ".java");
+    myFixture.checkHighlighting();
+  }
+
   public void testInheritorsOfJdkClassOnlyInModulesWithThatJdk() {
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
 
@@ -239,6 +251,24 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
       assertNotNull(file);
       assertTrue(file.getPath(), FileUtil.startsWith(file.getPath(), FileUtil.toSystemIndependentName(jdkHome.getPath()), true));
     }
+  }
+
+  public void testFindUsagesInLibrarySource() throws IOException {
+    PsiTestUtil.addLibrary(myJava7Module, "lib", myFixture.getTempDirFixture().findOrCreateDir("lib").getPath(), new String[]{"/libClasses"}, new String[]{"/libSrc"});
+    PsiFile libSrc = myFixture.addFileToProject("lib/libSrc/Foo.java", "class C{{ new javax.swing.JScrollPane().getHorizontalScrollBar(); }}");
+    assertTrue(FileIndexFacade.getInstance(myFixture.getProject()).isInLibrarySource(libSrc.getVirtualFile()));
+
+    PsiReference ref = libSrc.findReferenceAt(libSrc.getText().indexOf("Horizontal"));
+    PsiMethod method = assertInstanceOf(ref.resolve(), PsiMethod.class);
+    assertContainsElements(MethodReferencesSearch.search(method).findAll(), ref);
+  }
+
+  public void testConditionalAssignedToJava3Object() throws Exception {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
+    final String name = getTestName(false);
+    myFixture.copyFileToProject("java3/p/" + name + ".java");
+    myFixture.configureByFiles("java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
   }
 
   private void doTestWithoutLibrary() {

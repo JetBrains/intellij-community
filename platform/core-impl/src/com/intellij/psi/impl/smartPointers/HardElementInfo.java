@@ -47,7 +47,7 @@ class HardElementInfo extends SmartPointerElementInfo {
 
   @Override
   public PsiFile restoreFile() {
-    return myElement.getContainingFile();
+    return myElement.isValid() ? myElement.getContainingFile() : null;
   }
 
   @Override

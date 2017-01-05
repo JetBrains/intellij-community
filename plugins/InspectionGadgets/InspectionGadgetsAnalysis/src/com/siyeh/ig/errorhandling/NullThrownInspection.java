@@ -49,15 +49,10 @@ public class NullThrownInspection extends BaseInspection {
   }
 
   private static class ThrowNullFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("null.thrown.quickfix");
     }
 

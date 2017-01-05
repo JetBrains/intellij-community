@@ -170,7 +170,7 @@ public class ThrowableNotThrownInspection extends BaseInspection {
   }
 
   private static boolean isUsedElsewhere(PsiLocalVariable variable) {
-    final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+    final Query<PsiReference> query = ReferencesSearch.search(variable);
     for (PsiReference reference : query) {
       final PsiElement usage = reference.getElement();
       if (!isIgnored(usage, false)) {

@@ -56,7 +56,7 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitUnaryExpression(GrUnaryExpression grUnaryExpression) {
+    public void visitUnaryExpression(@NotNull GrUnaryExpression grUnaryExpression) {
       super.visitUnaryExpression(grUnaryExpression);
 
       final IElementType tokenType = grUnaryExpression.getOperationTokenType();

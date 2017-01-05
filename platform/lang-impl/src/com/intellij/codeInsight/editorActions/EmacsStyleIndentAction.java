@@ -22,7 +22,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler;
 import com.intellij.codeInsight.editorActions.emacs.LanguageEmacsExtension;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -33,12 +33,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class EmacsStyleIndentAction extends BaseCodeInsightAction implements DumbAware {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.actions.EmacsStyleIndentAction");
 
   @NotNull
   @Override
@@ -64,18 +61,18 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
         return;
       }
 
-      EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(file.getLanguage());
-      if (emacsProcessingHandler != null) {
-        EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, file);
-        if (result == EmacsProcessingHandler.Result.STOP) {
-          return;
+      WriteAction.run(() -> {
+        EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(file.getLanguage());
+        if (emacsProcessingHandler != null) {
+          EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, file);
+          if (result == EmacsProcessingHandler.Result.STOP) {
+            return;
+          }
         }
-      }
 
-      final Document document = editor.getDocument();
-      int startLine = document.getLineNumber(editor.getSelectionModel().getSelectionStart());
-      int endLine = document.getLineNumber(editor.getSelectionModel().getSelectionEnd());
-      try{
+        final Document document = editor.getDocument();
+        int startLine = document.getLineNumber(editor.getSelectionModel().getSelectionStart());
+        int endLine = document.getLineNumber(editor.getSelectionModel().getSelectionEnd());
         for (int line = startLine; line <= endLine; line++) {
           final int lineStart = document.getLineStartOffset(line);
           final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
@@ -86,15 +83,12 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
             editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           }
         }
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-      }
+      });
     }
 
     @Override
     public boolean startInWriteAction() {
-      return true;
+      return false;
     }
   }
 }

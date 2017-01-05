@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Arrays.asList;
 
 public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiExtensibleClass, PsiQualifiedNamedElement, Queryable {
   public static final Key<PsiClass> DELEGATE_KEY = Key.create("DELEGATE");
@@ -187,19 +188,19 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @NotNull
   @Override
   public List<PsiField> getOwnFields() {
-    return Arrays.asList(getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY));
+    return asList(getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY));
   }
 
   @NotNull
   @Override
   public List<PsiMethod> getOwnMethods() {
-    return Arrays.asList(getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY));
+    return asList(getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY));
   }
 
   @NotNull
   @Override
   public List<PsiClass> getOwnInnerClasses() {
-    return Arrays.asList(getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY));
+    return asList(getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY));
   }
 
   @Override
@@ -423,9 +424,9 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       setMirrors(getOwnInnerClasses(), extMirror.getOwnInnerClasses());
     }
     else {
-      setMirrors(getOwnFields(), mirror.getFields());
-      setMirrors(getOwnMethods(), mirror.getMethods());
-      setMirrors(getOwnInnerClasses(), mirror.getInnerClasses());
+      setMirrors(getOwnFields(), asList(mirror.getFields()));
+      setMirrors(getOwnMethods(), asList(mirror.getMethods()));
+      setMirrors(getOwnInnerClasses(), asList(mirror.getInnerClasses()));
     }
   }
 

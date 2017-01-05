@@ -15,82 +15,90 @@
  */
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CommitMessageI;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.ui.*;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-public class CommitMessage extends AbstractDataProviderPanel implements Disposable, CommitMessageI {
-
-  public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
+  public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   private final EditorTextField myEditorField;
-  private Consumer<String> myMessageConsumer;
-  private TitledSeparator mySeparator;
-  private boolean myCheckSpelling;
+  private final TitledSeparator mySeparator;
 
-  public CommitMessage(Project project) {
+  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with WriteLock
+
+  public CommitMessage(@NotNull Project project) {
     this(project, true);
   }
 
-  public CommitMessage(Project project, final boolean withSeparator) {
-    super(new BorderLayout());
-    myEditorField = createEditorField(project);
+  public CommitMessage(@NotNull Project project, @NotNull CommitMessage commitMessage) {
+    this(project);
+    myEditorField.setDocument(commitMessage.getEditorField().getDocument());
+  }
 
-    // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
-    // IJ code editor uses monospaced font). Hence, we don't need any special actions here
-    // (myEditorField.setFontInheritedFromLAF(true) should be used instead).
-    
+  public CommitMessage(@NotNull Project project, final boolean withSeparator) {
+    super(new BorderLayout());
+
+    myEditorField = createCommitTextEditor(project, false);
+    myEditorField.getDocument().putUserData(DATA_KEY, this);
+
     add(myEditorField, BorderLayout.CENTER);
 
-    JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBorder(BorderFactory.createEmptyBorder());
-    if (withSeparator) {
-      mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent(), true, true);
-      JPanel separatorPanel = new JPanel(new BorderLayout());
-      separatorPanel.add(mySeparator, BorderLayout.SOUTH);
-      separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
-      labelPanel.add(separatorPanel, BorderLayout.CENTER);
-    }
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), withSeparator);
     toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
+
     if (withSeparator) {
+      mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent());
+      JPanel separatorPanel = new JPanel(new BorderLayout());
+      separatorPanel.add(mySeparator, BorderLayout.SOUTH);
+      separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
+
+      JPanel labelPanel = new JPanel(new BorderLayout());
+      labelPanel.setBorder(BorderFactory.createEmptyBorder());
+      labelPanel.add(separatorPanel, BorderLayout.CENTER);
       labelPanel.add(toolbar.getComponent(), BorderLayout.EAST);
       add(labelPanel, BorderLayout.NORTH);
-    } else {
+    }
+    else {
+      mySeparator = null;
       add(toolbar.getComponent(), BorderLayout.EAST);
     }
 
     setBorder(BorderFactory.createEmptyBorder());
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (key.is(VcsDataKeys.COMMIT_MESSAGE_CONTROL.getName())) {
-      sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, this);
+  public Object getData(@NonNls String dataId) {
+    if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.is(dataId)) {
+      return this;
     }
+    return null;
   }
 
-  public void setSeparatorText(final String text) {
+  public void setSeparatorText(@NotNull String text) {
     if (mySeparator != null) {
       mySeparator.setText(text);
     }
@@ -101,12 +109,6 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
     setText(currentDescription);
   }
 
-  private static EditorTextField createEditorField(final Project project) {
-    EditorTextField editorField = createCommitTextEditor(project, false);
-    editorField.getDocument().putUserData(DATA_CONTEXT_KEY, DataManager.getInstance().getDataContext(editorField.getComponent()));
-    return editorField;
-  }
-
   /**
    * Creates a text editor appropriate for creating commit messages.
    *
@@ -115,7 +117,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
    *                          whether or not the editor has spell check enabled
    * @return a commit message editor
    */
-  public static EditorTextField createCommitTextEditor(final Project project, boolean forceSpellCheckOn) {
+  public static EditorTextField createCommitTextEditor(@NotNull Project project, boolean forceSpellCheckOn) {
     Set<EditorCustomization> features = new HashSet<>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
@@ -131,65 +133,52 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
 
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
+    features.add(MonospaceEditorCustomization.getInstance());
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
   }
 
-  @Nullable
-  public static ActionGroup getToolbarActions() {
+  @NotNull
+  private static ActionGroup getToolbarActions() {
     return (ActionGroup)ActionManager.getInstance().getAction("Vcs.MessageActionGroup");
   }
 
+  @NotNull
   public EditorTextField getEditorField() {
     return myEditorField;
   }
 
-  public void setText(final String initialMessage) {
+  public void setText(@Nullable String initialMessage) {
     final String text = initialMessage == null ? "" : StringUtil.convertLineSeparators(initialMessage);
     myEditorField.setText(text);
-    if (myMessageConsumer != null) {
-      myMessageConsumer.consume(text);
-    }
   }
 
   @NotNull
   public String getComment() {
     final String s = myEditorField.getDocument().getCharsSequence().toString();
-    int end = s.length();
-    while(end > 0 && Character.isSpaceChar(s.charAt(end-1))) {
-      end--;
-    }
-    return s.substring(0, end);
+    return StringUtil.trimTrailing(s);
   }
 
   public void requestFocusInMessage() {
     myEditorField.requestFocus();
     myEditorField.selectAll();
-
   }
+
   @Override
-  public boolean isCheckSpelling() {
-    return myCheckSpelling;
-  }
-
-  public void setCheckSpelling(boolean check) {
-    myCheckSpelling = check;
-    Editor editor = myEditorField.getEditor();
-    if (!(editor instanceof EditorEx)) {
-      return;
-    }
-    EditorEx editorEx = (EditorEx)editor;
-    EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(check);
-    if (customization != null) {
-      customization.customize(editorEx);
-    }
-  }
-
   public void dispose() {
   }
 
-  public void setMessageConsumer(Consumer<String> messageConsumer) {
-    myMessageConsumer = messageConsumer;
+  @CalledInAwt
+  public void setChangeLists(@NotNull List<ChangeList> value) {
+    WriteAction.run(() -> {
+      myChangeLists = value;
+    });
+  }
+
+  @NotNull
+  @CalledWithReadLock
+  public List<ChangeList> getChangeLists() {
+    return myChangeLists;
   }
 }

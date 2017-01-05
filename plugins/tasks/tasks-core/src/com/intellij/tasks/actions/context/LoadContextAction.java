@@ -140,8 +140,7 @@ public class LoadContextAction extends BaseTaskAction {
     }
 
     final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance()
-      .createActionGroupPopup("Load Context", group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null,
-                              MAX_ROW_COUNT);
+      .createActionGroupPopup("Load Context", group, e.getDataContext(), false, null, MAX_ROW_COUNT);
     popup.setAdText("Press SHIFT to merge with current context");
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {

@@ -1,9 +1,6 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>com.intellij.ide.SwingCleanuper</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>
       <implementation-class>com.intellij.openapi.wm.impl.FocusManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
@@ -45,25 +42,10 @@
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.QuickAccessSettings</implementation-class>
-    </component>
 
     <component>
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
       <headless-implementation-class/>
     </component>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.SwitchManagerAppComponent</implementation-class>
-    </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

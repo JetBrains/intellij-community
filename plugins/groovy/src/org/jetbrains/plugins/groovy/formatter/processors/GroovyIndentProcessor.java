@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,42 +117,42 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitAssertStatement(GrAssertStatement assertStatement) {
+  public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
     if (myChildType != GroovyTokenTypes.kASSERT) {
       myResult = Indent.getContinuationIndent();
     }
   }
 
   @Override
-  public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
+  public void visitAnnotationArrayInitializer(@NotNull GrAnnotationArrayInitializer arrayInitializer) {
     if (myChildType != GroovyTokenTypes.mLBRACK && myChildType != GroovyTokenTypes.mRBRACK) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
 
   @Override
-  public void visitListOrMap(GrListOrMap listOrMap) {
+  public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
     if (myChildType != GroovyTokenTypes.mLBRACK && myChildType != GroovyTokenTypes.mRBRACK) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
 
   @Override
-  public void visitCaseSection(GrCaseSection caseSection) {
+  public void visitCaseSection(@NotNull GrCaseSection caseSection) {
     if (myChildType != GroovyElementTypes.CASE_LABEL) {
       myResult = Indent.getNormalIndent();
     }
   }
 
   @Override
-  public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
     if (myChildType == GroovyElementTypes.CASE_SECTION) {
       myResult = getSwitchCaseIndent(getGroovySettings());
     }
   }
 
   @Override
-  public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
+  public void visitLabeledStatement(@NotNull GrLabeledStatement labeledStatement) {
     if (myChildType == GroovyTokenTypes.mIDENT) {
       CommonCodeStyleSettings.IndentOptions indentOptions = myBlock.getContext().getSettings().getIndentOptions();
       if (indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE) {
@@ -170,7 +170,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitAnnotation(GrAnnotation annotation) {
+  public void visitAnnotation(@NotNull GrAnnotation annotation) {
     if (myChildType == GroovyElementTypes.ANNOTATION_ARGUMENTS) {
       myResult = Indent.getContinuationIndent();
     }
@@ -180,14 +180,14 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitArgumentList(GrArgumentList list) {
+  public void visitArgumentList(@NotNull GrArgumentList list) {
     if (myChildType != GroovyTokenTypes.mLPAREN && myChildType != GroovyTokenTypes.mRPAREN) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
 
   @Override
-  public void visitIfStatement(GrIfStatement ifStatement) {
+  public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
     if (TokenSets.BLOCK_SET.contains(myChildType)) {
       if (myChild == ifStatement.getCondition()) {
         myResult = Indent.getContinuationWithoutFirstIndent();
@@ -207,7 +207,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
+  public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
     if (myChildType == GroovyTokenTypes.mLPAREN || myChildType == GroovyTokenTypes.mRPAREN) {
       myResult = Indent.getNoneIndent();
     }
@@ -217,75 +217,75 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitNamedArgument(GrNamedArgument argument) {
+  public void visitNamedArgument(@NotNull GrNamedArgument argument) {
     if (myChild == argument.getExpression()) {
       myResult = Indent.getContinuationIndent();
     }
   }
 
   @Override
-  public void visitVariable(GrVariable variable) {
+  public void visitVariable(@NotNull GrVariable variable) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitDocComment(GrDocComment comment) {
+  public void visitDocComment(@NotNull GrDocComment comment) {
     if (myChildType != GroovyDocTokenTypes.mGDOC_COMMENT_START) {
       myResult = Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
   }
 
   @Override
-  public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+  public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
     if (myChild instanceof GrVariable) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
 
   @Override
-  public void visitDocTag(GrDocTag docTag) {
+  public void visitDocTag(@NotNull GrDocTag docTag) {
     if (myChildType != GroovyDocTokenTypes.mGDOC_TAG_NAME) {
       myResult = Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
   }
 
   @Override
-  public void visitConditionalExpression(GrConditionalExpression expression) {
+  public void visitConditionalExpression(@NotNull GrConditionalExpression expression) {
       myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitAssignmentExpression(GrAssignmentExpression expression) {
+  public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitThrowsClause(GrThrowsClause throwsClause) {
+  public void visitThrowsClause(@NotNull GrThrowsClause throwsClause) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitImplementsClause(GrImplementsClause implementsClause) {
+  public void visitImplementsClause(@NotNull GrImplementsClause implementsClause) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitDocMethodParameterList(GrDocMethodParams params) {
+  public void visitDocMethodParameterList(@NotNull GrDocMethodParams params) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitExtendsClause(GrExtendsClause extendsClause) {
+  public void visitExtendsClause(@NotNull GrExtendsClause extendsClause) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitFile(GroovyFileBase file) {
+  public void visitFile(@NotNull GroovyFileBase file) {
     myResult = Indent.getNoneIndent();
   }
 
   @Override
-  public void visitMethod(GrMethod method) {
+  public void visitMethod(@NotNull GrMethod method) {
     if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
       myResult = Indent.getContinuationIndent();
     }
@@ -295,28 +295,28 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+  public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
     if (myChildType == GroovyElementTypes.EXTENDS_CLAUSE || myChildType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
       myResult = Indent.getContinuationIndent();
     }
   }
 
   @Override
-  public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
+  public void visitTypeDefinitionBody(@NotNull GrTypeDefinitionBody typeDefinitionBody) {
     if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
       myResult = Indent.getNormalIndent();
     }
   }
 
   @Override
-  public void visitClosure(GrClosableBlock closure) {
+  public void visitClosure(@NotNull GrClosableBlock closure) {
     if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
       myResult = Indent.getNormalIndent();
     }
   }
 
   @Override
-  public void visitOpenBlock(GrOpenBlock block) {
+  public void visitOpenBlock(@NotNull GrOpenBlock block) {
     final IElementType type = block.getNode().getElementType();
     if (type != GroovyElementTypes.OPEN_BLOCK && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
 
@@ -326,7 +326,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitWhileStatement(GrWhileStatement whileStatement) {
+  public void visitWhileStatement(@NotNull GrWhileStatement whileStatement) {
     if (myChild == (whileStatement).getBody() && !TokenSets.BLOCK_SET.contains(myChildType)) {
       myResult = Indent.getNormalIndent();
     }
@@ -336,14 +336,14 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
+  public void visitSynchronizedStatement(@NotNull GrSynchronizedStatement synchronizedStatement) {
     if (myChild == synchronizedStatement.getMonitor()) {
       myResult = Indent.getContinuationWithoutFirstIndent();
     }
   }
 
   @Override
-  public void visitForStatement(GrForStatement forStatement) {
+  public void visitForStatement(@NotNull GrForStatement forStatement) {
     if (myChild == forStatement.getBody() && !TokenSets.BLOCK_SET.contains(myChildType)) {
       myResult = Indent.getNormalIndent();
     }
@@ -357,7 +357,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+  public void visitParenthesizedExpression(@NotNull GrParenthesizedExpression expression) {
     if (myChildType == GroovyTokenTypes.mLPAREN || myChildType == GroovyTokenTypes.mRPAREN) {
       myResult = Indent.getNoneIndent();
     }
@@ -376,37 +376,37 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitParameterList(GrParameterList parameterList) {
+  public void visitParameterList(@NotNull GrParameterList parameterList) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitArrayDeclaration(GrArrayDeclaration arrayDeclaration) {
+  public void visitArrayDeclaration(@NotNull GrArrayDeclaration arrayDeclaration) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitExpression(GrExpression expression) {
+  public void visitExpression(@NotNull GrExpression expression) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
+  public void visitTypeArgumentList(@NotNull GrTypeArgumentList typeArgumentList) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+  public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitWildcardTypeArgument(GrWildcardTypeArgument wildcardTypeArgument) {
+  public void visitWildcardTypeArgument(@NotNull GrWildcardTypeArgument wildcardTypeArgument) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
+  public void visitAnnotationMethod(@NotNull GrAnnotationMethod annotationMethod) {
     if (myChild instanceof GrAnnotationMemberValue) {
       myResult = Indent.getContinuationIndent();
     }
@@ -416,22 +416,22 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
+  public void visitAnnotationNameValuePair(@NotNull GrAnnotationNameValuePair nameValuePair) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitForInClause(GrForInClause forInClause) {
+  public void visitForInClause(@NotNull GrForInClause forInClause) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitForClause(GrForClause forClause) {
+  public void visitForClause(@NotNull GrForClause forClause) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
-  public void visitCatchClause(GrCatchClause catchClause) {
+  public void visitCatchClause(@NotNull GrCatchClause catchClause) {
     if (myChild == catchClause.getBody()) {
       myResult = Indent.getNoneIndent();
     }
@@ -441,7 +441,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
-  public void visitTypeParameterList(GrTypeParameterList list) {
+  public void visitTypeParameterList(@NotNull GrTypeParameterList list) {
     myResult = Indent.getContinuationWithoutFirstIndent();
   }
 

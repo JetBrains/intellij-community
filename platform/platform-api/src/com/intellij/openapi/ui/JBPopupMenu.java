@@ -55,6 +55,8 @@ public class JBPopupMenu extends JPopupMenu {
   public void processMouseWheelEvent(MouseWheelEvent e) {
     if (!isShowing()) return;
 
+    int rotation = e.getWheelRotation();
+    if (rotation == 0) return;
     if (e.getComponent() != this) {
       e = (MouseWheelEvent)SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
     }
@@ -62,7 +64,7 @@ public class JBPopupMenu extends JPopupMenu {
     SwingUtilities.convertPointToScreen(p, this);
     Point tPoint = getLocationOnScreen();
     if (p.x >= tPoint.x && p.x <= tPoint.x + getWidth() && p.y >= tPoint.y && p.y <= tPoint.y + getHeight()) {
-      myLayout.updateShift(e.getWheelRotation() * 10);
+      myLayout.updateShift(rotation * 10);
     }
   }
 
@@ -166,6 +168,12 @@ public class JBPopupMenu extends JPopupMenu {
         myShift = newShift;
         myTarget.revalidate();
         myTarget.repaint();
+        Window w = UIUtil.getWindow(myTarget.getComponent());
+        if (w != null) {
+          for (Window window : w.getOwnedWindows()) {
+            window.dispose();
+          }
+        }
       }
     }
 

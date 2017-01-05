@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -146,7 +147,7 @@ public class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void selectLineAtCaret() {
-    SelectionModelImpl.doSelectLineAtCaret(myEditor);
+    SelectionModelImpl.doSelectLineAtCaret(myEditor.getCaretModel().getPrimaryCaret());
   }
 
   @Override
@@ -160,7 +161,9 @@ public class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void copySelectionToClipboard() {
-    EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
+    if (! (myTextComponent instanceof JPasswordField)) {
+      EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
+    }
   }
 
   @Override

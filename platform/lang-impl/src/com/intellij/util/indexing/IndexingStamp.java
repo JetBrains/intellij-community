@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -198,7 +199,7 @@ public class IndexingStamp {
 
           while(stream.available() > 0) {
             ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
-            if (id != null) {
+            if (id != null && !(id instanceof StubIndexKey)) {
               long stamp = getIndexCreationStamp(id);
               if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
               if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
@@ -209,7 +210,8 @@ public class IndexingStamp {
           if (outdatedIndices != null) {
             for(int outdatedIndexId:outdatedIndices) {
               ID<?, ?> id = ID.findById(outdatedIndexId);
-              if (id != null) {
+              if (id != null && !(id instanceof StubIndexKey)) {
+                if (getIndexCreationStamp(id) == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
                 long stamp = INDEX_DATA_OUTDATED_STAMP;
                 if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
                 if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);

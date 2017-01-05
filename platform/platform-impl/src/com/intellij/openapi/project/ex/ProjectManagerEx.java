@@ -35,7 +35,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
    * @param filePath path to .ipr file or directory where .idea directory is located
    */
   @Nullable
-  public abstract Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
+  public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;
@@ -67,7 +67,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public Project createProject(@Nullable String name, @NotNull String path) {
     return newProject(name, path, true, false);
   }
 

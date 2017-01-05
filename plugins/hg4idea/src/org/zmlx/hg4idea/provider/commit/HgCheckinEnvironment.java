@@ -27,13 +27,13 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -162,11 +162,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
       final List<HgRepository> preselectedRepositories = ContainerUtil.newArrayList(repositoriesMap.keySet());
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show();
-        }
-      });
+      GuiUtils.invokeLaterIfNeeded(() ->
+                                     new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show(),
+                                   ModalityState.defaultModalityState());
     }
 
     return exceptions;
@@ -210,7 +208,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         );
       }
     };
-    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(runnable);
     return choice[0] == Messages.OK;
   }
 
@@ -314,12 +312,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   /**
    * Commit options for hg
    */
-  private class HgCommitAdditionalComponent implements RefreshableOnComponent {
+  public class HgCommitAdditionalComponent implements RefreshableOnComponent {
     @NotNull private final JPanel myPanel;
     @NotNull private final AmendComponent myAmend;
     @NotNull private final JCheckBox myCommitSubrepos;
 
-    public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+    HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
 
       myAmend = new MyAmendComponent(project, getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
@@ -354,7 +352,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void saveState() {
-      myNextCommitAmend = myAmend.isAmend();
+      myNextCommitAmend = isAmend();
       myShouldCommitSubrepos = myCommitSubrepos.isSelected();
     }
 
@@ -367,6 +365,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @Override
     public JComponent getComponent() {
       return myPanel;
+    }
+
+    public boolean isAmend() {
+      return myAmend.isAmend();
     }
 
     private class MyAmendComponent extends AmendComponent {

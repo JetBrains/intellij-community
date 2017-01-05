@@ -55,11 +55,13 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
   public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
+  public void testTryReturnCatchInWhileNotComplex() throws Throwable { doTest(); }
   public void testNestedTryInWhileNotComplex() throws Throwable { doTest(); }
   public void testExceptionFromFinally() throws Throwable { doTest(); }
   public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
   public void testNestedFinally() { doTest(); }
   public void testTryFinallyInsideFinally() { doTest(); }
+  public void testBreakContinueViaFinally() { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }
@@ -193,6 +195,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testRememberLocalTransientFieldState() { doTest(); }
   public void testFinalFieldDuringInitialization() { doTest(); }
   public void testFinalFieldDuringSuperInitialization() { doTest(); }
+  public void testFinalFieldInCallBeforeInitialization() { doTest(); }
   public void testFinalFieldInConstructorAnonymous() { doTest(); }
 
   public void testFinalFieldNotDuringInitialization() {
@@ -236,6 +239,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testContractPreservesUnknownMethodNullability() { doTest(); }
   public void testContractSeveralClauses() { doTest(); }
   public void testContractVarargs() { doTest(); }
+  public void testContractConstructor() { doTest(); }
 
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
@@ -397,4 +401,15 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     doTest();
     myFixture.findSingleIntention("Remove 'if' statement");
   }
+
+  //https://youtrack.jetbrains.com/issue/IDEA-162184
+  public void testNullLiteralAndInferredMethodContract() {
+    doTest();
+  }
+  public void testNullLiteralArgumentDoesntReportedWhenMethodOnlyThrowAnException() { doTest(); }
+  public void testNullLiteralArgumentValueUsedAsReturnValue() {
+    doTest();
+  }
+
+  public void testCapturedWildcardNotNull() { doTest(); }
 }

@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -44,7 +43,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final InspectionResultsView view = getView(e);
-    InspectionProfile inspectionProfile = view.getCurrentProfile();
+    InspectionProfileImpl inspectionProfile = view.getCurrentProfile();
 
     if (view.isSingleInspectionRun()) {
       InspectionToolWrapper tool = inspectionProfile.getInspectionTool(inspectionProfile.getSingleTool(), view.getProject());
@@ -80,7 +79,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
       if (toolWrapper != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
         if (key != null) {
-          if (new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), (InspectionProfileImpl)inspectionProfile, false)) {
+          if (new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), inspectionProfile)) {
             view.updateCurrentProfile();
           }
           return;
@@ -88,7 +87,7 @@ public class EditSettingsAction extends InspectionViewActionBase {
       }
 
       final String[] path = view.getTree().getSelectedGroupPath();
-      if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, false, (c) -> {
+      if (EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, (c) -> {
         if (path != null) {
           c.selectInspectionGroup(path);
         }

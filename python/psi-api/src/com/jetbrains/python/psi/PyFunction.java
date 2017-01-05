@@ -23,19 +23,20 @@ import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * Function declaration in source (the <code>def</code> and everything within).
+ * Function declaration in source (the {@code def} and everything within).
  *
  * @author yole
  */
 public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyStatement, PyCallable,
                                     PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement, PyStatementListContainer,
-                                    PyPossibleClassMember, PyTypeCommentOwner {
+                                    PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> new PyFunction[count];
@@ -48,6 +49,9 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
    */
   @Nullable
   ASTNode getNameNode();
+
+  @Nullable
+  PyType getReturnStatementType(TypeEvalContext typeEvalContext);
 
   @Nullable
   PyType getReturnTypeFromDocString();
@@ -67,6 +71,11 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
    */
   @Nullable
   Modifier getModifier();
+
+  /**
+   * Checks whether the function contains a yield expression in its body.
+   */
+  boolean isGenerator();
 
   boolean isAsync();
 

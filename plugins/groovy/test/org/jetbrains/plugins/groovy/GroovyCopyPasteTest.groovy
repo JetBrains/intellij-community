@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,18 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
 
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    myAddImportsOld = settings.ADD_IMPORTS_ON_PASTE;
-    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
+    CodeInsightSettings settings = CodeInsightSettings.getInstance()
+    myAddImportsOld = settings.ADD_IMPORTS_ON_PASTE
+    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld;
-    super.tearDown();
+    CodeInsightSettings settings = CodeInsightSettings.getInstance()
+    settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld
+    super.tearDown()
   }
   
   private void doTest(String fromText, String toText, String expected) {
@@ -49,11 +49,11 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult expected
   }
 
-  public void testEscapeSlashesInRegex() {
+  void testEscapeSlashesInRegex() {
     doTest '<selection>a/b</selection>', 'def x = /smth<caret>/', 'def x = /smtha\\/b<caret>/'
   }
 
-  public void testEscapeSlashesInRegexFromRegex() {
+  void testEscapeSlashesInRegexFromRegex() {
     doTest 'def x = / <selection>a\\/b</selection>/', 'def x = /smth<caret>/', 'def x = /smtha\\/b<caret>/'
   }
 
@@ -61,15 +61,15 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
     doTest '''def x = <selection>a/b</selection>''', 'def x = /<caret> /', '''def x = /a\\/b /'''
   }
 
-  public void testEscapeDollarInGString() {
+  void testEscapeDollarInGString() {
     doTest '''def x = '<selection>$a</selection>b/''', 'def x = "smth<caret>h"', 'def x = "smth$a<caret>h"'
   }
 
-  public void testEscapeDollarInGString2() {
+  void testEscapeDollarInGString2() {
     doTest '''def x = '<selection>${a}</selection>b/''', 'def x = "smth<caret>h"', 'def x = "smth${a}<caret>h"'
   }
 
-  public void testRestoreImports() {
+  void testRestoreImports() {
     myFixture.addClass("package foo; public class Foo {}")
 
     doTest '''import foo.*; <selection>Foo f</selection>''', '<caret>', '''import foo.Foo
@@ -77,19 +77,19 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
 Foo f'''
   }
 
-  public void testPasteMultilineIntoMultilineGString() throws Exception {
+  void testPasteMultilineIntoMultilineGString() throws Exception {
     doTest '<selection>a/b\nc/d</selection>', 'def x = """smth<caret>"""', 'def x = """smtha/b\nc/d<caret>"""'
   }
 
-  public void testPasteMultilineIntoString() throws Exception {
+  void testPasteMultilineIntoString() throws Exception {
     doTest '<selection>a\nd</selection>', "def x = 'smth<caret>'", "def x = 'smtha\\n' +\n        'd<caret>'"
   }
 
-  public void testPasteMultilineIntoGString() throws Exception {
+  void testPasteMultilineIntoGString() throws Exception {
     doTest '<selection>a\nd</selection>', 'def x = "smth<caret>"', 'def x = "smtha\\n" +\n        "d<caret>"'
   }
 
-  public void testGStringEolReplace() throws Exception {
+  void testGStringEolReplace() throws Exception {
     doTest '''<selection>first
 second
 </selection>''',

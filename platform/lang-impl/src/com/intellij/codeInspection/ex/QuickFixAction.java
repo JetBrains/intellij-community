@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,23 +158,29 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
     try {
       final Set<PsiElement> ignoredElements = new HashSet<>();
-
-      final String templatePresentationText = getTemplatePresentation().getText();
-      assert templatePresentationText != null;
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-        final SequentialModalProgressTask progressTask =
-          new SequentialModalProgressTask(project, templatePresentationText, true);
-        progressTask.setMinIterationTime(200);
-        progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
-        ProgressManager.getInstance().run(progressTask);
-      }, templatePresentationText, null);
+      performFixesInBatch(project, descriptors, context, ignoredElements);
 
       refreshViews(project, ignoredElements, myToolWrapper);
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
     }
+  }
+
+  protected void performFixesInBatch(@NotNull Project project,
+                                     @NotNull CommonProblemDescriptor[] descriptors,
+                                     @NotNull GlobalInspectionContextImpl context,
+                                     Set<PsiElement> ignoredElements) {
+    final String templatePresentationText = getTemplatePresentation().getText();
+    assert templatePresentationText != null;
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      final SequentialModalProgressTask progressTask =
+        new SequentialModalProgressTask(project, templatePresentationText, true);
+      progressTask.setMinIterationTime(200);
+      progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
+      ProgressManager.getInstance().run(progressTask);
+    }, templatePresentationText, null);
   }
 
   private void doApplyFix(@NotNull final RefEntity[] refElements, @NotNull InspectionResultsView view) {

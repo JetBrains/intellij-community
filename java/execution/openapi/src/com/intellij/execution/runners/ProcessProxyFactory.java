@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ProcessProxyFactory {
-  public abstract boolean isBreakGenLibraryAvailable();
-
   public static ProcessProxyFactory getInstance() {
     return ServiceManager.getService(ProcessProxyFactory.class);
   }

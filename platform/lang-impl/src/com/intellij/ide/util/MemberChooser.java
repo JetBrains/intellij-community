@@ -21,6 +21,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -54,6 +56,7 @@ import java.util.*;
 import java.util.List;
 
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.MemberChooser");
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   protected JComponent[] myOptionControls;
@@ -680,6 +683,12 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     if (leadNode != null) {
       myTree.setLeadSelectionPath(new TreePath(((DefaultMutableTreeNode)leadNode).getPath()));
     }
+  }
+
+  @Override
+  public void show() {
+    LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Member Chooser should be shown in a transaction, see AnAction#startInTransaction");
+    super.show();
   }
 
   @Override

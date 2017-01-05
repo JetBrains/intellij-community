@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight;
+package com.intellij.codeInsight
 
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NonNls
 
-public class DuplicateActionTest extends LightCodeInsightFixtureTestCase {
-  public void testOneLine() {
+class DuplicateActionTest extends LightCodeInsightFixtureTestCase {
+  void testOneLine() {
     doTest '''xxx<caret>
 ''', "txt", '''xxx
 xxx<caret>
 '''
   }
 
-  public void testEmpty() {
+  void testEmpty() {
     doTest '<caret>', "txt", '<caret>'
   }
 
   private void doTest(String before, @NonNls String ext, String after) {
-    myFixture.configureByText("a." + ext, before);
+    myFixture.configureByText("a." + ext, before)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-    myFixture.checkResult(after);
+    myFixture.checkResult(after)
   }
 
-  public void testSelectName() {
+  void testSelectName() {
     doTest '''
 class C {
   void foo() {}<caret>
@@ -51,7 +51,7 @@ class C {
 '''
   }
 
-  public void "test preserve caret position when it's already inside element's name"() {
+  void "test preserve caret position when it's already inside element's name"() {
     doTest '''
 class C {
   void fo<caret>o() {}
@@ -64,7 +64,7 @@ class C {
 '''
   }
 
-  public void testXmlTag() {
+  void testXmlTag() {
     doTest '''
 <root>
   <foo/><caret>

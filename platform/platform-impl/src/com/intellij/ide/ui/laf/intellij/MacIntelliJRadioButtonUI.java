@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -26,7 +27,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
-  private static final Icon DEFAULT_ICON = EmptyIcon.create(26);
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(26));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

@@ -15,10 +15,9 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
@@ -114,12 +113,11 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
   public void save() throws IOException {
     CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
 
-    AccessToken token = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       for (String key : modifiedContent.keySet()) {
         Element content = modifiedContent.get(key);
         String path = fileSet.getParent(key) + '/' + key;
-        Writer writer = new OutputStreamWriter(StorageUtil.getOrCreateVirtualFile(this, Paths.get(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
+        Writer writer = new OutputStreamWriter(StorageUtilKt.getOrCreateVirtualFile(this, Paths.get(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
         try {
           EclipseJDOMUtil.output(content, writer, module.getProject());
         }
@@ -143,9 +141,6 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
         }
       }
       deletedContent.clear();
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 }

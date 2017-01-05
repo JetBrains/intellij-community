@@ -28,6 +28,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
@@ -97,6 +98,11 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   @Override
   public boolean isSuspendThreadSupported() {
     return true;
+  }
+
+  @Override
+  public SuspendPolicy getDefaultSuspendPolicy() {
+    return SuspendPolicy.THREAD;
   }
 
   private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {

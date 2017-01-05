@@ -163,7 +163,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
       final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       if (!node.isLeaf()) {
         nodes.add(node);
-        count += node.getCount();
+        count += node.getFileCount();
       }
     }
 
@@ -181,7 +181,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
         if (element.isLeaf()) count++;
       }
       else if (!element.isLeaf()) {
-        count -= element.getCount();
+        count -= element.getFileCount();
       }
     }
     return count;

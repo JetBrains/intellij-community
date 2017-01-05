@@ -15,11 +15,12 @@
     <orderEntry type="module" module-name="rest" />
     <orderEntry type="module" module-name="python-helpers" />
     <orderEntry type="module" module-name="terminal" />
-    <orderEntry type="module" module-name="python-ide-community" />
+    <orderEntry type="module" module-name="python-community-ide" />
     <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="module" module-name="jira" />
     <orderEntry type="module" module-name="ShortcutPromoter" />
     <orderEntry type="module" module-name="ipnb" />
     <orderEntry type="module" module-name="settings-repository" />
+    <orderEntry type="module" module-name="python-terminal" />
   </component>
 </module>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
@@ -704,8 +705,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   public static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
+    final PsiMethod delegate = generateDelegatePrototype(changeInfo);
+    PsiClass targetClass = changeInfo.getMethod().getContainingClass();
+    LOG.assertTrue(targetClass != null);
+    targetClass.addBefore(delegate, changeInfo.getMethod());
+  }
+
+  public static PsiMethod generateDelegatePrototype(JavaChangeInfo changeInfo) {
     final PsiMethod delegate = (PsiMethod)changeInfo.getMethod().copy();
-    final PsiClass targetClass = changeInfo.getMethod().getContainingClass();
+    PsiClass targetClass = changeInfo.getMethod().getContainingClass();
     LOG.assertTrue(targetClass != null);
     if (targetClass.isInterface() && delegate.getBody() == null) {
       delegate.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
@@ -714,7 +722,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     ChangeSignatureProcessor.makeEmptyBody(factory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, changeInfo.getNewName());
     addDelegateArguments(changeInfo, factory, callExpression);
-    targetClass.addBefore(delegate, changeInfo.getMethod());
+    return delegate;
   }
 
 
@@ -819,11 +827,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           parameter.getNameIdentifier().replace(newIdentifier);
         }
 
-        final PsiTypeElement typeElement = parameter.getTypeElement();
+        PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
+          parameter.normalizeDeclaration();
+          typeElement = parameter.getTypeElement();
           String oldType = oldParameterTypes[index];
           if (!oldType.equals(info.getTypeText())) {
-            parameter.normalizeDeclaration();
             PsiType newType =
               substitutor.substitute(info.createType(changeInfo.getMethod().getParameterList(), changeInfo.getMethod().getManager()));
             typeElement.replace(factory.createTypeElement(newType));
@@ -941,7 +950,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (PsiSubstitutor psiSubstitutor : substitutor) {
       type = psiSubstitutor.substitute(type);
     }
-    return factory.createParameter(newParm.getName(), type);
+    return factory.createParameter(newParm.getName(), type, list);
   }
 
   private static void resolveParameterVsFieldsConflicts(final PsiParameter[] newParms,
@@ -1034,6 +1043,22 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
           conflictDescriptions.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
         }
+        else if (element instanceof PsiJavaCodeReferenceElement) {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiCallExpression) {
+            final PsiExpressionList argumentList = ((PsiCallExpression)parent).getArgumentList();
+            if (argumentList != null) {
+              final PsiExpression[] args = argumentList.getExpressions();
+              for (int i = 0; i < toRemove.length; i++) {
+                if (toRemove[i] && i < args.length) {
+                  if (RemoveUnusedVariableUtil.checkSideEffects(args[i], null, new ArrayList<>())) {
+                    conflictDescriptions.putValue(args[i], "Parameter '" + myChangeInfo.getOldParameterNames()[i] + "' has usage that is not safe to delete");
+                  }
+                }
+              }
+            }
+          }
+        }
       }
 
       return conflictDescriptions;
@@ -1124,7 +1149,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             parameterType =
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
-          PsiParameter param = factory.createParameter(info.getName(), parameterType);
+          PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
           prototype.getParameterList().add(param);
         }
 

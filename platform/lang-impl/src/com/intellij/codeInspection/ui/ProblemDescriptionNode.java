@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
-    final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
+    final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile
                 .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())

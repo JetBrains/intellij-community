@@ -253,7 +253,7 @@ public class MvcModuleStructureUtil {
       for (Consumer<ModifiableFacetModel> action : actions.second) {
         action.consume(model);
       }
-      application.invokeAndWait(() -> application.runWriteAction(() -> model.commit()), application.getDefaultModalityState());
+      application.invokeAndWait(() -> application.runWriteAction(() -> model.commit()));
     }
   }
 

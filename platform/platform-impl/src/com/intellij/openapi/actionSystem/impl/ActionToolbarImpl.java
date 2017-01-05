@@ -25,11 +25,10 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -39,13 +38,9 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +51,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -67,6 +64,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private static final List<ActionToolbarImpl> ourToolbars = new LinkedList<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
+
+  static {
+    JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent e) {
+        ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();
+        ((JBDimension)ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE).update();
+      }
+    });
+  }
 
   public static void updateAllToolbarsImmediately() {
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
@@ -939,7 +946,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(myVisibleActions.size());
     DataContext dataContext = getDataContext();
 
-    Utils.expandActionGroup(myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
+    Utils.expandActionGroup(LaterInvocator.isInModalContext(), myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
                             myPlace, myActionManager, transparentOnly);
 
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
@@ -1230,67 +1237,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
   }
 
+  @NotNull
   @Override
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    ArrayList<SwitchTarget> result = new ArrayList<>();
-
-    if (getBounds().width * getBounds().height <= 0) return result;
-
-    for (int i = 0; i < getComponentCount(); i++) {
-      Component each = getComponent(i);
-      if (each instanceof ActionButton) {
-        result.add(new ActionTarget((ActionButton)each));
-      }
-    }
-    return result;
-  }
-
-  private static class ActionTarget implements SwitchTarget {
-    private final ActionButton myButton;
-
-    private ActionTarget(ActionButton button) {
-      myButton = button;
-    }
-
-    @Override
-    public ActionCallback switchTo(boolean requestFocus) {
-      myButton.click();
-      return ActionCallback.DONE;
-    }
-
-    @Override
-    public boolean isVisible() {
-      return myButton.isVisible();
-    }
-
-    @Override
-    public RelativeRectangle getRectangle() {
-      return new RelativeRectangle(myButton.getParent(), myButton.getBounds());
-    }
-
-    @Override
-    public Component getComponent() {
-      return myButton;
-    }
-
-    @Override
-    public String toString() {
-      return myButton.getAction().toString();
-    }
-  }
-
-  @Override
-  public SwitchTarget getCurrentTarget() {
-    return null;
-  }
-
-  @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
-  @Override
-  public List<AnAction> getActions(boolean originalProvider) {
+  public List<AnAction> getActions() {
     ArrayList<AnAction> result = new ArrayList<>();
 
     ArrayList<AnAction> secondary = new ArrayList<>();

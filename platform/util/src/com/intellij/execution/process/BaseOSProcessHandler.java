@@ -262,7 +262,6 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myCharset;
   }
 
-  @SuppressWarnings("unused")
   public static class ExecutorServiceHolder {
     /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 17) */
     public static Future<?> submit(@NotNull Runnable task) {

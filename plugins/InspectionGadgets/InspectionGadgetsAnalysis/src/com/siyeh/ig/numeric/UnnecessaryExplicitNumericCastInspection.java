@@ -73,15 +73,10 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
   }
 
   private static class UnnecessaryExplicitNumericCastFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.explicit.numeric.cast.quickfix");
     }
 

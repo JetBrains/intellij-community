@@ -21,12 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -46,7 +44,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final Stack<PsiParameter> myCatchParameters = new Stack<PsiParameter>();// stack of PsiParameter for catch
   private final Stack<PsiElement> myCatchBlocks = new Stack<PsiElement>();
 
-  private final Stack<PsiElement> myFinallyBlocks = new Stack<PsiElement>();
+  private final Stack<FinallyBlockSubroutine> myFinallyBlocks = new Stack<FinallyBlockSubroutine>();
   private final Stack<PsiElement> myUnhandledExceptionCatchBlocks = new Stack<PsiElement>();
 
   // element to jump to from inner (sub)expression in "jump to begin" situation.
@@ -273,7 +271,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     // generate jump to the top finally block
     if (!myFinallyBlocks.isEmpty()) {
-      final PsiElement finallyBlock = myFinallyBlocks.peek();
+      final PsiElement finallyBlock = myFinallyBlocks.peek().getElement();
       ConditionalThrowToInstruction throwToInstruction = new ConditionalThrowToInstruction(-2);
       myCurrentFlow.addInstruction(throwToInstruction);
       if (!patchUncheckedThrowInstructionIfInsideFinally(throwToInstruction, element, finallyBlock)) {
@@ -433,13 +431,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void callFinallyBlocksOnExit(PsiStatement exitedStatement) {
-    for (final ListIterator<PsiElement> it = myFinallyBlocks.listIterator(myFinallyBlocks.size()); it.hasPrevious(); ) {
-      final PsiElement finallyBlock = it.previous();
+    for (final ListIterator<FinallyBlockSubroutine> it = myFinallyBlocks.listIterator(myFinallyBlocks.size()); it.hasPrevious(); ) {
+      final FinallyBlockSubroutine finallyBlockSubroutine = it.previous();
+      PsiElement finallyBlock = finallyBlockSubroutine.getElement();
       final PsiElement enclosingTryStatement = finallyBlock.getParent();
       if (enclosingTryStatement == null || !PsiTreeUtil.isAncestor(exitedStatement, enclosingTryStatement, false)) {
         break;
       }
-      myCurrentFlow.addInstruction(new CallInstruction(0, 0, myStack));
+      CallInstruction instruction = new CallInstruction(0, 0, myStack);
+      finallyBlockSubroutine.addCall(instruction);
+      myCurrentFlow.addInstruction(instruction);
       addElementOffsetLater(finallyBlock, true);
     }
   }
@@ -844,7 +845,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else {
         instruction.offset = -4; // -4 for return
-        addElementOffsetLater(myFinallyBlocks.peek(), true);
+        addElementOffsetLater(myFinallyBlocks.peek().getElement(), true);
       }
     }
   }
@@ -937,7 +938,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else {
         instruction.offset = -2; // -2 to rethrow exception
-        element = myFinallyBlocks.peek();
+        element = myFinallyBlocks.peek().getElement();
         addElementOffsetLater(element, true);
       }
     }
@@ -980,7 +981,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressManager.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
       PsiType catchType = parameter.getType();
-      if (catchType.isAssignableFrom(throwType) || mightBeAssignableFromSubclass(throwType, catchType)) {
+      if (ControlFlowUtil.isCaughtExceptionType(throwType, catchType)) {
         blocks.add(myCatchBlocks.get(i));
       }
     }
@@ -989,18 +990,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       blocks.add(null);
     }
     return blocks;
-  }
-
-  private static boolean mightBeAssignableFromSubclass(@NotNull final PsiClassType throwType, @NotNull PsiType catchType) {
-    if (catchType instanceof PsiDisjunctionType) {
-      return ContainerUtil.exists(((PsiDisjunctionType)catchType).getDisjunctions(), new Condition<PsiType>() {
-        @Override
-        public boolean value(PsiType catchDisjunction) {
-          return throwType.isAssignableFrom(catchDisjunction);
-        }
-      });
-    }
-    return throwType.isAssignableFrom(catchType);
   }
 
   @Override
@@ -1083,8 +1072,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PsiCodeBlock finallyBlock = statement.getFinallyBlock();
 
+    FinallyBlockSubroutine finallyBlockSubroutine = null;
     if (finallyBlock != null) {
-      myFinallyBlocks.push(finallyBlock);
+      finallyBlockSubroutine = new FinallyBlockSubroutine(finallyBlock);
+      myFinallyBlocks.push(finallyBlockSubroutine);
     }
 
     PsiResourceList resourceList = statement.getResourceList();
@@ -1143,16 +1134,22 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (finallyBlock != null) {
       // normal completion, call finally block and proceed
-      myCurrentFlow.addInstruction(new CallInstruction(0, 0, myStack));
+      CallInstruction normalCompletion = new CallInstruction(0, 0, myStack);
+      finallyBlockSubroutine.addCall(normalCompletion);
+      myCurrentFlow.addInstruction(normalCompletion);
       addElementOffsetLater(finallyBlock, true);
       myCurrentFlow.addInstruction(new GoToInstruction(0));
       addElementOffsetLater(statement, false);
       // return completion, call finally block and return
-      myCurrentFlow.addInstruction(new CallInstruction(0, 0, myStack));
+      CallInstruction returnCompletion = new CallInstruction(0, 0, myStack);
+      finallyBlockSubroutine.addCall(returnCompletion);
+      myCurrentFlow.addInstruction(returnCompletion);
       addElementOffsetLater(finallyBlock, true);
       addReturnInstruction(statement);
       // throw exception completion, call finally block and rethrow
-      myCurrentFlow.addInstruction(new CallInstruction(0, 0, myStack));
+      CallInstruction throwExceptionCompletion = new CallInstruction(0, 0, myStack);
+      finallyBlockSubroutine.addCall(throwExceptionCompletion);
+      myCurrentFlow.addInstruction(throwExceptionCompletion);
       addElementOffsetLater(finallyBlock, true);
       final GoToInstruction gotoUncheckedRethrow = new GoToInstruction(0);
       myCurrentFlow.addInstruction(gotoUncheckedRethrow);
@@ -1161,31 +1158,22 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       finallyBlock.accept(this);
       final int procStart = myCurrentFlow.getStartOffset(finallyBlock);
       final int procEnd = myCurrentFlow.getEndOffset(finallyBlock);
-      int offset = procStart - 6;
-      final List<Instruction> instructions = myCurrentFlow.getInstructions();
-      CallInstruction callInstruction = (CallInstruction)instructions.get(offset);
-      callInstruction.procBegin = procStart;
-      callInstruction.procEnd = procEnd;
-      offset += 2;
-      callInstruction = (CallInstruction)instructions.get(offset);
-      callInstruction.procBegin = procStart;
-      callInstruction.procEnd = procEnd;
-      offset += 2;
-      callInstruction = (CallInstruction)instructions.get(offset);
-      callInstruction.procBegin = procStart;
-      callInstruction.procEnd = procEnd;
+      for (CallInstruction callInstruction : finallyBlockSubroutine.getCalls()) {
+        callInstruction.procBegin = procStart;
+        callInstruction.procEnd = procEnd;
+      }
 
       // generate return instructions
       // first three return instructions are for normal completion, return statement call completion and unchecked exception throwing completion resp.
 
       // normal completion
-      myCurrentFlow.addInstruction(new ReturnInstruction(0, myStack, callInstruction));
+      myCurrentFlow.addInstruction(new ReturnInstruction(0, myStack, normalCompletion));
 
       // return statement call completion
-      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 3, myStack, callInstruction));
+      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 3, myStack, returnCompletion));
 
       // unchecked exception throwing completion
-      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 1, myStack, callInstruction));
+      myCurrentFlow.addInstruction(new ReturnInstruction(procStart - 1, myStack, throwExceptionCompletion));
 
       // checked exception throwing completion. need to dispatch to the correct catch clause
       final List<PsiElement> unhandledExceptionCatchBlocks = finallyBlockToUnhandledExceptions.remove(finallyBlock);
@@ -1193,7 +1181,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ProgressManager.checkCanceled();
         PsiElement catchBlock = unhandledExceptionCatchBlocks.get(i);
 
-        final ReturnInstruction returnInstruction = new ReturnInstruction(0, myStack, callInstruction);
+        final ReturnInstruction returnInstruction = new ReturnInstruction(0, myStack, throwExceptionCompletion);
         returnInstruction.setRethrowFromFinally();
         myCurrentFlow.addInstruction(returnInstruction);
         if (catchBlock == null) {
@@ -1738,5 +1726,29 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
     if (refExpr.getParent() instanceof PsiMethodCallExpression) return null;
     return myPolicy.getUsedVariable(refExpr);
+  }
+
+  private static class FinallyBlockSubroutine {
+    private final PsiElement myElement;
+    private final List<CallInstruction> myCalls;
+
+    public FinallyBlockSubroutine(@NotNull PsiElement element) {
+      myElement = element;
+      myCalls = new ArrayList<CallInstruction>();
+    }
+
+    @NotNull
+    public PsiElement getElement() {
+      return myElement;
+    }
+
+    @NotNull
+    public List<CallInstruction> getCalls() {
+      return myCalls;
+    }
+
+    private void addCall(@NotNull CallInstruction callInstruction) {
+      myCalls.add(callInstruction);
+    }
   }
 }

@@ -18,11 +18,14 @@ package com.intellij.codeInspection.ex;
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
@@ -31,27 +34,29 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @State(name = "EntryPointsManager")
 public abstract class EntryPointsManagerBase extends EntryPointsManager implements PersistentStateComponent<Element> {
   @NonNls private static final String[] STANDARD_ANNOS = {
     "javax.ws.rs.*",
   };
-  private static final String PATTERN_SUFFIX = ".*";
 
   // null means uninitialized
   private volatile List<String> ADDITIONAL_ANNOS;
@@ -73,6 +78,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return annos;
   }
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
+  protected List<String> myWriteAnnotations = new ArrayList<>();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
   private final LinkedHashSet<ClassPattern> myPatterns = new LinkedHashSet<>();
   private final Set<RefElement> myTemporaryEntryPoints;
@@ -101,7 +107,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
           ADDITIONAL_ANNOS = null;
           UIUtil.invokeLaterIfNeeded(() -> {
             if (!ApplicationManager.getApplication().isDisposed()) {
-              InspectionProfileManager.getInstance().fireProfileChanged(null);
+              ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
             }
           });
         }
@@ -147,6 +153,17 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       XmlSerializer.deserializeInto(classPattern, pattern);
       getPatterns().add(classPattern);
     }
+
+    myWriteAnnotations.clear();
+    final Element writeAnnotations = element.getChild("writeAnnotations");
+    if (writeAnnotations != null) {
+      for (Element annoElement : writeAnnotations.getChildren("writeAnnotation")) {
+        final String value = annoElement.getAttributeValue("name");
+        if (value != null) {
+          myWriteAnnotations.add(value);
+        }
+      }
+    }
   }
 
   @Override
@@ -155,25 +172,37 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     Element element = new Element("state");
     writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
     if (!getPatterns().isEmpty()) {
+      SkipDefaultsSerializationFilter filter = new SkipDefaultsSerializationFilter();
       for (ClassPattern pattern : getPatterns()) {
-        element.addContent(XmlSerializer.serialize(pattern, new SkipDefaultsSerializationFilter()));
+        element.addContent(XmlSerializer.serialize(pattern, filter));
       }
+    }
+
+    if (!myWriteAnnotations.isEmpty()) {
+      final Element writeAnnotations = new Element("writeAnnotations");
+      for (String writeAnnotation : myWriteAnnotations) {
+        writeAnnotations.addContent(new Element("writeAnnotation").setAttribute("name", writeAnnotation));
+      }
+      element.addContent(writeAnnotations);
     }
     return element;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void writeExternal(final Element element,
-                            final Map<String, SmartRefElementPointer> persistentEntryPoints,
-                            final JDOMExternalizableStringList additional_annotations) {
-    Element entryPointsElement = new Element("entry_points");
-    entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
-    for (SmartRefElementPointer entryPoint : persistentEntryPoints.values()) {
-      assert entryPoint.isPersistent();
-      entryPoint.writeExternal(entryPointsElement);
+                                   final Map<String, SmartRefElementPointer> persistentEntryPoints,
+                                   final JDOMExternalizableStringList additional_annotations) {
+    Collection<SmartRefElementPointer> elementPointers = persistentEntryPoints.values();
+    if (!elementPointers.isEmpty()) {
+      Element entryPointsElement = new Element("entry_points");
+      entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
+      for (SmartRefElementPointer entryPoint : elementPointers) {
+        assert entryPoint.isPersistent();
+        entryPoint.writeExternal(entryPointsElement);
+      }
+      element.addContent(entryPointsElement);
     }
 
-    element.addContent(entryPointsElement);
     if (!additional_annotations.isEmpty()) {
       additional_annotations.writeExternal(element);
     }
@@ -198,9 +227,20 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         for (ClassPattern pattern : myPatterns) {
           final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
           if (refClass != null) {
-            for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
-              ((RefMethodImpl)constructor).setEntry(true);
-              ((RefMethodImpl)constructor).setPermanentEntry(true);
+            if (pattern.method.isEmpty()) {
+              for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
+                ((RefMethodImpl)constructor).setEntry(true);
+                ((RefMethodImpl)constructor).setPermanentEntry(true);
+              }
+            }
+            else {
+              List<RefEntity> children = refClass.getChildren();
+              for (RefEntity entity : children) {
+                if (entity instanceof RefMethodImpl && entity.getName().startsWith(pattern.method + "(")) {
+                  ((RefMethodImpl)entity).setEntry(true);
+                  ((RefMethodImpl)entity).setPermanentEntry(true);
+                }
+              }
             }
           }
         }
@@ -220,17 +260,24 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (isPersistent) {
-      if (newEntryPoint instanceof RefImplicitConstructor || newEntryPoint instanceof RefClass) {
-        final ClassPattern classPattern = new ClassPattern();
-        classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
-        getPatterns().add(classPattern);
+      if (newEntryPoint instanceof RefClass || newEntryPoint instanceof RefMethod) {
+        RefClass refClass = newEntryPoint instanceof RefMethod ? ((RefMethod)newEntryPoint).getOwnerClass()
+                                                               : (RefClass)newEntryPoint;
+        if (!refClass.isAnonymous()) {
+          final ClassPattern classPattern = new ClassPattern();
+          classPattern.pattern = new SmartRefElementPointerImpl(refClass, true).getFQName();
+          if (newEntryPoint instanceof RefMethod && !(newEntryPoint instanceof RefImplicitConstructor)) {
+            classPattern.method = getMethodName(newEntryPoint);
+          }
+          getPatterns().add(classPattern);
 
-        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
-        if (this != entryPointsManager) {
-          entryPointsManager.addEntryPoint(newEntryPoint, true);
+          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
+          if (this != entryPointsManager) {
+            entryPointsManager.addEntryPoint(newEntryPoint, true);
+          }
+
+          return;
         }
-
-        return;
       }
     }
 
@@ -265,13 +312,19 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         ((RefElementImpl)newEntryPoint).setEntry(true);
         ((RefElementImpl)newEntryPoint).setPermanentEntry(true);
         if (entry.isPersistent()) { //do save entry points
-          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
+          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
           if (this != entryPointsManager) {
             entryPointsManager.addEntryPoint(newEntryPoint, true);
           }
         }
       }
     }
+  }
+
+  private static String getMethodName(@NotNull RefElement newEntryPoint) {
+    String methodSignature = newEntryPoint.getName();
+    int indexOf = methodSignature.indexOf("(");
+    return indexOf > 0 ? methodSignature.substring(0, indexOf) : methodSignature;
   }
 
   @Override
@@ -301,13 +354,26 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       }
     }
 
-    if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+    if (anEntryPoint instanceof RefMethod || anEntryPoint instanceof RefClass) {
       final RefClass aClass = anEntryPoint instanceof RefClass ? (RefClass)anEntryPoint : ((RefMethod)anEntryPoint).getOwnerClass();
-      final String qualifiedName = aClass.getQualifiedName();
-      for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
-        if (Comparing.equal(iterator.next().pattern, qualifiedName)) {
-          //todo if inheritance or pattern?
-          iterator.remove();
+      if (aClass != null) {
+        final String qualifiedName = aClass.getQualifiedName();
+        for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
+          ClassPattern classPattern = iterator.next();
+          if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+            if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+              if (classPattern.method.isEmpty()) {
+                //todo if inheritance or pattern?
+                iterator.remove();
+              }
+            }
+            else {
+              String methodName = getMethodName(anEntryPoint);
+              if (methodName.equals(classPattern.method)) {
+                iterator.remove();
+              }
+            }
+          }
         }
       }
     }
@@ -426,6 +492,11 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
+  public boolean isImplicitWrite(PsiElement element) {
+    return element instanceof PsiField && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, myWriteAnnotations);
+  }
+
+  @Override
   public boolean isEntryPoint(@NotNull PsiElement element) {
     if (!(element instanceof PsiModifierListOwner)) return false;
     PsiModifierListOwner owner = (PsiModifierListOwner)element;
@@ -438,8 +509,29 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       final String qualifiedName = ((PsiClass)element).getQualifiedName();
       if (qualifiedName != null) {
         for (ClassPattern pattern : getPatterns()) {
-          if (isAcceptedByPattern((PsiClass)element, qualifiedName, pattern, new HashSet<>())) {
+          if (pattern.method.isEmpty() && isAcceptedByPattern((PsiClass)element, qualifiedName, pattern, new HashSet<>())) {
             return true;
+          }
+        }
+      }
+    }
+
+    if (element instanceof PsiMethod) {
+      final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+      if (containingClass != null) {
+        final String qualifiedName = containingClass.getQualifiedName();
+        if (qualifiedName != null) {
+          final String name = ((PsiMethod)element).getName();
+          for (ClassPattern pattern : getPatterns()) {
+            if (pattern.method.isEmpty()) continue;
+            boolean acceptedName = name.equals(pattern.method);
+            if (!acceptedName) {
+              final Pattern methodRegexp = pattern.getMethodRegexp();
+              acceptedName = methodRegexp != null && methodRegexp.matcher(name).matches();
+            }
+            if (acceptedName && isAcceptedByPattern(containingClass, qualifiedName, pattern, new HashSet<>())) {
+              return true;
+            }
           }
         }
       }
@@ -458,8 +550,14 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       return true;
     }
 
-    if (pattern.pattern.endsWith(PATTERN_SUFFIX) && qualifiedName.startsWith(StringUtil.trimEnd(pattern.pattern, PATTERN_SUFFIX))) {
-      return true;
+    final Pattern regexp = pattern.getRegexp();
+    if (regexp != null) {
+      try {
+        if (regexp.matcher(qualifiedName).matches()) {
+          return true;
+        }
+      }
+      catch (PatternSyntaxException ignored) {}
     }
 
     if (pattern.hierarchically) {
@@ -484,22 +582,39 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Attribute("hierarchically")
     public boolean hierarchically = false;
 
+    @Attribute("method")
+    public String method = "";
+
+
+    private Pattern regexp;
+    private Pattern methodRegexp;
+
     public ClassPattern(ClassPattern classPattern) {
       hierarchically = classPattern.hierarchically;
       pattern = classPattern.pattern;
+      method = classPattern.method;
     }
 
     public ClassPattern() {}
+
+    @Nullable
+    public Pattern getRegexp() {
+      if (regexp == null && pattern.contains("*")) {
+        regexp = createRegexp(pattern);
+      }
+      return regexp;
+    }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      ClassPattern otherPattern = (ClassPattern)o;
+      ClassPattern pattern1 = (ClassPattern)o;
 
-      if (hierarchically != otherPattern.hierarchically) return false;
-      if (!pattern.equals(otherPattern.pattern)) return false;
+      if (hierarchically != pattern1.hierarchically) return false;
+      if (!pattern.equals(pattern1.pattern)) return false;
+      if (!method.equals(pattern1.method)) return false;
 
       return true;
     }
@@ -508,7 +623,65 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     public int hashCode() {
       int result = pattern.hashCode();
       result = 31 * result + (hierarchically ? 1 : 0);
+      result = 31 * result + method.hashCode();
       return result;
+    }
+
+    public Pattern getMethodRegexp() {
+      if (methodRegexp == null && method.contains("*")) {
+        methodRegexp = createRegexp(method);
+      }
+      return methodRegexp;
+    }
+
+    private static Pattern createRegexp(final String pattern) {
+      final String replace = pattern.replace(".", "\\.").replace("*", ".*");
+      try {
+        return Pattern.compile(replace);
+      }
+      catch (PatternSyntaxException e) {
+        return null;
+      }
+    }
+  }
+
+  public static class AnnotationPattern {
+    public boolean readWriteAccess = true;
+    public String pattern = "";
+
+  }
+
+  public class AddImplicitlyWriteAnnotation implements IntentionAction {
+    private final String myQualifiedName;
+
+    public AddImplicitlyWriteAnnotation(String qualifiedName) {myQualifiedName = qualifiedName;}
+
+    @Override
+    @NotNull
+    public String getText() {
+      return QuickFixBundle.message("fix.unused.symbol.injection.text", "fields", myQualifiedName);
+    }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return QuickFixBundle.message("fix.unused.symbol.injection.family");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project1, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      myWriteAnnotations.add(myQualifiedName);
+      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

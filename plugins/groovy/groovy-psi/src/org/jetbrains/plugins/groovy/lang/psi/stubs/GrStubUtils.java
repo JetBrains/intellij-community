@@ -26,6 +26,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -37,13 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil.hasMaskModifier;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -80,16 +81,12 @@ public class GrStubUtils {
   }
 
   public static void writeNullableString(StubOutputStream dataStream, @Nullable String typeText) throws IOException {
-    dataStream.writeBoolean(typeText != null);
-    if (typeText != null) {
-      dataStream.writeUTFFast(typeText);
-    }
+    DataInputOutputUtil.writeNullable(dataStream, typeText, s -> dataStream.writeUTFFast(s));
   }
 
   @Nullable
   public static String readNullableString(StubInputStream dataStream) throws IOException {
-    final boolean hasTypeText = dataStream.readBoolean();
-    return hasTypeText ? dataStream.readUTFFast() : null;
+    return DataInputOutputUtil.readNullable(dataStream, () -> dataStream.readUTFFast());
   }
 
   @Nullable
@@ -122,9 +119,7 @@ public class GrStubUtils {
 
     // Foo -> java.util.List
     final String mappedFqn = getAliasMapping(element.getContainingFile()).get(referenceName);
-    final String fullText = element instanceof GrReferenceElementImpl
-                            ? ((GrReferenceElementImpl)element).getTextSkipWhiteSpaceAndComments()
-                            : element.getText();
+    final String fullText = element.getText();
 
     // alias: Foo<String> -> java.util.List<String>
     // unqualified ref: List<String> -> List<String>
@@ -159,10 +154,10 @@ public class GrStubUtils {
       return false;
     }
     int mask = ((GrModifierListStub)type).getModifiersFlags();
-    if (GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.PRIVATE, mask)) {
+    if (hasMaskModifier(mask, PsiModifier.PRIVATE)) {
       return false;
     }
-    if (GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.STATIC, mask)) {
+    if (hasMaskModifier(mask, PsiModifier.STATIC)) {
       return true;
     }
 

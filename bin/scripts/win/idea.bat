@@ -33,6 +33,9 @@ IF NOT "%JDK%" == "" (
   GOTO check
 )
 
+IF EXIST "%IDE_HOME%\jre64" SET JDK=%IDE_HOME%\jre64
+IF NOT "%JDK%" == "" GOTO check
+
 IF EXIST "%IDE_HOME%\jre" SET JDK=%IDE_HOME%\jre
 IF NOT "%JDK%" == "" GOTO check
 

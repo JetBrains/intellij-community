@@ -102,6 +102,8 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.springframework.util; public class Assert {\n" +
                        "    public static void isTrue(boolean expression) {}\n" +
                        "    public static void state(boolean expression, String s) {}\n" +
+                       "    public static void notNull(Object o) {}\n" +
+                       "    public static void notNull(Object o, String s) {}\n" +
                        "}");
     checkHighlighting();
   }

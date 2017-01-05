@@ -1,0 +1,1 @@
+we're going to delete <placeholder>thi<caret>s</placeholder> placeholder

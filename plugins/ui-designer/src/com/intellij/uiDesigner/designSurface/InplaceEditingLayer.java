@@ -25,10 +25,10 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditorAdapter;
-import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,7 +238,7 @@ public final class InplaceEditingLayer extends JComponent{
   /**
    * Finishes current inplace editing
    */
-  private void finishInplaceEditing(){
+  public void finishInplaceEditing(){
     if (myInplaceComponent == null || myInsideChange) { // nothing to finish
       return;
     }

@@ -35,7 +35,7 @@ public class JpsMavenJavaBuildingTest extends JpsBuildTestCase {
     FileUtil.copyDir(srcDir, workDir);
     addJdk("1.6");
     loadProject(workDir.getAbsolutePath());
-    BuildResult result = doBuild(CompileScopeTestBuilder.rebuild().all());
+    BuildResult result = doBuild(CompileScopeTestBuilder.rebuild().allModules());
     result.assertFailed();
     BuildMessage message = assertOneElement(result.getMessages(BuildMessage.Kind.ERROR));
     assertTrue(message.toString(), message.getMessageText().contains("Maven project configuration") && message.getMessageText().contains("isn't available."));

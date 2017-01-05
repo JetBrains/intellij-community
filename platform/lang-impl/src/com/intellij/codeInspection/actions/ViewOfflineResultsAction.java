@@ -26,7 +26,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -50,7 +49,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -111,13 +109,7 @@ public class ViewOfflineResultsAction extends AnAction {
           final String extension = inspectionFile.getExtension();
           if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
             profileName[0] = ApplicationManager.getApplication().runReadAction(
-                new Computable<String>() {
-                  @Override
-                  @Nullable
-                  public String compute() {
-                    return OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
-                  }
-                }
+              (Computable<String>)() -> OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString())
             );
           }
           else if (XML_EXTENSION.equals(extension)) {
@@ -153,7 +145,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                       final String profileName,
                                                       @NotNull final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       @NotNull String title) {
-    Profile profile;
+    InspectionProfileImpl profile;
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName, false);
       if (profile == null) {
@@ -165,7 +157,7 @@ public class ViewOfflineResultsAction extends AnAction {
     }
     final InspectionProfileImpl inspectionProfile;
     if (profile != null) {
-      inspectionProfile = (InspectionProfileImpl)profile;
+      inspectionProfile = profile;
     }
     else {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
@@ -184,7 +176,7 @@ public class ViewOfflineResultsAction extends AnAction {
   @NotNull
   public static InspectionResultsView showOfflineView(@NotNull Project project,
                                                       @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      @NotNull InspectionProfile inspectionProfile,
+                                                      @NotNull InspectionProfileImpl inspectionProfile,
                                                       @NotNull String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);

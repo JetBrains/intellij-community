@@ -27,6 +27,8 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,9 +62,10 @@ abstract class RefEntityImpl implements RefEntity {
     return myName;
   }
 
+  @NotNull
   @Override
   public synchronized List<RefEntity> getChildren() {
-    return myChildren;
+    return ObjectUtils.notNull(myChildren, ContainerUtil.emptyList());
   }
 
   @Override

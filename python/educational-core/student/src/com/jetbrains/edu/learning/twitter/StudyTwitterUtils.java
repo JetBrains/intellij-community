@@ -257,10 +257,6 @@ public class StudyTwitterUtils {
       init();
     }
 
-    public void setOKActionEnabled(boolean isEnabled) {
-      super.setOKActionEnabled(isEnabled);
-    }
-
     @Nullable
     @Override
     protected JComponent createCenterPanel() {

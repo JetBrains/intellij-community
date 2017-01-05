@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
@@ -58,9 +59,9 @@ public class VfsUtilCore {
    *
    * @param ancestor the file
    * @param file     the file
-   * @param strict   if <code>false</code> then this method returns <code>true</code> if <code>ancestor</code>
-   *                 and <code>file</code> are equal
-   * @return <code>true</code> if <code>ancestor</code> is parent of <code>file</code>; <code>false</code> otherwise
+   * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor}
+   *                 and {@code file} are equal
+   * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise
    */
   public static boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile file, boolean strict) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) return false;
@@ -117,7 +118,7 @@ public class VfsUtilCore {
   }
 
   /**
-   * Gets relative path of <code>file</code> to <code>root</code> when it's possible
+   * Gets relative path of {@code file} to {@code root} when it's possible
    * This method is designed to be used for file descriptions (in trees, lists etc.)
    * @param file the file
    * @param root candidate to be parent file (Project base dir, any content roots etc.)
@@ -136,7 +137,7 @@ public class VfsUtilCore {
   }
 
   /**
-   * Gets the relative path of <code>file</code> to its <code>ancestor</code>. Uses <code>separator</code> for
+   * Gets the relative path of {@code file} to its {@code ancestor}. Uses {@code separator} for
    * separating files.
    *
    * @param file      the file
@@ -191,10 +192,10 @@ public class VfsUtilCore {
   }
 
   /**
-   * Makes a copy of the <code>file</code> in the <code>toDir</code> folder and returns it.
+   * Makes a copy of the {@code file} in the {@code toDir} folder and returns it.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param file      file to make a copy of
    * @param toDir     directory to make a copy in
@@ -207,10 +208,10 @@ public class VfsUtilCore {
   }
 
   /**
-   * Makes a copy of the <code>file</code> in the <code>toDir</code> folder with the <code>newName</code> and returns it.
+   * Makes a copy of the {@code file} in the {@code toDir} folder with the {@code newName} and returns it.
    *
    * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor}
    * @param file      file to make a copy of
    * @param toDir     directory to make a copy in
@@ -440,6 +441,7 @@ public class VfsUtilCore {
   }
 
   @NotNull
+  @SuppressWarnings("SpellCheckingInspection")
   public static String fixURLforIDEA(@NotNull String url) {
     // removeLocalhostPrefix - false due to backward compatibility reasons
     return toIdeaUrl(url, false);
@@ -590,27 +592,20 @@ public class VfsUtilCore {
     return file;
   }
 
-  public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
-    if (!processor.process(root)) return false;
-
-    if (root.isDirectory()) {
-      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
-
-      queue.add(root.getChildren());
-
-      do {
-        final VirtualFile[] files = queue.removeFirst();
-
-        for (VirtualFile file : files) {
-          if (!processor.process(file)) return false;
-          if (file.isDirectory()) {
-            queue.add(file.getChildren());
-          }
+  public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
+    final Ref<Boolean> result = Ref.create(true);
+    visitChildrenRecursively(root, new VirtualFileVisitor() {
+      @NotNull
+      @Override
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        if (!processor.process(file)) {
+          result.set(Boolean.FALSE);
+          return skipTo(root);
         }
-      } while (!queue.isEmpty());
-    }
-
-    return true;
+        return CONTINUE;
+      }
+    });
+    return result.get();
   }
 
   /**
@@ -618,7 +613,7 @@ public class VfsUtilCore {
    *
    * @param file1 fist file
    * @param file2 second file
-   * @return common ancestor for the passed files. Returns <code>null</code> if
+   * @return common ancestor for the passed files. Returns {@code null} if
    *         the files do not have common ancestor
    */
   @Nullable
@@ -676,8 +671,7 @@ public class VfsUtilCore {
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
-    public DistinctVFilesRootsCollection() {
-    }
+    public DistinctVFilesRootsCollection() { }
 
     public DistinctVFilesRootsCollection(Collection<VirtualFile> virtualFiles) {
       super(virtualFiles);
@@ -693,6 +687,8 @@ public class VfsUtilCore {
     }
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
   public static void processFilesRecursively(@NotNull VirtualFile root,
                                              @NotNull Processor<VirtualFile> processor,
                                              @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
@@ -715,4 +711,5 @@ public class VfsUtilCore {
       } while (!queue.isEmpty());
     }
   }
+  //</editor-fold>
 }

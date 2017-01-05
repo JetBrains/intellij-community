@@ -113,7 +113,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @Override
   @NotNull
   public final String getName() {
-    PsiParameterStub stub = getStub();
+    PsiParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -269,7 +269,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public boolean isVarArgs() {
-    final PsiParameterStub stub = getStub();
+    final PsiParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.isParameterTypeEllipsis();
     }

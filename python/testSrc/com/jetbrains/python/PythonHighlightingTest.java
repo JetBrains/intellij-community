@@ -238,7 +238,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   // PY-19679
-  public void testAwaitInList() {
+  public void testAwaitInListPy35() {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
@@ -250,16 +250,36 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
-  public void testAwaitInSet() {
+  public void testAwaitInSetPy35() {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
-  public void testAwaitInDict() {
+  public void testAwaitInDictPy35() {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
-  public void testYieldInsideAsyncDef() {
+  // PY-20770
+  public void testAwaitInListPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
+  // PY-20770
+  public void testAwaitInSetPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
+  // PY-20770
+  public void testAwaitInDictPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
+  public void testYieldInsideAsyncDefPy35() {
     doTest(LanguageLevel.PYTHON35, false, false);
+  }
+
+  // PY-20770
+  public void testYieldInsideAsyncDefPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   public void testUnpackingStar() {
@@ -283,6 +303,71 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-19775
   public void testAsyncBuiltinMethods() {
     doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  public void testImplicitOctLongInteger() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  public void testUnderscoresInNumericLiterals() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  public void testVariableAnnotations() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  public void testIllegalVariableAnnotationTarget() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
+  public void testFStringLiterals() {
+    doTest();
+  }
+
+  // PY-20770
+  public void testAsyncComprehensionsPy35() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-20770
+  public void testAsyncComprehensionsPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
+  // PY-20775
+  public void testFStringMissingRightBrace() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
+
+  // PY-20776
+  public void testFStringEmptyExpressions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
+
+  // PY-20778
+  public void testFStringIllegalConversionCharacter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
+
+  // PY-20773
+  public void testFStringHashSigns() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
+
+  // PY-20844
+  public void testFStringBackslashes() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
+
+  // PY-20897
+  public void testFStringSingleRightBraces() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
+  
+  // PY-20901
+  public void testFStringTooDeeplyNestedExpressionFragments() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
   }
 
   // ---

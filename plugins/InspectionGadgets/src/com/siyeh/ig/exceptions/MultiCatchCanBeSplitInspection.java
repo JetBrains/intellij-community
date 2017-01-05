@@ -122,15 +122,8 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("multi.catch.can.be.split.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("multi.catch.can.be.split.quickfix");
     }
 
     @Override

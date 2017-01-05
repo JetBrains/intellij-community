@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.ParameterCanBeLocalInspection;
 import com.intellij.psi.PsiElement;
@@ -39,7 +40,7 @@ public class ConvertParameterToLocalVariableTest extends LightQuickFixParameteri
   }
 
   @Override
-  protected void doAction(@NotNull final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName)
+  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName)
     throws Exception {
 
     final LocalQuickFix fix = new ParameterCanBeLocalInspection.ConvertParameterToLocalQuickFix();

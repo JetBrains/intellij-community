@@ -306,12 +306,10 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree, myDisposable);
 
-    final DefaultActionGroup breakpointTypes = new DefaultActionGroup();
-    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-      if (type.isAddBreakpointButtonVisible()) {
-        breakpointTypes.addAll(new AddXBreakpointAction(type));
-      }
-    }
+    DefaultActionGroup breakpointTypes = XBreakpointUtil.breakpointTypes()
+      .filter(XBreakpointType::isAddBreakpointButtonVisible)
+      .map(AddXBreakpointAction::new)
+      .toListAndThen(DefaultActionGroup::new);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
       setAddAction(new AnActionButtonRunnable() {
@@ -390,7 +388,7 @@ public class BreakpointsDialog extends DialogWrapper {
     for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
       provider.createBreakpointsGroupingRules(myRulesAvailable);
     }
-    Collections.sort(myRulesAvailable, XBreakpointGroupingRule.PRIORITY_COMPARATOR);
+    myRulesAvailable.sort(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
     myRulesEnabled.clear();
     XBreakpointsDialogState settings = (getBreakpointManager()).getBreakpointsDialogSettings();
@@ -432,9 +430,7 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private void disposeItems() {
-    for (BreakpointItem item : myBreakpointItems) {
-      item.dispose();
-    }
+    myBreakpointItems.forEach(BreakpointItem::dispose);
   }
 
   @Nullable

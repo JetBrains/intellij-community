@@ -71,10 +71,10 @@ public abstract class VirtualFileSystem {
   /**
    * Refreshes the cached information for all files in this file system from the physical file system.<p>
    * <p/>
-   * If <code>asynchronous</code> is <code>false</code> this method should be only called within write-action.
+   * If {@code asynchronous} is {@code false} this method should be only called within write-action.
    * See {@link Application#runWriteAction}.
    *
-   * @param asynchronous if <code>true</code> then the operation will be performed in a separate thread,
+   * @param asynchronous if {@code true} then the operation will be performed in a separate thread,
    *                     otherwise will be performed immediately
    * @see VirtualFile#refresh
    * @see VirtualFileManager#syncRefresh
@@ -94,7 +94,7 @@ public abstract class VirtualFileSystem {
    * this method in a read action would result in a deadlock.
    *
    * @param path the path
-   * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    */
   @Nullable
   public abstract VirtualFile refreshAndFindFileByPath(@NotNull String path);
@@ -170,6 +170,6 @@ public abstract class VirtualFileSystem {
   }
 
   public boolean isValidName(@NotNull String name) {
-    return name.length() > 0 && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+    return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 }

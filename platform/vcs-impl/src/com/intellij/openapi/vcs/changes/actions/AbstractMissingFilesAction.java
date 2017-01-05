@@ -27,8 +27,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -79,12 +77,7 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
     if (synchronously()) {
       action.run();
     } else {
-      progressManager.runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, action);
-        }
-      }, getName(), true, project);
+      progressManager.runProcessWithProgressSynchronously(action, getName(), true, project);
     }
   }
 

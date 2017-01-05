@@ -220,8 +220,12 @@ public class FileManagerImpl implements FileManager {
     assert !file.isDirectory();
     FileViewProvider viewProvider = findCachedViewProvider(file);
     if (viewProvider != null) return viewProvider;
-    viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file, true));
-    return viewProvider;
+
+    viewProvider = createFileViewProvider(file, true);
+    if (file instanceof LightVirtualFile) {
+      return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
+    }
+    return ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, viewProvider);
   }
 
   @Override

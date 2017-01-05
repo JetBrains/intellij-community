@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,8 +103,6 @@ public class DataFlowRunner {
                                    @NotNull InstructionVisitor visitor,
                                    boolean ignoreAssertions,
                                    @NotNull Collection<DfaMemoryState> initialStates) {
-    if (PsiTreeUtil.findChildOfType(psiBlock, OuterLanguageElement.class) != null) return RunnerResult.NOT_APPLICABLE;
-
     try {
       final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
@@ -122,6 +119,8 @@ public class DataFlowRunner {
           joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
         } else if (instruction instanceof ConditionalGotoInstruction) {
           joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
+        } else if (instruction instanceof ControlTransferInstruction) {
+          joinInstructions.addAll(((ControlTransferInstruction)instruction).getPossibleTargetInstructions(myInstructions));
         } else if (instruction instanceof MethodCallInstruction && !((MethodCallInstruction)instruction).getContracts().isEmpty()) {
           joinInstructions.add(myInstructions[index + 1]);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,33 +20,49 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Function;
 
 public abstract class RunLineMarkerContributor {
+  public static final Function<PsiElement, String> RUN_TEST_TOOLTIP_PROVIDER = it -> "Run Test";
+
   static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
 
   public static class Info {
     public final Icon icon;
     public final AnAction[] actions;
+
     public final Function<PsiElement, String> tooltipProvider;
 
-    public Info(Icon icon, @Nullable Function<PsiElement, String> tooltipProvider, @NotNull AnAction... actions) {
+    public Info(Icon icon, @NotNull AnAction[] actions, @Nullable Function<PsiElement, String> tooltipProvider) {
       this.icon = icon;
       this.actions = actions;
       this.tooltipProvider = tooltipProvider;
     }
 
+    public Info(Icon icon, @Nullable com.intellij.util.Function<PsiElement, String> tooltipProvider, @NotNull AnAction... actions) {
+      this.icon = icon;
+      this.actions = actions;
+      this.tooltipProvider = tooltipProvider == null ? null : it -> tooltipProvider.fun(it);
+    }
+
     public Info(@NotNull final AnAction action) {
-      this(action.getTemplatePresentation().getIcon(), element -> getText(action, element), action);
+      this(action.getTemplatePresentation().getIcon(), new AnAction[]{action}, element -> getText(action, element));
+    }
+
+    /**
+     * Checks if this Info should replace another one, that is if the other should be discarded.
+     */
+    public boolean shouldReplace(@NotNull Info other) {
+      return false;
     }
   }
 
   @Nullable
-  public abstract Info getInfo(PsiElement element);
+  public abstract Info getInfo(@NotNull PsiElement element);
 
   @Nullable("null means disabled")
   protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {

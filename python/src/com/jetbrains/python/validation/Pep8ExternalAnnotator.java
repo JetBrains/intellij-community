@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
@@ -49,15 +50,18 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
+import com.jetbrains.python.inspections.quickfix.PyFillParagraphFix;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
 import com.jetbrains.python.inspections.quickfix.RemoveTrailingBlankLinesFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -168,7 +172,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
     final HighlightDisplayKey key = HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME);
-    if (!profile.isToolEnabled(key)) {
+    if (!profile.isToolEnabled(key, file)) {
+      return null;
+    }
+    if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(PyPep8Inspection.class)) {
       return null;
     }
     final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.KEY.toString(), file);
@@ -237,8 +244,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   @Override
   public void apply(@NotNull PsiFile file, Results annotationResult, @NotNull AnnotationHolder holder) {
-    if (annotationResult == null) return;
-    PyPsiUtils.assertValid(file);
+    if (annotationResult == null || !file.isValid()) return;
     final String text = file.getText();
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -266,11 +272,18 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         problemElement = file.findElementAt(Math.max(0, offset - 1));
       }
 
-      if (ignoreDueToSettings(project, problem, problemElement) || ignoredDueToProblemSuppressors(project, problem, file, problemElement)) {
+      if (ignoreDueToSettings(project, problem, problemElement) || ignoredDueToProblemSuppressors(problem, file, problemElement)) {
         continue;
       }
 
       if (problemElement != null) {
+        // TODO Remove: a workaround until the bundled pycodestyle.py supports Python 3.6 variable annotations by itself
+        if (problem.myCode.equals("E701") &&
+            problemElement.getNode().getElementType() == PyTokenTypes.COLON &&
+            problemElement.getParent() instanceof PyAnnotation) {
+          continue;
+        }
+        
         TextRange problemRange = problemElement.getTextRange();
         // Multi-line warnings are shown only in the gutter and it's not the desired behavior from the usability point of view.
         // So we register it only on that line where pycodestyle.py found the problem originally.
@@ -306,6 +319,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         else if (problem.myCode.equals("W391")) {
           annotation.registerUniversalFix(new RemoveTrailingBlankLinesFix(), null, null);
         }
+        else if (problem.myCode.equals("E501")) {
+          annotation.registerFix(new PyFillParagraphFix());
+        }
         else {
           annotation.registerUniversalFix(new ReformatFix(), null, null);
         }
@@ -316,8 +332,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
   }
 
-  private static boolean ignoredDueToProblemSuppressors(@NotNull Project project,
-                                                        @NotNull Problem problem,
+  private static boolean ignoredDueToProblemSuppressors(@NotNull Problem problem,
                                                         @NotNull PsiFile file,
                                                         @Nullable PsiElement element) {
     final Pep8ProblemSuppressor[] suppressors = Pep8ProblemSuppressor.EP_NAME.getExtensions();
@@ -372,11 +387,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           }
         }
       }
-      
-      if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
-        return true;
-      }
-        
+
       // E251 unexpected spaces around keyword / parameter equals
       // Note that E222 (multiple spaces after operator) is not suppressed, though. 
       if (problem.myCode.equals("E251") &&
@@ -384,6 +395,11 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
            element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
         return true;
       }
+    }
+    // W191 (indentation contains tabs) is reported also for indents inside multiline string literals, 
+    // thus underlying PSI element is not necessarily a whitespace
+    if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
+      return true;
     }
     return false;
   }
@@ -430,8 +446,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-      InspectionProjectProfileManager.getInstance(project).getCurrentProfile().modifyProfile(model -> {
-        PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
+        PyPep8Inspection tool = (PyPep8Inspection)it.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
         if (!tool.ignoredErrors.contains(myCode)) {
           tool.ignoredErrors.add(myCode);
         }

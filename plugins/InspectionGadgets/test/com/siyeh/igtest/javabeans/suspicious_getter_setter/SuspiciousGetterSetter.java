@@ -5,6 +5,8 @@ public class SuspiciousGetterSetter {
 
   private static final String MSG_KEY = "";
 
+  private String myUrl;
+
   public String <warning descr="Getter 'getTwo()' returns field 'myOne'">getTwo</warning>() {
     return myOne;
   }
@@ -15,5 +17,9 @@ public class SuspiciousGetterSetter {
 
   String getMsgKey() { // suspicious getter
     return MSG_KEY;
+  }
+
+  String getURL() {
+    return myUrl;
   }
 }

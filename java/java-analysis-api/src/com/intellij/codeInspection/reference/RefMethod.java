@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,8 @@ public interface RefMethod extends RefJavaElement {
   boolean isTestMethod();
 
   /**
-   * Checks if the signature of the method matches the signature of the standard <code>main</code>
-   * or <code>premain</code> method.
+   * Checks if the signature of the method matches the signature of the standard {@code main}
+   * or {@code premain} method.
    *
    * @return true if the method can be a main function of the application, false otherwise.
    */
@@ -130,7 +130,7 @@ public interface RefMethod extends RefJavaElement {
   @Nullable String getReturnValueIfSame();
 
   /**
-   * Returns the list of exceptions which are included in the <code>throws</code> list
+   * Returns the list of exceptions which are included in the {@code throws} list
    * of the method but cannot be actually thrown.
    *
    * @return the list of exceptions declared but not thrown, or null if there are no

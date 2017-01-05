@@ -20,8 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -42,8 +40,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -90,7 +88,7 @@ public class BuildArtifactAction extends DumbAwareAction {
       selectedIndices.add(0);
       selectedArtifacts.clear();
     }
-    
+
     for (Artifact artifact : artifacts) {
       final ArtifactPopupItem item = new ArtifactPopupItem(artifact, artifact.getName(), artifact.getArtifactType().getIcon());
       if (selectedArtifacts.contains(artifact)) {
@@ -98,10 +96,10 @@ public class BuildArtifactAction extends DumbAwareAction {
       }
       items.add(item);
     }
-    
+
     final ProjectSettingsService projectSettingsService = ProjectSettingsService.getInstance(project);
     final ArtifactAwareProjectSettingsService settingsService = projectSettingsService instanceof ArtifactAwareProjectSettingsService ? (ArtifactAwareProjectSettingsService)projectSettingsService : null;
-    
+
     final ChooseArtifactStep step = new ChooseArtifactStep(items, artifacts.get(0), project, settingsService);
     step.setDefaultOptionIndices(selectedIndices.toNativeArray());
 
@@ -121,20 +119,21 @@ public class BuildArtifactAction extends DumbAwareAction {
   }
 
   private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
-    final Set<Artifact> artifacts = getArtifacts(items, project);
-    final CompileScope scope = ArtifactCompileScope.createArtifactsScope(project, artifacts, rebuild);
-
-    ArtifactsWorkspaceSettings.getInstance(project).setArtifactsToBuild(artifacts);
-    //in external build we can set 'rebuild' flag per target type
-    CompilerManager.getInstance(project).make(scope, null);
+    final Artifact[] artifacts = getArtifacts(items, project);
+    if (rebuild) {
+      ProjectTaskManager.getInstance(project).rebuild(artifacts);
+    }
+    else {
+      ProjectTaskManager.getInstance(project).build(artifacts);
+    }
   }
 
-  private static Set<Artifact> getArtifacts(final List<ArtifactPopupItem> items, final Project project) {
+  private static Artifact[] getArtifacts(final List<ArtifactPopupItem> items, final Project project) {
     Set<Artifact> artifacts = new LinkedHashSet<>();
     for (ArtifactPopupItem item : items) {
       artifacts.addAll(item.getArtifacts(project));
     }
-    return artifacts;
+    return ContainerUtil.toArray(artifacts, new Artifact[artifacts.size()]);
   }
 
   private static class BuildArtifactItem extends ArtifactActionItem {
@@ -167,7 +166,7 @@ public class BuildArtifactAction extends DumbAwareAction {
 
       Map<String, String> outputPathContainingSourceRoots = new HashMap<>();
       final List<Pair<File, Artifact>> toClean = new ArrayList<>();
-      Set<Artifact> artifacts = getArtifacts(myArtifactPopupItems, myProject);
+      Artifact[] artifacts = getArtifacts(myArtifactPopupItems, myProject);
       for (Artifact artifact : artifacts) {
         String outputPath = artifact.getOutputFilePath();
         if (outputPath != null) {

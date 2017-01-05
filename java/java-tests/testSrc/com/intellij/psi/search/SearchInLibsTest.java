@@ -92,7 +92,7 @@ public class SearchInLibsTest extends PsiTestCase {
     model.setStringToFind("LibraryClass1");
     model.setProjectScope(false);
 
-    List<UsageInfo> usages = new ArrayList<>();
+    List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
     FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
@@ -110,7 +110,7 @@ public class SearchInLibsTest extends PsiTestCase {
     model.setStringToFind(/*LibraryClas*/"s1"); // to defeat trigram index
     model.setProjectScope(false);
 
-    List<UsageInfo> usages = new ArrayList<>();
+    List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
     FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
@@ -131,7 +131,7 @@ public class SearchInLibsTest extends PsiTestCase {
     model.setStringToFind("xxx");
     model.setProjectScope(false);
 
-    List<UsageInfo> usages = new ArrayList<>();
+    List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
     FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);

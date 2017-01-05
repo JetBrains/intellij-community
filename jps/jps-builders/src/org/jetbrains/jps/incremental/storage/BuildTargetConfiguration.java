@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,14 @@ import java.util.Set;
  */
 public class BuildTargetConfiguration {
   public static final Key<Set<JpsModule>> MODULES_WITH_TARGET_CONFIG_CHANGED_KEY = GlobalContextKey.create("_modules_with_target_config_changed_");
+
   private static final Logger LOG = Logger.getInstance(BuildTargetConfiguration.class);
+  private static final GlobalContextKey<Set<File>> ALL_DELETED_ROOTS_KEY = GlobalContextKey.create("_all_deleted_output_roots_");
+
   private final BuildTarget<?> myTarget;
   private final BuildTargetsState myTargetsState;
   private String myConfiguration;
   private volatile String myCurrentState;
-  private static final GlobalContextKey<Set<File>> ALL_DELETED_ROOTS_KEY = GlobalContextKey.create("_all_deleted_output_roots_");
 
   public BuildTargetConfiguration(BuildTarget<?> target, BuildTargetsState targetsState) {
     myTarget = target;
@@ -140,7 +142,7 @@ public class BuildTargetConfiguration {
     }
     File file = getNonexistentOutputsFile();
     if (nonexistentOutputRoots.isEmpty()) {
-      file.delete();
+      FileUtil.delete(file);
     }
     else {
       FileUtil.writeToFile(file, StringUtil.join(nonexistentOutputRoots, "\n"));

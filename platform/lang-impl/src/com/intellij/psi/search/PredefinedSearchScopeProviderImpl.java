@@ -70,6 +70,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                                boolean usageView,
                                                boolean showEmptyScopes) {
     Collection<SearchScope> result = ContainerUtil.newLinkedHashSet();
+    result.add(GlobalSearchScope.everythingScope(project));
     result.add(GlobalSearchScope.projectScope(project));
     if (suggestSearchInLibs) {
       result.add(GlobalSearchScope.allScope(project));

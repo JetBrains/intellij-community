@@ -172,7 +172,6 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertEquals(expected, actual);
     // EditorColorsSchemeImplTest.testWriteInheritedFromDefault
     // EditorColorsSchemeImplTest.testWriteInheritedFromDarcula
-    assertEquals(expected.isEnforceEmpty(), actual.isEnforceEmpty());
   }
 
   @NotNull

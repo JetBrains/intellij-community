@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ class ConvertMultilineStringToSingleLineTest extends GrIntentionTestCase {
     super(ConvertMultilineStringToSingleLineIntention.hint)
   }
 
-  public void testSimple() { doTest(true) }
-  public void testSlashN() { doTest(true) }
-  public void testQuote() { doTest(true) }
+  void testSimple() { doTest(true) }
+
+  void testSlashN() { doTest(true) }
+
+  void testQuote() { doTest(true) }
 }

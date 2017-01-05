@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,11 @@ package com.intellij.psi;
 import com.intellij.psi.tree.IElementType;
 
 /**
- * Represents a comment in Java code or in a custom language.
+ * Represents a comment in a code.
  */
 public interface PsiComment extends PsiElement {
   /**
-   * Returns the token type of the comment (for example, {@link JavaTokenType#END_OF_LINE_COMMENT} or
-   * {@link JavaTokenType#C_STYLE_COMMENT}).
-   *
-   * @return the token type of the comment.
+   * Returns the token type of the comment (like {@code JavaTokenType.END_OF_LINE_COMMENT} or {@code JavaTokenType.C_STYLE_COMMENT}).
    */
   IElementType getTokenType();
 }

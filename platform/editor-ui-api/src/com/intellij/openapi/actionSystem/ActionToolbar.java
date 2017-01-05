@@ -15,20 +15,19 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * Represents a toolbar with a visual presentation.
  *
  * @see ActionManager#createActionToolbar(String, ActionGroup, boolean)
  */
-public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
+public interface ActionToolbar {
   String ACTION_TOOLBAR_PROPERTY_KEY = "ACTION_TOOLBAR";
 
   /**
@@ -55,7 +54,6 @@ public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   /**
    * @return component which represents the tool bar on UI
    */
-  @Override
   JComponent getComponent();
 
   /**
@@ -116,6 +114,9 @@ public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   void setReservePlaceAutoPopupIcon(final boolean reserve);
 
   void setSecondaryActionsTooltip(String secondaryActionsTooltip);
+
+  @NotNull
+  List<AnAction> getActions();
 
   void setMiniMode(boolean minimalMode);
 

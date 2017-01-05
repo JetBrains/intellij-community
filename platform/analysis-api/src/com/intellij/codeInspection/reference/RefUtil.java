@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
@@ -34,6 +35,9 @@ public class RefUtil {
   private RefUtil() {}
 
   public static boolean isImplicitUsage(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitUsage(element)) return true;
@@ -42,6 +46,9 @@ public class RefUtil {
   }
 
   public static boolean isImplicitRead(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitRead(element)) return true;
@@ -59,10 +66,13 @@ public class RefUtil {
   }
 
   public static boolean isImplicitWrite(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitWrite(element)) return true;
     }
-    return false;
+    return EntryPointsManager.getInstance(element.getProject()).isImplicitWrite(element);
   }
 }

@@ -22,28 +22,28 @@ import com.intellij.idea.ActionsBundle
 
 class MergeTest : MergeTestBase() {
   fun testChangeTypes() {
-    test ("", "", "", 0) {
+    test("", "", "", 0) {
     }
 
-    test ("x", "x", "x", 0) {
+    test("x", "x", "x", 0) {
     }
 
-    test ("x_y_z a x", "x_y_z a x", "x_y_z a x", 0) {
+    test("x_y_z a x", "x_y_z a x", "x_y_z a x", 0) {
     }
 
-    test1 ("x", "x", "y") {
+    test1("x", "x", "y") {
       0.assertType(MODIFIED, RIGHT)
       0.assertContent("x", 0, 1)
       0.assertResolved(NONE)
     }
 
-    test1 ("x", "y", "x") {
+    test1("x", "y", "x") {
       0.assertType(MODIFIED, BOTH)
       0.assertContent("y", 0, 1)
       0.assertResolved(NONE)
     }
 
-    test2 ("x_Y", "Y", "Y_z") {
+    test2("x_Y", "Y", "Y_z") {
       0.assertType(INSERTED, LEFT)
       0.assertContent("", 0, 0)
       0.assertResolved(NONE)
@@ -53,7 +53,7 @@ class MergeTest : MergeTestBase() {
       1.assertResolved(NONE)
     }
 
-    test2 ("Y_z", "x_Y_z", "x_Y") {
+    test2("Y_z", "x_Y_z", "x_Y") {
       0.assertType(DELETED, LEFT)
       0.assertContent("x", 0, 1)
       0.assertResolved(NONE)
@@ -63,13 +63,13 @@ class MergeTest : MergeTestBase() {
       1.assertResolved(NONE)
     }
 
-    test1 ("X_Z", "X_y_Z", "X_Z") {
+    test1("X_Z", "X_y_Z", "X_Z") {
       0.assertType(DELETED, BOTH)
       0.assertContent("y", 1, 2)
       0.assertResolved(NONE)
     }
 
-    test1 ("X_y_Z", "X_Z", "X_y_Z") {
+    test1("X_y_Z", "X_Z", "X_y_Z") {
       0.assertType(INSERTED, BOTH)
       0.assertContent("", 1, 1)
       0.assertResolved(NONE)
@@ -81,31 +81,31 @@ class MergeTest : MergeTestBase() {
       0.assertResolved(NONE)
     }
 
-    test1 ("z_Y", "x_Y", "Y") {
+    test1("z_Y", "x_Y", "Y") {
       0.assertType(CONFLICT, BOTH)
       0.assertContent("x", 0, 1)
       0.assertResolved(NONE)
     }
 
-    test1 ("z_Y", "x_Y", "k_x_Y") {
+    test1("z_Y", "x_Y", "k_x_Y") {
       0.assertType(CONFLICT, BOTH)
       0.assertContent("x", 0, 1)
       0.assertResolved(NONE)
     }
 
-    test1 ("x_Y", "Y", "z_Y") {
+    test1("x_Y", "Y", "z_Y") {
       0.assertType(CONFLICT, BOTH)
       0.assertContent("", 0, 0)
       0.assertResolved(NONE)
     }
 
-    test1 ("x_Y", "Y", "z_x_Y") {
+    test1("x_Y", "Y", "z_x_Y") {
       0.assertType(CONFLICT, BOTH)
       0.assertContent("", 0, 0)
       0.assertResolved(NONE)
     }
 
-    test1 ("x_Y", "x_z_Y", "z_Y") {
+    test1("x_Y", "x_z_Y", "z_Y") {
       0.assertType(CONFLICT, BOTH)
       0.assertContent("x_z", 0, 2)
       0.assertResolved(NONE)
@@ -113,39 +113,39 @@ class MergeTest : MergeTestBase() {
   }
 
   fun testLastLine() {
-    test1 ("x", "x_", "x") {
+    test1("x", "x_", "x") {
       0.assertType(DELETED, BOTH)
       0.assertContent("", 1, 2)
       0.assertResolved(NONE)
     }
 
-    test1 ("x_", "x_", "x") {
+    test1("x_", "x_", "x") {
       0.assertType(DELETED, RIGHT)
       0.assertContent("", 1, 2)
       0.assertResolved(NONE)
     }
 
-    test1 ("x_", "x_", "x_y") {
-      0.assertType(MODIFIED,RIGHT)
+    test1("x_", "x_", "x_y") {
+      0.assertType(MODIFIED, RIGHT)
       0.assertContent("", 1, 2)
       0.assertResolved(NONE)
     }
 
-    test1 ("x", "x_", "x_y") {
-      0.assertType(CONFLICT,BOTH)
+    test1("x", "x_", "x_y") {
+      0.assertType(CONFLICT, BOTH)
       0.assertContent("", 1, 2)
       0.assertResolved(NONE)
     }
 
-    test1 ("x_", "x", "x_y") {
-      0.assertType(CONFLICT,BOTH)
+    test1("x_", "x", "x_y") {
+      0.assertType(CONFLICT, BOTH)
       0.assertContent("", 1, 1)
       0.assertResolved(NONE)
     }
   }
 
   fun testModifications() {
-    test1 ("x", "x", "y") {
+    test1("x", "x", "y") {
       0.apply(Side.RIGHT)
       0.assertResolved(BOTH)
       0.assertContent("y")
@@ -153,7 +153,7 @@ class MergeTest : MergeTestBase() {
       assertContent("y")
     }
 
-    test1 ("x", "x", "y") {
+    test1("x", "x", "y") {
       0.apply(Side.LEFT)
       0.assertResolved(BOTH)
       0.assertContent("x")
@@ -161,7 +161,7 @@ class MergeTest : MergeTestBase() {
       assertContent("x")
     }
 
-    test1 ("X_x_Z", "X_x_Z", "X_y_Z") {
+    test1("X_x_Z", "X_x_Z", "X_y_Z") {
       0.apply(Side.RIGHT)
       0.assertResolved(BOTH)
       0.assertContent("y")
@@ -169,7 +169,7 @@ class MergeTest : MergeTestBase() {
       assertContent("X_y_Z")
     }
 
-    test1 ("z", "x", "y") {
+    test1("z", "x", "y") {
       0.apply(Side.RIGHT)
       0.assertResolved(RIGHT)
       0.assertContent("y")
@@ -181,7 +181,7 @@ class MergeTest : MergeTestBase() {
       assertContent("y_z")
     }
 
-    test1 ("z", "x", "y") {
+    test1("z", "x", "y") {
       0.apply(Side.LEFT)
       0.assertResolved(LEFT)
       0.assertContent("z")
@@ -193,7 +193,7 @@ class MergeTest : MergeTestBase() {
       assertContent("z_y")
     }
 
-    test1 ("X", "X", "X_y") {
+    test1("X", "X", "X_y") {
       0.apply(Side.RIGHT)
       0.assertResolved(BOTH)
       0.assertContent("y")
@@ -201,7 +201,7 @@ class MergeTest : MergeTestBase() {
       assertContent("X_y")
     }
 
-    test1 ("X", "X", "X_y") {
+    test1("X", "X", "X_y") {
       0.apply(Side.LEFT)
       0.assertResolved(BOTH)
       0.assertContent("")
@@ -209,7 +209,7 @@ class MergeTest : MergeTestBase() {
       assertContent("X")
     }
 
-    test1 ("X_z", "X", "X_y") {
+    test1("X_z", "X", "X_y") {
       0.apply(Side.RIGHT)
       0.assertResolved(RIGHT)
       0.assertContent("y")
@@ -221,7 +221,7 @@ class MergeTest : MergeTestBase() {
       assertContent("X_y_z")
     }
 
-    test1 ("X_z", "X_y", "X") {
+    test1("X_z", "X_y", "X") {
       0.apply(Side.LEFT)
       0.assertResolved(BOTH)
       0.assertContent("z")
@@ -229,7 +229,7 @@ class MergeTest : MergeTestBase() {
       assertContent("X_z")
     }
 
-    test1 ("X_z", "X_y", "X") {
+    test1("X_z", "X_y", "X") {
       0.apply(Side.RIGHT)
       0.assertResolved(RIGHT)
       0.assertContent("")
@@ -243,7 +243,7 @@ class MergeTest : MergeTestBase() {
   }
 
   fun testModificationsIgnore() {
-    test1 ("x", "x", "y") {
+    test1("x", "x", "y") {
       0.ignore(Side.RIGHT)
       0.assertResolved(BOTH)
       0.assertContent("x")
@@ -251,7 +251,7 @@ class MergeTest : MergeTestBase() {
       assertContent("x")
     }
 
-    test1 ("x", "x", "y") {
+    test1("x", "x", "y") {
       0.ignore(Side.LEFT)
       0.assertResolved(BOTH)
       0.assertContent("x")
@@ -259,7 +259,7 @@ class MergeTest : MergeTestBase() {
       assertContent("x")
     }
 
-    test1 ("z", "x", "y") {
+    test1("z", "x", "y") {
       0.ignore(Side.RIGHT)
       0.assertResolved(RIGHT)
       0.assertContent("x")
@@ -271,7 +271,7 @@ class MergeTest : MergeTestBase() {
       assertContent("x")
     }
 
-    test1 ("z", "x", "y") {
+    test1("z", "x", "y") {
       0.apply(Side.RIGHT)
       0.assertResolved(RIGHT)
       0.assertContent("y")
@@ -283,7 +283,7 @@ class MergeTest : MergeTestBase() {
       assertContent("y")
     }
 
-    test1 ("z", "x", "y") {
+    test1("z", "x", "y") {
       0.ignore(Side.RIGHT)
       0.assertResolved(RIGHT)
       0.assertContent("x")
@@ -295,7 +295,7 @@ class MergeTest : MergeTestBase() {
       assertContent("z")
     }
 
-    test1 ("X_z", "X_y", "X") {
+    test1("X_z", "X_y", "X") {
       0.ignore(Side.RIGHT)
       0.assertResolved(RIGHT)
       0.assertContent("y")
@@ -307,7 +307,7 @@ class MergeTest : MergeTestBase() {
       assertContent("X_z")
     }
 
-    test1 ("X_z", "X_y", "X") {
+    test1("X_z", "X_y", "X") {
       0.ignore(Side.LEFT)
       0.assertResolved(LEFT)
       0.assertContent("y")
@@ -321,7 +321,7 @@ class MergeTest : MergeTestBase() {
   }
 
   fun testModificationsModifiers() {
-    test1 ("x", "x", "y") {
+    test1("x", "x", "y") {
       0.apply(Side.RIGHT, true)
       0.assertResolved(BOTH)
       0.assertContent("y")
@@ -329,7 +329,7 @@ class MergeTest : MergeTestBase() {
       assertContent("y")
     }
 
-    test1 ("x", "x", "y") {
+    test1("x", "x", "y") {
       0.ignore(Side.RIGHT, true)
       0.assertResolved(BOTH)
       0.assertContent("x")
@@ -337,7 +337,7 @@ class MergeTest : MergeTestBase() {
       assertContent("x")
     }
 
-    test1 ("z", "x", "y") {
+    test1("z", "x", "y") {
       0.apply(Side.RIGHT, true)
       0.assertResolved(BOTH)
       0.assertContent("y")
@@ -345,7 +345,7 @@ class MergeTest : MergeTestBase() {
       assertContent("y")
     }
 
-    test1 ("z", "x", "y") {
+    test1("z", "x", "y") {
       0.ignore(Side.RIGHT, true)
       0.assertResolved(BOTH)
       0.assertContent("x")
@@ -355,75 +355,75 @@ class MergeTest : MergeTestBase() {
   }
 
   fun testUndoSimple() {
-    test1 ("x", "y", "z") {
+    test1("x", "y", "z") {
       checkUndo(1) {
         0.apply(Side.RIGHT)
       }
     }
 
-    test1 ("x", "y", "z") {
+    test1("x", "y", "z") {
       checkUndo(1) {
         0.apply(Side.RIGHT, true)
       }
     }
 
-    test1 ("x", "y", "z") {
+    test1("x", "y", "z") {
       checkUndo(1) {
         0.ignore(Side.RIGHT)
       }
     }
 
-    test1 ("x", "y", "z") {
+    test1("x", "y", "z") {
       checkUndo(1) {
         0.ignore(Side.RIGHT, true)
       }
     }
 
-    test1 ("x", "y", "z") {
+    test1("x", "y", "z") {
       checkUndo(2) {
         0.apply(Side.RIGHT)
         0.apply(Side.LEFT)
       }
     }
 
-    test1 ("x", "y", "z") {
+    test1("x", "y", "z") {
       checkUndo(2) {
         0.apply(Side.RIGHT)
         0.apply(Side.RIGHT)
       }
     }
 
-    test1 ("X", "X_y", "X") {
+    test1("X", "X_y", "X") {
       checkUndo(1) {
         0.apply(Side.RIGHT)
       }
     }
 
-    test1 ("X", "X", "X_y") {
+    test1("X", "X", "X_y") {
       checkUndo(1) {
         0.apply(Side.LEFT)
       }
     }
 
-    test1 ("X", "X", "X_y") {
+    test1("X", "X", "X_y") {
       checkUndo(1) {
         0.apply(Side.RIGHT)
       }
     }
 
-    test1 ("X_z", "X_y", "X") {
+    test1("X_z", "X_y", "X") {
       checkUndo(1) {
         0.apply(Side.LEFT)
       }
     }
 
-    test1 ("X_z", "X_y", "X") {
+    test1("X_z", "X_y", "X") {
       checkUndo(1) {
         0.apply(Side.RIGHT)
       }
     }
 
-    test2 ("y_X", "X", "X_z") {
+    test2("y_X", "X", "X_z") {
       checkUndo(1) {
         0.apply(Side.LEFT)
       }
@@ -505,6 +505,71 @@ class MergeTest : MergeTestBase() {
     val applyRightTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts.Right")
 
     val text1 =
+      "1 ======\n" +
+      "insert left\n" +
+      "2 ======\n" +
+      "remove right\n" +
+      "3 ======\n" +
+      "new both\n" +
+      "4 ======\n" +
+      "modify both\n" +
+      "5 ======\n" +
+      "modify\n" +
+      "6 ======\n" +
+      "7 ======"
+    val text2 =
+      "1 ======\n" +
+      "2 ======\n" +
+      "remove right\n" +
+      "3 ======\n" +
+      "4 ======\n" +
+      "modify\n" +
+      "5 ======\n" +
+      "modify\n" +
+      "6 ======\n" +
+      "delete modify\n" +
+      "7 ======"
+    val text3 =
+      "1 ======\n" +
+      "2 ======\n" +
+      "3 ======\n" +
+      "new both\n" +
+      "4 ======\n" +
+      "modify both\n" +
+      "5 ======\n" +
+      "modify right\n" +
+      "6 ======\n" +
+      "modify\n" +
+      "7 ======"
+
+    testN(text1, text2, text3) {
+      checkUndo(1) {
+        runActionByTitle(applyAllTitle)
+      }
+
+      assertChangesCount(1)
+      assertContent(
+        "1 ======\n" +
+        "insert left\n" +
+        "2 ======\n" +
+        "3 ======\n" +
+        "new both\n" +
+        "4 ======\n" +
+        "modify both\n" +
+        "5 ======\n" +
+        "modify right\n" +
+        "6 ======\n" +
+        "delete modify\n" +
+        "7 ======")
+    }
+
+    testN(text1, text2, text3) {
+      checkUndo(1) {
+        runActionByTitle(applyLeftTitle)
+      }
+
+      assertChangesCount(3)
+      assertContent(
         "1 ======\n" +
         "insert left\n" +
         "2 ======\n" +
@@ -516,73 +581,8 @@ class MergeTest : MergeTestBase() {
         "5 ======\n" +
         "modify\n" +
         "6 ======\n" +
-        "7 ======"
-    val text2 =
-        "1 ======\n" +
-        "2 ======\n" +
-        "remove right\n" +
-        "3 ======\n" +
-        "4 ======\n" +
-        "modify\n" +
-        "5 ======\n" +
-        "modify\n" +
-        "6 ======\n" +
         "delete modify\n" +
-        "7 ======"
-    val text3 =
-        "1 ======\n" +
-        "2 ======\n" +
-        "3 ======\n" +
-        "new both\n" +
-        "4 ======\n" +
-        "modify both\n" +
-        "5 ======\n" +
-        "modify right\n" +
-        "6 ======\n" +
-        "modify\n" +
-        "7 ======"
-
-    testN(text1, text2, text3) {
-      checkUndo(1) {
-        runActionByTitle(applyAllTitle)
-      }
-
-      assertChangesCount(1)
-      assertContent(
-          "1 ======\n" +
-          "insert left\n" +
-          "2 ======\n" +
-          "3 ======\n" +
-          "new both\n" +
-          "4 ======\n" +
-          "modify both\n" +
-          "5 ======\n" +
-          "modify right\n" +
-          "6 ======\n" +
-          "delete modify\n" +
-          "7 ======")
-    }
-
-    testN(text1, text2, text3) {
-      checkUndo(1) {
-        runActionByTitle(applyLeftTitle)
-      }
-
-      assertChangesCount(3)
-      assertContent(
-          "1 ======\n" +
-          "insert left\n" +
-          "2 ======\n" +
-          "remove right\n" +
-          "3 ======\n" +
-          "new both\n" +
-          "4 ======\n" +
-          "modify both\n" +
-          "5 ======\n" +
-          "modify\n" +
-          "6 ======\n" +
-          "delete modify\n" +
-          "7 ======")
+        "7 ======")
     }
 
     testN(text1, text2, text3) {
@@ -592,17 +592,17 @@ class MergeTest : MergeTestBase() {
 
       assertChangesCount(2)
       assertContent(
-          "1 ======\n" +
-          "2 ======\n" +
-          "3 ======\n" +
-          "new both\n" +
-          "4 ======\n" +
-          "modify both\n" +
-          "5 ======\n" +
-          "modify right\n" +
-          "6 ======\n" +
-          "delete modify\n" +
-          "7 ======")
+        "1 ======\n" +
+        "2 ======\n" +
+        "3 ======\n" +
+        "new both\n" +
+        "4 ======\n" +
+        "modify both\n" +
+        "5 ======\n" +
+        "modify right\n" +
+        "6 ======\n" +
+        "delete modify\n" +
+        "7 ======")
     }
   }
 }

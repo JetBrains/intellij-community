@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -63,7 +64,8 @@ public class ArrayUtilTest extends TestCase {
     }
   }
 
-  private static <T> void assertEqualsArray(T[] actual, T... expected) {
+  @SafeVarargs
+  private static <T> void assertEqualsArray(T[] actual, @NotNull T... expected) {
     assertEquals(expected.length, actual.length);
     for (int i = 0; i < actual.length; i++) {
       assertEquals(expected[i], actual[i]);

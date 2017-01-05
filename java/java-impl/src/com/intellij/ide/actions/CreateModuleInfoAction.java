@@ -23,25 +23,31 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaDirectoryService;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
+import static java.util.Collections.singleton;
 
 public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public CreateModuleInfoAction() {
@@ -53,40 +59,43 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     DataContext ctx = e.getDataContext();
     boolean available = Optional.ofNullable(LangDataKeys.IDE_VIEW.getData(ctx))
       .map(view -> getTargetDirectory(ctx, view))
-      .filter(dir -> PsiUtil.isLanguageLevel9OrHigher(dir) && JavaDirectoryService.getInstance().isSourceRoot(dir))
+      .filter(PsiUtil::isLanguageLevel9OrHigher)
       .map(ModuleUtilCore::findModuleForPsiElement)
-      .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, new ModulesScope(module)).isEmpty())
+      .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, module.getModuleScope(false)).isEmpty())
       .orElse(false);
     e.getPresentation().setEnabledAndVisible(available);
   }
 
   @Nullable
   @Override
-  protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
+  protected PsiDirectory getTargetDirectory(DataContext ctx, IdeView view) {
     PsiDirectory[] directories = view.getDirectories();
-    return directories.length == 1 ? directories[0] : null;
+    if (directories.length == 1) {
+      PsiDirectory psiDir = directories[0];
+      VirtualFile vDir = psiDir.getVirtualFile();
+      ProjectFileIndex index = ProjectRootManager.getInstance(psiDir.getProject()).getFileIndex();
+      if (vDir.equals(index.getSourceRootForFile(vDir)) &&
+          index.isUnderSourceRootOfType(vDir, singleton(JavaSourceRootType.SOURCE))) {
+        return psiDir;
+      }
+    }
+
+    return null;
   }
 
   @Override
   protected FileTemplate getTemplate(@NotNull Project project, @NotNull PsiDirectory dir) {
-    FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate(INTERNAL_MODULE_INFO_TEMPLATE_NAME);
-    template.setLiveTemplateEnabled(true);
-    return template;
+    return FileTemplateManager.getInstance(project).getInternalTemplate(INTERNAL_MODULE_INFO_TEMPLATE_NAME);
   }
 
   @Override
-  public AttributesDefaults getAttributesDefaults(@NotNull DataContext ctx) {
-    AttributesDefaults defaults = new AttributesDefaults(MODULE_INFO_CLASS).withFixedName(true);
-    copyDefaultProperties(ctx, defaults);
-    defaults.addPredefined("MODULE_NAME", "$module_name$");
-    return defaults;
+  protected AttributesDefaults getAttributesDefaults(@NotNull DataContext ctx) {
+    return new AttributesDefaults(MODULE_INFO_CLASS).withFixedName(true);
   }
 
-  private static void copyDefaultProperties(DataContext ctx, AttributesDefaults defaults) {
-    Project project = CommonDataKeys.PROJECT.getData(ctx);
-    if (project != null) {
-      Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
-      props.stringPropertyNames().forEach(name -> defaults.addPredefined(name, props.getProperty(name)));
-    }
+  @Override
+  protected Map<String, String> getLiveTemplateDefaults(@NotNull DataContext ctx, @NotNull PsiFile file) {
+    Module module = LangDataKeys.MODULE.getData(ctx);
+    return Collections.singletonMap("MODULE_NAME", module != null ? StringUtil.sanitizeJavaIdentifier(module.getName()) : "module_name");
   }
 }

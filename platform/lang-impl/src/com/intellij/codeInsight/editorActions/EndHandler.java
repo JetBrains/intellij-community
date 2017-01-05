@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -29,8 +30,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EndHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -87,46 +86,32 @@ public class EndHandler extends EditorActionHandler {
         if (isEmptyLine) {
 
           // There is a possible case that indent string is not calculated for particular document (that is true at least for plain text
-          // documents). Hence, we check that and don't finish processing in case we have such a situation. AtomicBoolean is used
-          // here just as a boolean value holder due to requirement to declare variable used from inner class as final.
-          final AtomicBoolean stopProcessing = new AtomicBoolean(true);
+          // documents). Hence, we check that and don't finish processing in case we have such a situation.
+          boolean stopProcessing = true;
           PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-              final String lineIndent = styleManager.getLineIndent(file, caretOffset);
-              if (lineIndent != null) {
-                int col = calcColumnNumber(lineIndent, editor.getSettings().getTabSize(project));
-                int line = caretModel.getVisualPosition().line;
-                caretModel.moveToVisualPosition(new VisualPosition(line, col));
+          CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+          final String lineIndent = styleManager.getLineIndent(file, caretOffset);
+          if (lineIndent != null) {
+            int col = calcColumnNumber(lineIndent, editor.getSettings().getTabSize(project));
+            int line = caretModel.getVisualPosition().line;
+            caretModel.moveToVisualPosition(new VisualPosition(line, col));
 
-                if (caretModel.getLogicalPosition().column != col){
-                  if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-                    return;
-                  }
-                  editor.getSelectionModel().removeSelection();
-                  document.replaceString(offset1 + 1, offset2, lineIndent);
-                }
+            if (caretModel.getLogicalPosition().column != col){
+              if (!ApplicationManager.getApplication().isWriteAccessAllowed() &&
+                  !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
+                return;
               }
-              else {
-                stopProcessing.set(false);
-              }
-
-              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               editor.getSelectionModel().removeSelection();
+              WriteAction.run(() -> document.replaceString(offset1 + 1, offset2, lineIndent));
             }
+          }
+          else {
+            stopProcessing = false;
+          }
 
-            private int calcColumnNumber(final String lineIndent, final int tabSize) {
-              int result = 0;
-              for (char c : lineIndent.toCharArray()) {
-                if (c == ' ') result++;
-                if (c == '\t') result += tabSize;
-              }
-              return result;
-            }
-          });
-          if (stopProcessing.get()) {
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          editor.getSelectionModel().removeSelection();
+          if (stopProcessing) {
             return;
           }
         }
@@ -137,4 +122,14 @@ public class EndHandler extends EditorActionHandler {
       myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
+
+  private static int calcColumnNumber(final String lineIndent, final int tabSize) {
+    int result = 0;
+    for (char c : lineIndent.toCharArray()) {
+      if (c == ' ') result++;
+      if (c == '\t') result += tabSize;
+    }
+    return result;
+  }
+
 }

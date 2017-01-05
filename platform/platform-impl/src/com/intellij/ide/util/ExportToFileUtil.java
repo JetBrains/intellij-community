@@ -183,7 +183,7 @@ public class ExportToFileUtil {
     }
 
     protected JComponent createNorthPanel() {
-      JPanel filePanel = createFilePanel(myTfFile.getTextField(), myTfFile.getButton());
+      JPanel filePanel = createFilePanel();
       JComponent settingsPanel = myExporter.getSettingsEditor();
       if (settingsPanel == null) {
         return filePanel;
@@ -194,7 +194,7 @@ public class ExportToFileUtil {
       return northPanel;
     }
 
-    protected JPanel createFilePanel(JTextField textField, JButton button) {
+    protected JPanel createFilePanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new GridBagLayout());
       GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -206,9 +206,10 @@ public class ExportToFileUtil {
       panel.add(myTfFile, gbConstraints);
 
       String defaultFilePath = myExporter.getDefaultFilePath();
-      if (! new File(defaultFilePath).isAbsolute()) {
+      if (!new File(defaultFilePath).isAbsolute()) {
         defaultFilePath = PathMacroManager.getInstance(myProject).collapsePath(defaultFilePath).replace('/', File.separatorChar);
-      } else {
+      }
+      else {
         defaultFilePath = defaultFilePath.replace('/', File.separatorChar);
       }
       myTfFile.setText(defaultFilePath);

@@ -28,7 +28,6 @@ import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -37,7 +36,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -387,7 +385,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   protected ApplyPatchStatus executeWritable() {
     final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus = getReadOnlyFilesStatus(myVerifier.getWritableFiles());
     if (readOnlyFilesStatus.hasReadonlyFiles()) {
-      showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage(), true);
+      showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage());
       return ApplyPatchStatus.ABORT;
     }
     myFailedPatches.addAll(myVerifier.filterBadFileTypePatches());
@@ -503,7 +501,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       }
     }
     catch (IOException e) {
-      showError(myProject, e.getMessage(), true);
+      showError(myProject, e.getMessage());
       return ApplyPatchStatus.ABORT;
     }
     return status;
@@ -541,14 +539,15 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   protected static void showApplyStatus(@NotNull Project project, final ApplyPatchStatus status) {
+    VcsNotifier vcsNotifier = VcsNotifier.getInstance(project);
     if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-      showError(project, VcsBundle.message("patch.apply.already.applied"), false);
+      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.dialog.title"), VcsBundle.message("patch.apply.already.applied"));
     }
     else if (status == ApplyPatchStatus.PARTIAL) {
-      showError(project, VcsBundle.message("patch.apply.partially.applied"), false);
-    } else if (ApplyPatchStatus.SUCCESS.equals(status)) {
-      final String message = VcsBundle.message("patch.apply.success.applied.text");
-      VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.dialog.title"), VcsBundle.message("patch.apply.partially.applied"));
+    }
+    else if (status == ApplyPatchStatus.SUCCESS) {
+      vcsNotifier.notifySuccess(VcsBundle.message("patch.apply.success.applied.text"));
     }
   }
 
@@ -562,29 +561,13 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
   }
 
-  public static void showError(final Project project, final String message, final boolean error) {
+  public static void showError(final Project project, final String message) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
     }
-    final String title = VcsBundle.message("patch.apply.dialog.title");
-    final Runnable messageShower = new Runnable() {
-      @Override
-      public void run() {
-        if (error) {
-          Messages.showErrorDialog(project, message, title);
-        }
-        else {
-          Messages.showInfoMessage(project, message, title);
-        }
-      }
-    };
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-        @Override
-        public void run() {
-          messageShower.run();
-        }
-      }, null, project);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+      () -> Messages.showErrorDialog(project, message, VcsBundle.message("patch.apply.dialog.title")), null, project);
   }
 
   private static class FilesMover implements Consumer<Collection<FilePath>> {

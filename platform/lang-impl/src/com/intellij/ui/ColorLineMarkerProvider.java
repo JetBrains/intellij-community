@@ -18,8 +18,7 @@ package com.intellij.ui;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -28,6 +27,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TwoColorsIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +68,7 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
     public MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
       super(element, 
             element.getTextRange(),
-            new ColorIcon(12, color),
+            JBUI.scale(new ColorIcon(12, color)),
             Pass.LINE_MARKERS,
             FunctionUtil.<Object, String>nullConstant(), 
             new GutterIconNavigationHandler<PsiElement>() {
@@ -76,17 +76,11 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
               public void navigate(MouseEvent e, PsiElement elt) {
                 if (!elt.isWritable()) return;
 
-                final Editor editor = PsiUtilBase.findEditor(element);
+                final Editor editor = PsiUtilBase.findEditor(elt);
                 assert editor != null;
                 final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose Color", color, true);
                 if (c != null) {
-                  AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(ColorLineMarkerProvider.class);
-                  try {
-                    colorProvider.setColorTo(element, c);
-                  }
-                  finally {
-                    token.finish();
-                  }
+                  WriteAction.run(() -> colorProvider.setColorTo(elt, c));
                 }
               }
             }, 
@@ -102,7 +96,7 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
     @Override
     public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
       if (infos.size() == 2 && infos.get(0) instanceof MyInfo && infos.get(1) instanceof MyInfo) {
-         return new TwoColorsIcon(12, ((MyInfo)infos.get(0)).myColor, ((MyInfo)infos.get(1)).myColor);
+         return JBUI.scale(new TwoColorsIcon(12, ((MyInfo)infos.get(0)).myColor, ((MyInfo)infos.get(1)).myColor));
       }
       return AllIcons.Gutter.Colors;
     }

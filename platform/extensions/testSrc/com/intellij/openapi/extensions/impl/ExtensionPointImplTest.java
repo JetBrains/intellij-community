@@ -24,9 +24,9 @@ import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
+import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.openapi.extensions.impl.ExtensionComponentAdapterTest.readElement;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
@@ -64,7 +64,7 @@ public class ExtensionPointImplTest {
     final AreaInstance area = new AreaInstance() {};
     final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<Object>(
       "an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area,
-      ourTestLog, new UndefinedPluginDescriptor());
+      new UndefinedPluginDescriptor());
 
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {
@@ -249,10 +249,24 @@ public class ExtensionPointImplTest {
     assertThat(ourTestLog.errors(), empty());
   }
 
+  @Test
+  public void clientsCannotModifyCachedExtensions() {
+    ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
+    extensionPoint.registerExtension(4);
+    extensionPoint.registerExtension(2);
+
+    Integer[] extensions = extensionPoint.getExtensions();
+    assertEquals(ContainerUtil.newArrayList(4, 2), Arrays.asList(extensions));
+    Arrays.sort(extensions);
+    assertEquals(ContainerUtil.newArrayList(2, 4), Arrays.asList(extensions));
+
+    assertEquals(ContainerUtil.newArrayList(4, 2), Arrays.asList(extensionPoint.getExtensions()));
+  }
+
   private static <T> ExtensionPoint<T> buildExtensionPoint(Class<T> aClass) {
     return new ExtensionPointImpl<T>(
       ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(), ExtensionPoint.Kind.INTERFACE,
-      buildExtensionArea(), null, ourTestLog, new UndefinedPluginDescriptor());
+      buildExtensionArea(), null, new UndefinedPluginDescriptor());
   }
 
   private static ExtensionsAreaImpl buildExtensionArea() {
@@ -264,10 +278,10 @@ public class ExtensionPointImplTest {
   }
 
   private static class MyShootingComponentAdapter extends ExtensionComponentAdapter {
-    private boolean myFire = false;
+    private boolean myFire;
 
-    public MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, readElement("<bean/>"), new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), false);
+    MyShootingComponentAdapter(@NotNull String implementationClass) {
+      super(implementationClass, ExtensionComponentAdapterTest.readElement("<bean/>"), new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), false);
     }
 
     public void setFire(boolean fire) {

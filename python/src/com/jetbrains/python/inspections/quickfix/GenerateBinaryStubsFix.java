@@ -111,6 +111,11 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
     final Backgroundable backgroundable = getFixTask(file);

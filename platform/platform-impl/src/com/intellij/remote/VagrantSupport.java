@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,13 @@ public abstract class VagrantSupport {
   public abstract boolean checkVagrantRunning(@NotNull String vagrantFolder, @Nullable String machineName, boolean askToRunIfDown);
 
   public abstract void runVagrant(@NotNull String vagrantFolder, @Nullable String machineName) throws ExecutionException;
+
+  /**
+   * @param vagrantFolder folder with Vagrantfile
+   * @return path mappings from vagrant file
+   */
+  @Nullable
+  public abstract PathMappingSettings getMappedFolders(@NotNull String vagrantFolder);
 
   public abstract Collection<? extends RemoteConnector> getVagrantInstancesConnectors(@NotNull Project project);
 

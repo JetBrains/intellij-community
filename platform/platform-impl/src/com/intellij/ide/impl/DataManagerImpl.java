@@ -17,8 +17,10 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +38,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.ui.SwingHelper;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,11 +66,13 @@ public class DataManagerImpl extends DataManager {
 
   @Nullable
   private Object getData(@NotNull String dataId, final Component focusedComponent) {
-    for (Component c = focusedComponent; c != null; c = c.getParent()) {
-      final DataProvider dataProvider = getDataProviderEx(c);
-      if (dataProvider == null) continue;
-      Object data = getDataFromProvider(dataProvider, dataId, null);
-      if (data != null) return data;
+    try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
+      for (Component c = focusedComponent; c != null; c = c.getParent()) {
+        final DataProvider dataProvider = getDataProviderEx(c);
+        if (dataProvider == null) continue;
+        Object data = getDataFromProvider(dataProvider, dataId, null);
+        if (data != null) return data;
+      }
     }
     return null;
   }
@@ -204,15 +209,17 @@ public class DataManagerImpl extends DataManager {
   @Override
   @NotNull
   public DataContext getDataContext() {
-    return getDataContext(getFocusedComponent());
+    Component component = null;
+    if (Registry.is("actionSystem.getContextByRecentMouseEvent")) {
+      component = SwingHelper.getComponentFromRecentMouseEvent();
+    }
+    return getDataContext(component != null ? component : getFocusedComponent());
   }
 
   @Override
   public AsyncResult<DataContext> getDataContextFromFocus() {
-    final AsyncResult<DataContext> context = new AsyncResult<>();
-
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> context.setDone(getDataContext()));
-
+    AsyncResult<DataContext> context = new AsyncResult<>();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> context.setDone(getDataContext()), ModalityState.current());
     return context;
   }
 
@@ -386,7 +393,7 @@ public class DataManagerImpl extends DataManager {
       if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
-      if (CommonDataKeys.EDITOR.is(dataId)) {
+      if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
         Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
         return validateEditor(editor);
       }

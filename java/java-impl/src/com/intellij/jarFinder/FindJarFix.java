@@ -1,10 +1,24 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.jarFinder;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +41,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -220,9 +233,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
         }
       }
     }
-    catch (SAXException e) {//
-    }
-    catch (IOException e) {//
+    catch (SAXException | IOException e) {//
     }
   }
 
@@ -255,13 +266,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
         downloader.createDownloader(Arrays.asList(description), jarName)
                   .downloadFilesWithProgress(file.getPath(), project, myEditorComponent);
       if (jars != null && jars.size() == 1) {
-        AccessToken token = WriteAction.start();
-        try {
-          OrderEntryFix.addJarToRoots(jars.get(0).getPresentableUrl(), myModule, myRef);
-        }
-        finally {
-          token.finish();
-        }
+        WriteAction.run(() -> OrderEntryFix.addJarToRoots(jars.get(0).getPresentableUrl(), myModule, myRef));
       }
     }
   }

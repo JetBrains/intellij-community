@@ -184,7 +184,6 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     assertEmpty(myDiffs);
   }
 
-  @SuppressWarnings("unused")
   public void _testExportInferredAnnotations() {
     exportInferredAnnotations();
   }

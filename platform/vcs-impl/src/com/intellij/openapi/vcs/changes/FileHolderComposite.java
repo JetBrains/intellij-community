@@ -100,8 +100,8 @@ public class FileHolderComposite implements FileHolder {
     throw new UnsupportedOperationException();
   }
 
-  public IgnoredFilesHolder getIgnoredFileHolder() {
-    return (IgnoredFilesHolder) myHolders.get(HolderType.IGNORED);
+  public IgnoredFilesCompositeHolder getIgnoredFileHolder() {
+    return (IgnoredFilesCompositeHolder) myHolders.get(HolderType.IGNORED);
   }
 
   public void notifyVcsStarted(AbstractVcs vcs) {

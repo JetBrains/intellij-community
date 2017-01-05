@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 public class GrRedundantElseIntention extends Intention {
   public static final String HINT = "Remove redundant 'else' keyword";
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof GrIfStatement)) return;
 

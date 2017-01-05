@@ -333,7 +333,7 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
+  public static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
     final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
 
     return normalizedVersion == null ?

@@ -90,4 +90,11 @@ public class ManualArrayCopy
         }
 
     }
+
+    void stepOfLowestCommonAncestor(int[][] array) {
+        int n = array.length;
+        int v = 1;
+        for (int i = 1; i <= n; i++)
+            array[v][i] = array[array[v][i - 1]][i - 1];
+    }
 }

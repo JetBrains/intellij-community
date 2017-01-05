@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class MacIntelliJIconCache {
     if (focused) key+= "Focused";
     else if (!enabled) key+="Disabled";
     if (IntelliJLaf.isGraphite()) key= "graphite/" + key;
+    if (IntelliJLaf.isWindowsNativeLook()) key = "win10/" + key;
     Icon icon = cache.get(key);
     if (icon == null) {
       icon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/" + key + ".png", MacIntelliJIconCache.class, true);

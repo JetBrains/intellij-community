@@ -20,7 +20,6 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -98,8 +97,7 @@ public class EclipseUserLibrariesHelper {
 
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
     Element element = JDOMUtil.load(exportedFile.getInputStream());
-    AccessToken token = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       for (Element libElement : element.getChildren("library")) {
         String libName = libElement.getAttributeValue("name");
         Library libraryByName = libraryTable.getLibraryByName(libName);
@@ -133,9 +131,6 @@ public class EclipseUserLibrariesHelper {
         }
         unknownLibraries.remove(libName);  //ignore finally found libraries
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 }

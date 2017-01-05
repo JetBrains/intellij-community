@@ -238,11 +238,6 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     super.doCancelAction();
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-  }
-
   private CheckboxTree createTree() {
     final Couple<CheckedTreeNode> rootAndPreselectedNode = createRoot();
     final CheckedTreeNode root = rootAndPreselectedNode.first;
@@ -636,16 +631,13 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
       final int[] selectedModulesCount = {0};
 
-      TreeUtil.traverse((CheckedTreeNode)root, new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(Object node) {
-          if (node instanceof DataNodeCheckedTreeNode &&
-              ((DataNodeCheckedTreeNode)node).isChecked() &&
-              myDependencyAwareDataKeys.contains((((DataNodeCheckedTreeNode)node).myDataNode.getKey()))) {
-            selectedModulesCount[0]++;
-          }
-          return true;
+      TreeUtil.traverse((CheckedTreeNode)root, node -> {
+        if (node instanceof DataNodeCheckedTreeNode &&
+            ((DataNodeCheckedTreeNode)node).isChecked() &&
+            myDependencyAwareDataKeys.contains((((DataNodeCheckedTreeNode)node).myDataNode.getKey()))) {
+          selectedModulesCount[0]++;
         }
+        return true;
       });
       stateMessage = String.format("%1$d Modules. %2$d selected", myModulesCount, selectedModulesCount[0]);
     }

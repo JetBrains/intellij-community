@@ -68,15 +68,10 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   private static class TryFinallyCanBeTryWithResourcesFix extends InspectionGadgetsFix {
 
     public TryFinallyCanBeTryWithResourcesFix() {}
-     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");
     }
 

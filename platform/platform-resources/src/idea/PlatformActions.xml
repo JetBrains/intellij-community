@@ -15,16 +15,11 @@
   -->
 <idea-plugin>
   <actions>
+    <group id="Other.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Others -->
+    <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
+    <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
-    <group id="SwitchViewActions">
-      <action id="SwitchUp" text="Switching Up" class="com.intellij.ui.switcher.SwitchAction$Up"/>
-      <action id="SwitchDown" text="Switching Down" class="com.intellij.ui.switcher.SwitchAction$Down"/>
-      <action id="SwitchLeft" text="Switching Left" class="com.intellij.ui.switcher.SwitchAction$Left"/>
-      <action id="SwitchRight" text="Switching Right" class="com.intellij.ui.switcher.SwitchAction$Right"/>
-      <action id="SwitchApply" text="Switching Apply" class="com.intellij.ui.switcher.ApplySwitchAction"/>
-    </group>
-
-    <group id="ScrollPaneActions">
+    <group id="ScrollPaneActions" text="Scroll">
       <action id="ScrollPane-scrollHome" text="Scroll Home" class="com.intellij.ui.ScrollPaneActions$Home"/>
       <action id="ScrollPane-scrollEnd" text="Scroll End" class="com.intellij.ui.ScrollPaneActions$End"/>
       <action id="ScrollPane-unitScrollUp" text="Scroll Up" class="com.intellij.ui.ScrollPaneActions$Up"/>
@@ -35,6 +30,8 @@
       <action id="ScrollPane-scrollDown" text="Scroll Page Down" class="com.intellij.ui.ScrollPaneActions$PageDown"/>
       <action id="ScrollPane-scrollLeft" text="Scroll Page Left" class="com.intellij.ui.ScrollPaneActions$PageLeft"/>
       <action id="ScrollPane-scrollRight" text="Scroll Page Right" class="com.intellij.ui.ScrollPaneActions$PageRight"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
@@ -172,9 +169,6 @@
 
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
 
-    <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
-    <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
-
     <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
       <action id="Diff.ShowDiff" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->
       <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
@@ -212,6 +206,10 @@
       <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.LeftDiff"/>
       <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.RightDiff"/>
       <action id="Diff.ComparePartial.Left.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.BranchDiff"/>
+
+      <action id="Diff.CompareWithBase.Left" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="Diff.CompareWithBase.Result" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="Diff.CompareWithBase.Right" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <separator/>
 
       <action id="CompareDirs" class="com.intellij.diff.actions.CompareFilesAction" text="Compare Directories" use-shortcut-of="CompareTwoFiles"/>
@@ -227,12 +225,14 @@
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+    <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project" internal="true"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
+          <action id="AttachProject" class="com.intellij.platform.AttachProjectAction"/>
           <group id="$LRU" popup="true">
             <group id="RecentProjectListGroup" class="com.intellij.ide.actions.RecentProjectsGroup" popup="false"/>
             <separator/>
@@ -249,8 +249,8 @@
           </group>
           <separator/>
           <group id="ExportImportGroup">
-            <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
-            <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
+            <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
+            <action id="ExportSettings" class="com.intellij.configurationStore.ExportSettingsAction"/>
           </group>
         </group>
         <separator/>
@@ -415,8 +415,6 @@
         <separator/>
       </group>
 
-      <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
-
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
@@ -481,6 +479,11 @@
           </group>
           <action id="TabsAlphabeticalMode" class="com.intellij.ide.actions.TabsAlphabeticalModeSwitcher" text="Sort Tabs By Filename"/>
           <action id="AddNewTabToTheEndMode" class="com.intellij.ide.actions.TabsAddedToTheEndSwitcher"/>
+        </group>
+
+        <group id="Notifications" popup="true">
+          <action class="com.intellij.ui.CloseFirstNotificationAction" id="CloseFirstNotification"/>
+          <action class="com.intellij.ui.CloseAllNotificationsAction" id="CloseAllNotifications"/>
         </group>
 
         <group id="BackgroundTasks" popup="true">
@@ -615,8 +618,8 @@
       <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Configure"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
 
-      <action id="WelcomeScreen.Configure.Import" class="com.intellij.ide.actions.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
-      <action id="WelcomeScreen.Configure.Export" class="com.intellij.ide.actions.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
+      <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
+      <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
 
       <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
               icon="AllIcons.Welcome.CreateDesktopEntry"/>
@@ -736,7 +739,10 @@
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector">
           <abbreviation value="uii"/>
         </action>
+        <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
+        <action id="ShowAboutPopupInDebugModeAction" class="com.intellij.internal.ui.ShowAboutPopupInDebugModeAction"
+                text="Show About Popup in Debug Mode"/>
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />
         <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction" text="Test ColorBlindness" />
@@ -748,14 +754,20 @@
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
         <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
         <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses" text="Add Many Test Processes"/>
+        <action id="WriteActionUnderProgress" internal="true" class="com.intellij.internal.TestWriteActionUnderProgress" text="Test Write Action Under Progress"/>
         <separator/>
         <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd" text="Test Dnd"/>
         <action id="AnimatorTestAction" class="com.intellij.internal.ui.AnimatorTestAction" text="Test Animator"/>
+        <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction" text="Test Progress Indicators"/>
+        <action id="ShowSouthPanelTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction" text="Test DialogWrapper South Panel"/>
+        <separator/>
+        <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.DebugMigLayoutAction" text="MigLayout Debug Mode" />
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" text="Top Anomalies" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction" text="Find Image Duplicates"/>
       <action id="ShowNonRetinaImages" internal="true" class="com.intellij.internal.ShowNonRetinaImagesActions" text="Show Non Retina Images"/>
+      <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.openapi.updateSettings.impl.ShowUpdateInfoDialogAction" text="Show Update Dialog"/>
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
@@ -794,6 +806,7 @@
     <action id="DecrementWindowWidth" class="com.intellij.ide.actions.WindowAction$DecrementWidth" use-shortcut-of="ResizeToolWindowLeft"/>
     <action id="IncrementWindowHeight" class="com.intellij.ide.actions.WindowAction$IncrementHeight" use-shortcut-of="ResizeToolWindowDown"/>
     <action id="DecrementWindowHeight" class="com.intellij.ide.actions.WindowAction$DecrementHeight" use-shortcut-of="ResizeToolWindowUp"/>
+    <action id="MaximizeActiveDialog" class="com.intellij.ide.actions.MaximizeActiveDialogAction" text="Maximize/Restore Active Dialog"/>
 
     <action id="ExportTestResults" class="com.intellij.execution.testframework.export.ExportTestResultsAction" icon="AllIcons.Actions.Export"/>
 

@@ -15,24 +15,27 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.options.Scheme
-import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.extensions.AbstractExtensionPointBean
+import com.intellij.openapi.options.*
+import com.intellij.openapi.project.Project
+import com.intellij.project.isDirectoryBased
+import com.intellij.util.isEmpty
+import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.Element
 import java.io.OutputStream
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
-interface SchemeDataHolder<in MUTABLE_SCHEME : Scheme> {
+interface SchemeDataHolder<in T : Scheme> {
   /**
    * You should call updateDigest() after read on init.
    */
   fun read(): Element
 
-  fun updateDigest(scheme: MUTABLE_SCHEME)
-}
+  fun updateDigest(scheme: T)
 
-interface SerializableScheme {
-  fun writeScheme(): Element
+  fun updateDigest(data: Element)
 }
 
 /**
@@ -41,28 +44,33 @@ interface SerializableScheme {
  */
 interface SchemeExtensionProvider {
   /**
-   * @return The scheme file extension **with e leading dot**, for example ".ext".
+   * @return The scheme file extension **with a leading dot**, for example ".ext".
    */
   val schemeExtension: String
-
-  /**
-   * @return True if the upgrade from the old default .xml extension is needed.
-   */
-  val isUpgradeNeeded: Boolean
 }
 
-abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
-  open fun getName(attributeProvider: Function<String, String?>): String {
-    return attributeProvider.apply("name") ?: throw IllegalStateException("name is missed in the scheme data")
+abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+  open fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
+    return attributeProvider.apply(nameAttribute) ?: throw IllegalStateException("name is missed in the scheme data")
   }
 
-  abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>, name: String, attributeProvider: Function<String, String?>): MUTABLE_SCHEME
-
+  abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>,
+                            name: String,
+                            attributeProvider: Function<String, String?>,
+                            isBundled: Boolean = false): MUTABLE_SCHEME
   override final fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
 
   open fun isSchemeFile(name: CharSequence) = true
 
   open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
+
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
+
+  /**
+   * May be called from any thread - EDT is not guaranteed.
+   */
+  open fun reloaded(schemeManager: SchemeManager<SCHEME>) {
+  }
 }
 
 class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
@@ -74,9 +82,7 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
     digest.update(b, off, len)
   }
 
-  override fun toString(): String {
-    return "[Digest Output Stream] " + digest.toString()
-  }
+  override fun toString() = "[Digest Output Stream] $digest"
 }
 
 fun Element.digest(): ByteArray {
@@ -84,4 +90,58 @@ fun Element.digest(): ByteArray {
   val digest = MessageDigest.getInstance("SHA-1")
   serializeElementToBinary(this, DigestOutputStream(digest))
   return digest.digest()
+}
+
+abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
+  protected abstract val lazyScheme: Lazy<T>
+
+  val scheme: T
+    get() = lazyScheme.value
+
+  override fun getSchemeState() = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
+
+  init {
+    this.name = name
+  }
+}
+
+abstract class LazySchemeWrapper<T : Scheme>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+  protected val dataHolder = AtomicReference(dataHolder)
+
+  override final fun writeScheme(): Element {
+    val dataHolder = dataHolder.get()
+    @Suppress("IfThenToElvis")
+    return if (dataHolder == null) writer(scheme) else dataHolder.read()
+  }
+}
+
+class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (scheme: T) -> Element) : SchemeWrapper<T>(scheme.name) {
+  override val lazyScheme = lazyOf(scheme)
+
+  override fun writeScheme() = writer(scheme)
+}
+
+fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIprProvider?, schemeManager: SchemeManager<*>): Element? {
+  val data = if (project.isDirectoryBased) element.getChild("settings") else element
+  iprAdapter?.let {
+    it.load(data)
+    schemeManager.reload()
+  }
+  return data
+}
+
+fun wrapState(element: Element, project: Project): Element {
+  if (element.isEmpty() || !project.isDirectoryBased) {
+    element.name = "state"
+    return element
+  }
+
+  val wrapper = Element("state")
+  wrapper.addContent(element)
+  return wrapper
+}
+
+class BundledSchemeEP : AbstractExtensionPointBean() {
+  @Attribute("path")
+  var path: String? = null
 }

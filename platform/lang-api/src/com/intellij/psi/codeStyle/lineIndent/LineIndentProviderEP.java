@@ -17,7 +17,6 @@ package com.intellij.psi.codeStyle.lineIndent;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,12 +27,11 @@ public class LineIndentProviderEP {
   
   @Nullable
   public static LineIndentProvider findLineIndentProvider(@Nullable Language language) {
-    LineIndentProvider foundProvider = null;
     for (LineIndentProvider provider : EP_NAME.getExtensions()) {
-      if (foundProvider == null || provider.isSuitableFor(language) && foundProvider.getClass().isInstance(provider)) {
-        foundProvider = provider;
+      if (provider.isSuitableFor(language)) {
+        return provider;
       }
     }
-    return foundProvider;
+    return null;
   }
 }

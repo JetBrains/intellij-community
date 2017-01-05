@@ -57,7 +57,7 @@ public class WavePainter {
   }
 
   /**
-   * Paints a wave in given coordinate range. <code>y</code> defines the lower boundary of painted wave.
+   * Paints a wave in given coordinate range. {@code y} defines the lower boundary of painted wave.
    */
   public void paint(Graphics2D g, int xStart, int xEnd, int y) {
     Shape oldClip = g.getClip();

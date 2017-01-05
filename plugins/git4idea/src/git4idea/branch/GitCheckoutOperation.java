@@ -39,7 +39,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.util.GitUIUtil.code;
+import static java.util.Arrays.stream;
 
 /**
  * Represents {@code git checkout} operation.
@@ -51,8 +53,6 @@ import static git4idea.util.GitUIUtil.code;
  *  @author Kirill Likhodedov
  */
 class GitCheckoutOperation extends GitBranchOperation {
-
-  public static final String ROLLBACK_PROPOSAL_FORMAT = "You may rollback (checkout back to previous branch) not to let branches diverge.";
 
   @NotNull private final String myStartPointReference;
   private final boolean myDetach;
@@ -191,8 +191,12 @@ class GitCheckoutOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
+    String previousBranch = getIfSingle(getSuccessfulRepositories().stream().map(myCurrentHeads::get).distinct());
+    if (previousBranch == null) previousBranch = "previous branch";
+    String rollBackProposal = "You may rollback (checkout back to " + previousBranch + ") not to let branches diverge.";
     return "However checkout has succeeded for the following " + repositories() + ":<br/>" +
-           successfulRepositoriesJoined() + "<br/>" + ROLLBACK_PROPOSAL_FORMAT;
+           successfulRepositoriesJoined() + "<br/>" +
+           rollBackProposal;
   }
 
   @NotNull
@@ -281,11 +285,11 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   private void refresh(GitRepository... repositories) {
+    // repositories state will be auto-updated with the following VFS refresh => there is no need to call GitRepository#update()
+    // but we want repository state to be updated as soon as possible, without waiting for the whole VFS refresh to complete.
+    stream(repositories).forEach(GitRepository::update);
     for (GitRepository repository : repositories) {
       refreshRoot(repository);
-      // repository state will be auto-updated with this VFS refresh => in general there is no need to call GitRepository#update()
-      // but to avoid problems of the asynchronous refresh, let's force update the repository info.
-      repository.update();
     }
   }
 

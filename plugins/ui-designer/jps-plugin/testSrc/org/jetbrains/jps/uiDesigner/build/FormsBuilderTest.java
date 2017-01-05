@@ -41,51 +41,51 @@ public class FormsBuilderTest extends JpsBuildTestCase {
 
   public void testSimple() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertTrue(isRuntimeClassesCopied(m));
     assertInstrumented(m, "xxx/MyForm.class");
-    makeAll().assertUpToDate();
+    buildAllModules().assertUpToDate();
   }
 
   public void testEnableInstrumenting() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
     JpsUiDesignerExtensionService.getInstance().getOrCreateUiDesignerConfiguration(myProject).setInstrumentClasses(false);
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertNotInstrumented(m, "xxx/MyForm.class");
-    makeAll().assertUpToDate();
+    buildAllModules().assertUpToDate();
 
     JpsUiDesignerExtensionService.getInstance().getOrCreateUiDesignerConfiguration(myProject).setInstrumentClasses(true);
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertInstrumented(m, "xxx/MyForm.class");
-    makeAll().assertUpToDate();
+    buildAllModules().assertUpToDate();
   }
 
   public void testDisableInstrumenting() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertInstrumented(m, "xxx/MyForm.class");
 
     JpsUiDesignerExtensionService.getInstance().getOrCreateUiDesignerConfiguration(myProject).setInstrumentClasses(false);
-    rebuildAll();//todo[nik,jeka] perhaps we shouldn't require rebuild to remove instrumented code
+    rebuildAllModules();//todo[nik,jeka] perhaps we shouldn't require rebuild to remove instrumented code
     assertNotInstrumented(m, "xxx/MyForm.class");
   }
 
   public void testRecompileFormForChangedClass() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertInstrumented(m, "xxx/MyForm.class");
 
     change(getAbsolutePath("src/xxx/MyForm.java"));
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertCompiled(JavaBuilder.BUILDER_NAME, "src/xxx/MyForm.java");
     assertCompiled(FormsInstrumenter.BUILDER_NAME, "src/xxx/MyForm.form");
     assertInstrumented(m, "xxx/MyForm.class");
-    makeAll().assertUpToDate();
+    buildAllModules().assertUpToDate();
   }
 
   public void testRecompileFormForChangedClassOnSecondCompilationRound() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertInstrumented(m, "xxx/MyForm.class");
 
     change(getAbsolutePath("src/xxx/Constants.java"), "package xxx;\n" +
@@ -93,16 +93,16 @@ public class FormsBuilderTest extends JpsBuildTestCase {
                                                       "public class Constants {\n" +
                                                       "  public static int CONST = 10;\n" +
                                                       "}");
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertCompiled(JavaBuilder.BUILDER_NAME, "src/xxx/MyForm.java", "src/xxx/Constants.java");
     assertCompiled(FormsInstrumenter.BUILDER_NAME, "src/xxx/MyForm.form");
     assertInstrumented(m, "xxx/MyForm.class");
-    makeAll().assertUpToDate();
+    buildAllModules().assertUpToDate();
   }
 
   public void testDoNotCopyRuntimeClassesIfOnlyAlienFormFilesExist() {
     JpsModule module = addModule("m", copyToProject("plugins/ui-designer/jps-plugin/testData/build/alienFormFile", "src"));
-    makeAll().assertSuccessful();
+    buildAllModules().assertSuccessful();
     assertFalse(isRuntimeClassesCopied(module));
   }
 

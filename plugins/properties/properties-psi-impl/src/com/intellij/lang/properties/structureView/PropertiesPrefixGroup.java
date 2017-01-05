@@ -20,7 +20,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.editor.PropertiesAnchorizer;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
@@ -96,9 +95,6 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
         continue;
       }
       Object value = ((StructureViewTreeElement)treeElement).getValue();
-      if (value instanceof PropertiesAnchorizer.PropertyAnchor) {
-        value = ((PropertiesAnchorizer.PropertyAnchor)value).getRepresentative();
-      }
       if (!(value instanceof IProperty)) {
         continue;
       }

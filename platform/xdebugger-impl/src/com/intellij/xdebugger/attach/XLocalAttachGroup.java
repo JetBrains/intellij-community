@@ -18,10 +18,12 @@ package com.intellij.xdebugger.attach;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Experimental
 public interface XLocalAttachGroup {
   int getOrder();
   

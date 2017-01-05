@@ -30,7 +30,7 @@
       <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}" />
     </annotation>
   </item>
-  <item name="java.awt.event.HierarchyEvent int getChangeFlags()">
+  <item name="java.awt.event.HierarchyEvent long getChangeFlags()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.event.HierarchyEvent.PARENT_CHANGED,java.awt.event.HierarchyEvent.DISPLAYABILITY_CHANGED,java.awt.event.HierarchyEvent.SHOWING_CHANGED}" />
     </annotation>

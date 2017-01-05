@@ -23,9 +23,9 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiWildcardType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,14 +79,7 @@ public class GuessElementTypeMacro extends Macro {
     if (expr == null) return null;
     PsiType[] types = GuessManager.getInstance(project).guessContainerElementType(expr, new TextRange(context.getTemplateStartOffset(), context.getTemplateEndOffset()));
     for (int i = 0; i < types.length; i++) {
-      PsiType type = types[i];
-      if (type instanceof PsiWildcardType) {
-        if (((PsiWildcardType)type).isExtends()) {
-          types[i] = ((PsiWildcardType)type).getBound();
-        } else {
-          types[i] = PsiType.getJavaLangObject(expr.getManager(), expr.getResolveScope());
-        }
-      }
+      types[i] = GenericsUtil.getVariableTypeByExpressionType(types[i]);
     }
     return types;
   }

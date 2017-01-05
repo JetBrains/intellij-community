@@ -22,12 +22,14 @@ import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -59,6 +61,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                 @NotNull AbstractTreeStructure treeStructure,
                                 @Nullable Comparator<NodeDescriptor> comparator) {
     init(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
+    getUi().setClearOnHideDelay(Registry.intValue("ide.tree.clearOnHideTime"));
     myProject = project;
   }
 
@@ -158,18 +161,18 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                  final boolean requestFocus,
                                  final Condition<AbstractTreeNode> nonStopCondition) {
 
+    AbstractTreeUpdater updater = getUpdater();
+    if (updater == null) return ActionCallback.REJECTED;
+
     final ActionCallback result = new ActionCallback();
 
     final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
 
-    UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), getUpdater().getModalityState());
-    cancelUpdate().doWhenDone(() -> batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
-        UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
-      }
-    }));
+    UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
+    batch(indicator -> {
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
+      UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
+    });
 
 
 
@@ -217,8 +220,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           }
         });
     }
-    else if (virtualSelectTarget == null && getTree().getSelectionPaths().length == 1) {
-      select(alreadySelected, onDone);
+    else if (virtualSelectTarget == null) {
+      scrollTo(alreadySelected, onDone);
     }
     else {
       onDone.run();

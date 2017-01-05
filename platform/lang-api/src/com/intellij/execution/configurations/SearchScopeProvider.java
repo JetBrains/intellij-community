@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Vojtech Krasa
  */
 public class SearchScopeProvider {
+
   @NotNull
   public static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
-    Module[] modules = null;
     if (runProfile instanceof SearchScopeProvidingRunProfile) {
-      modules = ((SearchScopeProvidingRunProfile)runProfile).getModules();
+      GlobalSearchScope scope = ((SearchScopeProvidingRunProfile)runProfile).getSearchScope();
+      if (scope != null) return scope;
     }
-    if (modules == null || modules.length == 0) {
-      return GlobalSearchScope.allScope(project);
+    return GlobalSearchScope.allScope(project);
+  }
+
+  @Nullable
+  public static GlobalSearchScope createSearchScope(@NotNull Module[] modules) {
+    if (modules.length == 0) {
+      return null;
     }
     else {
       GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(modules[0], true);

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.CommonActionsManager;
@@ -56,9 +55,11 @@ import java.util.Set;
 public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
   private static final HierarchyNodeDescriptor[] EMPTY_DESCRIPTORS = new HierarchyNodeDescriptor[0];
 
-  protected Content myContent;
-  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   protected final Project myProject;
+  protected Content myContent;
+
+  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
+  private volatile boolean myDisposed;
 
   protected HierarchyBrowserBase(@NotNull Project project) {
     super(true, true);
@@ -66,12 +67,12 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       @Override
       protected boolean isAutoScrollMode() {
-        return HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE;
+        return HierarchyBrowserManager.getSettings(myProject).IS_AUTOSCROLL_TO_SOURCE;
       }
 
       @Override
-      protected void setAutoScrollMode(final boolean state) {
-        HierarchyBrowserManager.getInstance(myProject).getState().IS_AUTOSCROLL_TO_SOURCE = state;
+      protected void setAutoScrollMode(boolean state) {
+        HierarchyBrowserManager.getSettings(myProject).IS_AUTOSCROLL_TO_SOURCE = state;
       }
     };
   }
@@ -88,6 +89,11 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   @Override
   public void dispose() {
+    myDisposed = true;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   protected ActionToolbar createToolbar(final String place, final String helpID) {
@@ -302,5 +308,4 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     TreeUtil.installActions(tree);
     myAutoScrollToSourceHandler.install(tree);
   }
-
 }

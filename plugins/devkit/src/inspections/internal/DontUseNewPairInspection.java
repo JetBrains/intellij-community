@@ -18,8 +18,8 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ChangeToPairCreateQuickFix;
 
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 /**
  * @author Konstantin Bulenkov
  */
-public class DontUseNewPairInspection extends InternalInspection {
+public class DontUseNewPairInspection extends DevKitInspectionBase {
   private static final String PAIR_FQN = "com.intellij.openapi.util.Pair";
 
   @Override

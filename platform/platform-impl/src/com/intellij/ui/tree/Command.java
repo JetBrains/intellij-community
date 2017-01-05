@@ -15,9 +15,6 @@
  */
 package com.intellij.ui.tree;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -27,27 +24,34 @@ import java.util.function.Supplier;
  * @author Sergey.Malenkov
  */
 interface Command<T> extends Supplier<T>, Consumer<T> {
-  final class Processor implements Disposable {
+  final class Processor {
     public final Invoker foreground;
     public final Invoker background;
-
-    public Processor(@NotNull @NonNls String name, boolean queueInBackground) {
-      this(new Invoker.EDT(name), queueInBackground ? new Invoker.BackgroundQueue(name) : new Invoker.Background(name));
-    }
 
     public Processor(@NotNull Invoker foreground, @NotNull Invoker background) {
       this.foreground = foreground;
       this.background = background;
     }
 
+    /**
+     * Lets the specified consumer to accept the given value on the foreground thread.
+     */
     public <T> void consume(Consumer<T> consumer, T value) {
       if (consumer != null) foreground.invokeLaterIfNeeded(() -> consumer.accept(value));
     }
 
+    /**
+     * Lets the specified command to produce a value on the background thread
+     * and to accept this value on the foreground thread.
+     */
     public <T> void process(Command<T> command) {
       if (command != null) background.invokeLaterIfNeeded(() -> consume(command, command.get()));
     }
 
+    /**
+     * Lets the specified supplier to produce a value on the background thread
+     * and the specified consumer to accept this value on the foreground thread.
+     */
     public <T> void process(Supplier<T> supplier, Consumer<T> consumer) {
       if (supplier != null) {
         background.invokeLaterIfNeeded(() -> consume(consumer, supplier.get()));
@@ -57,10 +61,13 @@ interface Command<T> extends Supplier<T>, Consumer<T> {
       }
     }
 
-    @Override
-    public void dispose() {
-      Disposer.dispose(foreground);
-      Disposer.dispose(background);
+    /**
+     * Returns a workload of both task queues.
+     *
+     * @return amount of tasks, which are executing or waiting for execution
+     */
+    public int getTaskCount() {
+      return foreground.getTaskCount() + background.getTaskCount();
     }
   }
 }

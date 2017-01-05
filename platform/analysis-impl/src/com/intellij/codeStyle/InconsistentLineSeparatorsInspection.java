@@ -69,12 +69,6 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
   @NotNull private static final LocalQuickFix SET_PROJECT_LINE_SEPARATORS = new LocalQuickFix() {
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Convert to project line separators";
     }

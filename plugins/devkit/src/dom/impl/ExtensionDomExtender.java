@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -362,11 +361,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
-    final XmlElement xmlElement = extensions.getXmlElement();
-    if (xmlElement == null) return;
-
     IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
-
     if (ideaPlugin == null) return;
 
     String epPrefix = extensions.getEpPrefix();

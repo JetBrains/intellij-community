@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,18 +30,12 @@ public class GrPsiTypeStub extends PsiType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return "?";
+    return getCanonicalText();
   }
 
   @NotNull
   @Override
   public String getCanonicalText() {
-    return "?";
-  }
-
-  @NotNull
-  @Override
-  public String getInternalCanonicalText() {
     return "?";
   }
 
@@ -52,7 +45,7 @@ public class GrPsiTypeStub extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(@NotNull @NonNls String text) {
+  public boolean equalsToText(@NotNull String text) {
     return false;
   }
 

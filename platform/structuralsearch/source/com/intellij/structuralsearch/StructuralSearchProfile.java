@@ -222,7 +222,7 @@ public abstract class StructuralSearchProfile {
     return fileType;
   }
 
-  Configuration[] getPredefinedTemplates() {
+  public Configuration[] getPredefinedTemplates() {
     return Configuration.EMPTY_ARRAY;
   }
 

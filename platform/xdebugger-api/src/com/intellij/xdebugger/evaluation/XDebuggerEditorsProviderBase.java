@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.evaluation;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +27,9 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvider {
   @NotNull
@@ -70,6 +74,14 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
 
   protected PsiFile createExpressionCodeFragment(@NotNull Project project, @NotNull XExpression expression, @Nullable PsiElement context, boolean isPhysical) {
     return createExpressionCodeFragment(project, expression.getExpression(), context, isPhysical);
+  }
+
+  @NotNull
+  public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
+    if (context != null) {
+      return getSupportedLanguages(context.getProject(), null);
+    }
+    return Collections.emptyList();
   }
 
   @Nullable

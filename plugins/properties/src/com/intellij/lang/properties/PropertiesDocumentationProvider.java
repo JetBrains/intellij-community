@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class PropertiesDocumentationProvider extends AbstractDocumentationProvider {
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof IProperty) {
@@ -56,6 +57,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
     return StringUtil.escapeXml(raw);
   }
 
+  @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
     if (element instanceof IProperty) {
       IProperty property = (IProperty)element;
@@ -69,7 +71,9 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
           info +="<div bgcolor=#"+ GuiUtils.colorToHex(background)+">";
         }
         String doc = StringUtil.join(ContainerUtil.map(StringUtil.split(text, "\n"), s -> StringUtil.trimStart(StringUtil.trimStart(s, "#"), "!").trim()), "<br>");
-        info += "<font color=#" + GuiUtils.colorToHex(attributes.getForegroundColor()) + ">" + doc + "</font>\n<br>";
+        final Color foreground = attributes.getForegroundColor();
+        info += foreground != null ? "<font color=#" + GuiUtils.colorToHex(foreground) + ">" + doc + "</font>" : doc;
+        info += "\n<br>";
         if (background != null) {
           info += "</div>";
         }

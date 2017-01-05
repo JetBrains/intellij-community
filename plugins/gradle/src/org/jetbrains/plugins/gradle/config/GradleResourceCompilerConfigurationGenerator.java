@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -78,7 +78,7 @@ public class GradleResourceCompilerConfigurationGenerator {
     externalProjectDataCache = ExternalProjectDataCache.getInstance(project);
     assert externalProjectDataCache != null;
 
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
         myModulesConfigurationHash.remove(module.getName());

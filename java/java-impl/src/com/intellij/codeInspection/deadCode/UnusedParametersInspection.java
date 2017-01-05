@@ -212,14 +212,8 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
     }
 
     @Override

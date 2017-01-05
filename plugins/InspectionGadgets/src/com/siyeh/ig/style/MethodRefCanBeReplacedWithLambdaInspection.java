@@ -27,20 +27,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
@@ -78,28 +76,16 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReferenceExpression) {
       super.visitMethodReferenceExpression(methodReferenceExpression);
-      final PsiType interfaceType = methodReferenceExpression.getFunctionalInterfaceType();
-      if (interfaceType != null &&
-          LambdaUtil.getFunctionalInterfaceMethod(interfaceType) != null &&
-          methodReferenceExpression.resolve() != null) {
-        registerError(methodReferenceExpression, getFixFactory(isWithSideEffects(methodReferenceExpression), isOnTheFly()));
+      if (LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression)) {
+        registerError(methodReferenceExpression,
+                      getFixFactory(LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression), isOnTheFly()));
       }
     }
 
-    private static FixFactory getFixFactory(boolean withSideEffects, boolean onTheFly) {
-      if (!withSideEffects) return MethodRefToLambdaFix::new;
+    private static FixFactory getFixFactory(boolean canConvert, boolean onTheFly) {
+      if (canConvert) return MethodRefToLambdaFix::new;
       if (onTheFly || ApplicationManager.getApplication().isUnitTestMode()) return SideEffectsMethodRefToLambdaFix::new;
       return null;
-    }
-
-    private static boolean isWithSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
-      final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-      if (qualifierExpression != null) {
-        final List<PsiElement> sideEffects = new ArrayList<>();
-        SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
-        return !sideEffects.isEmpty();
-      }
-      return false;
     }
   }
 
@@ -107,15 +93,8 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
     }
 
     @Override

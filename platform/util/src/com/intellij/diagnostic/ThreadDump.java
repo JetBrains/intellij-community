@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents thread dump of the IDE captured by its performance diagnostic tool.
  */
-public class ThreadDump {
+class ThreadDump {
   private final String myRawDump;
   private final StackTraceElement[] myEdtStack;
 
@@ -34,7 +34,7 @@ public class ThreadDump {
    * @return full thread dump as a string
    */
   @NotNull
-  public String getRawDump() {
+  String getRawDump() {
     return myRawDump;
   }
 
@@ -42,8 +42,7 @@ public class ThreadDump {
    * @return state of the AWT thread from the dump
    */
   @Nullable
-  public StackTraceElement[] getEDTStackTrace() {
+  StackTraceElement[] getEDTStackTrace() {
     return myEdtStack;
   }
-
 }

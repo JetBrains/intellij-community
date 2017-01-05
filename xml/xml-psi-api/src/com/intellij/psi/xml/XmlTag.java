@@ -71,7 +71,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * @param localName new tag's name
    * @param namespace new tag's namespace
    * @param bodyText pass null to create collapsed tag, empty string means creating expanded one
-   * @param enforceNamespacesDeep if you pass some xml tags to <code>bodyText</code> parameter, this flag sets namespace prefixes for them
+   * @param enforceNamespacesDeep if you pass some xml tags to {@code bodyText} parameter, this flag sets namespace prefixes for them
    * @return created tag. Use {@link #addSubTag(XmlTag, boolean)}} to add it to parent
    */
   XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @Nullable @NonNls String bodyText, boolean enforceNamespacesDeep);

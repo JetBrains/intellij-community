@@ -101,7 +101,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     }
     final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace())
                          ? null
-                         : "Can not " + RollbackUtil.getRollbackOperationName(project) + " now";
+                         : "Can not " + UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project)) + " now";
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
     FileDocumentManager.getInstance().saveAllDocuments();
 

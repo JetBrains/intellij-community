@@ -35,7 +35,7 @@ import java.util.Comparator;
  * @author stathik
  * @since Dec 11, 2003
  */
-class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
+public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final int COLUMN_NAME = 0;
   public static final int COLUMN_DOWNLOADS = 1;
   public static final int COLUMN_RATE = 2;

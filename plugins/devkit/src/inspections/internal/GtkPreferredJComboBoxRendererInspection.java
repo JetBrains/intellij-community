@@ -23,10 +23,12 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 import javax.swing.*;
 
-public class GtkPreferredJComboBoxRendererInspection extends InternalInspection {
+public class GtkPreferredJComboBoxRendererInspection extends DevKitInspectionBase {
+
   private static final String COMBO_BOX_CLASS_NAME = JComboBox.class.getName();
   private static final String[] RIGHT_RENDERER_CLASS_NAMES =
     {ListCellRendererWrapper.class.getName(), ColoredListCellRenderer.class.getName()};

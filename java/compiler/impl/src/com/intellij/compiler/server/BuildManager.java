@@ -55,9 +55,9 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -101,7 +101,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.ChannelRegistrar;
-import org.jetbrains.io.NettyKt;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -125,6 +124,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.util.io.NettyKt.serverBootstrap;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
@@ -284,7 +284,7 @@ public class BuildManager implements Disposable {
           }
 
           if (fileIndex.isInContent(eventFile)) {
-            if (ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(eventFile, project)) {
+            if (ProjectUtil.isProjectOrWorkspaceFile(eventFile) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(eventFile, project)) {
               // changes in project files or generated stuff should not trigger auto-make
               continue;
             }
@@ -418,6 +418,20 @@ public class BuildManager implements Disposable {
       }
     }
     scheduleAutoMake();
+  }
+
+  public void clearState() {
+    final boolean cleared;
+    synchronized (myProjectDataMap) {
+      cleared = !myProjectDataMap.isEmpty();
+      for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
+        cancelPreloadedBuilds(entry.getKey());
+        entry.getValue().dropChanges();
+      }
+    }
+    if (cleared) {
+      scheduleAutoMake();
+    }
   }
 
   public boolean isProjectWatched(Project project) {
@@ -749,7 +763,7 @@ public class BuildManager implements Disposable {
 
               Integer debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
               if (debugPort != null) {
-                String message = "Make: waiting for debugger connection on port " + debugPort;
+                String message = "Build: waiting for debugger connection on port " + debugPort;
                 messageHandler
                   .handleCompileMessage(sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse(message).getCompileMessage());
               }
@@ -879,7 +893,16 @@ public class BuildManager implements Disposable {
   }
 
   @NotNull
-  public static Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(Project project) {
+  public static Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(@NotNull Project project) {
+    return getRuntimeSdk(project, JavaSdkVersion.JDK_1_8);
+  }
+
+  @NotNull
+  public static Pair<Sdk, JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
+    return getRuntimeSdk(project, JavaSdkVersion.JDK_1_6);
+  }
+
+  private static Pair<Sdk, JavaSdkVersion> getRuntimeSdk(@NotNull Project project, final JavaSdkVersion oldestPossibleVersion) {
     final Set<Sdk> candidates = new LinkedHashSet<>();
     final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
@@ -921,9 +944,7 @@ public class BuildManager implements Disposable {
       }
     }
 
-    final JavaSdkVersion oldestPossible = getOldestPossiblePlatformForBuildProcess(project);
-
-    if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(oldestPossible)) {
+    if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(oldestPossibleVersion)) {
       final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       projectJdk = internalJdk;
       sdkVersion = javaSdkType.getVersion(internalJdk);
@@ -936,23 +957,13 @@ public class BuildManager implements Disposable {
     JavaSdkVersion version = javaSdkType.getVersion(vs);
     if (version == null) {
       // Unexpected version string: e.g. early access or experimental JDK build
-      // trying to find the 'known' sdk version that would best describe the passed version string  
+      // trying to find the 'known' sdk version that would best describe the passed version string
       final int parsed = JpsJavaSdkType.parseVersion(vs);
       if (parsed > 0) {
         version = javaSdkType.getVersion(parsed + ".0");
       }
     }
     return version;
-  }
-
-  @NotNull
-  private static JavaSdkVersion getOldestPossiblePlatformForBuildProcess(Project project) {
-    final BackendCompiler javaCompiler = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getDefaultCompiler();
-    final String id = javaCompiler != null? javaCompiler.getId() : JavaCompilers.JAVAC_ID;
-    if (id == JavaCompilers.ECLIPSE_ID || id == JavaCompilers.ECLIPSE_EMBEDDED_ID) {
-      return JavaSdkVersion.JDK_1_7; // because bundled ecj is compiled against 1.7
-    }
-    return JavaSdkVersion.JDK_1_6;
   }
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
@@ -1143,6 +1154,8 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
     cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
 
+    cmdLine.addParameter("-Dio.netty.noUnsafe=true");
+
     final File workDirectory = getBuildSystemDirectory();
     //noinspection ResultOfMethodCallIgnored
     workDirectory.mkdirs();
@@ -1160,13 +1173,13 @@ public class BuildManager implements Disposable {
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     launcherCp.add(compilerPath);
-    ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp);
+    ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, shouldIncludeEclipseCompiler(projectConfig));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
 
     cmdLine.addParameter(launcherClass.getName());
 
-    final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath(true);
+    final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.addAll(myClasspathManager.getBuildProcessPluginsClasspath(project));
     if (isProfilingMode) {
       cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
@@ -1216,6 +1229,15 @@ public class BuildManager implements Disposable {
     }
 
     return processHandler;
+  }
+
+  private boolean shouldIncludeEclipseCompiler(CompilerConfiguration config) {
+    if (config instanceof CompilerConfigurationImpl) {
+      final BackendCompiler javaCompiler = ((CompilerConfigurationImpl)config).getDefaultCompiler();
+      final String compilerId = javaCompiler != null? javaCompiler.getId() : null;
+      return JavaCompilers.ECLIPSE_ID.equals(compilerId)  || JavaCompilers.ECLIPSE_EMBEDDED_ID.equals(compilerId);
+    }
+    return true;
   }
 
   public File getBuildSystemDirectory() {
@@ -1315,7 +1337,7 @@ public class BuildManager implements Disposable {
     else {
       group = mainServer.getEventLoopGroup();
     }
-    final ServerBootstrap bootstrap = NettyKt.serverBootstrap(group);
+    final ServerBootstrap bootstrap = serverBootstrap(group);
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
       protected void initChannel(@NotNull Channel channel) throws Exception {
@@ -1487,7 +1509,7 @@ public class BuildManager implements Disposable {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
-      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
         public void rootsChanged(final ModuleRootEvent event) {
           final Object source = event.getSource();

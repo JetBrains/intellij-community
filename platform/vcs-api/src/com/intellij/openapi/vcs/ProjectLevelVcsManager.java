@@ -198,6 +198,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void addVcsListener(VcsListener listener);
 
   /**
@@ -207,6 +208,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
    * @since 6.0
    */
+  @Deprecated
   public abstract void removeVcsListener(VcsListener listener);
 
   /**
@@ -270,17 +272,10 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
-  // TODO: To be removed in IDEA 16.
-  @Deprecated
-  @Nullable
-  public abstract VcsEventsListenerManager getVcsEventsListenerManager();
-
   public abstract VcsHistoryCache getVcsHistoryCache();
   public abstract ContentRevisionCache getContentRevisionCache();
   public abstract boolean isFileInContent(final VirtualFile vf);
   public abstract boolean isIgnored(VirtualFile vf);
-
-  public abstract boolean dvcsUsedInProject();
 
   @NotNull
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();

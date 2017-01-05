@@ -57,6 +57,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     super(project, resourceBundle, settings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
@@ -68,6 +69,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     return children;
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
@@ -75,6 +77,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     return propertiesFile != null && getValue().getPropertiesFiles().contains(propertiesFile);
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     final List<PropertiesFile> list = getValue().getPropertiesFiles();
     if (!list.isEmpty()) {
@@ -83,28 +86,34 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     return null;
   }
 
+  @Override
   public void update(PresentationData presentation) {
     presentation.setIcon(AllIcons.Nodes.ResourceBundle);
     presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getValue().getBaseName()));
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return true;
   }
 
+  @Override
   public boolean canNavigate() {
     return true;
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), new ResourceBundleAsVirtualFile(getValue()));
     FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, requestFocus);
   }
 
+  @Override
   public boolean isSortByFirstChild() {
     return true;
   }
 
+  @Override
   public Comparable getTypeSortKey() {
     return new PsiFileNode.ExtensionSortKey(StdFileTypes.PROPERTIES.getDefaultExtension());
   }

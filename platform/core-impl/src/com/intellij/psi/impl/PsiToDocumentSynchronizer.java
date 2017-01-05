@@ -29,6 +29,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
@@ -119,6 +121,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   static void performAtomically(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    PsiUtilCore.ensureValid(file);
     assert !isInsideAtomicChange(file);
     file.putUserData(PSI_DOCUMENT_ATOMIC_ACTION, Boolean.TRUE);
 
@@ -252,13 +255,13 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return false;
-    final PsiElement changeScope = documentChangeTransaction.myChangeScope;
+    final PsiFile changeScope = documentChangeTransaction.myChangeScope;
     try {
       mySyncDocument = document;
 
       final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
       fakeEvent.setParent(changeScope);
-      fakeEvent.setFile(changeScope.getContainingFile());
+      fakeEvent.setFile(changeScope);
       checkPsiModificationAllowed(fakeEvent);
       doSync(fakeEvent, true, new DocSyncAction() {
         @Override
@@ -266,7 +269,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
           doCommitTransaction(document, documentChangeTransaction);
         }
       });
-      myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, (PsiFile)changeScope);
+      myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, changeScope);
+    }
+    catch (Throwable e) {
+      myPsiDocumentManager.forceReload(changeScope.getViewProvider().getVirtualFile(), changeScope.getViewProvider());
+      ExceptionUtil.rethrowAllAsUnchecked(e);
     }
     finally {
       mySyncDocument = null;

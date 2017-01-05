@@ -135,7 +135,14 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     }
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      final PsiExpression qualifier = referenceExpression.getQualifierExpression();
+      if (!isMoveable(qualifier)) {
+        return false;
+      }
       final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiClass) {
+        return true;
+      }
       if (!(target instanceof PsiVariable)) {
         return false;
       }
@@ -166,6 +173,11 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (!isAllowedMethod(method)) {
+        return false;
+      }
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      if (qualifierExpression != null && !isMoveable(qualifierExpression)) {
         return false;
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -224,6 +236,8 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
 
   private class TooBroadScopeVisitor extends BaseInspectionVisitor {
 
+    TooBroadScopeVisitor() {}
+
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
@@ -238,7 +252,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       if (variableScope == null) {
         return;
       }
-      final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope());
+      final Query<PsiReference> query = ReferencesSearch.search(variable);
       final Collection<PsiReference> referencesCollection = query.findAll();
       final int size = referencesCollection.size();
       if (size == 0) {

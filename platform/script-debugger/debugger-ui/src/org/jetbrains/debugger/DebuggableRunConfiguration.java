@@ -48,7 +48,7 @@ public interface DebuggableRunConfiguration extends RunConfiguration {
                                    @Nullable ExecutionResult executionResult,
                                    @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
-  interface RunConfigurationWithConditionalRun {
-    boolean canRun(@NotNull String executorId, @NotNull RunProfile profile);
+  default boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
+    return true;
   }
 }

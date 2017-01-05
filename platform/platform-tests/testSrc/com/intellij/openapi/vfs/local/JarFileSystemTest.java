@@ -18,8 +18,11 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.openapi.vfs.impl.jar.JarHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -32,10 +35,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.jar.JarFile;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.junit.Assert.*;
 
@@ -115,6 +120,23 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(2, jarRoot.getChildren().length);
     VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
     assertContent(newEntry, "some text");
+  }
+
+  @Test
+  public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
+    File jar = IoTestUtil.createTestJar();
+    JarHandler handler = new JarHandler(jar.getPath());
+    FileAttributes attributes = handler.getAttributes(JarFile.MANIFEST_NAME);
+    assertNotNull(attributes);
+    assertEquals(0, attributes.length);
+    assertTimestampsEqual(jar.lastModified(), attributes.lastModified);
+
+    if (((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(jar)) {
+      // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
+      Field resolved = handler.getClass().getDeclaredField("myFileWithMirrorResolved");
+      resolved.setAccessible(true);
+      assertTrue(resolved.get(handler) == null);
+    }
   }
 
   @Test

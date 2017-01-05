@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,12 +104,13 @@ public abstract class BaseRefactoringAction extends AnAction {
       return;
     }
 
-    if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements)) {
+    InplaceRefactoring activeInplaceRenamer = InplaceRefactoring.getActiveInplaceRenamer(editor);
+    if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements) && activeInplaceRenamer != null) {
       InplaceRefactoring.unableToStartWarning(project, editor);
       return;
     }
 
-    if (InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
+    if (activeInplaceRenamer == null) {
       final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup instanceof LookupImpl) {
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);

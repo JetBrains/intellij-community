@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -151,8 +152,16 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
   }
 
+  void waitForHighlightInfosApplied() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    HighlightingSessionImpl session = (HighlightingSessionImpl)myHighlightingSession;
+    if (session != null) {
+      session.waitForHighlightInfosApplied();
+    }
+  }
+
   static class EmptyPass extends TextEditorHighlightingPass {
-    public EmptyPass(final Project project, @Nullable final Document document) {
+    EmptyPass(final Project project, @Nullable final Document document) {
       super(project, document, false);
     }
 

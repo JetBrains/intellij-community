@@ -27,7 +27,6 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.CalledInAwt;
@@ -125,10 +124,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, mySide);
-    }
-    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getContent();
     }
     return super.getData(dataId);

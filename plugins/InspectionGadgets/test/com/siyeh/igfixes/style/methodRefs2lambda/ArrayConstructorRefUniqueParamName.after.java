@@ -1,7 +1,7 @@
 public class Foo {
     public void test() {
         Object i = null;
-        long[][] avg = collect((i1) -> new long[i1][]);
+        long[][] avg = collect(i1 -> new long[i1][]);
     }
 
     interface P<T> {

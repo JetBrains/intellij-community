@@ -56,8 +56,9 @@ public abstract class HintManager {
   public static final int HIDE_IF_OUT_OF_EDITOR = 0x40;
   public static final int UPDATE_BY_SCROLLING = 0x80;
   public static final int HIDE_BY_MOUSEOVER = 0x100;
+  public static final int DONT_CONSUME_ESCAPE = 0x200;
 
-  @MagicConstant(flags = {HIDE_BY_ESCAPE, HIDE_BY_ANY_KEY, HIDE_BY_LOOKUP_ITEM_CHANGE, HIDE_BY_TEXT_CHANGE, HIDE_BY_OTHER_HINT, HIDE_BY_SCROLLING, HIDE_IF_OUT_OF_EDITOR, UPDATE_BY_SCROLLING, HIDE_BY_MOUSEOVER})
+  @MagicConstant(flags = {HIDE_BY_ESCAPE, HIDE_BY_ANY_KEY, HIDE_BY_LOOKUP_ITEM_CHANGE, HIDE_BY_TEXT_CHANGE, HIDE_BY_OTHER_HINT, HIDE_BY_SCROLLING, HIDE_IF_OUT_OF_EDITOR, UPDATE_BY_SCROLLING, HIDE_BY_MOUSEOVER, DONT_CONSUME_ESCAPE})
   public @interface HideFlags {}
 
   public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, @HideFlags int flags, int timeout);

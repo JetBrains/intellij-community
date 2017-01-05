@@ -85,6 +85,11 @@ public class TemplateProjectDirectoryGenerator implements DirectoryProjectGenera
       return new ValidationResult(message);
     }
 
+    ValidationResult result = myTemplate.validate(baseDirPath);
+    if(result != null){
+      return result;
+    }
+
     return ValidationResult.OK;
   }
 

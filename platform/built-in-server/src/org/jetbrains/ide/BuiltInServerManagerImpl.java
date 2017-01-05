@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Url;
 import com.intellij.util.UrlImpl;
 import com.intellij.util.net.NetUtils;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,9 +64,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
       try {
         serverStartFuture.get();
       }
-      catch (InterruptedException ignored) {
-      }
-      catch (ExecutionException ignored) {
+      catch (InterruptedException | ExecutionException ignored) {
       }
     }
     return this;
@@ -122,13 +119,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   @Nullable
   public Disposable getServerDisposable() {
     return server;
-  }
-
-  @NotNull
-  public EventLoopGroup getEventLoopGroup() {
-    waitForStart();
-    assert server != null;
-    return server.getEventLoopGroup();
   }
 
   @Override

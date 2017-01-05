@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -53,7 +52,6 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlTag tagFromText = XmlElementFactory.getInstance(project).createTagFromText("<" + FxmlConstants.FX_DEFINE + "/>");
     tagFromText.addSubTag(myTag, true);
     myTag.replace(tagFromText);

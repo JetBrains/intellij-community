@@ -45,6 +45,7 @@ public interface DebugProcess {
 
   RequestManager getRequestsManager();
 
+  @NotNull
   PositionManager getPositionManager();
 
   VirtualMachineProxy getVirtualMachineProxy();

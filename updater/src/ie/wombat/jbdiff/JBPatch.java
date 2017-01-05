@@ -146,7 +146,31 @@ public class JBPatch {
     extraBlockIn.close();
     diffIn.close();
 
-    newFileOut.write(newBuf, 0, newBuf.length - 1);
+    oldBuf = null;
+    saveBufferInChunks(newFileOut, newBuf, newBuf.length - 1);
+  }
+
+  private static final int ourBufferSize = 8192;
+
+  static void saveBufferInChunks(OutputStream newFileOut, byte[] newBuf, final int bytesToWrite) throws IOException {
+    // Native code in Java_java_io_FileOutputStream_write will allocate native buffer of Math.max(bytesToWrite, 8192)
+    // With large bytesToWrite we can have OOME (IDEA-159529), relevant code (java/io/io_util.c#writeBytes)
+    // if (len > BUF_SIZE) buf = malloc(len);
+    // if (buf == NULL) {
+    //   JNU_ThrowOutOfMemoryError(env, NULL);
+    //   return;
+    // }
+    // We write newBuf with chunks of ourBufferSize
+
+    //newFileOut.write(newBuf, 0, bytesToWrite);
+
+    int offset = 0;
+
+    while(offset < bytesToWrite) {
+      int chunkSize = Math.min(ourBufferSize, bytesToWrite - offset);
+      newFileOut.write(newBuf, offset, chunkSize);
+      offset += chunkSize;
+    }
   }
 }
 

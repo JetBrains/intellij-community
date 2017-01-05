@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -173,7 +172,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
         }
       }
 
-      private boolean shouldDigInside(GrTopStatement statement) {
+      private boolean shouldDigInside(GroovyPsiElement statement) {
         if (stmtLevel && (statement instanceof GrMethod || statement instanceof GrTypeDefinition)) {
           return false;
         }
@@ -183,9 +182,9 @@ public class GroovyStatementMover extends StatementUpDownMover {
         return true;
       }
 
-      private void addChildRanges(GrTopStatement[] statements) {
+      private void addChildRanges(GroovyPsiElement[] statements) {
         for (int i = 0; i < statements.length; i++) {
-          GrTopStatement statement = statements[i];
+          GroovyPsiElement statement = statements[i];
           if (nlsAfter(statement)) {
             final LineRange range = getLineRange(statement);
             if ((i == 0 || isStatement(statements[i-1])) && isStatement(statement)) {

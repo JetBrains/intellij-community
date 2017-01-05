@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -151,7 +152,7 @@ public class MethodOrClosureScopeChooser {
           else {
             toSearchFor = superMethod.isEnabled() && superMethod.isSelected() ? ToSearchIn.getParent() : null;
           }
-          IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> callback.fun(ToSearchIn, toSearchFor));
+          IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> callback.fun(ToSearchIn, toSearchFor), ModalityState.current());
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,14 +194,5 @@ public class ContentUtilEx extends ContentsUtil {
       index++;
     }
     return -1;
-  }
-
-  @Nullable
-  public static String getTabNameWithoutPrefix(@NotNull TabbedContent content, @NotNull String fullTabName) {
-    int fullPrefixLength = getFullPrefix(content.getTitlePrefix()).length();
-    if (fullTabName.startsWith(content.getTitlePrefix())) {
-      return fullTabName.substring(fullPrefixLength);
-    }
-    return null;
   }
 }

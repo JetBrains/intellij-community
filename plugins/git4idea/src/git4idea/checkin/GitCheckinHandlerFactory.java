@@ -347,12 +347,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private String readMore(String link, String message) {
-      if (Messages.canShowMacSheetPanel()) {
-        return message + ":\n" + link;
-      }
-      else {
-        return String.format("<a href='%s'>%s</a>.", link, message);
-      }
+      return String.format("<a href='%s'>%s</a>.", link, message);
     }
 
     /**

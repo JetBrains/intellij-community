@@ -20,13 +20,15 @@ import com.intellij.psi.tree.IElementType;
 
 ALPHA=[A-Za-z_]
 DIGIT=[0-9]
-MACRO="$"({ALPHA}|{DIGIT})+|"$""{"({ALPHA}|{DIGIT})+"}"
+MACRO="$"({ALPHA}|{DIGIT})+|"$""{"({ALPHA}|{DIGIT})+"}"|"$"({ALPHA}|{DIGIT})+"$"
 DIRECTIVE="#"{ALPHA}+
 
 %%
 
 <YYINITIAL> "\\#" { return FileTemplateTokenType.ESCAPE; }
 <YYINITIAL> "\\$" { return FileTemplateTokenType.ESCAPE; }
+<YYINITIAL> "#[[" { return FileTemplateTokenType.ESCAPE; }
+<YYINITIAL> "]]#" { return FileTemplateTokenType.ESCAPE; }
 <YYINITIAL> {MACRO} { return FileTemplateTokenType.MACRO; }
 <YYINITIAL> {DIRECTIVE} { return FileTemplateTokenType.DIRECTIVE; }
 <YYINITIAL> [^] { return FileTemplateTokenType.TEXT; }

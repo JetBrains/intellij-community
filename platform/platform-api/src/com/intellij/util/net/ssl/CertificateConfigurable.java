@@ -22,14 +22,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -59,8 +57,6 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   private JPanel myRootPanel;
 
   private JBCheckBox myAcceptAutomatically;
-  private JBCheckBox myCheckHostname;
-  private JBCheckBox myCheckValidityPeriod;
 
   private JPanel myCertificatesListPanel;
   private JPanel myDetailsPanel;
@@ -74,10 +70,6 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   private void initializeUI() {
     myTree = new Tree();
     myTreeBuilder = new CertificateTreeBuilder(myTree);
-
-    // are not fully functional by now
-    myCheckHostname.setVisible(false);
-    myCheckValidityPeriod.setVisible(false);
 
     myTrustManager = CertificateManager.getInstance().getCustomTrustManager();
     // show newly added certificates
@@ -187,8 +179,6 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
   public boolean isModified() {
     CertificateManager.Config state = CertificateManager.getInstance().getState();
     return myAcceptAutomatically.isSelected() != state.ACCEPT_AUTOMATICALLY ||
-           myCheckHostname.isSelected() != state.CHECK_HOSTNAME ||
-           myCheckValidityPeriod.isSelected() != state.CHECK_VALIDITY ||
            !myCertificates.equals(new HashSet<>(myTrustManager.getCertificates()));
   }
 
@@ -216,8 +206,6 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     CertificateManager.Config state = CertificateManager.getInstance().getState();
 
     state.ACCEPT_AUTOMATICALLY = myAcceptAutomatically.isSelected();
-    state.CHECK_HOSTNAME = myCheckHostname.isSelected();
-    state.CHECK_VALIDITY = myCheckValidityPeriod.isSelected();
   }
 
   @Override
@@ -242,8 +230,6 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
     CertificateManager.Config state = CertificateManager.getInstance().getState();
     myAcceptAutomatically.setSelected(state.ACCEPT_AUTOMATICALLY);
-    myCheckHostname.setSelected(state.CHECK_HOSTNAME);
-    myCheckValidityPeriod.setSelected(state.CHECK_VALIDITY);
   }
 
   @Override

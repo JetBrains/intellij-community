@@ -122,13 +122,8 @@ public class AutoUnboxingInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
     }
 
     @Override

@@ -15,7 +15,7 @@
  */
 package org.zmlx.hg4idea.branch;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -29,14 +29,13 @@ import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.List;
 
-public class HgCommonBranchActions extends ActionGroup {
+public class HgCommonBranchActions extends BranchActionGroup {
 
   @NotNull protected final Project myProject;
   @NotNull protected String myBranchName;
   @NotNull List<HgRepository> myRepositories;
 
   HgCommonBranchActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
-    super("", true);
     myProject = project;
     myBranchName = branchName;
     myRepositories = repositories;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,9 @@ import java.util.*;
  * @author nik
  */
 public class JavaBuilderUtil {
+  public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
   private static final Key<Set<File>> FILES_TO_COMPILE_KEY = Key.create("_files_to_compile_");
@@ -60,13 +63,11 @@ public class JavaBuilderUtil {
   private static final Key<Set<File>> SUCCESSFULLY_COMPILED_FILES_KEY = Key.create("_successfully_compiled_files_");
   private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
-  public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
 
   public static void registerFileToCompile(CompileContext context, File file) {
     registerFilesToCompile(context, Collections.singleton(file));
   }
-  
+
   public static void registerFilesToCompile(CompileContext context, Collection<File> files) {
     getFilesContainer(context, FILES_TO_COMPILE_KEY).addAll(files);
   }
@@ -130,8 +131,10 @@ public class JavaBuilderUtil {
   }
 
   /**
-   * @deprecated this method isn't supposed to be called by plugins anymore, the mappings are updated by the build process infrastructure automatically.
-   * Use {@link #getDependenciesRegistrar(CompileContext)}, {@link #registerFilesToCompile(CompileContext, Collection)}, {@link #registerSuccessfullyCompiled(CompileContext, Collection)} instead.
+   * @deprecated this method isn't supposed to be called by plugins anymore, the mappings are updated
+   * by the build process infrastructure automatically. Use {@link #getDependenciesRegistrar(CompileContext)},
+   * {@link #registerFilesToCompile(CompileContext, Collection)}, or
+   * {@link #registerSuccessfullyCompiled(CompileContext, Collection)} instead.
    */
   public static boolean updateMappings(CompileContext context,
                                        final Mappings delta,
@@ -319,8 +322,8 @@ public class JavaBuilderUtil {
 
   public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
     CompileScope scope = context.getScope();
-    return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) && scope.isBuildForcedForAllTargets(
-      JavaModuleBuildTargetType.TEST);
+    return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) &&
+           scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.TEST);
   }
 
   public static boolean isCompileJavaIncrementally(CompileContext context) {

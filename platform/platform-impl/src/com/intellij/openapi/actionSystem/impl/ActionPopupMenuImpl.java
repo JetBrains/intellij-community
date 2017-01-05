@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
@@ -92,7 +93,7 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
 
       myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
-      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false);
+      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false, LaterInvocator.isInModalContext());
       if (getComponentCount() == 0) {
         return;
       }
@@ -136,7 +137,7 @@ public final class ActionPopupMenuImpl extends ApplicationActivationListener.Ada
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         MyMenu.this.removeAll();
         Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().DISABLE_MNEMONICS, myPresentationFactory, myContext, myPlace, false,
-                       false);
+                       false, LaterInvocator.isInModalContext());
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }

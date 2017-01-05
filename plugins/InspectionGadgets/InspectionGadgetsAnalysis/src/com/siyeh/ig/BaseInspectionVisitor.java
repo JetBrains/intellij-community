@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,10 +97,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     else {
       nameIdentifier = aClass.getNameIdentifier();
     }
-    if (nameIdentifier != null && !nameIdentifier.isPhysical()) {
-      nameIdentifier = nameIdentifier.getNavigationElement();
-    }
-    if (nameIdentifier == null || !nameIdentifier.isPhysical()) {
+    if (nameIdentifier == null) {
       registerError(aClass.getContainingFile(), infos);
     }
     else {
@@ -182,9 +180,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   protected final void registerError(@NotNull PsiElement location,
                                      final ProblemHighlightType highlightType,
                                      Object... infos) {
-    if (!location.isPhysical() || location.getTextLength() == 0 && !(location instanceof PsiFile)) {
-      return;
-    }
+    assert location.getTextLength() != 0 || location instanceof PsiFile;
     final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     holder.registerProblem(location, description, highlightType, fixes);
@@ -197,9 +193,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length,
                                              ProblemHighlightType highlightType,
                                              Object... infos) {
-    if (location.getTextLength() == 0 || length == 0) {
-      return;
-    }
+    assert !(location.getTextLength() == 0 || length == 0);
     final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     final TextRange range = new TextRange(offset, offset + length);
@@ -249,5 +243,9 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   public final void setProblemsHolder(ProblemsHolder holder) {
     this.holder = holder;
+  }
+
+  protected boolean isVisibleHighlight(@NotNull PsiElement element) {
+    return !isOnTheFly() || !InspectionProjectProfileManager.isInformationLevel(inspection.getShortName(), element);
   }
 }

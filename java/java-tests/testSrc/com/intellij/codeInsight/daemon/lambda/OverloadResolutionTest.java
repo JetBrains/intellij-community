@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,6 +226,18 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
 
   public void testIgnoreStaticCorrectnessDuringOverloadResolution() throws Exception {
     doTest(false);
+  }
+
+  public void testIgnoreLambdaVoidValueIncompatibilitiesPreferringMethodWithFunctionalTypeToNonFunctionalType() throws Exception {
+    doTest(false);
+  }
+
+  public void testVarargComponentTypesShouldBeExcludedFromBoxingComparison() throws Exception {
+    doTest(false);
+  }
+
+  public void testOverriddenVarargWithaArray() throws Exception {
+    doTest();
   }
 
   private void doTest() {

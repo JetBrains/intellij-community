@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-public abstract class ExtractClosureTest extends LightGroovyTestCase {
+abstract class ExtractClosureTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}groovy/refactoring/extractMethod/";
+    return "${TestUtils.testDataPath}groovy/refactoring/extractMethod/"
   }
 
   protected void doTest(String before, String after, List<Integer> toRemove = [], List<Integer> notToUseAsParams = [], boolean forceReturn = true) {

@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,7 +59,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
     final ActionCallback result = new ActionCallback();
 
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+    inWriteSafeContext(() -> {
       TypingTarget typingTarget = findTarget(context);
       if (typingTarget != null) {
         typingTarget.type(unicode).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> typeCodes(context, context.getRobot(), codes).notify(result));
@@ -82,6 +81,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
           String[] splits = eachPair.split(MODIFIER_DELIMITER);
           Integer code = Integer.valueOf(splits[0]);
           Integer modifier = Integer.valueOf(splits[1]);
+          //noinspection MagicConstant
           type(robot, code.intValue(), modifier.intValue());
         }
         catch (NumberFormatException e) {

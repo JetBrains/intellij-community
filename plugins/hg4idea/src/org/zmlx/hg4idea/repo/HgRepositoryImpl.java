@@ -16,6 +16,7 @@
 
 package org.zmlx.hg4idea.repo;
 
+import com.intellij.dvcs.repo.AsyncFilesManagerListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.ChangesViewI;
+import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +37,7 @@ import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgBranchesCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.HgLocalIgnoredHolder;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
@@ -50,6 +54,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull private volatile HgConfig myConfig;
   private boolean myIsFresh = true;
+  private final HgLocalIgnoredHolder myLocalIgnoredHolder;
 
 
   @SuppressWarnings("ConstantConditions")
@@ -61,6 +66,9 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
     myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
     myConfig = HgConfig.getInstance(getProject(), rootDir);
+    myLocalIgnoredHolder = new HgLocalIgnoredHolder(this);
+    Disposer.register(this, myLocalIgnoredHolder);
+    myLocalIgnoredHolder.addUpdateStateListener(new MyIgnoredHolderAsyncListener(getProject()));
     update();
   }
 
@@ -79,6 +87,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   private void setupUpdater() {
     HgRepositoryUpdater updater = new HgRepositoryUpdater(this);
     Disposer.register(this, updater);
+    myLocalIgnoredHolder.startRescan();
   }
 
   @NotNull
@@ -254,5 +263,28 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   public void updateConfig() {
     myConfig = HgConfig.getInstance(getProject(), getRoot());
+  }
+
+  @Override
+  public HgLocalIgnoredHolder getLocalIgnoredHolder() {
+    return myLocalIgnoredHolder;
+  }
+
+  private static class MyIgnoredHolderAsyncListener implements AsyncFilesManagerListener {
+    @NotNull private final ChangesViewI myChangesViewI;
+
+    public MyIgnoredHolderAsyncListener(@NotNull Project project) {
+      myChangesViewI = ChangesViewManager.getInstance(project);
+    }
+
+    @Override
+    public void updateStarted() {
+      myChangesViewI.scheduleRefresh();
+    }
+
+    @Override
+    public void updateFinished() {
+      myChangesViewI.scheduleRefresh();
+    }
   }
 }

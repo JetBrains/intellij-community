@@ -60,11 +60,11 @@ class FileFilterPanel {
     String text = (String)myFileMask.getSelectedItem();
     if (text == null) return null;
 
-    final Condition<String> patternCondition = FindInProjectUtil.createFileMaskCondition(text);
+    final Condition<CharSequence> patternCondition = FindInProjectUtil.createFileMaskCondition(text);
     return new GlobalSearchScope() {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        return patternCondition.value(file.getName());
+        return patternCondition.value(file.getNameSequence());
       }
 
       @Override

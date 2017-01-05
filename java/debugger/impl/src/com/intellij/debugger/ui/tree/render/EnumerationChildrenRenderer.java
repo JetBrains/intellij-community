@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.descriptors.data.UserExpressionData;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.openapi.util.InvalidDataException;
@@ -149,7 +150,8 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
   @Nullable
   public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
     Renderer renderer = valueDescriptor.getLastRenderer();
-    if (renderer instanceof CompoundNodeRenderer) {
+    if (renderer instanceof CompoundNodeRenderer &&
+        NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)renderer)) {
       ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
       if (childrenRenderer instanceof EnumerationChildrenRenderer) {
         return (EnumerationChildrenRenderer)childrenRenderer;

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -51,6 +52,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Editor myEditor;
   private final boolean myIsEditor;
   private int myLineHeight;
+  private List<UsageInfo> myCachedSelectedUsageInfos;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -109,8 +111,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
-      myLineHeight = myEditor.getLineHeight();
       if (myEditor == null) return;
+      myLineHeight = myEditor.getLineHeight();
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -118,7 +120,10 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       validate();
     }
 
-    highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
+    if (!Comparing.equal(infos, myCachedSelectedUsageInfos)) { // avoid moving viewport
+      highlight(infos, myEditor, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX);
+      myCachedSelectedUsageInfos = infos;
+    }
   }
 
   public int getLineHeight() {
@@ -156,7 +161,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                             || infoRange.getStartOffset() > elementRange.getLength() 
                             || infoRange.getEndOffset() > elementRange.getLength() ? null 
                                                                                    : elementRange.cutOut(infoRange);
-      if (textRange == null || !highlightOnlyNameElements) textRange = elementRange;
+      if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight
       if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
         PsiFile psiFile = psiElement.getContainingFile();
@@ -196,7 +201,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
-    settings.setVirtualSpace(true);
     settings.setAnimatedScrolling(false);
     if (settings instanceof SettingsImpl) {
       ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
@@ -218,6 +222,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);
       myEditor = null;
+      myCachedSelectedUsageInfos = null;
     }
   }
 

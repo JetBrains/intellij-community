@@ -17,11 +17,14 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Bas Leijdekkers
@@ -85,11 +88,13 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         }
         final PsiParameter[] otherParameters = otherParameterList.getParameters();
         final PsiType otherFunctionalType = otherParameters[functionalIndex].getType();
+        final PsiType functionalType = parameters[functionalIndex].getType();
         if (!areOtherParameterTypesConvertible(parameters, otherParameters, functionalIndex) ||
-            !LambdaUtil.isFunctionalType(otherFunctionalType)) {
+            !LambdaUtil.isFunctionalType(otherFunctionalType) ||
+            Objects.equals(functionalType, otherFunctionalType)) {
           continue;
         }
-        final PsiType functionalType = parameters[functionalIndex].getType();
+
         if (areSameShapeFunctionalTypes(functionalType, otherFunctionalType)) {
           registerMethodError(method, method);
           return;
@@ -116,8 +121,8 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
         if (i == notThisOne) {
           continue;
         }
-        final PsiType type = parameters[i].getType();
-        final PsiType otherType = otherParameters[i].getType();
+        final PsiType type = TypeConversionUtil.erasure(parameters[i].getType());
+        final PsiType otherType = TypeConversionUtil.erasure(otherParameters[i].getType());
         if (!type.isAssignableFrom(otherType) && !otherType.isAssignableFrom(type)) {
           return false;
         }

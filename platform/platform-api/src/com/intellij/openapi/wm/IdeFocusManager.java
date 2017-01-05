@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
@@ -66,6 +67,11 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
   /**
+   * Executes given runnable after all focus activities are finished, immediately or later with the given modaliy state
+   */
+  public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality);
+
+  /**
    * Executes given runnable after all focus activities are finished
    */
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
@@ -83,11 +89,17 @@ public abstract class IdeFocusManager implements FocusRequestor {
    */
   public abstract boolean dispatch(@NotNull KeyEvent e);
 
+  @Deprecated
+  // use #typeAheadUntil(ActionCallback, String) instead
+  public void typeAheadUntil(ActionCallback done) {
+    typeAheadUntil(done, "No cause has been provided");
+  }
+
   /**
    * Aggregates all key events until given callback object is processed
    * @param done action callback
    */
-  public abstract void typeAheadUntil(ActionCallback done);
+  public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
 
   /**
    * Reports if any focus activity is being done

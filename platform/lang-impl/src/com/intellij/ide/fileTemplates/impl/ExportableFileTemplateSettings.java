@@ -31,6 +31,6 @@ import org.jetbrains.annotations.NotNull;
 public class ExportableFileTemplateSettings extends FileTemplateSettings {
 
   public ExportableFileTemplateSettings(@NotNull FileTypeManagerEx typeManager) {
-    super(typeManager);
+    super(typeManager, null);
   }
 }

@@ -45,11 +45,10 @@ import java.util.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
-  private final static Logger LOG = Logger.getInstance(TypeMigrationProcessor.class);
   private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
 
   private PsiElement[] myRoot;
-  private Function<PsiElement, PsiType> myRootTypes;
+  private final Function<PsiElement, PsiType> myRootTypes;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
@@ -74,7 +73,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final PsiElement root,
                                                   final PsiType migrationType,
                                                   final boolean optimizeImports) {
-    runHighlightingTypeMigration(project, editor, rules, new PsiElement[] {root}, Functions.<PsiElement, PsiType>constant(migrationType), optimizeImports);
+    runHighlightingTypeMigration(project, editor, rules, new PsiElement[] {root}, Functions.constant(migrationType), optimizeImports);
   }
 
 

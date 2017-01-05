@@ -155,21 +155,9 @@ public class CvsFileAnnotation extends FileAnnotation{
     return myAnnotations[lineNumber].getDate();
   }
 
-  public VcsRevisionNumber originalRevision(int lineNumber) {
-    return getLineRevisionNumber(lineNumber);
-  }
-
   @Nullable
   public List<VcsFileRevision> getRevisions() {
     return myRevisions;
-  }
-
-  public boolean revisionsNotEmpty() {
-    return ! myRevisions.isEmpty();
-  }
-
-  public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
-    return null;
   }
 
   @Override

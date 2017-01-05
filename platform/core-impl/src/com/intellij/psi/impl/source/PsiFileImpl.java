@@ -350,28 +350,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
     clearStub(STUB_PSI_MISMATCH);
-    scheduleDropCachesWithInvalidStubPsi();
 
     throw new AssertionError(message
                              + StubTreeLoader.getInstance().getStubAstMismatchDiagnostics(getViewProvider().getVirtualFile(), this,
                                                                                           stubTree, cachedDocument)
                              + "\n------------\n");
-  }
-
-  private void scheduleDropCachesWithInvalidStubPsi() {
-    // invokeLater even if already on EDT, because
-    // we might be inside an index query and write actions might result in deadlocks there (https://youtrack.jetbrains.com/issue/IDEA-123118)
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ((PsiModificationTrackerImpl)getManager().getModificationTracker()).incCounter();
-          }
-        });
-      }
-    });
   }
 
   @NotNull
@@ -450,7 +433,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public long getModificationStamp() {
-    return myModificationStamp;
+    PsiElement context = getContext();
+    PsiFile contextFile = context == null ? null : context.getContainingFile();
+    long contextStamp = contextFile == null ? 0 : contextFile.getModificationStamp();
+    return myModificationStamp + contextStamp;
   }
 
   @Override
@@ -672,11 +658,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public void onContentReload() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    myRefToPsi.invalidatePsi();
-
-    FileElement treeElement = derefTreeElement();
     DebugUtil.startPsiModification("onContentReload");
     try {
+      myRefToPsi.invalidatePsi();
+
+      FileElement treeElement = derefTreeElement();
       if (treeElement != null) {
         setTreeElementPointer(null);
         treeElement.detachFromFile();
@@ -1112,7 +1098,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        myManager.dropResolveCaches();
+        if (!myManager.isDisposed()) {
+          myManager.dropResolveCaches();
+          ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
+        }
 
         final VirtualFile vFile = getVirtualFile();
         if (vFile != null && vFile.isValid()) {
@@ -1145,6 +1134,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public final void beforeAstChange() {
     if (!useStrongRefs()) {
+      myUseStrongRefs = true;
       myRefToPsi.switchToStrongRefs();
 
       FileElement element = getTreeElement();
@@ -1153,8 +1143,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       } else {
         LOG.error("No AST; " + derefStub() + "; " + this + " of " + getClass() + "; " + getViewProvider() + " of " + getViewProvider().getClass());
       }
-
-      myUseStrongRefs = true;
     }
   }
 

@@ -46,9 +46,9 @@ import org.jetbrains.annotations.Nullable;
  *        sequences, they form a minimal-depth binary tree.
  *        The tree is maintained balanced automatically through <a 
  *        href="http://en.wikipedia.org/wiki/Tree_rotation">tree rotations</a>. 
- *        Insertion/deletions are performed in <code>O[Log(n)]</code>
- *        instead of <code>O[n]</code> for 
- *        <code>StringBuffer/StringBuilder</code>.</i></p>
+ *        Insertion/deletions are performed in {@code O[Log(n)]}
+ *        instead of {@code O[n]} for
+ *        {@code StringBuffer/StringBuilder}.</i></p>
  *
  * @author  <a href="mailto:jean-marie@dautelle.com">Jean-Marie Dautelle</a>
  * @author Wilfried Middleton
@@ -162,18 +162,18 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   /**
    * Concatenates the specified text to the end of this text. 
    * This method is very fast (faster even than 
-   * <code>StringBuffer.append(String)</code>) and still returns
+   * {@code StringBuffer.append(String)}) and still returns
    * a text instance with an internal binary tree of minimal depth!
    *
    * @param  that the text that is concatenated.
-   * @return <code>this + that</code>
+   * @return {@code this + that}
    */
   private ImmutableText concat(ImmutableText that) {
     return that.length() == 0 ? this : length() == 0 ? that : new ImmutableText(concatNodes(ensureChunked().myNode, that.ensureChunked().myNode));
   }
 
   @Override
-  public ImmutableText concat(CharSequence sequence) {
+  public ImmutableText concat(@NotNull CharSequence sequence) {
     return concat(valueOf(sequence));
   }
 
@@ -182,8 +182,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    *
    * @param  start the index of the first character inclusive.
    * @return the sub-text starting at the specified position.
-   * @throws IndexOutOfBoundsException if <code>(start < 0) || 
-   *          (start > this.length())</code>
+   * @throws IndexOutOfBoundsException if {@code (start < 0) ||
+   *          (start > this.length())}
    */
   private ImmutableText subtext(int start) {
     return subtext(start, length());
@@ -195,16 +195,16 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    *
    * @param index the insertion position.
    * @param txt the text being inserted.
-   * @return <code>subtext(0, index).concat(txt).concat(subtext(index))</code>
-   * @throws IndexOutOfBoundsException if <code>(index < 0) ||
-   *            (index > this.length())</code>
+   * @return {@code subtext(0, index).concat(txt).concat(subtext(index))}
+   * @throws IndexOutOfBoundsException if {@code (index < 0) ||
+   *            (index > this.length())}
    */
   private ImmutableText insert(int index, ImmutableText txt) {
     return subtext(0, index).concat(txt).concat(subtext(index));
   }
 
   @Override
-  public ImmutableText insert(int index, CharSequence seq) {
+  public ImmutableText insert(int index, @NotNull CharSequence seq) {
     return insert(index, valueOf(seq));
   }
 
@@ -213,9 +213,9 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    *
    * @param start the beginning index, inclusive.
    * @param end the ending index, exclusive.
-   * @return <code>subtext(0, start).concat(subtext(end))</code>
-   * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-   *         (start > end) || (end > this.length()</code>
+   * @return {@code subtext(0, start).concat(subtext(end))}
+   * @throws IndexOutOfBoundsException if {@code (start < 0) || (end < 0) ||
+   *         (start > end) || (end > this.length()}
    */
   @Override
   public ImmutableText delete(int start, int end) {
@@ -312,8 +312,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * @param  end the index of the last character exclusive.
    * @return the sub-text starting at the specified start position and 
    *         ending just before the specified end position.
-   * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-   *         (start > end) || (end > this.length())</code>
+   * @throws IndexOutOfBoundsException if {@code (start < 0) || (end < 0) ||
+   *         (start > end) || (end > this.length())}
    */
   @Override
   public ImmutableText subtext(int start, int end) {
@@ -338,8 +338,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * @param end the index after the last character to copy.
    * @param dest the destination array.
    * @param destPos the start offset in the destination array.
-   * @throws IndexOutOfBoundsException if <code>(start < 0) || (end < 0) ||
-   *         (start > end) || (end > this.length())</code>
+   * @throws IndexOutOfBoundsException if {@code (start < 0) || (end < 0) ||
+   *         (start > end) || (end > this.length())}
    */
   @Override
   public void getChars(int start, int end, @NotNull char[] dest, int destPos) {
@@ -347,9 +347,9 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   }
 
   /**
-   * Returns the <code>String</code> representation of this text.
+   * Returns the {@code String} representation of this text.
    *
-   * @return the <code>java.lang.String</code> for this text.
+   * @return the {@code java.lang.String} for this text.
    */
   @Override
   @NotNull

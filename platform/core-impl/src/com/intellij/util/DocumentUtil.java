@@ -33,8 +33,8 @@ public final class DocumentUtil {
    * Ensures that given task is executed when given document is at the given 'in bulk' mode.
    * 
    * @param document       target document
-   * @param executeInBulk  <code>true</code> to force given document to be in bulk mode when given task is executed;
-   *                       <code>false</code> to force given document to be <b>not</b> in bulk mode when given task is executed
+   * @param executeInBulk  {@code true} to force given document to be in bulk mode when given task is executed;
+   *                       {@code false} to force given document to be <b>not</b> in bulk mode when given task is executed
    * @param task           task to execute
    */
   public static void executeInBulk(@NotNull Document document, final boolean executeInBulk, @NotNull Runnable task) {
@@ -111,5 +111,31 @@ public final class DocumentUtil {
 
   public static boolean isAtLineStart(int offset, @NotNull Document document) {
     return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineStartOffset(document.getLineNumber(offset));
+  }
+
+  public static boolean isAtLineEnd(int offset, @NotNull Document document) {
+    return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineEndOffset(document.getLineNumber(offset));
+  }
+
+  public static int alignToCodePointBoundary(@NotNull Document document, int offset) {
+    return isInsideSurrogatePair(document, offset) ? offset - 1 : offset;
+  }
+
+  public static boolean isSurrogatePair(@NotNull Document document, int offset) {
+    CharSequence text = document.getImmutableCharSequence();
+    if (offset < 0 || (offset + 1) >= text.length()) return false;
+    return Character.isSurrogatePair(text.charAt(offset), text.charAt(offset + 1));
+  }
+
+  public static boolean isInsideSurrogatePair(@NotNull Document document, int offset) {
+    return isSurrogatePair(document, offset - 1);
+  }
+
+  public static int getPreviousCodePointOffset(@NotNull Document document, int offset) {
+    return offset - (isSurrogatePair(document, offset - 2) ? 2 : 1);
+  }
+
+  public static int getNextCodePointOffset(@NotNull Document document, int offset) {
+    return offset + (isSurrogatePair(document, offset) ? 2 : 1);
   }
 }

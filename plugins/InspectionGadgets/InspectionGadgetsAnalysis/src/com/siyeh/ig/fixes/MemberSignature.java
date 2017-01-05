@@ -217,10 +217,7 @@ public class MemberSignature implements Comparable<MemberSignature> {
              signature.equals(other.signature) &&
              modifiers == other.modifiers;
     }
-    catch (ClassCastException ignored) {
-      return false;
-    }
-    catch (NullPointerException ignored) {
+    catch (ClassCastException | NullPointerException ignored) {
       return false;
     }
   }

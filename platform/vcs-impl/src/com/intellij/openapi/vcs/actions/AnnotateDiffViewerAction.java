@@ -63,6 +63,7 @@ import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -77,7 +78,6 @@ import java.awt.*;
 public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
 
-  private static final Key<AnnotationData[]> CACHE_KEY = Key.create("Diff.AnnotateAction.Cache");
   private static final Key<boolean[]> ANNOTATIONS_SHOWN_KEY = Key.create("Diff.AnnotateAction.AnnotationShown");
 
   private static final ViewerAnnotatorFactory[] ANNOTATORS = new ViewerAnnotatorFactory[]{
@@ -182,12 +182,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     final Project project = viewer.getProject();
     if (project == null) return;
 
-    AnnotationData data = annotator.getDataFromCache();
-    if (data != null) {
-      annotator.showAnnotation(data);
-      return;
-    }
-
     final FileAnnotationLoader loader = annotator.createAnnotationsLoader();
     if (loader == null) return;
 
@@ -215,12 +209,8 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
           }
 
           if (loader.getResult() == null) return;
-          if (loader.shouldCache()) {
-            // data race is possible here, but we expect AnnotationData to be immutable, so this is not an issue
-            annotator.putDataToCache(loader.getResult());
-          }
-
           if (viewer.isDisposed()) return;
+
           annotator.showAnnotation(loader.getResult());
         }, indicator.getModalityState());
       }
@@ -300,7 +290,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
                                                                 @Nullable AbstractVcs vcs,
                                                                 @Nullable final VirtualFile file) {
     if (vcs == null || file == null) return null;
-    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (annotationProvider == null) return null;
 
     FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
@@ -308,8 +298,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       return null;
     }
 
-    // TODO: cache them too, listening for ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener() ?
-    return new FileAnnotationLoader(vcs, false) {
+    return new FileAnnotationLoader(vcs) {
       @Override
       public FileAnnotation compute() throws VcsException {
         return annotationProvider.annotate(file);
@@ -326,7 +315,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
 
-    return new FileAnnotationLoader(vcs, true) {
+    return new FileAnnotationLoader(vcs) {
       @Override
       public FileAnnotation compute() throws VcsException {
         return ((AnnotationProviderEx)annotationProvider).annotate(path, revisionNumber);
@@ -381,7 +370,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       return;
     }
 
-    Balloon balloon = NotificationsManagerImpl.createBalloon(component, notification, false, true, null, viewer);
+    Balloon balloon = NotificationsManagerImpl.createBalloon(component, notification, false, true, BalloonLayoutData.fullContent(), viewer);
 
     Dimension componentSize = component.getSize();
     Dimension balloonSize = balloon.getPreferredSize();
@@ -527,6 +516,11 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       }
       return myLocalChangesProvider.isRangeChanged(line1, line2);
     }
+
+    @Override
+    public int getLineCount() {
+      return myLocalChangesProvider.getLineCount();
+    }
   }
 
   private static class ThreesideAnnotatorFactory extends ThreesideViewerAnnotatorFactory<ThreesideTextDiffViewerEx> {
@@ -657,27 +651,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
         public BackgroundableActionLock getBackgroundableLock() {
           return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
         }
-
-        @Nullable
-        @Override
-        public AnnotationData getDataFromCache() {
-          AnnotationData[] cache = viewer.getRequest().getUserData(CACHE_KEY);
-          if (cache != null && cache.length == 2) {
-            return side.select(cache);
-          }
-          return null;
-        }
-
-        @Override
-        public void putDataToCache(@NotNull AnnotationData data) {
-          DiffRequest request = viewer.getRequest();
-          AnnotationData[] cache = request.getUserData(CACHE_KEY);
-          if (cache == null || cache.length != 2) {
-            cache = new AnnotationData[2];
-            request.putUserData(CACHE_KEY, cache);
-          }
-          cache[side.getIndex()] = data;
-        }
       };
     }
   }
@@ -766,27 +739,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
         public BackgroundableActionLock getBackgroundableLock() {
           return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
         }
-
-        @Nullable
-        @Override
-        public AnnotationData getDataFromCache() {
-          AnnotationData[] cache = viewer.getRequest().getUserData(CACHE_KEY);
-          if (cache != null && cache.length == 3) {
-            return side.select(cache);
-          }
-          return null;
-        }
-
-        @Override
-        public void putDataToCache(@NotNull AnnotationData data) {
-          DiffRequest request = viewer.getRequest();
-          AnnotationData[] cache = request.getUserData(CACHE_KEY);
-          if (cache == null || cache.length != 3) {
-            cache = new AnnotationData[3];
-            request.putUserData(CACHE_KEY, cache);
-          }
-          cache[side.getIndex()] = data;
-        }
       };
     }
   }
@@ -818,23 +770,16 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
 
     @NotNull
     public abstract BackgroundableActionLock getBackgroundableLock();
-
-    @Nullable
-    public abstract AnnotationData getDataFromCache();
-
-    public abstract void putDataToCache(@NotNull AnnotationData result);
   }
 
   private abstract static class FileAnnotationLoader {
     @NotNull private final AbstractVcs myVcs;
-    private final boolean myShouldCache;
 
     @Nullable private VcsException myException;
     @Nullable private FileAnnotation myResult;
 
-    public FileAnnotationLoader(@NotNull AbstractVcs vcs, boolean cache) {
+    public FileAnnotationLoader(@NotNull AbstractVcs vcs) {
       myVcs = vcs;
-      myShouldCache = cache;
     }
 
     @Nullable
@@ -845,10 +790,6 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     @Nullable
     public AnnotationData getResult() {
       return myResult != null ? new AnnotationData(myVcs, myResult) : null;
-    }
-
-    public boolean shouldCache() {
-      return myShouldCache;
     }
 
     public void run() {

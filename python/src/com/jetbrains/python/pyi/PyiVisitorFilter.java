@@ -26,7 +26,8 @@ public class PyiVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {
     if (visitorClass == PyUnusedLocalInspection.class || visitorClass == PyStatementEffectInspection.class ||
-        visitorClass == PyCompatibilityInspection.class || visitorClass == PyMissingOrEmptyDocstringInspection.class) {
+        visitorClass == PyCompatibilityInspection.class || visitorClass == PyMissingOrEmptyDocstringInspection.class ||
+        visitorClass == PyTypeCheckerInspection.class) {
       return false;
     }
     return true;

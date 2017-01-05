@@ -17,6 +17,8 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.externalSystem.JavaProjectData;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -55,6 +57,7 @@ import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
+import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -102,12 +105,32 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                   @Nullable final GradleExecutionSettings settings,
                                                   @NotNull final ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
+
+    if (isPreviewMode) {
+      // Create project preview model w/o request to gradle, there are two main reasons for the it:
+      // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading buildscript dependencies)
+      // * Ability to open  an invalid projects (e.g. with errors in build scripts)
+      String projectName = new File(projectPath).getName();
+      ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath);
+      DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
+
+      final String ideProjectPath = settings == null ? null : settings.getIdeProjectPath();
+      final String mainModuleFileDirectoryPath =
+        ideProjectPath == null ? projectPath : ideProjectPath + "/.idea/modules/";
+
+      projectDataNode
+        .createChild(ProjectKeys.MODULE, new ModuleData(projectName, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(),
+                                                                     projectName, mainModuleFileDirectoryPath, projectPath))
+        .createChild(ProjectKeys.CONTENT_ROOT, new ContentRootData(GradleConstants.SYSTEM_ID, projectPath));
+      return projectDataNode;
+    }
+
     if (settings != null) {
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
     }
 
     final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(settings);
-    DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(id, projectPath, settings, listener, isPreviewMode);
+    DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(id, projectPath, settings, listener, false);
     final DataNode<ProjectData> resultProjectDataNode = myHelper.execute(
       projectPath, settings, new ProjectConnectionDataNodeFunction(resolverContext, projectResolverChain, false)
     );
@@ -115,7 +138,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // auto-discover buildSrc project if needed
     final String buildSrcProjectPath = projectPath + "/buildSrc";
     DefaultProjectResolverContext buildSrcResolverCtx =
-      new DefaultProjectResolverContext(id, buildSrcProjectPath, settings, listener, isPreviewMode);
+      new DefaultProjectResolverContext(id, buildSrcProjectPath, settings, listener, false);
     resolverContext.copyUserDataTo(buildSrcResolverCtx);
     handleBuildSrcProject(resultProjectDataNode, new ProjectConnectionDataNodeFunction(buildSrcResolverCtx, projectResolverChain, true));
     return resultProjectDataNode;
@@ -143,6 +166,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
+    commandLineArgs.add("-Didea.version=" + getIdeaVersion());
     if(resolverCtx.isPreviewMode()){
       commandLineArgs.add("-Didea.isPreviewMode=true");
       final Set<Class> previewLightWeightToolingModels = ContainerUtil.set(ExternalProjectPreview.class, GradleBuild.class);
@@ -150,6 +174,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     if(resolverCtx.isResolveModulePerSourceSet()) {
       commandLineArgs.add("-Didea.resolveSourceSetDependencies=true");
+    }
+
+    GradleExecutionSettings executionSettings = resolverCtx.getSettings();
+    if (!isBuildSrcProject && executionSettings != null) {
+      for (GradleBuildParticipant buildParticipant : executionSettings.getExecutionWorkspace().getBuildParticipants()) {
+        ContainerUtil.addAll(commandLineArgs, GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+      }
     }
 
     final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
@@ -196,7 +227,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     GradleExecutionHelper.prepare(
       buildActionExecutor, resolverCtx.getExternalSystemTaskId(),
-      resolverCtx.getSettings(), resolverCtx.getListener(),
+      executionSettings, resolverCtx.getListener(),
       parametersList.getParameters(), commandLineArgs, resolverCtx.getConnection());
 
     resolverCtx.checkCancelled();
@@ -227,7 +258,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(
         aClass,
         resolverCtx.getExternalSystemTaskId(),
-        resolverCtx.getSettings(),
+        executionSettings,
         resolverCtx.getConnection(),
         resolverCtx.getListener(),
         parametersList.getParameters());
@@ -718,17 +749,23 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       return;
     }
 
-    final DataNode<ModuleData> buildSrcModuleDataNode =
-      GradleProjectResolverUtil.findModule(resultProjectDataNode, projectPath);
-
-    // check if buildSrc project was already exposed in settings.gradle file
-    if (buildSrcModuleDataNode != null) return;
+    Set<String> paths = ContainerUtil.newHashSet();
+    for (DataNode<ModuleData> moduleDataNode : ExternalSystemApiUtil.findAll(resultProjectDataNode, ProjectKeys.MODULE)) {
+      String path = moduleDataNode.getData().getLinkedExternalProjectPath();
+      if (path.equals(projectPath)) {
+        // check if buildSrc project was already exposed in settings.gradle file
+        return;
+      }
+      paths.add(path);
+    }
 
     final DataNode<ProjectData> buildSrcProjectDataDataNode = myHelper.execute(
       projectPath, projectConnectionDataNodeFunction.myResolverContext.getSettings(), projectConnectionDataNodeFunction);
 
     if (buildSrcProjectDataDataNode != null) {
       for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.getChildren(buildSrcProjectDataDataNode, ProjectKeys.MODULE)) {
+        if (paths.contains(moduleNode.getData().getLinkedExternalProjectPath())) continue;
+
         resultProjectDataNode.addChild(moduleNode);
 
         // adjust ide module group
@@ -812,4 +849,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     return projectResolverChain;
   }
+
+  private static String getIdeaVersion() {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
+  }
+
 }

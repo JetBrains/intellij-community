@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("AtomicFieldUpdaterNotStaticFinal")
 public class AtomicFieldUpdaterNotStaticFinalInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {

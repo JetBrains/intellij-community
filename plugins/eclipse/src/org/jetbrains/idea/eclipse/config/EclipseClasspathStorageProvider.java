@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
@@ -112,7 +111,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public void modulePathChanged(Module module, String path) {
+  public void modulePathChanged(@NotNull Module module) {
     final EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     if (moduleManager != null) {
       moduleManager.setDocumentSet(null);
@@ -145,13 +144,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       VirtualFile root = LocalFileSystem.getInstance().findFileByPath(ModuleUtilCore.getModuleDirPath(module));
       VirtualFile source = root == null ? null : root.findChild(oldName + EclipseXml.IDEA_SETTINGS_POSTFIX);
       if (source != null && source.isValid()) {
-        AccessToken token = WriteAction.start();
-        try {
-          source.rename(this, newName + EclipseXml.IDEA_SETTINGS_POSTFIX);
-        }
-        finally {
-          token.finish();
-        }
+        WriteAction.run(() -> source.rename(this, newName + EclipseXml.IDEA_SETTINGS_POSTFIX));
       }
 
       DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));

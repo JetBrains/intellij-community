@@ -22,6 +22,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -68,7 +69,8 @@ public class ClassUtil {
           && !alreadyImplemented.contains(method)) {
         return method;
       }
-      final List<HierarchicalMethodSignature> superSignatures = signatureHierarchical.getSuperSignatures();
+      final List<HierarchicalMethodSignature> superSignatures = new ArrayList<HierarchicalMethodSignature>(signatureHierarchical.getInaccessibleSuperSignatures());
+      superSignatures.addAll(signatureHierarchical.getSuperSignatures());
       for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
         final PsiMethod superMethod = superSignatureHierarchical.getMethod();
         if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT) && !resolveHelper.isAccessible(superMethod, method, null)) {
@@ -77,21 +79,6 @@ public class ClassUtil {
       }
     }
 
-    return checkPackageLocalInSuperClass(aClass);
-  }
-
-  @Nullable
-  private static PsiMethod checkPackageLocalInSuperClass(@NotNull PsiClass aClass) {
-    // super class can have package-private abstract methods not accessible for overriding
-    PsiClass superClass = aClass.getSuperClass();
-    if (superClass == null) return null;
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return null;
-    if (JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) return null;
-
-    for (HierarchicalMethodSignature methodSignature : superClass.getVisibleSignatures()) {
-      PsiMethod method = methodSignature.getMethod();
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return method;
-    }
     return null;
   }
 

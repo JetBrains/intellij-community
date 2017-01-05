@@ -41,6 +41,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    installCompiler();
     ClassFilesIndexFeature.METHOD_CHAINS_COMPLETION.enable();
   }
 

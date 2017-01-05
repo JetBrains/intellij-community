@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,7 @@ import java.util.List;
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
-
   String CARET_MARKER = EditorTestUtil.CARET_TAG;
-
   String ERROR_MARKER = "error";
   String WARNING_MARKER = "warning";
   String WEAK_WARNING_MARKER = "weak_warning";
@@ -466,6 +464,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void checkResult(@NotNull String text, boolean stripTrailingSpaces);
 
+  void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces);
+
   Document getDocument(@NotNull PsiFile file);
 
   @NotNull
@@ -576,6 +576,16 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   @NotNull
   List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
+
+  /**
+   * Get elements found by the Goto Class action called with the given pattern
+   * @param pattern a pattern to search for elements
+   * @param searchEverywhere indicates whether "include non-project classes" checkbox is selected
+   * @param contextForSorting a PsiElement used for "proximity sorting" of the results. The sorting will be disabled if null given.
+   * @return a list of the results (likely PsiElements) found for the given pattern
+   */
+  @NotNull
+  List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);
 }

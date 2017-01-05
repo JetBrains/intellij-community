@@ -155,8 +155,9 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   @Override
   @NotNull
   public FileType getStdFileType(@NotNull @NonNls final String fileTypeName) {
-    if ("ARCHIVE".equals(fileTypeName) || "CLASS".equals(fileTypeName)) return UnknownFileType.INSTANCE;
+    if ("ARCHIVE".equals(fileTypeName)) return UnknownFileType.INSTANCE;
     if ("PLAIN_TEXT".equals(fileTypeName)) return PlainTextFileType.INSTANCE;
+    if ("CLASS".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.JavaClassFileType", fileTypeName);
     if ("JAVA".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.JavaFileType", fileTypeName);
     if ("XML".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.XmlFileType", fileTypeName);
     if ("DTD".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.DTDFileType", fileTypeName);

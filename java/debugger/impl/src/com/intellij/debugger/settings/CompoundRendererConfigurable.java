@@ -29,10 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.JavaCodeFragment;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
@@ -208,8 +205,8 @@ class CompoundRendererConfigurable extends JPanel {
     ApplicationManager.getApplication().runReadAction(() -> {
       Project project = myProject;
       if (project != null) {
-        Pair<PsiClass, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
-        PsiClass context = pair.first;
+        Pair<PsiElement, PsiType>pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
+        PsiElement context = pair.first;
         if (context != null) {
           myLabelEditor.setContext(context);
           myChildrenEditor.setContext(context);

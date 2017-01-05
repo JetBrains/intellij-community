@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -16,7 +17,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
@@ -34,6 +34,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,7 +53,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * GoF builder for gradle-backed projects.
+ * GoF builder for external system backed projects.
  * 
  * @author Denis Zhdanov
  * @since 8/1/11 1:29 PM
@@ -90,7 +91,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   @Override
-  public void setList(List<DataNode<ProjectData>> gradleProjects) {
+  public void setList(List<DataNode<ProjectData>> externalSystemProjects) {
   }
 
   @Override
@@ -169,7 +170,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (dialog.hasMultipleDataToSelect()) {
           dialog.showAndGet();
         } else {
-          dialog.dispose();
+          Disposer.dispose(dialog.getDisposable());
         }
       }
 
@@ -192,8 +193,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
     // resolve dependencies
     final Runnable resolveDependenciesTask = () -> ExternalSystemUtil.refreshProject(
-      project, myExternalSystemId, projectSettings.getExternalProjectPath(), false,
-      ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+      project, myExternalSystemId, projectSettings.getExternalProjectPath(),
+      createFinalImportCallback(project, projectSettings), false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, true);
     if (!isFromUI) {
       resolveDependenciesTask.run();
     }
@@ -204,17 +205,25 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (ContainerUtil.list(committedModules).containsAll(modules)) {
           resolveDependenciesTask.run();
         }
-        else {
-          ExternalSystemApiUtil.getLocalSettings(project, myExternalSystemId).forgetExternalProjects(
-            Collections.singleton(projectSettings.getExternalProjectPath()));
-          ExternalSystemApiUtil.getSettings(project, myExternalSystemId).unlinkExternalProject(
-            projectSettings.getExternalProjectPath());
-
-          ExternalProjectsManager.getInstance(project).forgetExternalProjectData(
-            myExternalSystemId, projectSettings.getExternalProjectPath());
-        }
       });
     }
+  }
+
+  protected ExternalProjectRefreshCallback createFinalImportCallback(@NotNull Project project,
+                                                                     @NotNull ExternalProjectSettings projectSettings) {
+    return new ExternalProjectRefreshCallback() {
+      @Override
+      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+        if (externalProject == null) {
+          return;
+        }
+        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+      }
+    };
   }
 
   @NotNull
@@ -239,7 +248,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * Asks current builder to ensure that target external project is defined.
    *
    * @param wizardContext             current wizard context
-   * @throws ConfigurationException   if gradle project is not defined and can't be constructed
+   * @throws ConfigurationException   if external project is not defined and can't be constructed
    */
   @SuppressWarnings("unchecked")
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
@@ -311,7 +320,10 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     systemSettings.copyFrom(myControl.getSystemSettings());
     Collection projectSettingsToRestore = systemSettings.getLinkedProjectsSettings();
-    systemSettings.setLinkedProjectsSettings(Collections.singleton(getCurrentExternalProjectSettings()));
+    Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+    projects.add(getCurrentExternalProjectSettings());
+    systemSettings.setLinkedProjectsSettings(projects);
+
     try {
       task.run();
     }

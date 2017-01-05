@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,14 @@ public interface FileEditorManagerListener extends EventListener{
   Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER =
     new Topic<>("file editor events", FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file);
+  default void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+  }
 
-  void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file);
+  default void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+  }
 
-  void selectionChanged(@NotNull FileEditorManagerEvent event);
+  default void selectionChanged(@NotNull FileEditorManagerEvent event) {
+  }
 
   interface Before extends EventListener {
     Topic<Before> FILE_EDITOR_MANAGER =

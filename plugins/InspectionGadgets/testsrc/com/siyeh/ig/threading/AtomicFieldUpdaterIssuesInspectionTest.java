@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,16 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestC
            "}");
   }
 
+  public void testRightType() {
+    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+           "import java.util.RandomAccess;" +
+           "class A<T extends RandomAccess> {" +
+           "  private volatile T value = null;" +
+           "  private static final AtomicReferenceFieldUpdater updater = " +
+           "    AtomicReferenceFieldUpdater.newUpdater(A.class, RandomAccess.class, \"value\");" +
+           "}");
+  }
+
   public void testNotAccessible1() {
     doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
            "class Z {" +
@@ -111,6 +121,15 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestC
            "    private static final AtomicIntegerFieldUpdater updater = \n" +
            "      AtomicIntegerFieldUpdater.newUpdater(Z.class, /*'private' field 'value' is not accessible from here*/\"value\"/**/);\n" +
            "  }" +
+           "}");
+  }
+
+  public void testAvoidNPE() {
+    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;\n" +
+           "class Z</*!Cyclic inheritance involving 'T'*//*!*/T extends T> {\n" +
+           "  private T value = null;\n" +
+           "  private static final AtomicReferenceFieldUpdater updater = \n" +
+           "      AtomicReferenceFieldUpdater.newUpdater(Z.class, Object.class, \"value\");\n" +
            "}");
   }
 

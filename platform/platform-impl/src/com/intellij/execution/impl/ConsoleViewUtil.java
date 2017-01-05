@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +55,11 @@ import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsol
 public class ConsoleViewUtil {
 
   public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
+  public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
+
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
+  @NotNull
   public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
@@ -196,12 +200,27 @@ public class ConsoleViewUtil {
   }
 
   public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text, @NotNull SyntaxHighlighter highlighter) {
+    printWithHighlighting(console, text, highlighter, null);
+  }
+
+  public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text,
+                                           @NotNull SyntaxHighlighter highlighter,
+                                           Runnable doOnNewLine) {
     Lexer lexer = highlighter.getHighlightingLexer();
     lexer.start(text, 0, text.length(), 0);
 
     IElementType tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
-      console.print(lexer.getTokenText(), getContentTypeForToken(tokenType, highlighter));
+      ConsoleViewContentType contentType = getContentTypeForToken(tokenType, highlighter);
+      StringTokenizer eolTokenizer = new StringTokenizer(lexer.getTokenText(), "\n", true);
+      while (eolTokenizer.hasMoreTokens()){
+        String tok = eolTokenizer.nextToken();
+        console.print(tok, contentType);
+        if (doOnNewLine != null && "\n".equals(tok)) {
+            doOnNewLine.run();
+        }
+      }
+
       lexer.advance();
     }
   }

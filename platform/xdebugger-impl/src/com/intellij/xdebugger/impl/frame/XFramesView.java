@@ -191,12 +191,7 @@ public class XFramesView extends XDebugView {
   }
 
   private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack, XDebugSession session) {
-    StackFramesListBuilder builder = myBuilders.get(executionStack);
-    if (builder == null) {
-      builder = new StackFramesListBuilder(executionStack, session);
-      myBuilders.put(executionStack, builder);
-    }
-    return builder;
+    return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, session));
   }
 
   @Override
@@ -210,16 +205,17 @@ public class XFramesView extends XDebugView {
     XStackFrame currentStackFrame = session.getCurrentStackFrame();
     XSuspendContext suspendContext = session.getSuspendContext();
 
-    myLaterInvocator.offer(() -> {
-      if (event == SessionEvent.FRAME_CHANGED) {
-        if (currentStackFrame != null) {
-          myFramesList.setSelectedValue(currentStackFrame, true);
-          mySelectedFrameIndex = myFramesList.getSelectedIndex();
-          myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
-        }
-        return;
+    if (event == SessionEvent.FRAME_CHANGED) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (currentStackFrame != null) {
+        myFramesList.setSelectedValue(currentStackFrame, true);
+        mySelectedFrameIndex = myFramesList.getSelectedIndex();
+        myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
       }
+      return;
+    }
 
+    myLaterInvocator.offer(() -> {
       if (event != SessionEvent.SETTINGS_CHANGED) {
         mySelectedFrameIndex = 0;
         mySelectedStack = null;
@@ -230,9 +226,7 @@ public class XFramesView extends XDebugView {
       }
 
       myListenersEnabled = false;
-      for (StackFramesListBuilder builder : myBuilders.values()) {
-        builder.dispose();
-      }
+      myBuilders.values().forEach(StackFramesListBuilder::dispose);
       myBuilders.clear();
 
       if (suspendContext == null) {
@@ -439,9 +433,7 @@ public class XFramesView extends XDebugView {
     @SuppressWarnings("unchecked")
     public void initModel(final DefaultListModel model) {
       model.removeAllElements();
-      for (XStackFrame stackFrame : myStackFrames) {
-        model.addElement(stackFrame);
-      }
+      myStackFrames.forEach(model::addElement);
       if (myErrorMessage != null) {
         model.addElement(myErrorMessage);
       }

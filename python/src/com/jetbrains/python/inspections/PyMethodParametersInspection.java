@@ -205,7 +205,9 @@ public class PyMethodParametersInspection extends PyInspection {
                 );
               }
             }
-            else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
+            else if (flags.isClassMethod() ||
+                     PyNames.NEW.equals(methodName) ||
+                     PyNames.INIT_SUBCLASS.equals(methodName) && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),

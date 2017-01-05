@@ -19,10 +19,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.ConstructorAccessor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -135,8 +136,10 @@ public class ReflectionUtil {
 
   @NotNull
   public static List<Field> collectFields(@NotNull Class clazz) {
-    List<Field> result = new ArrayList<Field>();
-    collectFields(clazz, result);
+    List<Field> result = ContainerUtil.newArrayList();
+    for (Class c : classTraverser(clazz)) {
+      result.addAll(getClassDeclaredFields(c));
+    }
     return result;
   }
 
@@ -165,35 +168,14 @@ public class ReflectionUtil {
     throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
   }
 
-  private static void collectFields(@NotNull Class clazz, @NotNull List<Field> result) {
-    final List<Field> fields = getClassDeclaredFields(clazz);
-    result.addAll(fields);
-    final Class superClass = clazz.getSuperclass();
-    if (superClass != null) {
-      collectFields(superClass, result);
-    }
-    final Class[] interfaces = clazz.getInterfaces();
-    for (Class each : interfaces) {
-      collectFields(each, result);
-    }
-  }
-
+  @Nullable
   private static Field processFields(@NotNull Class clazz, @NotNull Condition<Field> checker) {
-    for (Field field : clazz.getDeclaredFields()) {
-      if (checker.value(field)) {
+    for (Class c : classTraverser(clazz)) {
+      Field field = JBIterable.of(c.getDeclaredFields()).find(checker);
+      if (field != null) {
         field.setAccessible(true);
         return field;
       }
-    }
-    final Class superClass = clazz.getSuperclass();
-    if (superClass != null) {
-      Field result = processFields(superClass, checker);
-      if (result != null) return result;
-    }
-    final Class[] interfaces = clazz.getInterfaces();
-    for (Class each : interfaces) {
-      Field result = processFields(each, checker);
-      if (result != null) return result;
     }
     return null;
   }
@@ -417,50 +399,6 @@ public class ReflectionUtil {
     }
   }
 
-  private static final Method acquireConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "acquireConstructorAccessor");
-  private static final Method getConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "getConstructorAccessor");
-
-  /** @deprecated private API (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static ConstructorAccessor getConstructorAccessor(@NotNull Constructor constructor) {
-    if (acquireConstructorAccessorMethod == null || getConstructorAccessorMethod == null) {
-      throw new IllegalStateException();
-    }
-
-    constructor.setAccessible(true);
-    try {
-      acquireConstructorAccessorMethod.invoke(constructor);
-      return (ConstructorAccessor)getConstructorAccessorMethod.invoke(constructor);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /** @deprecated private API, use {@link #createInstance(Constructor, Object...)} instead (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor, @NotNull Object... arguments) {
-    try {
-      @SuppressWarnings("unchecked") T t = (T)constructorAccessor.newInstance(arguments);
-      return t;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /** @deprecated private API, use {@link #newInstance(Class)} instead (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  public static <T> T createInstanceViaConstructorAccessor(@NotNull ConstructorAccessor constructorAccessor) {
-    try {
-      @SuppressWarnings("unchecked") T t = (T)constructorAccessor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
-      return t;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   /**
    * Like {@link Class#newInstance()} but also handles private classes
    */
@@ -623,4 +561,17 @@ public class ReflectionUtil {
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
+
+  @NotNull
+  public static JBTreeTraverser<Class> classTraverser(@Nullable Class root) {
+    return new JBTreeTraverser<Class>(CLASS_STRUCTURE).unique().withRoot(root);
+  }
+
+  private static final Function<Class, Iterable<Class>> CLASS_STRUCTURE = new Function<Class, Iterable<Class>>() {
+    @Override
+    public Iterable<Class> fun(Class aClass) {
+      return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
+    }
+  };
+
 }

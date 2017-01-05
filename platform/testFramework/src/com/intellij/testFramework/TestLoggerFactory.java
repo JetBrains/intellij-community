@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.*;
 import org.apache.log4j.spi.LoggingEvent;
@@ -145,6 +146,8 @@ public class TestLoggerFactory implements Logger.Factory {
 
   private static final StringWriter STRING_WRITER = new StringWriter();
   private static final StringBuffer BUFFER = STRING_WRITER.getBuffer();
+  static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
+  // inserted unicode whitespace to be able to tell these failed tests log lines from the others and fold them
   private static final WriterAppender APPENDER = new WriterAppender(new PatternLayout("%d{HH:mm:ss,SSS} %p %.30c - %m%n"), STRING_WRITER);
   private static final int MAX_BUFFER_LENGTH = 100000;
   private static final String CFQN = Category.class.getName();
@@ -153,7 +156,7 @@ public class TestLoggerFactory implements Logger.Factory {
       //return;
     }
     LoggingEvent event = new LoggingEvent(CFQN, logger, level, message, t);
-    APPENDER.append(event);
+    APPENDER.doAppend(event);
 
     if (BUFFER.length() > MAX_BUFFER_LENGTH) {
       synchronized (BUFFER) {
@@ -165,8 +168,25 @@ public class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestFinished(boolean success) {
-    if (!success) {
-      System.err.println(BUFFER);
+    if (!success && BUFFER.length() != 0) {
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        // print in several small statements to avoid service messages tearing causing this fold to expand
+        // using .out instead of .err by the advice from Nikita Skvortsov
+        System.out.flush();
+        System.out.println("##teamcity[blockOpened name='DEBUG log']\n");
+        System.out.flush();
+        System.out.println(BUFFER);
+        System.out.flush();
+        System.out.println("\n##teamcity[blockClosed name='DEBUG log']\n");
+        System.out.flush();
+      }
+      else {
+        // mark each line in IDEA console with this hidden mark to be able to fold it automatically
+        String[] lines = LineTokenizer.tokenize(BUFFER, false, false);
+        String text = StringUtil.join(lines, FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n");
+        if (!text.startsWith("\n")) text = "\n" + text;
+        System.err.println(text);
+      }
     }
     BUFFER.setLength(0);
   }

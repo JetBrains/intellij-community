@@ -95,7 +95,6 @@ public class EncodingEnvironmentUtil {
   }
 
   /** @deprecated use {@link #setLocaleEnvironmentIfMac(GeneralCommandLine)} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
   public static void fixDefaultEncodingIfMac(@NotNull GeneralCommandLine commandLine, @Nullable Project project) {
     if (SystemInfo.isMac && !isLocaleDefined(commandLine)) {
       setLocaleEnvironment(commandLine.getEnvironment(), getCharset(project));
@@ -103,7 +102,6 @@ public class EncodingEnvironmentUtil {
   }
 
   /** @deprecated use {@link #setLocaleEnvironmentIfMac(Map, Charset)} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("unused")
   public static void fixDefaultEncodingIfMac(@NotNull Map<String, String> env, @Nullable Project project) {
     if (SystemInfo.isMac && !isLocaleDefined(env)) {
       setLocaleEnvironment(env, getCharset(project));

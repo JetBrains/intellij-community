@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.options.CompoundScheme;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -33,7 +33,6 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,7 +148,6 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
                            @NotNull final VirtualFile virtualFile,
                            byte[] bytes,
                            @NotNull final Charset charset) {
-
     String text = document.getText();
     EncodingUtil.Magic8 isSafeToConvert = EncodingUtil.isSafeToConvertTo(virtualFile, text, bytes, charset);
     EncodingUtil.Magic8 isSafeToReload = EncodingUtil.isSafeToReloadIn(virtualFile, text, bytes, charset);

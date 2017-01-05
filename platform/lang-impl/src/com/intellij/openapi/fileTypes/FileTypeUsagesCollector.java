@@ -21,16 +21,13 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,7 +35,6 @@ import java.util.Set;
  * @author Nikolay Matveev
  */
 public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector {
-
   private static final String GROUP_ID = "file-type";
 
   @NotNull
@@ -60,11 +56,10 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       if (project.isDisposed()) {
         throw new CollectUsagesException("Project is disposed");
       }
-      final String ideaDirPath = getIdeaDirPath(project);
       ApplicationManager.getApplication().runReadAction(() -> {
         FileTypeIndex.processFiles(fileType, file -> {
           //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-          if (ideaDirPath == null || FileUtil.isAncestorThreeState(ideaDirPath, file.getPath(), true) == ThreeState.NO) {
+          if (!ProjectKt.getStateStore(project).isProjectFile(file)) {
             usedFileTypes.add(fileType);
             return false;
           }
@@ -73,17 +68,5 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       });
     }
     return ContainerUtil.map2Set(usedFileTypes, (NotNullFunction<FileType, UsageDescriptor>)fileType -> new UsageDescriptor(fileType.getName(), 1));
-  }
-
-  @Nullable
-  private static String getIdeaDirPath(@NotNull Project project) {
-    String projectPath = project.getBasePath();
-    if (projectPath != null) {
-      String ideaDirPath = projectPath + "/" + Project.DIRECTORY_STORE_FOLDER;
-      if (new File(ideaDirPath).isDirectory()) {
-        return ideaDirPath;
-      }
-    }
-    return null;
   }
 }

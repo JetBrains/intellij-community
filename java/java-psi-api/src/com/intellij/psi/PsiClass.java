@@ -195,7 +195,7 @@ public interface PsiClass
   @NotNull PsiMethod[] getAllMethods();
 
   /**
-   * Returns the list of inner classes for the class and all its superclasses..
+   * Returns the list of inner classes for the class and all its superclasses.
    *
    * @return the list of inner classes.
    */

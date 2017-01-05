@@ -15,14 +15,17 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.util.SystemInfo;
+
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTextAreaUI;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
-
-import static javax.swing.SwingConstants.WEST;
+import java.awt.event.KeyEvent;
 
 public class DarculaTextAreaUI extends BasicTextAreaUI{
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -31,11 +34,21 @@ public class DarculaTextAreaUI extends BasicTextAreaUI{
   }
 
   @Override
+  protected void installKeyboardActions() {
+    super.installKeyboardActions();
+    if (SystemInfo.isMac) {
+      InputMap inputMap = getComponent().getInputMap();
+      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), DefaultEditorKit.upAction);
+      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), DefaultEditorKit.downAction);
+      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), DefaultEditorKit.pageUpAction);
+      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), DefaultEditorKit.pageDownAction);
+    }
+  }
+
+  @Override
   public int getNextVisualPositionFrom(JTextComponent t, int pos, Position.Bias b, int direction, Position.Bias[] biasRet)
     throws BadLocationException {
-    if (direction == WEST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionEnd() == pos) {
-      return t.getSelectionStart();
-    }
-    return super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
+    int position = DarculaUIUtil.getPatchedNextVisualPositionFrom(t, pos, direction);
+    return position != -1 ? position : super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
   }
 }

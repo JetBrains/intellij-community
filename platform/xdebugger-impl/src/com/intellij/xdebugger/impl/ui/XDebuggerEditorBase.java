@@ -36,7 +36,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -108,7 +110,7 @@ public abstract class XDebuggerEditorBase {
 
   private ListPopup createLanguagePopup() {
     DefaultActionGroup actions = new DefaultActionGroup();
-    for (final Language language : getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition)) {
+    for (Language language : getSupportedLanguages()) {
       //noinspection ConstantConditions
       actions.add(new AnAction(language.getDisplayName(), null, language.getAssociatedFileType().getIcon()) {
         @Override
@@ -126,23 +128,45 @@ public abstract class XDebuggerEditorBase {
                                                                false);
   }
 
+  @NotNull
+  private Collection<Language> getSupportedLanguages() {
+    XDebuggerEditorsProvider editorsProvider = getEditorsProvider();
+    if (myContext != null && editorsProvider instanceof XDebuggerEditorsProviderBase) {
+      return ((XDebuggerEditorsProviderBase)editorsProvider).getSupportedLanguages(myContext);
+    }
+    else {
+      return editorsProvider.getSupportedLanguages(myProject, mySourcePosition);
+    }
+  }
+
   protected JPanel decorate(JComponent component, boolean multiline, boolean showEditor) {
-    JPanel panel = JBUI.Panels.simplePanel();
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel();
 
     JPanel factoryPanel = JBUI.Panels.simplePanel();
     factoryPanel.add(myChooseFactory, multiline ? BorderLayout.NORTH : BorderLayout.CENTER);
     panel.add(factoryPanel, BorderLayout.WEST);
 
     if (!multiline && showEditor) {
-      ComponentWithBrowseButton<JComponent> componentWithButton =
-        new ComponentWithBrowseButton<>(component, e -> showCodeFragmentEditor(component, this));
-      componentWithButton.setButtonIcon(AllIcons.Actions.ShowViewer);
-      componentWithButton.getButton().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Actions.ShowViewer));
-      panel.add(componentWithButton, BorderLayout.CENTER);
-    } else {
-      panel.add(component, BorderLayout.CENTER);
+      component = addMultilineButton(component);
     }
 
+    panel.addToCenter(component);
+
+    return panel;
+  }
+
+  protected JPanel addMultilineButton(JComponent component) {
+    ComponentWithBrowseButton<JComponent> componentWithButton =
+      new ComponentWithBrowseButton<>(component, e -> showCodeFragmentEditor(component, this));
+    componentWithButton.setButtonIcon(AllIcons.Actions.ShowViewer);
+    componentWithButton.getButton().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Actions.ShowViewer));
+    return componentWithButton;
+  }
+
+  protected JComponent addChooser(JComponent component) {
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
+    panel.setBackground(component.getBackground());
+    panel.addToRight(myChooseFactory);
     return panel;
   }
 
@@ -182,7 +206,10 @@ public abstract class XDebuggerEditorBase {
     }
     Language language = text.getLanguage();
     if (language == null) {
-      if (mySourcePosition != null) {
+      if (myContext != null) {
+        language = myContext.getLanguage();
+      }
+      if (language == null && mySourcePosition != null) {
         language = LanguageUtil.getFileLanguage(mySourcePosition.getFile());
       }
       if (language == null) {
@@ -191,7 +218,7 @@ public abstract class XDebuggerEditorBase {
       text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), text.getMode());
     }
 
-    Collection<Language> languages = getEditorsProvider().getSupportedLanguages(myProject, mySourcePosition);
+    Collection<Language> languages = getSupportedLanguages();
     boolean many = languages.size() > 1;
 
     if (language != null) {
@@ -201,7 +228,9 @@ public abstract class XDebuggerEditorBase {
     //myChooseFactory.setEnabled(many && languages.contains(language));
 
     if (language != null && language.getAssociatedFileType() != null) {
-      Icon icon = language.getAssociatedFileType().getIcon();
+      LayeredIcon icon = JBUI.scale(new LayeredIcon(2));
+      icon.setIcon(language.getAssociatedFileType().getIcon(), 0);
+      icon.setIcon(AllIcons.General.Dropdown, 1, 3, 0);
       myChooseFactory.setIcon(icon);
       myChooseFactory.setDisabledIcon(IconLoader.getDisabledIcon(icon));
     }
@@ -328,7 +357,10 @@ public abstract class XDebuggerEditorBase {
       protected void doOKAction() {
         super.doOKAction();
         baseEditor.setExpression(inputComponent.getInputEditor().getExpression());
-        IdeFocusManager.findInstance().requestFocus(baseEditor.getEditorComponent(), false);
+        JComponent component = baseEditor.getPreferredFocusedComponent();
+        if (component != null) {
+          IdeFocusManager.findInstance().requestFocus(component, false);
+        }
       }
 
       @Nullable

@@ -31,10 +31,8 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jetbrains.annotations.NotNull;
@@ -85,14 +83,11 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
     boolean doNotShowTextEditor = false;
     for (final FileEditorProvider provider : myProviders) {
-      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
-            return false;
-          }
-          return provider.accept(project, file);
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+        if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+          return false;
         }
+        return provider.accept(project, file);
       })) {
         sharedProviders.add(provider);
         doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
@@ -146,8 +141,6 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     mySelectedProviders.putAll(state.mySelectedProviders);
   }
 
-  private static final Function<FileEditorProvider, String> EDITOR_PROVIDER_STRING_FUNCTION = provider -> provider.getEditorTypeId();
-
   private final Map<String, String> mySelectedProviders = new HashMap<>();
 
   void providerSelected(EditorComposite composite) {
@@ -159,7 +152,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   }
 
   private static String computeKey(FileEditorProvider[] providers) {
-    return StringUtil.join(ContainerUtil.map(providers, EDITOR_PROVIDER_STRING_FUNCTION), ",");
+    return StringUtil.join(ContainerUtil.map(providers, FileEditorProvider::getEditorTypeId), ",");
   }
 
   @Nullable

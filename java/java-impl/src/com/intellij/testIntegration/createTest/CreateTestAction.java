@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiDirectory srcDir = element.getContainingFile().getContainingDirectory();
     PsiPackage srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir);
 
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
     Module testModule = suggestModuleForTests(project, srcModule);
     final List<VirtualFile> testRootUrls = computeTestRoots(testModule);
     if (testRootUrls.isEmpty() && computeSuitableTestRootUrls(testModule).isEmpty()) {
@@ -142,6 +142,18 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         return module;
       }
     }
+
+    if (computeSuitableTestRootUrls(productionModule).isEmpty()) {
+      final HashSet<Module> modules = new HashSet<>();
+      ModuleUtilCore.collectModulesDependsOn(productionModule, modules);
+      modules.remove(productionModule);
+      List<Module> modulesWithTestRoot = modules.stream()
+        .filter(module -> !computeSuitableTestRootUrls(module).isEmpty())
+        .limit(2)
+        .collect(Collectors.toList());
+      if (modulesWithTestRoot.size() == 1) return modulesWithTestRoot.get(0);
+    }
+
     return productionModule;
   }
 

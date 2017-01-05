@@ -27,6 +27,7 @@ import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -44,12 +45,16 @@ public class BranchMerger implements IMerger {
   private final long mySourceCopyRevision;
   private boolean myAtStart;
   private SVNRevision mySourceLatestRevision;
+  private final boolean mySupportsMergeInfo;
 
   public BranchMerger(final SvnVcs vcs,
                       final SVNURL sourceUrl,
                       final String targetPath,
                       final UpdateEventHandler handler,
-                      final boolean isReintegrate, final String branchName, final long sourceCopyRevision) {
+                      final boolean isReintegrate,
+                      final String branchName,
+                      long sourceCopyRevision,
+                      boolean supportsMergeInfo) {
     myVcs = vcs;
     myTargetPath = targetPath;
     mySourceUrl = sourceUrl;
@@ -58,11 +63,13 @@ public class BranchMerger implements IMerger {
     myBranchName = branchName;
     mySourceCopyRevision = sourceCopyRevision;
     myAtStart = true;
-    mySourceLatestRevision = resolveSourceLatestRevision();
+    mySupportsMergeInfo = supportsMergeInfo;
   }
 
   public String getComment() {
-    return "Merge all from " + myBranchName + " at " + mySourceLatestRevision +(myReintegrate ? " (reintegration)" : "");
+    return "Merge all from " + myBranchName +
+           (!mySupportsMergeInfo ? " at " + mySourceLatestRevision : "") +
+           (myReintegrate ? " (reintegration)" : "");
   }
 
   public boolean hasNext() {
@@ -74,13 +81,15 @@ public class BranchMerger implements IMerger {
 
     File destination = new File(myTargetPath);
     MergeClient client = myVcs.getFactory(destination).createMergeClient();
+    SvnTarget source = SvnTarget.fromURL(mySourceUrl);
 
-    if (myReintegrate) {
-      client.merge(SvnTarget.fromURL(mySourceUrl), destination, false, createDiffOptions(), myHandler);
+    if (mySupportsMergeInfo) {
+      client.merge(source, destination, false, myReintegrate, createDiffOptions(), myHandler);
     } else {
-      client.merge(SvnTarget.fromURL(mySourceUrl, SVNRevision.create(mySourceCopyRevision)),
-                   SvnTarget.fromURL(mySourceUrl, mySourceLatestRevision), destination, Depth.INFINITY, true, false, false, true,
-                   createDiffOptions(), myHandler);
+      mySourceLatestRevision = resolveSourceLatestRevision();
+      SVNRevisionRange range = new SVNRevisionRange(SVNRevision.create(mySourceCopyRevision), mySourceLatestRevision);
+
+      client.merge(source, range, destination, Depth.UNKNOWN, false, false, true, createDiffOptions(), myHandler);
     }
   }
 

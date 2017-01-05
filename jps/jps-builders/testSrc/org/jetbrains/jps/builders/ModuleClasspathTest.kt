@@ -64,6 +64,7 @@ class ModuleClasspathTest(): JpsBuildTestCase() {
     val chunk = createChunk("main")
     assertClasspath(listOf("util/lib/exported.jar", "out/production/util", "/jdk.jar"), getPathsList(ProjectPaths.getPlatformCompilationClasspath(chunk, true)))
     assertClasspath(listOf("main/lib/service.jar"), getPathsList(ProjectPaths.getCompilationClasspath(chunk, true)))
+    assertClasspath(listOf("main/lib/service.jar"), getPathsList(ProjectPaths.getCompilationModulePath(chunk, true)))
   }
 
   private fun assertClasspath(moduleName: String, includeTests: Boolean, expected: List<String>) {

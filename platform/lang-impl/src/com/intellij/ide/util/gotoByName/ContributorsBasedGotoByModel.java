@@ -121,10 +121,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
             }
           }
         }
-        catch (ProcessCanceledException ex) {
-          // index corruption detected, ignore
-        }
-        catch (IndexNotReadyException ex) {
+        catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
         catch (Exception ex) {
@@ -269,6 +266,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   @Override
   public String getElementName(Object element) {
+    if (!(element instanceof NavigationItem)) {
+      throw new AssertionError(element + " of " + element.getClass());
+    }
     return ((NavigationItem)element).getName();
   }
 

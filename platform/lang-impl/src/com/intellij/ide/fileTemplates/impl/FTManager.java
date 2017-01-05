@@ -16,7 +16,6 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -44,19 +43,18 @@ class FTManager {
 
   private final String myName;
   private final boolean myInternal;
-  private final String myTemplatesDir;
+  private final File myTemplatesDir;
   @Nullable
   private final FTManager myOriginal;
-  private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
   private final Map<String, FileTemplateBase> myTemplates = new HashMap<>();
   private volatile List<FileTemplateBase> mySortedTemplates;
   private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<>();
 
-  FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName) {
+  FTManager(@NotNull @NonNls String name, @NotNull @NonNls File defaultTemplatesDirName) {
     this(name, defaultTemplatesDirName, false);
   }
 
-  FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName, boolean internal) {
+  FTManager(@NotNull @NonNls String name, @NotNull @NonNls File defaultTemplatesDirName, boolean internal) {
     myName = name;
     myInternal = internal;
     myTemplatesDir = defaultTemplatesDirName;
@@ -74,12 +72,6 @@ class FTManager {
 
   public String getName() {
     return myName;
-  }
-
-  public void setScheme(FileTemplatesScheme scheme) {
-    mySortedTemplates = null;
-    myScheme = scheme;
-    loadCustomizedContent();
   }
 
   @NotNull
@@ -356,12 +348,12 @@ class FTManager {
     fileOutputStream.close();
   }
 
+  @NotNull
   public File getConfigRoot(boolean create) {
-    File templatesPath = myTemplatesDir.isEmpty() ? new File(myScheme.getTemplatesDir()) : new File(myScheme.getTemplatesDir(), myTemplatesDir);
-    if (create && !templatesPath.mkdirs() && !templatesPath.exists()) {
-      LOG.info("Cannot create directory: " + templatesPath.getAbsolutePath());
+    if (create && !myTemplatesDir.mkdirs() && !myTemplatesDir.exists()) {
+      LOG.info("Cannot create directory: " + myTemplatesDir.getAbsolutePath());
     }
-    return templatesPath;
+    return myTemplatesDir;
   }
 
   @Override
@@ -387,6 +379,6 @@ class FTManager {
   }
 
   public Map<String, FileTemplateBase> getTemplates() {
-    return myOriginal != null && myScheme == FileTemplatesScheme.DEFAULT ? myOriginal.myTemplates : myTemplates;
+    return myOriginal != null ? myOriginal.myTemplates : myTemplates;
   }
 }

@@ -41,14 +41,8 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercent
 
 public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.add.specifier");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.add.specifier");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

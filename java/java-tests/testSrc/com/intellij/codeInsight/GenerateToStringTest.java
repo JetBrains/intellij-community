@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.java.generate.GenerateToStringWorker;
+import org.jetbrains.java.generate.config.ReplacePolicy;
 import org.jetbrains.java.generate.template.TemplateResource;
 
 import java.util.Collections;
@@ -44,7 +45,8 @@ public class GenerateToStringTest extends LightCodeInsightTestCase {
     final PsiClass clazz = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
     assertNotNull(clazz);
     WriteAction.run(() -> {
-      new GenerateToStringWorker(clazz, editor, false).execute(Collections.emptyList(), templateResource);
+      final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, false);
+      worker.execute(Collections.emptyList(), templateResource, ReplacePolicy.getInstance());
     });
     checkResultByFile("/codeInsight/generateToString/after" + getTestName(false) + ".java");
   }

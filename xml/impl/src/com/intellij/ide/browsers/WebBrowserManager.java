@@ -110,30 +110,32 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       state.setAttribute("showHover", "false");
     }
 
-    for (ConfigurableWebBrowser browser : browsers) {
-      Element entry = new Element("browser");
-      entry.setAttribute("id", browser.getId().toString());
-      entry.setAttribute("name", browser.getName());
-      entry.setAttribute("family", browser.getFamily().name());
+    if (!browsers.equals(PREDEFINED_BROWSERS)) {
+      for (ConfigurableWebBrowser browser : browsers) {
+        Element entry = new Element("browser");
+        entry.setAttribute("id", browser.getId().toString());
+        entry.setAttribute("name", browser.getName());
+        entry.setAttribute("family", browser.getFamily().name());
 
-      String path = browser.getPath();
-      if (path != null && !path.equals(browser.getFamily().getExecutionPath())) {
-        entry.setAttribute("path", path);
-      }
-
-      if (!browser.isActive()) {
-        entry.setAttribute("active", "false");
-      }
-
-      BrowserSpecificSettings specificSettings = browser.getSpecificSettings();
-      if (specificSettings != null) {
-        Element settingsElement = new Element("settings");
-        XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
-        if (!JDOMUtil.isEmpty(settingsElement)) {
-          entry.addContent(settingsElement);
+        String path = browser.getPath();
+        if (path != null && !path.equals(browser.getFamily().getExecutionPath())) {
+          entry.setAttribute("path", path);
         }
+
+        if (!browser.isActive()) {
+          entry.setAttribute("active", "false");
+        }
+
+        BrowserSpecificSettings specificSettings = browser.getSpecificSettings();
+        if (specificSettings != null) {
+          Element settingsElement = new Element("settings");
+          XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
+          if (!JDOMUtil.isEmpty(settingsElement)) {
+            entry.addContent(settingsElement);
+          }
+        }
+        state.addContent(entry);
       }
-      state.addContent(entry);
     }
     return state;
   }
@@ -269,7 +271,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   @NotNull
   public List<WebBrowser> getBrowsers() {
-    return Collections.<WebBrowser>unmodifiableList(browsers);
+    return Collections.unmodifiableList(browsers);
   }
 
   @NotNull
@@ -284,7 +286,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   @NotNull
   public List<WebBrowser> getActiveBrowsers() {
-    return getBrowsers(Conditions.<WebBrowser>alwaysTrue(), true);
+    return getBrowsers(Conditions.alwaysTrue(), true);
   }
 
   @NotNull
@@ -338,10 +340,10 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
   }
 
-  @Nullable
   /**
    * @param idOrFamilyName UUID or, due to backward compatibility, browser family name or JS debugger engine ID
    */
+  @Nullable
   public WebBrowser findBrowserById(@Nullable String idOrFamilyName) {
     if (StringUtil.isEmpty(idOrFamilyName)) {
       return null;

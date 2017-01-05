@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class MigrationDialog extends DialogWrapper{
     }
 
     initMapCombobox();
-    myDescriptionTextArea = new MyTextArea("", 3, 40);
+    myDescriptionTextArea = new MyTextArea("", 10, 40);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionTextArea);
     myDescriptionScroll.getViewport().add(myDescriptionTextArea);
     myDescriptionScroll.setBorder(null);

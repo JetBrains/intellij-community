@@ -60,7 +60,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
   private static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
-    new VirtualDirectoryImpl(-42, null, null, null, LocalFileSystem.getInstance()) {
+    new VirtualDirectoryImpl(-42, new VfsData.Segment(), new VfsData.DirectoryData(), null, LocalFileSystem.getInstance()) {
       @Override
       public String toString() {
         return "NULL";
@@ -70,7 +70,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private final VfsData.DirectoryData myData;
   private final NewVirtualFileSystem myFs;
 
-  public VirtualDirectoryImpl(int id, VfsData.Segment segment, VfsData.DirectoryData data, VirtualDirectoryImpl parent, NewVirtualFileSystem fs) {
+  public VirtualDirectoryImpl(int id,
+                              @NotNull VfsData.Segment segment,
+                              @NotNull VfsData.DirectoryData data,
+                              @Nullable VirtualDirectoryImpl parent,
+                              @NotNull NewVirtualFileSystem fs) {
     super(id, segment, parent);
     myData = data;
     myFs = fs;
@@ -550,7 +554,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   static void checkLeaks(KeyFMap newMap) {
-    for (Key key : newMap.getKeys()) {
+    for (Key<?> key : newMap.getKeys()) {
       if (key != null && newMap.get(key) instanceof PsiCachedValue) {
         throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
       }

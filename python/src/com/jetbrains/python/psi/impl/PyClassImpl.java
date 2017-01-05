@@ -51,6 +51,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -235,24 +236,72 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @NotNull
-  public static PyExpression unfoldClass(@NotNull PyExpression expression) {
-    if (expression instanceof PyCallExpression) {
-      PyCallExpression call = (PyCallExpression)expression;
-      final PyExpression callee = call.getCallee();
-      final PyExpression[] arguments = call.getArguments();
-      if (callee != null && "with_metaclass".equals(callee.getName()) && arguments.length > 1) {
-        final PyExpression secondArgument = arguments[1];
-        if (secondArgument != null) {
-          return secondArgument;
-        }
+  public static List<PyExpression> getUnfoldedSuperClassExpressions(@NotNull PyClass pyClass) {
+    return StreamEx
+      .of(pyClass.getSuperClassExpressions())
+      .filter(expression -> !PyKeywordArgument.class.isInstance(expression))
+      .flatCollection(PyClassImpl::unfoldSuperClassExpression)
+      .toList();
+  }
+
+  @NotNull
+  private static List<PyExpression> unfoldSuperClassExpression(@NotNull PyExpression expression) {
+    if (isSixWithMetaclassCall(expression)) {
+      final PyExpression[] arguments = ((PyCallExpression)expression).getArguments();
+      if (arguments.length > 1) {
+        return ContainerUtil.newArrayList(arguments, 1, arguments.length);
+      }
+      else {
+        return Collections.emptyList();
       }
     }
     // Heuristic: unfold Foo[Bar] to Foo for subscription expressions for superclasses
     else if (expression instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
-      return subscriptionExpr.getOperand();
+      return Collections.singletonList(subscriptionExpr.getOperand());
     }
-    return expression;
+
+    return Collections.singletonList(expression);
+  }
+
+  private static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
+    if (expression instanceof PyCallExpression){
+      final PyCallExpression call = (PyCallExpression)expression;
+      final PyExpression callee = call.getCallee();
+      if (callee != null && "with_metaclass".equals(callee.getName())) {
+        // SUPPORTED CASES:
+
+        // import six
+        // six.with_metaclass(...)
+
+        // from six import metaclass
+        // with_metaclass(...)
+        return true;
+      }
+
+      if (callee instanceof PyReferenceExpression) {
+        // SUPPORTED CASES:
+
+        // from six import with_metaclass as w_m
+        // w_m(...)
+
+        final boolean importedWithMetaclass = StreamEx
+          .of(PyResolveUtil.resolveLocally((PyReferenceExpression)callee))
+          .select(PyImportElement.class)
+          .map(PyImportElement::getImportedQName)
+          .nonNull()
+          .map(QualifiedName::getLastComponent)
+          .nonNull()
+          .findAny("with_metaclass"::equals)
+          .isPresent();
+
+        if (importedWithMetaclass) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   @NotNull
@@ -304,22 +353,29 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  public List<String> getSlots(TypeEvalContext context) {
-    final Set<String> result = new LinkedHashSet<>();
-    boolean found = false;
+  @Nullable
+  public List<String> getSlots(@Nullable TypeEvalContext context) {
     final List<String> ownSlots = getOwnSlots();
-    if (ownSlots != null) {
-      found = true;
-      result.addAll(ownSlots);
+    if (ownSlots == null) {
+      return null;
     }
+
+    final Set<String> result = new LinkedHashSet<>(ownSlots);
+
     for (PyClass cls : getAncestorClasses(context)) {
-      final List<String> ancestorSlots = cls.getOwnSlots();
-      if (ancestorSlots != null) {
-        found = true;
-        result.addAll(ancestorSlots);
+      if (PyUtil.isObjectClass(cls)) {
+        continue;
       }
+
+      final List<String> ancestorSlots = cls.getOwnSlots();
+      if (ancestorSlots == null) {
+        return null;
+      }
+
+      result.addAll(ancestorSlots);
     }
-    return found ? new ArrayList<>(result) : null;
+
+    return new ArrayList<>(result);
   }
 
   @Nullable
@@ -520,6 +576,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private static class NameFinder<T extends PyElement> implements Processor<T> {
     private T myResult;
     private final String[] myNames;
+    private int myLastResultIndex = -1;
+    private PyClass myLastVisitedClass = null;
 
     public NameFinder(String... names) {
       myNames = names;
@@ -530,11 +588,26 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return myResult;
     }
 
+    @Nullable
+    protected PyClass getContainingClass(@NotNull T element) {
+      return null;
+    }
+
     public boolean process(T target) {
-      final String targetName = target.getName();
-      for (String name : myNames) {
-        if (name.equals(targetName)) {
-          myResult = target;
+      final PyClass currentClass = getContainingClass(target);
+      // Stop when the current class changes and there was a result
+      if (myLastVisitedClass != null && myLastVisitedClass != currentClass && myResult != null) {
+        return false;
+      }
+
+      myLastVisitedClass = currentClass;
+
+      final int index = ArrayUtil.indexOf(myNames, target.getName());
+      // Do not depend on the order in which elements appear, always try to find the first one
+      if (index >= 0 && (myLastResultIndex == -1 || index < myLastResultIndex)) {
+        myLastResultIndex = index;
+        myResult = target;
+        if (index == 0) {
           return false;
         }
       }
@@ -563,7 +636,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public PyFunction findInitOrNew(boolean inherited, final @Nullable TypeEvalContext context) {
     NameFinder<PyFunction> proc;
     if (isNewStyleClass(context)) {
-      proc = new NameFinder<>(PyNames.INIT, PyNames.NEW);
+      proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW) {
+        @Nullable
+        @Override
+        protected PyClass getContainingClass(@NotNull PyFunction element) {
+          return element.getContainingClass();
+        }
+      };
     }
     else {
       proc = new NameFinder<>(PyNames.INIT);
@@ -1264,12 +1343,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private void fillSuperClassesSwitchingToAst(@NotNull TypeEvalContext context, List<PyClassLikeType> result) {
-    for (PyExpression expression : getSuperClassExpressions()) {
-      context.getType(expression);
-      expression = unfoldClass(expression);
-      if (expression instanceof PyKeywordArgument) {
-        continue;
-      }
+    for (PyExpression expression : getUnfoldedSuperClassExpressions(this)) {
       final PyType type = context.getType(expression);
       PyClassLikeType classLikeType = null;
       if (type instanceof PyClassLikeType) {
@@ -1371,7 +1445,66 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         return attribute.findAssignedValue();
       }
     }
+
+    for (PyExpression expression : getSuperClassExpressions()) {
+      if (isSixWithMetaclassCall(expression)) {
+        final PyExpression[] arguments = ((PyCallExpression)expression).getArguments();
+        if (arguments.length != 0) {
+          return arguments[0];
+        }
+      }
+    }
+
+    final PyDecoratorList decoratorList = getDecoratorList();
+    if (decoratorList != null) {
+      for (PyDecorator decorator : decoratorList.getDecorators()) {
+        if (isSixAddMetaclass(decorator)) {
+          final PyExpression[] arguments = decorator.getArguments();
+          if (arguments.length != 0) {
+            return arguments[0];
+          }
+        }
+      }
+    }
+
     return null;
+  }
+
+  private static boolean isSixAddMetaclass(@NotNull PyDecorator decorator) {
+    final PyExpression callee = decorator.getCallee();
+    if (callee != null && "add_metaclass".equals(callee.getName())) {
+      // SUPPORTED CASES:
+
+      // import six
+      // six.add_metaclass(...)
+
+      // from six import add_metaclass
+      // add_metaclass(...)
+      return true;
+    }
+
+    if (callee instanceof PyReferenceExpression) {
+      // SUPPORTED CASES:
+
+      // from six import add_metaclass as a_m
+      // a_m(...)
+
+      final boolean importedAddMetaclass = StreamEx
+        .of(PyResolveUtil.resolveLocally((PyReferenceExpression)callee))
+        .select(PyImportElement.class)
+        .map(PyImportElement::getImportedQName)
+        .nonNull()
+        .map(QualifiedName::getLastComponent)
+        .nonNull()
+        .findAny("add_metaclass"::equals)
+        .isPresent();
+
+      if (importedAddMetaclass) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @NotNull

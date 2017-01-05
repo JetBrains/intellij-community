@@ -35,15 +35,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.InsertPathAction;
-import com.intellij.ui.JBDefaultTreeCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
@@ -57,7 +52,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -538,8 +536,8 @@ public class CustomizableActionsPanel {
       if (StringUtil.isNotEmpty(path)) {
         Image image = null;
         try {
-          image = ImageLoader.loadFromStream(VfsUtilCore.convertToURL(VfsUtil.pathToUrl(path.replace(File.separatorChar,
-                                                                                                     '/'))).openStream());
+          image = ImageLoader.loadFromStream(VfsUtilCore.convertToURL(VfsUtilCore.pathToUrl(path.replace(File.separatorChar,
+                                                                                                         '/'))).openStream());
         }
         catch (IOException e) {
           LOG.debug(e);
@@ -727,23 +725,20 @@ public class CustomizableActionsPanel {
     @Override
     protected void doOKAction() {
       final ActionManager actionManager = ActionManager.getInstance();
-      TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(Object node) {
-          if (node instanceof DefaultMutableTreeNode) {
-            final DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
-            final Object userObject = mutableNode.getUserObject();
-            if (userObject instanceof Pair) {
-              String actionId = (String)((Pair)userObject).first;
-              final AnAction action = actionManager.getAction(actionId);
-              Icon icon = (Icon)((Pair)userObject).second;
-              action.getTemplatePresentation().setIcon(icon);
-              action.setDefaultIcon(icon == null);
-              editToolbarIcon(actionId, mutableNode);
-            }
+      TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), node -> {
+        if (node instanceof DefaultMutableTreeNode) {
+          final DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
+          final Object userObject = mutableNode.getUserObject();
+          if (userObject instanceof Pair) {
+            String actionId = (String)((Pair)userObject).first;
+            final AnAction action = actionManager.getAction(actionId);
+            Icon icon = (Icon)((Pair)userObject).second;
+            action.getTemplatePresentation().setIcon(icon);
+            action.setDefaultIcon(icon == null);
+            editToolbarIcon(actionId, mutableNode);
           }
-          return true;
         }
+        return true;
       });
       super.doOKAction();
       CustomActionsSchema.setCustomizationSchemaForCurrentProjects();

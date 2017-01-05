@@ -33,17 +33,17 @@ public interface Query<Result> extends Iterable<Result> {
   Collection<Result> findAll();
 
   /**
-   * Get the first result or <code>null</code> if no results have been found.
-   * @return first result of the search or <code>null</code> if no results.
+   * Get the first result or {@code null} if no results have been found.
+   * @return first result of the search or {@code null} if no results.
    */
   @Nullable
   Result findFirst();
 
   /**
-   * Process search results one-by-one. All the results will be subsequently fed to a <code>consumer</code> passed.
+   * Process search results one-by-one. All the results will be subsequently fed to a {@code consumer} passed.
    * @param consumer - a processor search results should be fed to.
-   * @return <code>true</code> if the search was completed normally,
-   *         <code>false</code> if the occurrence processing was cancelled by the processor.
+   * @return {@code true} if the search was completed normally,
+   *         {@code false} if the occurrence processing was cancelled by the processor.
    */
   boolean forEach(@NotNull Processor<Result> consumer);
 

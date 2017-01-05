@@ -64,7 +64,8 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
 
   @Override
   public boolean isPhysical() {
-    return getContainingFile().isPhysical();
+    PsiFile file = getContainingFile();
+    return file != null && file.isPhysical();
   }
 
   @Override

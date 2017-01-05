@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java conditional expression (for example, <code>a ? 1 : 2</code>.
+ * Represents a Java conditional expression (for example, {@code a ? 1 : 2}.
  */
 public interface PsiConditionalExpression extends PsiExpression {
   /**

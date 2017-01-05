@@ -607,10 +607,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
           return true;
         }
       }
-      catch (NoSuchFieldException e) {
-        LOG.error(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (NoSuchFieldException | IllegalAccessException e) {
         LOG.error(e);
       }
     }

@@ -352,6 +352,7 @@ public class GitImpl implements Git {
                                        @NotNull String newName,
                                        @NotNull GitLineHandlerListener... listeners) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setSilent(false);
     h.setStdoutSuppressed(false);
     h.addParameters("-m", currentName, newName);
     return run(h);
@@ -521,6 +522,30 @@ public class GitImpl implements Git {
   public GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
     h.addParameters("add", name, url);
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult removeRemote(@NotNull GitRepository repository, @NotNull GitRemote remote) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("remove", remote.getName());
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult renameRemote(@NotNull GitRepository repository, @NotNull String oldName, @NotNull String newName) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("rename", oldName, newName);
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult setRemoteUrl(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String newUrl) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("set-url", remoteName, newUrl);
     return run(h);
   }
 

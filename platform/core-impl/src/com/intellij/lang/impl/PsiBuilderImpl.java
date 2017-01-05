@@ -44,6 +44,7 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,6 +99,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private Map<Key, Object> myUserData;
   private IElementType myCachedTokenType;
+
+  private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<LazyParseableToken>();
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     @NotNull
@@ -536,7 +539,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       int startOffset = getStartOffset() - myBuilder.myOffset;
       int endOffset = isDone ? getEndOffset() - myBuilder.myOffset : myBuilder.getCurrentOffset();
       CharSequence text = originalText.subSequence(startOffset, endOffset);
-      return isDone ? text.toString() : text + "...";
+      return isDone ? text.toString() : text + "\u2026";
     }
   }
 
@@ -557,10 +560,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private int myTokenStart;
     private int myTokenEnd;
     private int myHC = -1;
+    private StartMarker myParentNode;
 
     public void clean() {
       myBuilder = null;
       myHC = -1;
+      myParentNode = null;
     }
 
     @Override
@@ -614,6 +619,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public IElementType getTokenType() {
       return myTokenType;
     }
+
+    void initToken(@NotNull IElementType type,
+                   @NotNull PsiBuilderImpl builder,
+                   StartMarker parent,
+                   int start,
+                   int end) {
+      this.myParentNode = parent;
+      this.myBuilder = builder;
+      this.myTokenType = type;
+      this.myTokenStart = start;
+      this.myTokenEnd = end;
+    }
   }
 
   private static class TokenNode extends Token implements LighterASTTokenNode {
@@ -625,16 +642,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
     private MyTreeStructure myParentStructure;
-    private StartMarker myParentNode;
     private FlyweightCapableTreeStructure<LighterASTNode> myParsed;
     private int myStartIndex;
     private int myEndIndex;
 
     @Override
     public void clean() {
+      myBuilder.myChameleonCache.remove(getStartOffset());
       super.clean();
       myParentStructure = null;
-      myParentNode = null;
       myParsed = null;
     }
 
@@ -853,10 +869,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Override
   public int rawTokenIndex() {
     return myCurrentLexeme;
-  }
-
-  public int rawTokenOffset(int tokenIndex) {
-    return myLexStarts[tokenIndex];
   }
 
   @Override
@@ -1675,6 +1687,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (node instanceof ProductionMarker) {
         return ((ProductionMarker)node).myParent;
       }
+      if (node instanceof Token) {
+        return ((Token)node).myParentNode;
+      }
       throw new UnsupportedOperationException("Unknown node type: " + node);
     }
 
@@ -1693,7 +1708,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         final FlyweightCapableTreeStructure<LighterASTNode> tree = ((LazyParseableToken)item).parseContents();
         final LighterASTNode root = tree.getRoot();
         if (root instanceof ProductionMarker) {
-          ((ProductionMarker)root).myParent = ((LazyParseableToken)item).myParentNode;
+          ((ProductionMarker)root).myParent = ((Token)item).myParentNode;
         }
         return tree.getChildren(tree.prepareForGetChildren(root), into);  // todo: set offset shift for kids?
       }
@@ -1780,24 +1795,45 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return;
       }
 
-      final Token lexeme;
-      if (type instanceof ILightLazyParseableElementType) {
-        lexeme = myLazyPool.alloc();
-        LazyParseableToken lazyParseableToken = (LazyParseableToken)lexeme;
-        lazyParseableToken.myParentStructure = this;
-        lazyParseableToken.myParentNode = parent;
-        lazyParseableToken.myStartIndex = startLexemeIndex;
-        lazyParseableToken.myEndIndex = endLexemeIndex;
-      }
-      else {
-        lexeme = myPool.alloc();
-      }
-      lexeme.myBuilder = builder;
-      lexeme.myTokenType = type;
-      lexeme.myTokenStart = start;
-      lexeme.myTokenEnd = end;
+      Token lexeme = obtainToken(type, builder, startLexemeIndex, endLexemeIndex, parent, start, end);
       ensureCapacity();
       nodes[count++] = lexeme;
+    }
+
+    @NotNull
+    private Token obtainToken(@NotNull IElementType type,
+                              @NotNull PsiBuilderImpl builder,
+                              int startLexemeIndex,
+                              int endLexemeIndex, StartMarker parent, int start, int end) {
+      if (type instanceof ILightLazyParseableElementType) {
+        return obtainLazyToken(type, builder, startLexemeIndex, endLexemeIndex, parent, start, end);
+      }
+
+      Token lexeme = myPool.alloc();
+      lexeme.initToken(type, builder, parent, start, end);
+      return lexeme;
+    }
+
+    @NotNull
+    private Token obtainLazyToken(@NotNull IElementType type,
+                                  @NotNull PsiBuilderImpl builder,
+                                  int startLexemeIndex,
+                                  int endLexemeIndex, StartMarker parent, int start, int end) {
+      int startInFile = start + builder.myOffset;
+      LazyParseableToken token = builder.myChameleonCache.get(startInFile);
+      if (token == null) {
+        token = myLazyPool.alloc();
+        token.myStartIndex = startLexemeIndex;
+        token.myEndIndex = endLexemeIndex;
+        token.initToken(type, builder, parent, start, end);
+        builder.myChameleonCache.put(startInFile, token);
+      } else {
+        if (token.myBuilder != builder || token.myStartIndex != startLexemeIndex || token.myEndIndex != endLexemeIndex) {
+          throw new AssertionError("Wrong chameleon cached");
+        }
+      }
+      token.myParentStructure = this;
+      return token;
     }
 
     @NotNull
@@ -1854,7 +1890,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @NotNull
-  private TreeElement createLeaf(@NotNull IElementType type, final int start, final int end) {
+  protected TreeElement createLeaf(@NotNull IElementType type, final int start, final int end) {
     CharSequence text = myCharTable.intern(myText, start, end);
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(text);

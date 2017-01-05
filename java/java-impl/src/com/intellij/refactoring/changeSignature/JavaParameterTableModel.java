@@ -32,6 +32,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,8 +89,9 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     if (paramType != null) {
       paramType.addImportsTo(paramTypeCodeFragment);
     }
+    String value = parameterInfo.getDefaultValue();
     PsiExpressionCodeFragment defaultValueCodeFragment =
-      f.createExpressionCodeFragment(parameterInfo.getDefaultValue(), myDefaultValueContext, null, true);
+      f.createExpressionCodeFragment(ObjectUtils.notNull(value, ""), myDefaultValueContext, null, true);
     defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
     return new ParameterTableModelItemBase<ParameterInfoImpl>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
@@ -98,10 +100,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
         try {
           return paramTypeCodeFragment.getType() instanceof PsiEllipsisType;
         }
-        catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-          return false;
-        }
-        catch (PsiTypeCodeFragment.NoTypeException e) {
+        catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
           return false;
         }
       }
@@ -133,10 +132,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     try {
       return ((PsiTypeCodeFragment)((JavaParameterTableModel)table.getModel()).getItems().get(row).typeCodeFragment).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
       return null;
     }
   }

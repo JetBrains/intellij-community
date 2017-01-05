@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -70,9 +71,11 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     Collections.sort(names, (o1, o2) -> StringUtil.compare(o1.first, o2.first, true));
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     final List<Pair<String, Boolean>> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
-    final HashSet<String> onDemand = new HashSet<>();
-    ImportHelper.collectOnDemandImports(sortedNames, onDemand, settings);
-    onDemand.addAll(demandedForNested);
+    final Map<String, Boolean> onDemand = new HashMap<>();
+    ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand);
+    for (String s : demandedForNested) {
+      onDemand.put(s, false);
+    }
     final Set<String> imported = new HashSet<>();
     final List<String> imports = new ArrayList<>();
     for (Pair<String, Boolean> pair : sortedNames) {
@@ -81,7 +84,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
       if (imported.contains(packageName) || imported.contains(qName)) {
         continue;
       }
-      if (onDemand.contains(packageName)) {
+      if (onDemand.containsKey(packageName)) {
         imported.add(packageName);
         imports.add("<?import " + packageName + ".*?>");
       } else {

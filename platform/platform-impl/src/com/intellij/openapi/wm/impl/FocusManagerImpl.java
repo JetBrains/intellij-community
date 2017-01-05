@@ -55,6 +55,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
@@ -433,6 +434,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public void dispose() {
     myForcedFocusRequestsAlarm.cancelAllRequests();
     myFocusedComponentAlarm.cancelAllRequests();
+    for (FurtherRequestor requestor : myValidFurtherRequestors) {
+      Disposer.dispose(requestor);
+    }
+    myValidFurtherRequestors.clear();
   }
 
   private class KeyProcessorContext implements KeyEventProcessor.Context {
@@ -486,6 +491,20 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         }
       }
     });
+  }
+
+  @Override
+  public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
+    AtomicBoolean immediate = new AtomicBoolean(true);
+    doWhenFocusSettlesDown(() -> {
+      if (immediate.get()) {
+        runnable.run();
+        return;
+      }
+
+      ApplicationManager.getApplication().invokeLater(() -> doWhenFocusSettlesDown(runnable, modality), modality);
+    });
+    immediate.set(false);
   }
 
   private void restartIdleAlarm() {
@@ -721,7 +740,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   @Override
-  public void typeAheadUntil(@NotNull ActionCallback callback) {
+  public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
     if (!isTypeaheadEnabled()) return;
 
     final long currentTime = System.currentTimeMillis();
@@ -752,7 +771,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
                                             new Exception() {
                                               @Override
                                               public String getMessage() {
-                                                return "Time: " + (System.currentTimeMillis() - currentTime);
+                                                return "Time: " + (System.currentTimeMillis() - currentTime) + "; cause: " + cause;
                                               }
                                             },
                                             true).doWhenProcessed(() -> {

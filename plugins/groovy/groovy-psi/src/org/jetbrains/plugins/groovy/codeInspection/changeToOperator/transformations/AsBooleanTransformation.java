@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
@@ -30,12 +31,9 @@ class AsBooleanTransformation extends UnaryTransformation {
   public static final String NEGATION = mLNOT.toString();
   public static final String DOUBLE_NEGATION = NEGATION + NEGATION;
 
-  public AsBooleanTransformation() {
-    super(null);
-  }
-
+  @NotNull
   @Override
-  protected GrExpression getExpandedElement(GrMethodCallExpression callExpression) {
+  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
     PsiElement parent = callExpression.getParent();
     if (isNegation(parent)) {
       return (GrExpression)parent;
@@ -46,7 +44,7 @@ class AsBooleanTransformation extends UnaryTransformation {
   }
 
   @Override
-  @Nullable 
+  @Nullable
   protected String getPrefix(MethodCallData methodInfo, OptionsData optionsData) {
     if (methodInfo.isNegated()) {
       return NEGATION;
@@ -64,5 +62,5 @@ class AsBooleanTransformation extends UnaryTransformation {
 
   private static boolean isImplicitlyBoolean(MethodCallData methodInfo) {
     return methodInfo.getBackingElement().getParent() instanceof GrIfStatement;
-  } 
+  }
 }

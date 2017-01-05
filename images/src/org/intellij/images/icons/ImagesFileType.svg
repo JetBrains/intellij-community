@@ -1,0 +1,9 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>ImagesFileType</title>
+  <g>
+    <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+    <path d="M7,0V5H2V15H13V0H7Zm5,14H3V6h9v8Z" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+    <path d="M11,13H4V11s2.06361-1.89568,3-1a9.5647,9.5647,0,0,0,4,2v1Z" fill="#62b543" opacity="0.8"/>
+    <path d="M4,7v3S6.06348,8.10449,7,9a9.56218,9.56218,0,0,0,4,2V7H4ZM9.5,9A0.5,0.5,0,1,1,10,8.5,0.49987,0.49987,0,0,1,9.5,9Z" fill="#40b6e0" opacity="0.8"/>
+  </g>
+</svg>

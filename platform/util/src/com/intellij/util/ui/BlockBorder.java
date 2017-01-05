@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,20 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.Gray;
 
-import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author Eugene Belyaev
- */
+/** @deprecated ancient HiDPI-unfriendly component, to be removed in IDEA 2018 */
+@SuppressWarnings({"UseDPIAwareInsets", "UseJBColor", "unused", "SpellCheckingInspection"})
 public class BlockBorder implements Border {
-
   private static final Insets DEFAULT_INSETS = new Insets(1, 1, 3, 3);
-
   private static final Color DEFAULT_SHADE1 = Gray._203;
   private static final Color DEFAULT_SHADE2 = Gray._238;
-
   private static final Insets EMPTY = new Insets(0, 0, 0, 0);
+
   private Insets myInsets;
   private Insets myOuterMargin;
   private Color myBoundsColor = Color.GRAY;
-
   private Color myShade1;
   private Color myShade2;
 
@@ -109,25 +104,5 @@ public class BlockBorder implements Border {
   @Override
   public Insets getBorderInsets(Component component) {
     return (Insets)myInsets.clone();
-  }
-
-  public static void main(String[] args) {
-    final JFrame jFrame = new JFrame();
-
-    jFrame.getContentPane().setLayout(new BorderLayout());
-    jFrame.getContentPane().setBackground(Color.white);
-
-    final JPanel jPanel = new JPanel(new BorderLayout());
-    jPanel.setBackground(Color.white);
-    jPanel.setOpaque(true);
-
-    jPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10),
-                                                        new BlockBorder(new Insets(5, 5, 5, 5), new Insets(5, 5, 5, 5))));
-    jFrame.getContentPane().add(jPanel);
-
-    jFrame.setBounds(100, 100, 200, 200);
-
-
-    jFrame.setVisible(true);
   }
 }

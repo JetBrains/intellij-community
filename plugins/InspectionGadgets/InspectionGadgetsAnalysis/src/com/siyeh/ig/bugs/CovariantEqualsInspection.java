@@ -50,7 +50,9 @@ public class CovariantEqualsInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      // note: no call to super
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
       final String name = method.getName();
       if (!HardcodedMethodConstants.EQUALS.equals(name)) {
         return;
@@ -74,7 +76,7 @@ public class CovariantEqualsInspection extends BaseInspection {
           return;
         }
       }
-      if (SuperMethodsSearch.search(method, null, true, false).findFirst() != null) {
+      if (MethodUtils.hasSuper(method)) {
         return;
       }
       registerMethodError(method);

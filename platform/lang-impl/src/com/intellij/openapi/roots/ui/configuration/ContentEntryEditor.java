@@ -39,6 +39,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -287,26 +288,34 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     return folder != null ? folder.getRootType() : null;
   }
 
-  public boolean isExcludedOrUnderExcludedDirectory(@NotNull final VirtualFile file) {
-    Project project = getModel().getProject();
-    final ContentEntry contentEntry = getContentEntry();
+  public boolean isExcludedOrUnderExcludedDirectory(@NotNull VirtualFile file) {
+    ModifiableRootModel model = getModel();
+    if (model == null) {
+      throw new AssertionError(getClass() + ".getModel() returned null unexpectedly");
+    }
+    Project project = model.getProject();
+    ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
     }
     return isExcludedOrUnderExcludedDirectory(project, contentEntry, file);
   }
 
-  public static boolean isExcludedOrUnderExcludedDirectory(@NotNull Project project,
+  public static boolean isExcludedOrUnderExcludedDirectory(@Nullable Project project,
                                                            @NotNull ContentEntry entry,
                                                            @NotNull VirtualFile file) {
-    List<VirtualFile> excludedFiles = ContainerUtil.newArrayList(entry.getExcludeFolderFiles());
-    for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
-      ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
-    }
-    for (VirtualFile excludedFile : excludedFiles) {
-      if (VfsUtilCore.isAncestor(excludedFile, file, false)) {
-        return true;
+    Set<VirtualFile> excludedFiles = ContainerUtil.newHashSet(entry.getExcludeFolderFiles());
+    if (project != null) {
+      for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
+        ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
       }
+    }
+    Set<VirtualFile> sourceRoots = ContainerUtil.set(entry.getSourceFolderFiles());
+    VirtualFile parent = file;
+    while (parent != null) {
+      if (excludedFiles.contains(parent)) return true;
+      if (sourceRoots.contains(parent)) return false;
+      parent = parent.getParent();
     }
     return false;
   }

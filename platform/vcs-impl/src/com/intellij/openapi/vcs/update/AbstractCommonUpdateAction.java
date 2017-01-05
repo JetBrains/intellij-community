@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -394,12 +394,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private void putExceptions(final HotfixData key, @NotNull final List<VcsException> list) {
       if (list.isEmpty()) return;
-      List<VcsException> exceptionList = myGroupedExceptions.get(key);
-      if (exceptionList == null) {
-        exceptionList = new ArrayList<>();
-        myGroupedExceptions.put(key, exceptionList);
-      }
-      exceptionList.addAll(list);
+      myGroupedExceptions.computeIfAbsent(key, k -> new ArrayList<>()).addAll(list);
     }
 
     private void doVfsRefresh() {

@@ -83,9 +83,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
     if (communication != null) {
       if (qualifier != null) {
-        return new PydevConsoleReference(this, communication, qualifier.getText() + ".");
+        return new PydevConsoleReference(this, communication, qualifier.getText() + ".", context.allowRemote());
       }
-      return new PydevConsoleReference(this, communication, "");
+      return new PydevConsoleReference(this, communication, "", context.allowRemote());
     }
 
     if (qualifier != null) {

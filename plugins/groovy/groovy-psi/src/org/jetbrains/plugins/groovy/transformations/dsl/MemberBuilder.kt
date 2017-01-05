@@ -24,4 +24,7 @@ class MemberBuilder(val context: TransformationContext) {
     return GrLightMethodBuilder(context.manager, name).apply(builder)
   }
 
+  fun constructor(builder: GrLightMethodBuilder.() -> Unit): GrLightMethodBuilder {
+    return GrLightMethodBuilder(context.codeClass).apply(builder)
+  }
 }

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
@@ -42,7 +41,7 @@ import java.util.List;
  * if a and b:
  *   #stuff here
  */
-public class PyJoinIfIntention extends BaseIntentionAction {
+public class PyJoinIfIntention extends PyBaseIntentionAction {
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.join.if");
@@ -79,7 +78,7 @@ public class PyJoinIfIntention extends BaseIntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyIfStatement expression =
           PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
     PyIfStatement ifStatement = getIfStatement(expression);

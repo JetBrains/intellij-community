@@ -65,7 +65,11 @@ public class PyClassMROTest extends PyTestCase {
   }
 
   public void testSixWithMetaclass() {
-    assertMRO(getClass("C"), "B", "object");
+    assertMRO(getClass("C"), "B", "D", "object");
+  }
+
+  public void testSixWithMetaclassWithAs() {
+    assertMRO(getClass("C"), "B", "D", "object");
   }
 
   // PY-4183

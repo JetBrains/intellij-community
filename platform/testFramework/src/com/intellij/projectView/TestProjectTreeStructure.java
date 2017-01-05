@@ -15,6 +15,7 @@
  */
 package com.intellij.projectView;
 
+import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.openapi.Disposable;
@@ -25,7 +26,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import org.junit.Assert;
 
-public class TestProjectTreeStructure extends AbstractProjectTreeStructure implements Disposable {
+public class TestProjectTreeStructure extends AbstractProjectTreeStructure implements Disposable, ProjectViewSettings {
+  private boolean myShowExcludedFiles = true;
   protected boolean myShowMembers = false;
   protected boolean myHideEmptyMiddlePackages;
   protected boolean myFlattenPackages;
@@ -75,6 +77,11 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   }
 
   @Override
+  public boolean isShowExcludedFiles() {
+    return myShowExcludedFiles;
+  }
+
+  @Override
   public boolean isShowModules() {
     return true;
   }
@@ -89,6 +96,10 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
 
   public void setFlattenPackages(boolean flattenPackages) {
     myFlattenPackages = flattenPackages;
+  }
+
+  public void hideExcludedFiles() {
+    myShowExcludedFiles = false;
   }
 
   public void setShowLibraryContents(boolean showLibraryContents) {

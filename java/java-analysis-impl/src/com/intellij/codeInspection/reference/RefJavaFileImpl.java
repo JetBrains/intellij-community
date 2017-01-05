@@ -20,11 +20,25 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiJavaFile;
 
 public class RefJavaFileImpl extends RefFileImpl {
+  private final RefModule myRefModule;
+
   RefJavaFileImpl(PsiJavaFile elem, RefManager manager) {
     super(elem, manager);
+    myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(elem));
     ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(elem.getPackageName())).add(this);
+  }
+
+  @Override
+  public void buildReferences() {
+    getRefManager().fireBuildReferences(this);
+  }
+
+  @Override
+  public RefModule getModule() {
+    return myRefModule;
   }
 }

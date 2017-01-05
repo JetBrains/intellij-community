@@ -36,13 +36,13 @@
   <item name="org.jdom.Element Element(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name="org.jdom.Element java.util.List getChildren()">
+  <item name="org.jdom.Element java.util.List&lt;org.jdom.Element&gt; getChildren()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="org.jdom.Element java.util.List getChildren(java.lang.String)">
+  <item name="org.jdom.Element java.util.List&lt;org.jdom.Element&gt; getChildren(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="org.jdom.Element java.util.List getChildren(java.lang.String, org.jdom.Namespace)">
+  <item name="org.jdom.Element java.util.List&lt;org.jdom.Element&gt; getChildren(java.lang.String, org.jdom.Namespace)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name='org.jdom.Element java.util.List&lt;org.jdom.Content&gt; getContent()'>

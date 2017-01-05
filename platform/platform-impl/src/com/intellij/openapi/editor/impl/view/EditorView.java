@@ -22,9 +22,12 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.event.VisibleAreaEvent;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
@@ -35,7 +38,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
 import java.text.Bidi;
 
@@ -45,7 +51,7 @@ import java.text.Bidi;
  * 
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
-public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
+public class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
   private static Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
@@ -75,7 +81,6 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   private final Object myLock = new Object();
   
   public EditorView(EditorImpl editor) {
-    setFontRenderContext();
     myEditor = editor;
     myDocument = editor.getDocument();
     
@@ -85,7 +90,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     myTextLayoutCache = new TextLayoutCache(this);
     myLogicalPositionCache = new LogicalPositionCache(this);
     myTabFragment = new TabFragment(this);
-    
+
+    myEditor.getContentComponent().addHierarchyListener(this);
+    myEditor.getScrollingModel().addVisibleAreaListener(this);
+
     Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
@@ -121,8 +129,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
   @Override
   public void dispose() {
+    myEditor.getScrollingModel().removeVisibleAreaListener(this);
+    myEditor.getContentComponent().removeHierarchyListener(this);
   }
 
+  @Override
+  public void hierarchyChanged(HierarchyEvent e) {
+    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getComponent().isShowing()) {
+      checkFontRenderContext();
+    }
+  }
+
+  @Override
+  public void visibleAreaChanged(VisibleAreaEvent e) {
+    checkFontRenderContext();
+  }
   public int yToVisualLine(int y) {
     return myMapper.yToVisualLine(y);
   }
@@ -256,6 +277,22 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     return mySizeManager.getPreferredSize();
   }
 
+  /**
+   * Returns preferred pixel width of the lines in range.
+   * <p>
+   * This method is currently used only with "idea.true.smooth.scrolling" experimental option.
+   *
+   * @param beginLine begin visual line (inclusive)
+   * @param endLine   end visual line (exclusive), may be greater than the actual number of lines
+   * @return preferred pixel width
+   */
+  public int getPreferredWidth(int beginLine, int endLine) {
+    assertIsDispatchThread();
+    assert !myEditor.isPurePaintingMode();
+    myEditor.getSoftWrapModel().prepareToMapping();
+    return mySizeManager.getPreferredWidth(beginLine, endLine);
+  }
+
   public int getPreferredHeight() {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
@@ -383,6 +420,13 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     }
   }
 
+  public int getNominalLineHeight() {
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myLineHeight + myTopOverhang + myBottomOverhang;
+    }
+  }
+
   public int getLineHeight() {
     synchronized (myLock) {
       initMetricsIfNeeded();
@@ -455,8 +499,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
     int ascent = FontLayoutService.getInstance().getAscent(fm);
     myAscent = (int)Math.ceil(ascent * verticalScalingFactor);
-    myTopOverhang = Math.max(ascent - myAscent, 0);
-    myBottomOverhang = Math.max(fontMetricsHeight - ascent - myLineHeight + myAscent, 0);
+    myTopOverhang = ascent - myAscent;
+    myBottomOverhang = fontMetricsHeight - ascent - myLineHeight + myAscent;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
@@ -473,12 +517,15 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   }
 
   private void setFontRenderContext() {
-    Graphics2D g = FontInfo.createReferenceGraphics();
-    try {
-      myFontRenderContext = g.getFontRenderContext();
-    }
-    finally {
-      g.dispose();
+    JComponent component = myEditor.getContentComponent();
+    myFontRenderContext = FontInfo.getFontRenderContext(component);
+  }
+
+  private void checkFontRenderContext() {
+    FontRenderContext oldContext = myFontRenderContext;
+    setFontRenderContext();
+    if (!myFontRenderContext.equals(oldContext)) {
+      myTextLayoutCache.resetToDocumentSize(false);
     }
   }
 
@@ -506,7 +553,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   int getBidiFlags() {
     return myBidiFlags;
   }
-  
+
   private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
@@ -547,6 +594,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   }
 
   private void assertNotInBulkMode() {
-    if (myDocument.isInBulkUpdate()) throw new IllegalStateException("Current operation is not available in bulk mode");
+    if (myDocument instanceof DocumentImpl) ((DocumentImpl)myDocument).assertNotInBulkUpdate();
+    else if (myDocument.isInBulkUpdate()) throw new IllegalStateException("Current operation is not available in bulk mode");
   }
 }

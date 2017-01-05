@@ -19,6 +19,7 @@ package com.intellij.ide.hierarchy;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -35,7 +36,7 @@ public final class ViewClassHierarchyAction extends ChangeViewTypeActionBase {
   }
 
   @Override
-  public final void update(final AnActionEvent event) {
+  public final void update(@NotNull final AnActionEvent event) {
     super.update(event);
     final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
     event.getPresentation().setEnabled(browser != null && !browser.isInterface());

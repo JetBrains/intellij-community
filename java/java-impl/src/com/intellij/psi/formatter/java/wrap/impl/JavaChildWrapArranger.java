@@ -53,8 +53,8 @@ public class JavaChildWrapArranger {
    * Provides implementation of {@link JavaWrapManager#arrangeChildWrap} method.
    *
    * @param child                   child node which {@link Wrap wrap} is to be defined
-   * @param parent                  direct or indirect parent of the given <code>'child'</code> node. Defines usage context
-   *                                of <code>'child'</code> node processing
+   * @param parent                  direct or indirect parent of the given {@code 'child'} node. Defines usage context
+   *                                of {@code 'child'} node processing
    * @param settings                code style settings to use during wrap definition
    * @param suggestedWrap           wrap suggested to use by clients of current class. I.e. those clients offer wrap to
    *                                use based on their information about current processing state. However, it's possible
@@ -64,8 +64,8 @@ public class JavaChildWrapArranger {
    * @param reservedWrapsProvider   reserved {@code 'element type -> wrap instance'} mappings provider. <b>Note:</b> this
    *                                argument is considered to be a part of legacy heritage and is intended to be removed as
    *                                soon as formatting code refactoring is done
-   * @return                        wrap to use for the given <code>'child'</code> node if it's possible to define the one;
-   *                                <code>null</code> otherwise
+   * @return                        wrap to use for the given {@code 'child'} node if it's possible to define the one;
+   *                                {@code null} otherwise
    */
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable

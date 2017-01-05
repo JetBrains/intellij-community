@@ -39,7 +39,7 @@ public class JavaLightTreeUtil {
   public static List<LighterASTNode> getArgList(@NotNull LighterAST tree, @Nullable LighterASTNode call) {
     LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
     LighterASTNode exprList = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, EXPRESSION_LIST);
-    return exprList == null ? null : LightTreeUtil.getChildrenOfType(tree, exprList, ElementType.EXPRESSION_BIT_SET);
+    return exprList == null ? null : getExpressionChildren(tree, exprList);
   }
 
   @Nullable
@@ -47,5 +47,15 @@ public class JavaLightTreeUtil {
   public static String getNameIdentifierText(@NotNull LighterAST tree, @Nullable LighterASTNode idOwner) {
     LighterASTNode id = LightTreeUtil.firstChildOfType(tree, idOwner, JavaTokenType.IDENTIFIER);
     return id != null ? RecordUtil.intern(tree.getCharTable(), id) : null;
+  }
+
+  @NotNull
+  public static List<LighterASTNode> getExpressionChildren(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+    return LightTreeUtil.getChildrenOfType(tree, node, ElementType.EXPRESSION_BIT_SET);
+  }
+
+  @Nullable
+  public static LighterASTNode findExpressionChild(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
+    return LightTreeUtil.firstChildOfType(tree, node, ElementType.EXPRESSION_BIT_SET);
   }
 }

@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>com.intellij.properties</id>
   <name>Properties Support</name>
   <depends>com.intellij.modules.xml</depends>
@@ -120,6 +120,9 @@
     <properties.implicitPropertyUsageProvider implementation="com.intellij.codeInspection.unused.LoggerConfigPropertyUsageProvider"/>
 
     <stripTrailingSpacesFilterFactory implementation="com.intellij.lang.properties.formatting.PropertiesStripTrailingSpacesFilterFactory"/>
+
+    <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
+    <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
   </extensions>
 
   <project-components>

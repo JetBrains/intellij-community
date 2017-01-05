@@ -8,6 +8,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +44,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstalledPackagesPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(InstalledPackagesPanel.class);
+
+  private static final String LOADING_PACKAGES_LIST_TITLE = "Loading Packages List";
+
   private final AnActionButton myUpgradeButton;
   protected final AnActionButton myInstallButton;
   private final AnActionButton myUninstallButton;
@@ -208,19 +215,20 @@ public class InstalledPackagesPanel extends JPanel {
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
+          ModalityState modalityState = ModalityState.current();
           final PackageManagementService.Listener listener = new PackageManagementService.Listener() {
             @Override
             public void operationStarted(final String packageName) {
-              UIUtil.invokeLaterIfNeeded(() -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 myPackagesTable.setPaintBusy(true);
                 myCurrentlyInstalling.add(packageName);
-              });
+              }, modalityState);
             }
 
             @Override
             public void operationFinished(final String packageName,
                                           @Nullable final PackageManagementService.ErrorDescription errorDescription) {
-              UIUtil.invokeLaterIfNeeded(() -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 myPackagesTable.clearSelection();
                 updatePackages(selPackageManagementService);
                 myPackagesTable.setPaintBusy(false);
@@ -236,7 +244,7 @@ public class InstalledPackagesPanel extends JPanel {
                 if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
                   upgradePostponedPackages();
                 }
-              });
+              }, modalityState);
             }
           };
           PackageManagementServiceEx serviceEx = getServiceEx();
@@ -318,16 +326,20 @@ public class InstalledPackagesPanel extends JPanel {
     final List<InstalledPackage> packages = getSelectedPackages();
     final PackageManagementService selPackageManagementService = myPackageManagementService;
     if (selPackageManagementService != null) {
+      ModalityState modalityState = ModalityState.current();
       PackageManagementService.Listener listener = new PackageManagementService.Listener() {
         @Override
         public void operationStarted(String packageName) {
-          UIUtil.invokeLaterIfNeeded(() -> myPackagesTable.setPaintBusy(true));
+          ApplicationManager.getApplication().invokeLater(
+            () -> myPackagesTable.setPaintBusy(true),
+            modalityState
+          );
         }
 
         @Override
         public void operationFinished(final String packageName,
                                       @Nullable final PackageManagementService.ErrorDescription errorDescription) {
-          UIUtil.invokeLaterIfNeeded(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             myPackagesTable.clearSelection();
             updatePackages(selPackageManagementService);
             myPackagesTable.setPaintBusy(false);
@@ -343,7 +355,7 @@ public class InstalledPackagesPanel extends JPanel {
               myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>", "Uninstall Packages Failed",
                                            errorDescription);
             }
-          });
+          }, modalityState);
         }
       };
       myPackageManagementService.uninstallPackages(packages, listener);
@@ -389,42 +401,45 @@ public class InstalledPackagesPanel extends JPanel {
 
   public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
     onUpdateStarted();
-    final Application application = ApplicationManager.getApplication();
-    application.executeOnPooledThread(() -> {
-      Collection<InstalledPackage> packages = Lists.newArrayList();
-      try {
-        packages = packageManagementService.getInstalledPackages();
-      }
-      catch (IOException e) {
-        LOG.warn(e.getMessage()); // do nothing, we already have an empty list
-      }
-      finally {
-        final Collection<InstalledPackage> finalPackages = packages;
-
-        final Map<String, RepoPackage> cache = buildNameToPackageMap(packageManagementService.getAllPackagesCached());
-        final boolean shouldFetchLatestVersionsForOnlyInstalledPackages = shouldFetchLatestVersionsForOnlyInstalledPackages();
-        if (cache.isEmpty()) {
-          if (!shouldFetchLatestVersionsForOnlyInstalledPackages) {
-            refreshLatestVersions(packageManagementService);
-          }
+    ProgressManager progressManager = ProgressManager.getInstance();
+    progressManager.run(new Task.Backgroundable(myProject, LOADING_PACKAGES_LIST_TITLE, true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        Collection<InstalledPackage> packages = Lists.newArrayList();
+        try {
+          packages = packageManagementService.getInstalledPackages();
         }
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (packageManagementService == myPackageManagementService) {
-            myPackagesTableModel.getDataVector().clear();
-            for (InstalledPackage pkg : finalPackages) {
-              RepoPackage repoPackage = cache.get(pkg.getName());
-              final String version = repoPackage != null ? repoPackage.getLatestVersion() : null;
-              myPackagesTableModel
-                .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
-            }
-            if (!cache.isEmpty()) {
-              onUpdateFinished();
-            }
-            if (shouldFetchLatestVersionsForOnlyInstalledPackages) {
-              setLatestVersionsForInstalledPackages();
+        catch (IOException e) {
+          LOG.warn(e.getMessage()); // do nothing, we already have an empty list
+        }
+        finally {
+          final Collection<InstalledPackage> finalPackages = packages;
+
+          final Map<String, RepoPackage> cache = buildNameToPackageMap(packageManagementService.getAllPackagesCached());
+          final boolean shouldFetchLatestVersionsForOnlyInstalledPackages = shouldFetchLatestVersionsForOnlyInstalledPackages();
+          if (cache.isEmpty()) {
+            if (!shouldFetchLatestVersionsForOnlyInstalledPackages) {
+              refreshLatestVersions(packageManagementService);
             }
           }
-        });
+          UIUtil.invokeLaterIfNeeded(() -> {
+            if (packageManagementService == myPackageManagementService) {
+              myPackagesTableModel.getDataVector().clear();
+              for (InstalledPackage pkg : finalPackages) {
+                RepoPackage repoPackage = cache.get(pkg.getName());
+                final String version = repoPackage != null ? repoPackage.getLatestVersion() : null;
+                myPackagesTableModel
+                  .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
+              }
+              if (!cache.isEmpty()) {
+                onUpdateFinished();
+              }
+              if (shouldFetchLatestVersionsForOnlyInstalledPackages) {
+                setLatestVersionsForInstalledPackages();
+              }
+            }
+          });
+        }
       }
     });
   }

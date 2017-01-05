@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.template.impl;
-
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import gnu.trove.THashMap;
+import kotlin.Lazy;
+import kotlin.LazyKt;
+import kotlin.jvm.functions.Function0;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,6 +41,7 @@ public class TemplateContext {
   private static class ContextInterner {
     private static final Map<String, String> internMap = Arrays.stream(TemplateContextType.EP_NAME.getExtensions())
       .map(TemplateContextType::getContextId)
+      .distinct()
       .collect(Collectors.toMap(Function.identity(), Function.identity()));
   }
 
@@ -87,7 +91,7 @@ public class TemplateContext {
 
   // used during initialization => no sync
   @VisibleForTesting
-  public void readTemplateContext(Element element) {
+  public void readTemplateContext(@NotNull Element element) {
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
@@ -122,21 +126,68 @@ public class TemplateContext {
     return getOwnValue(t) != null;
   }
 
+  @TestOnly
+  public Element writeTemplateContext(@Nullable TemplateContext defaultContext) {
+    return writeTemplateContext(defaultContext, getIdToType());
+  }
+
   @VisibleForTesting
-  public void writeTemplateContext(Element element) throws WriteExternalException {
-    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      Boolean ownValue = getOwnValue(type);
-      if (ownValue != null) {
-        TemplateContextType base = type.getBaseContextType();
-        boolean baseEnabled = base != null && isEnabled(base);
-        if (ownValue != baseEnabled) {
-          Element optionElement = new Element("option");
-          optionElement.setAttribute("name", type.getContextId());
-          optionElement.setAttribute("value", ownValue.toString());
-          element.addContent(optionElement);
-        }
+  @Nullable
+  public Element writeTemplateContext(@Nullable TemplateContext defaultContext, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
+    if (myContextStates.isEmpty()) {
+      return null;
+    }
+
+    Element element = new Element(TemplateSettings.CONTEXT);
+    for (Map.Entry<String, Boolean> entry : myContextStates.entrySet()) {
+      Boolean ownValue = entry.getValue();
+      if (ownValue == null) {
+        continue;
+      }
+
+      TemplateContextType type = idToType.getValue().get(entry.getKey());
+      if (type == null) {
+        // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
+        JdomKt.addOptionTag(element, entry.getKey(), ownValue.toString());
+      }
+      else if (isValueChanged(ownValue, type, defaultContext)) {
+        JdomKt.addOptionTag(element, type.getContextId(), ownValue.toString());
       }
     }
+    return element;
+  }
+
+  @NotNull
+  public static Lazy<Map<String, TemplateContextType>> getIdToType() {
+    return LazyKt.lazy(new Function0<Map<String, TemplateContextType>>() {
+      @Override
+      public Map<String, TemplateContextType> invoke() {
+        Map<String, TemplateContextType> idToType = new THashMap<>();
+        for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+          idToType.put(type.getContextId(), type);
+        }
+        return idToType;
+      }
+    });
+  }
+
+  /**
+   * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
+   * Base value is `false`.
+   *
+   * If default value is defined (as in our example) — we must not take base value in account.
+   * Because on init `setDefaultContext` will be called and we will have own value.
+   * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
+   * See TemplateSchemeTest.
+   */
+  private boolean isValueChanged(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
+    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type);
+    if (defaultValue == null) {
+      TemplateContextType base = type.getBaseContextType();
+      boolean baseEnabled = base != null && isEnabled(base);
+      return ownValue != baseEnabled;
+    }
+    return !ownValue.equals(defaultValue);
   }
 
   @Override

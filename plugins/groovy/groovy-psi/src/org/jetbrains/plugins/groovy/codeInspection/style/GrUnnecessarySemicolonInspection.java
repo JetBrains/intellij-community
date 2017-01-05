@@ -20,35 +20,34 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import static com.intellij.psi.tree.TokenSet.andNot;
+import static com.intellij.psi.tree.TokenSet.orSet;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSEMI;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
 
 public class GrUnnecessarySemicolonInspection extends GroovySuppressableInspectionTool implements CleanupLocalInspectionTool {
 
-  private static final TokenSet SET = TokenSet.orSet(TokenSets.WHITE_SPACES_OR_COMMENTS, TokenSet.create(mSEMI));
+  private static final TokenSet NLS_SET = TokenSet.create(mNLS);
+  private static final TokenSet FORWARD_SET = andNot(orSet(WHITE_SPACES_OR_COMMENTS, TokenSet.create(mSEMI)), NLS_SET);
+  private static final TokenSet BACKWARD_SET = andNot(WHITE_SPACES_OR_COMMENTS, NLS_SET);
+
   private static final LocalQuickFix FIX = new LocalQuickFix() {
 
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return "Remove semicolon";
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Remove semicolon";
     }
 
     @Override
@@ -65,31 +64,21 @@ public class GrUnnecessarySemicolonInspection extends GroovySuppressableInspecti
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(@NotNull PsiElement element) {
+      public void visitElement(PsiElement element) {
         if (element.getNode().getElementType() != mSEMI) return;
-        if (!isSemicolonUnnecessary(element)) return;
+        if (isSemicolonNecessary(element)) return;
         holder.registerProblem(element, "Semicolon is unnecessary", ProblemHighlightType.LIKE_UNUSED_SYMBOL, FIX);
       }
     };
   }
 
-  private static boolean isSemicolonUnnecessary(@NotNull PsiElement semicolon) {
-    PsiElement next = PsiUtil.skipSet(semicolon.getNextSibling(), true, SET, false);
-    if (next == null) return true;
-    if (next.getNode().getElementType() == GroovyTokenTypes.mNLS) {
-      PsiElement nextSibling = next.getNextSibling();
-      if (nextSibling == null || nextSibling.getNode().getElementType() != GroovyElementTypes.CLOSABLE_BLOCK) {
-        return true;
-      }
-    }
+  private static boolean isSemicolonNecessary(@NotNull PsiElement semicolon) {
+    if (semicolon.getParent() instanceof GrTraditionalForClause) return true;
 
-    PsiElement previous = PsiUtil.skipWhitespacesAndComments(semicolon.getPrevSibling(), false, false);
-    if (previous == null) return true;
-    IElementType previousType = previous.getNode().getElementType();
-    if (previousType == GroovyTokenTypes.mNLS || previousType == mSEMI) {
-      return true;
-    }
-
-    return false;
+    PsiElement prevSibling = PsiUtil.skipSet(semicolon, false, BACKWARD_SET);
+    PsiElement nextSibling = PsiUtil.skipSet(semicolon, true, FORWARD_SET);
+    return prevSibling instanceof GrStatement && (
+      nextSibling instanceof GrStatement || nextSibling != null && nextSibling.getNextSibling() instanceof GrClosableBlock
+    );
   }
 }

@@ -22,7 +22,6 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -78,7 +77,6 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       final PsiFile psiFile = startElement.getContainingFile();
-      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       final TextRange range = startElement.getTextRange();
       OpenFileDescriptor descriptor = new OpenFileDescriptor(
         project,

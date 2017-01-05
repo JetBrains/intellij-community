@@ -27,8 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -74,15 +72,13 @@ public class SuppressActionSequentialTask implements SequentialTask {
       indicator.setFraction((double)myCount / myNodesToSuppress.length);
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
-      final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
-      if (content.first != null) {
-        final PsiElement element = content.first;
-        RefEntity refEntity = node.getElement();
-        LOG.assertTrue(refEntity != null);
-        suppress(element, content.second, mySuppressAction, refEntity, myWrapper, node);
-      }
-    });
+    final Pair<PsiElement, CommonProblemDescriptor> content = node.getSuppressContent();
+    if (content.first != null) {
+      final PsiElement element = content.first;
+      RefEntity refEntity = node.getElement();
+      LOG.assertTrue(refEntity != null);
+      suppress(element, content.second, mySuppressAction, refEntity, myWrapper, node);
+    }
 
     return false;
   }
@@ -154,10 +150,8 @@ public class SuppressActionSequentialTask implements SequentialTask {
               suppressedNodes.add(entity);
             }
             final List<RefEntity> children = entity.getChildren();
-            if (children != null) {
-              for (RefEntity child : children) {
-                toIgnoreInView.addLast(child);
-              }
+            for (RefEntity child : children) {
+              toIgnoreInView.addLast(child);
             }
           }
         }

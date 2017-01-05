@@ -165,6 +165,15 @@ public interface Git {
   GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url);
 
   @NotNull
+  GitCommandResult removeRemote(@NotNull GitRepository repository, @NotNull GitRemote remote);
+
+  @NotNull
+  GitCommandResult renameRemote(@NotNull GitRepository repository, @NotNull String oldName, @NotNull String newName);
+
+  @NotNull
+  GitCommandResult setRemoteUrl(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String newUrl);
+
+  @NotNull
   GitCommandResult lsRemote(@NotNull Project project, @NotNull File workingDir, @NotNull String url);
 
   @NotNull

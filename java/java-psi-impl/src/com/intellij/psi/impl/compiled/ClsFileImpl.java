@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.compiled.ClassFileDecompilers;
-import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiFileEx;
@@ -76,6 +75,7 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -99,7 +99,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private final FileViewProvider myViewProvider;
   private final boolean myIsForDecompiling;
   private volatile SoftReference<StubTree> myStub;
-  private volatile TreeElement myMirrorFileElement;
+  private volatile Reference<TreeElement> myMirrorFileElement;
   private volatile ClsPackageStatementImpl myPackageStatement;
   private boolean myIsPhysical = true;
   private boolean myInvalidated;
@@ -382,10 +382,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public PsiElement getMirror() {
-    TreeElement mirrorTreeElement = myMirrorFileElement;
+    TreeElement mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
     if (mirrorTreeElement == null) {
       synchronized (myMirrorLock) {
-        mirrorTreeElement = myMirrorFileElement;
+        mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
         if (mirrorTreeElement == null) {
           VirtualFile file = getVirtualFile();
           PsiClass[] classes = getClasses();
@@ -417,7 +417,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           }
 
           ((PsiFileImpl)mirror).setOriginalFile(this);
-          myMirrorFileElement = mirrorTreeElement;
+          myMirrorFileElement = new SoftReference<TreeElement>(mirrorTreeElement);
         }
       }
     }

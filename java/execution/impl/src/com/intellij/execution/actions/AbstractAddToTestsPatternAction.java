@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,14 +55,14 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
     if (patternConfigurations.size() == 1) {
       final T configuration = patternConfigurations.get(0);
       for (PsiElement aClass : classes) {
-        getPatterns(configuration).add(AbstractPatternBasedConfigurationProducer.getQName(aClass));
+        getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
       }
     } else {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<T>("Choose suite to add", patternConfigurations) {
         @Override
         public PopupStep onChosen(T configuration, boolean finalChoice) {
           for (PsiElement aClass : classes) {
-            getPatterns(configuration).add(AbstractPatternBasedConfigurationProducer.getQName(aClass));
+            getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
           }
           return FINAL_CHOICE;
         }
@@ -110,7 +111,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends ModuleBasedConfi
     for (RunConfiguration configuration : configurations) {
       if (isPatternBasedConfiguration((T)configuration)) {
         if (foundClasses.size() > 1 ||
-            !getPatterns((T)configuration).contains(AbstractPatternBasedConfigurationProducer.getQName(foundClasses.iterator().next()))) {
+            foundClasses.size() == 1 && !getPatterns((T)configuration).contains(getPatternBasedProducer().getQName(ContainerUtil.getFirstItem(foundClasses)))) {
           foundConfigurations.add((T)configuration);
         }
       }

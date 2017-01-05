@@ -16,75 +16,72 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+import static com.intellij.CommonBundle.getCancelButtonText;
+import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.openapi.vcs.AbstractVcs.fileInVcsByFileStatus;
+import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class BrowseChangesAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    assert vFile != null;
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vFile);
-    assert vcs != null;
-    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-    assert provider != null;
-    final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
-    ChangeBrowserSettings settings = vcsConfiguration.CHANGE_BROWSER_SETTINGS.get(vcs.getName());
-    if (settings == null) {
-      settings = provider.createDefaultSettings();
-      vcsConfiguration.CHANGE_BROWSER_SETTINGS.put(vcs.getName(), settings);
-    }
-    CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
-    if (!dlg.showAndGet()) {
-      return;
-    }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    AbstractVcs vcs = notNull(getVcsForFile(file, project));
+    CommittedChangesProvider provider = notNull(vcs.getCommittedChangesProvider());
+    ChangeBrowserSettings settings =
+      vcs.getConfiguration().CHANGE_BROWSER_SETTINGS.computeIfAbsent(vcs.getName(), key -> provider.createDefaultSettings());
+    CommittedChangesFilterDialog dialog = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
 
-    int maxCount = 0;
-    if (!settings.isAnyFilterSpecified()) {
-      int rc = Messages
-        .showYesNoCancelDialog(project, VcsBundle.message("browse.changes.no.filter.prompt"), VcsBundle.message("browse.changes.title"),
-                               VcsBundle.message("browse.changes.show.recent.button"),
-                               VcsBundle.message("browse.changes.show.all.button"),
-                               CommonBundle.getCancelButtonText(),
-                               Messages.getQuestionIcon());
-      if (rc == Messages.CANCEL) {
-        return;
-      }
-      if (rc == Messages.YES) {
-        maxCount = 50;
-      }
+    if (dialog.showAndGet()) {
+      showChanges(vcs, file, settings);
     }
-
-    AbstractVcsHelper.getInstance(project).openCommittedChangesTab(vcs, vFile, settings, maxCount, null);
   }
 
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isActionEnabled(e));
-  }
-
-  private static boolean isActionEnabled(final AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) return false;
-    VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (vFile == null) return false;
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vFile);
-    if (vcs == null || vcs.getCommittedChangesProvider() == null || !vcs.allowsRemoteCalls(vFile)) {
-      return false;
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+
+    e.getPresentation().setEnabled(project != null && file != null && isEnabled(project, file));
+  }
+
+  private static boolean isEnabled(@NotNull Project project, @NotNull VirtualFile file) {
+    AbstractVcs vcs = getVcsForFile(file, project);
+
+    return vcs != null && vcs.getCommittedChangesProvider() != null && vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(project, file);
+  }
+
+  private static void showChanges(@NotNull AbstractVcs vcs, @NotNull VirtualFile file, @NotNull ChangeBrowserSettings settings) {
+    int maxCount = !settings.isAnyFilterSpecified() ? askMaxCount(vcs.getProject()) : 0;
+
+    if (maxCount >= 0) {
+      AbstractVcsHelper.getInstance(vcs.getProject()).openCommittedChangesTab(vcs, file, settings, maxCount, null);
     }
-    FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(vFile);
-    return AbstractVcs.fileInVcsByFileStatus(project, filePath);
+  }
+
+  private static int askMaxCount(@NotNull Project project) {
+    switch (showYesNoCancelDialog(project, message("browse.changes.no.filter.prompt"), message("browse.changes.title"),
+                                  message("browse.changes.show.recent.button"), message("browse.changes.show.all.button"),
+                                  getCancelButtonText(), getQuestionIcon())) {
+      case CANCEL:
+        return -1;
+      case YES:
+        return 50;
+      default:
+        return 0;
+    }
   }
 }

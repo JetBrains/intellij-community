@@ -36,6 +36,7 @@ import java.util.Arrays;
 public class ResourceBundleDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance(ResourceBundleDeleteProvider.class);
 
+  @Override
   public void deleteElement(@NotNull DataContext dataContext) {
     final ResourceBundle[] resourceBundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
     if (resourceBundles != null && resourceBundles.length != 0) {
@@ -57,6 +58,7 @@ public class ResourceBundleDeleteProvider implements DeleteProvider {
     }
   }
 
+  @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     return project != null;

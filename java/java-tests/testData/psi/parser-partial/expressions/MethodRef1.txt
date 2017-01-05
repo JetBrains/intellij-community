@@ -1,5 +1,5 @@
 PsiJavaFile:MethodRef1.java
-  PsiMethodReferenceExpression:a.b.C<T>::new
+  PsiMethodReferenceExpression
     PsiTypeElement:a.b.C<T>
       PsiJavaCodeReferenceElement:a.b.C<T>
         PsiJavaCodeReferenceElement:a.b

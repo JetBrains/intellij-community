@@ -129,7 +129,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     if (isCanceled() && isCancelable()) {
       throw new ProcessCanceledException();
     }
-    if (CoreProgressManager.sleepIfNeeded()) {
+    if (CoreProgressManager.runCheckCanceledHooks()) {
       if (isCanceled() && isCancelable()) {
         throw new ProcessCanceledException();
       }
@@ -205,7 +205,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   @NotNull
-  public final ModalityState getModalityState() {
+  public ModalityState getModalityState() {
     return myModalityState;
   }
 

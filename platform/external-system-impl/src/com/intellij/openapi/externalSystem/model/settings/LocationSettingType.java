@@ -10,20 +10,20 @@ import java.awt.*;
 import java.util.Arrays;
 
 /**
- * Enumerates possible types of 'gradle home' location setting.
+ * Enumerates possible types of external project location setting.
  *
  * @author Denis Zhdanov
  * @since 9/2/11 3:58 PM
  */
 public enum LocationSettingType {
 
-  /** User hasn't defined gradle location but the IDE discovered it automatically. */
+  /** User hasn't defined location but the IDE discovered it automatically. */
   DEDUCED("setting.type.location.deduced", "TextField.inactiveForeground", "nimbusDisabledText"),
 
-  /** User hasn't defined gradle location and the IDE was unable to discover it automatically. */
+  /** User hasn't defined location and the IDE was unable to discover it automatically. */
   UNKNOWN("setting.type.location.unknown"),
 
-  /** User defined gradle location but it's incorrect. */
+  /** User defined location but it's incorrect. */
   EXPLICIT_INCORRECT("setting.type.location.explicit.incorrect"),
 
   EXPLICIT_CORRECT("setting.type.location.explicit.correct");

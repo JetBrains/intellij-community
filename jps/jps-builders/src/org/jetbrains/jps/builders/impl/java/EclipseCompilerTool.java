@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Collections;
@@ -34,9 +32,16 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 /**
+ * The latest version of ecj batch compiler can be found here:
+ * http://download.eclipse.org/eclipse/downloads/
+ *
  * @author nik
  */
 public class EclipseCompilerTool extends JavaCompilingTool {
+
+  private static final String JAR_FILE_NAME_PREFIX = "ecj-";
+  private static final String JAR_FILE_NAME_SUFFIX = ".jar";
+  private String myVersion;
   @NotNull
   @Override
   public String getId() {
@@ -52,18 +57,42 @@ public class EclipseCompilerTool extends JavaCompilingTool {
   @NotNull
   @Override
   public String getDescription() {
-    return "Eclipse compiler";
+    String version = myVersion;
+    if (version == null) {
+      version = "";
+      //final File file = findEcjJarFile();
+      final JavaCompiler compiler = findCompiler();
+      final String path = compiler != null? PathManager.getJarPathForClass(compiler.getClass()) : null;
+      final File file = path != null? new File(path) : null;
+      if (file != null) {
+        final String name = file.getName();
+        if (name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX)) {
+          version = " " + name.substring(JAR_FILE_NAME_PREFIX.length(), name.length() - JAR_FILE_NAME_SUFFIX.length());
+        }
+      }
+      myVersion = version;
+    }
+    return "Eclipse compiler" + version;
   }
 
   @NotNull
   @Override
   public JavaCompiler createCompiler() throws CannotCreateJavaCompilerException {
+    final JavaCompiler javaCompiler = findCompiler();
+    if (javaCompiler == null) {
+      throw new CannotCreateJavaCompilerException("Eclipse Batch Compiler was not found in classpath");
+    }
+    return javaCompiler;
+  }
+
+  @Nullable
+  private static JavaCompiler findCompiler() {
     for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) {
       if ("EclipseCompiler".equals(StringUtil.getShortName(javaCompiler.getClass()))) {
         return javaCompiler;
       }
     }
-    throw new CannotCreateJavaCompilerException("Eclipse Batch Compiler was not found in classpath");
+    return null;
   }
 
   @NotNull
@@ -79,7 +108,7 @@ public class EclipseCompilerTool extends JavaCompilingTool {
       File[] children = lib.listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
-          return name.startsWith("ecj-") && name.endsWith(".jar");
+          return name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX);
         }
       });
       if (children != null && children.length > 0) {
@@ -87,16 +116,6 @@ public class EclipseCompilerTool extends JavaCompilingTool {
       }
     }
     return null;
-  }
-
-  @Override
-  public void processCompilerOptions(@NotNull CompileContext context, @NotNull List<String> options) {
-    for (String option : options) {
-      if (option.startsWith("-proceedOnError")) {
-        Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
-        break;
-      }
-    }
   }
 
   @Override

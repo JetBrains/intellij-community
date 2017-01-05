@@ -44,10 +44,10 @@ public class Descriptor {
   private final NamedScope myScope;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
   private final ScopeToolState myState;
-  private final InspectionProfileImpl myInspectionProfile;
+  private final InspectionProfileModifiableModel myInspectionProfile;
   private final String myScopeName;
 
-  public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileImpl inspectionProfile, @NotNull Project project) {
+  public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileModifiableModel inspectionProfile, @NotNull Project project) {
     myState = state;
     myInspectionProfile = inspectionProfile;
     InspectionToolWrapper tool = state.getTool();
@@ -120,7 +120,7 @@ public class Descriptor {
     return myToolWrapper.loadDescription();
   }
 
-  public InspectionProfileImpl getInspectionProfile() {
+  public InspectionProfileModifiableModel getInspectionProfile() {
     return myInspectionProfile;
   }
 

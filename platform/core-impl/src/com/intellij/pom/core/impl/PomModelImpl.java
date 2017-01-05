@@ -42,6 +42,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
@@ -53,6 +54,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IReparseableLeafElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -348,6 +350,10 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiElement changeScope = transaction.getChangeScope();
 
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
+    if (containingFileByTree != null && !(containingFileByTree instanceof DummyHolder) && !manager.isCommitInProgress()) {
+      PsiUtilCore.ensureValid(containingFileByTree);
+    }
+
     boolean physical = changeScope.isPhysical();
     if (physical && synchronizer.toProcessPsiEvent()) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch

@@ -31,6 +31,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
@@ -39,13 +40,13 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
-  private final PsiClass myBase;
+  private final @Nullable PsiClass myBase;
   private final Project myProject;
   private final GlobalSearchScope myScope;
 
-  private TestClassFilter(@NotNull PsiClass base, final GlobalSearchScope scope) {
+  private TestClassFilter(@Nullable PsiClass base, final GlobalSearchScope scope) {
     myBase = base;
-    myProject = base.getProject();
+    myProject = scope.getProject();
     myScope = scope;
   }
 
@@ -58,7 +59,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
       @Override
       public Boolean compute() {
         if (aClass.getQualifiedName() != null  &&
-            (aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) || JUnitUtil.isTestClass(aClass))) {
+            (myBase != null && aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) || JUnitUtil.isTestClass(aClass))) {
           final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
           if (virtualFile == null) return false;
@@ -85,6 +86,9 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     final PsiClass testCase = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
       @Override
       public PsiClass compute() {
+        if (TestObject.isJUnit5(module, sourceScope, sourceScope.getProject())) {
+          return null;
+        }
         try {
           return module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
         }
@@ -141,5 +145,6 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   }
 
   public GlobalSearchScope getScope() { return myScope; }
+  @Nullable
   public PsiClass getBase() { return myBase; }
 }

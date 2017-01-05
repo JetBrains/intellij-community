@@ -19,7 +19,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.ex.DisableInspectionToolAction;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
@@ -108,13 +108,6 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return PropertiesBundle.message("incomplete.property.quick.fix.name");
     }
@@ -141,8 +134,8 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
       final TreeSet<String> suffixesToIgnore = new TreeSet<>(ContainerUtil.map(allFilesWithoutTranslation,
                                                                                PropertiesUtil::getSuffix));
       if (new IncompletePropertyInspectionOptionsPanel(suffixesToIgnore).showDialogAndGet(project)) {
-        DisableInspectionToolAction.modifyAndCommitProjectProfile(
-          modifiableModel -> ((IncompletePropertyInspection)modifiableModel.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore), project);
+        InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project,
+                                                                         it -> ((IncompletePropertyInspection)it.getInspectionTool(TOOL_KEY, element).getTool()).addSuffixes(suffixesToIgnore));
       }
     }
   }

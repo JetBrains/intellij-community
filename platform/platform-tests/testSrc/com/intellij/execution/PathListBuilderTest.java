@@ -1,59 +1,81 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution;
 
-import com.intellij.util.Assertion;
 import com.intellij.util.PathsList;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.File;
 
-public class PathListBuilderTest extends TestCase {
-  private final PathsList myBuilder = new PathsList();
-  private final Assertion CHECK = new Assertion();
+import static org.assertj.core.api.Assertions.assertThat;
 
+public class PathListBuilderTest {
+  @Test
   public void testOrder() {
-    myBuilder.add("a");
-    myBuilder.addFirst("2");
-    myBuilder.addTail("A");
-    myBuilder.addFirst("1");
-    myBuilder.add("b");
-    myBuilder.addTail("B");
-    CHECK.compareAll(new String[]{"1", "2", "a", "b", "A", "B"}, myBuilder.getPathList());
+    PathsList builder = new PathsList();
+    builder.add("a");
+    builder.addFirst("2");
+    builder.addTail("A");
+    builder.addFirst("1");
+    builder.add("b");
+    builder.addTail("B");
+    assertThat(builder.getPathList()).containsExactly("1", "2", "a", "b", "A", "B");
   }
 
+  @Test
   public void testDuplications() {
-    myBuilder.add("b");
-    myBuilder.add("b");
-
-    myBuilder.addFirst("a");
-    myBuilder.addFirst("a");
-
-    myBuilder.addTail("c");
-    myBuilder.addTail("c");
-
-    CHECK.compareAll(new String[]{"a", "b", "c"}, myBuilder.getPathList());
+    PathsList builder = new PathsList();
+    builder.add("b");
+    builder.add("b");
+    builder.addFirst("a");
+    builder.addFirst("a");
+    builder.addTail("c");
+    builder.addTail("c");
+    assertThat(builder.getPathList()).containsExactly("a", "b", "c");
   }
 
+  @Test
   public void testComplexDuplications() {
-    myBuilder.add("a" + File.pathSeparatorChar + "b");
-    myBuilder.add("c" + File.pathSeparatorChar + "b");
-    CHECK.compareAll(new String[]{"a", "b", "c"}, myBuilder.getPathList());
+    PathsList builder = new PathsList();
+    builder.add("a" + File.pathSeparatorChar + "b");
+    builder.add("c" + File.pathSeparatorChar + "b");
+    assertThat(builder.getPathList()).containsExactly("a", "b", "c");
   }
 
+  @Test
   public void testAddTwice() {
-    myBuilder.add("a" + File.pathSeparatorChar + "a");
-    myBuilder.add("b");
-    CHECK.compareAll(new String[]{"a", "b"}, myBuilder.getPathList());
+    PathsList builder = new PathsList();
+    builder.add("a" + File.pathSeparatorChar + "a");
+    builder.add("b");
+    assertThat(builder.getPathList()).containsExactly("a", "b");
   }
 
+  @Test
   public void testAddFirstTwice() {
-    myBuilder.addFirst("b" + File.pathSeparatorChar + "b");
-    myBuilder.addFirst("a");
-    CHECK.compareAll(new String[]{"a", "b"}, myBuilder.getPathList());
+    PathsList builder = new PathsList();
+    builder.addFirst("b" + File.pathSeparatorChar + "b");
+    builder.addFirst("a");
+    assertThat(builder.getPathList()).containsExactly("a", "b");
   }
 
+  @Test
   public void testAsString() {
-    myBuilder.add("a" + File.pathSeparatorChar + "b" + File.pathSeparatorChar);
-    myBuilder.add("c" + File.pathSeparatorChar);
-    assertEquals("a" + File.pathSeparatorChar + "b" + File.pathSeparatorChar + "c", myBuilder.getPathsString());
+    PathsList builder = new PathsList();
+    builder.add("a" + File.pathSeparatorChar + "b" + File.pathSeparatorChar);
+    builder.add("c" + File.pathSeparatorChar);
+    assertThat(builder.getPathsString()).isEqualTo("a" + File.pathSeparatorChar + "b" + File.pathSeparatorChar + "c");
   }
 }

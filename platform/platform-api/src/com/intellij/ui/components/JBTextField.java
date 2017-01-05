@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,18 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     init();
   }
 
-  public JBTextField(int i) {
-    super(i);
+  public JBTextField(int columns) {
+    super(columns);
     init();
   }
 
-  public JBTextField(String s) {
-    super(s);
+  public JBTextField(String text) {
+    super(text);
     init();
   }
 
-  public JBTextField(String s, int i) {
-    super(s, i);
+  public JBTextField(String text, int columns) {
+    super(text, columns);
     init();
   }
 

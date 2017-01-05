@@ -102,7 +102,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Nullable
-  public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
+  public VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     List<VcsFileRevision> revisions = null;
     try {
       revisions = GitHistoryUtils.history(myProject, filePath);

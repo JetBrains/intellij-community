@@ -365,7 +365,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
         @Override
         public Icon getIcon() {
-          return RunManagerEx.getInstanceEx(project).getConfigurationIcon(getValue());
+          return RunManagerEx.getInstanceEx(project).getConfigurationIcon(getValue(), true);
         }
 
         @Override

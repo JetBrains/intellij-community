@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ import javax.swing.*;
  */
 public class JavacConfigurable implements Configurable{
   private JPanel myPanel;
+  private JBCheckBox myCbPreferTargetJdkCompiler;
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbDeprecation;
   private JCheckBox myCbGenerateNoWarnings;
@@ -55,6 +57,7 @@ public class JavacConfigurable implements Configurable{
 
   public boolean isModified() {
     boolean isModified = false;
+    isModified |= ComparingUtils.isModified(myCbPreferTargetJdkCompiler, myJavacSettings.PREFER_TARGET_JDK_COMPILER);
     isModified |= ComparingUtils.isModified(myCbDeprecation, myJavacSettings.DEPRECATION);
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myJavacSettings.DEBUGGING_INFO);
     isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myJavacSettings.GENERATE_NO_WARNINGS);
@@ -63,6 +66,7 @@ public class JavacConfigurable implements Configurable{
   }
 
   public void apply() throws ConfigurationException {
+    myJavacSettings.PREFER_TARGET_JDK_COMPILER =  myCbPreferTargetJdkCompiler.isSelected();
     myJavacSettings.DEPRECATION =  myCbDeprecation.isSelected();
     myJavacSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
     myJavacSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
@@ -70,6 +74,7 @@ public class JavacConfigurable implements Configurable{
   }
 
   public void reset() {
+    myCbPreferTargetJdkCompiler.setSelected(myJavacSettings.PREFER_TARGET_JDK_COMPILER);
     myCbDeprecation.setSelected(myJavacSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myJavacSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);

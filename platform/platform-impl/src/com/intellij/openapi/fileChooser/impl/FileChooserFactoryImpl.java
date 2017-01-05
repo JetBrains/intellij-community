@@ -26,6 +26,7 @@ import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
@@ -107,12 +108,12 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
-    return new FileSaverDialogImpl(descriptor, project);
+    return (SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog")) ? new MacFileSaverDialog(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
   }
 
   @NotNull
   @Override
   public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-    return new FileSaverDialogImpl(descriptor, parent);
+    return (SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog"))? new MacFileSaverDialog (descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
   }
 }

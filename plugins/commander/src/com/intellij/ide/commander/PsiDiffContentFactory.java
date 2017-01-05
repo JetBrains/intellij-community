@@ -52,7 +52,7 @@ public class PsiDiffContentFactory {
     if (containingFile == null) {
       String text = psiElement.getText();
       if (text == null) return null;
-      return factory.create(text, psiElement.getLanguage().getAssociatedFileType(), false);
+      return factory.create(psiElement.getProject(), text, psiElement.getLanguage().getAssociatedFileType(), false);
     }
     DocumentContent wholeFileContent = factory.createDocument(psiElement.getProject(), containingFile.getVirtualFile());
     if (wholeFileContent == null) return null;

@@ -21,30 +21,30 @@ package com.intellij.psi;
  */
 public interface JavaCodeFragment extends PsiImportHolder, PsiCodeFragment {
   /**
-   * Returns the type corresponding to the <code>this</code> keyword in the code fragment.
+   * Returns the type corresponding to the {@code this} keyword in the code fragment.
    *
-   * @return the type of <code>this</code> in the fragment.
+   * @return the type of {@code this} in the fragment.
    */
   PsiType getThisType();
 
   /**
-   * Sets the type corresponding to the <code>this</code> keyword in the code fragment.
+   * Sets the type corresponding to the {@code this} keyword in the code fragment.
    *
-   * @param psiType the type of <code>this</code> in the fragment.
+   * @param psiType the type of {@code this} in the fragment.
    */
   void setThisType(PsiType psiType);
 
   /**
-   * Returns the type corresponding to the <code>super</code> keyword in the code fragment.
+   * Returns the type corresponding to the {@code super} keyword in the code fragment.
    *
-   * @return the type of <code>super</code> in the fragment.
+   * @return the type of {@code super} in the fragment.
    */
   PsiType getSuperType();
 
   /**
-   * Sets the type corresponding to the <code>super</code> keyword in the code fragment.
+   * Sets the type corresponding to the {@code super} keyword in the code fragment.
    *
-   * @param superType the type of <code>super</code> in the fragment.
+   * @param superType the type of {@code super} in the fragment.
    */
   void setSuperType(PsiType superType);
 

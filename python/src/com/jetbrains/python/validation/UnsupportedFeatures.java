@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -46,37 +47,47 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   }
 
   @Override
-  protected void registerProblem(@Nullable final PsiElement node, String message, LocalQuickFix localQuickFix, boolean asError) {
-    if (node == null) return;
-    registerProblem(node, node.getTextRange(), message, localQuickFix, asError);
-  }
-
-  @Override
-  protected void registerProblem(PsiElement node, TextRange range, String message, LocalQuickFix localQuickFix, boolean asError) {
-    if (range.isEmpty()){
+  protected void registerProblem(@NotNull PsiElement node,
+                                 @NotNull TextRange range,
+                                 @NotNull String message,
+                                 @Nullable LocalQuickFix localQuickFix,
+                                 boolean asError) {
+    if (range.isEmpty()) {
       return;
     }
-    if (localQuickFix != null)
-      if (asError)
+
+    if (localQuickFix != null) {
+      if (asError) {
         getHolder().createErrorAnnotation(range, message).registerFix(createIntention(node, message, localQuickFix));
-      else
+      }
+      else {
         getHolder().createWarningAnnotation(range, message).registerFix(createIntention(node, message, localQuickFix));
-    else
-      if (asError)
+      }
+    }
+    else {
+      if (asError) {
         getHolder().createErrorAnnotation(range, message);
-      else
+      }
+      else {
         getHolder().createWarningAnnotation(range, message);
+      }
+    }
   }
 
-  private static IntentionAction createIntention(PsiElement node, String message, LocalQuickFix fix) {
-    return createIntention(node, node.getTextRange(), message, fix);
+  @NotNull
+  private static IntentionAction createIntention(@NotNull PsiElement node, @NotNull String message, @NotNull LocalQuickFix localQuickFix) {
+    return createIntention(node, node.getTextRange(), message, localQuickFix);
   }
 
-  private static IntentionAction createIntention(PsiElement node, TextRange range, String message, LocalQuickFix fix) {
-    LocalQuickFix[] quickFixes = {fix};
-    CommonProblemDescriptorImpl descr = new ProblemDescriptorImpl(node, node, message,
-                                                                  quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
-                                                                  range, true);
+  @NotNull
+  private static IntentionAction createIntention(@NotNull PsiElement node,
+                                                 @Nullable TextRange range,
+                                                 @NotNull String message,
+                                                 @NotNull LocalQuickFix localQuickFix) {
+    final LocalQuickFix[] quickFixes = {localQuickFix};
+    final CommonProblemDescriptorImpl descr =
+      new ProblemDescriptorImpl(node, node, message, quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, range, true);
+
     return QuickFixWrapper.wrap((ProblemDescriptor)descr, 0);
   }
 }

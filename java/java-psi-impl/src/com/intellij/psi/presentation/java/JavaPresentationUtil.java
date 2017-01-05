@@ -19,6 +19,7 @@ import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -47,8 +48,12 @@ public class JavaPresentationUtil {
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        if (psiMethod.isDeprecated()) {
-          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        try {
+          if (psiMethod.isDeprecated()) {
+            return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+          }
+        }
+        catch (IndexNotReadyException ignore) {
         }
         return null;
       }
@@ -75,8 +80,12 @@ public class JavaPresentationUtil {
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        if (psiField.isDeprecated()) {
-          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+        try {
+          if (psiField.isDeprecated()) {
+            return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+          }
+        }
+        catch (IndexNotReadyException ignore) {
         }
         return null;
       }

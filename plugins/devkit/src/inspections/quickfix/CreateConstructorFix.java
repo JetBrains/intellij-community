@@ -31,13 +31,8 @@ public class CreateConstructorFix extends BaseFix {
   }
 
   @NotNull
-  public String getName() {
-    return DevKitBundle.message("inspections.registration.problems.quickfix.create.constructor");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return DevKitBundle.message("inspections.registration.problems.quickfix.create.constructor");
   }
 
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {

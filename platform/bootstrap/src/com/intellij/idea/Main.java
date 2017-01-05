@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,18 @@ package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Restarter;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-
-import static java.io.File.pathSeparator;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class Main {
   public static final int NO_GRAPHICS = 1;
-  public static final int UPDATE_FAILED = 2;
+  public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
   public static final int JDK_CHECK_FAILED = 4;
   public static final int DIR_CHECK_FAILED = 5;
@@ -85,16 +73,6 @@ public class Main {
       showMessage("Unsupported Java Version",
                   "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
       System.exit(UNSUPPORTED_JAVA_VERSION);
-    }
-
-    if (args.length == 0 || (args.length == 1 && "nosplash".equals(args[0]))) {
-      try {
-        installPatch();
-      }
-      catch (Throwable t) {
-        showMessage("Update Failed", t);
-        System.exit(UPDATE_FAILED);
-      }
     }
 
     try {
@@ -155,142 +133,6 @@ public class Main {
     return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
   }
 
-  private static boolean checkBundledJava(File java) throws Exception {
-    String[] command = new String[]{java.getPath(), "-version"};
-    try {
-      Process process = Runtime.getRuntime().exec(command);
-      String line = (new BufferedReader(new InputStreamReader(process.getErrorStream()))).readLine();
-      if (line != null && (line.toLowerCase().startsWith("java version") || (line.toLowerCase().startsWith("openjdk version")))){
-        int pos = line.indexOf('.');
-        if (pos > 0){
-          int majorVersion = Integer.parseInt(line.substring(pos-1, pos));
-          int minorVersion = Integer.parseInt(line.substring(pos+1, pos+2));
-          if (majorVersion > 1 || minorVersion > 5) {
-            return true;
-          }
-        }
-      }
-    } catch (Exception e) {
-      System.out.println("updater: the java: " + command[0] + " is invalid.");
-    }
-    return false;
-  }
-
-  private static String getBundledJava(String javaHome) throws Exception {
-    // remove the code after one cycle of EAP/patch
-    File removeRestartFromHome = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
-    if (removeRestartFromHome.exists()) {
-      FileUtil.delete(removeRestartFromHome);
-    }
-    // remove the code after one cycle of EAP/patch
-
-    String javaHomeCopy = Restarter.getRestarterDir() + "/jre";
-    File javaCopy = SystemInfoRt.isWindows ? new File(javaHomeCopy + "/bin/java.exe") : new File(javaHomeCopy + "/bin/java");
-    if (javaCopy != null && javaCopy.isFile() && checkBundledJava(javaCopy)) {
-      javaHome = javaHomeCopy;
-    }
-    if (javaHome != javaHomeCopy) {
-      File javaHomeCopyDir = new File(javaHomeCopy);
-      if (javaHomeCopyDir.exists()) FileUtil.delete(javaHomeCopyDir);
-      System.out.println("Updater: java: " + javaHome + " copied to " + javaHomeCopy);
-      FileUtil.copyDir(new File(javaHome), javaHomeCopyDir);
-      javaHome = javaHomeCopy;
-    }
-    return javaHome;
-  }
-
-  private static String getJava() throws Exception {
-    String javaHome = System.getProperty("java.home");
-    if (javaHome.toLowerCase().startsWith(PathManager.getHomePath().toLowerCase())) {
-      System.out.println("Updater: uses bundled java.");
-      javaHome = getBundledJava(javaHome);
-    }
-    return javaHome + "/bin/java";
-  }
-
-  private static void installPatch() throws Exception {
-    String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
-    String tempDir = System.getProperty("java.io.tmpdir");
-    File patch = new File(tempDir, patchFileName);
-
-    // always delete previous patch copy
-    String userName = System.getProperty("user.name");
-    File patchCopy = new File(tempDir, patchFileName + "_copy_" + userName);
-    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy_" + userName);
-    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy_" + userName);
-    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy_" + userName);
-    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
-      throw new IOException("Cannot delete temporary files in " + tempDir);
-    }
-
-    if (!patch.exists()) return;
-    File log4j = new File(PathManager.getLibPath(), "log4j.jar");
-    if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
-
-    File jnaUtils = new File(PathManager.getLibPath(), "jna-platform.jar");
-    if (!jnaUtils.exists()) throw new IOException("jna-platform.jar is missing: " + jnaUtils);
-
-    File jna = new File(PathManager.getLibPath(), "jna.jar");
-    if (!jna.exists()) throw new IOException("jna is missing: " + jna);
-
-    copyFile(patch, patchCopy, true);
-    copyFile(log4j, log4jCopy, false);
-    copyFile(jna, jnaCopy, false);
-    copyFile(jnaUtils, jnaUtilsCopy, false);
-
-    int status = 0;
-    if (Restarter.isSupported()) {
-      List<String> args = new ArrayList<String>();
-
-      if (SystemInfoRt.isWindows) {
-        File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
-        args.add(Restarter.createTempExecutable(launcher).getPath());
-        Restarter.createTempExecutable(new File(PathManager.getBinPath(), "restarter.exe"));
-      }
-
-      //noinspection SpellCheckingInspection
-      String java = getJava();
-      Collections.addAll(args,
-                         java,
-                         "-Xmx750m",
-                         "-Djna.nosys=true",
-                         "-Djna.boot.library.path=",
-                         "-Djna.debug_load=true",
-                         "-Djna.debug_load.jna=true",
-                         "-classpath",
-                         patchCopy.getPath() + pathSeparator + log4jCopy.getPath() + pathSeparator + jnaCopy.getPath() + pathSeparator + jnaUtilsCopy.getPath(),
-                         "-Djava.io.tmpdir=" + tempDir,
-                         "-Didea.updater.log=" + PathManager.getLogPath(),
-                         "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
-                         "com.intellij.updater.Runner",
-                         "install",
-                         PathManager.getHomePath());
-
-      status = Restarter.scheduleRestart(ArrayUtilRt.toStringArray(args));
-    }
-    else {
-      String message = "Patch update is not supported - please do it manually";
-      showMessage("Update Error", message, true);
-    }
-
-    System.exit(status);
-  }
-
-  private static void copyFile(File original, File copy, boolean move) throws IOException {
-    if (move) {
-      if (!original.renameTo(copy) || !FileUtilRt.delete(original)) {
-        throw new IOException("Cannot create temporary file: " + copy);
-      }
-    }
-    else {
-      FileUtilRt.copy(original, copy);
-      if (!copy.exists()) {
-        throw new IOException("Cannot create temporary file: " + copy);
-      }
-    }
-  }
-
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static void showMessage(String title, Throwable t) {
     StringWriter message = new StringWriter();
@@ -336,14 +178,14 @@ public class Main {
         JTextPane textPane = new JTextPane();
         textPane.setEditable(false);
         textPane.setText(message.replaceAll("\t", "    "));
-        textPane.setBackground(UIUtil.getPanelBackground());
+        textPane.setBackground(UIManager.getColor("Panel.background"));
         textPane.setCaretPosition(0);
         JScrollPane scrollPane = new JScrollPane(
           textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
 
-        int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
-        int maxWidth = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().width - 150);
+        int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
+        int maxWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
         Dimension component = scrollPane.getPreferredSize();
         if (component.height > maxHeight || component.width > maxWidth) {
           scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));

@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.codeInspection
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.codeInspection.reference.RefClass
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import junit.framework.TestCase
 
 class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
 
@@ -27,12 +28,48 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
     val unusedDeclarationInspection = UnusedDeclarationInspection(true)
     myFixture.enableInspections(unusedDeclarationInspection)
     val classPattern = EntryPointsManagerBase.ClassPattern()
-    classPattern.hierarchically = true;
+    classPattern.hierarchically = true
     classPattern.pattern = "java.lang.Runnable"
     val patterns = EntryPointsManagerBase.getInstance(project).patterns
     try {
       patterns.add(classPattern)
       myFixture.configureByText("C.java", "public abstract class C implements Runnable {}")
+      myFixture.checkHighlighting()
+    }
+    finally {
+      patterns.remove(classPattern)
+      myFixture.disableInspections(unusedDeclarationInspection)
+    }
+  }
+
+  fun testMethodPattern() {
+    val unusedDeclarationInspection = UnusedDeclarationInspection(true)
+    myFixture.enableInspections(unusedDeclarationInspection)
+    val classPattern = EntryPointsManagerBase.ClassPattern()
+    classPattern.pattern = "C"
+    classPattern.method = "*"
+    val patterns = EntryPointsManagerBase.getInstance(project).patterns
+    try {
+      patterns.add(classPattern)
+      myFixture.configureByText("C.java", "public abstract class C { void foo() {} public static void main(String[] args) {}}")
+      myFixture.checkHighlighting()
+    }
+    finally {
+      patterns.remove(classPattern)
+      myFixture.disableInspections(unusedDeclarationInspection)
+    }
+  }
+
+  fun testMethodPattern1() {
+    val unusedDeclarationInspection = UnusedDeclarationInspection(true)
+    myFixture.enableInspections(unusedDeclarationInspection)
+    val classPattern = EntryPointsManagerBase.ClassPattern()
+    classPattern.pattern = "C"
+    classPattern.method = "foo*"
+    val patterns = EntryPointsManagerBase.getInstance(project).patterns
+    try {
+      patterns.add(classPattern)
+      myFixture.configureByText("C.java", "public abstract class C { void fooBar() {} public static void main(String[] args) {}}")
       myFixture.checkHighlighting()
     }
     finally {
@@ -74,6 +111,35 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
       for (constructor in (refClass as RefClass).constructors) {
         entryPointsManager.removeEntryPoint(constructor)
       }
+
+      assertEmpty(patterns)
+      assertEmpty(entryPointsManager.entryPoints)
+    }
+    finally {
+      context.cleanup()
+    }
+  }
+
+  fun testAddRemoveMethodEntryPoint() {
+    val aClass = myFixture.addClass("public class Foo {void foo(){}}")
+    val entryPointsManager = EntryPointsManagerBase.getInstance(project)
+    val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext(false)
+    try {
+      val refMethod = context.refManager.getReference(aClass.methods[0])
+      assertNotNull(refMethod)
+      val refClass = context.refManager.getReference(aClass)
+      assertNotNull(refClass)
+      val patterns = entryPointsManager.patterns
+      assertEmpty(patterns)
+
+      entryPointsManager.addEntryPoint(refMethod!!, true)
+      assertSize(1, patterns)
+      val classPattern = patterns.iterator().next()
+      assertEquals("Foo", classPattern.pattern)
+      assertEquals("foo", classPattern.method)
+      assertEmpty(entryPointsManager.entryPoints)
+
+      entryPointsManager.removeEntryPoint(refMethod)
 
       assertEmpty(patterns)
       assertEmpty(entryPointsManager.entryPoints)

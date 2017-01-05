@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -429,9 +428,13 @@ public class ControlFlowUtils {
     return false;
   }
 
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile);
   }
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
@@ -445,6 +448,7 @@ public class ControlFlowUtils {
     return collectReturns(flow, allExitPoints);
   }
 
+  @NotNull
   public static List<GrStatement> collectReturns(@NotNull Instruction[] flow, final boolean allExitPoints) {
     boolean[] visited = new boolean[flow.length];
     final List<GrStatement> res = new ArrayList<>();
@@ -539,8 +543,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitReturnStatement(
-        @NotNull GrReturnStatement returnStatement) {
+    public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
       if (m_found) {
         return;
       }
@@ -563,8 +566,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitBreakStatement(
-        @NotNull GrBreakStatement breakStatement) {
+    public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
       if (m_found) {
         return;
       }
@@ -593,8 +595,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitContinueStatement(
-        @NotNull GrContinueStatement continueStatement) {
+    public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
       if (m_found) {
         return;
       }

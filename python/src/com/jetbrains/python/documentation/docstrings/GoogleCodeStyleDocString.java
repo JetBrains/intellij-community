@@ -56,31 +56,31 @@ public class GoogleCodeStyleDocString extends SectionBasedDocString {
    * <ol>
    * <li>
    * mayHaveType=true, preferType=false
-   * <pre><code>
+   * <pre>{@code
    * Attributes:
    *     arg1 (int): description; `(int)` is optional
-   * </code></pre>
+   * }</pre>
    * </li>
    * <li>
    * mayHaveType=true, preferType=true
-   * <pre><code>
+   * <pre>{@code
    * Returns:
    *     code (int): description; `(int)` is optional
-   * </code></pre>
+   * }</pre>
    * </li>
    * <li>
    * mayHaveType=false, preferType=false
-   * <pre><code>
+   * <pre>{@code
    * Methods:
    *     my_method() : description
-   * </code></pre>
+   * }</pre>
    * </li>
    * <li>
    * mayHaveType=false, preferType=true
-   * <pre><code>
+   * <pre>{@code
    * Raises:
    *     Exception : description
-   * </code></pre>
+   * }</pre>
    * </li>
    * </li>
    * </ol>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@ public class TestDataPathResolvingTest extends TestDataPathTestCase {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myFixture.getProject().getBaseDir()));
   }
 
-  public void testReferencesAfterProjectRoot() throws Exception {
+  public void testReferencesAfterProjectRoot() {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myProjectSubdir));
   }
 
-  public void testContentRootReference() throws Exception {
+  public void testContentRootReference() {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myContentRoot));
   }
 
-  public void testReferencesAfterContentRoot() throws Exception {
+  public void testReferencesAfterContentRoot() {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myContentRootSubdir));
   }
 

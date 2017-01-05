@@ -20,18 +20,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
@@ -104,7 +104,6 @@ class ProgressDialog implements Disposable {
   private JPanel myInnerPanel;
   DialogWrapper myPopup;
   private final Window myParentWindow;
-  private Point myLastClicked;
 
   public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
     myProgressWindow = progressWindow;
@@ -119,9 +118,7 @@ class ProgressDialog implements Disposable {
 
   public ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
     myProgressWindow = progressWindow;
-    myParentWindow = parent instanceof Window
-                     ? (Window)parent
-                     : (Window)SwingUtilities.getAncestorOfClass(Window.class, parent);
+    myParentWindow = UIUtil.getWindow(parent);
     initDialog(shouldShowBackground, cancelText);
   }
 
@@ -155,31 +152,14 @@ class ProgressDialog implements Disposable {
     createCenterPanel();
 
     myTitlePanel.setActive(true);
-    myTitlePanel.addMouseListener(new MouseAdapter() {
+    WindowMoveListener moveListener = new WindowMoveListener(myTitlePanel) {
       @Override
-      public void mousePressed(@NotNull MouseEvent e) {
-        final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
-        myLastClicked = new RelativePoint(e).getScreenPoint();
-        myLastClicked.x -= titleOffset.x;
-        myLastClicked.y -= titleOffset.y;
+      protected Component getView(Component component) {
+        return SwingUtilities.getAncestorOfClass(DialogWrapperDialog.class, component);
       }
-    });
-
-    myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseDragged(@NotNull MouseEvent e) {
-        if (myLastClicked == null) {
-          return;
-        }
-        final Point draggedTo = new RelativePoint(e).getScreenPoint();
-        draggedTo.x -= myLastClicked.x;
-        draggedTo.y -= myLastClicked.y;
-
-        if (myPopup != null) {
-          myPopup.setLocation(draggedTo);
-        }
-      }
-    });
+    };
+    myTitlePanel.addMouseListener(moveListener);
+    myTitlePanel.addMouseMotionListener(moveListener);
   }
 
   @Override
@@ -243,7 +223,7 @@ class ProgressDialog implements Disposable {
     );
   }
 
-  private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
+  static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
 
   synchronized void update() {
     if (myRepaintedFlag) {
@@ -273,12 +253,19 @@ class ProgressDialog implements Disposable {
   }
 
   void hide() {
-    SwingUtilities.invokeLater(() -> {
-      if (myPopup != null) {
-        myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
-        myPopup = null;
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(this::hideImmediately, ModalityState.any());
+  }
+
+  void hideImmediately() {
+    if (myPopup != null) {
+      myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
+      myPopup = null;
+    }
+  }
+
+  @Nullable
+  Window getParentWindow() {
+    return myParentWindow;
   }
 
   void show() {
@@ -300,6 +287,9 @@ class ProgressDialog implements Disposable {
     }
     if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
       ((DialogWrapperPeerImpl)myPopup.getPeer()).setAutoRequestFocus(false);
+      if (isWriteActionProgress()) {
+        myPopup.setModal(false); // display the dialog and continue with EDT execution, don't block it forever
+      }
     }
     myPopup.pack();
 
@@ -317,6 +307,10 @@ class ProgressDialog implements Disposable {
     });
 
     myPopup.show();
+  }
+
+  private boolean isWriteActionProgress() {
+    return myProgressWindow instanceof PotemkinProgress;
   }
 
   boolean wasShown() {
@@ -348,7 +342,7 @@ class ProgressDialog implements Disposable {
     @NotNull
     @Override
     protected DialogWrapperPeer createPeer(@NotNull final Component parent, final boolean canBeParent) {
-      if (System.getProperty("vintage.progress") == null) {
+      if (useLightPopup()) {
         try {
           return new GlassPaneDialogWrapperPeer(this, parent, canBeParent);
         }
@@ -370,7 +364,7 @@ class ProgressDialog implements Disposable {
     @NotNull
     @Override
     protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
-      if (System.getProperty("vintage.progress") == null) {
+      if (useLightPopup()) {
         try {
           return new GlassPaneDialogWrapperPeer(this, canBeParent);
         }
@@ -381,6 +375,10 @@ class ProgressDialog implements Disposable {
       else {
         return super.createPeer(WindowManager.getInstance().suggestParentWindow(myProgressWindow.myProject), canBeParent, applicationModalIfPossible);
       }
+    }
+
+    private boolean useLightPopup() {
+      return System.getProperty("vintage.progress") == null && !isWriteActionProgress();
     }
 
     @NotNull
@@ -404,7 +402,7 @@ class ProgressDialog implements Disposable {
       super.init();
       setUndecorated(true);
       getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-      if (! (SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
+      if (! UIUtil.isUnderWin10LookAndFeel()) {
         myPanel.setBorder(PopupBorder.Factory.create(true, true));
       }
     }

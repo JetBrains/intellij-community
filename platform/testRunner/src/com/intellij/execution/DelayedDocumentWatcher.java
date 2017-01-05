@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -65,7 +65,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
                                 @NotNull Consumer<Integer> modificationStampConsumer,
                                 @Nullable Condition<VirtualFile> changedFileFilter) {
     myProject = project;
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
     myChangedFileFilter = changedFileFilter;
@@ -125,7 +125,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
         return;
       }
       if (!myChangedFiles.contains(file)) {
-        if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
+        if (ProjectUtil.isProjectOrWorkspaceFile(file)) {
           return;
         }
         if (myChangedFileFilter != null && !myChangedFileFilter.value(file)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NonNls;
@@ -74,7 +73,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> super.show());
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> super.show());
   }
 
 
@@ -86,6 +85,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init();
   }
 
+  @Override
   public Object getData(@NonNls String dataId) {
     if (myEditor instanceof DataProvider) {
       DataProvider provider = (DataProvider)myEditor;
@@ -115,6 +115,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return DialogStyle.COMPACT;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myEditor;
   }

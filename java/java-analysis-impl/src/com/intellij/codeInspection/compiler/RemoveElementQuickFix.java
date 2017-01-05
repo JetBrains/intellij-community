@@ -31,12 +31,6 @@ public class RemoveElementQuickFix implements LocalQuickFix {
 
   @NotNull
   @Override
-  public String getName() {
-    return myName;
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
     return myName;
   }

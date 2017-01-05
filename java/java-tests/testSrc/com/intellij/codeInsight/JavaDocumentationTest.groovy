@@ -39,9 +39,9 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     "        p {" +
     "            margin: 5px 0;" +
     "        }" +
-    "    </style>";
+    "    </style>"
 
-  public void testConstructorDoc() {
+  void testConstructorDoc() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }
 
@@ -63,7 +63,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testConstructorDoc2() {
+  void testConstructorDoc2() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }
 
@@ -85,7 +85,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testMethodDocWhenInArgList() {
+  void testMethodDocWhenInArgList() {
     configure """\
       class Foo { void doFoo() {} }
 
@@ -105,7 +105,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testGenericMethod() {
+  void testGenericMethod() {
     configure """\
       class Bar<T> { java.util.List<T> foo(T param); }
 
@@ -116,10 +116,10 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
 
-    assert doc == "Bar\n java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)"
+    assert doc == "Bar\n java.util.List&lt;java.lang.String&gt; foo(java.lang.String param)"
   }
 
-  public void testGenericField() {
+  void testGenericField() {
     configure """\
       class Bar<T> { T field; }
 
@@ -132,8 +132,8 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
 
     assert doc == "Bar\n java.lang.Integer field"
   }
-  
-  public void testMethodInAnonymousClass() {
+
+  void testMethodInAnonymousClass() {
     configure """\
       class Foo {{
         new Runnable() {
@@ -148,10 +148,10 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
 
     def doc = CtrlMouseHandler.getInfo(editor, CtrlMouseHandler.BrowseMode.Declaration)
 
-    assert doc == "private void m ()"
+    assert doc == "private void m()"
   }
 
-  public void testAsterisksFiltering() {
+  void testAsterisksFiltering() {
     configure """\
       class C {
         /**
@@ -176,7 +176,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testInlineTagSpacing() {
+  void testInlineTagSpacing() {
     configure """\
       class C {
         /** Visit the "{@code /login}" URL. */
@@ -196,7 +196,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
-  public void testMethodToMethodDelegate() {
+  void testMethodToMethodDelegate() {
     DocumentationDelegateProvider provider = {
       if (it instanceof PsiMethod && it.name == 'foo') {
         JavaPsiFacade.getInstance(project).findClass('Foo', it.resolveScope)?.findMethodBySignature(it, false)

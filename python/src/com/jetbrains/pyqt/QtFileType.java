@@ -15,8 +15,9 @@
  */
 package com.jetbrains.pyqt;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.INativeFileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -38,13 +39,14 @@ import java.util.List;
 /**
  * @author yole
  */
-public abstract class QtFileType implements FileType, INativeFileType {
+public abstract class QtFileType extends LanguageFileType implements INativeFileType {
   private final String myName;
   private final String myDescription;
   private final String myDefaultExtension;
   private final Icon myIcon;
 
   protected QtFileType(String name, String description, String defaultExtension, Icon icon) {
+    super(XMLLanguage.INSTANCE);
     myName = name;
     myDescription = description;
     myDefaultExtension = defaultExtension;
@@ -72,11 +74,6 @@ public abstract class QtFileType implements FileType, INativeFileType {
   @Override
   public Icon getIcon() {
     return myIcon;
-  }
-
-  @Override
-  public boolean isBinary() {
-    return true;
   }
 
   @Override

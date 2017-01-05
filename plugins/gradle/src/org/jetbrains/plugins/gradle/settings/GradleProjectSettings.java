@@ -20,6 +20,10 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author Denis Zhdanov
  * @since 4/24/13 11:57 AM
@@ -31,6 +35,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet = true;
+  @Nullable private Set<String> myCompositeParticipants = new HashSet<>();
 
   @Nullable
   public String getGradleHome() {
@@ -76,6 +81,15 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   @NotNull
+  public Set<String> getCompositeParticipants() {
+    return myCompositeParticipants == null ? Collections.emptySet() : myCompositeParticipants;
+  }
+
+  public void setCompositeParticipants(@Nullable Set<String> compositeParticipants) {
+    myCompositeParticipants = compositeParticipants;
+  }
+
+  @NotNull
   @Override
   public ExternalProjectSettings clone() {
     GradleProjectSettings result = new GradleProjectSettings();
@@ -85,6 +99,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     result.distributionType = distributionType;
     result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
     result.resolveModulePerSourceSet = resolveModulePerSourceSet;
+    result.myCompositeParticipants = myCompositeParticipants != null ? new HashSet<>(myCompositeParticipants) : null;
     return result;
   }
 }

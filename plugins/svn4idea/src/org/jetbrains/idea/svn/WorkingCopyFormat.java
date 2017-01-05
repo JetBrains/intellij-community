@@ -18,57 +18,40 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * since not all constants are available from svnkit & constants are fixed
- */
-public enum WorkingCopyFormat {
+import java.util.stream.Stream;
 
-  ONE_DOT_THREE(4, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version13.text"), new Version(1, 3, 0)),
-  ONE_DOT_FOUR(8, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version14.text"), new Version(1, 4, 0)),
-  ONE_DOT_FIVE(9, true, true, false, SvnBundle.message("dialog.show.svn.map.table.version15.text"), new Version(1, 5, 0)),
-  ONE_DOT_SIX(10, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version16.text"), new Version(1, 6, 0)),
-  ONE_DOT_SEVEN(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version17.text"), new Version(1, 7, 0)),
-  ONE_DOT_EIGHT(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version18.text"), new Version(1, 8, 0)),
-  UNKNOWN(0, false, false, false, "unknown", new Version(0, 0, 0));
+public enum WorkingCopyFormat {
+  ONE_DOT_THREE(4, SvnBundle.message("dialog.show.svn.map.table.version13.text"), new Version(1, 3, 0)),
+  ONE_DOT_FOUR(8, SvnBundle.message("dialog.show.svn.map.table.version14.text"), new Version(1, 4, 0)),
+  ONE_DOT_FIVE(9, SvnBundle.message("dialog.show.svn.map.table.version15.text"), new Version(1, 5, 0)),
+  ONE_DOT_SIX(10, SvnBundle.message("dialog.show.svn.map.table.version16.text"), new Version(1, 6, 0)),
+  ONE_DOT_SEVEN(12, SvnBundle.message("dialog.show.svn.map.table.version17.text"), new Version(1, 7, 0)),
+  ONE_DOT_EIGHT(12, SvnBundle.message("dialog.show.svn.map.table.version18.text"), new Version(1, 8, 0)),
+  UNKNOWN(0, "unknown", new Version(0, 0, 0));
 
   public static final int INTERNAL_FORMAT_17 = 29;
   public static final int INTERNAL_FORMAT_18 = 31;
   private static final Version ONE_DOT_NINE_VERSION = new Version(1, 9, 0);
 
   private final int myFormat;
-  private final boolean myChangelistSupport;
-  private final boolean myMergeInfoSupport;
-  private final boolean myTreeConflictSupport;
-  private final String myName;
-  @NotNull
-  private final Version myVersion;
+  @NotNull private final String myName;
+  @NotNull private final Version myVersion;
 
-  private WorkingCopyFormat(final int format,
-                            boolean changelistSupport,
-                            boolean mergeInfoSupport,
-                            boolean treeConflictSupport,
-                            String name,
-                            @NotNull Version version) {
+  WorkingCopyFormat(int format, @NotNull String name, @NotNull Version version) {
     myFormat = format;
-    myChangelistSupport = changelistSupport;
-    myMergeInfoSupport = mergeInfoSupport;
-    myTreeConflictSupport = treeConflictSupport;
     myName = name;
     myVersion = version;
   }
 
   public boolean supportsChangelists() {
-    return myChangelistSupport;
+    return isOrGreater(ONE_DOT_FIVE);
   }
 
   public boolean supportsMergeInfo() {
-    return myMergeInfoSupport;
+    return isOrGreater(ONE_DOT_FIVE);
   }
 
-  public boolean supportsTreeConflicts() {
-    return myTreeConflictSupport;
-  }
-
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -79,8 +62,7 @@ public enum WorkingCopyFormat {
   }
 
   @NotNull
-  public static WorkingCopyFormat getInstance(final int value) {
-    // somewhy 1.7 wc format can also be 29
+  public static WorkingCopyFormat getInstance(int value) {
     if (INTERNAL_FORMAT_17 == value) {
       return ONE_DOT_SEVEN;
     } else if (INTERNAL_FORMAT_18 == value) {
@@ -113,21 +95,12 @@ public enum WorkingCopyFormat {
 
   @NotNull
   public static WorkingCopyFormat from(@NotNull Version version) {
-    WorkingCopyFormat result = UNKNOWN;
-
-    if (version.compareTo(ONE_DOT_NINE_VERSION) >= 0) {
-      result = ONE_DOT_EIGHT;
-    }
-    else {
-      for (WorkingCopyFormat format : WorkingCopyFormat.values()) {
-        if (format.getVersion().is(version.major, version.minor)) {
-          result = format;
-          break;
-        }
-      }
-    }
-
-    return result;
+    return version.compareTo(ONE_DOT_NINE_VERSION) >= 0
+           ? ONE_DOT_EIGHT
+           : Stream.of(values())
+             .filter(format -> format.getVersion().is(version.major, version.minor))
+             .findFirst()
+             .orElse(UNKNOWN);
   }
 
   @Override

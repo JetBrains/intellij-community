@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,10 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +75,7 @@ import java.util.*;
 
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
+  private static boolean PREVIEW_IN_TESTS = true;
 
   @NotNull
   protected final Project myProject;
@@ -227,8 +228,21 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  @TestOnly
+  public static <T extends Throwable> void runWithDisabledPreview(ThrowableRunnable<T> runnable) throws T {
+    PREVIEW_IN_TESTS = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      PREVIEW_IN_TESTS = true;
+    }
+  }
+
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
+      ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
     }
@@ -479,6 +493,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         }
       });
 
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
       for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
         //noinspection unchecked
         e.getKey().performOperation(myProject, e.getValue());
@@ -525,10 +541,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       try {
         GuiUtils.runOrInvokeAndWait(myPrepareSuccessfulSwingThreadCallback);
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
+      catch (InterruptedException | InvocationTargetException e) {
         LOG.error(e);
       }
     }
@@ -539,11 +552,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
-
-      //noinspection TestOnlyProblems
-      UIUtil.dispatchAllInvocationEvents();
-      //noinspection TestOnlyProblems
-      UIUtil.dispatchAllInvocationEvents();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {

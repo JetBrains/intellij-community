@@ -44,7 +44,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
                                                  "}";
   private static final String TEST_CODE = "import junit.framework.TestCase;" +
                                           "public class ATest extends TestCase {" +
-                                          "public static void test() {}" +
+                                          "public void test() {}" +
                                           "private void otherMethod() {}" +
                                           "}";
   private TestSources mySource;

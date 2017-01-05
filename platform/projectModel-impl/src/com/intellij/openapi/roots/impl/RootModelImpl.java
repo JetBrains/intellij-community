@@ -29,10 +29,10 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -225,7 +225,14 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   public LibraryOrderEntry addLibraryEntry(@NotNull Library library) {
     assertWritable();
     final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(library, this, myProjectRootManager);
-    assert libraryOrderEntry.isValid();
+    if (!libraryOrderEntry.isValid()) {
+      LibraryEx libraryEx = ObjectUtils.tryCast(library, LibraryEx.class);
+      boolean libraryDisposed = libraryEx != null ? libraryEx.isDisposed() : Disposer.isDisposed(library);
+      throw new AssertionError("Invalid libraryOrderEntry, library: " + library
+                               + " of type " + library.getClass()
+                               + ", disposed: " + libraryDisposed
+                               + ", kind: " + (libraryEx != null ? libraryEx.getKind() : "<undefined>"));
+    }
     myOrderEntries.add(libraryOrderEntry);
     return libraryOrderEntry;
   }
@@ -400,7 +407,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return e;
   }
 
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) {
     for (ModuleExtension extension : myExtensions) {
       extension.writeExternal(element);
     }

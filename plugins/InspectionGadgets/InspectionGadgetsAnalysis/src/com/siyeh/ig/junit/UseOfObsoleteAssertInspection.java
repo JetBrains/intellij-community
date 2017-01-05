@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("use.of.obsolete.assert.problem.descriptor");
+    String name = (String)infos[0];
+    return InspectionGadgetsBundle.message("use.of.obsolete.assert.problem.descriptor", name);
   }
 
   @Override
@@ -66,7 +67,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final PsiClass newAssertClass = JavaPsiFacade.getInstance(project)
-        .findClass("org.junit.Assert", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+        .findClass(JUnitCommonClassNames.ORG_JUNIT_ASSERT, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
       if (newAssertClass == null) {
         return;
       }
@@ -75,8 +76,12 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = psiMethod.getContainingClass();
-      if (containingClass != null && Comparing.strEqual(containingClass.getQualifiedName(), "junit.framework.Assert")) {
-        registerMethodCallError(expression);
+      if (containingClass == null) {
+        return;
+      }
+      final String name = containingClass.getQualifiedName();
+      if (JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(name) || JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(name)) {
+        registerMethodCallError(expression, name);
       }
     }
   }
@@ -89,9 +94,9 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final PsiClass newAssertClass =
-        JavaPsiFacade.getInstance(project).findClass("org.junit.Assert", GlobalSearchScope.allScope(project));
+        JavaPsiFacade.getInstance(project).findClass(JUnitCommonClassNames.ORG_JUNIT_ASSERT, GlobalSearchScope.allScope(project));
       final PsiClass oldAssertClass =
-        JavaPsiFacade.getInstance(project).findClass("junit.framework.Assert", GlobalSearchScope.allScope(project));
+        JavaPsiFacade.getInstance(project).findClass(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, GlobalSearchScope.allScope(project));
 
       if (newAssertClass == null) {
         return;
@@ -222,15 +227,8 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("use.of.obsolete.assert.quickfix");
     }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
-
   }
 }

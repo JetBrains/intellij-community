@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * Creates the <code>toString</code> method.
+   * Creates the {@code toString} method.
    *
    * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
    * @param policy          conflict resolution policy
@@ -121,9 +121,7 @@ public class GenerateToStringWorker {
     return toStringMethod;
   }
 
-  public void execute(Collection<PsiMember> members, TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
-    // decide what to do if the method already exists
-    ConflictResolutionPolicy resolutionPolicy = exitsMethodDialog(template);
+  public void execute(Collection<PsiMember> members, TemplateResource template, final ConflictResolutionPolicy resolutionPolicy) throws IncorrectOperationException, GenerateCodeException {
     // what insert policy should we use?
     resolutionPolicy.setNewMethodStrategy(getStrategy(config.getInsertNewMethodInitialOption()));
 
@@ -157,7 +155,7 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * This method gets the choice if there is an existing <code>toString</code> method.
+   * This method gets the choice if there is an existing {@code toString} method.
    * <br/> 1) If there is a settings to always override use this.
    * <br/> 2) Prompt a dialog and let the user decide.
    *
@@ -181,7 +179,7 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * This method is executed just before the <code>toString</code> method is created or updated.
+   * This method is executed just before the {@code toString} method is created or updated.
    *
    * @param params   additional parameters stored with key/value in the map.
    * @param template the template to use
@@ -198,9 +196,9 @@ public class GenerateToStringWorker {
 
 
   /**
-   * This method is executed just after the <code>toString</code> method is created or updated.
+   * This method is executed just after the {@code toString} method is created or updated.
    *
-   * @param method   the newly created/updated <code>toString</code> method.
+   * @param method   the newly created/updated {@code toString} method.
    * @param params   additional parameters stored with key/value in the map.
    * @param template the template to use
    * @throws IncorrectOperationException is thrown by IDEA

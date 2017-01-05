@@ -35,10 +35,10 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
   @NotNull private final EncodingUtil.Magic8 safeToReload;
   @NotNull private final EncodingUtil.Magic8 safeToConvert;
 
-  public IncompatibleEncodingDialog(@NotNull VirtualFile virtualFile,
-                                    @NotNull final Charset charset,
-                                    @NotNull EncodingUtil.Magic8 safeToReload,
-                                    @NotNull EncodingUtil.Magic8 safeToConvert) {
+  IncompatibleEncodingDialog(@NotNull VirtualFile virtualFile,
+                             @NotNull final Charset charset,
+                             @NotNull EncodingUtil.Magic8 safeToReload,
+                             @NotNull EncodingUtil.Magic8 safeToConvert) {
     super(false);
     this.virtualFile = virtualFile;
     this.charset = charset;
@@ -111,7 +111,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
           String error = EncodingUtil.checkCanConvert(virtualFile);
           int res = Messages.showDialog(XmlStringUtil.wrapInHtml(
                                         "Please do not convert to '"+charset.displayName()+"'.<br><br>" +
-                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : error)),
+                                        (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : "Because "+error)),
                                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,
                                         AllIcons.General.WarningDialog);
           if (res != 0) {
@@ -131,6 +131,6 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     return new Action[]{reloadAction, convertAction, cancelAction};
   }
 
-  public static final int RELOAD_EXIT_CODE = 10;
-  public static final int CONVERT_EXIT_CODE = 20;
+  static final int RELOAD_EXIT_CODE = 10;
+  static final int CONVERT_EXIT_CODE = 20;
 }

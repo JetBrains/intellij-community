@@ -21,14 +21,14 @@ import com.intellij.openapi.project.Project;
  * @author yole
  */
 public class ProjectRootModificationTrackerImpl extends ProjectRootModificationTracker {
-  private final Project myProject;
+  private final ProjectRootManager myManager;
 
   public ProjectRootModificationTrackerImpl(Project project) {
-    myProject = project;
+    myManager = ProjectRootManager.getInstance(project);
   }
 
   @Override
   public long getModificationCount() {
-    return ProjectRootManager.getInstance(myProject).getModificationCount();
+    return myManager.getModificationCount();
   }
 }

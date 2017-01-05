@@ -35,6 +35,7 @@ import com.intellij.lang.ant.segments.OutputPacketProcessor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -112,15 +113,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final AntMessageCustomizer[] myMessageCustomizers = AntMessageCustomizer.EP_NAME.getExtensions();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Runnable myFlushLogRunnable = new Runnable() {
-    @Override
-    public void run() {
-      if (myCommandsProcessedCount < myLog.size()) {
-        if (!myIsOutputPaused) {
-          new OutputFlusher().doFlush();
-          myTreeView.scrollToLastMessage();
-        }
-      }
+  private final Runnable myFlushLogRunnable = () -> {
+    if (myCommandsProcessedCount < myLog.size()) {
+      flushWhenSmart(true);
     }
   };
 
@@ -834,14 +829,16 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         }
       }
     });
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      if (!myProject.isDisposed()) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> {
-          if (!myIsOutputPaused) {
-            new OutputFlusher().doFlush();
-          }
-        });
+    ApplicationManager.getApplication().invokeLater(() -> flushWhenSmart(false), ModalityState.any(), myProject.getDisposed());
+  }
+
+  private void flushWhenSmart(boolean scroll) {
+    DumbService.getInstance(myProject).runWhenSmart(() -> {
+      if (!myIsOutputPaused) {
+        new OutputFlusher().doFlush();
+        if (scroll) {
+          myTreeView.scrollToLastMessage();
+        }
       }
     });
   }

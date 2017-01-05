@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -255,7 +254,6 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
       if (myTag == null) return;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(myTag)) return;
       myTag.delete();
     }
   }

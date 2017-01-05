@@ -111,7 +111,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private String myTitle;
   private final TreeSpeedSearch mySpeedSearch;
   private final SmartTreeStructure myTreeStructure;
-  private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
   private final PsiElement myInitialPsiElement;
   private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<>();
@@ -300,7 +299,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     //final long time = System.currentTimeMillis();
     JComponent panel = createCenterPanel();
     MnemonicHelper.init(panel);
-    boolean shouldSetWidth = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject) == null;
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
       .setTitle(myTitle)
       .setResizable(true)
@@ -311,11 +309,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setBelongsToGlobalPopupStack(true)
       //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
-      .setDimensionServiceKey(null, getDimensionServiceKey(), false)
-      .setCancelCallback(() -> {
-        DimensionService.getInstance().setLocation(getDimensionServiceKey(), myPopup.getLocationOnScreen(), myProject);
-        return myCanClose;
-      })
+      .setDimensionServiceKey(null, getDimensionServiceKey(), true)
+      .setCancelCallback(() -> myCanClose)
       .createPopup();
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -340,21 +335,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     });
     myTree.getEmptyText().setText("Loading...");
-    final Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), myProject);
-    if (location != null) {
-      myPopup.showInScreenCoordinates(myFileEditor.getComponent(), location);
-    }
-    else {
-      myPopup.showCenteredInCurrentWindow(myProject);
-    }
+    myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
-    if (shouldSetWidth) {
-      myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
-    }
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
-    SwingUtilities.windowForComponent(myPopup.getContent()).addWindowFocusListener(new WindowFocusListener() {
+    Window window = SwingUtilities.windowForComponent(myPopup.getContent());
+    WindowFocusListener windowFocusListener = new WindowFocusListener() {
       @Override
       public void windowGainedFocus(WindowEvent e) {
       }
@@ -363,7 +350,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public void windowLostFocus(WindowEvent e) {
         myPopup.cancel();
       }
-    });
+    };
+    window.addWindowFocusListener(windowFocusListener);
+    Disposer.register(myPopup, () -> window.removeWindowFocusListener(windowFocusListener));
+
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ApplicationManager.getApplication().runReadAction(() -> myFilteringStructure.rebuild());
 
@@ -624,10 +614,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
 
-    myPreferredWidth = Math.max(comboPanel.getPreferredSize().width, JBUI.scale(350));
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree());
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    Dimension preferredSize = scrollPane.getPreferredSize();
+    preferredSize.width = Math.max(comboPanel.getPreferredSize().width, JBUI.scale(350));
+    scrollPane.setPreferredSize(preferredSize);
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {

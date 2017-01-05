@@ -16,7 +16,7 @@
 package org.jetbrains.java.generate.exception;
 
 /**
- * Error generating the javacode for the <code>toString</code> method.
+ * Error generating the javacode for the {@code toString} method.
  * <p/>
  * This exception is usually caused by a Velocity parsing exception.
  */

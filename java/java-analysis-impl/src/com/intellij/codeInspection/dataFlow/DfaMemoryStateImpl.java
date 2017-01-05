@@ -237,7 +237,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public void emptyStack() {
     myCachedHash = null;
-    myStack.clear();
+    while (!myStack.isEmpty() && !(myStack.peek() instanceof DfaControlTransferValue)) {
+      myStack.pop();
+    }
   }
 
   @Override
@@ -677,7 +679,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             setVariableState(dfaVar, newState);
             return true;
           }
-          return applyRelation(dfaVar, myFactory.getConstFactory().getNull(), false);
+          return !getVariableState(dfaVar).isNotNull() && applyRelation(dfaVar, myFactory.getConstFactory().getNull(), false);
         }
         if (applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true)) {
           DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue((DfaTypeValue)dfaRight);

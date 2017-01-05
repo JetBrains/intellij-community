@@ -32,6 +32,18 @@ import org.jetbrains.annotations.Nullable;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
 
+  @NotNull
+  @Override
+  public String getID() {
+    return "SyntheticAccessorCall";
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "PrivateMemberAccessBetweenOuterAndInnerClass";
+  }
+
   @Override
   @NotNull
   public String getDisplayName() {
@@ -184,7 +196,11 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
       if (containingClass == null) {
         return;
       }
-      final PsiMethod constructor = expression.resolveConstructor();
+      final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+      if (!resolveResult.isAccessible()) {
+        return;
+      }
+      final PsiMethod constructor = (PsiMethod)resolveResult.getElement();
       if (constructor == null) {
         final PsiJavaCodeReferenceElement classReference =
           expression.getClassOrAnonymousClassReference();
@@ -223,7 +239,11 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
       if (referenceNameElement == null) {
         return;
       }
-      final PsiElement element = expression.resolve();
+      final JavaResolveResult resolveResult = expression.advancedResolve(false);
+      if (!resolveResult.isAccessible()) {
+        return;
+      }
+      final PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiMethod || element instanceof PsiField)) {
         return;
       }
@@ -240,8 +260,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
         return;
       }
       final PsiClass memberClass = ClassUtils.getContainingClass(member);
-      if (memberClass == null || memberClass.equals(containingClass) ||
-          (!PsiTreeUtil.isAncestor(containingClass, memberClass, true) && !PsiTreeUtil.isAncestor(memberClass, containingClass, true))) {
+      if (memberClass == null || memberClass.equals(containingClass)) {
         return;
       }
       registerError(referenceNameElement, memberClass, member);

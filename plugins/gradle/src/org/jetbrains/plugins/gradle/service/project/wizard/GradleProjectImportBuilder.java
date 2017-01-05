@@ -17,15 +17,22 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,6 +83,44 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     if (sdkPair != null && !ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
       importFromGradleControl.getProjectSettings().setGradleJvm(sdkPair.first);
     }
+  }
+
+  @Override
+  protected ExternalProjectRefreshCallback createFinalImportCallback(@NotNull final Project project,
+                                                                     @NotNull ExternalProjectSettings projectSettings) {
+    return new ExternalProjectRefreshCallback() {
+      @Override
+      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+        if (externalProject == null) return;
+        Runnable selectDataTask = () -> {
+          ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
+            project, new InternalExternalProjectInfo(
+            GradleConstants.SYSTEM_ID, projectSettings.getExternalProjectPath(), externalProject));
+          if (dialog.hasMultipleDataToSelect()) {
+            dialog.showAndGet();
+          }
+          else {
+            Disposer.dispose(dialog.getDisposable());
+          }
+        };
+
+        Runnable importTask = () -> ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
+
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            selectDataTask.run();
+            ApplicationManager.getApplication().executeOnPooledThread(importTask);
+          });
+        }
+        else {
+          importTask.run();
+        }
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+      }
+    };
   }
 
   @Override

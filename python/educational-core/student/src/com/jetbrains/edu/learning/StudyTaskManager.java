@@ -13,7 +13,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -34,10 +33,9 @@ import java.util.Map;
 @State(name = "StudySettings", storages = @Storage("study_project.xml"))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
-  public static final int CURRENT_VERSION = 3;
-  private StepicUser myUser = new StepicUser();
+  public static final int CURRENT_VERSION = 4;
   private Course myCourse;
-  public int VERSION = 3;
+  public int VERSION = 4;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
@@ -45,7 +43,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
-  private boolean myEnableTestingFromSamples = true;
+  private boolean myEnableTestingFromSamples = false;
 
   @Transient private final Project myProject;
 
@@ -97,6 +95,9 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public JBColor getColor(@NotNull final AnswerPlaceholder placeholder) {
+    if (!placeholder.getUseLength() && placeholder.isActive() && placeholder.getActiveSubtaskInfo().isNeedInsertText()) {
+      return JBColor.LIGHT_GRAY;
+    }
     final StudyStatus status = placeholder.getStatus();
     if (status == StudyStatus.Solved) {
       return JBColor.GREEN;
@@ -108,7 +109,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public boolean hasFailedAnswerPlaceholders(@NotNull final TaskFile taskFile) {
-    return taskFile.getAnswerPlaceholders().size() > 0 && taskFile.hasFailedPlaceholders();
+    return taskFile.getActivePlaceholders().size() > 0 && taskFile.hasFailedPlaceholders();
   }
 
   @Nullable
@@ -137,8 +138,10 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
           state = StudySerializationUtils.Xml.convertToSecondVersion(state);
         case 2:
           state = StudySerializationUtils.Xml.convertToThirdVersion(state, myProject);
+        case 3:
+          state = StudySerializationUtils.Xml.convertToForthVersion(state);
           //uncomment for future versions
-          //case 3:
+          //case 4:
           //state = StudySerializationUtils.Xml.convertToForthVersion(state, myProject);
       }
       XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
@@ -194,15 +197,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
     myTurnEditingMode = turnEditingMode;
   }
   
-  @NotNull
-  public StepicUser getUser() {
-    return myUser;
-  }
-
-  public void setUser(@NotNull final StepicUser user) {
-    myUser = user;
-  }
-
   public boolean isEnableTestingFromSamples() {
     return myEnableTestingFromSamples;
   }

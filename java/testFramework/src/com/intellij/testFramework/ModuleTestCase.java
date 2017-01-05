@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -57,30 +56,24 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      List<Throwable> errors = null;
-      AccessToken token = WriteAction.start();
-      try {
-        for (Module module : myModulesToDispose) {
-          try {
-            String moduleName = module.getName();
-            if (moduleManager.findModuleByName(moduleName) != null) {
-              moduleManager.disposeModule(module);
+      if (!myModulesToDispose.isEmpty()) {
+        List<Throwable> errors = new SmartList<>();
+        WriteAction.run(() -> {
+          ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+          for (Module module : myModulesToDispose) {
+            try {
+              String moduleName = module.getName();
+              if (moduleManager.findModuleByName(moduleName) != null) {
+                moduleManager.disposeModule(module);
+              }
+            }
+            catch (Throwable e) {
+              errors.add(e);
             }
           }
-          catch (Throwable e) {
-            if (errors == null) {
-              errors = new SmartList<>();
-            }
-            errors.add(e);
-          }
-        }
+        });
+        CompoundRuntimeException.throwIfNotEmpty(errors);
       }
-      finally {
-        token.finish();
-      }
-
-      CompoundRuntimeException.throwIfNotEmpty(errors);
     }
     finally {
       myModulesToDispose.clear();

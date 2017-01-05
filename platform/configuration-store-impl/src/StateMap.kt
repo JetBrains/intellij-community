@@ -77,7 +77,7 @@ fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>
     return state.clone()
   }
   else {
-    return newLiveStates?.get(key) ?: (state as? ByteArray)?.let { unarchiveState(it)  }
+    return newLiveStates?.get(key) ?: (state as? ByteArray)?.let(::unarchiveState)
   }
 }
 

@@ -158,11 +158,11 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
   }
 
-  public static PsiReference createTypeOrElementOrAttributeReference(final PsiElement element) {
+  public static PsiReference createTypeOrElementOrAttributeReference(@NotNull final PsiElement element) {
     return createTypeOrElementOrAttributeReference(element, null);
   }
 
-  public static PsiReference createTypeOrElementOrAttributeReference(final PsiElement element, String ns) {
+  public static PsiReference createTypeOrElementOrAttributeReference(@NotNull final PsiElement element, String ns) {
     final int length = element.getTextLength();
     int offset = (element instanceof XmlAttributeValue) ?
       XmlUtil.findPrefixByQualifiedName(((XmlAttributeValue)element).getValue()).length() : 0;

@@ -39,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author spleaner
@@ -68,6 +70,8 @@ public class XmlRefCountHolder {
   private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<>();
   private final Set<String> myUsedPrefixes = new HashSet<>();
   private final Set<String> myUsedNamespaces = new HashSet<>();
+
+  private static final Pattern PREFIX_PATTERN = Pattern.compile("[\\w_][\\w_.]*:");
 
   @Nullable
   public static XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
@@ -252,6 +256,10 @@ public class XmlRefCountHolder {
                 myHolder.addUsedPrefix(prefix.getName());
               }
             }
+          }
+          Matcher matcher = PREFIX_PATTERN.matcher(value.getText());
+          while (matcher.find()) {
+            myHolder.addUsedPrefix(matcher.group());
           }
         }
 

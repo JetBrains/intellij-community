@@ -27,6 +27,7 @@ public class CommandEvent extends EventObject {
   private final String myCommandName;
   private final Object myCommandGroupId;
   private final UndoConfirmationPolicy myUndoConfirmationPolicy;
+  private final boolean myShouldRecordActionForActiveDocument;
   private final Document myDocument;
 
   public CommandEvent(@NotNull CommandProcessor processor, @NotNull Runnable command, Project project, @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
@@ -39,7 +40,7 @@ public class CommandEvent extends EventObject {
                       Object commandGroupId,
                       Project project,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    this(processor, command, commandName, commandGroupId, project, undoConfirmationPolicy, null);
+    this(processor, command, commandName, commandGroupId, project, undoConfirmationPolicy, true, null);
   }
   public CommandEvent(@NotNull CommandProcessor processor,
                       @NotNull Runnable command,
@@ -47,6 +48,7 @@ public class CommandEvent extends EventObject {
                       Object commandGroupId,
                       Project project,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
+                      boolean shouldRecordActionForActiveDocument,
                       Document document) {
     super(processor);
     myCommand = command;
@@ -54,6 +56,7 @@ public class CommandEvent extends EventObject {
     myCommandGroupId = commandGroupId;
     myProject = project;
     myUndoConfirmationPolicy = undoConfirmationPolicy;
+    myShouldRecordActionForActiveDocument = shouldRecordActionForActiveDocument;
     myDocument = document;
   }
 
@@ -82,6 +85,10 @@ public class CommandEvent extends EventObject {
   @NotNull
   public UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return myUndoConfirmationPolicy;
+  }
+
+  public boolean shouldRecordActionForOriginalDocument() {
+    return myShouldRecordActionForActiveDocument;
   }
 
   public Document getDocument() {

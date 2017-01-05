@@ -24,7 +24,7 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.startup.StartupManager;
@@ -111,7 +111,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
         @Override
         public void update(final @NotNull Module module, @NotNull ModifiableRootModel rootModel) {
           final MessageBusConnection connection = module.getProject().getMessageBus().connect();
-          connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+          connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
 
             @Override
             public void moduleAdded(@NotNull Project project, @NotNull Module addedModule) {

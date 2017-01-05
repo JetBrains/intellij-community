@@ -17,8 +17,11 @@ package com.intellij.execution.junit;
 
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.util.PathUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,10 +43,27 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
       return JavaSdkUtil.getJUnit4JarPaths();
     }
   };
+  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5") {
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      try {
+        return Arrays.asList(PathUtil.getJarPathForClass(Class.forName("org.junit.jupiter.api.Test")),
+                             PathUtil.getJarPathForClass(Class.forName("org.opentest4j.AssertionFailedError")));
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
   private final String myVersion;
 
-  public JUnitExternalLibraryDescriptor(String version) {
-    super("junit", "junit", version + ".0", version + ".999");
+  private JUnitExternalLibraryDescriptor(String version) {
+    this("junit", "junit", version);
+  }
+
+  private JUnitExternalLibraryDescriptor(final String groupId, final String artifactId, final String version) {
+    super(groupId, artifactId, version + ".0", version + ".999");
     myVersion = version;
   }
 

@@ -33,12 +33,11 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
-import com.jetbrains.python.debugger.PyDebugProcess;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyThreadInfo;
+import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -256,6 +255,31 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return null;
   }
 
+  protected int getNumberOfReferringObjects(String name) throws PyDebuggerException {
+    XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
+    final PyReferringObjectsValue value = new PyReferringObjectsValue((PyDebugValue)var);
+    EvaluationCallback callback = new EvaluationCallback();
+
+    myDebugProcess.loadReferrers(value, new PyDebugCallback<XValueChildrenList>() {
+      @Override
+      public void ok(XValueChildrenList valueList) {
+        callback.evaluated(valueList.size());
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+        callback.errorOccurred(exception.getMessage());
+      }
+    });
+
+    final Pair<Integer, String> result = callback.waitFor(NORMAL_TIMEOUT);
+    if (result.second != null) {
+      throw new PyDebuggerException(result.second);
+    }
+
+    return result.first;
+  }
+
   protected Variable eval(String name) throws InterruptedException {
     Assert.assertTrue("Eval works only while suspended", mySession.isSuspended());
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
@@ -366,6 +390,27 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       }
 
       finishSession();
+    }
+  }
+
+  protected static class EvaluationCallback {
+    private final Semaphore myFinished = new Semaphore(0);
+    private int myResult;
+    private String myErrorMessage;
+
+    public void evaluated(int result) {
+      myResult = result;
+      myFinished.release();
+    }
+
+    public void errorOccurred(@NotNull String errorMessage) {
+      myErrorMessage = errorMessage;
+      myFinished.release();
+    }
+
+    public Pair<Integer, String> waitFor(long timeoutInMilliseconds) {
+      Assert.assertTrue("timed out", XDebuggerTestUtil.waitFor(myFinished, timeoutInMilliseconds));
+      return Pair.create(myResult, myErrorMessage);
     }
   }
 

@@ -13,90 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("PackageDirectoryMismatch")
+
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.credentialStore.*
-import com.intellij.credentialStore.PasswordSafeSettings.ProviderType
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
+import org.jetbrains.concurrency.runAsync
+import java.nio.file.Paths
 
-class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
-  private @Volatile var currentProvider: PasswordStorage
+fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
+  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)) {
+    return KeePassCredentialStore(memoryOnly = true)
+  }
+  else if (settings.providerType == ProviderType.KEEPASS) {
+    val dbFile = settings.state.keepassDb?.let {
+      LOG.catchAndLog { return@let Paths.get(it) }
+      return@let null
+    }
+    return KeePassCredentialStore(dbFile = dbFile)
+  }
+  else {
+    return createPersistentCredentialStore()
+  }
+}
 
+class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
+                                                 internal @Volatile var currentProvider: CredentialStore = computeProvider(settings)) : PasswordSafe(), SettingsSavingComponent {
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  private val memoryHelperProvider = lazy { FileCredentialStore(emptyMap(), memoryOnly = true) }
+  private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
 
   override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
 
-  val isNativeCredentialStoreUsed: Boolean
-    get() = currentProvider !is FileCredentialStore
-
-  init {
-    if (settings.providerType == ProviderType.MEMORY_ONLY || ApplicationManager.getApplication().isUnitTestMode) {
-      currentProvider = FileCredentialStore(memoryOnly = true)
-    }
-    else {
-      currentProvider = createPersistentCredentialStore()
-    }
-
-    ApplicationManager.getApplication().messageBus.connect().subscribe(PasswordSafeSettings.TOPIC, object: PasswordSafeSettingsListener {
-      override fun typeChanged(oldValue: ProviderType, newValue: ProviderType) {
-        val memoryOnly = newValue == ProviderType.MEMORY_ONLY
-        if (memoryOnly) {
-          val provider = currentProvider
-          if (provider is FileCredentialStore) {
-            provider.memoryOnly = true
-            provider.deleteFileStorage()
-          }
-          else {
-            currentProvider = FileCredentialStore(memoryOnly = true)
-          }
-        }
-        else {
-          currentProvider = createPersistentCredentialStore(currentProvider as? FileCredentialStore)
-        }
-      }
-    })
-  }
-
-  @Suppress("OverridingDeprecatedMember")
-  override fun getPassword(requestor: Class<*>, accountName: String): String? {
-    @Suppress("DEPRECATION")
-    val value = currentProvider.getPassword(requestor, accountName)
-    if (value == null && memoryHelperProvider.isInitialized()) {
-      // if password was set as `memoryOnly`
-      return memoryHelperProvider.value.get(CredentialAttributes(requestor, accountName))?.password
-    }
-    return value
-  }
-
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
-    if (value == null && memoryHelperProvider.isInitialized()) {
+    if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
-      return memoryHelperProvider.value.get(attributes)
+      memoryHelperProvider.value.get(attributes)?.let {
+        if (!it.isEmpty()) {
+          return it
+        }
+      }
     }
     return value
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     currentProvider.set(attributes, credentials)
-    if (memoryHelperProvider.isInitialized()) {
-      val memoryHelper = memoryHelperProvider.value
-      // update password in the memory helper, but only if it was previously set
-      if (credentials == null || memoryHelper.get(attributes) != null) {
-        memoryHelper.set(attributes, credentials)
-      }
+    if (attributes.isPasswordMemoryOnly && !credentials?.password.isNullOrEmpty()) {
+      // we must store because otherwise on get will be no password
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
+    }
+    else if (memoryHelperProvider.isInitialized()) {
+      memoryHelperProvider.value.set(attributes, null)
     }
   }
 
-  override fun setPassword(attributes: CredentialAttributes, value: String?, memoryOnly: Boolean) {
-    val credentials = value?.let { Credentials(attributes.accountName, it) }
+  override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
-      memoryHelperProvider.value.set(attributes, credentials)
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
       // remove to ensure that on getPassword we will not return some value from default provider
       currentProvider.set(attributes, null)
     }
@@ -105,8 +84,11 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     }
   }
 
+  // maybe in the future we will use native async, so, this method added here instead "if need, just use runAsync in your code"
+  override fun getAsync(attributes: CredentialAttributes) = runAsync { get(attributes) }
+
   override fun save() {
-    (currentProvider as? FileCredentialStore)?.let { it.save() }
+    (currentProvider as? KeePassCredentialStore)?.save()
   }
 
   fun clearPasswords() {
@@ -117,16 +99,30 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       }
     }
     finally {
-      (currentProvider as? FileCredentialStore)?.let { it.clear() }
+      (currentProvider as? KeePassCredentialStore)?.clear()
     }
 
     ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
   }
 
+  override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean {
+    if (isMemoryOnly || credentials.password.isNullOrEmpty()) {
+      return true
+    }
+
+    if (!memoryHelperProvider.isInitialized()) {
+      return false
+    }
+
+    return memoryHelperProvider.value.get(attributes)?.let {
+      !it.password.isNullOrEmpty()
+    } ?: false
+  }
+
   // public - backward compatibility
   @Suppress("unused", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use it")
-  val masterKeyProvider: PasswordStorage
+  val masterKeyProvider: CredentialStore
     get() = currentProvider
 
   @Suppress("unused")
@@ -136,13 +132,13 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     get() = memoryHelperProvider.value
 }
 
-private fun createPersistentCredentialStore(existing: FileCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
+internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
   LOG.catchAndLog {
     for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
       val store = factory.create() ?: continue
       if (convertFileStore) {
         LOG.catchAndLog {
-          val fileStore = FileCredentialStore()
+          val fileStore = KeePassCredentialStore()
           fileStore.copyTo(store)
           fileStore.clear()
           fileStore.save()
@@ -156,5 +152,5 @@ private fun createPersistentCredentialStore(existing: FileCredentialStore? = nul
     it.memoryOnly = false
     return it
   }
-  return FileCredentialStore()
+  return KeePassCredentialStore()
 }

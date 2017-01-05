@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin;
 
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -17,6 +18,7 @@ public class StructuralSearchAction extends AnAction {
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
+    UsageTrigger.trigger("structural.search");
     final Project project = searchContext.getProject();
     if (project == null) {
       return;

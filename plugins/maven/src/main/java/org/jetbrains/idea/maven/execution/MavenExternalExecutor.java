@@ -19,7 +19,6 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,7 +66,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       }
 
       myProcessHandler =
-        new OSProcessHandler(CommandLineBuilder.createFromJavaParameters(myJavaParameters)) {
+        new OSProcessHandler(myJavaParameters.toCommandLine()) {
           @Override
           public void notifyTextAvailable(String text, Key outputType) {
             // todo move this logic to ConsoleAdapter class

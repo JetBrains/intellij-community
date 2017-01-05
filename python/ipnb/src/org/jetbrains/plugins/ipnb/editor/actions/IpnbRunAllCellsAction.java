@@ -40,23 +40,14 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
         if (url == null) return;
         IpnbSettings.getInstance(project).setURL(url);
         final String finalUrl = url;
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            final boolean serverStarted = connectionManager.startIpythonServer(finalUrl, ipnbEditor);
-            if (!serverStarted) {
-              return;
-            }
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                connectionManager.startConnection(null, path, finalUrl, false);
-              }
-            });
-            runCells(cells, ipnbFilePanel);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          final boolean serverStarted = connectionManager.startIpythonServer(finalUrl, ipnbEditor);
+          if (!serverStarted) {
+            return;
           }
+          UIUtil.invokeLaterIfNeeded(() -> connectionManager.startConnection(null, path, finalUrl, false));
+          runCells(cells, ipnbFilePanel);
         });
-
       }
       else {
         runCells(cells, ipnbFilePanel);
@@ -66,7 +57,7 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
 
   private static void runCells(List<IpnbEditablePanel> cells, IpnbFilePanel ipnbFilePanel) {
     for (IpnbEditablePanel cell : cells) {
-      cell.runCell();
+      cell.runCell(true);
       ipnbFilePanel.revalidate();
       ipnbFilePanel.repaint();
       ipnbFilePanel.requestFocus();

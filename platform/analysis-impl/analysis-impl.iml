@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="extensions" />
     <orderEntry type="module" module-name="resources-en" />
-    <orderEntry type="module" module-name="projectModel-impl" />
+    <orderEntry type="module" module-name="projectModel-impl" exported="" />
     <orderEntry type="module" module-name="editor-ui-ex" />
     <orderEntry type="module" module-name="indexing-impl" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />

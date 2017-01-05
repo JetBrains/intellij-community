@@ -123,9 +123,7 @@ public class SystemBuilder {
       Boolean good = myMethodCache.get(method);
 
       if (good != null && good.booleanValue()) {
-        if (myMethods.get(method) == null) {
-          myMethods.put(method, method);
-        }
+        myMethods.putIfAbsent(method, method);
 
         if (parameter != null && myParameters.get(parameter) == null) {
           myParameters.put(parameter, parameter);

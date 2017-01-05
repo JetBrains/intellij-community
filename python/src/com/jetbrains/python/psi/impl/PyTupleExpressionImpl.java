@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -39,12 +40,7 @@ public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements P
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PyExpression[] elements = getElements();
-    final PyType[] types = new PyType[elements.length];
-    for (int i = 0; i < types.length; i++) {
-      types [i] = context.getType(elements [i]);
-    }
-    return PyTupleType.create(this, types);
+    return PyTupleType.create(this, ContainerUtil.map(getElements(), context::getType));
   }
 
   public Iterator<PyExpression> iterator() {

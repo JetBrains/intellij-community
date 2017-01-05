@@ -45,7 +45,6 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,14 +158,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
-    UIUtil.invokeLaterIfNeeded(() -> {
-      try {
-        commitAllDocuments();
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    });
+    try {
+      commitAllDocuments();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @Override

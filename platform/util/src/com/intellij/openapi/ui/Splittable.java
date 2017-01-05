@@ -25,12 +25,12 @@ public interface Splittable {
   void setProportion(float proportion);
 
   /**
-   * @return <code>true</code> if splitter has vertical orientation, <code>false</code> otherwise
+   * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
    */
   boolean getOrientation();
 
   /**
-   * @param verticalSplit <code>true</code> means that splitter will have vertical split
+   * @param verticalSplit {@code true} means that splitter will have vertical split
    */
   void setOrientation(boolean verticalSplit);
 

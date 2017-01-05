@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -193,14 +194,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
     }
 
     @Override
@@ -258,14 +253,12 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         }
         return;
       }
-      final int size = out.size();
-      for (int i = 0; i < size; i++) {
-        final PsiType collectedType = out.get(i);
+      for (Iterator<PsiType> iterator = out.iterator(); iterator.hasNext(); ) {
+        final PsiType collectedType = iterator.next();
         if (TypeConversionUtil.isAssignable(type, collectedType)) {
-          out.remove(i);
-          out.add(type);
-          return;
-        } else if (TypeConversionUtil.isAssignable(collectedType, type)) {
+          iterator.remove();
+        }
+        else if (TypeConversionUtil.isAssignable(collectedType, type)) {
           return;
         }
       }

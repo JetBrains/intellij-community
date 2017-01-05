@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,10 @@ public class JavaMethodMergingContributor extends CompletionContributor {
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     final CompletionParameters parameters = context.getParameters();
     if (parameters.getCompletionType() != CompletionType.SMART && parameters.getCompletionType() != CompletionType.BASIC) {
+      return null;
+    }
+
+    if (Registry.is("java.completion.argument.live.template")) {
       return null;
     }
 

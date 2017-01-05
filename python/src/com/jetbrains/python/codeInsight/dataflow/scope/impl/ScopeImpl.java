@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -149,12 +150,15 @@ public class ScopeImpl implements Scope {
       collectDeclarations();
     }
     if (myNamedElements.containsKey(name)) {
-      return myNamedElements.get(name);
+      final Collection<PsiNamedElement> elements = myNamedElements.get(name);
+      elements.forEach(PyPsiUtils::assertValid);
+      return elements;
     }
     if (includeNestedGlobals && isGlobal(name)) {
       for (Scope scope : myNestedScopes) {
         final Collection<PsiNamedElement> globals = scope.getNamedElements(name, true);
         if (!globals.isEmpty()) {
+          globals.forEach(PyPsiUtils::assertValid);
           return globals;
         }
       }

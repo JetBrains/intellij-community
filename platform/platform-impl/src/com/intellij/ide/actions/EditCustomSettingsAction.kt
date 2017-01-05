@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.actions
 
+import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 import com.intellij.openapi.project.DumbAwareAction
@@ -28,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
+import java.io.IOException
 
 abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): File?
@@ -42,10 +45,19 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
     val file = file() ?: return
 
     if (!file.exists()) {
-      val message = IdeBundle.message("edit.custom.settings.confirm", FileUtil.getLocationRelativeToUserHome(file.path))
-      val result = Messages.showYesNoDialog(project, message, e.presentation.text!!, Messages.getQuestionIcon())
+      val confirmation = IdeBundle.message("edit.custom.settings.confirm", FileUtil.getLocationRelativeToUserHome(file.path))
+      val result = Messages.showYesNoDialog(project, confirmation, e.presentation.text!!, Messages.getQuestionIcon())
       if (result == Messages.NO) return
-      FileUtil.writeToFile(file, template())
+
+      try {
+        FileUtil.writeToFile(file, template())
+      }
+      catch(ex: IOException) {
+        Logger.getInstance(javaClass).warn(ex)
+        val message = IdeBundle.message("edit.custom.settings.failed", file, ex.message)
+        Messages.showErrorDialog(project, message, CommonBundle.message("title.error"))
+        return
+      }
     }
 
     val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)

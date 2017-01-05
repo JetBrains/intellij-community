@@ -27,10 +27,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -107,21 +106,19 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   };
   private final Project myProject;
 
-  public DomElementAnnotationsManagerImpl(Project project) {
+  public DomElementAnnotationsManagerImpl(@NotNull Project project) {
     myProject = project;
-    final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
+    ProjectInspectionProfileManager.getInstance(project).addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
-      public void profileActivated(Profile oldProfile, @Nullable Profile profile) {
+      public void profileActivated(InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
         dropAnnotationsCache();
       }
 
       @Override
-      public void profileChanged(Profile profile) {
+      public void profileChanged(InspectionProfile profile) {
         dropAnnotationsCache();
       }
-    };
-
-    InspectionProfileManager.getInstance().addProfileChangeListener(profileChangeAdapter, project);
+    }, project);
   }
 
   @Override

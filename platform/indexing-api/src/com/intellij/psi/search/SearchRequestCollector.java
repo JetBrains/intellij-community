@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -28,12 +29,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
 * @author peter
 */
 public class SearchRequestCollector {
+  private static final ExtensionPointName<ScopeOptimizer> CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.codeUsageScopeOptimizer");
+
   private final Object lock = new Object();
   private final List<PsiSearchRequest> myWordRequests = ContainerUtil.newArrayList();
   private final List<QuerySearchRequest> myQueryRequests = ContainerUtil.newArrayList();
@@ -60,7 +65,7 @@ public class SearchRequestCollector {
                          short searchContext,
                          boolean caseSensitive,
                          @NotNull PsiElement searchTarget) {
-    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), new SingleTargetRequestResultProcessor(searchTarget));
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), new SingleTargetRequestResultProcessor(searchTarget), searchTarget);
   }
 
   private void searchWord(@NotNull String word,
@@ -68,11 +73,36 @@ public class SearchRequestCollector {
                           short searchContext,
                           boolean caseSensitive,
                           String containerName,
-                          @NotNull RequestResultProcessor processor) {
+                          @NotNull RequestResultProcessor processor,
+                          PsiElement searchTarget) {
     if (!makesSenseToSearch(word, searchScope)) return;
+
+    Collection<PsiSearchRequest> requests = null;
+    if (searchTarget != null &&
+        searchScope instanceof GlobalSearchScope &&
+        ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
+      for (ScopeOptimizer optimizer : CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
+        final GlobalSearchScope optimizedCodeUsageSearchScope = optimizer.getScopeToExclude(searchTarget);
+        if (optimizedCodeUsageSearchScope != null) {
+          short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
+                                          ? UsageSearchContext.IN_COMMENTS |
+                                            UsageSearchContext.IN_STRINGS |
+                                            UsageSearchContext.IN_FOREIGN_LANGUAGES |
+                                            UsageSearchContext.IN_PLAIN_TEXT
+                                          : (short)(searchContext ^ UsageSearchContext.IN_CODE);
+          GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
+          requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
+                                        new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+          break;
+        }
+      }
+    }
+    if (requests == null) {
+      requests = Collections.singleton(new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, containerName, processor));
+    }
+
     synchronized (lock) {
-      PsiSearchRequest request = new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, containerName, processor);
-      myWordRequests.add(request);
+      myWordRequests.addAll(requests);
     }
   }
   public void searchWord(@NotNull String word,
@@ -81,16 +111,13 @@ public class SearchRequestCollector {
                           boolean caseSensitive,
                           @NotNull PsiElement searchTarget,
                           @NotNull RequestResultProcessor processor) {
-    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), processor);
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), processor, searchTarget);
   }
 
   private static String getContainerName(@NotNull final PsiElement target) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        PsiElement container = getContainer(target);
-        return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
-      }
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      PsiElement container = getContainer(target);
+      return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
     });
   }
 
@@ -99,10 +126,13 @@ public class SearchRequestCollector {
       final PsiElement container = provider.getContainer(refElement);
       if (container != null) return container;
     }
-    return refElement.getParent();
+    // it's assumed that in the general case of unknown language the .getParent() will lead to reparse,
+    // (all these Javascript stubbed methods under non-stubbed block statements under stubbed classes - meh)
+    // so just return null instead of refElement.getParent() here to avoid making things worse.
+    return null;
   }
 
-  /** use {@link #searchWord(java.lang.String, com.intellij.psi.search.SearchScope, short, boolean, com.intellij.psi.PsiElement)}
+  /** use {@link #searchWord(String, SearchScope, short, boolean, PsiElement)}
    * instead
    */
   @Deprecated
@@ -111,17 +141,14 @@ public class SearchRequestCollector {
                          short searchContext,
                          boolean caseSensitive,
                          @NotNull RequestResultProcessor processor) {
-    searchWord(word, searchScope, searchContext, caseSensitive, (String)null, processor);
+    searchWord(word, searchScope, searchContext, caseSensitive, null, processor, null);
   }
 
   private static boolean makesSenseToSearch(@NotNull String word, @NotNull SearchScope searchScope) {
     if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
       return false;
     }
-    if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
-      return false;
-    }
-    return !StringUtil.isEmpty(word);
+    return searchScope != GlobalSearchScope.EMPTY_SCOPE && !StringUtil.isEmpty(word);
   }
 
   public void searchQuery(@NotNull QuerySearchRequest request) {

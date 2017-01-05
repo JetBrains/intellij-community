@@ -1345,7 +1345,6 @@ com/intellij/psi/filters/ElementFilter.class:/lib/openapi.jar
 com/intellij/profile/codeInspection/InspectionProfileManager.class:/lib/idea.jar
 com/intellij/profile/codeInspection/SeverityProvider.class:/lib/idea.jar
 com/intellij/profile/ApplicationProfileManager.class:/lib/openapi.jar
-com/intellij/profile/ProfileManager.class:/lib/openapi.jar
 com/intellij/codeInspection/InspectionProfile.class:/lib/openapi.jar
 com/intellij/profile/Profile.class:/lib/openapi.jar
 com/intellij/profile/codeInspection/JavaAwareInspectionProfileManager.class:/lib/idea.jar
@@ -2528,7 +2527,6 @@ com/intellij/openapi/ui/popup/ListPopupStep.class:/lib/openapi.jar
 com/intellij/openapi/ui/popup/PopupStep.class:/lib/openapi.jar
 com/intellij/execution/ExecutionException.class:/lib/openapi.jar
 com/intellij/execution/runners/Runner.class:/lib/openapi.jar
-com/intellij/tools/ToolProgramRunner.class:/lib/idea.jar
 com/intellij/execution/runners/DefaultProgramRunner.class:/lib/idea.jar
 com/intellij/execution/runners/GenericProgramRunner.class:/lib/openapi.jar
 com/intellij/execution/impl/DefaultJavaProgramRunner.class:/lib/idea.jar
@@ -4116,7 +4114,6 @@ com/intellij/util/indexing/UnindexedFilesUpdater.class:/lib/idea.jar
 com/intellij/util/indexing/FileBasedIndexProjectHandler$1.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$1.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$2.class:/lib/idea.jar
-com/intellij/openapi/fileEditor/FileEditorManagerAdapter.class:/lib/openapi.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$3.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$5.class:/lib/idea.jar
 com/intellij/codeInsight/navigation/CtrlMouseHandler$6.class:/lib/idea.jar

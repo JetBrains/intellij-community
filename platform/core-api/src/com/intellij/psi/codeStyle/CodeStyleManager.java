@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -75,7 +76,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   @NotNull public abstract PsiElement reformat(@NotNull PsiElement element) throws IncorrectOperationException;
 
@@ -89,7 +90,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   @NotNull public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
@@ -103,7 +104,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   public abstract PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException;
 
@@ -119,7 +120,7 @@ public abstract class CodeStyleManager  {
    * @return the element in the PSI tree after the reformat operation corresponding to the
    *         original element.
    * @throws IncorrectOperationException if the file to reformat is read-only.
-   * @see #reformatText(com.intellij.psi.PsiFile, int, int)
+   * @see #reformatText(PsiFile, int, int)
    */
   public abstract PsiElement reformatRange(@NotNull PsiElement element,
                                            int startOffset,
@@ -138,7 +139,7 @@ public abstract class CodeStyleManager  {
 
   /**
    * Re-formats a ranges of text in the specified file. This method works faster than
-   * {@link #reformatRange(com.intellij.psi.PsiElement, int, int)} but invalidates the
+   * {@link #reformatRange(PsiElement, int, int)} but invalidates the
    * PSI structure for the file.
    *
    * @param file  the file to reformat
@@ -248,7 +249,7 @@ public abstract class CodeStyleManager  {
    * It's possible to configure that (implementation details are insignificant here) and current method serves as a read-only
    * facade for obtaining information if 'sequential' processing is allowed at the moment.
    *
-   * @return      <code>true</code> if 'sequential' formatting is allowed now; <code>false</code> otherwise
+   * @return      {@code true} if 'sequential' formatting is allowed now; {@code false} otherwise
    */
   public abstract boolean isSequentialProcessingAllowed();
 
@@ -259,9 +260,28 @@ public abstract class CodeStyleManager  {
    *
    * @param r the operation to run.
    */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public abstract void performActionWithFormatterDisabled(Runnable r);
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T;
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
+
+  /**
+   * Retrieves the current formatting mode.
+   * 
+   * @param project The current project used to obtain {@code CodeStyleManager} instance.
+   * @return The current formatting mode.
+   * @see FormattingMode
+   */
+  public static FormattingMode getCurrentFormattingMode(@NotNull Project project) {
+    if (!project.isDisposed()) {
+      CodeStyleManager instance = getInstance(project);
+      if (instance instanceof FormattingModeAwareIndentAdjuster) {
+        return ((FormattingModeAwareIndentAdjuster)instance).getCurrentFormattingMode();
+      }
+    }
+    return FormattingMode.REFORMAT;
+  }
 }

@@ -25,13 +25,14 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
   public void merge(@NotNull SvnTarget source,
                     @NotNull File destination,
                     boolean dryRun,
+                    boolean reintegrate,
                     @Nullable DiffOptions diffOptions,
-                    @Nullable final ProgressTracker handler) throws VcsException {
+                    @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
     List<String> parameters = new ArrayList<>();
     CommandUtil.put(parameters, source);
-    fillParameters(parameters, destination, null, dryRun, false, false, true, diffOptions);
+    fillParameters(parameters, destination, null, dryRun, false, false, reintegrate, diffOptions);
 
     run(destination, handler, parameters);
   }

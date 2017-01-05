@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public interface Graph<Node> {
+public interface Graph<Node> extends InboundSemiGraph<Node>, OutboundSemiGraph<Node> {
+  @Override
   Collection<Node> getNodes();
 
+  @Override
   Iterator<Node> getIn(Node n);
 
+  @Override
   Iterator<Node> getOut(Node n);
 }

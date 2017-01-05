@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -57,7 +58,7 @@ public class QuickMergeWayOptionsPanel {
     myFindsWhereOneOfLabel.setBorder(JBUI.Borders.emptyBottom(10));
   }
 
-  private ActionListener setCodeAndClose(final QuickMergeContentsVariants variant) {
+  private ActionListener setCodeAndClose(@NotNull QuickMergeContentsVariants variant) {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -75,6 +76,7 @@ public class QuickMergeWayOptionsPanel {
     myWrapper = wrapper;
   }
 
+  @NotNull
   public QuickMergeContentsVariants getVariant() {
     return myVariant;
   }

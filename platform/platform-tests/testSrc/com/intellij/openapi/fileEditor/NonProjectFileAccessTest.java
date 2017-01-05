@@ -38,6 +38,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
@@ -393,7 +394,9 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   private Editor getEditor(VirtualFile file) {
     myOpenedFiles.add(file);
-    return FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
+    Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
+    EditorTestUtil.waitForLoading(editor);
+    return editor;
   }
 
   protected void typeInChar(Editor e, char c) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiModifier;
 import org.intellij.lang.annotations.Pattern;
-import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,7 @@ public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool
   public boolean FIELD = true;
   public boolean METHOD = true;
   public boolean CLASS = true;
-  protected boolean INNER_CLASS = CLASS;
+  protected boolean INNER_CLASS = true;
   public boolean PARAMETER = true;
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
 

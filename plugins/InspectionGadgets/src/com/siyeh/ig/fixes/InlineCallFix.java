@@ -45,12 +45,6 @@ public class InlineCallFix extends InspectionGadgetsFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return getFamilyName();
-  }
-
-  @Override
   public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)nameElement.getParent();

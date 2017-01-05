@@ -16,7 +16,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogStorage;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
@@ -75,12 +74,9 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   private void notifyLoaded() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
-          loadingFinishedListener.run();
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
+        loadingFinishedListener.run();
       }
     });
   }
@@ -237,7 +233,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     return commits;
   }
 
-  private TIntObjectHashMap<T> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
+  @NotNull
+  public TIntObjectHashMap<T> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
     TIntObjectHashMap<T> result = new TIntObjectHashMap<>();
     final MultiMap<VirtualFile, String> rootsAndHashes = MultiMap.create();
     commits.forEach(commit -> {
@@ -267,15 +264,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   public void saveInCache(@NotNull TIntObjectHashMap<T> details) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        details.forEachEntry((key, value) -> {
-          myCache.put(key, value);
-          return true;
-        });
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> details.forEachEntry((key, value) -> {
+      myCache.put(key, value);
+      return true;
+    }));
   }
 
   @NotNull

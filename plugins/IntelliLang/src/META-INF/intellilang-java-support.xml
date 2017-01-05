@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<idea-plugin version="2">
+<idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="com.intellij.openapi.progress.NonCancelableSection">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.openapi.progress.Progressive">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+</root>

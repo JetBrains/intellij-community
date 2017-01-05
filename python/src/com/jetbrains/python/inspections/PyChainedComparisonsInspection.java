@@ -19,8 +19,8 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.CheckBox;
@@ -245,13 +245,6 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return ourIgnoreConstantOptionText;
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return ourIgnoreConstantOptionText;
     }
@@ -259,10 +252,8 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(model -> {
-        final PyChainedComparisonsInspection tool = (PyChainedComparisonsInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
-        tool.ignoreConstantInTheMiddle = true;
-      });
+      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it ->
+        ((PyChainedComparisonsInspection)it.getUnwrappedTool(INSPECTION_SHORT_NAME, file)).ignoreConstantInTheMiddle = true);
     }
   }
 }

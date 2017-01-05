@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
 
   <module value="com.intellij.ui-designer-new"/>
 

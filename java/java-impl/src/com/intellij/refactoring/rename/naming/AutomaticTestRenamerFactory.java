@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,29 +67,24 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
       if (module != null) {
         final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependentsScope(module);
 
-        appendTestClass(aClass, "Test", moduleScope);
-        appendTestClass(aClass, "TestCase", moduleScope);
+        PsiShortNamesCache cache = PsiShortNamesCache.getInstance(aClass.getProject());
 
-        suggestAllNames(aClass.getName(), newClassName);
-      }
-    }
+        String klassName = aClass.getName();
+        Pattern pattern = Pattern.compile(".*" + klassName + ".*" + "Test(Case)?");
 
-    private void appendTestClass(PsiClass aClass, String testSuffix, final GlobalSearchScope moduleScope) {
-      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(aClass.getProject());
-
-      String klassName = aClass.getName();
-      Pattern pattern = Pattern.compile(".*" + klassName + ".*" + testSuffix);
-
-      HashSet<String> names = new HashSet<>();
-      cache.getAllClassNames(names);
-      for (String eachName : names) {
-        if (pattern.matcher(eachName).matches()) {
-          for (PsiClass eachClass : cache.getClassesByName(eachName, moduleScope)) {
-            if (TestFrameworks.getInstance().isTestClass(eachClass)) {
-              myElements.add(eachClass);
+        HashSet<String> names = new HashSet<>();
+        cache.getAllClassNames(names);
+        for (String eachName : names) {
+          if (pattern.matcher(eachName).matches()) {
+            for (PsiClass eachClass : cache.getClassesByName(eachName, moduleScope)) {
+              if (TestFrameworks.getInstance().isTestClass(eachClass)) {
+                myElements.add(eachClass);
+              }
             }
           }
         }
+
+        suggestAllNames(aClass.getName(), newClassName);
       }
     }
 

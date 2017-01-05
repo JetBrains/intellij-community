@@ -104,7 +104,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   @Override
   @NotNull
   public String getName() {
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -185,7 +185,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   private PsiField findFirstFieldInDeclaration() {
     if (getSelfModifierList() != null) return this;
 
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       final List siblings = stub.getParentStub().getChildrenStubs();
       final int idx = siblings.indexOf(stub);
@@ -226,7 +226,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   // avoids stub-to-AST switch if possible,
   // returns the light generated initializer literal expression if stored in stubs, the regular initializer if wasn't
   public PsiExpression getDetachedInitializer() {
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     PsiExpression initializer;
     if (stub == null) {
       initializer = getInitializer();
@@ -251,7 +251,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public boolean hasInitializer() {
-    PsiFieldStub stub = getStub();
+    PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.getInitializerText() != null;
     }
@@ -299,7 +299,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public boolean isDeprecated() {
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(this);
     }
@@ -309,7 +309,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public PsiDocComment getDocComment(){
-    final PsiFieldStub stub = getStub();
+    final PsiFieldStub stub = getGreenStub();
     if (stub != null && !stub.hasDocComment()) return null;
 
     CompositeElement treeElement = getNode();

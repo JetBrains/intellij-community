@@ -83,12 +83,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
     final Project project = compileContext.getProject();
-    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(new Computable<Set<Module>>() {
-      @Override
-      public Set<Module> compute() {
-        return ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project);
-      }
-    });
+    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(
+      (Computable<Set<Module>>)() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project));
     if (modules.isEmpty()) {
       return;
     }

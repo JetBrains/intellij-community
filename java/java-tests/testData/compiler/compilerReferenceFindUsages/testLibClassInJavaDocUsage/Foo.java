@@ -1,0 +1,6 @@
+/**
+ * {@link System}
+ */
+class Foo {
+
+}

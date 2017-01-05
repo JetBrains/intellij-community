@@ -25,7 +25,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -87,24 +86,20 @@ public class RequestHint {
     try {
       frameCount = stepThread.frameCount();
 
-      position = ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
-        public SourcePosition compute() {
-          return ContextUtil.getSourcePosition(new StackFrameContext() {
-            public StackFrameProxy getFrameProxy() {
-              try {
-                return stepThread.frame(0);
-              }
-              catch (EvaluateException e) {
-                LOG.debug(e);
-                return null;
-              }
-            }
+      position = ContextUtil.getSourcePosition(new StackFrameContext() {
+        public StackFrameProxy getFrameProxy() {
+          try {
+            return stepThread.frame(0);
+          }
+          catch (EvaluateException e) {
+            LOG.debug(e);
+            return null;
+          }
+        }
 
-            @NotNull
-            public DebugProcess getDebugProcess() {
-              return suspendContext.getDebugProcess();
-            }
-          });
+        @NotNull
+        public DebugProcess getDebugProcess() {
+          return suspendContext.getDebugProcess();
         }
       });
     }
@@ -160,7 +155,7 @@ public class RequestHint {
     return myMethodFilter instanceof BreakpointStepMethodFilter || myTargetMethodMatched;
   }
 
-  private boolean isTheSameFrame(SuspendContextImpl context) {
+  protected boolean isTheSameFrame(SuspendContextImpl context) {
     if (mySteppedOut) return false;
     final ThreadReferenceProxyImpl contextThread = context.getThread();
     if (contextThread != null) {
@@ -185,11 +180,8 @@ public class RequestHint {
     }
   }
 
-  private int reached(MethodFilter filter, SuspendContextImpl context) {
-    if (filter instanceof ActionMethodFilter) {
-      return ((ActionMethodFilter)filter).onReached(context, this);
-    }
-    return STOP;
+  protected boolean isSteppedOut() {
+    return mySteppedOut;
   }
 
   public int getNextStepDepth(final SuspendContextImpl context) {
@@ -204,23 +196,23 @@ public class RequestHint {
           !isTheSameFrame(context)
         ) {
         myTargetMethodMatched = true;
-        return reached(myMethodFilter, context);
+        return myMethodFilter.onReached(context, this);
       }
 
       if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
-        final Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-          public Integer compute() {
-            final SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
-            if (locationPosition != null) {
+        SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
+        if (locationPosition != null) {
+          Integer resultDepth = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+            public Integer compute() {
               if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
                 return isOnTheSameLine(locationPosition) ? myDepth : STOP;
               }
+              return null;
             }
-            return null;
+          });
+          if (resultDepth != null) {
+            return resultDepth.intValue();
           }
-        });
-        if (resultDepth != null) {
-          return resultDepth.intValue();
         }
       }
 
@@ -241,7 +233,7 @@ public class RequestHint {
         if(settings.SKIP_GETTERS) {
           boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
             public Boolean compute() {
-              PsiElement contextElement = PositionUtil.getContextElement(context);
+              PsiElement contextElement = ContextUtil.getContextElement(context);
               return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
             }
           }).booleanValue();
@@ -274,8 +266,7 @@ public class RequestHint {
           try {
             if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
           }
-          catch (Exception e) {LOG.error(e);}
-          catch (AssertionError e) {LOG.error(e);}
+          catch (Exception | AssertionError e) {LOG.error(e);}
         }
       }
       // smart step feature

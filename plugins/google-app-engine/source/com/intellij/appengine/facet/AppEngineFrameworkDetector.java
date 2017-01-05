@@ -39,6 +39,7 @@ public class AppEngineFrameworkDetector extends FacetBasedFrameworkDetector<AppE
     super("appengine-java");
   }
 
+  @NotNull
   @Override
   public FacetType<AppEngineFacet, AppEngineFacetConfiguration> getFacetType() {
     return FacetType.findInstance(AppEngineFacetType.class);

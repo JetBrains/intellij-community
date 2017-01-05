@@ -33,4 +33,9 @@ public class VcsLogHashFilterImpl implements VcsLogHashFilter {
   public Collection<String> getHashes() {
     return myHashes;
   }
+
+  @Override
+  public String toString() {
+    return "hashes:" + myHashes;
+  }
 }

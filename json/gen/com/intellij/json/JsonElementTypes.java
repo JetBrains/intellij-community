@@ -24,7 +24,7 @@ public interface JsonElementTypes {
   IElementType COMMA = new JsonTokenType(",");
   IElementType DOUBLE_QUOTED_STRING = new JsonTokenType("DOUBLE_QUOTED_STRING");
   IElementType FALSE = new JsonTokenType("false");
-  IElementType INDENTIFIER = new JsonTokenType("INDENTIFIER");
+  IElementType IDENTIFIER = new JsonTokenType("IDENTIFIER");
   IElementType LINE_COMMENT = new JsonTokenType("LINE_COMMENT");
   IElementType L_BRACKET = new JsonTokenType("[");
   IElementType L_CURLY = new JsonTokenType("{");
@@ -44,9 +44,6 @@ public interface JsonElementTypes {
       else if (type == BOOLEAN_LITERAL) {
         return new JsonBooleanLiteralImpl(node);
       }
-      else if (type == LITERAL) {
-        return new JsonLiteralImpl(node);
-      }
       else if (type == NULL_LITERAL) {
         return new JsonNullLiteralImpl(node);
       }
@@ -64,9 +61,6 @@ public interface JsonElementTypes {
       }
       else if (type == STRING_LITERAL) {
         return new JsonStringLiteralImpl(node);
-      }
-      else if (type == VALUE) {
-        return new JsonValueImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

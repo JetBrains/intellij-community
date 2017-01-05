@@ -1,0 +1,2 @@
+org.jetbrains.jps.javac.ast.ExternalRefCollectorCompilerToolExtension
+org.jetbrains.jps.javac.ast.InProcessRefCollectorCompilerToolExtension

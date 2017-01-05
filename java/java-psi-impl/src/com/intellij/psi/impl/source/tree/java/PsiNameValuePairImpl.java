@@ -103,7 +103,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   @Override
   @Nullable
   public PsiAnnotationMemberValue getDetachedValue() {
-    PsiNameValuePairStub stub = getStub();
+    PsiNameValuePairStub stub = getGreenStub();
     if (stub != null) {
       String text = stub.getValue();
       PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);

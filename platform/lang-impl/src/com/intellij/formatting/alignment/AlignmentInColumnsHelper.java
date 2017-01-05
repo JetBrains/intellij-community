@@ -27,9 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * This class provides helper methods to use for <code>'align in columns'</code> processing.
+ * This class provides helper methods to use for {@code 'align in columns'} processing.
  * <p/>
- * <code>'Align in columns'</code> here means format the code like below:
+ * {@code 'Align in columns'} here means format the code like below:
  * <pre>
  *     class Test {
  *         private int    iii = 1;
@@ -59,7 +59,7 @@ public class AlignmentInColumnsHelper {
    * @param node                         target node which alignment strategy is to be defined
    * @param config                       alignment config to use for processing
    * @param blankLinesToBeKeptOnReformat corresponding KEEP_LINE_IN_* formatting setting
-   * @return <code>true</code> if given node should be aligned to the previous one; <code>false</code> otherwise
+   * @return {@code true} if given node should be aligned to the previous one; {@code false} otherwise
    */
   @SuppressWarnings({"MethodMayBeStatic"})
   public boolean useDifferentVarDeclarationAlignment(ASTNode node, AlignmentInColumnsConfig config, int blankLinesToBeKeptOnReformat) {
@@ -141,7 +141,7 @@ public class AlignmentInColumnsHelper {
    * @param config                       current processing config
    * @param blankLinesToBeKeptOnReformat
    * @return previous node to the given base node that has that same type and is adjacent to it if possible;
-   *         <code>null</code> otherwise
+   *         {@code null} otherwise
    */
   @SuppressWarnings({"StatementWithEmptyBody"})
   @Nullable
@@ -190,7 +190,7 @@ public class AlignmentInColumnsHelper {
    * @param targetTypes target node types
    * @return base node or its first descendant child that has
    *         {@link AlignmentInColumnsConfig#getTargetDeclarationTypes() target type} target type if the one if found;
-   *         <code>null</code> otherwise
+   *         {@code null} otherwise
    */
   @Nullable
   private static ASTNode deriveNodeOfTargetType(ASTNode baseNode, TokenSet targetTypes) {
@@ -230,11 +230,11 @@ public class AlignmentInColumnsHelper {
    *                 |      |
    *                n31    n32
    * </pre>
-   * Let's assume that target node is <code>'n32'</code>. 'n31' is assumed to be returned from this method then.
+   * Let's assume that target node is {@code 'n32'}. 'n31' is assumed to be returned from this method then.
    * <p/>
    * <b>Note:</b> current method avoids going too deep if found node type is the same as start node type
    *
-   * @return direct or indirect previous node of the given one having target type if possible; <code>null</code> otherwise
+   * @return direct or indirect previous node of the given one having target type if possible; {@code null} otherwise
    */
   private static boolean findPreviousNode(AlignmentInColumnsConfig config,
                                           ASTNode from,

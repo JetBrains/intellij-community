@@ -65,3 +65,19 @@ class Test {
   }
 }
 
+class InsideThisRxpression {
+  interface Foo {
+    void fooMethod();
+
+    default Bar toBar() {
+      return new Bar() {
+        @Override
+        public void fooMethod() {
+          Foo.this.fooMethod();
+        }
+      };
+    }
+  }
+  public interface Bar extends Foo {}
+}
+

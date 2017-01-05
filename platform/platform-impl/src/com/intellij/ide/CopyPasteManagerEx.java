@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.CaretStateTransferableData;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -142,23 +143,20 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         }
       }
 
-      Transferable same = null;
-      for (Transferable old : myData) {
-        if (clipString.equals(getStringContent(old))) {
-          same = old;
-          break;
+      CaretStateTransferableData caretData = CaretStateTransferableData.getFrom(content);
+      for (int i = 0; i < myData.size(); i++) {
+        Transferable old = myData.get(i);
+        if (clipString.equals(getStringContent(old)) &&
+            CaretStateTransferableData.areEquivalent(caretData, CaretStateTransferableData.getFrom(old))) {
+          myData.remove(i);
+          myData.add(0, content);
+          return content;
         }
       }
 
-      if (same == null) {
-        addToTheTopOfTheStack(content);
-      }
-      else {
-        moveContentToStackTop(same, false); // notification is done in setContents() method
-      }
+      addToTheTopOfTheStack(content);
     }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
+    catch (UnsupportedFlavorException | IOException ignore) { }
     return content;
   }
 
@@ -221,8 +219,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     try {
       return (String)content.getTransferData(DataFlavor.stringFlavor);
     }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
+    catch (UnsupportedFlavorException | IOException ignore) { }
     return null;
   }
 
@@ -249,8 +246,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
           return data;
         }
       }
-      catch (UnsupportedFlavorException ignore) { }
-      catch (IOException ignore) { }
+      catch (UnsupportedFlavorException | IOException ignore) { }
     }
 
     return null;
@@ -277,23 +273,15 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public void moveContentToStackTop(Transferable t) {
-    moveContentToStackTop(t, true);
-  }
-
-  private void moveContentToStackTop(Transferable t, boolean notifyOthers) {
     Transferable current = myData.isEmpty() ? null : myData.get(0);
     if (!Comparing.equal(t, current)) {
       myData.remove(t);
       myData.add(0, t);
-      if (notifyOthers) {
-        setSystemClipboardContent(t);
-        fireContentChanged(current, t);
-      }
+      setSystemClipboardContent(t);
+      fireContentChanged(current, t);
     }
     else {
-      if (notifyOthers) {
-        setSystemClipboardContent(t);
-      }
+      setSystemClipboardContent(t);
     }
   }
 }

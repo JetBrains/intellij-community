@@ -17,11 +17,9 @@ package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,20 +33,14 @@ public class VcsAnnotation {
   private final Map<Object, VcsLineAnnotationData> myAdditionalAnnotations;
   private final Map<VcsRevisionNumber, VcsFileRevision> myCachedOtherRevisions;
   private final VcsRevisionNumber myLastRevision;
-  private final List<? extends VcsRevisionDescription> myDescriptions;
 //  private final VcsAbstractHistorySession myRelatedHistorySession;
 
-  public VcsAnnotation(FilePath filePath, VcsLineAnnotationData basicAnnotation, VcsRevisionNumber lastRevision, List<? extends VcsRevisionDescription> descriptions) {
+  public VcsAnnotation(FilePath filePath, VcsLineAnnotationData basicAnnotation, VcsRevisionNumber lastRevision) {
     myBasicAnnotation = basicAnnotation;
     myLastRevision = lastRevision;
     myAdditionalAnnotations = new HashMap<>();
     myCachedOtherRevisions = new HashMap<>();
     myFilePath = filePath;
-    myDescriptions = descriptions;
-  }
-
-  public VcsAnnotation(FilePath filePath, VcsLineAnnotationData basicAnnotation, VcsRevisionNumber lastRevision) {
-    this(filePath, basicAnnotation, lastRevision, null);
   }
 
   public void addAnnotation(final Object o, final VcsLineAnnotationData vcsLineAnnotationData) {
@@ -81,10 +73,6 @@ public class VcsAnnotation {
 
   public VcsRevisionNumber getFirstRevision() {
     return myLastRevision;
-  }
-
-  public List<? extends VcsRevisionDescription> getDescriptions() {
-    return myDescriptions;
   }
 }
 

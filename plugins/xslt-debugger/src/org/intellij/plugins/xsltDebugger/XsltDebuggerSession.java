@@ -174,10 +174,7 @@ public class XsltDebuggerSession implements Disposable {
       descriptor.navigate(true);
 
       return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    } catch (MalformedURLException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      return null;
-    } catch (URISyntaxException e) {
+    } catch (MalformedURLException | URISyntaxException e) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       return null;
     }

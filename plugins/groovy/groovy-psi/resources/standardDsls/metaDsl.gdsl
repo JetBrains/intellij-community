@@ -66,7 +66,7 @@ Its elements should be calls to <code>parameter</code> method.'''),
     method name: "variable", type: "void", params: [args: [
             parameter(name: "name", type: String.name, doc: 'Variable name'),
             parameter(name: 'type', type: String.name, doc: 'Variable type')
-    ]], doc: 'Descrive a DSL local variable'
+    ]], doc: 'Describe a DSL local variable'
     method name: "property", type: "void", params: [args: [
             parameter(name:'name', type:String.name, doc:'Property name'),
             parameter(name:'type', type:Object.name, doc:'Property type name'),

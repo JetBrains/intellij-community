@@ -49,6 +49,11 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
   }
 
   @Override
+  public boolean inferRuntimeExceptionForThrownBoundWithNoConstraints() {
+    return false;
+  }
+
+  @Override
   public PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType constraintType) {
     if (guess != null && !(guess instanceof PsiWildcardType)) {
       if (constraintType == ConstraintType.SUPERTYPE) return PsiWildcardType.createExtends(manager, guess);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -27,6 +29,16 @@ public class CompositePathMacroFilter extends PathMacroFilter {
 
   public CompositePathMacroFilter(PathMacroFilter[] filters) {
     myFilters = filters;
+  }
+
+  @Override
+  public boolean skipPathMacros(@NotNull Element element) {
+    for (PathMacroFilter filter : myFilters) {
+      if (filter.skipPathMacros(element)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

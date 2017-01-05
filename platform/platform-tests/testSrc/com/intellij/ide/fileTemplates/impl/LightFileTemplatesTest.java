@@ -182,12 +182,12 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     FileTemplateBase template = (FileTemplateBase)myTemplateManager.getTemplate("templateWithLiveTemplate.txt");
     assertTrue(template.isLiveTemplateEnabledByDefault());
     FileTemplateSettings settings = ServiceManager.getService(ExportableFileTemplateSettings.class);
-    assertNull(settings.getState());
+    assertEquals(0, settings.getState().getContentSize());
     template.setLiveTemplateEnabled(false);
     Element state = settings.getState();
     assertNotNull(state);
     template.setLiveTemplateEnabled(true);
-    assertNull(settings.getState());
+    assertEquals(0, settings.getState().getContentSize());
   }
 
   private FileTemplateManagerImpl myTemplateManager;

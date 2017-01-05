@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -75,7 +74,6 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
                      @Nullable("is null when called from inspection") final Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     XmlTag myTag = (XmlTag)startElement;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
 

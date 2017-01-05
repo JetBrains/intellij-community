@@ -17,43 +17,132 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * Stores UI configuration based on user activity and preferences.
  */
-public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, VcsLogUiProperties {
+public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
+  private static final Set<VcsLogUiProperty> SUPPORTED_PROPERTIES = ContainerUtil.newHashSet(MainVcsLogUiProperties.SHOW_DETAILS,
+                                                                                             MainVcsLogUiProperties.SHOW_LONG_EDGES,
+                                                                                             MainVcsLogUiProperties.BEK_SORT_TYPE,
+                                                                                             MainVcsLogUiProperties.SHOW_ROOT_NAMES,
+                                                                                             MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW,
+                                                                                             MainVcsLogUiProperties.SHOW_TAG_NAMES,
+                                                                                             MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
+                                                                                             MainVcsLogUiProperties.TEXT_FILTER_REGEX);
+  private final Set<VcsLogUiPropertiesListener> myListeners = ContainerUtil.newLinkedHashSet();
 
   public static class State {
-    public boolean SHOW_DETAILS = true;
-    public boolean SHOW_BRANCHES_PANEL = false;
+    public boolean SHOW_DETAILS_IN_CHANGES = true;
     public boolean LONG_EDGES_VISIBLE = false;
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
+    public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
+    public boolean COMPACT_REFERENCES_VIEW = true;
+    public boolean SHOW_TAG_NAMES = false;
+    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
   }
 
   @NotNull
   @Override
   public abstract State getState();
 
-  /**
-   * Returns true if the details pane (which shows commit meta-data, such as the full commit message, commit date, all references, etc.)
-   * should be visible when the log is loaded; returns false if it should be hidden by default.
-   */
+  @SuppressWarnings("unchecked")
+  @NotNull
   @Override
-  public boolean isShowDetails() {
-    return getState().SHOW_DETAILS;
+  public <T> T get(@NotNull VcsLogUiProperty<T> property) {
+    if (SHOW_DETAILS.equals(property)) {
+      return (T)Boolean.valueOf(getState().SHOW_DETAILS_IN_CHANGES);
+    }
+    else if (SHOW_LONG_EDGES.equals(property)) {
+      return (T)Boolean.valueOf(getState().LONG_EDGES_VISIBLE);
+    }
+    else if (SHOW_ROOT_NAMES.equals(property)) {
+      return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
+    }
+    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
+      return (T)Boolean.valueOf(getState().COMPACT_REFERENCES_VIEW);
+    }
+    else if (SHOW_TAG_NAMES.equals(property)) {
+      return (T)Boolean.valueOf(getState().SHOW_TAG_NAMES);
+    }
+    else if (BEK_SORT_TYPE.equals(property)) {
+      return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
+    }
+    else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
+      return (T)Boolean.valueOf(getTextFilterSettings().MATCH_CASE);
+    }
+    else if (TEXT_FILTER_REGEX.equals(property)) {
+      return (T)Boolean.valueOf(getTextFilterSettings().REGEX);
+    }
+    else if (property instanceof VcsLogHighlighterProperty) {
+      Boolean result = getState().HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
+      if (result == null) return (T)Boolean.TRUE;
+      return (T)result;
+    }
+    throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
 
   @Override
-  public void setShowDetails(boolean showDetails) {
-    getState().SHOW_DETAILS = showDetails;
+  public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
+    if (SHOW_DETAILS.equals(property)) {
+      getState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
+    }
+    else if (SHOW_LONG_EDGES.equals(property)) {
+      getState().LONG_EDGES_VISIBLE = (Boolean)value;
+    }
+    else if (SHOW_ROOT_NAMES.equals(property)) {
+      getState().SHOW_ROOT_NAMES = (Boolean)value;
+    }
+    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
+      getState().COMPACT_REFERENCES_VIEW = (Boolean)value;
+    }
+    else if (SHOW_TAG_NAMES.equals(property)) {
+      getState().SHOW_TAG_NAMES = (Boolean)value;
+    }
+    else if (BEK_SORT_TYPE.equals(property)) {
+      getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
+    }
+    else if (TEXT_FILTER_REGEX.equals(property)) {
+      getTextFilterSettings().REGEX = (boolean)(Boolean)value;
+    }
+    else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
+      getTextFilterSettings().MATCH_CASE = (boolean)(Boolean)value;
+    }
+    else if (property instanceof VcsLogHighlighterProperty) {
+      getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
+    }
+    else {
+      throw new UnsupportedOperationException("Property " + property + " does not exist");
+    }
+    myListeners.forEach(l -> l.onPropertyChanged(property));
+  }
+
+  @Override
+  public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
+    if (SUPPORTED_PROPERTIES.contains(property) || property instanceof VcsLogHighlighterProperty) {
+      return true;
+    }
+    return false;
+  }
+
+  @NotNull
+  private TextFilterSettings getTextFilterSettings() {
+    TextFilterSettings settings = getState().TEXT_FILTER_SETTINGS;
+    if (settings == null) {
+      settings = new TextFilterSettings();
+      getState().TEXT_FILTER_SETTINGS = settings;
+    }
+    return settings;
   }
 
   @Override
@@ -96,54 +185,29 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   @Override
-  public boolean areLongEdgesVisible() {
-    return getState().LONG_EDGES_VISIBLE;
+  public void saveFilterValues(@NotNull String filterName, @Nullable List<String> values) {
+    if (values != null) {
+      getState().FILTERS.put(filterName, values);
+    }
+    else {
+      getState().FILTERS.remove(filterName);
+    }
+  }
+
+  @Nullable
+  @Override
+  public List<String> getFilterValues(@NotNull String filterName) {
+    return getState().FILTERS.get(filterName);
   }
 
   @Override
-  public void setLongEdgesVisibility(boolean visible) {
-    getState().LONG_EDGES_VISIBLE = visible;
+  public void addChangeListener(@NotNull VcsLogUiPropertiesListener listener) {
+    myListeners.add(listener);
   }
 
   @Override
-  public int getBekSortType() {
-    return getState().BEK_SORT_TYPE;
-  }
-
-  @Override
-  public void setBek(int bekSortType) {
-    getState().BEK_SORT_TYPE = bekSortType;
-  }
-
-  @Override
-  public boolean isShowRootNames() {
-    return getState().SHOW_ROOT_NAMES;
-  }
-
-  @Override
-  public void setShowRootNames(boolean isShowRootNames) {
-    getState().SHOW_ROOT_NAMES = isShowRootNames;
-  }
-
-  @Override
-  public boolean isHighlighterEnabled(@NotNull String id) {
-    Boolean result = getState().HIGHLIGHTERS.get(id);
-    return result != null ? result : true; // new highlighters get enabled by default
-  }
-
-  @Override
-  public void enableHighlighter(@NotNull String id, boolean value) {
-    getState().HIGHLIGHTERS.put(id, value);
-  }
-
-  @Override
-  public boolean isShowBranchesPanel() {
-    return getState().SHOW_BRANCHES_PANEL;
-  }
-
-  @Override
-  public void setShowBranchesPanel(boolean show) {
-    getState().SHOW_BRANCHES_PANEL = show;
+  public void removeChangeListener(@NotNull VcsLogUiPropertiesListener listener) {
+    myListeners.remove(listener);
   }
 
   public static class UserGroup {
@@ -161,6 +225,60 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     @Override
     public int hashCode() {
       return users.hashCode();
+    }
+  }
+
+  private static class TextFilterSettings {
+    public boolean REGEX = false;
+    public boolean MATCH_CASE = false;
+  }
+
+  public abstract static class MainVcsLogUiPropertiesListener implements VcsLogUiPropertiesListener {
+    public abstract void onShowDetailsChanged();
+
+    public abstract void onShowLongEdgesChanged();
+
+    public abstract void onBekChanged();
+
+    public abstract void onShowRootNamesChanged();
+
+    public abstract void onCompactReferencesViewChanged();
+
+    public abstract void onShowTagNamesChanged();
+
+    public abstract void onTextFilterSettingsChanged();
+
+    public abstract void onHighlighterChanged();
+
+    @Override
+    public <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property) {
+      if (SHOW_DETAILS.equals(property)) {
+        onShowDetailsChanged();
+      }
+      else if (SHOW_LONG_EDGES.equals(property)) {
+        onShowLongEdgesChanged();
+      }
+      else if (SHOW_ROOT_NAMES.equals(property)) {
+        onShowRootNamesChanged();
+      }
+      else if (COMPACT_REFERENCES_VIEW.equals(property)) {
+        onCompactReferencesViewChanged();
+      }
+      else if (SHOW_TAG_NAMES.equals(property)) {
+        onShowTagNamesChanged();
+      }
+      else if (BEK_SORT_TYPE.equals(property)) {
+        onBekChanged();
+      }
+      else if (TEXT_FILTER_REGEX.equals(property) || TEXT_FILTER_MATCH_CASE.equals(property)) {
+        onTextFilterSettingsChanged();
+      }
+      else if (property instanceof VcsLogHighlighterProperty) {
+        onHighlighterChanged();
+      }
+      else {
+        throw new UnsupportedOperationException("Property " + property + " does not exist");
+      }
     }
   }
 }

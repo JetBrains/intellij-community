@@ -71,6 +71,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.PanelUI;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -277,6 +278,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         wrapperPanel.repaint();
       }
     }
+  }
+
+  void resetSelection() {
+    int size = myModel.size();
+    if (size > 0) myModel.setSelectedIndex(size - 1);
   }
 
   public void rebuildAndSelectTail(final boolean requestFocus) {
@@ -540,6 +546,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, group);
     final NavBarItem item = getItem(index);
     if (item != null) {
+      popupMenu.getComponent().addPopupMenuListener(new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuCanceled(PopupMenuEvent event) {
+          resetSelection(); // select last item if popup cancelled
+        }
+      });
       popupMenu.getComponent().show(this, item.getX(), item.getY() + item.getHeight());
     }
   }

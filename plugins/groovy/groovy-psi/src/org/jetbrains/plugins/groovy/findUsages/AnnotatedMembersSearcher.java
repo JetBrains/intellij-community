@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,12 +104,12 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
           if (element instanceof GroovyPsiElement) {
             ((GroovyPsiElement)element).accept(new GroovyRecursiveElementVisitor() {
               @Override
-              public void visitMethod(GrMethod method) {
+              public void visitMethod(@NotNull GrMethod method) {
                 candidates.add(method);
               }
 
               @Override
-              public void visitField(GrField field) {
+              public void visitField(@NotNull GrField field) {
                 candidates.add(field);
               }
             });
@@ -126,7 +126,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
             PsiModifierList list = candidate.getModifierList();
             if (list != null) {
               for (PsiAnnotation annotation : list.getAnnotations()) {
-                if (annotationFQN.equals(annotation.getQualifiedName()) && !consumer.process(candidate)) {
+                if ((p.isApproximate() || annotationFQN.equals(annotation.getQualifiedName())) && !consumer.process(candidate)) {
                   return false;
                 }
               }

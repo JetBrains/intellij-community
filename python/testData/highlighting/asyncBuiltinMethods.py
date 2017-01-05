@@ -7,3 +7,6 @@ class A:
 
     async def __aiter__(self):
         pass
+
+    async def __call__(self, *args, **kwargs):
+        pass

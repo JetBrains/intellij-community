@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -47,6 +46,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -814,8 +814,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           reason = e.getMessage();
         }
         //noinspection InstanceofCatchParameter
-        if (e instanceof SocketTimeoutException) {
-          LOG.warn("Socket timeout from " + repository);
+        if (e instanceof SocketTimeoutException || e instanceof HttpRequests.HttpStatusException) {
+          LOG.warn("Can't connect to " + repository + ": " + e.getMessage());
         }
         else {
           LOG.warn("Cannot connect to " + repository, e);
@@ -885,7 +885,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public LocalTask getAssociatedTask(@NotNull LocalChangeList list) {
     for (LocalTask task : getLocalTasks()) {
-      for (ChangeListInfo changeListInfo : task.getChangeLists()) {
+      for (ChangeListInfo changeListInfo : new ArrayList<>(task.getChangeLists())) {
         if (changeListInfo.id.equals(list.getId())) {
           return task;
         }

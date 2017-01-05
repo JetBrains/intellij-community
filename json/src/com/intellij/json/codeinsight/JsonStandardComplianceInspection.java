@@ -142,14 +142,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   private static class AddDoubleQuotesFix implements LocalQuickFix {
     @NotNull
     @Override
-    public String getName() {
-      return JsonBundle.message("quickfix.add.double.quotes.desc");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return JsonBundle.message("quickfix.add.double.quotes.desc");
     }
 
     @Override

@@ -70,11 +70,12 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   public static Map<QualifiedName, QualifiedName> getSuperClassQNames(@NotNull final PyClass pyClass) {
     final Map<QualifiedName, QualifiedName> result = new LinkedHashMap<>();
 
-    Arrays
-      .stream(pyClass.getSuperClassExpressions())
-      .filter(expression -> !PyKeywordArgument.class.isInstance(expression))
-      .map(PyClassImpl::unfoldClass)
-      .forEach(expression -> result.put(PyPsiUtils.asQualifiedName(expression), resolveOriginalSuperClassQName(expression)));
+    for (PyExpression expression : PyClassImpl.getUnfoldedSuperClassExpressions(pyClass)) {
+      final QualifiedName importedQName = PyPsiUtils.asQualifiedName(expression);
+      final QualifiedName originalQName = resolveOriginalSuperClassQName(expression);
+
+      result.put(importedQName, originalQName);
+    }
 
     return result;
   }

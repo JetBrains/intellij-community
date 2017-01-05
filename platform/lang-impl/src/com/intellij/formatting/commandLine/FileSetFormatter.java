@@ -17,9 +17,8 @@ package com.intellij.formatting.commandLine;
 
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -92,9 +91,7 @@ class FileSetFormatter extends FileSetProcessor {
   private void closeProject() {
     if (myProject != null) {
       ProjectManager.getInstance().closeProject(myProject);
-      AccessToken writeToken = ApplicationManager.getApplication().acquireWriteActionLock(this.getClass());
-      Disposer.dispose(myProject);
-      writeToken.finish();
+      WriteAction.run(() -> Disposer.dispose(myProject));
     }
   }
 
@@ -150,19 +147,11 @@ class FileSetFormatter extends FileSetProcessor {
   }
 
   private void reformatFile(@NotNull Project project, @NotNull final PsiFile file, @NotNull Document document) {
-    AccessToken writeToken = ApplicationManager.getApplication().acquireWriteActionLock(this.getClass());
-    try {
-      CommandProcessor.getInstance().executeCommand(
-        myProject,
-        () -> {
-          CodeFormatterFacade formatterFacade = new CodeFormatterFacade(mySettings, file.getLanguage());
-          formatterFacade.processText(file, new FormatTextRanges(new TextRange(0, file.getTextLength()), true), false);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-        }, null, null);
-    }
-    finally {
-      writeToken.finish();
-    }
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      CodeFormatterFacade formatterFacade = new CodeFormatterFacade(mySettings, file.getLanguage());
+      formatterFacade.processText(file, new FormatTextRanges(new TextRange(0, file.getTextLength()), true), false);
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+    });
   }
 
   private static boolean isFormattingSupported(@NotNull PsiFile file) {

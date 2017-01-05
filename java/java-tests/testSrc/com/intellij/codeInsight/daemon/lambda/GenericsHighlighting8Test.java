@@ -21,7 +21,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -1003,6 +1002,18 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testMembersContainedInCapturedWildcardType() throws Exception {
+    doTest();
+  }
+
+  public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() throws Exception {
+    doTest();
+  }
+
+  public void testBoundsPromotionForDerivedType() throws Exception {
+    doTest();
+  }
+
+  public void testSameErasureForStaticMethodsInInterfaces() throws Exception {
     doTest();
   }
 }

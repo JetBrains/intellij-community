@@ -15,16 +15,13 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -90,6 +87,18 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("'''docstring'''", doTestTyping("'''docstring''", 14,  '\''));
   }
 
+  public void testAutoCloseAfterIllegalPrefix() {
+    assertEquals("rrr''", doTestTyping("rrr", 3, '\''));
+  }
+
+  // PY-18972
+  public void testFString() throws Exception {
+    assertEquals("f''", doTestTyping("f", 1, '\''));
+    assertEquals("rf''", doTestTyping("rf", 2, '\''));
+    assertEquals("fr''", doTestTyping("fr", 2, '\''));
+    assertEquals("fr''''''", doTestTyping("fr''", 4, '\''));
+  }
+
   public void testOvertypeFromInside() {
     assertEquals("''", doTestTyping("''", 1, '\''));
   }
@@ -124,10 +133,7 @@ public class PyEditingTest extends PyTestCase {
   public void testUncommentWithSpace() throws Exception {   // PY-980
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> {
-      CommentByLineCommentAction action = new CommentByLineCommentAction();
-      action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
-    }, "", null);
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
     myFixture.checkResultByFile("/editing/uncommentWithSpace.after.py", true);
   }
 
@@ -455,6 +461,31 @@ public class PyEditingTest extends PyTestCase {
     before = before.replace("<caret>", "");
     doTestTyping(before, pos, '\n');
     myFixture.checkResult(after);
+  }
+
+  // PY-21478
+  public void testContinuationIndentForFunctionArguments() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;
+    doTestEnter("func(<caret>)",
+                "func(\n" +
+                "        <caret>\n" +
+                ")");
+  }
+
+  // PY-21840
+  public void testEditInjectedRegexpFragmentWithLongUnicodeEscape() {
+    myFixture.configureByText(PythonFileType.INSTANCE,
+                              "import re\n" +
+                              "re.compile(ur'\\U00010000<caret>')");
+    doTyping("t");
+    myFixture.checkResult("import re\n" +
+                          "re.compile(ur'\\U00010000t')");
+  }
+
+  // PY-21697
+  public void testTripleQuotesInsideTripleQuotedStringLiteral() {
+    // TODO an extra quote is inserted due to PY-21993
+    doTypingTest("'");
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {

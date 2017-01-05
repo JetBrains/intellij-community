@@ -14,6 +14,6 @@ public class MyTest {
     static void call(int i, I2 s) {}
 
     public static void main(String[] args) {
-        call(1, (i) -> m(i));
+        call(1, i -> m(i));
     }
 }

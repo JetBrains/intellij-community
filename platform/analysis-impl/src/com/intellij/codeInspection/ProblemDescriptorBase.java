@@ -135,7 +135,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       final int startOffset = textRange.getStartOffset();
       final int textLength = document.getTextLength();
       LOG.assertTrue(startOffset <= textLength, getDescriptionTemplate() + " at " + startOffset + ", " + textLength);
-      myLineNumber =  document.getLineNumber(startOffset) + 1;
+      myLineNumber =  document.getLineNumber(startOffset);
     }
     return myLineNumber;
   }

@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -26,7 +25,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -436,6 +434,12 @@ class ExtractedClassBuilder {
             else {
               out.append(backPointerName + '.' + GenerateMembersUtil.suggestGetterName(field) + "()");
             }
+          }
+        }
+        else if (referent instanceof PsiClass) {
+          String qualifiedName = ((PsiClass)referent).getQualifiedName();
+          if (qualifiedName != null) {
+            out.append(qualifiedName);
           }
         }
         else {

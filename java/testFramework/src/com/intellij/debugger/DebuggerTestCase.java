@@ -40,7 +40,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
@@ -152,7 +151,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @Override
       protected GeneralCommandLine createCommandLine() throws ExecutionException {
-        return CommandLineBuilder.createFromJavaParameters(getJavaParameters());
+        return getJavaParameters().toCommandLine();
       }
     };
 
@@ -174,7 +173,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       catch (ExecutionException e) {
         LOG.error(e);
       }
-    }, ModalityState.defaultModalityState());
+    });
     myDebugProcess = myDebuggerSession.getProcess();
 
     myDebugProcess.addProcessListener(new ProcessAdapter() {
@@ -213,7 +212,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @Override
       protected GeneralCommandLine createCommandLine() throws ExecutionException {
-        return CommandLineBuilder.createFromJavaParameters(getJavaParameters());
+        return getJavaParameters().toCommandLine();
       }
     };
 
@@ -271,7 +270,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       javaParameters.getVMParametersList().add(token);
     }
 
-    GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParameters);
+    GeneralCommandLine commandLine = javaParameters.toCommandLine();
 
 
     DebuggerSession debuggerSession;

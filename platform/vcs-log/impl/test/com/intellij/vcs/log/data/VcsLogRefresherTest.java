@@ -25,19 +25,15 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.TestVcsLogProvider;
-import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
-import com.intellij.vcs.log.impl.VcsRefImpl;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -199,10 +195,22 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
-    myLogData = new VcsLogData(myProject, myLogProviders, LOG::error);
+    myLogData = new VcsLogData(myProject, myLogProviders, new FatalErrorHandler() {
+      @Override
+      public void consume(@Nullable Object source, @NotNull Exception exception) {
+        LOG.error(exception);
+      }
+
+      @Override
+      public void displayFatalErrorMessage(@NotNull String message) {
+        LOG.error(message);
+      }
+    });
     Disposer.register(myProject, myLogData);
-    return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(),
-                                   myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT) {
+    return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
+                                   new VcsLogProgress(),
+                                   myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
+    ) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
         LOG.debug("Starting a background task...");

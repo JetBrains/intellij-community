@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.debugger.*;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import com.thoughtworks.xstream.io.xml.XppReader;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.xmlpull.mxp1.MXParser;
 
@@ -128,6 +129,10 @@ public class ProtocolParser {
     }
     threadingEvent.setFrames(frames);
     return threadingEvent;
+  }
+
+  public static boolean parseInputCommand(String payload) throws PyDebuggerException {
+    return payload.equals("True");
   }
 
   public static String parseSourceContent(String payload) throws PyDebuggerException {
@@ -262,6 +267,7 @@ public class ProtocolParser {
     String value = readString(reader, "value", null);
     final String isContainer = readString(reader, "isContainer", "");
     final String isReturnedValue = readString(reader, "isRetVal", "");
+    final String isIPythonHidden = readString(reader, "isIPythonHidden", "");
     final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
@@ -269,7 +275,7 @@ public class ProtocolParser {
     }
 
     return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), "True".equals(isReturnedValue),
-                            "True".equals(isErrorOnEval), frameAccessor);
+                            "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), frameAccessor);
   }
 
   public static ArrayChunk parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
@@ -288,7 +294,7 @@ public class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, false, false, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, false, false, false, frameAccessor));
       reader.moveUp();
     }
     if ("headerdata".equals(reader.peekNextChild())) {
@@ -383,33 +389,14 @@ public class ProtocolParser {
   }
 
   private static String readString(final XppReader reader, final String name, final String fallback) throws PyDebuggerException {
-    final String value;
-    try {
-      value = read(reader, name);
-    }
-    catch (PyDebuggerException e) {
-      if (fallback != null) {
-        return fallback;
-      }
-      else {
-        throw e;
-      }
-    }
-    return decode(value);
+    final String value = read(reader, name, fallback == null);
+    return value == null ? fallback : value;
   }
 
   private static int readInt(final XppReader reader, final String name, final Integer fallback) throws PyDebuggerException {
-    final String value;
-    try {
-      value = read(reader, name);
-    }
-    catch (PyDebuggerException e) {
-      if (fallback != null) {
-        return fallback;
-      }
-      else {
-        throw e;
-      }
+    final String value = read(reader, name, fallback == null);
+    if (value == null) {
+      return fallback;
     }
     try {
       return Integer.parseInt(value);
@@ -419,11 +406,12 @@ public class ProtocolParser {
     }
   }
 
-  private static String read(final XppReader reader, final String name) throws PyDebuggerException {
+  @Contract("_, _, true -> !null")
+  private static String read(final XppReader reader, final String name, boolean isRequired) throws PyDebuggerException {
     final String value = reader.getAttribute(name);
-    if (value == null) {
+    if (value == null && isRequired) {
       throw new PyDebuggerException("Attribute not found: " + name);
     }
-    return value;
+    return value == null ? null : decode(value);
   }
 }

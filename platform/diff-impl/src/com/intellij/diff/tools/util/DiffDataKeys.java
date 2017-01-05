@@ -23,8 +23,12 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.pom.Navigatable;
 
 public interface DiffDataKeys {
+  DataKey<Navigatable> NAVIGATABLE = DataKey.create("diff_navigatable");
+  DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("diff_navigatable_array");
+
   DataKey<Editor> CURRENT_EDITOR = DataKey.create("diff_current_editor");
   DataKey<DiffContent> CURRENT_CONTENT = DataKey.create("diff_current_content");
   DataKey<LineRange> CURRENT_CHANGE_RANGE = DataKey.create("diff_current_change_range");

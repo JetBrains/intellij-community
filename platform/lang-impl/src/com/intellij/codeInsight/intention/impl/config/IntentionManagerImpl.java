@@ -27,6 +27,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -50,13 +51,13 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class IntentionManagerImpl extends IntentionManager {
+public class IntentionManagerImpl extends IntentionManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl");
 
   private final List<IntentionAction> myActions = ContainerUtil.createLockFreeCopyOnWriteList();
   private final IntentionManagerSettings mySettings;
 
-  private final Alarm myInitActionsAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myInitActionsAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
@@ -105,6 +106,11 @@ public class IntentionManagerImpl extends IntentionManager {
     else {
       myInitActionsAlarm.addRequest(runnable, 300);
     }
+  }
+
+  @Override
+  public void dispose() {
+
   }
 
   private static IntentionAction createIntentionActionWrapper(@NotNull IntentionActionBean intentionActionBean, String[] categories) {
@@ -183,6 +189,11 @@ public class IntentionManagerImpl extends IntentionManager {
   @Nullable
   @Override
   public IntentionAction createFixAllIntention(InspectionToolWrapper toolWrapper, IntentionAction action) {
+    if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+      final LocalInspectionToolWrapper localWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
+      if (localWrapper != null) return createFixAllIntention(localWrapper, action);
+    }
+
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
       Class aClass = action.getClass();
       if (action instanceof QuickFixWrapper) {

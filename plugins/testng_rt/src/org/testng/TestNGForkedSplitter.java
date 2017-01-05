@@ -27,8 +27,8 @@ import java.util.Map;
 public class TestNGForkedSplitter extends ForkedByModuleSplitter {
 
 
-  public TestNGForkedSplitter(String workingDirsPath, PrintStream out, PrintStream err, List newArgs) {
-    super(workingDirsPath, "none", out, err, newArgs);
+  public TestNGForkedSplitter(String workingDirsPath, List newArgs) {
+    super(workingDirsPath, "none", newArgs);
   }
 
   @Override

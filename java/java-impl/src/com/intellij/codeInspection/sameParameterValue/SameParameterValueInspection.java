@@ -25,11 +25,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -107,6 +111,19 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     }
 
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+      JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
+      if (!conflicts.isEmpty()) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
+            throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+          }
+        }
+        else if (!new ConflictsDialog(parameter.getProject(), conflicts).showAndGet()) {
+          return;
+        }
+      }
+
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
       ApplicationManager.getApplication().runWriteAction(() -> {

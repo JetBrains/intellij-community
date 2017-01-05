@@ -474,7 +474,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private boolean hasPrefix;
     private boolean hasParams;
 
-    AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<String> callback) {
+    private AnnotationTextCollector(@Nullable String desc, Function<String, String> mapping, Consumer<String> callback) {
       super(ASM_API);
       myMapping = mapping;
       myCallback = callback;
@@ -644,7 +644,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
             new PsiAnnotationStubImpl(myModList, text);
           }
           else if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && typePath == null) {
-            int idx = ref.getFormalParameterIndex() - myParamIgnoreCount;
+            int idx = ref.getFormalParameterIndex();
             if (!filtered(idx + 1, text)) {
               new PsiAnnotationStubImpl(myOwner.findParameter(idx).getModList(), text);
             }

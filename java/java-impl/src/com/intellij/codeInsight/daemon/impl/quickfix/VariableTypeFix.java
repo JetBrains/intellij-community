@@ -94,7 +94,6 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     if (changeMethodSignatureIfNeeded(myVariable)) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
     new WriteCommandAction.Simple(project, getText(), file) {
 
       @Override

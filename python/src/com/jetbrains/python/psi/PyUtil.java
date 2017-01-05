@@ -28,7 +28,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -62,6 +62,7 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -148,7 +149,7 @@ public class PyUtil {
   /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
-   * Typical usage: <code>flattenedParensAndTuples(some_tuple.getExpressions())</code>.
+   * Typical usage: {@code flattenedParensAndTuples(some_tuple.getExpressions())}.
    *
    * @param targets target elements.
    * @return the list of flattened expressions.
@@ -609,16 +610,18 @@ public class PyUtil {
   @NotNull
   public static PsiElement resolveToTheTop(@NotNull final PsiElement elementToResolve) {
     PsiElement currentElement = elementToResolve;
+    final Set<PsiElement> checkedElements = new HashSet<>(); // To prevent PY-20553
     while (true) {
       final PsiReference reference = currentElement.getReference();
       if (reference == null) {
         break;
       }
       final PsiElement resolve = reference.resolve();
-      if ((resolve == null) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
+      if ((resolve == null) ||  checkedElements.contains(resolve) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
         break;
       }
       currentElement = resolve;
+      checkedElements.add(resolve);
     }
     return currentElement;
   }
@@ -858,26 +861,31 @@ public class PyUtil {
     return result;
   }
 
+  /**
+   * This method is allowed to be called from any thread, but in general you should not set {@code modal=true} if you're calling it
+   * from the write action, because in this case {@code function} will be executed right in the current thread (presumably EDT)
+   * without any progress whatsoever to avoid possible deadlock.
+   *
+   * @see ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, Project, JComponent, String)
+   */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, @NotNull final Consumer<ProgressIndicator> function) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (modal) {
-        ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            function.consume(indicator);
-          }
-        });
-      }
-      else {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            function.consume(indicator);
-          }
-        });
-      }
-    }, ModalityState.current());
+    if (modal) {
+      ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          function.consume(indicator);
+        }
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          function.consume(indicator);
+        }
+      });
+    }
   }
 
   /**
@@ -992,6 +1000,11 @@ public class PyUtil {
    * @see PyNames#isIdentifier(String)
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackage(directory)) {
+        return true;
+      }
+    }
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
@@ -1005,6 +1018,11 @@ public class PyUtil {
   }
 
   public static boolean isPackage(@NotNull PsiFile file) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackageFile(file)) {
+        return true;
+      }
+    }
     return PyNames.INIT_DOT_PY.equals(file.getName());
   }
 
@@ -1730,8 +1748,8 @@ public class PyUtil {
 
   /**
    * Sometimes you do not know real FQN of some class, but you know class name and its package.
-   * I.e. <code>django.apps.conf.AppConfig</code> is not documented, but you know
-   * <code>AppConfig</code> and <code>django</code> package.
+   * I.e. {@code django.apps.conf.AppConfig} is not documented, but you know
+   * {@code AppConfig} and {@code django} package.
    *
    * @param symbol element to check (class or function)
    * @param expectedPackage package like "django"
@@ -1831,6 +1849,45 @@ public class PyUtil {
     return null;
   }
 
+  public static boolean isEmptyFunction(@NotNull PyFunction function) {
+    final PyStatementList statementList = function.getStatementList();
+    final PyStatement[] statements = statementList.getStatements();
+    if (statements.length == 0) {
+      return true;
+    }
+    else if (statements.length == 1) {
+      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
+        return true;
+      }
+    }
+    else if (statements.length == 2) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
+    if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
+      return true;
+    }
+    if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isStringLiteral(PyStatement stmt) {
+    if (stmt instanceof PyExpressionStatement) {
+      final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
+      if (expr instanceof PyStringLiteralExpression) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
    */
@@ -1922,21 +1979,28 @@ public class PyUtil {
      * @return true if given string node contains "u" or "U" prefix
      */
     public boolean isUnicode() {
-      return StringUtil.containsIgnoreCase(myPrefix, "u");
+      return PyStringLiteralUtil.isUnicodePrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "r" or "R" prefix
      */
     public boolean isRaw() {
-      return StringUtil.containsIgnoreCase(myPrefix, "r");
+      return PyStringLiteralUtil.isRawPrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "b" or "B" prefix
      */
     public boolean isBytes() {
-      return StringUtil.containsIgnoreCase(myPrefix, "b");
+      return PyStringLiteralUtil.isBytesPrefix(myPrefix);
+    }
+
+    /**
+     * @return true if given string node contains "f" or "F" prefix
+     */
+    public boolean isFormatted() {
+      return PyStringLiteralUtil.isFormattedPrefix(myPrefix);
     }
 
     /**

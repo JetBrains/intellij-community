@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,19 +47,16 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,9 +72,10 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
-public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
-                                        QuickActionProvider, DockContainer.Dialog {
+public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener,
+                                        DockContainer.Dialog {
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
@@ -213,7 +211,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         }
         return null;
       }
-    }).setTabLabelActionsAutoHide(false).setProvideSwitchTargets(false).setInnerInsets(new Insets(0, 0, 0, 0))
+    }).setTabLabelActionsAutoHide(false).setInnerInsets(JBUI.emptyInsets())
       .setToDrawBorderIfTabsHidden(false).setTabDraggingEnabled(isMoveToGridActionEnabled()).setUiDecorator(null).getJBTabs();
     rebuildTabPopup();
 
@@ -621,11 +619,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
-  @Override
   public void setManager(@NotNull final ContentManager manager) {
     assert myManager == null;
 
@@ -792,12 +785,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private static boolean hasContent(ContentManager manager, Content content) {
-    for (Content c : manager.getContents()) {
-      if (c == content) {
-        return true;
-      }
-    }
-    return false;
+    return StreamEx.of(manager.getContents()).has(content);
   }
 
   private static void moveFollowingTabs(int index, final JBRunnerTabs tabs) {
@@ -904,10 +892,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (TabInfo each : tabs) {
       hasToolbarContent |= updateTabUI(each, usedNames);
     }
-    int tabsCount = tabs.size();
-    for (RunnerContentUi child : myChildren) {
-      tabsCount += child.myTabs.getTabCount();
-    }
+    int tabsCount = tabs.size() + myChildren.stream().mapToInt(child -> child.myTabs.getTabCount()).sum();
     myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabsCount <= 1 && myOriginal == null);
     myTabs.updateTabActions(validateNow);
 
@@ -1062,11 +1047,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private ArrayList<GridImpl> getGrids() {
-    ArrayList<GridImpl> result = new ArrayList<>();
-    for (TabInfo each : myTabs.getTabs()) {
-      result.add(getGridFor(each));
-    }
-    return result;
+    return myTabs.getTabs().stream().map(RunnerContentUi::getGridFor).collect(Collectors.toCollection(ArrayList::new));
   }
 
 
@@ -1370,7 +1351,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
+  private class MyComponent extends NonOpaquePanel implements DataProvider {
     private boolean myWasEverAdded;
 
     public MyComponent(LayoutManager layout) {
@@ -1383,10 +1364,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (KEY.is(dataId)) {
-        return RunnerContentUi.this;
-      }
-      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
+      if (CloseAction.CloseTarget.KEY.is(dataId)) {
         Content content = getContentManager().getSelectedContent();
         if (content != null && content.getManager().canCloseContents() && content.isCloseable()) {
           return new CloseAction.CloseTarget() {
@@ -1404,27 +1382,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         return ((DataProvider)originalContentComponent).getData(dataId);
       }
       return null;
-    }
-
-    @SuppressWarnings("NullableProblems")
-    @Override
-    public String getName() {
-      return RunnerContentUi.this.getName();
-    }
-
-    @Override
-    public List<AnAction> getActions(boolean originalProvider) {
-      return RunnerContentUi.this.getActions(originalProvider);
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return RunnerContentUi.this.getComponent();
-    }
-
-    @Override
-    public boolean isCycleRoot() {
-      return RunnerContentUi.this.isCycleRoot();
     }
 
     @Override
@@ -1714,61 +1671,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myRunnerUi;
   }
 
-  @Override
-  public String getName() {
-    return mySessionName;
-  }
-
-  @Override
-  public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
-    if (myLeftToolbarActions != null) {
-      AnAction[] kids = myLeftToolbarActions.getChildren(null);
-      ContainerUtil.addAll(result, kids);
-    }
-    return result;
-  }
-
-  @Override
-  public SwitchTarget getCurrentTarget() {
-    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (owner == null) return myTabs.getCurrentTarget();
-
-    GridImpl grid = getSelectedGrid();
-    if (grid != null && grid.getContents().size() <= 1) return myTabs.getCurrentTarget();
-
-    if (grid != null) {
-      SwitchTarget cell = grid.getCellFor(owner);
-      return cell != null ? cell : myTabs.getCurrentTarget();
-    }
-    else {
-      return myTabs.getCurrentTarget();
-    }
-  }
-
-  @Override
-  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
-    List<SwitchTarget> result = new ArrayList<>();
-
-    result.addAll(myTabs.getTargets(true, false));
-    GridImpl grid = getSelectedGrid();
-    if (grid != null) {
-      result.addAll(grid.getTargets(onlyVisible));
-    }
-
-    for (Wrapper wrapper : myMinimizedButtonsPlaceholder.values()) {
-      if (!wrapper.isShowing()) continue;
-      JComponent target = wrapper.getTargetComponent();
-      if (target instanceof ActionToolbar) {
-        ActionToolbar tb = (ActionToolbar)target;
-        result.addAll(tb.getTargets(onlyVisible, false));
-      }
-    }
-
-    return result;
-  }
-
-
   private int findFreeWindow() {
     int i;
     for (i = 1; i < Integer.MAX_VALUE; i++) {
@@ -1780,12 +1682,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private boolean isUsed(int i) {
-    for (RunnerContentUi child : myChildren) {
-      if (child.getWindow() == i) {
-        return true;
-      }
-    }
-    return false;
+    return myChildren.stream().anyMatch(child -> child.getWindow() == i);
   }
 
   private DockManagerImpl getDockManager() {

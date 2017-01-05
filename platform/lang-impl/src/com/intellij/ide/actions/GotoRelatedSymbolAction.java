@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -22,12 +23,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -43,17 +48,28 @@ public class GotoRelatedSymbolAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    PsiElement element = getContextElement(e.getDataContext());
+    final DataContext dataContext = e.getDataContext();
+
+    final PsiElement element = getContextElement(dataContext);
     if (element == null) return;
 
-    List<GotoRelatedItem> items = NavigationUtil.collectRelatedItems(element, e.getDataContext());
-    if (items.isEmpty()) return;
+    List<GotoRelatedItem> items = NavigationUtil.collectRelatedItems(element, dataContext);
+    if (items.isEmpty()) {
+      final JComponent label = HintUtil.createErrorLabel("No related symbols");
+      label.setBorder(IdeBorderFactory.createEmptyBorder(2, 7, 2, 7));
+      JBPopupFactory.getInstance().createBalloonBuilder(label)
+        .setFadeoutTime(3000)
+        .setFillColor(HintUtil.ERROR_COLOR)
+        .createBalloon()
+        .show(JBPopupFactory.getInstance().guessBestPopupLocation(dataContext), Balloon.Position.above);
+      return;
+    }
 
     if (items.size() == 1 && items.get(0).getElement() != null) {
       items.get(0).navigate();
       return;
     }
-    NavigationUtil.getRelatedItemsPopup(items, "Choose Target").showInBestPositionFor(e.getDataContext());
+    NavigationUtil.getRelatedItemsPopup(items, "Choose Target").showInBestPositionFor(dataContext);
   }
 
   @TestOnly

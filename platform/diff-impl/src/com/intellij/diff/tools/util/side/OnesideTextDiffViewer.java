@@ -31,7 +31,6 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.Navigatable;
@@ -46,8 +45,6 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(OnesideTextDiffViewer.class);
-
   @NotNull private final List<? extends EditorEx> myEditableEditors;
 
   @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;

@@ -69,8 +69,8 @@ public class NameSuggesterUtil {
     final Collection<String> possibleNames = new LinkedHashSet<>();
     name = StringUtil.decapitalize(deleteNonLetterFromString(name.replace('.', '_')));
     name = toUnderscoreCase(name);
-    possibleNames.add(name);
     possibleNames.add(name.substring(0, 1));
+    possibleNames.add(name);
     return possibleNames;
   }
 

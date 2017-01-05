@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Maxim.Mossienko
  */
 public class PropertiesFileTypeFactory extends FileTypeFactory {
+  @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(PropertiesFileType.INSTANCE, PropertiesFileType.DEFAULT_EXTENSION);
   }

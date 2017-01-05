@@ -33,8 +33,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
-import com.jetbrains.python.refactoring.move.PyMoveModuleMembersHelper;
-import com.jetbrains.python.refactoring.move.PyMoveModuleMembersProcessor;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-import static com.jetbrains.python.refactoring.move.PyMoveModuleMembersHelper.isMovableModuleMember;
+import static com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper.isMovableModuleMember;
 
 /**
  * @author vlan
@@ -356,6 +356,31 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("use_foo", "c.py");
   }
 
+  // PY-21366
+  public void testFromImportAliases() {
+    doMoveSymbolTest("func", "b.py");
+  }
+
+  // PY-21292
+  public void testStaleFromImportsRemovedWhenSeveralMovedSymbolsUsedInSameModule() {
+    doMoveSymbolsTest("b.py", "A", "B");
+  }
+
+  // PY-21292
+  public void testStaleFromImportRemovedWhenNewImportCombinedWithExistingImport() {
+    doMoveSymbolTest("A", "b.py");
+  }
+
+  // PY-20427
+  public void testQualifiedReferenceInDestinationModule() {
+    doMoveSymbolTest("FOO", "b.py");
+  }
+
+  // PY-21220
+  public void testReferenceToClassWithNewInMovedSymbol() {
+    doMoveSymbolTest("fnToMove", "toFile.py");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName) {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);
@@ -403,10 +428,7 @@ public class PyMoveTest extends PyTestCase {
 
     VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
     String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
-    new PyMoveModuleMembersProcessor(myFixture.getProject(),
-                                     symbols,
-                                     path,
-                                     false).run();
+    new PyMoveModuleMembersProcessor(symbols, path).run();
 
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {

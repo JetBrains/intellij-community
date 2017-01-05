@@ -201,16 +201,18 @@ public class JavaStackFrame extends XStackFrame {
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions
+      Set<ObjectReference> exceptions = new HashSet<>();
       for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(debuggerContext.getSuspendContext())) {
-        final Event debugEvent = pair.getSecond();
+        Event debugEvent = pair.getSecond();
         if (debugEvent instanceof ExceptionEvent) {
-          final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
+          ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
           if (exception != null) {
-            final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, exception);
-            children.add(JavaValue.create(exceptionDescriptor, evaluationContext, myNodeManager));
+            exceptions.add(exception);
           }
         }
       }
+      exceptions.forEach(e -> children.add(
+        JavaValue.create(myNodeManager.getThrownExceptionObjectDescriptor(myDescriptor, e), evaluationContext, myNodeManager)));
 
       try {
         buildVariables(debuggerContext, evaluationContext, debugProcess, children, thisObjectReference, location);
@@ -341,9 +343,7 @@ public class JavaStackFrame extends XStackFrame {
                                                        @NotNull SourcePosition sourcePosition,
                                                        @NotNull EvaluationContextImpl evalContext) {
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
-    for (TextWithImports text : usedVars.second) {
-      alreadyCollected.add(text.getText());
-    }
+    usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
     for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
       if (provider.isAvailable(sourcePosition, evalContext)) {

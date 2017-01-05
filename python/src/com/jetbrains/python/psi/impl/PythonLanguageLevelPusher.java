@@ -19,7 +19,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -183,13 +182,16 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     DataInputOutputUtil.writeINT(oStream, level.ordinal());
     oStream.close();
 
+    PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
     for (VirtualFile child : fileOrDir.getChildren()) {
-      final FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(child.getName());
-      if (!child.isDirectory() && PythonFileType.INSTANCE.equals(fileType)) {
+      if (!child.isDirectory() && isPythonFile(child)) {
         clearSdkPathCache(child);
-        PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
       }
     }
+  }
+
+  private static boolean isPythonFile(VirtualFile child) {
+    return PythonFileType.INSTANCE.equals(FileTypeRegistry.getInstance().getFileTypeByFileName(child.getName()));
   }
 
   private static void clearSdkPathCache(@NotNull final VirtualFile child) {
@@ -250,7 +252,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     final Application application = ApplicationManager.getApplication();
     PyUtil.invalidateLanguageLevelCache(project);
-    application.executeOnPooledThread(() -> application.runReadAction(() -> {
+    final Runnable markFiles = () -> application.runReadAction(() -> {
       if (project.isDisposed()) {
         return;
       }
@@ -264,7 +266,13 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
           markRecursively(project, file, languageLevel, suppressSizeLimit);
         }
       }
-    }));
+    });
+    if (application.isUnitTestMode()) {
+      markFiles.run();
+    }
+    else {
+      application.executeOnPooledThread(markFiles);
+    }
   }
 
   private void markRecursively(final Project project,

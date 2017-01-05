@@ -58,7 +58,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getThrownCheckedExceptions(@NotNull PsiElement[] elements) {
+  public static List<PsiClassType> getThrownCheckedExceptions(@NotNull PsiElement... elements) {
     List<PsiClassType> exceptions = getThrownExceptions(elements);
     if (exceptions.isEmpty()) return exceptions;
     exceptions = filterOutUncheckedExceptions(exceptions);
@@ -452,6 +452,10 @@ public class ExceptionUtil {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
     if (!includeSelfCalls && method == containingMethod) {
       return Collections.emptyList();
+    }
+
+    if (properties != null) {
+      PsiUtilCore.ensureValid(method);
     }
 
     final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();

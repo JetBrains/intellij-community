@@ -78,15 +78,8 @@ public class UnaryPlusInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("unary.plus.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("unary.plus.quickfix");
     }
 
     @Override

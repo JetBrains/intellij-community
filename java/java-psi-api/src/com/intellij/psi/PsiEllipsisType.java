@@ -36,7 +36,6 @@ public class PsiEllipsisType extends PsiArrayType {
   }
 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
-  @SuppressWarnings("unused")
   public static PsiType createEllipsis(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
     return new PsiEllipsisType(componentType, annotations);
   }

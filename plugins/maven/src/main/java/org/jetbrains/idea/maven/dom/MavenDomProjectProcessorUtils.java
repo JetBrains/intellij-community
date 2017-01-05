@@ -348,7 +348,7 @@ public class MavenDomProjectProcessorUtils {
         for (MavenDomDependency domDependency : importDependencies) {
           GenericDomValue<String> version = domDependency.getVersion();
           if (version.getXmlElement() != null) {
-            GenericDomValueReference reference = new GenericDomValueReference(version);
+            GenericDomValueReference<String> reference = new GenericDomValueReference<>(version);
             PsiElement resolve = reference.resolve();
 
             if (resolve instanceof XmlFile) {
@@ -432,7 +432,7 @@ public class MavenDomProjectProcessorUtils {
       }
     }.process(projectDom);
 
-    return aBoolean == null ? false : aBoolean.booleanValue();
+    return aBoolean != null && aBoolean.booleanValue();
   }
 
 
@@ -465,7 +465,7 @@ public class MavenDomProjectProcessorUtils {
     if (processProfiles(projectDom.getProfiles(), mavenProjectOrNull, processor, domProfileFunction)) return true;
 
     T t = projectDomFunction.fun(projectDom);
-    return t == null ? false : processor.process(t);
+    return t != null && processor.process(t);
   }
 
   private static <T> boolean processProfilesXml(VirtualFile projectFile,
@@ -531,7 +531,8 @@ public class MavenDomProjectProcessorUtils {
         parentDesc = new MavenParentDesc(parentId, parentRelativePath);
       }
 
-      return process(myManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
+      VirtualFile projectFile = MavenDomUtil.getVirtualFile(projectDom);
+      return projectFile == null ? null : process(myManager.getGeneralSettings(), projectFile, parentDesc);
     }
   }
 

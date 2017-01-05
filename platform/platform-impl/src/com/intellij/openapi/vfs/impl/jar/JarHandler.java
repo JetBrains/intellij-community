@@ -45,6 +45,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -56,7 +57,7 @@ public class JarHandler extends ZipHandler {
   private static final int FS_TIME_RESOLUTION = 2000;
 
   private final JarFileSystemImpl myFileSystem;
-  private volatile File myFileWithMirrorResolved;
+  private volatile File myFileWithMirrorResolved; // field is reflectively referenced in tests
 
   public JarHandler(@NotNull String path) {
     super(path);
@@ -76,6 +77,33 @@ public class JarHandler extends ZipHandler {
       myFileWithMirrorResolved = fileWithMirrorResolved;
     }
     return fileWithMirrorResolved;
+  }
+
+  @NotNull
+  @Override
+  protected Map<String, EntryInfo> createEntriesMap() throws IOException {
+    FileAccessorCache.Handle<ZipFile> existingZipRef = getCachedZipFileHandle(
+      !myFileSystem.isMakeCopyOfJar(getFile()) || myFileWithMirrorResolved != null);
+
+    if (existingZipRef == null) {
+      File file = getFile();
+      ZipFile zipFile = new ZipFile(file);
+
+      setFileStampAndLength(this, file.getPath());
+      try {
+        return buildEntryMapForZipFile(zipFile);
+      }
+      finally {
+        zipFile.close();
+      }
+    }
+
+    try {
+      return buildEntryMapForZipFile(existingZipRef.get());
+    }
+    finally {
+      existingZipRef.release();
+    }
   }
 
   private File getMirrorFile(@NotNull File originalFile) {

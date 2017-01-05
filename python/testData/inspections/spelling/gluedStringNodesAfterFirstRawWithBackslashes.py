@@ -1,0 +1,1 @@
+s = 'foo' r'\teapot'

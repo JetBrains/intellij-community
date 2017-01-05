@@ -37,6 +37,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -275,7 +276,7 @@ public class ParameterInfoController implements Disposable {
       return;
     }
 
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    final PsiFile file =  PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
     CharSequence chars = myEditor.getDocument().getCharsSequence();
     boolean noDelimiter = myHandler instanceof ParameterInfoHandlerWithTabActionSupport &&
                           ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;

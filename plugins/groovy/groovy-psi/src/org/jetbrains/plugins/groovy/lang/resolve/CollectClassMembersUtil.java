@@ -98,7 +98,7 @@ public class CollectClassMembersUtil {
       if (current instanceof ClsClassImpl) continue;
       if (visited.add(current)) {
         if (TransformationUtilKt.isUnderTransformation(current)) return false;
-        for (PsiClass superClass : getSupers(current, true)) {
+        for (PsiClass superClass : getSupers(current, false)) {
           queue.offer(superClass);
         }
       }

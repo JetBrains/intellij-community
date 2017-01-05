@@ -22,6 +22,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -122,10 +123,23 @@ public class JsonSchemaExportedDefinitions {
     return dirtyKeys;
   }
 
-  public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
+  public boolean checkFileForId(@NotNull String id, @NotNull final VirtualFile file) {
     synchronized (myLock) {
       ensureInitialized();
-      return file.equals(myId2Key.get(id));
+      return file.equals(myId2Key.get(normalizeId(id)));
     }
+  }
+
+  @Nullable
+  public VirtualFile getSchemaFileById(@NotNull final String id) {
+    synchronized (myLock) {
+      ensureInitialized();
+      return myId2Key.get(id);
+    }
+  }
+
+  @NotNull
+  public static String normalizeId(@NotNull final String id) {
+    return id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
   }
 }

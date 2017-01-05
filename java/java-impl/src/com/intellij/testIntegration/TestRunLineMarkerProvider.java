@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,18 +38,15 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
-
-  private static final Function<PsiElement, String> TOOLTIP_PROVIDER = element -> "Run Test";
-
   @Nullable
   @Override
-  public Info getInfo(PsiElement e) {
+  public Info getInfo(@NotNull PsiElement e) {
     if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass) {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
-          String url = "java:suite://" + ((PsiClass)element).getQualifiedName();
+          String url = "java:suite://" + ClassUtil.getJVMClassName((PsiClass)element);
           return getInfo(url, e.getProject(), true);
         }
       }
@@ -58,7 +55,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         if (psiClass != null) {
           TestFramework framework = TestFrameworks.detectFramework(psiClass);
           if (framework != null && framework.isTestMethod(element)) {
-            String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
+            String url = "java:test://" + ClassUtil.getJVMClassName(psiClass) + "." + ((PsiMethod)element).getName();
             return getInfo(url, e.getProject(), false);
           }
         }
@@ -70,7 +67,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
   @NotNull
   private static Info getInfo(String url, Project project, boolean isClass) {
     Icon icon = getTestStateIcon(url, project, isClass);
-    return new Info(icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+    return new Info(icon, ExecutorAction.getActions(1), RunLineMarkerContributor.RUN_TEST_TOOLTIP_PROVIDER);
   }
 
   protected boolean isIdentifier(PsiElement e) {

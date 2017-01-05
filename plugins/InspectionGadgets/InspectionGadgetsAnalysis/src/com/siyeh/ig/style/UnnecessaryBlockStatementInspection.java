@@ -75,15 +75,9 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.code.block.unwrap.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

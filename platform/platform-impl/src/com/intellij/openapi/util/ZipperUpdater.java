@@ -31,14 +31,14 @@ public class ZipperUpdater {
   private final Alarm.ThreadToUse myThreadToUse;
   private boolean myIsEmpty;
 
-  public ZipperUpdater(final int delay, Disposable parentDisposable) {
+  public ZipperUpdater(final int delay, @NotNull Disposable parentDisposable) {
     myDelay = delay;
     myIsEmpty = true;
     myThreadToUse = Alarm.ThreadToUse.POOLED_THREAD;
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
-  public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, Disposable parentDisposable) {
+  public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, @NotNull Disposable parentDisposable) {
     myDelay = delay;
     myThreadToUse = threadToUse;
     myIsEmpty = true;

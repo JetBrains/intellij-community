@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface JsonReferenceExpression extends JsonValue {
 
   @NotNull
-  PsiElement getIndentifier();
+  PsiElement getIdentifier();
 
 }

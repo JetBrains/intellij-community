@@ -36,6 +36,11 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
     addLibraryToModule(libraryDescription, module);
   }

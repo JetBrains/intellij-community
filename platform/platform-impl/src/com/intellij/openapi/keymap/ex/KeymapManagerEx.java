@@ -19,13 +19,14 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public abstract class KeymapManagerEx extends KeymapManager {
-  public static KeymapManagerEx getInstanceEx(){
+  public static KeymapManagerEx getInstanceEx() {
     return (KeymapManagerEx)getInstance();
   }
 
@@ -41,16 +42,29 @@ public abstract class KeymapManagerEx extends KeymapManager {
    * Instructs the manager that one action should use shortcut of another one (<code>'use-shortcut-of'</code> attribute at
    * action's config located at plugin.xml).
    *
-   * @param sourceActionId  if of the action which shortcut should be used for the 'target action'
-   * @param targetActionId  id of the action which should use shortcut of the 'source action'
+   * @param sourceActionId if of the action which shortcut should be used for the 'target action'
+   * @param targetActionId id of the action which should use shortcut of the 'source action'
    */
-  public abstract void bindShortcuts(String sourceActionId, String targetActionId);
+  public abstract void bindShortcuts(@NotNull String sourceActionId, @NotNull String targetActionId);
+
   public abstract void unbindShortcuts(String targetActionId);
 
+  @NotNull
   public abstract Set<String> getBoundActions();
-  public abstract String getActionBinding(String actionId);
+
+  @Nullable
+  public abstract String getActionBinding(@NotNull String actionId);
 
   public abstract SchemeManager<Keymap> getSchemeManager();
+
+  /**
+   * @deprecated Please use {@link #getSchemeManager()}
+   */
+  @SuppressWarnings("deprecation")
+  @Deprecated
+  public final SchemesManager<Keymap> getSchemesManager() {
+    return (SchemesManager<Keymap>)getSchemeManager();
+  }
 
   public abstract void addWeakListener(@NotNull KeymapManagerListener listener);
 

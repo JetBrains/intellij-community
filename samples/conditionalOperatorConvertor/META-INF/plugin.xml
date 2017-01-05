@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
     <name>Conditional Operator Converter</name>
     <id>ConditionalOperatorConverter</id>
     <description>Intention action that suggests to convert a conditional operator into

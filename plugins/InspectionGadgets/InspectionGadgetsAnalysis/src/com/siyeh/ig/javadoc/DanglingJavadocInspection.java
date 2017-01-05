@@ -66,14 +66,8 @@ public class DanglingJavadocInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("dangling.javadoc.convert.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("dangling.javadoc.convert.quickfix");
     }
 
     @Override
@@ -107,14 +101,8 @@ public class DanglingJavadocInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("dangling.javadoc.delete.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("dangling.javadoc.delete.quickfix");
     }
 
     @Override

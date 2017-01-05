@@ -56,15 +56,10 @@ public class EmptyInitializerInspection extends BaseInspection {
   }
 
   private static class EmptyInitializerFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "empty.class.initializer.delete.quickfix");
     }

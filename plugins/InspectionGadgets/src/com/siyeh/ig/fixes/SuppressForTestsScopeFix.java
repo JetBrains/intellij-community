@@ -57,18 +57,12 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
 
   @NotNull
   @Override
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("suppress.for.tests.scope.quickfix");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return getName();
-  }
-
-  @Override
-  protected boolean prepareForWriting() {
+  public boolean startInWriteAction() {
     return false;
   }
 
@@ -90,8 +84,7 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
   }
 
   private void addRemoveTestsScope(Project project, boolean add) {
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getCurrentProfile();
+    final InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final String shortName = myInspection.getShortName();
     final InspectionToolWrapper tool = profile.getInspectionTool(shortName, project);
     if (tool == null) {

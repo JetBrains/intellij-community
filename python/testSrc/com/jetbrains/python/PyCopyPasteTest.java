@@ -393,6 +393,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testEmptyFunctionCaretAtEndOfFile() {
+    doTest();
+  }
+  
   // PY-19053
   public void testSimpleExpressionPartCaretAtLineEnd() {
     doTest();
@@ -441,5 +445,20 @@ public class PyCopyPasteTest extends PyTestCase {
   // PY-19100
   public void testAsyncFunctionWithBadSelection() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-20138
+  public void testUseExistingIndentWhenCaretAtFirstColumn() {
+    doTest();
+  }
+  
+  // PY-20138
+  public void testUseExistingIndentWhenCaretAtFirstColumnEndOfFile() {
+    doTest();
+  }
+  
+  // PY-20138
+  public void testInvalidExistingIndentWhenCaretAtFirstColumn() {
+    doTest();
   }
 }

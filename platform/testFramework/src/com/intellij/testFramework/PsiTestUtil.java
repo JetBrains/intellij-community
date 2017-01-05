@@ -93,8 +93,7 @@ public class PsiTestUtil {
     PlatformTestCase.synchronizeTempDirVfs(vDir);
 
     EdtTestUtil.runInEdtAndWait(() -> {
-      AccessToken token = WriteAction.start();
-      try {
+      WriteAction.run(() -> {
         if (rootPath != null) {
           VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
           if (vDir1 == null) {
@@ -106,15 +105,12 @@ public class PsiTestUtil {
         if (addProjectRoots) {
           addSourceContentToRoots(module, vDir);
         }
-      }
-      finally {
-        token.finish();
-      }
+      });
     });
     return vDir;
   }
 
-  public static void removeAllRoots(Module module, Sdk jdk) {
+  public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       model.clear();
       model.setSdk(jdk);
@@ -377,6 +373,14 @@ public class PsiTestUtil {
   public static Sdk addJdkAnnotations(@NotNull Sdk sdk) {
     String path = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations";
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+    return addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), root);
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static Sdk addRootsToJdk(@NotNull Sdk sdk,
+                                  @NotNull OrderRootType rootType,
+                                  @NotNull VirtualFile... roots) {
     Sdk clone;
     try {
       clone = (Sdk)sdk.clone();
@@ -385,7 +389,9 @@ public class PsiTestUtil {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
-    sdkModificator.addRoot(root, AnnotationOrderRootType.getInstance());
+    for (VirtualFile root : roots) {
+      sdkModificator.addRoot(root, rootType);
+    }
     sdkModificator.commitChanges();
     return clone;
   }

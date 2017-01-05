@@ -23,7 +23,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,10 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -237,6 +233,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     init();
 
     chooseView();
+
+    Disposer.register(myProject, this);
   }
 
   private static void makeBold(Component component) {
@@ -407,7 +405,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull
   protected JComponent createCenterPanel() {
-    mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", getConfiguration().FILE_HISTORY_SPLITTER_PROPORTION);
+    mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", 0.6f);
     mySplitter.setFirstComponent(myDualView);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDetails);
@@ -487,7 +485,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       mySplitter.repaint();
 
       myRefresherI.run(true, canUseLastRevisionCheck);
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   @NotNull

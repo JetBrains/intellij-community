@@ -270,7 +270,7 @@ public class GeometryUtil implements SwingConstants {
     double deltaX = aX2 - aX1;
     double deltaY = aY2 - aY1;
 
-    return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    return Math.hypot(deltaX, deltaY);
   }
 
   public static double cos(Line2D aLine) {

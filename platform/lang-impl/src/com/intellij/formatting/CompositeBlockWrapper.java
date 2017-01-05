@@ -90,7 +90,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
    *
    * @param current   block that defines right boundary for child blocks processing
    * @return          last child block that contains line feeds and starts before the given block if any;
-   *                  <code>null</code> otherwise
+   *                  {@code null} otherwise
    */
   @Nullable
   public AbstractBlockWrapper getPrevIndentedSibling(@NotNull final AbstractBlockWrapper current) {

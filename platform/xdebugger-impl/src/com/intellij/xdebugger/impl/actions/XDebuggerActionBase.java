@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author nik
@@ -60,11 +62,7 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   protected boolean isEnabled(final AnActionEvent e) {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        if (isEnabled(project, e, support)) {
-          return true;
-        }
-      }
+      return Arrays.stream(DebuggerSupport.getDebuggerSupports()).anyMatch(support -> isEnabled(project, e, support));
     }
     return false;
   }
@@ -101,13 +99,9 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   }
 
   protected boolean isHidden(AnActionEvent event) {
-    final Project project = event.getProject();
+    Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        if (!getHandler(support).isHidden(project, event)) {
-          return false;
-        }
-      }
+      return Arrays.stream(DebuggerSupport.getDebuggerSupports()).allMatch(support -> getHandler(support).isHidden(project, event));
     }
     return true;
   }

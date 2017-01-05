@@ -2,7 +2,11 @@ package com.jetbrains.edu.coursecreator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -12,16 +16,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
@@ -42,6 +49,29 @@ public class CCUtils {
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";
+
+  public static int getSubtaskIndex(@NotNull Project project, @NotNull VirtualFile file) {
+    String fileName = file.getName();
+    String name = FileUtil.getNameWithoutExtension(fileName);
+    boolean canBeSubtaskFile = isTestsFile(project, file) || StudyUtils.isTaskDescriptionFile(fileName);
+    if (!canBeSubtaskFile) {
+      return -1;
+    }
+    if (!name.contains(EduNames.SUBTASK_MARKER)) {
+      return 0;
+    }
+    int markerIndex = name.indexOf(EduNames.SUBTASK_MARKER);
+    String index = name.substring(markerIndex + EduNames.SUBTASK_MARKER.length());
+    if (index.isEmpty()) {
+      return -1;
+    }
+    try {
+      return Integer.valueOf(index);
+    }
+    catch (NumberFormatException e) {
+      return -1;
+    }
+  }
 
   @Nullable
   public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
@@ -128,15 +158,13 @@ public class CCUtils {
           public void run() {
             try {
               generatedRoot.set(baseDir.createChildDirectory(this, GENERATED_FILES_FOLDER));
-              final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-              ContentEntry entry = MarkRootActionBase.findContentEntry(model, generatedRoot.get());
-              if (entry == null) {
-                LOG.info("Failed to find contentEntry for archive folder");
+              VirtualFile contentRootForFile =
+                ProjectRootManager.getInstance(module.getProject()).getFileIndex().getContentRootForFile(generatedRoot.get());
+              if (contentRootForFile == null) {
                 return;
               }
-              entry.addExcludeFolder(generatedRoot.get());
-              model.commit();
-              module.getProject().save();
+              ModuleRootModificationUtil.updateExcludedFolders(module, contentRootForFile, Collections.emptyList(),
+                                                               Collections.singletonList(generatedRoot.get().getUrl()));
             }
             catch (IOException e) {
               LOG.info("Failed to create folder for generated files", e);
@@ -238,12 +266,12 @@ public class CCUtils {
     }
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
-      VirtualFile answerFile = taskDir.findChild(name);
+      VirtualFile answerFile = taskDir.findFileByRelativePath(name);
       if (answerFile == null) {
         continue;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
-        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null);
+        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null, task.getActiveSubtaskIndex());
       });
     }
   }
@@ -252,5 +280,41 @@ public class CCUtils {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     presentation.setEnabledAndVisible(project != null && isCourseCreator(project));
+  }
+
+  private static void createFromTemplate(@NotNull final PsiDirectory taskDirectory,
+                                         @Nullable final FileTemplate template,
+                                         @Nullable IdeView view, boolean open) {
+    if (template == null) {
+      return;
+    }
+    try {
+      final PsiElement file = FileTemplateUtil.createFromTemplate(template, template.getName(), null, taskDirectory);
+      if (view != null && open) {
+        EditorHelper.openInEditor(file, false);
+        view.selectElement(file);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  public static void createTaskContent(@NotNull Project project,
+                                       @Nullable IdeView view,
+                                       @NotNull Course course,
+                                       PsiDirectory taskDirectory) {
+    CCLanguageManager manager = getStudyLanguageManager(course);
+    if (manager == null) {
+      return;
+    }
+    createFromTemplate(taskDirectory, manager.getTestsTemplate(project), view, false);
+    createFromTemplate(taskDirectory, FileTemplateManager.getInstance(project)
+      .getInternalTemplate(StudyUtils.getTaskDescriptionFileName(CCSettings.getInstance().useHtmlAsDefaultTaskFormat())), view, false);
+    String defaultExtension = manager.getDefaultTaskFileExtension();
+    if (defaultExtension != null) {
+      FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
+      createFromTemplate(taskDirectory, taskFileTemplate, view, true);
+    }
   }
 }

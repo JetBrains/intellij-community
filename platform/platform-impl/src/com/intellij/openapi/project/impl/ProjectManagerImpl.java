@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
@@ -28,10 +29,12 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -133,9 +136,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
-  public static int TEST_PROJECTS_CREATED;
-  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = true;
-  private static final int MAX_LEAKY_PROJECTS = 42;
+  @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
+  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
+  private static final int MAX_LEAKY_PROJECTS = 5;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Nullable
@@ -144,6 +147,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     //noinspection ConstantConditions
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         for (int i = 0; i < 42; i++) {
@@ -315,8 +319,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     for (Project p : myOpenProjects) {
-      if (ProjectUtil.isSameProject(project.getBasePath(), p)) {
-        ProjectUtil.focusProjectWindow(p, false);
+      if (ProjectUtil.isSameProject(project.getProjectFilePath(), p)) {
+        GuiUtils.invokeLaterIfNeeded(() -> ProjectUtil.focusProjectWindow(p, false), ModalityState.NON_MODAL);
         return false;
       }
     }
@@ -344,12 +348,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
           Application application = ApplicationManager.getApplication();
           if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
-            StorageUtil.checkUnknownMacros(project, true);
+            StorageUtilKt.checkUnknownMacros(project, true);
           }
         }
       }, ModalityState.NON_MODAL);
     };
-    if (myProgressManager.getProgressIndicator() != null) {
+    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Preparing workspace...");
       process.run();
       return true;
     }
@@ -386,27 +392,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static boolean canCancelProjectLoading() {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    return !(indicator instanceof NonCancelableSection);
+    return !ProgressManager.getInstance().isInNonCancelableSection();
   }
 
   @Override
   public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
     final String filePath = toCanonicalName(originalFilePath);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(filePath);
-    Project project;
+    ProjectImpl project;
     if (conversionResult.openingIsCanceled()) {
       project = null;
     }
     else {
-      project = myProgressManager.run(new Task.WithResult<Project, IOException>(null, ProjectBundle.message("project.load.progress"), true) {
+      project = createProject(null, toCanonicalName(filePath), false);
+      myProgressManager.run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
         protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-          final Project project = loadProjectWithProgress(filePath);
-          if (project == null) {
+          if (!loadProjectWithProgress(project)) {
             return null;
           }
-
           if (!conversionResult.conversionNotNeeded()) {
             StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
           }
@@ -422,7 +426,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     if (!project.isOpen()) {
       WelcomeFrame.showIfNoProjectOpened();
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        if (!project.isDisposed()) {
+          Disposer.dispose(project);
+        }
+      });
     }
     return project;
   }
@@ -442,36 +450,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return null;
     }
 
-    final Project project = loadProjectWithProgress(filePath);
-
-    if (project != null && !conversionResult.conversionNotNeeded()) {
+    ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
+    if (!loadProjectWithProgress(project)) return null;
+    if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
   }
 
-  /**
-   * Opens the project at the specified path.
-   *
-   * @param filePath the path to open the project.
-   * @return the project, or null if the user has cancelled opening the project.
-   */
-  @Nullable
-  private Project loadProjectWithProgress(@NotNull String filePath) throws IOException {
+  private boolean loadProjectWithProgress(ProjectImpl project) throws IOException {
     try {
-      final ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
       if (myProgressManager.getProgressIndicator() != null) {
         initProject(project, null);
-        return project;
+        return true;
       }
       myProgressManager.runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
         initProject(project, null);
         return project;
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-      return project;
+      return true;
     }
     catch (ProcessCanceledException e) {
-      return null;
+      return false;
     }
     catch (Throwable t) {
       LOG.info(t);
@@ -480,7 +480,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static void notifyProjectOpenFailed() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    Application application = ApplicationManager.getApplication();
+    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    if (application.isUnitTestMode()) return;
     WelcomeFrame.showIfNoProjectOpened();
   }
 
@@ -499,7 +501,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     assert ApplicationManager.getApplication().isUnitTestMode();
     closeProject(project, false, false, false);
     Project[] projects = getOpenProjects();
-    return projects.length == 0 ? Collections.<Project>emptyList() : Arrays.asList(projects);
+    return projects.length == 0 ? Collections.emptyList() : Arrays.asList(projects);
   }
 
   @Override
@@ -536,6 +538,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
+    }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
       if (!((ProjectImpl)project).isTemporarilyDisposed()) {
@@ -561,7 +568,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
 
-      LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -633,7 +639,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
       listeners = ((UserDataHolderEx)project)
-        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.<ProjectManagerListener>createLockFreeCopyOnWriteList());
+        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.createLockFreeCopyOnWriteList());
     }
     listeners.add(listener);
   }

@@ -105,6 +105,11 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.remove.leading.$0", "U"), LanguageLevel.PYTHON30);
   }
 
+  public void testRemoveLeadingF() {
+    doTest(PyBundle.message("INTN.remove.leading.$0", "F"), LanguageLevel.PYTHON35);
+  }
+
+  // PY-18972
   public void testRemoveTrailingL() {
     doTest(PyBundle.message("INTN.remove.trailing.l"), LanguageLevel.PYTHON30);
   }
@@ -226,6 +231,11 @@ public class  PyIntentionTest extends PyTestCase {
 
   public void testConvertVariadicParam() { //PY-2264
     doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-20254
+  public void testConvertVariadicParamEmptySubscription() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertTripleQuotedString() { //PY-2697

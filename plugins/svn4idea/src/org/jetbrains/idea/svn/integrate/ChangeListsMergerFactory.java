@@ -32,7 +32,7 @@ public class ChangeListsMergerFactory implements MergerFactory {
   private final boolean myInvertRange;
   private final boolean myGroupSequentialChangeLists;
 
-  public ChangeListsMergerFactory(@NotNull List<CommittedChangeList> changeLists,
+  public ChangeListsMergerFactory(@NotNull List<? extends CommittedChangeList> changeLists,
                                   boolean recordOnly,
                                   boolean invertRange,
                                   boolean groupSequentialChangeLists) {

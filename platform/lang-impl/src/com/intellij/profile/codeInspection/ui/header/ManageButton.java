@@ -70,18 +70,13 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
     @Override
     public void update(AnActionEvent e) {
       final boolean isProjectLevel = myBuilder.isProjectLevel();
-      e.getPresentation().setText(isProjectLevel ? "Set as Global" : "Copy to Project");
+      e.getPresentation().setText(isProjectLevel ? "Copy as Global" : "Copy to Project");
       e.getPresentation().setEnabled(myBuilder.canChangeProfileLevel());
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      if (myBuilder.isProjectLevel()) {
-        myBuilder.setAsGlobal();
-      }
-      else {
-        myBuilder.moveToProject();
-      }
+      myBuilder.copyToAnotherLevel();
     }
   }
 

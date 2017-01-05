@@ -37,8 +37,8 @@ public interface Block {
 
   /**
    * Returns the list of child blocks for the specified block. <b>Important</b>: The same list
-   * of blocks must be returned when <code>getSubBlocks()</code> is repeatedly called on a particular
-   * <code>Block</code> instance.
+   * of blocks must be returned when {@code getSubBlocks()} is repeatedly called on a particular
+   * {@code Block} instance.
    *
    * @return the child block list.
    * @see #isLeaf()
@@ -70,7 +70,7 @@ public interface Block {
 
   /**
    * Returns an alignment object indicating how this block is aligned with other blocks. Blocks
-   * which return the same alignment object instance from the <code>getAlignment</code> method
+   * which return the same alignment object instance from the {@code getAlignment} method
    * are aligned with each other.
    *
    * @return the alignment object instance, or null if no alignment is required for the block.
@@ -83,7 +83,7 @@ public interface Block {
    * specified children of this block.
    *
    * @param child1 the first child for which spacing is requested;
-   *               <code>null</code> if given <code>'child2'</code> block is the first document block
+   *               {@code null} if given {@code 'child2'} block is the first document block
    * @param child2 the second child for which spacing is requested.
    * @return the spacing instance, or null if no special spacing is required. If null is returned,
    *         the formatter does not insert or delete spaces between the child blocks, but may insert

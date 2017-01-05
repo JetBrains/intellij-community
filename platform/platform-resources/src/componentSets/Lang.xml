@@ -16,6 +16,10 @@
       <implementation-class>com.intellij.util.indexing.FileBasedIndexImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.util.gist.GistManager</interface-class>
+      <implementation-class>com.intellij.util.gist.GistManagerImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.psi.stubs.StubIndex</interface-class>
       <implementation-class>com.intellij.psi.stubs.StubIndexImpl</implementation-class>
     </component>
@@ -143,7 +147,7 @@
       <skipForDefaultProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignaturePassFactory</implementation-class>
+      <implementation-class>com.intellij.refactoring.changeSignature.inplace.ChangeSignaturePassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
     <component>
@@ -197,11 +201,6 @@
     <component>
       <interface-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>

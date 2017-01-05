@@ -52,6 +52,11 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
     return Anchor.LAST;
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
     if (myWord != null) {

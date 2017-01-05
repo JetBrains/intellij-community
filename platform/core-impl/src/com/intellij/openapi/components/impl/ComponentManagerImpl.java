@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.StartupProgress;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,7 +97,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
-    List<ComponentConfig> componentConfigs = getComponentConfigs();
+    List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
     for (ComponentConfig config : componentConfigs) {
       registerComponents(config);
     }
@@ -236,7 +237,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  @Override
   public final <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
     List<T> result = null;
     // we must use instances only from our adapter (could be service or extension point or something else)
@@ -300,11 +300,16 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  private List<ComponentConfig> getComponentConfigs() {
+  private List<ComponentConfig> getComponentConfigs(final ProgressIndicator indicator) {
     ArrayList<ComponentConfig> componentConfigs = new ArrayList<ComponentConfig>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins(new StartupProgress() {
+      @Override
+      public void showProgress(String message, float progress) {
+        indicator.setFraction(progress);
+      }
+    })) {
       if (PluginManagerCore.shouldSkipPlugin(plugin)) {
         continue;
       }
@@ -365,7 +370,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   @NotNull
-  public final Condition getDisposed() {
+  public final Condition<?> getDisposed() {
     return myDisposedCondition;
   }
 
@@ -384,11 +389,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private void registerComponents(@NotNull ComponentConfig config) {
     ClassLoader loader = config.getClassLoader();
     try {
-      final Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
-      final Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass())
-                                           ?
-                                           interfaceClass
-                                           : StringUtil.isEmpty(config.getImplementationClass()) ? null : Class.forName(config.getImplementationClass(), true, loader);
+      Class<?> interfaceClass = Class.forName(config.getInterfaceClass(), true, loader);
+      Class<?> implementationClass = Comparing.equal(config.getInterfaceClass(), config.getImplementationClass()) ? interfaceClass :
+                                     StringUtil.isEmpty(config.getImplementationClass()) ? null :
+                                     Class.forName(config.getImplementationClass(), true, loader);
       MutablePicoContainer picoContainer = getPicoContainer();
       if (config.options != null && Boolean.parseBoolean(config.options.get("overrides"))) {
         ComponentAdapter oldAdapter = picoContainer.getComponentAdapterOfType(interfaceClass);
@@ -399,8 +403,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
       // implementationClass == null means we want to unregister this component
       if (implementationClass != null) {
-        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(),
-                                                                            config.options != null && Boolean.parseBoolean(config.options.get("workspace"))));
+        boolean ws = config.options != null && Boolean.parseBoolean(config.options.get("workspace"));
+        picoContainer.registerComponent(new ComponentConfigComponentAdapter(interfaceClass, implementationClass, config.getPluginId(), ws));
       }
     }
     catch (Throwable t) {

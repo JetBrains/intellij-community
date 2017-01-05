@@ -16,25 +16,16 @@
 package org.testng;
 
 import com.beust.jcommander.JCommander;
-import com.intellij.rt.execution.testFrameworks.ChildVMStarter;
 import org.testng.remote.RemoteArgs;
 
-import java.io.PrintStream;
 import java.util.Arrays;
 
-public class TestNGForkedStarter extends ChildVMStarter {
+public class TestNGForkedStarter  {
   public static void main(String[] args) throws Exception {
-    new TestNGForkedStarter().startVM(args);
-  }
-
-  @Override
-  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err) throws Exception {
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(null);
     CommandLineArgs cla = new CommandLineArgs();
     RemoteArgs ra = new RemoteArgs();
-    String[] resultArgs = new String[args.length - 1];
-    System.arraycopy(args, 1, resultArgs, 0, resultArgs.length);
-    new JCommander(Arrays.asList(cla, ra), resultArgs);
+    new JCommander(Arrays.asList(cla, ra), args);
     testNG.configure(cla);
     testNG.run();
     System.exit(0);

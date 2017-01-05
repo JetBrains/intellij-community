@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -27,11 +28,17 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IpnbParser {
   private static final Logger LOG = Logger.getInstance(IpnbParser.class);
   private static final Gson gson = initGson();
+  private static final List<String> myErrors = new ArrayList<>();
+  private static final String VALIDATION_ERROR_TEXT = "An invalid notebook may not function properly. The validation error was:";
+  private static final String VALIDATION_ERROR_TITLE = "Notebook Validation Failed";
 
   @NotNull
   private static Gson initGson() {
@@ -46,29 +53,48 @@ public class IpnbParser {
   }
 
   @NotNull
-  public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, @NotNull final VirtualFile virtualFile) throws IOException {
+  public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, @NotNull final VirtualFile virtualFile) {
+    myErrors.clear();
+
     final String path = virtualFile.getPath();
     IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
     if (rawFile == null) {
       int nbformat = isIpythonNewFormat(virtualFile) ? 4 : 3;
-      return new IpnbFile(Collections.emptyMap(), nbformat, Lists.newArrayList(), path);
+      return new IpnbFile(new HashMap<>(), nbformat, Lists.newArrayList(), path);
     }
     List<IpnbCell> cells = new ArrayList<>();
     final IpnbWorksheet[] worksheets = rawFile.worksheets;
     if (worksheets == null) {
       for (IpnbCellRaw rawCell : rawFile.cells) {
-        cells.add(rawCell.createCell());
+        cells.add(rawCell.createCell(validateSource(rawCell)));
       }
     }
     else {
       for (IpnbWorksheet worksheet : worksheets) {
         final List<IpnbCellRaw> rawCells = worksheet.cells;
         for (IpnbCellRaw rawCell : rawCells) {
-          cells.add(rawCell.createCell());
+          cells.add(rawCell.createCell(validateSource(rawCell)));
         }
       }
     }
+    showValidationMessage();
     return new IpnbFile(rawFile.metadata, rawFile.nbformat, cells, path);
+  }
+
+  private static boolean validateSource(IpnbCellRaw cell) {
+    if (cell.source == null) {
+      final String error = VALIDATION_ERROR_TEXT + "\n" + "\"source\" is required property:\n" + cell;
+      myErrors.add(error);
+      LOG.warn(error);
+      return false;
+    }
+    return true;
+  }
+
+  private static void showValidationMessage() {
+    if (!myErrors.isEmpty()) {
+      Messages.showWarningDialog(myErrors.get(0), VALIDATION_ERROR_TITLE);
+    }
   }
 
   public static boolean isIpythonNewFormat(@NotNull final VirtualFile virtualFile) {
@@ -115,7 +141,7 @@ public class IpnbParser {
     final IpnbFileRaw fileRaw = new IpnbFileRaw();
     fileRaw.metadata = ipnbFile.getMetadata();
     if (ipnbFile.getNbformat() == 4) {
-      for (IpnbCell cell: ipnbFile.getCells()) {
+      for (IpnbCell cell : ipnbFile.getCells()) {
         fileRaw.cells.add(IpnbCellRaw.fromCell(cell, ipnbFile.getNbformat()));
       }
     }
@@ -141,14 +167,16 @@ public class IpnbParser {
       final OutputStreamWriter writer = new OutputStreamWriter(fileOutputStream, Charset.forName("UTF-8").newEncoder());
       try {
         writer.write(json);
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         LOG.error(e);
       }
       finally {
         try {
           writer.close();
           fileOutputStream.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           LOG.error(e);
         }
       }
@@ -168,7 +196,7 @@ public class IpnbParser {
   }
 
   private static class IpnbWorksheet {
-    List<IpnbCellRaw> cells = new ArrayList<>();
+    final List<IpnbCellRaw> cells = new ArrayList<>();
   }
 
   @SuppressWarnings("unused")
@@ -182,6 +210,11 @@ public class IpnbParser {
     List<String> input;
     String language;
     Integer prompt_number;
+
+    @Override
+    public String toString() {
+      return new GsonBuilder().setPrettyPrinting().create().toJson(this);
+    }
 
     public static IpnbCellRaw fromCell(@NotNull final IpnbCell cell, int nbformat) {
       final IpnbCellRaw raw = new IpnbCellRaw();
@@ -222,10 +255,11 @@ public class IpnbParser {
       return raw;
     }
 
-    public IpnbCell createCell() {
+    @Nullable
+    public IpnbCell createCell(boolean isValidSource) {
       final IpnbCell cell;
       if (cell_type.equals("markdown")) {
-        cell = new IpnbMarkdownCell(source, metadata);
+        cell = new IpnbMarkdownCell(isValidSource ? source : new ArrayList<>(), metadata);
       }
       else if (cell_type.equals("code")) {
         final List<IpnbOutputCell> outputCells = new ArrayList<>();
@@ -233,14 +267,15 @@ public class IpnbParser {
           outputCells.add(outputRaw.createOutput());
         }
         final Integer prompt = prompt_number != null ? prompt_number : execution_count;
-        cell = new IpnbCodeCell(language == null ? "python" : language, input == null ? source : input,
+        cell = new IpnbCodeCell(language == null ? "python" : language,
+                                input == null ? (isValidSource ? source : new ArrayList<>()) : input,
                                 prompt, outputCells, metadata);
       }
       else if (cell_type.equals("raw")) {
-        cell = new IpnbRawCell(source);
+        cell = new IpnbRawCell(isValidSource ? source : new ArrayList<>());
       }
       else if (cell_type.equals("heading")) {
-        cell = new IpnbHeadingCell(source, level, metadata);
+        cell = new IpnbHeadingCell(isValidSource ? source : new ArrayList<>(), level, metadata);
       }
       else {
         cell = null;
@@ -271,7 +306,7 @@ public class IpnbParser {
       final CellOutputRaw raw = new CellOutputRaw();
       raw.metadata = outputCell.getMetadata();
       if (raw.metadata == null && !(outputCell instanceof IpnbStreamOutputCell) && !(outputCell instanceof IpnbErrorOutputCell)) {
-        raw.metadata = Collections.emptyMap();
+        raw.metadata = new HashMap<>();
       }
 
       if (outputCell instanceof IpnbPngOutputCell) {
@@ -318,10 +353,15 @@ public class IpnbParser {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
           dataRaw.text = outputCell.getText();
-          dataRaw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+          if (((IpnbLatexOutputCell)outputCell).isMarkdown()) {
+            dataRaw.markdown = ((IpnbLatexOutputCell)outputCell).getLatex();
+          }
+          else {
+            dataRaw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
+          }
           raw.data = dataRaw;
           raw.execution_count = outputCell.getPromptNumber();
-          raw.output_type = "execute_result";
+          raw.output_type = outputCell.getPromptNumber() != null ? "execute_result" : "display_data";
         }
         else {
           raw.latex = ((IpnbLatexOutputCell)outputCell).getLatex();
@@ -395,7 +435,10 @@ public class IpnbParser {
         outputCell = new IpnbHtmlOutputCell(html == null ? data.html : html, text, prompt, metadata);
       }
       else if (latex != null || (data != null && data.latex != null)) {
-        outputCell = new IpnbLatexOutputCell(latex == null ? data.latex : latex, prompt, text, metadata);
+        outputCell = new IpnbLatexOutputCell(latex == null ? data.latex : latex, false, prompt, text, metadata);
+      }
+      else if (data != null && data.markdown != null) {
+        outputCell = new IpnbLatexOutputCell(data.markdown, true, prompt, text, metadata);
       }
       else if (stream != null || name != null) {
         outputCell = new IpnbStreamOutputCell(stream == null ? name : stream, text, prompt, metadata);
@@ -409,7 +452,7 @@ public class IpnbParser {
       else if ("execute_result".equals(output_type) && data != null) {
         outputCell = new IpnbOutOutputCell(data.text, prompt, metadata);
       }
-      else if ("display_data".equals(output_type)){
+      else if ("display_data".equals(output_type)) {
         outputCell = new IpnbPngOutputCell(null, text, prompt, metadata);
       }
       else {
@@ -426,6 +469,7 @@ public class IpnbParser {
     @SerializedName("image/jpeg") List<String> jpeg;
     @SerializedName("text/latex") List<String> latex;
     @SerializedName("text/plain") List<String> text;
+    @SerializedName("text/markdown") List<String> markdown;
   }
 
   static class RawCellAdapter implements JsonSerializer<IpnbCellRaw> {
@@ -472,6 +516,7 @@ public class IpnbParser {
       return jsonObject;
     }
   }
+
   static class FileAdapter implements JsonSerializer<IpnbFileRaw> {
     @Override
     public JsonElement serialize(IpnbFileRaw fileRaw, Type typeOfSrc, JsonSerializationContext context) {
@@ -555,10 +600,12 @@ public class IpnbParser {
       dataRaw.svg = getStringOrArray("image/svg+xml", object);
       dataRaw.jpeg = getStringOrArray("image/jpeg", object);
       dataRaw.latex = getStringOrArray("text/latex", object);
+      dataRaw.markdown = getStringOrArray("text/markdown", object);
       dataRaw.text = getStringOrArray("text/plain", object);
       return dataRaw;
     }
   }
+
   static class CellOutputDeserializer implements JsonDeserializer<CellOutputRaw> {
 
     @Override
@@ -732,6 +779,10 @@ public class IpnbParser {
       if (cellRaw.latex != null) {
         final JsonElement latex = gson.toJsonTree(cellRaw.latex);
         jsonObject.add("text/latex", latex);
+      }
+      if (cellRaw.markdown != null) {
+        final JsonElement markdown = gson.toJsonTree(cellRaw.markdown);
+        jsonObject.add("text/markdown", markdown);
       }
       if (cellRaw.text != null) {
         final JsonElement text = gson.toJsonTree(cellRaw.text);

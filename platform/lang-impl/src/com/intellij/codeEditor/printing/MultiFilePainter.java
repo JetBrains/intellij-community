@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 
 import java.awt.*;
@@ -27,13 +25,16 @@ import java.awt.print.PrinterException;
 import java.util.List;
 
 class MultiFilePainter extends BasePainter {
-  private final List<Pair<PsiFile, Editor>> myFilesList;
+  private final List<PsiFile> myFilesList;
+  private final boolean myEvenNumberOfPagesPerFile;
   private int myFileIndex = 0;
   private int myStartPageIndex = 0;
   private TextPainter myTextPainter = null;
+  private int myLargestPrintedPage = -1;
 
-  public MultiFilePainter(List<Pair<PsiFile, Editor>> filesList) {
+  public MultiFilePainter(List<PsiFile> filesList, boolean evenNumberOfPagesPerFile) {
     myFilesList = filesList;
+    myEvenNumberOfPagesPerFile = evenNumberOfPagesPerFile;
   }
 
   @Override
@@ -43,8 +44,8 @@ class MultiFilePainter extends BasePainter {
     }
     while (myFileIndex < myFilesList.size()) {
       if (myTextPainter == null) {
-        Pair<PsiFile, Editor> pair = myFilesList.get(myFileIndex);
-        myTextPainter = PrintManager.initTextPainter(pair.first, pair.second);
+        PsiFile psiFile = myFilesList.get(myFileIndex);
+        myTextPainter = PrintManager.initTextPainter(psiFile);
       }
       if (myTextPainter != null) {
         myTextPainter.setProgress(myProgress);
@@ -59,13 +60,19 @@ class MultiFilePainter extends BasePainter {
           return Printable.NO_SUCH_PAGE;
         }
         if (ret == Printable.PAGE_EXISTS) {
+          myLargestPrintedPage = pageIndex;
           return Printable.PAGE_EXISTS;
+        }
+        if (myEvenNumberOfPagesPerFile && pageIndex == (myLargestPrintedPage + 1) && (pageIndex % 2) == 1 &&
+            myFileIndex < (myFilesList.size() - 1)) {
+          return PAGE_EXISTS;
         }
         myTextPainter.dispose();
         myTextPainter = null;
         myStartPageIndex = pageIndex;
       }
       myFileIndex++;
+      myLargestPrintedPage = -1;
     }
     return Printable.NO_SUCH_PAGE;
   }

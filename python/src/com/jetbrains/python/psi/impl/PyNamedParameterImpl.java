@@ -28,7 +28,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -172,9 +175,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (includeDefaultValue && defaultValue != null) {
       String representation = PyUtil.getReadableRepr(defaultValue, true);
       if (defaultValue instanceof PyStringLiteralExpression) {
-        final Pair<String, String> quotes = PythonStringUtil.getQuotes(defaultValue.getText());
+        final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
         if (quotes != null) {
-          representation = quotes.getFirst() + PythonStringUtil.getStringValue(defaultValue) + quotes.getSecond();
+          representation = quotes.getFirst() + PyStringLiteralUtil.getStringValue(defaultValue) + quotes.getSecond();
         }
       }
       sb.append("=").append(representation);
@@ -220,10 +223,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         if (isKeywordContainer()) {
-          return PyBuiltinCache.getInstance(this).getDictType();
+          return PyTypeUtil.toKeywordContainerType(this, null);
         }
         if (isPositionalContainer()) {
-          return PyBuiltinCache.getInstance(this).getTupleType();
+          return PyTypeUtil.toPositionalContainerType(this, null);
         }
         if (context.maySwitchToAST(this)) {
           final PyExpression defaultValue = getDefaultValue();
@@ -336,6 +339,38 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
               elseIfCondition.accept(this);
             }
           }
+        }
+
+        @Override
+        public void visitPyCallExpression(PyCallExpression node) {
+          Optional
+            .ofNullable(node.getCallee())
+            .filter(callee -> "len".equals(callee.getName()))
+            .map(PyExpression::getReference)
+            .map(PsiReference::resolve)
+            .filter(element -> PyBuiltinCache.getInstance(element).isBuiltin(element))
+            .ifPresent(
+              callable -> {
+                final PyReferenceExpression argument = node.getArgument(0, PyReferenceExpression.class);
+                if (argument != null && argument.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
+                  result.add(PyNames.LEN);
+                }
+              }
+            );
+
+          super.visitPyCallExpression(node);
+        }
+
+        @Override
+        public void visitPyForStatement(PyForStatement node) {
+          Optional
+            .of(node.getForPart())
+            .map(PyForPart::getSource)
+            .map(PyExpression::getReference)
+            .filter(reference -> reference.isReferenceTo(PyNamedParameterImpl.this))
+            .ifPresent(reference -> result.add(PyNames.ITER));
+
+          super.visitPyForStatement(node);
         }
       });
     }

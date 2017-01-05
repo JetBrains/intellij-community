@@ -393,7 +393,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       RootVisitorHost.visitSdkRoots(myContext.getSdk(), this);
     }
     else {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Context is empty. Provide some context: module, file, sdk, etc");
     }
   }
 

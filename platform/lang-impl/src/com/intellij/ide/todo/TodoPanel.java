@@ -29,11 +29,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
@@ -49,7 +50,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +90,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private UsagePreviewPanel myUsagePreviewPanel;
 
   /**
-   * @param currentFileMode if <code>true</code> then view doesn't have "Group By Packages" and "Flatten Packages"
+   * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
   TodoPanel(Project project, TodoPanelSettings settings, boolean currentFileMode, Content content) {
@@ -158,11 +162,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(final TreeSelectionEvent e) {
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           if (myUsagePreviewPanel.isVisible()) {
             updatePreviewPanel();
           }
-        });
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
 
@@ -228,7 +232,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   private void updatePreviewPanel() {
-    if (myProject.isDisposed()) return;
+    if (myProject == null || myProject.isDisposed()) return;
     List<UsageInfo> infos = new ArrayList<>();
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
@@ -282,7 +286,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   /**
-   * Sets specified <code>TodoFilter</code>. The method also updates window's title.
+   * Sets specified {@code TodoFilter}. The method also updates window's title.
    *
    * @see TodoTreeBuilder#setTodoFilter
    */
@@ -416,15 +420,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     alarm.cancelAllRequests();
     alarm.addRequest(() -> {
       final Set<VirtualFile> files = new HashSet<>();
-      ApplicationManager.getApplication().runReadAction(() -> {
-        try {
-          myTodoTreeBuilder.collectFiles(virtualFile -> {
-            files.add(virtualFile);
-            return true;
-          });
-        }
-        catch (IndexNotReadyException ignore) {
-        }
+      DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+        myTodoTreeBuilder.collectFiles(virtualFile -> {
+          files.add(virtualFile);
+          return true;
+        });
       });
       final Runnable runnable = () -> {
         myTodoTreeBuilder.rebuildCache(files);

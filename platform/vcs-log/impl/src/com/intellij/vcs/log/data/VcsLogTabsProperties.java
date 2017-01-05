@@ -44,13 +44,18 @@ public class VcsLogTabsProperties implements PersistentStateComponent<VcsLogTabs
     myState = state;
   }
 
-  public VcsLogUiProperties createProperties(@NotNull final String id) {
+  public MainVcsLogUiProperties createProperties(@NotNull final String id) {
     myState.TAB_STATES.putIfAbsent(id, new VcsLogUiPropertiesImpl.State());
     return new VcsLogUiPropertiesImpl() {
       @NotNull
       @Override
       public State getState() {
-        return myState.TAB_STATES.get(id);
+        State state = myState.TAB_STATES.get(id);
+        if (state == null) {
+          state = new VcsLogUiPropertiesImpl.State();
+          myState.TAB_STATES.put(id, state);
+        }
+        return state;
       }
 
       @Override

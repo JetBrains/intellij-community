@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -93,7 +92,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   @Nullable
-  protected final String acceptParameter(String param) {
+  protected static String acceptParameter(String param) {
     return param != null && param.length() > 0 ? param : null;
   }
 
@@ -123,8 +122,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
    * Typically delegates to ModuleType (e.g. JavaModuleType) that is more generic than ModuleBuilder
    *
    * @param settingsStep step to be modified
-   * @return callback ({@link com.intellij.ide.util.projectWizard.ModuleWizardStep#validate()}
-   *         and {@link com.intellij.ide.util.projectWizard.ModuleWizardStep#updateDataModel()}
+   * @return callback ({@link ModuleWizardStep#validate()}
+   *         and {@link ModuleWizardStep#updateDataModel()}
    *         will be invoked)
    */
   @Override
@@ -296,12 +295,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     if (model == null) moduleModel.commit();
 
     if (runFromProjectWizard) {
-      StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module));
-        }
-      });
+      StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(
+        (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module)));
     }
     else {
       onModuleInitialized(module);
@@ -338,12 +333,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
         myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       }
       try {
-        return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Module, Exception>() {
-          @Override
-          public Module compute() throws Exception {
-            return createAndCommitIfNeeded(project, model, true);
-          }
-        });
+        return ApplicationManager.getApplication().runWriteAction(
+          (ThrowableComputable<Module, Exception>)() -> createAndCommitIfNeeded(project, model, true));
       }
       catch (Exception ex) {
         LOG.warn(ex);

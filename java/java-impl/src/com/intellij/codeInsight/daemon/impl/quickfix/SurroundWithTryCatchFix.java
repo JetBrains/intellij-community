@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -73,8 +72,6 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));

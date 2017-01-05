@@ -95,7 +95,12 @@ class VariableView(override val variableName: String, private val variable: Vari
     }, false)
     node.setFullValueEvaluator(object : XFullValueEvaluator(" (invoke getter)") {
       override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
-        val valueModifier = variable.valueModifier
+        var valueModifier = variable.valueModifier
+        var nonProtoContext = context
+        while (nonProtoContext is VariableView && nonProtoContext.variableName == PROTOTYPE_PROP) {
+          valueModifier = nonProtoContext.variable.valueModifier
+          nonProtoContext = nonProtoContext.parent
+        }
         valueModifier!!.evaluateGet(variable, evaluateContext)
           .done(node) {
             callback.evaluated("")
@@ -190,7 +195,8 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   abstract class ObsolescentIndexedVariablesConsumer(protected val node: XCompositeNode) : IndexedVariablesConsumer() {
-    override fun isObsolete() = node.isObsolete
+    override val isObsolete: Boolean
+      get() = node.isObsolete
   }
 
   private fun computeIndexedProperties(value: ArrayValue, node: XCompositeNode, isLastChildren: Boolean): Promise<*> {
@@ -373,14 +379,22 @@ class VariableView(override val variableName: String, private val variable: Vari
     if (!watchableAsEvaluationExpression()) {
       return null
     }
+    if (context.variableName == null) return variable.name // top level watch expression, may be call etc.
 
-    val list = SmartList(variable.name)
+    val list = SmartList<String>()
+    addVarName(list, parent, variable.name)
+
     var parent: VariableContext? = context
     while (parent != null && parent.variableName != null) {
-      list.add(parent.variableName!!)
+      addVarName(list, parent.parent, parent.variableName!!)
       parent = parent.parent
     }
     return context.viewSupport.propertyNamesToString(list, false)
+  }
+
+  private fun addVarName(list: SmartList<String>, parent: VariableContext?, name: String) {
+    if (parent == null || parent.variableName != null) list.add(name)
+    else list.addAll(name.split(".").reversed())
   }
 
   private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString!!.length) {
@@ -478,3 +492,5 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
     renderer.renderSpecialSymbol("]")
   }
 }
+
+private val PROTOTYPE_PROP = "__proto__"

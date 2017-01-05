@@ -15,8 +15,6 @@
  */
 package com.intellij.ui.mac;
 
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdePopupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,14 +23,12 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -40,7 +36,6 @@ import com.intellij.util.ui.OwnerOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -84,28 +79,45 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
   }
 
   @NotNull
-  private static List<VirtualFile> getChosenFiles(final Stream<File> streamOfFiles) {
-
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+  private List<VirtualFile> getChosenFiles(final Stream<File> streamOfFiles) {
     final List<VirtualFile> virtualFiles = new ArrayList<>();
 
     streamOfFiles.forEach(file -> {
-      final String vfsPath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-      final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByPath(vfsPath);
+      final VirtualFile virtualFile = fileToVirtualFile(file);
       if (virtualFile != null && virtualFile.isValid()) {
         virtualFiles.add(virtualFile);
       }
     });
+    return FileChooserUtil.getChosenFiles(myFileChooserDescriptor, virtualFiles);
+  }
 
-    return virtualFiles;
+  private VirtualFile fileToVirtualFile(File file) {
+    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    final String vfsPath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
+    return localFileSystem.refreshAndFindFileByPath(vfsPath);
   }
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<List<VirtualFile>> callback) {
     if (toSelect != null && toSelect.getParent() != null) {
-      myFileDialog.setDirectory(toSelect.getParent().getCanonicalPath());
-      myFileDialog.setFile(toSelect.getPath());
+
+      String directoryName;
+      String fileName = null;
+      if (toSelect.isDirectory()) {
+        directoryName = toSelect.getCanonicalPath();
+      } else {
+        directoryName = toSelect.getParent().getCanonicalPath();
+        fileName = toSelect.getPath();
+      }
+      myFileDialog.setDirectory(directoryName);
+      myFileDialog.setFile(fileName);
     }
+
+
+    myFileDialog.setFilenameFilter((dir, name) -> {
+      File file = new File(dir, name);
+      return myFileChooserDescriptor.isFileSelectable(fileToVirtualFile(file));
+    });
 
     myFileDialog.setMultipleMode(myFileChooserDescriptor.isChooseMultiple());
 

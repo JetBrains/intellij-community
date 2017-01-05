@@ -8,7 +8,7 @@ REGEXP_FILE
             RegExpCharImpl: <:>
               PsiElement(CHARACTER)(':')
             RegExpCharImpl: <^>
-              PsiElement(CARET)('^')
+              PsiElement(CHARACTER)('^')
             RegExpCharImpl: <x>
               PsiElement(CHARACTER)('x')
             RegExpCharImpl: <d>

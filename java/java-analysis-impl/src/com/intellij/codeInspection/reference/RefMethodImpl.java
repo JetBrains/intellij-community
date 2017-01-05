@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,24 +57,20 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private RefParameter[] myParameters;
   private String myReturnValueTemplate;
-  protected final RefClass myOwnerClass;
 
   RefMethodImpl(@NotNull RefClass ownerClass, PsiMethod method, RefManager manager) {
     super(method, manager);
 
     ((RefClassImpl)ownerClass).add(this);
-
-    myOwnerClass = ownerClass;
   }
 
   // To be used only from RefImplicitConstructor.
   protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
-    myOwnerClass = ownerClass;
     ((RefClassImpl)ownerClass).add(this);
 
-    addOutReference(getOwnerClass());
-    ((RefClassImpl)getOwnerClass()).addInReference(this);
+    addOutReference(ownerClass);
+    ((RefClassImpl)ownerClass).addInReference(this);
 
     setConstructor(true);
   }
@@ -87,11 +83,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     super.add(child);
   }
 
+  @NotNull
   @Override
   public List<RefEntity> getChildren() {
     List<RefEntity> superChildren = super.getChildren();
     if (myParameters == null) return superChildren;
-    if (superChildren == null || superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
+    if (superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
     
     List<RefEntity> allChildren = new ArrayList<>(superChildren.size() + myParameters.length);
     allChildren.addAll(superChildren);
@@ -285,8 +282,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (method == null) return;
     PsiCodeBlock body = method.getBody();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-    refUtil.addReferences(method, this, body);
-    refUtil.addReferences(method, this, method.getModifierList());
+    refUtil.addReferences(method, this, method);
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 

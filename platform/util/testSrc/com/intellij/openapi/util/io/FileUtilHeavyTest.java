@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Processor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class FileUtilHeavyTest {
   private static File myFindTestSecondFile;
 
   @BeforeClass
-  public static void setUp() throws Exception {
+  public static void setUp() throws IOException {
     myTempDirectory = FileUtil.createTempDirectory("FileUtilHeavyTest.", ".tmp");
 
     myVisitorTestDirectory = IoTestUtil.createTestDir(myTempDirectory, "visitor_test_dir");
@@ -167,32 +168,22 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testDeleteFail() throws Exception {
+  public void testDeleteFail() throws IOException {
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "failed_delete");
     File file = IoTestUtil.createTestFile(targetDir, "file");
 
     if (SystemInfo.isWindows) {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      RandomAccessFile rw = new RandomAccessFile(file, "rw");
-      FileLock lock = null;
-      try {
-        lock = rw.getChannel().tryLock();
+      try (RandomAccessFile rw = new RandomAccessFile(file, "rw"); FileLock ignored = rw.getChannel().tryLock()) {
         assertFalse(FileUtil.delete(file));
-      }
-      finally {
-        if (lock != null) {
-          lock.release();
-        }
-        rw.close();
       }
     }
-    else { // on unix use chmod
-      assertEquals(0, new ProcessBuilder("chmod", "a-w", file.getParentFile().getPath()).start().waitFor());
+    else {
+      assertTrue(targetDir.setWritable(false, false));
       try {
         assertFalse(FileUtil.delete(file));
       }
       finally {
-        assertEquals(0, new ProcessBuilder("chmod", "a+w", file.getParentFile().getPath()).start().waitFor());
+        assertTrue(targetDir.setWritable(true, true));
       }
     }
   }
@@ -231,28 +222,44 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testSymlinkDeletion() throws Exception {
+  public void testSymlinkDeletion() {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
-    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_1");
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "lnk_del_test_1");
     IoTestUtil.createTestFile(targetDir, "file");
-    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_2");
+    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "lnk_del_test_2");
     IoTestUtil.createTestFile(linkDir, "file");
     IoTestUtil.createSymLink(targetDir.getPath(), linkDir.getPath() + "/link");
 
     assertEquals(1, targetDir.list().length);
     FileUtil.delete(linkDir);
+    assertFalse(linkDir.exists());
     assertEquals(1, targetDir.list().length);
   }
-  
-  
+
   @Test
-  public void testToCanonicalPathSymLinksAware() throws Exception {
+  public void testJunctionDeletion() {
+    assumeTrue(SystemInfo.isWindows);
+
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_1");
+    IoTestUtil.createTestFile(targetDir, "file");
+    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_2");
+    IoTestUtil.createTestFile(linkDir, "file");
+    IoTestUtil.createJunction(targetDir.getPath(), linkDir.getPath() + "/link");
+
+    assertEquals(1, targetDir.list().length);
+    FileUtil.delete(linkDir);
+    assertFalse(linkDir.exists());
+    assertEquals(1, targetDir.list().length);
+  }
+
+  @Test
+  public void testToCanonicalPathSymLinksAware() throws IOException {
     assumeTrue(SystemInfo.areSymLinksSupported);
-    
+
     File rootDir = IoTestUtil.createTestDir(myTempDirectory, "root");
     assertTrue(new File(rootDir, "dir1/dir2/dir3/dir4").mkdirs());
-    
+
     String root = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(rootDir.getPath()));
 
     // non-recursive link
@@ -261,14 +268,14 @@ public class FileUtilHeavyTest {
     IoTestUtil.createSymLink(new File(rootDir, "dir1").getPath(), new File(rootDir, "dir1/dir1_link").getPath());
 
     // I) links should NOT be resolved when ../ stays inside the linked path
-    // I.I) non-recursive links 
+    // I.I) non-recursive links
     assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/./", true));
     assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/../", true));
     assertEquals(root + "/dir1/dir2_link/dir3", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/dir4/../", true));
     assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/dir3/dir4/../../", true));
     assertEquals(root + "/dir1/dir2_link", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir2_link/dir3/../", true));
 
-    // I.II) recursive links 
+    // I.II) recursive links
     assertEquals(root + "/dir1/dir1_link", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/./", true));
     assertEquals(root + "/dir1/dir1_link", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../", true));
     assertEquals(root + "/dir1/dir1_link/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/dir3/../", true));
@@ -276,8 +283,8 @@ public class FileUtilHeavyTest {
     assertEquals(root + "/dir1/dir1_link", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir1_link/dir2/../", true));
 
     // II) links should be resolved is ../ escapes outside
-    
-    // II.I) non-recursive links 
+
+    // II.I) non-recursive links
     assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/../", true));
     assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/../dir2", true));
     assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir2_link/../../dir1/dir2", true));
@@ -286,7 +293,7 @@ public class FileUtilHeavyTest {
     assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir2_link/../dir2", true));
 
     // II.I) recursive links
-    // the rules seems to be different when ../ goes over recursive link: 
+    // the rules seems to be different when ../ goes over recursive link:
     // * on Windows ../ goes to link's parent
     // * on Unix ../ goes to target's parent
     if (SystemInfo.isWindows) {
@@ -304,8 +311,8 @@ public class FileUtilHeavyTest {
       assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../../../root/dir1", true));
       assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir1_link/../dir1", true));
     }
-    
-    // some corner cases, behavior should be the same as the default FileUtil.toCanonicalPath 
+
+    // some corner cases, behavior should be the same as the default FileUtil.toCanonicalPath
     assertEquals(FileUtil.toCanonicalPath("..", false), FileUtil.toCanonicalPath("..", true));
     assertEquals(FileUtil.toCanonicalPath("../", false),  FileUtil.toCanonicalPath("../", true));
     assertEquals(FileUtil.toCanonicalPath("/..", false),  FileUtil.toCanonicalPath("/..", true));

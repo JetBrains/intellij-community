@@ -131,15 +131,8 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("if.can.be.assertion.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("if.can.be.assertion.quickfix");
     }
 
     @Override

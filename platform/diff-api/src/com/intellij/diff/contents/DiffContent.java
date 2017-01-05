@@ -37,13 +37,13 @@ public interface DiffContent extends UserDataHolder {
    * Provides a way to open related content in editor
    */
   @Nullable
-  Navigatable getNavigatable();
+  default Navigatable getNavigatable() { return null; }
 
   /**
    * @see DiffRequest#onAssigned(boolean)
    */
   @CalledInAwt
-  void onAssigned(boolean isAssigned);
+  default void onAssigned(boolean isAssigned) { }
 
   @Nullable
   @Deprecated

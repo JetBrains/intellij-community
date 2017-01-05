@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,8 +28,19 @@ public interface MoveMembersOptions {
 
   String getTargetClassName();
 
+  @PsiModifier.ModifierConstant
   @Nullable
   String getMemberVisibility();
+
+  @PsiModifier.ModifierConstant
+  @Nullable
+  default String getExplicitMemberVisibility() {
+    String visibility = getMemberVisibility();
+    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
+      return PsiModifier.PUBLIC;
+    }
+    return visibility;
+  }
 
   boolean makeEnumConstant();
 }

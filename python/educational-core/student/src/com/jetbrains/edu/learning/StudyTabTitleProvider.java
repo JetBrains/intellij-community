@@ -12,6 +12,7 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 public class StudyTabTitleProvider implements EditorTabTitleProvider {
   @Nullable
@@ -25,7 +26,7 @@ public class StudyTabTitleProvider implements EditorTabTitleProvider {
     if (title == null) {
       return null;
     }
-    String[] split = title.split(File.separator);
+    String[] split = title.split(Pattern.quote(File.separator));
     for (int i = 0; i < split.length; i++) {
       String part = split[i];
       Task task = taskFile.getTask();

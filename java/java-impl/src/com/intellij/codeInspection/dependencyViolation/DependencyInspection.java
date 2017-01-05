@@ -80,6 +80,11 @@ public class DependencyInspection extends DependencyInspectionBase {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       ShowSettingsUtil.getInstance().editConfigurable(project, new DependencyConfigurable(project));
     }

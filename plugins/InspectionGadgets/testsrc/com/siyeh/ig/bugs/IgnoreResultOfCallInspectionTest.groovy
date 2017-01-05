@@ -1,14 +1,29 @@
-package com.siyeh.ig.bugs;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.siyeh.ig.bugs
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.intellij.codeInspection.LocalInspectionTool
+import com.siyeh.ig.LightInspectionTestCase
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
-public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
+class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected LocalInspectionTool getInspection() {
-    return new IgnoreResultOfCallInspection();
+    return new IgnoreResultOfCallInspection()
   }
 
   @Override
@@ -51,7 +66,7 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
     ] as String[]
   }
 
-  public void testCanIgnoreReturnValue() {
+  void testCanIgnoreReturnValue() {
     doTest("import com.google.errorprone.annotations.CanIgnoreReturnValue;\n" +
            "import javax.annotation.CheckReturnValue;\n" +
            "\n" +
@@ -66,18 +81,18 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
            "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
            "  }\n" +
-           "}");
+           "}")
   }
 
-  public void testObjectMethods() {
+  void testObjectMethods() {
     doTest("class C {\n" +
            "  void foo(Object o, String s) {\n" +
            "    o./*Result of 'Object.equals()' is ignored*/equals/**/(s);\n" +
            "  }\n" +
-           "}\n");
+           "}\n")
   }
 
-  public void testMatcher() {
+  void testMatcher() {
     doTest("class C {\n" +
            "  void matcher() {\n" +
            "    final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(\"baaaa\");\n" +
@@ -85,10 +100,10 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "    matcher./*Result of 'Matcher.find()' is ignored*/find/**/();\n" +
            "    matcher.notify();\n" +
            "  }\n" +
-           "}\n");
+           "}\n")
   }
 
-  public void testReader() {
+  void testReader() {
     doTest("import java.io.Reader;" +
            "import java.io.IOException;" +
            "class U {" +
@@ -98,7 +113,7 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "}")
   }
 
-  public void testJSR305Annotation() {
+  void testJSR305Annotation() {
     doTest("import javax.annotation.CheckReturnValue;" +
            "class A {" +
            "  @CheckReturnValue" +
@@ -108,10 +123,10 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void b() {" +
            "    /*Result of 'A.a()' is ignored*/a/**/();" +
            "  }" +
-           "}");
+           "}")
   }
 
-  public void testRandomGetter() {
+  void testRandomGetter() {
     doTest("class A {" +
            "  private String name;" +
            "  public String getName() {" +
@@ -123,7 +138,7 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "}")
   }
 
-  public void testJSR305Annotation2() {
+  void testJSR305Annotation2() {
     doTest("import javax.annotation.CheckReturnValue;" +
            "@CheckReturnValue " +
            "class A {" +
@@ -133,10 +148,10 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void b() {" +
            "    /*Result of 'A.a()' is ignored*/a/**/();" +
            "  }" +
-           "}");
+           "}")
   }
 
-  public void testJSR305Annotation3() {
+  void testJSR305Annotation3() {
     doTest("import javax.annotation.CheckReturnValue;" +
            "@CheckReturnValue " +
            "class Parent {" +
@@ -148,10 +163,10 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "      /*Result of 'A.a()' is ignored*/a/**/();" +
            "    }" +
            "  }" +
-           "}");
+           "}")
   }
 
-  public void testPureMethod() {
+  void testPureMethod() {
     doTest """
 import org.jetbrains.annotations.Contract;
 
@@ -163,6 +178,24 @@ class Util {
 class C {
   {
     Util./*Result of 'Util.util()' is ignored*/util/**/();
+  }
+}
+"""
+  }
+
+  void testPureMethodInVoidFunctionalExpression() {
+    doTest """
+import org.jetbrains.annotations.Contract;
+
+class Util {
+  @Contract(pure=true)
+  static Object util() { return null; }
+}
+
+class C {
+  {
+    Runnable r = () -> Util./*Result of 'Util.util()' is ignored*/util/**/();
+    Runnable r1 = Util::/*Result of 'Util.util()' is ignored*/util/**/;
   }
 }
 """

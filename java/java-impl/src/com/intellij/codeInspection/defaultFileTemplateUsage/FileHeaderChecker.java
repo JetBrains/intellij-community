@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -89,8 +88,7 @@ public class FileHeaderChecker {
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiElement element = descriptor.getPsiElement();
-        if (element == null || !element.isValid()) return;
-        if (!CodeInsightUtil.preparePsiElementsForWrite(element)) return;
+        if (element == null) return;
 
         String newText;
         try {

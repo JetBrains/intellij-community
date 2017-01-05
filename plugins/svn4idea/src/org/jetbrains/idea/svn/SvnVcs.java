@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -220,38 +221,31 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
    * TODO: formats. And should be removed when 1.6 working copies are no longer supported by IDEA.
    */
   private void cleanup17copies() {
-    final Runnable callCleanupWorker = new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        new CleanupWorker(VirtualFile.EMPTY_ARRAY, myProject, "action.Subversion.cleanup.progress.title") {
-          @Override
-          protected void chanceToFillRoots() {
-            final List<WCInfo> infos = getAllWcInfos();
-            final LocalFileSystem lfs = LocalFileSystem.getInstance();
-            final List<VirtualFile> roots = new ArrayList<>(infos.size());
-            for (WCInfo info : infos) {
-              if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-                final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
-                if (file == null) {
-                  LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
-                }
-                else {
-                  roots.add(file);
-                }
+    Runnable callCleanupWorker = () -> {
+      if (myProject.isDisposed()) return;
+      new CleanupWorker(VirtualFile.EMPTY_ARRAY, myProject, "action.Subversion.cleanup.progress.title") {
+        @Override
+        protected void chanceToFillRoots() {
+          final List<WCInfo> infos = getAllWcInfos();
+          final LocalFileSystem lfs = LocalFileSystem.getInstance();
+          final List<VirtualFile> roots = new ArrayList<>(infos.size());
+          for (WCInfo info : infos) {
+            if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
+              final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
+              if (file == null) {
+                LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
+              }
+              else {
+                roots.add(file);
               }
             }
-            myRoots = roots.toArray(new VirtualFile[roots.size()]);
           }
-        }.execute();
-      }
+          myRoots = roots.toArray(new VirtualFile[roots.size()]);
+        }
+      }.execute();
     };
 
-    myCopiesRefreshManager.waitRefresh(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(callCleanupWorker, ModalityState.any());
-      }
-    });
+    myCopiesRefreshManager.waitRefresh(() -> ApplicationManager.getApplication().invokeLater(callCleanupWorker));
   }
 
   public boolean checkCommandLineVersion() {
@@ -265,11 +259,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myCopiesRefreshManager != null) {
       myCopiesRefreshManager.asynchRequest();
     }
-  }
-
-  @Override
-  public boolean checkImmediateParentsBeforeCommit() {
-    return true;
   }
 
   private void upgradeIfNeeded(final MessageBus bus) {
@@ -360,8 +349,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     FrameStateManager.getInstance().addListener(myFrameStateListener);
 
     myAuthNotifier.init();
-    mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
-    mySvnBranchPointsCalculator.activate();
+    mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
 
     svnKitManager.activate();
 
@@ -529,7 +517,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myAnnotationProvider == null) {
       myAnnotationProvider = new SvnAnnotationProvider(this);
     }
-    return myAnnotationProvider;
+    return new VcsAnnotationCachedProxy(this, myAnnotationProvider);
   }
 
   @Override
@@ -730,7 +718,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> getCommittedChangesProvider() {
     if (myCommittedChangesProvider == null) {
-      myCommittedChangesProvider = new SvnCommittedChangesProvider(myProject);
+      myCommittedChangesProvider = new SvnCommittedChangesProvider(this);
     }
     return myCommittedChangesProvider;
   }

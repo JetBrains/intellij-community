@@ -40,7 +40,6 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -254,19 +253,17 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
                                                   @NotNull final String oldParameterName,
                                                   @NotNull final JavaCodeStyleManager manager,
                                                   @NotNull final Map<PsiElement, String> allRenames) {
-    addGetterOrSetterWithParameter(methodPrototype, newName, newPropertyName, oldParameterName, manager, allRenames);
     PsiMethod[] methods = methodPrototype.findDeepestSuperMethods();
     if (methods.length == 0) {
       methods = new PsiMethod[] {methodPrototype};
     }
     for (PsiMethod method : methods) {
+      addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);
       OverridingMethodsSearch.search(method).forEach(psiMethod -> {
         RenameProcessor.assertNonCompileElement(psiMethod);
         addGetterOrSetterWithParameter(psiMethod, newName, newPropertyName, oldParameterName, manager, allRenames);
         return true;
       });
-      
-      addGetterOrSetterWithParameter(method, newName, newPropertyName, oldParameterName, manager, allRenames);
     }
   }
 

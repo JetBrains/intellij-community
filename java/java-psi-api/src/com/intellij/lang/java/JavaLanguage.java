@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaLanguage extends Language {
 
+  @NotNull
   public static final JavaLanguage INSTANCE = new JavaLanguage();
 
   private JavaLanguage() {

@@ -15,20 +15,18 @@
  */
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.history.LogEntry;
+import org.jetbrains.idea.svn.history.LogEntryPath;
+import org.jetbrains.idea.svn.history.LogHierarchyNode;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
@@ -39,29 +37,31 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.util.text.StringUtil.toUpperCase;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.*;
+import static java.util.Collections.reverseOrder;
+import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
+import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 public class OneShotMergeInfoHelper implements MergeChecker {
 
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final Map<Long, Collection<String>> myPartiallyMerged;
   // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
-  @NotNull private final AreaMap<String, Map<String, SVNMergeRangeList>> myMergeInfoMap;
+  @NotNull private final NavigableMap<String, Map<String, SVNMergeRangeList>> myMergeInfoMap;
   @NotNull private final Object myMergeInfoLock;
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
     myMergeContext = mergeContext;
-    myPartiallyMerged = ContainerUtil.newHashMap();
+    myPartiallyMerged = newHashMap();
     myMergeInfoLock = new Object();
-    // TODO: Rewrite without AreaMap usage
-    myMergeInfoMap = AreaMap.create(new PairProcessor<String, String>() {
-      public boolean process(String parentUrl, String childUrl) {
-        if (".".equals(parentUrl)) return true;
-        return SVNPathUtil.isAncestor(SvnUtil.ensureStartSlash(parentUrl), SvnUtil.ensureStartSlash(childUrl));
-      }
-    });
+    myMergeInfoMap = new TreeMap<>(reverseOrder());
   }
 
   @Override
@@ -79,8 +79,8 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   }
 
   @NotNull
-  public SvnMergeInfoCache.MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
-    Set<String> notMergedPaths = ContainerUtil.newHashSet();
+  public MergeCheckResult checkList(@NotNull SvnChangeList changeList) {
+    Set<String> notMergedPaths = newHashSet();
     boolean hasMergedPaths = false;
 
     for (String path : changeList.getAffectedPaths()) {
@@ -100,31 +100,43 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     }
 
     return notMergedPaths.isEmpty()
-           ? hasMergedPaths ? SvnMergeInfoCache.MergeCheckResult.MERGED : SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS
-           : SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+           ? hasMergedPaths ? MergeCheckResult.MERGED : MergeCheckResult.NOT_EXISTS
+           : MergeCheckResult.NOT_MERGED;
   }
 
   @NotNull
-  public SvnMergeInfoCache.MergeCheckResult checkPath(@NotNull String repositoryRelativePath, long revisionNumber) {
+  public MergeCheckResult checkPath(@NotNull String repositoryRelativePath, long revisionNumber) {
+    MergeCheckResult result = MergeCheckResult.NOT_EXISTS;
     String sourceRelativePath =
-      SVNPathUtil.getRelativePath(myMergeContext.getRepositoryRelativeSourcePath(), SvnUtil.ensureStartSlash(repositoryRelativePath));
-    SvnMergeInfoCache.MergeCheckResult result;
+      SVNPathUtil.getRelativePath(myMergeContext.getRepositoryRelativeSourcePath(), ensureStartSlash(repositoryRelativePath));
 
-    if (sourceRelativePath == null) {
-      // TODO: SVNPathUtil.getRelativePath() is @NotNull - probably we need to check also isEmpty() here?
-      result = SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
-    }
-    else {
+    // TODO: SVNPathUtil.getRelativePath() is @NotNull - probably we need to check also isEmpty() here?
+    if (sourceRelativePath != null) {
       InfoProcessor processor = new InfoProcessor(sourceRelativePath, myMergeContext.getRepositoryRelativeSourcePath(), revisionNumber);
+      String key = toKey(sourceRelativePath);
 
       synchronized (myMergeInfoLock) {
-        myMergeInfoMap.getSimiliar(toKey(sourceRelativePath), processor);
+        Map<String, SVNMergeRangeList> mergeInfo = myMergeInfoMap.get(key);
+        if (mergeInfo != null) {
+          processor.process(key, mergeInfo);
+        }
+        else {
+          for (Map.Entry<String, Map<String, SVNMergeRangeList>> entry : myMergeInfoMap.tailMap(key).entrySet()) {
+            if (isUnder(entry.getKey(), key) && processor.process(entry.getKey(), entry.getValue())) {
+              break;
+            }
+          }
+        }
       }
 
-      result = SvnMergeInfoCache.MergeCheckResult.getInstance(processor.isMerged());
+      result = MergeCheckResult.getInstance(processor.isMerged());
     }
 
     return result;
+  }
+
+  private static boolean isUnder(@NotNull String parentUrl, @NotNull String childUrl) {
+    return ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
   }
 
   private static class InfoProcessor implements PairProcessor<String, Map<String, SVNMergeRangeList>> {
@@ -137,7 +149,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     public InfoProcessor(@NotNull String sourceRelativePath, @NotNull String repositoryRelativeSourcePath, long revisionNumber) {
       mySourceRelativePath = sourceRelativePath;
       myRevisionNumber = revisionNumber;
-      myRepositoryRelativeSourcePath = SvnUtil.ensureStartSlash(repositoryRelativeSourcePath);
+      myRepositoryRelativeSourcePath = ensureStartSlash(repositoryRelativeSourcePath);
     }
 
     public boolean isMerged() {
@@ -147,30 +159,22 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     // TODO: Try to unify with BranchInfo.processMergeinfoProperty()
     public boolean process(@NotNull String workingCopyRelativePath, @NotNull Map<String, SVNMergeRangeList> mergedPathsMap) {
       boolean processed = false;
-      final boolean isCurrentPath = workingCopyRelativePath.equals(mySourceRelativePath);
+      boolean isCurrentPath = workingCopyRelativePath.equals(mySourceRelativePath);
 
       if (mergedPathsMap.isEmpty()) {
         myIsMerged = false;
         processed = true;
       }
       else {
-        String mergedPathAffectingSourcePath = ContainerUtil.find(mergedPathsMap.keySet(), new Condition<String>() {
-          @Override
-          public boolean value(String path) {
-            return SVNPathUtil.isAncestor(myRepositoryRelativeSourcePath, SvnUtil.ensureStartSlash(path));
-          }
-        });
+        String mergedPathAffectingSourcePath =
+          find(mergedPathsMap.keySet(), path -> isAncestor(myRepositoryRelativeSourcePath, ensureStartSlash(path)));
 
         if (mergedPathAffectingSourcePath != null) {
           SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingSourcePath);
 
           processed = true;
-          myIsMerged = ContainerUtil.or(mergeRangeList.getRanges(), new Condition<SVNMergeRange>() {
-            @Override
-            public boolean value(@NotNull SVNMergeRange range) {
-              return BranchInfo.isInRange(range, myRevisionNumber) && (range.isInheritable() || isCurrentPath);
-            }
-          });
+          myIsMerged = exists(mergeRangeList.getRanges(),
+                              range -> BranchInfo.isInRange(range, myRevisionNumber) && (range.isInheritable() || isCurrentPath));
         }
       }
 
@@ -183,14 +187,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     return new PropertyConsumer() {
       public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SVNException {
         String workingCopyRelativePath = getWorkingCopyRelativePath(path);
-        Map<String, SVNMergeRangeList> mergeInfo;
-
-        try {
-          mergeInfo = BranchInfo.parseMergeInfo(ObjectUtils.assertNotNull(property.getValue()));
-        }
-        catch (SvnBindException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, e), e);
-        }
+        Map<String, SVNMergeRangeList> mergeInfo = parseMergeInfo(property);
 
         synchronized (myMergeInfoLock) {
           myMergeInfoMap.put(toKey(workingCopyRelativePath), mergeInfo);
@@ -202,17 +199,82 @@ public class OneShotMergeInfoHelper implements MergeChecker {
 
       public void handleProperty(long revision, PropertyData property) throws SVNException {
       }
+
+      @NotNull
+      private Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyData property) throws SVNException {
+        try {
+          return BranchInfo.parseMergeInfo(notNull(property.getValue()));
+        }
+        catch (SvnBindException e) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, e), e);
+        }
+      }
     };
   }
 
   @NotNull
   private String getWorkingCopyRelativePath(@NotNull File file) {
-    return FileUtil.toSystemIndependentName(
-      ObjectUtils.assertNotNull(FileUtil.getRelativePath(myMergeContext.getWcInfo().getRootInfo().getIoFile(), file)));
+    return toSystemIndependentName(notNull(getRelativePath(myMergeContext.getWcInfo().getRootInfo().getIoFile(), file)));
   }
 
   @NotNull
   private static String toKey(@NotNull String path) {
-    return SystemInfo.isFileSystemCaseSensitive ? path : path.toUpperCase();
+    return SystemInfo.isFileSystemCaseSensitive ? path : toUpperCase(path);
+  }
+
+  // true if errors found
+  public boolean checkListForPaths(@NotNull LogHierarchyNode node) {
+    // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
+    // TODO: from branch1 to branch2 and have revision which contain merge changes from branch3 to branch1.
+    // TODO: In this case paths of child log entries will not contain neither urls from branch1 nor from branch2 - and checkEntry() method
+    // TODO: will return true => so such revision will not be used (and displayed) further.
+
+    // TODO: Why do we check entries recursively - we have a revision - set of changes in the "merge from" branch? Why do we need to check
+    // TODO: where they came from - we want avoid some circular merges or what? Does subversion itself perform such checks or not?
+    boolean isLocalChange = or(node.getChildren(), this::checkForSubtree);
+
+    return isLocalChange ||
+           checkForEntry(node.getMe(), myMergeContext.getRepositoryRelativeWorkingCopyPath(),
+                         myMergeContext.getRepositoryRelativeSourcePath());
+  }
+
+  /**
+   * TODO: Why checkForEntry() from checkListForPaths() and checkForSubtree() are called with swapped parameters.
+   */
+  // true if errors found
+  private boolean checkForSubtree(@NotNull LogHierarchyNode tree) {
+    LinkedList<LogHierarchyNode> queue = new LinkedList<>();
+    queue.addLast(tree);
+
+    while (!queue.isEmpty()) {
+      LogHierarchyNode element = queue.removeFirst();
+      ProgressManager.checkCanceled();
+
+      if (checkForEntry(element.getMe(), myMergeContext.getRepositoryRelativeSourcePath(),
+                        myMergeContext.getRepositoryRelativeWorkingCopyPath())) {
+        return true;
+      }
+      queue.addAll(element.getChildren());
+    }
+    return false;
+  }
+
+  // true if errors found
+  // checks if either some changed path is in current branch => treat as local change
+  // or if no changed paths in current branch, checks if at least one path in "merge from" branch
+  // NOTE: this fails for "merge-source" log entries from other branches - when all changed paths are from some
+  // third branch - this logic treats such log entry as local.
+  private static boolean checkForEntry(@NotNull LogEntry entry, @NotNull String localURL, @NotNull String relativeBranch) {
+    boolean atLeastOneUnderBranch = false;
+
+    for (LogEntryPath path : entry.getChangedPaths().values()) {
+      if (isAncestor(localURL, path.getPath())) {
+        return true;
+      }
+      if (!atLeastOneUnderBranch && isAncestor(relativeBranch, path.getPath())) {
+        atLeastOneUnderBranch = true;
+      }
+    }
+    return !atLeastOneUnderBranch;
   }
 }

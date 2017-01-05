@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated Use {@link PropertiesComponent} directly.
  * @see JBSplitter
  */
-@SuppressWarnings("unused")
 @Deprecated
 public class StorageAccessors {
   private final Storage myStorage;

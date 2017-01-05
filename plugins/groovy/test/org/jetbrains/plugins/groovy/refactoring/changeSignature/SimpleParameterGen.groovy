@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,55 +26,55 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  * @author Max Medvedev
  */
 class SimpleParameterGen implements ChangeSignatureTestCase.GenParams {
-  private final List<SimpleInfo> myInfos;
-  private Project myProject;
+  private final List<SimpleInfo> myInfos
+  private Project myProject
 
-  public SimpleParameterGen(List<SimpleInfo> infos, Project project) {
-    myInfos = infos;
-    myProject = project;
+  SimpleParameterGen(List<SimpleInfo> infos, Project project) {
+    myInfos = infos
+    myProject = project
   }
 
   @Override
-  public GrParameterInfo[] genParams(GrMethod method) {
-    GrParameter[] params = method.getParameterList().getParameters();
-    int size = myInfos.size();
-    GrParameterInfo[] result = new GrParameterInfo[size];
+  GrParameterInfo[] genParams(GrMethod method) {
+    GrParameter[] params = method.getParameterList().getParameters()
+    int size = myInfos.size()
+    GrParameterInfo[] result = new GrParameterInfo[size]
     for (int i = 0; i < size; i++) {
 
-      final SimpleInfo sim = myInfos[i];
-      int oldIndex = sim.myOldIndex;
+      final SimpleInfo sim = myInfos[i]
+      int oldIndex = sim.myOldIndex
 
-      GrParameterInfo info;
-      String name = null;
-      String defInitializer = null;
-      PsiType type = null;
-      String defValue = null;
+      GrParameterInfo info
+      String name = null
+      String defInitializer = null
+      PsiType type = null
+      String defValue = null
       if (oldIndex > -1) {
-        final GrParameter p = params[oldIndex];
-        name = p.getName();
-        final GrExpression initializer = p.getInitializerGroovy();
-        defInitializer = initializer != null ? initializer.getText() : null;
-        type = p.getDeclaredType();
+        final GrParameter p = params[oldIndex]
+        name = p.getName()
+        final GrExpression initializer = p.getInitializerGroovy()
+        defInitializer = initializer != null ? initializer.getText() : null
+        type = p.getDeclaredType()
       }
 
       if (sim.myNewName != null) {
-        name = sim.myNewName;
+        name = sim.myNewName
       }
       if (sim.myType != null && sim.myType.length() > 0) {
-        type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(sim.myType, method);
+        type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(sim.myType, method)
       }
       if (sim.myDefaultInitializer != null) {
-        defInitializer = sim.myDefaultInitializer;
+        defInitializer = sim.myDefaultInitializer
       }
       if (sim.myDefaultValue != null) {
-        defValue = sim.myDefaultValue;
+        defValue = sim.myDefaultValue
       }
 
-      assert oldIndex >= 0 || defValue != null || defInitializer != null;
-      assert name != null;
-      info = new GrParameterInfo(name, defValue, defInitializer, type, oldIndex, sim.myFeelLucky);
-      result[i] = info;
+      assert oldIndex >= 0 || defValue != null || defInitializer != null
+      assert name != null
+      info = new GrParameterInfo(name, defValue, defInitializer, type, oldIndex, sim.myFeelLucky)
+      result[i] = info
     }
-    return result;
+    return result
   }
 }

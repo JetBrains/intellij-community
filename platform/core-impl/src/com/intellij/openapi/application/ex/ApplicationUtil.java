@@ -31,41 +31,18 @@ public class ApplicationUtil {
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
     final Ref<T> result = new Ref<T>();
-    if (((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(new Runnable() {
+    tryRunReadAction(new Runnable() {
       @Override
       public void run() {
         result.set(computable.compute());
       }
-    })) {
-      return result.get();
-    }
-    throw new CannotRunReadActionException();
+    });
+    return result.get();
   }
 
   public static void tryRunReadAction(@NotNull final Runnable computable) throws CannotRunReadActionException {
     if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(computable)) {
       throw new CannotRunReadActionException();
-    }
-  }
-
-  /**
-   * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
-   * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
-   */
-  public static <T> T runWithCheckCanceled(@NotNull final Computable<T> computable, @NotNull ProgressIndicator indicator) {
-    try {
-      return runWithCheckCanceled(new Callable<T>() {
-        @Override
-        public T call() throws Exception {
-          return computable.compute();
-        }
-      }, indicator);
-    }
-    catch (RuntimeException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 
@@ -112,11 +89,6 @@ public class ApplicationUtil {
     }
   }
 
-  public static class CannotRunReadActionException extends RuntimeException {
-    @SuppressWarnings({"NullableProblems", "NonSynchronizedMethodOverridesSynchronizedMethod"})
-    @Override
-    public Throwable fillInStackTrace() {
-      return this;
-    }
+  public static class CannotRunReadActionException extends ProcessCanceledException {
   }
 }

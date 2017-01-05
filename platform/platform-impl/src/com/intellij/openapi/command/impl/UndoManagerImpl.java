@@ -36,7 +36,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -66,7 +65,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   @Nullable private final ProjectEx myProject;
   private final CommandProcessor myCommandProcessor;
-  private final StartupManager myStartupManager;
 
   private UndoProvider[] myUndoProviders;
   private CurrentEditorProvider myEditorProvider;
@@ -101,27 +99,19 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  public UndoManagerImpl(Application application, CommandProcessor commandProcessor) {
-    this(application, null, commandProcessor, null);
+  public UndoManagerImpl(CommandProcessor commandProcessor) {
+    this(null, commandProcessor);
   }
 
-  public UndoManagerImpl(Application application,
-                         @Nullable ProjectEx project,
-                         CommandProcessor commandProcessor,
-                         StartupManager startupManager) {
+  public UndoManagerImpl(@Nullable ProjectEx project, CommandProcessor commandProcessor) {
     myProject = project;
     myCommandProcessor = commandProcessor;
-    myStartupManager = startupManager;
 
-    init(application);
+    if (myProject == null || !myProject.isDefault()) {
+      runStartupActivity();
+    }
 
     myMerger = new CommandMerger(this);
-  }
-
-  private void init(@NotNull Application application) {
-    if (myProject == null || application.isUnitTestMode() && !myProject.isDefault()) {
-      initialize();
-    }
   }
 
   @Override
@@ -141,9 +131,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   @Override
   public void projectOpened() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      initialize();
-    }
   }
 
   @Override
@@ -158,15 +145,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   public void dispose() {
   }
 
-  private void initialize() {
-    if (myProject == null) {
-      runStartupActivity();
-    }
-    else {
-      myStartupManager.registerStartupActivity(() -> runStartupActivity());
-    }
-  }
-
   private void runStartupActivity() {
     myEditorProvider = new FocusBasedCurrentEditorProvider();
     CommandListener commandListener = new CommandAdapter() {
@@ -174,7 +152,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
       @Override
       public void commandStarted(CommandEvent event) {
-        onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy());
+        onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
       }
 
       @Override
@@ -186,7 +164,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       public void undoTransparentActionStarted() {
         if (!isInsideCommand()) {
           myStarted = true;
-          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT);
+          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT, true);
         }
       }
 
@@ -220,7 +198,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myCommandLevel > 0;
   }
 
-  private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
+  private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (myCommandLevel == 0) {
       for (UndoProvider undoProvider : myUndoProviders) {
         undoProvider.commandStarted(project);
@@ -228,7 +206,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       myCurrentActionProject = project;
     }
 
-    commandStarted(undoConfirmationPolicy, myProject == project);
+    commandStarted(undoConfirmationPolicy, myProject == project && recordOriginalReference);
 
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
@@ -298,20 +276,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myOriginatorReference == null || myCurrentMerger.hasChangesOf(myOriginatorReference, true)) return;
 
     final DocumentReference[] refs = {myOriginatorReference};
-    myCurrentMerger.addAction(new BasicUndoableAction() {
-      @Override
-      public void undo() throws UnexpectedUndoException {
-      }
-
-      @Override
-      public void redo() throws UnexpectedUndoException {
-      }
-
-      @Override
-      public DocumentReference[] getAffectedDocuments() {
-        return refs;
-      }
-    });
+    myCurrentMerger.addAction(new MentionOnlyUndoableAction(refs));
   }
 
   private EditorAndState getCurrentState() {
@@ -319,7 +284,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (editor == null) {
       return null;
     }
-    if (Registry.is("editor.new.rendering") && !editor.isValid()) {
+    if (!editor.isValid()) {
       return null;
     }
     return new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO));
@@ -604,7 +569,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (refs.size() <= FREE_QUEUES_LIMIT) return;
 
     DocumentReference[] backSorted = refs.toArray(new DocumentReference[refs.size()]);
-    Arrays.sort(backSorted, (a, b) -> getLastCommandTimestamp(a) - getLastCommandTimestamp(b));
+    Arrays.sort(backSorted, Comparator.comparingInt(this::getLastCommandTimestamp));
 
     for (int i = 0; i < backSorted.length - FREE_QUEUES_LIMIT; i++) {
       DocumentReference each = backSorted[i];
@@ -647,7 +612,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   @TestOnly
   public void dropHistoryInTests() {
     flushMergers();
-    LOG.assertTrue(myCommandLevel == 0);
+    LOG.assertTrue(myCommandLevel == 0, myCommandLevel);
 
     myUndoStacksHolder.clearAllStacksInTests();
     myRedoStacksHolder.clearAllStacksInTests();
@@ -656,8 +621,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   @TestOnly
   private void flushMergers() {
     // Run dummy command in order to flush all mergers...
-    CommandProcessor.getInstance()
-      .executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
+    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }
 
   @TestOnly

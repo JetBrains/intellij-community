@@ -18,24 +18,34 @@ package com.intellij.history.integration;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
+import java.util.List;
+
+public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener,
+                                                                               BulkFileListener {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
   private final LocalHistoryFacade myVcs;
   private final IdeaGateway myGateway;
+  private final EventDispatcher<VirtualFileListener> myVfsEventsDispatcher =  EventDispatcher.create(VirtualFileListener.class);
 
   public LocalHistoryEventDispatcher(LocalHistoryFacade vcs, IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
+    myVfsEventsDispatcher.addListener(this);
   }
 
   @Override
@@ -192,5 +202,27 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
 
   private boolean areContentChangesVersioned(VirtualFileEvent e) {
     return myGateway.areContentChangesVersioned(e.getFile());
+  }
+
+  @Override
+  public void before(@NotNull List<? extends VFileEvent> events) {
+    myGateway.runWithVfsEventsDispatchContext(events, true, () -> {
+      for (VFileEvent event : events) {
+        BulkVirtualFileListenerAdapter.fireBefore(myVfsEventsDispatcher.getMulticaster(), event);
+      }
+    });
+  }
+
+  @Override
+  public void after(@NotNull List<? extends VFileEvent> events) {
+    myGateway.runWithVfsEventsDispatchContext(events, false, () -> {
+      for (VFileEvent event : events) {
+        BulkVirtualFileListenerAdapter.fireAfter(myVfsEventsDispatcher.getMulticaster(), event);
+      }
+    });
+  }
+
+  public void addVirtualFileListener(VirtualFileListener virtualFileListener, Disposable disposable) {
+    myVfsEventsDispatcher.addListener(virtualFileListener, disposable);
   }
 }

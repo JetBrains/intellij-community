@@ -17,13 +17,10 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
@@ -141,30 +138,14 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return XmlBundle.message("change.root.element.to", myText);
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return XmlBundle.message("change.root.element.to", myText);
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final XmlTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class);
-
-      if (!FileModificationService.getInstance().prepareFileForWrite(myTag.getContainingFile())) {
-        return;
-      }
-
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull final Result result) throws Throwable {
-          myTag.setName(myText);
-        }
-      }.execute();
+      myTag.setName(myText);
     }
   }
 }

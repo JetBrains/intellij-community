@@ -59,7 +59,7 @@ public class SuperTearDownInFinallyInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.TestCase")) {
+      if (!InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) {
         return;
       }
       final PsiTryStatement tryStatement =

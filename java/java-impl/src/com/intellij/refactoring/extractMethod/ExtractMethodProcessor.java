@@ -41,13 +41,17 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -66,7 +70,9 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -142,7 +148,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myProject = project;
     myEditor = editor;
     if (elements.length != 1 || !(elements[0] instanceof PsiBlockStatement)) {
-      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression 
+      myElements = elements.length == 1 && elements[0] instanceof PsiParenthesizedExpression
                    ? new PsiElement[] {PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0])} : elements;
       myEnclosingBlockStatement = null;
     }
@@ -229,7 +235,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
 
     try {
-      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements);
+      myExitStatements = myControlFlowWrapper.prepareExitStatements(myElements, codeFragment);
       if (myControlFlowWrapper.isGenerateConditionalExit()) {
         myGenerateConditionalExit = true;
       } else {
@@ -1092,13 +1098,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean hasNormalExit() {
-    boolean hasNormalExit = false;
-    PsiElement lastElement = myElements[myElements.length - 1];
-    if (!(lastElement instanceof PsiReturnStatement || lastElement instanceof PsiBreakStatement ||
-          lastElement instanceof PsiContinueStatement)) {
-      hasNormalExit = true;
+    try {
+      PsiCodeBlock block = JavaPsiFacade.getElementFactory(myProject).createCodeBlock();
+      block.addRange(myElements[0], myElements[myElements.length - 1]);
+      ControlFlow flow = ControlFlowFactory.getInstance(myProject).getControlFlow(block, new LocalsControlFlowPolicy(block), false, false);
+      return ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
     }
-    return hasNormalExit;
+    catch (AnalysisCanceledException e) {
+      //check incomplete code as simple as possible
+      PsiElement lastElement = myElements[myElements.length - 1];
+      if (!(lastElement instanceof PsiReturnStatement || lastElement instanceof PsiBreakStatement ||
+            lastElement instanceof PsiContinueStatement)) {
+        return true;
+      }
+      return false;
+    }
   }
 
   protected boolean isNeedToChangeCallContext() {
@@ -1155,7 +1169,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         });
       }
-      else {
+      else if (!PsiUtil.isLanguageLevel8OrHigher(method)){
         method.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
@@ -1453,6 +1467,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     myTargetClass = myCodeFragmentMember instanceof PsiMember
                     ? ((PsiMember)myCodeFragmentMember).getContainingClass()
                     : PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiClass.class);
+    if (myTargetClass == null) {
+      LOG.error(myElements[0].getContainingFile());
+    }
     if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
 
       final LinkedHashMap<PsiClass, List<PsiVariable>> classes = new LinkedHashMap<>();

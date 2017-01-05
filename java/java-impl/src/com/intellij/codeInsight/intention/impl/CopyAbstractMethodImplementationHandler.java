@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -140,6 +141,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private void copyImplementation(final PsiMethod sourceMethod) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
     final List<PsiMethod> generatedMethods = new ArrayList<>();
     new WriteCommandAction(myProject, getTargetFiles()) {
       @Override

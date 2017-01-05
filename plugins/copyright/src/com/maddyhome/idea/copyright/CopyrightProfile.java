@@ -34,7 +34,7 @@ public class CopyrightProfile extends ProfileEx {
 
   //read external
   public CopyrightProfile() {
-    super("", new SmartSerializer());
+    this("");
   }
 
   public CopyrightProfile(String profileName) {

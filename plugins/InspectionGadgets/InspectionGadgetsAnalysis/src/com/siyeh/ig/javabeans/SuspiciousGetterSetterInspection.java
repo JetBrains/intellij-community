@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,11 +104,13 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
       else {
         return;
       }
+      if (fieldName == null) {
+        return;
+      }
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(method.getProject());
-      final String decapitalized = decapitalize(extractedFieldName);
-      final String computedFieldName = codeStyleManager.propertyNameToVariableName(decapitalized, VariableKind.FIELD);
-      final String computedStaticFieldName = codeStyleManager.propertyNameToVariableName(decapitalized, VariableKind.STATIC_FINAL_FIELD);
-      if (fieldName.equals(computedFieldName) || fieldName.equals(computedStaticFieldName)) {
+      final String computedFieldName = codeStyleManager.propertyNameToVariableName(extractedFieldName, VariableKind.FIELD);
+      final String computedStaticFieldName = codeStyleManager.propertyNameToVariableName(extractedFieldName, VariableKind.STATIC_FINAL_FIELD);
+      if (fieldName.equalsIgnoreCase(computedFieldName) || fieldName.equalsIgnoreCase(computedStaticFieldName)) {
         return;
       }
       if (onlyWarnWhenFieldPresent) {
@@ -127,20 +129,5 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
 
   private static boolean nameStartsWith(String name, String prefix) {
     return name.startsWith(prefix) && name.length() != prefix.length() && Character.isUpperCase(name.charAt(prefix.length()));
-  }
-
-  private static String decapitalize(String name) {
-    final StringBuilder result = new StringBuilder();
-    for (int i = 0, length = name.length(); i < length; i++) {
-      final char c = name.charAt(i);
-      if (Character.isUpperCase(c)) {
-        result.append(Character.toLowerCase(c));
-      }
-      else {
-        result.append(name.substring(i));
-        return result.toString();
-      }
-    }
-    return result.toString();
   }
 }

@@ -60,7 +60,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "            Attribute:text:nestedGroupActionText\n");
   }
 
-  public void testXInclude() throws Exception {
+  public void testXInclude() {
     prepareFile("pluginWithXInclude-extensionPoints.xml");
     prepareFile("pluginWithXInclude-main.xml");
     prepareFile("pluginWithXInclude.xml");

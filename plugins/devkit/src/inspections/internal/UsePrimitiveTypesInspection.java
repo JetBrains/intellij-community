@@ -27,8 +27,9 @@ import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
-public class UsePrimitiveTypesInspection extends InternalInspection {
+public class UsePrimitiveTypesInspection extends DevKitInspectionBase {
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {

@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.TimedReference;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -132,6 +133,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myName = projectName;
+      
       StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
         if (isDisposed()) return;
 
@@ -196,7 +198,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   IProjectStore getStateStore() {
-    return (IProjectStore)ServiceKt.getStateStore(this);
+    return ProjectKt.getStateStore(this);
   }
 
   @Override
@@ -362,7 +364,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     // we use super here, because temporarilyDisposed will be true if project closed
-    LOG.assertTrue(!super.isDisposed());
+    LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
     if (myProjectManagerListener != null) {
       myProjectManager.removeProjectManagerListener(this, myProjectManagerListener);
     }

@@ -45,7 +45,7 @@ class FilterDialog extends DialogWrapper {
   /**
    * @param parent      parent component.
    * @param filter      filter to be edited.
-   * @param filterIndex index of <code>filter</code> in the <code>filters</code>. This parameter is
+   * @param filterIndex index of {@code filter} in the {@code filters}. This parameter is
    *                    needed to not compare filter with itself when validating.
    * @param filters     all already configured filters. This parameter is used to
    * @param patterns    all patterns available in this filter.

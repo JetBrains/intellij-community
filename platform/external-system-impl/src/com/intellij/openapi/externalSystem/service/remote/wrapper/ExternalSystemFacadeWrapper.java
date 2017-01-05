@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class acts as a point where target remote gradle services are proxied.
+ * This class acts as a point where target remote external system services are proxied.
  * <p/>
  * Check service wrapper contracts for more details.
  * <p/>

@@ -41,14 +41,13 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("problematic.whitespace.show.whitespaces.quickfix");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
-      return getName();
+    public boolean startInWriteAction() {
+      return false;
     }
 
     @Override

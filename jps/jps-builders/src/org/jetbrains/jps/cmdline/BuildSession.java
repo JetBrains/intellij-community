@@ -197,13 +197,14 @@ final class BuildSession implements Runnable, CanceledStatus {
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " + myProjectPath));
       return;
     }
-    if (!dataStorageRoot.exists()) {
+    final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
+    if (storageFilesAbsent) {
       // invoked the very first time for this project
       myBuildRunner.setForceCleanCaches(true);
     }
     final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
     final DataInputStream fsStateStream = 
-      preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
+      storageFilesAbsent || preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
     if (fsStateStream != null || myPreloadedData != null) {
       // optimization: check whether we can skip the build
@@ -397,7 +398,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
-          pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
+          pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, timestamps);
         }
       }
       else {
@@ -595,7 +596,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (!trace.isEmpty()) {
           messageText.append("\n").append(trace);
         }
-        if (error instanceof RebuildRequestedException) {
+        if (error instanceof RebuildRequestedException || cause instanceof IOException) {
           messageText.append("\n").append("Please perform full project rebuild (Build | Rebuild Project)");
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure(messageText.toString(), cause));

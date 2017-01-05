@@ -115,12 +115,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   private void refresh() {
     int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
-    if (errorCount != null && maxIndex == errorCount.length) return;
-    int[] newErrors = new int[maxIndex+1];
-    if (errorCount != null) {
-      System.arraycopy(errorCount, 0, newErrors, 0, Math.min(errorCount.length, newErrors.length));
-    }
-    errorCount = newErrors;
+    if (errorCount != null && maxIndex + 1 == errorCount.length) return;
+    errorCount = new int[maxIndex + 1];
   }
 
   static void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel,
@@ -334,7 +330,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     Icon icon = AllIcons.General.InspectionsOK;
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
-      if (status.errorCount[i] != 0) {
+      if (status.errorCount[i] > 0) {
         icon = SeverityRegistrar.getSeverityRegistrar(project).getRendererIconByIndex(i);
         break;
       }

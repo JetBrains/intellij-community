@@ -24,6 +24,8 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
@@ -84,9 +86,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitRegExpCharRange(RegExpCharRange range) {
     final RegExpCharRange.Endpoint from = range.getFrom();
     final RegExpCharRange.Endpoint to = range.getTo();
-    final boolean a = from instanceof RegExpChar;
-    final boolean b = to instanceof RegExpChar;
-    if (a && b) {
+    if (from instanceof RegExpChar && to instanceof RegExpChar) {
       final Character t = ((RegExpChar)to).getValue();
       final Character f = ((RegExpChar)from).getValue();
       if (t != null && f != null) {
@@ -99,8 +99,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         }
       }
     }
-    else if (a != b) {
-      myHolder.createErrorAnnotation(range, "Character class (e.g. '\\\\w') may not be used inside character range");
+    else if (to instanceof RegExpSimpleClass) {
+      myHolder.createErrorAnnotation(to, "Character class not allowed inside character range");
     }
     else if (from.getText().equals(to.getText())) {
       myHolder.createWarningAnnotation(range, "Redundant character range");
@@ -151,12 +151,20 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
-  private void checkForDuplicates(RegExpClassElement element, Set<Character> seen) {
+  private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
     if (element instanceof RegExpChar) {
       final RegExpChar regExpChar = (RegExpChar)element;
       final Character value = regExpChar.getValue();
       if (value != null && !seen.add(value)) {
-        myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' in character class");
+        myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' inside character class");
+      }
+    }
+    else if (element instanceof RegExpSimpleClass) {
+      final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
+      final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
+      if (!seen.add(kind)) {
+        myHolder.createWarningAnnotation(regExpSimpleClass, "Duplicate predefined character class '" + regExpSimpleClass.getText() +
+                                                            "' inside character class");
       }
     }
     else if (element instanceof RegExpClass) {
@@ -175,40 +183,44 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpChar(final RegExpChar ch) {
-    final Character value = ch.getValue();
-    if (value == null || (value == '\b' && !myLanguageHosts.supportsLiteralBackspace(ch))) {
-      switch (ch.getType()) {
-        case CHAR:
-          myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
-          break;
-        case HEX:
-          myHolder.createErrorAnnotation(ch, "Illegal hexadecimal escape sequence");
-          break;
-        case OCT:
-          myHolder.createErrorAnnotation(ch, "Illegal octal escape sequence");
-          break;
-        case UNICODE:
-          myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
-          break;
-        case INVALID:
-          // produces a parser error. already handled by IDEA and possibly suppressed by IntelliLang
-          break;
+    final PsiElement child = ch.getFirstChild();
+    IElementType type = child.getNode().getElementType();
+    if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
+      myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
+      return;
+    }
+    else if (type == RegExpTT.BAD_HEX_VALUE) {
+      myHolder.createErrorAnnotation(ch, "Illegal hexadecimal escape sequence");
+      return;
+    }
+    else if (type == RegExpTT.BAD_OCT_VALUE) {
+      myHolder.createErrorAnnotation(ch, "Illegal octal escape sequence");
+      return;
+    }
+    else if (type == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN) {
+      myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
+      return;
+    }
+    final String text = ch.getUnescapedText();
+    if (type == RegExpTT.ESC_CTRL_CHARACTER && text.equals("\\b") && !myLanguageHosts.supportsLiteralBackspace(ch)) {
+      myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
+    }
+    if (text.startsWith("\\") && myLanguageHosts.isRedundantEscape(ch, text)) {
+      final ASTNode astNode = ch.getNode().getFirstChildNode();
+      if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
+        final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
+        registerFix(a, new RemoveRedundantEscapeAction(ch));
       }
     }
-    else {
-      final String text = ch.getUnescapedText();
-      if (text.startsWith("\\") && myLanguageHosts.isRedundantEscape(ch, text)) {
-        final ASTNode astNode = ch.getNode().getFirstChildNode();
-        if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
-          final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
-          registerFix(a, new RemoveRedundantEscapeAction(ch));
-        }
+    final RegExpChar.Type charType = ch.getType();
+    if (charType == RegExpChar.Type.HEX || charType == RegExpChar.Type.UNICODE) {
+      if (ch.getValue() == null) {
+        myHolder.createErrorAnnotation(ch, "Illegal unicode escape sequence");
+        return;
       }
-      if (ch.getType() == RegExpChar.Type.HEX) {
-        if (text.charAt(text.length() - 1) == '}') {
-          if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
-            myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
-          }
+      if (text.charAt(text.length() - 1) == '}') {
+        if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
+          myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
         }
       }
     }
@@ -222,8 +234,19 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     if(!myLanguageHosts.isValidCategory(category.getPsi(), category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
-      if (a != null) {
-        // IDEA-9381
+      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    }
+  }
+
+  @Override
+  public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
+    if (!myLanguageHosts.supportsNamedCharacters(namedCharacter)) {
+      myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regular expression dialect");
+    }
+    else if (!myLanguageHosts.isValidNamedCharacter(namedCharacter)) {
+      final ASTNode node = namedCharacter.getNameNode();
+      if (node != null) {
+        final Annotation a = myHolder.createErrorAnnotation(node, "Unknown character name");
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
@@ -234,10 +257,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     final RegExpGroup group = backref.resolve();
     if (group == null) {
       final Annotation a = myHolder.createErrorAnnotation(backref, "Unresolved back reference");
-      if (a != null) {
-        // IDEA-9381
-        a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-      }
+      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     }
     else if (PsiTreeUtil.isAncestor(group, backref, true)) {
       myHolder.createWarningAnnotation(backref, "Back reference is nested into the capturing group it refers to");
@@ -277,6 +297,11 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
       }
     }
+    final String name = group.getName();
+    if (name != null && !myLanguageHosts.isValidGroupName(name, group)) {
+      final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
+      if (node != null) myHolder.createErrorAnnotation(node, "Invalid group name");
+    }
   }
 
   @Override
@@ -291,9 +316,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     final RegExpGroup group = groupRef.resolve();
     if (group == null) {
       final ASTNode node = groupRef.getNode().findChildByType(RegExpTT.NAME);
-      final Annotation a = myHolder.createErrorAnnotation(node, "Unresolved named group reference");
-      if (a != null) {
-        // IDEA-9381
+      if (node != null) {
+        final Annotation a = myHolder.createErrorAnnotation(node, "Unresolved named group reference");
         a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
@@ -382,8 +406,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
     final String className = posixBracketExpression.getClassName();
     if (!POSIX_CHARACTER_CLASSES.contains(className)) {
-      final Annotation annotation = myHolder.createErrorAnnotation(posixBracketExpression, "Unknown POSIX character class");
-      if (annotation != null) {
+      final ASTNode node = posixBracketExpression.getNode().findChildByType(RegExpTT.NAME);
+      if (node != null) {
+        final Annotation annotation = myHolder.createErrorAnnotation(node, "Unknown POSIX character class");
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }

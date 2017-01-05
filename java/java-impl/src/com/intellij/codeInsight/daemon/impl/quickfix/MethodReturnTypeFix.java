@@ -135,7 +135,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
 
     if (statementToSelect != null) {
-      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, statementToSelect.getContainingFile());
+      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, file);
       if (editorForMethod != null) {
         selectReturnValueInEditor(statementToSelect, editorForMethod);
       }
@@ -308,7 +308,9 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   static void selectReturnValueInEditor(final PsiReturnStatement returnStatement, final Editor editor) {
-    TextRange range = returnStatement.getReturnValue().getTextRange();
+    final PsiExpression returnValue = returnStatement.getReturnValue();
+    LOG.assertTrue(returnValue != null, returnStatement);
+    TextRange range = returnValue.getTextRange();
     int offset = range.getStartOffset();
 
     editor.getCaretModel().moveToOffset(offset);

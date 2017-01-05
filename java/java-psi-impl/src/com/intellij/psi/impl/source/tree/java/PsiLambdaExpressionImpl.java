@@ -158,7 +158,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
 
   @Override
   public String toString() {
-    return "PsiLambdaExpression:" + getText();
+    return "PsiLambdaExpression";
   }
 
   @Override

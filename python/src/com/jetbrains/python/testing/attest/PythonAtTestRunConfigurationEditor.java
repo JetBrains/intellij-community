@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ public class PythonAtTestRunConfigurationEditor extends SettingsEditor<PythonAtT
     myForm = new PythonAtTestRunConfigurationForm(project, configuration);
   }
 
-  protected void resetEditorFrom(final PythonAtTestRunConfiguration config) {
+  protected void resetEditorFrom(@NotNull final PythonAtTestRunConfiguration config) {
     PythonAtTestRunConfiguration.copyParams(config, myForm);
   }
 
-  protected void applyEditorTo(final PythonAtTestRunConfiguration config) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull final PythonAtTestRunConfiguration config) throws ConfigurationException {
     PythonAtTestRunConfiguration.copyParams(myForm, config);
   }
 

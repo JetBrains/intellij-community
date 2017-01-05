@@ -53,13 +53,8 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.unary.minus.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("unnecessary.unary.minus.quickfix");
     }
 
     @Override

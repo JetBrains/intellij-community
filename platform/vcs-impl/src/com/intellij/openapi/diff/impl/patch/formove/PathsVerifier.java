@@ -222,13 +222,12 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       fileType = FileTypeChooser.associateFileType(file.getName());
       if (fileType == null) {
         PatchApplier
-          .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because its type not defined.",
-                     true);
+          .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because its type not defined.");
         return false;
       }
     }
     if (fileType.isBinary()) {
-      PatchApplier.showError(myProject, "Cannot apply file " + file.getPresentableName() + " from patch because it is binary.", true);
+      PatchApplier.showError(myProject, "Cannot apply file " + file.getPresentableName() + " from patch because it is binary.");
       return false;
     }
     return true;
@@ -420,7 +419,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   }
 
   private void revert(final String errorMessage) {
-    PatchApplier.showError(myProject, errorMessage, true);
+    PatchApplier.showError(myProject, errorMessage);
 
     // move back
     /*for (MovedFileData movedFile : myMovedFiles) {

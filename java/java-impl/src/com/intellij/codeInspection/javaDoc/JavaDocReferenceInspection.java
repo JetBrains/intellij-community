@@ -71,14 +71,8 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
 
     @Override
     @NotNull
-    public String getName() {
-      return "Change to ...";
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Change to ...";
     }
 
     @Override
@@ -112,12 +106,6 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
 
     public AddQualifierFix(final List<PsiClass> originalClasses) {
       this.originalClasses = originalClasses;
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      return QuickFixBundle.message("add.qualifier");
     }
 
     @Override

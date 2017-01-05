@@ -84,7 +84,7 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
         return;
       }
       if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
+                                       JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) {
         return;
       }
       final PsiMethod[] methods = aClass.getMethods();

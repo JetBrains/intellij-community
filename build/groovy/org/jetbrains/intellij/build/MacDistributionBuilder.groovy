@@ -76,7 +76,7 @@ class MacDistributionBuilder {
     ant.delete(file: dmgImageCopy)
 
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$communityHome/build/mac") {
+      ant.fileset(dir: "$communityHome/platform/build-scripts/tools/mac/scripts") {
         include(name: "makedmg.sh")
         include(name: "makedmg.pl")
       }
@@ -123,7 +123,7 @@ class MacDistributionBuilder {
     }
     ant.delete(file: sitFilePath)
     ftpAction("put", false, "777") {
-      ant.fileset(dir: "$communityHome/build/mac") {
+      ant.fileset(dir: "$communityHome/platform/build-scripts/tools/mac/scripts") {
         include(name: "signapp.sh")
       }
     }
@@ -161,7 +161,7 @@ class MacDistributionBuilder {
 
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER";
     Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/jsch-0.1.53.jar"))
+    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/jsch-0.1.54.jar"))
     pathSsh.createPathElement().setLocation(new File("$communityHome/lib/ant/lib/ant-jsch.jar"))
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))

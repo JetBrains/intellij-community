@@ -24,9 +24,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,23 +158,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       try {
         super.apply();
 
-        for (CodeStyleScheme scheme : new ArrayList<>(myModel.getSchemes())) {
-          final boolean isDefaultModified = CodeStyleSchemesModel.cannotBeModified(scheme) && isSchemeModified(scheme);
-          if (isDefaultModified) {
-            CodeStyleScheme newscheme = myModel.createNewScheme(null, scheme);
-            CodeStyleSettings settingsWillBeModified = scheme.getCodeStyleSettings();
-            CodeStyleSettings notModifiedSettings = settingsWillBeModified.clone();
-            ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(notModifiedSettings);
-            ((CodeStyleSchemeImpl)newscheme).setCodeStyleSettings(settingsWillBeModified);
-            myModel.addScheme(newscheme, false);
-
-            if (myModel.getSelectedScheme() == scheme) {
-              myModel.selectScheme(newscheme, this);
-            }
-
-          }
-        }
-
         for (CodeStyleConfigurableWrapper panel : myPanels) {
           panel.applyPanel();
         }
@@ -190,15 +171,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     }
 
-  }
-
-  private boolean isSchemeModified(final CodeStyleScheme scheme) {
-    for (CodeStyleConfigurableWrapper panel : myPanels) {
-      if (panel.isPanelModified(scheme)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
@@ -423,10 +395,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       if (myPanel != null) {
         myPanel.disposeUIResources();
       }
-    }
-
-    public boolean isPanelModified(CodeStyleScheme scheme) {
-      return myPanel != null && myPanel.isModified(scheme);
     }
 
     public boolean isPanelModified() {

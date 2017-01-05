@@ -1,0 +1,16 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>manifest@2x</title>
+  <g>
+    <g>
+      <polygon points="12 0 4 8 12 8 12 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <rect x="2" y="18" width="30" height="14" fill="#b99bf8" opacity="0.5"/>
+      <polygon points="14 0 14 8 14 10 12 10 4 10 4 16 26 16 26 0 14 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+    </g>
+    <g opacity="0.6">
+      <path d="M5.171,20H7.04257l3.04292,4.72839L13.12842,20H15V30H13.24241V22.82889l-3.15692,4.71444h-0.057l-3.129-4.68652V30H5.171V20Z" fill="#231f20"/>
+    </g>
+    <g opacity="0.6">
+      <path d="M17,20h6.6115v1.60056H18.75759v2.7277h4.21066v1.60056H18.75759V30H17V20Z" fill="#231f20"/>
+    </g>
+  </g>
+</svg>

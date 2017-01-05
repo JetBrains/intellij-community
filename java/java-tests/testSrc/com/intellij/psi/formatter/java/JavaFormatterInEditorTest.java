@@ -186,12 +186,12 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
         "<caret>package com.acme;\n" +
         "\n" +
         "class Foo {\n" +
-        "   Integer[] foo() {\n" +
-        "        \n" +
-        "        \n" +
-        "    return new Integer[]{0, 1};\n" +
-        "   }\n" +
-        "    \n" +
+        "    Integer[] foo() {\n" +
+        "          \n" +
+        "             \n" +
+        "        return new Integer[]{0, 1};\n" +
+        "    }\n" +
+        "      \n" +
         "}";
       
       final String expected =
@@ -207,8 +207,8 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
         "}";
 
       configureFromFileText(getTestName(false) + ".java", initial);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject())
-        .reformatText(getFile(), 0, getEditor().getDocument().getTextLength()));
+      //WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject())
+      //  .reformatText(getFile(), 0, getEditor().getDocument().getTextLength()));
        Document doc = getEditor().getDocument();
       EditorTestUtil.performTypingAction(getEditor(), ' ');
       PsiDocumentManager.getInstance(getProject()).commitDocument(doc);

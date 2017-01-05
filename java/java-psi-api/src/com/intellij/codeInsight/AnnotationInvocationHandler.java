@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.IncompleteAnnotationException;
@@ -50,9 +50,12 @@ class AnnotationInvocationHandler implements InvocationHandler {
     }
 
     // Handle annotation member accessors
-    PsiAnnotationMemberValue value = myAnnotation.findAttributeValue(member);
+    Pair<PsiAnnotationMemberValue, String> pair = attributeValueOrError(myAnnotation, member);
+    PsiAnnotationMemberValue value = pair.first;
+
     if (value == null) {
-      throw new IncompleteAnnotationException(type, member+". (Unable to find attribute in '"+myAnnotation.getText()+"')");
+      String error = pair.second;
+      throw new IncompleteAnnotationException(type, member+". (Unable to find attribute in '"+myAnnotation.getText()+"': " + error + ")");
     }
 
     Object result = JavaPsiFacade.getInstance(myAnnotation.getProject()).getConstantEvaluationHelper().computeConstantExpression(value);
@@ -63,6 +66,38 @@ class AnnotationInvocationHandler implements InvocationHandler {
 
     // todo arrays
     return result;
+  }
+
+  @NotNull
+  private static Pair<PsiAnnotationMemberValue, String> attributeValueOrError(@NotNull PsiAnnotation annotation, @Nullable @NonNls String attributeName) {
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, attributeName);
+    final PsiAnnotationMemberValue value = attribute == null ? null : attribute.getValue();
+    if (value != null) return Pair.create(value, null);
+
+    if (attributeName == null) attributeName = "value";
+    final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+    if (referenceElement == null) {
+      return Pair.create(null, "no reference found in "+annotation.getText());
+    }
+    PsiElement resolved = referenceElement.resolve();
+    if (resolved == null) {
+      return Pair.create(null, "can't resolve reference '"+referenceElement.getText()+"'");
+    }
+    PsiClass psiClass;
+    if (!(resolved instanceof PsiClass) || !(psiClass = (PsiClass)resolved).isAnnotationType()) {
+      return Pair.create(null, "reference '"+referenceElement.getText()+"' resolved to "+resolved+" ("+resolved.getClass()+") instead of enum");
+    }
+    PsiMethod[] methods = psiClass.findMethodsByName(attributeName, false);
+    for (PsiMethod method : methods) {
+      if (method instanceof PsiAnnotationMethod) {
+        PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
+        if (defaultValue != null) {
+          return Pair.create(defaultValue, null);
+        }
+        return Pair.create(null, "method has no value nor default value: "+method.getText());
+      }
+    }
+    return Pair.create(null, "method '"+attributeName+"' not found in "+psiClass.getQualifiedName()+" among methods "+Arrays.asList(psiClass.getMethods()));
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -115,7 +116,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     }
 
     final Ref<String> errorMessage = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage(psiClass))), "Check if inline is possible...", true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage((PsiClass)psiClass.getNavigationElement()))), "Check if inline is possible...", true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;
@@ -201,7 +202,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return RefactoringBundle.message("inline.to.anonymous.no.abstract");
     }
-    if (!psiClass.getManager().isInProject(psiClass)) {
+    if (psiClass instanceof PsiCompiledElement) {
       return "Library classes cannot be inlined";
     }
 
@@ -230,6 +231,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     }
 
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(psiClass.getProject());
     final PsiMethod[] methods = psiClass.getMethods();
     for(PsiMethod method: methods) {
       if (method.isConstructor()) {
@@ -238,7 +240,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
         }
       }
       else if (method.findSuperMethods().length == 0) {
-        if (!ReferencesSearch.search(method).forEach(new AllowedUsagesProcessor(psiClass))) {
+        if (!ReferencesSearch.search(method, searchScope).forEach(new AllowedUsagesProcessor(psiClass))) {
           return "Class cannot be inlined because there are usages of its methods not inherited from its superclass or interface";
         }
       }
@@ -253,7 +255,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       if (classModifiers.hasModifierProperty(PsiModifier.STATIC)) {
         return "Class cannot be inlined because it has static inner classes";
       }
-      if (!ReferencesSearch.search(innerClass).forEach(new AllowedUsagesProcessor(psiClass))) {
+      if (!ReferencesSearch.search(innerClass, searchScope).forEach(new AllowedUsagesProcessor(psiClass))) {
         return "Class cannot be inlined because it has usages of its inner classes";
       }
     }
@@ -274,7 +276,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
           return "Class cannot be inlined because it has static fields with non-constant initializers";
         }
       }
-      if (!ReferencesSearch.search(field).forEach(new AllowedUsagesProcessor(psiClass))) {
+      if (!ReferencesSearch.search(field, searchScope).forEach(new AllowedUsagesProcessor(psiClass))) {
         return "Class cannot be inlined because it has usages of fields not inherited from its superclass";
       }
     }
@@ -305,7 +307,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Nullable
   private static String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
     boolean hasUsages = false;
-    for(PsiReference reference : ReferencesSearch.search(aClass)) {
+    for(PsiReference reference : ReferencesSearch.search(aClass, GlobalSearchScope.projectScope(aClass.getProject()))) {
       final PsiElement element = reference.getElement();
       if (element == null) continue;
       if (!PsiTreeUtil.isAncestor(aClass, element, false)) {
@@ -359,10 +361,10 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
     @Override
     public boolean process(final PsiReference psiReference) {
-      if (PsiTreeUtil.isAncestor(myPsiElement, psiReference.getElement(), false)) {
+      PsiElement element = psiReference.getElement();
+      if (element != null && PsiTreeUtil.isAncestor(myPsiElement, element.getNavigationElement(), false)) {
         return true;
       }
-      PsiElement element = psiReference.getElement();
       if (element instanceof PsiReferenceExpression) {
         PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
         while (qualifier instanceof PsiParenthesizedExpression) {
@@ -371,7 +373,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
         if (qualifier instanceof PsiNewExpression) {
           PsiNewExpression newExpr = (PsiNewExpression) qualifier;
           PsiJavaCodeReferenceElement classRef = newExpr.getClassReference();
-          if (classRef != null && myPsiElement.equals(classRef.resolve())) {
+          if (classRef != null && myPsiElement.isEquivalentTo(classRef.resolve())) {
             return true;
           }
         }

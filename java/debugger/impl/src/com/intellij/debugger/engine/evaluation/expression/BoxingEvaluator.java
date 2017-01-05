@@ -24,7 +24,6 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.sun.jdi.*;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -59,14 +58,14 @@ public class BoxingEvaluator implements Evaluator{
     final ClassType wrapperClass = (ClassType)process.findClass(context, wrapperTypeName, null);
     final String methodSignature = "(" + JVMNameUtil.getPrimitiveSignature(value.type().name()) + ")L" + wrapperTypeName.replace('.', '/') + ";";
 
-    List<Method> methods = wrapperClass.methodsByName("valueOf", methodSignature);
-    if (methods.size() == 0) { // older JDK version
-      methods = wrapperClass.methodsByName(JVMNameUtil.CONSTRUCTOR_NAME, methodSignature);
+    Method method = wrapperClass.concreteMethodByName("valueOf", methodSignature);
+    if (method == null) { // older JDK version
+      method = wrapperClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, methodSignature);
     }
-    if (methods.size() == 0) {
+    if (method == null) {
       throw new EvaluateException("Cannot construct wrapper object for value of type " + value.type() + ": Unable to find either valueOf() or constructor method");
     }
 
-    return process.invokeMethod(context, wrapperClass, methods.get(0), Collections.singletonList(value));
+    return process.invokeMethod(context, wrapperClass, method, Collections.singletonList(value));
   }
 }

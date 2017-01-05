@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class EditorFragmentComponent extends JPanel {
   private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
+    boolean newRendering = editor instanceof EditorImpl;
     int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
     final int textImageWidth = Math.min(
       editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
@@ -85,7 +85,7 @@ public class EditorFragmentComponent extends JPanel {
       editor.getScrollingModel().scrollHorizontally(0);
     }
 
-    final BufferedImage textImage = UIUtil.createImage(textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+    final BufferedImage textImage = UIUtil.createImage(editor.getComponent(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
     Graphics textGraphics = textImage.getGraphics();
     EditorUIUtil.setupAntialiasing(textGraphics);
 
@@ -97,7 +97,7 @@ public class EditorFragmentComponent extends JPanel {
       rowHeader = editor.getGutterComponentEx();
       markersImageWidth = Math.max(1, rowHeader.getWidth());
 
-      markersImage = UIUtil.createImage(markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+      markersImage = UIUtil.createImage(editor.getComponent(), markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
       Graphics markerGraphics = markersImage.getGraphics();
       EditorUIUtil.setupAntialiasing(markerGraphics);
 
@@ -213,7 +213,7 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     final JComponent c = editor.getComponent();
-    int x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
+    int x = SwingUtilities.convertPoint(c, new Point(JBUI.scale(-3),0), UIUtil.getRootPane(c)).x; //IDEA-68016
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
@@ -62,6 +63,7 @@ class PrintDialog extends DialogWrapper {
   private JTextField myRightMarginField = null;
 
   private JCheckBox myCbDrawBorder = null;
+  private JCheckBox myCbEvenNumberOfPages = null;
 
   private JTextField myLineTextField1 = null;
   private JComboBox myLinePlacementCombo1 = null;
@@ -74,6 +76,7 @@ class PrintDialog extends DialogWrapper {
   private String myFileName = null;
   private String myDirectoryName = null;
   private final boolean isSelectedTextEnabled;
+  private final int mySelectedFileCount;
 
   private static final Map<Object, String> PLACEMENT_MAP = new HashMap<>();
   private static final Map<Object, String> ALIGNMENT_MAP = new HashMap<>();
@@ -89,13 +92,14 @@ class PrintDialog extends DialogWrapper {
   }
 
 
-  public PrintDialog(String fileName, String directoryName, String selectedText, Project project) {
+  public PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
     super(project, true);
     mySelectedText = selectedText;
     setOKButtonText(CodeEditorBundle.message("print.print.button"));
     myFileName = fileName;
     myDirectoryName = directoryName;
-    this.isSelectedTextEnabled = selectedText != null;
+    isSelectedTextEnabled = selectedText != null;
+    mySelectedFileCount = selectedFileCount;
     setTitle(CodeEditorBundle.message("print.title"));
     init();
   }
@@ -115,7 +119,9 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.insets = new Insets(0,0,0,0);
 
-    myRbCurrentFile = new JRadioButton(CodeEditorBundle.message("print.file.name.radio", (myFileName != null ? myFileName : "")));
+    myRbCurrentFile = new JRadioButton(mySelectedFileCount > 1 ? CodeEditorBundle.message("print.files.radio", mySelectedFileCount)
+                                                               : CodeEditorBundle.message("print.file.name.radio",
+                                                                                          (myFileName != null ? myFileName : "")));
     panel.add(myRbCurrentFile, gbConstraints);
 
     myRbSelectedText = new JRadioButton(mySelectedText != null ? mySelectedText : CodeEditorBundle.message("print.selected.text.radio"));
@@ -139,18 +145,18 @@ class PrintDialog extends DialogWrapper {
     buttonGroup.add(myRbSelectedText);
     buttonGroup.add(myRbCurrentPackage);
 
-    ActionListener actionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
-      }
-    };
+    ActionListener actionListener = e -> updateDependentComponents();
 
     myRbCurrentFile.addActionListener(actionListener);
     myRbSelectedText.addActionListener(actionListener);
     myRbCurrentPackage.addActionListener(actionListener);
 
     return panel;
+  }
+
+  private void updateDependentComponents() {
+    myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
+    myCbEvenNumberOfPages.setVisible(myRbCurrentFile.isSelected() && mySelectedFileCount > 1 || myRbCurrentPackage.isSelected());
   }
 
   @Override
@@ -205,6 +211,10 @@ class PrintDialog extends DialogWrapper {
     myCbDrawBorder = new JCheckBox(CodeEditorBundle.message("print.settings.draw.border.checkbox"));
     gbConstraints.gridy++;
     panel.add(myCbDrawBorder, gbConstraints);
+
+    myCbEvenNumberOfPages = new JCheckBox(CodeEditorBundle.message("print.settings.even.number.of.pages"));
+    gbConstraints.gridy++;
+    panel.add(myCbEvenNumberOfPages, gbConstraints);
 
     gbConstraints.insets = new Insets(0, 0, 6, 4);
     gbConstraints.gridx = 0;
@@ -504,13 +514,14 @@ class PrintDialog extends DialogWrapper {
 
     myRbSelectedText.setEnabled(isSelectedTextEnabled);
     myRbSelectedText.setSelected(isSelectedTextEnabled);
-    myRbCurrentFile.setEnabled(myFileName != null);
-    myRbCurrentFile.setSelected(myFileName != null && !isSelectedTextEnabled);
+    myRbCurrentFile.setEnabled(myFileName != null || mySelectedFileCount > 1);
+    myRbCurrentFile.setSelected(myFileName != null && !isSelectedTextEnabled || mySelectedFileCount > 1);
     myRbCurrentPackage.setEnabled(myDirectoryName != null);
     myRbCurrentPackage.setSelected(myDirectoryName != null && !isSelectedTextEnabled && myFileName == null);
 
     myCbIncludeSubpackages.setSelected(printSettings.isIncludeSubdirectories());
-    myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
+
+    updateDependentComponents();
 
     Object selectedPageSize = PageSizes.getItem(printSettings.PAPER_SIZE);
     if(selectedPageSize != null) {
@@ -544,7 +555,7 @@ class PrintDialog extends DialogWrapper {
     myRightMarginField.setText(String.valueOf(printSettings.RIGHT_MARGIN));
 
     myCbDrawBorder.setSelected(printSettings.DRAW_BORDER);
-
+    myCbEvenNumberOfPages.setSelected(printSettings.EVEN_NUMBER_OF_PAGES);
 
     myLineTextField1.setText(printSettings.FOOTER_HEADER_TEXT1);
     myLinePlacementCombo1.setSelectedItem(printSettings.FOOTER_HEADER_PLACEMENT1);
@@ -613,6 +624,7 @@ class PrintDialog extends DialogWrapper {
     catch(NumberFormatException ignored) { }
 
     printSettings.DRAW_BORDER = myCbDrawBorder.isSelected();
+    printSettings.EVEN_NUMBER_OF_PAGES = myCbEvenNumberOfPages.isSelected();
     printSettings.FOOTER_HEADER_TEXT1 = myLineTextField1.getText();
     printSettings.FOOTER_HEADER_ALIGNMENT1 = (String)myLineAlignmentCombo1.getSelectedItem();
     printSettings.FOOTER_HEADER_PLACEMENT1 = (String)myLinePlacementCombo1.getSelectedItem();

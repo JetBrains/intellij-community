@@ -36,12 +36,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     if (codeFragment == null) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
-    codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
     DebuggerUtils.checkSyntax(codeFragment);
 
     return factory.getEvaluatorBuilder().build(codeFragment, position);
@@ -247,14 +246,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     private Evaluator[] visitStatements(PsiStatement[] statements) {
-      Evaluator[] evaluators = new Evaluator[statements.length];
-      for (int i = 0; i < statements.length; i++) {
-        PsiStatement psiStatement = statements[i];
+      List<Evaluator> evaluators = new ArrayList<>();
+      for (PsiStatement psiStatement : statements) {
         psiStatement.accept(this);
-        evaluators[i] = new DisableGC(myResult);
+        if (myResult != null) { // for example declaration w/o initializer produces empty evaluator now
+          evaluators.add(new DisableGC(myResult));
+        }
         myResult = null;
       }
-      return evaluators;
+      return evaluators.toArray(new Evaluator[0]);
     }
 
     @Override
@@ -1324,8 +1324,20 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           processBoxingConversions(constructor.getParameterList().getParameters(), argExpressions, constructorResolveResult.getSubstitutor(), argumentEvaluators);
         }
 
-        if (aClass != null && aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
-          argumentEvaluators = addThisEvaluator(argumentEvaluators, aClass.getContainingClass());
+        if (aClass != null) {
+          PsiClass containingClass = aClass.getContainingClass();
+          if (containingClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
+            PsiExpression qualifier = expression.getQualifier();
+            if (qualifier != null) {
+              qualifier.accept(this);
+              if (myResult != null) {
+                argumentEvaluators = ArrayUtil.prepend(myResult, argumentEvaluators);
+              }
+            }
+            else {
+              argumentEvaluators = ArrayUtil.prepend(new ThisEvaluator(calcIterationCount(containingClass, "this")), argumentEvaluators);
+            }
+          }
         }
 
         JVMName signature = JVMNameUtil.getJVMConstructorSignature(constructor, aClass);
@@ -1343,14 +1355,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           throwEvaluateException("Unknown type for expression: " + expression.getText());
         }
       }
-    }
-
-    private Evaluator[] addThisEvaluator(Evaluator[] argumentEvaluators, PsiClass cls) {
-      Evaluator[] res = new Evaluator[argumentEvaluators.length+1];
-      int depth = calcIterationCount(cls, "this");
-      res[0] = new ThisEvaluator(depth);
-      System.arraycopy(argumentEvaluators, 0, res, 1, argumentEvaluators.length);
-      return res;
     }
 
     @Override

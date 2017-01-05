@@ -19,6 +19,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
@@ -180,6 +181,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       }
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       // fix references in moved files to outer files
       for (PsiFile movedFile : movedFiles) {

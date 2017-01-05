@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -122,11 +123,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   public boolean hasTargetWithActionId(final String id) {
-    final List<AntBuildTargetBase> targetsList = getTargetsList();
-    for (AntBuildTargetBase buildTarget : targetsList) {
-      if (id.equals(buildTarget.getActionId())) return true;
-    }
-    return false;
+    return StreamEx.of(getTargetsList()).map(AntBuildTargetBase::getActionId).has(id);
   }
 
   private List<AntBuildTargetBase> getTargetsList() {

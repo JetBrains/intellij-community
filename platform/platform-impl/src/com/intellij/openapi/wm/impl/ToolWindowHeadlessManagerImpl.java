@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.*;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -507,16 +508,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void addContent(@NotNull final Content content) {
-      myContents.add(content);
-      Disposer.register(this, content);
-      ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
-      myDispatcher.getMulticaster().contentAdded(e);
-      if (mySelected == null) setSelectedContent(content);
+      addContent(content, -1);
     }
 
     @Override
     public void addContent(@NotNull Content content, int order) {
-      myContents.add(order, content);
+      myContents.add(order == -1 ? myContents.size() : order, content);
+      if (content instanceof ContentImpl && content.getManager() == null) {
+        ((ContentImpl)content).setManager(this);
+      }
       Disposer.register(this, content);
       ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
       myDispatcher.getMulticaster().contentAdded(e);

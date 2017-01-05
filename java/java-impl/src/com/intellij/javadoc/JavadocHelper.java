@@ -107,16 +107,15 @@ public class JavadocHelper {
     }
 
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(psiFile.getProject()).getCurrentSettings();
-    final int indentSize = codeStyleSettings.getIndentSize(psiFile.getFileType());
     int column;
     if (codeStyleSettings.JD_ALIGN_PARAM_COMMENTS) {
       column = Math.max(descriptionStartColumn, parameterNameEndColumn);
       if (column <= parameterNameEndColumn) {
-        column = parameterNameEndColumn + indentSize;
+        column = parameterNameEndColumn + 1;
       }
     }
     else {
-      column = anchor.parameterNameEndPosition.column + indentSize;
+      column = anchor.parameterNameEndPosition.column + 1;
     }
     return new LogicalPosition(anchor.parameterNameEndPosition.line, column);
   }

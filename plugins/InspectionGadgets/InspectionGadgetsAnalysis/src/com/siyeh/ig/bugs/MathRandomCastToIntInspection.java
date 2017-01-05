@@ -68,11 +68,6 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionGadgetsBundle.message("math.random.cast.to.int.quickfix");
     }
 
@@ -161,7 +156,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       final String qualifiedName = containingClass.getQualifiedName();
-      if (!"java.lang.Math".equals(qualifiedName) && !"java.lang.StrictMath".equals(qualifiedName)) {
+      if (!CommonClassNames.JAVA_LANG_MATH.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_STRICT_MATH.equals(qualifiedName)) {
         return;
       }
       registerError(methodCallExpression, expression, type);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,18 +22,17 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Tag("dictionary")
 public class DictionaryState implements PersistentStateComponent<DictionaryState> {
-
   public static final String NAME_ATTRIBUTE = "name";
 
   @Tag("words") @AbstractCollection(surroundWithTag = false, elementTag = "w", elementValueAttribute = "")
-  public Set<String> words = new HashSet<>();
+  public Set<String> words = new THashSet<>();
 
   @Attribute(NAME_ATTRIBUTE)
   public String name;
@@ -60,6 +59,7 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
     return dictionary;
   }
 
+  @Override
   public DictionaryState getState() {
     synchronizeWords();
     return this;
@@ -67,12 +67,11 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
 
   private void synchronizeWords() {
     if (dictionary != null) {
-      Set<String> words = new HashSet<>();
-      words.addAll(dictionary.getWords());
-      this.words = words;
+      this.words = new THashSet<>(dictionary.getWords());
     }
   }
 
+  @Override
   public void loadState(DictionaryState state) {
     if (state != null && state.name != null) {
       name = state.name;

@@ -36,7 +36,7 @@ public interface ArrangementStandardSettingsAware {
 
   /**
    * @return  settings to use by default, i.e. when a user hasn't been explicitly modified arrangement settings;
-   *          <code>null</code> as an indication that no default settings are available
+   *          {@code null} as an indication that no default settings are available
    */
   @Nullable
   StdArrangementSettings getDefaultSettings();
@@ -59,12 +59,12 @@ public interface ArrangementStandardSettingsAware {
    * Allows to answer if given token is enabled in combination with other conditions specified by the given condition object.
    * <p/>
    * Example: say, current rearranger is for java and given condition is like 'public class'. This method is expected to
-   * return <code>false</code> for token 'volatile' (because it can be applied only to fields) but <code>true</code>
+   * return {@code false} for token 'volatile' (because it can be applied only to fields) but {@code true}
    * for token 'abstract' (a java class can be abstract).
    * 
    * @param token    target token to check
-   * @param current  an object which represents currently chosen tokens; <code>null</code> if no other token is selected
-   * @return         <code>true</code> if given token is enabled with the given condition; <code>false</code> otherwise
+   * @param current  an object which represents currently chosen tokens; {@code null} if no other token is selected
+   * @return         {@code true} if given token is enabled with the given condition; {@code false} otherwise
    */
   boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current);
 

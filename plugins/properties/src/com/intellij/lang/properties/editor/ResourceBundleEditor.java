@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -122,12 +121,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final PropertiesAnchorizer myPropertiesAnchorizer;
 
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
   private volatile boolean    myDisposed;
-  private VirtualFileListener myVfsListener;
+  private ResourceBundleEditorFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
   private ResourceBundleEditorHighlighter myHighlighter;
@@ -150,8 +148,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     myResourceBundle = resourceBundle;
     myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
 
-    myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
-    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
+    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
@@ -217,7 +214,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     installPropertiesChangeListeners();
 
-    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         onSelectionChanged(event);
@@ -319,8 +316,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       if (value != null) {
         final IProperty property = PropertiesImplUtil.getProperty(value);
         if (propertyName.equals(property.getUnescapedKey())) {
-          final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get(property);
-          myStructureViewComponent.select(anchor, true);
+          myStructureViewComponent.select(property, true);
           selectionChanged();
           return;
         }
@@ -331,6 +327,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       }
     }
+  }
+
+  public void flush() {
+    myVfsListener.flush();
   }
 
   @Nullable
@@ -379,7 +379,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
       try {
-
         if (currentValue.isEmpty() &&
             ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
             !propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
@@ -454,6 +453,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         public void focusLost(final Editor editor) {
           if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
             writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
+            myVfsListener.flush();
           }
         }
       });
@@ -495,12 +495,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     valuesPanelComponent.add(new JPanel(), gc);
     selectionChanged();
     myValuesPanel.repaint();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        updateEditorsFromProperties(true);
-      }
-    });
+    updateEditorsFromProperties(true);
   }
 
   @NotNull
@@ -620,7 +615,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   @Nullable
-  private IProperty getSelectedProperty() {
+  IProperty getSelectedProperty() {
     final Collection<DefaultMutableTreeNode> selectedNode = getSelectedNodes();
     if (selectedNode.isEmpty()) {
       return null;

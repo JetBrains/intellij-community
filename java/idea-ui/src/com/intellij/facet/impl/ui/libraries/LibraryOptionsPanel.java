@@ -26,8 +26,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -68,7 +66,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -80,7 +77,7 @@ public class LibraryOptionsPanel implements Disposable {
   private JBLabel myMessageLabel;
   private JPanel myPanel;
   private JButton myConfigureButton;
-  private JComboBox myExistingLibraryComboBox;
+  private JComboBox<LibraryEditor> myExistingLibraryComboBox;
   private JRadioButton myDoNotCreateRadioButton;
   private JPanel myConfigurationPanel;
   private JButton myCreateButton;
@@ -236,9 +233,10 @@ public class LibraryOptionsPanel implements Disposable {
         onVersionChanged(getPresentableVersion());
       }
     });
-    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer(myExistingLibraryComboBox) {
+    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer<LibraryEditor>(myExistingLibraryComboBox) {
       @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends LibraryEditor> list, LibraryEditor value, int index, boolean selected,
+                                           boolean hasFocus) {
         if (value == null) {
           append("[No library selected]");
         }
@@ -249,7 +247,7 @@ public class LibraryOptionsPanel implements Disposable {
         }
         else if (value instanceof NewLibraryEditor) {
           setIcon(PlatformIcons.LIBRARY_ICON);
-          final String name = ((NewLibraryEditor)value).getName();
+          final String name = value.getName();
           append(name != null ? name : "<unnamed>");
         }
       }
@@ -291,7 +289,7 @@ public class LibraryOptionsPanel implements Disposable {
     });
     myConfigureButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> doConfigure());
+        doConfigure();
       }
     });
     updateState();

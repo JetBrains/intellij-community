@@ -57,7 +57,7 @@ public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
         if (!artifacts.isEmpty()) {
           TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder()
             .setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId())
-            .setForceBuild(ArtifactCompileScope.isArtifactRebuildForced(baseScope));
+            .setForceBuild(forceBuild || ArtifactCompileScope.isArtifactRebuildForced(baseScope));
           for (Artifact artifact : artifacts) {
             builder.addTargetId(artifact.getName());
           }

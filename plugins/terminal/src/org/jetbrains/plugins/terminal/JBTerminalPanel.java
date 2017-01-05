@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,15 +44,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
-import java.io.IOException;
 import java.util.List;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable,
@@ -69,6 +66,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateStructureToolWindow",
     "ActivateHierarchyToolWindow",
     "ActivateVersionControlToolWindow",
+    "HideAllWindows",
 
     "ShowBookmarks",
     "GotoBookmark0",
@@ -242,13 +240,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   @Override
-  protected String getClipboardContent() throws IOException, UnsupportedFlavorException {
-    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-  }
-
-  @Override
   protected BufferedImage createBufferedImage(int width, int height) {
-    return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    return UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_ARGB);
   }
 
 
@@ -262,7 +255,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   private void installKeyDispatcher() {
-    if (TerminalOptionsProvider.getInstance().overrideIdeShortcuts()) {
+    if (TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
       IdeEventQueue.getInstance().addDispatcher(this, this);
     }
@@ -300,7 +293,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences());
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences(),
+                                                           null);
   }
 
   @Override
@@ -310,6 +304,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void dispose() {
+    super.dispose();
     mySettingsProvider.removeListener(this);
   }
 }

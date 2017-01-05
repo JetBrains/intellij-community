@@ -21,16 +21,16 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -67,8 +67,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
-
-@State(name = "ScratchFileService", storages = @Storage("scratches.xml"))
+@State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
 public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>{
 
   private static final RootType NULL_TYPE = new RootType("", null) {};
@@ -102,7 +101,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   }
 
   private void initFileOpenedListener(MessageBus messageBus) {
-    final FileEditorManagerAdapter editorListener = new FileEditorManagerAdapter() {
+    final FileEditorManagerListener editorListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!isEditable(file)) return;
@@ -290,8 +289,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     String ext = PathUtil.getFileExtension(pathName);
     String fileNameExt = PathUtil.getFileName(pathName);
     String fileName = StringUtil.trimEnd(fileNameExt, ext == null ? "" : "." + ext);
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-    try {
+    return WriteAction.compute(() -> {
       VirtualFile dir = VfsUtil.createDirectories(PathUtil.getParentPath(fullPath));
       if (option == Option.create_new_always) {
         return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, StringUtil.notNullize(ext));
@@ -299,10 +297,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       else {
         return dir.createChildData(LocalFileSystem.getInstance(), fileNameExt);
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
   }
 
   @Nullable

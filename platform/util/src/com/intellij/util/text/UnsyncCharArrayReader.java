@@ -40,7 +40,8 @@ public class UnsyncCharArrayReader extends Reader {
   public int read(@NotNull char[] cbuf, int off, int len) {
     if (off < 0 || off > cbuf.length || len < 0 || off + len > cbuf.length || off + len < 0) {
         throw new IndexOutOfBoundsException();
-    } else if (len == 0) {
+    }
+    if (len == 0) {
         return 0;
     }
 

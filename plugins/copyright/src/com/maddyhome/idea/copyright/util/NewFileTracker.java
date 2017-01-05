@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,14 @@ import java.util.Collections;
 import java.util.Set;
 
 public class NewFileTracker {
-  public static NewFileTracker getInstance() {
-    return instance;
-  }
+  private final Set<VirtualFile> newFiles = Collections.synchronizedSet(new THashSet<VirtualFile>());
 
   public boolean poll(@NotNull VirtualFile file) {
     return newFiles.remove(file);
   }
 
-  private NewFileTracker() {
-    final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
+  public NewFileTracker() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         if (event.isFromRefresh()) return;
@@ -48,9 +45,6 @@ public class NewFileTracker {
       }
     });
   }
-
-  private final Set<VirtualFile> newFiles = Collections.synchronizedSet(new THashSet<VirtualFile>());
-  private static final NewFileTracker instance = new NewFileTracker();
 
   public void clear() {
     newFiles.clear();

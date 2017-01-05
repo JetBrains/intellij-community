@@ -54,7 +54,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "list of MyObject");
     assertNotNull(type);
     assertClassType(type, "list");
-    assertClassType(type.getElementTypes(getTypeEvalContext()).get(0), "MyObject");
+    assertClassType(type.getIteratedItemType(), "MyObject");
   }
 
   public void testDictType() {
@@ -182,8 +182,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType collectionType = (PyCollectionType)type;
     assertNotNull(collectionType);
     assertEquals("list", collectionType.getName());
-    final List<PyType> elementTypes = collectionType.getElementTypes(TypeEvalContext.codeInsightFallback(null));
-    assertInstanceOf(elementTypes.get(0), PyUnionType.class);
+    assertInstanceOf(collectionType.getIteratedItemType(), PyUnionType.class);
   }
 
   public void testBoundedGeneric() {
@@ -203,8 +202,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType collectionType = (PyCollectionType)type;
     assertNotNull(collectionType);
     assertEquals("list", collectionType.getName());
-    final List<PyType> elementTypes = collectionType.getElementTypes(TypeEvalContext.codeInsightFallback(null));
-    assertEquals("int", elementTypes.get(0).getName());
+    assertEquals("int", collectionType.getIteratedItemType().getName());
   }
 
   public void testBracketMultipleParams() {

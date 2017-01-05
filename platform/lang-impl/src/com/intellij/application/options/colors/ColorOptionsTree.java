@@ -15,16 +15,23 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StatusText;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.*;
+import java.awt.event.ActionListener;
 import java.util.*;
+
+import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR;
 
 /**
  * @author Rustam Vishnyakov
@@ -32,8 +39,6 @@ import java.util.*;
 public class ColorOptionsTree extends Tree {
   private final String myCategoryName;
   private final DefaultTreeModel myTreeModel;
-
-  public final static String NAME_SEPARATOR = "//";
 
   private static final Comparator<EditorSchemeAttributeDescriptor> ATTR_COMPARATOR =
     (o1, o2) -> StringUtil.naturalCompare(o1.toString(), o2.toString());
@@ -63,6 +68,18 @@ public class ColorOptionsTree extends Tree {
     myTreeModel.setRoot(root);
   }
 
+  public void setEmptyText(@NotNull String text, @Nullable ActionListener linkListener) {
+    StatusText statusText = getEmptyText();
+    if (linkListener != null) {
+      statusText.clear();
+      statusText.appendText(text + ' ');
+      statusText.appendText("More...", SimpleTextAttributes.LINK_ATTRIBUTES, linkListener);
+    }
+    else {
+      statusText.setText(text);
+    }
+  }
+
   private static TreeModel createTreeModel()  {
     return new DefaultTreeModel(new DefaultMutableTreeTableNode());
   }
@@ -78,9 +95,9 @@ public class ColorOptionsTree extends Tree {
   }
 
   @Nullable
-  public ColorAndFontDescription getSelectedDescriptor() {
+  public EditorSchemeAttributeDescriptor getSelectedDescriptor() {
     Object selectedValue = getSelectedValue();
-    return selectedValue instanceof ColorAndFontDescription ? (ColorAndFontDescription)selectedValue : null;
+    return selectedValue instanceof EditorSchemeAttributeDescriptor ? (EditorSchemeAttributeDescriptor)selectedValue : null;
   }
 
   @Nullable
@@ -138,7 +155,7 @@ public class ColorOptionsTree extends Tree {
 
   @Nullable
   private static List<String> extractPath(@NotNull EditorSchemeAttributeDescriptor descriptor) {
-    if (descriptor instanceof ColorAndFontDescription) {
+    if (descriptor instanceof EditorSchemeAttributeDescriptorWithPath) {
       String name = descriptor.toString();
       List<String> path = new ArrayList<>();
       int separatorStart = name.indexOf(NAME_SEPARATOR);

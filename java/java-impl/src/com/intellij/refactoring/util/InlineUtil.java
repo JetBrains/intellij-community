@@ -27,6 +27,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -127,7 +128,7 @@ public class InlineUtil {
             if (substituted == null) break;
             copy.getTypeArgumentList().add(elementFactory.createTypeElement(substituted));
           }
-          if (varType.equals(copy.getType())) {
+          if (varType.equals(copy.getType()) && copy.resolveMethodGenerics().isValidResult()) {
             ((PsiCallExpression)expr).getTypeArgumentList().replace(copy.getTypeArgumentList());
             return (PsiMethod)resolved;
           }

@@ -17,9 +17,14 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EmptyProgressIndicator implements StandardProgressIndicator {
+
+  private static final Logger LOG = Logger.getInstance(EmptyProgressIndicator.class);
+
   @NotNull private final ModalityState myModalityState;
 
   private volatile boolean myIsRunning;
@@ -142,5 +147,14 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
   @Override
   public boolean isShowing() {
     return false;
+  }
+
+  @NotNull
+  public static ProgressIndicator notNullize(@Nullable ProgressIndicator indicator) {
+    if (indicator != null) {
+      return indicator;
+    }
+    LOG.info("No progress indicator");
+    return new EmptyProgressIndicator();
   }
 }

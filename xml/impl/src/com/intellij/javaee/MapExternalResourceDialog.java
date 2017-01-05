@@ -15,19 +15,17 @@
  */
 package com.intellij.javaee;
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,8 +34,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.config.ConfigFileSearcher;
@@ -46,12 +42,13 @@ import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -68,14 +65,14 @@ import java.util.Set;
  */
 public class MapExternalResourceDialog extends DialogWrapper {
 
-  private static final String MAP_EXTERNAL_RESOURCE_SELECTED_TAB = "map.external.resource.selected.tab";
+  private static final FileChooserDescriptor FILE_CHOOSER_DESCRIPTOR = new FileChooserDescriptor(true, false, false, false, true, false).withTitle("Choose Schema File");
+
   private JTextField myUri;
   private JPanel myMainPanel;
   private JTree mySchemasTree;
-  private JPanel myExplorerPanel;
-  private JBTabbedPane myTabs;
-  private final FileSystemTreeImpl myExplorer;
-  private String myLocation;
+  private JPanel mySchemasPanel;
+  private TextFieldWithBrowseButton myFileTextField;
+  private boolean mySchemaFound;
 
   public MapExternalResourceDialog(String uri, @Nullable Project project, @Nullable PsiFile file, @Nullable String location) {
     super(project);
@@ -88,47 +85,24 @@ public class MapExternalResourceDialog extends DialogWrapper {
       }
     });
 
-    myExplorer = new FileSystemTreeImpl(project, new FileChooserDescriptor(true, false, false, false, true, false));
-    Disposer.register(getDisposable(), myExplorer);
-
-    myExplorer.addListener(new FileSystemTree.Listener() {
-      @Override
-      public void selectionChanged(List<VirtualFile> selection) {
-        validateInput();
-      }
-    }, myExplorer);
-
-    MouseAdapter mouseAdapter = new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() > 1 && isOKActionEnabled()) {
-          doOKAction();
-        }
-      }
-    };
-    myExplorer.getTree().addMouseListener(mouseAdapter);
-
-    myExplorerPanel.add(ScrollPaneFactory.createScrollPane(myExplorer.getTree()), BorderLayout.CENTER);
-
-    AnAction actionGroup = ActionManager.getInstance().getAction("FileChooserToolbar");
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, (ActionGroup)actionGroup, true);
-    toolbar.setTargetComponent(myExplorerPanel);
-    myExplorerPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
-
     if (project != null) {
-      setupSchemasTab(uri, project, file, location, mouseAdapter);
+      String path = project.getBasePath();
+      if (path != null) {
+        myFileTextField.setText(FileUtil.toSystemDependentName(path));
+      }
+      setupSchemasTree(uri, project, file, location);
     }
     else {
-      myTabs.removeTabAt(0);
+      mySchemasPanel.setVisible(false);
     }
+    myFileTextField.addBrowseFolderListener(new TextBrowseFolderListener(FILE_CHOOSER_DESCRIPTOR, project));
     init();
   }
 
-  private void setupSchemasTab(String uri,
-                               @NotNull Project project,
-                               @Nullable PsiFile file,
-                               @Nullable String location,
-                               MouseAdapter mouseAdapter) {
+  private void setupSchemasTree(String uri,
+                                @NotNull Project project,
+                                @Nullable PsiFile file,
+                                @Nullable String location) {
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     mySchemasTree.setModel(new DefaultTreeModel(root));
@@ -168,6 +142,14 @@ public class MapExternalResourceDialog extends DialogWrapper {
     renderer.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
 
     mySchemasTree.setCellRenderer(renderer);
+    MouseAdapter mouseAdapter = new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() > 1 && isOKActionEnabled()) {
+          doOKAction();
+        }
+      }
+    };
     mySchemasTree.addMouseListener(mouseAdapter);
     mySchemasTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -176,6 +158,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
       }
     });
 
+    mySchemasTree.setSelectionRow(0);
     PsiFile schema = null;
     if (file != null) {
       schema = XmlUtil.findNamespaceByLocation(file, uri);
@@ -190,26 +173,11 @@ public class MapExternalResourceDialog extends DialogWrapper {
     if (schema != null) {
       DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, schema);
       if (node != null) {
+        mySchemaFound = true;
         TreeUtil.selectNode(mySchemasTree, node);
       }
-      myExplorer.select(schema.getVirtualFile(), null);
+      myFileTextField.setText(schema.getVirtualFile().getCanonicalPath());
     }
-
-    int index = PropertiesComponent.getInstance().getInt(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, 0);
-    myTabs.setSelectedIndex(index);
-    myTabs.getModel().addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        PropertiesComponent.getInstance().setValue(MAP_EXTERNAL_RESOURCE_SELECTED_TAB, Integer.toString(myTabs.getSelectedIndex()));
-      }
-    });
-  }
-
-  @Override
-  protected void processDoNotAskOnOk(int exitCode) {
-    super.processDoNotAskOnOk(exitCode);
-    // store it since explorer will be disposed
-    myLocation = getResourceLocation();
   }
 
   private void validateInput() {
@@ -223,7 +191,18 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return StringUtil.isEmpty(myUri.getText()) ? myUri : mySchemasTree;
+    return StringUtil.isEmpty(myUri.getText()) ? myUri : mySchemaFound ? mySchemasTree : myFileTextField.getTextField();
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return new Dimension(400, 300);
+  }
+
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
   }
 
   public String getUri() {
@@ -232,9 +211,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
   @Nullable
   public String getResourceLocation() {
-    if (myLocation != null) return myLocation;
-
-    if (myTabs.getTabCount() > 1 && myTabs.getSelectedIndex() == 0) {
+    if (mySchemasTree.hasFocus()) {
       TreePath path = mySchemasTree.getSelectionPath();
       if (path == null) return null;
       Object object = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
@@ -242,28 +219,18 @@ public class MapExternalResourceDialog extends DialogWrapper {
       return FileUtil.toSystemIndependentName(((PsiFile)object).getVirtualFile().getPath());
     }
     else {
-      VirtualFile file = myExplorer.getSelectedFile();
-      return file == null ? null : FileUtil.toSystemIndependentName(file.getPath());
+      return myFileTextField.getText();
     }
-  }
-
-  private void createUIComponents() {
-    myExplorerPanel = new JPanel(new BorderLayout());
-    DataManager.registerDataProvider(myExplorerPanel, new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (FileSystemTree.DATA_KEY.is(dataId)) {
-          return myExplorer;
-        }
-        return null;
-      }
-    });
   }
 
   @Nullable
   @Override
   protected String getHelpId() {
     return "Map External Resource dialog";
+  }
+
+  private void createUIComponents() {
+    FileTextField field = FileChooserFactory.getInstance().createFileTextField(FILE_CHOOSER_DESCRIPTOR, getDisposable());
+    myFileTextField = new TextFieldWithBrowseButton(field.getField());
   }
 }

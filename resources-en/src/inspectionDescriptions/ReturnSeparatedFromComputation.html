@@ -1,0 +1,26 @@
+<html>
+<body>
+This inspection detects <code>return</code> statements which return a local variable, where the value of the variable is computed
+somewhere else within the same code block with the <code>return</code> statement.
+<p>The quick fix inlines the returned variable by moving the return statement to the location where the value of the variable is computed.
+  When the returned value can't be inlined into return statement, the quick fix attempts to move the return statement as close to the
+  computation of the returned value as possible.
+<p>For example, the code below could be simplified:
+<pre><code>int n = -1;
+for(int i = 0; i &lt; a.length; i++) {
+    if (a[i] == b) {
+        n = i;
+        break;
+    }
+}
+return n;</code></pre>
+After the quick fix it becomes the following:
+<pre><code>int n = -1;
+for(int i = 0; i &lt; a.length; i++) {
+    if (a[i] == b) {
+        return i;
+    }
+}
+return n;</code></pre>
+</body>
+</html>

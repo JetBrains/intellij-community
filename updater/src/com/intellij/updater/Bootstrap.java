@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
@@ -57,7 +58,10 @@ public class Bootstrap {
         while ((line = br.readLine()) != null) {
           final File file = new File(path + line);
           final Path tmp = Files.createTempFile(IJ_PLATFORM_UPDATER + file.getName(), "");
-          Files.copy(file.toPath(), Files.newOutputStream(tmp));
+
+          try (OutputStream targetStream = Files.newOutputStream(tmp)) {
+             Files.copy(file.toPath(), targetStream);
+          }
           urls.add(tmp.toFile().toURI().toURL());
           files.add(tmp.toFile());
         }
@@ -90,15 +94,18 @@ public class Bootstrap {
     log("Cleaning up...");
     try {
       final Path file = Files.createTempFile("", "");
-      Files.list(file.getParent()).forEach((p) -> {
-        if (!p.toFile().isDirectory() && p.toFile().getName().startsWith(IJ_PLATFORM_UPDATER)) try {
-          log("Deleting " + p.toString());
-          Files.delete(p);
-        } catch (IOException e) {
-          log("Can't delete " + p.toString());
-          log(e);
-        }
-      });
+      try (Stream<Path> listing = Files.list(file.getParent())) {
+        listing.forEach((p) -> {
+          if (!p.toFile().isDirectory() && p.toFile().getName().startsWith(IJ_PLATFORM_UPDATER)) try {
+            log("Deleting " + p.toString());
+            Files.delete(p);
+          }
+          catch (IOException e) {
+            log("Can't delete " + p.toString());
+            log(e);
+          }
+        });
+      }
       Files.delete(file);
     } catch (IOException e) {
       log(e);

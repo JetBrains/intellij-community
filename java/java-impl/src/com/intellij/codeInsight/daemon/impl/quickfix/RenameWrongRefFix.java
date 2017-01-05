@@ -24,7 +24,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -147,7 +146,6 @@ public class RenameWrongRefFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
     LookupElement[] items = collectItems();

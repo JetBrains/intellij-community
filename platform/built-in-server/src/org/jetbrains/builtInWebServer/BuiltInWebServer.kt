@@ -20,6 +20,7 @@ import com.google.common.net.InetAddresses
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
+import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -36,8 +37,7 @@ import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
-import com.intellij.util.io.URLUtil
+import com.intellij.util.io.*
 import com.intellij.util.net.NetUtils
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -48,7 +48,6 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.jetbrains.ide.BuiltInServerManagerImpl
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.*
-import org.jetbrains.notification.SingletonNotificationManager
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
 import java.math.BigInteger
@@ -66,7 +65,8 @@ internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
 private const val IDE_TOKEN_FILE = "user.web.token"
 
 private val notificationManager by lazy {
-  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
+  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION,
+                                                         null)
 }
 
 class BuiltInWebServer : HttpRequestHandler() {

@@ -61,6 +61,28 @@ public class ColorUtil {
     return Color.getHSBColor(hsb[0], hsb[1], brightness);
   }
 
+  @NotNull
+  public static Color saturate(@NotNull Color color, int tones) {
+    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    float saturation = hsb[1];
+    for (int i = 0; i < tones; i++) {
+      saturation = Math.min(1, saturation * 1.1F);
+      if (saturation == 1) break;
+    }
+    return Color.getHSBColor(hsb[0], saturation, hsb[2]);
+  }
+
+  @NotNull
+  public static Color desaturate(@NotNull Color color, int tones) {
+    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    float saturation = hsb[1];
+    for (int i = 0; i < tones; i++) {
+      saturation = Math.max(0, saturation / 1.1F);
+      if (saturation == 0) break;
+    }
+    return Color.getHSBColor(hsb[0], saturation, hsb[2]);
+  }
+
   public static Color dimmer(@NotNull Color color) {
     float[] rgb = color.getRGBColorComponents(null);
 
@@ -100,10 +122,10 @@ public class ColorUtil {
 
   /**
    * Return Color object from string. The following formats are allowed:
-   * <code>#abc123</code>,
-   * <code>ABC123</code>,
-   * <code>ab5</code>,
-   * <code>#FFF</code>.
+   * {@code #abc123},
+   * {@code ABC123},
+   * {@code ab5},
+   * {@code #FFF}.
    *
    * @param str hex string
    * @return Color object

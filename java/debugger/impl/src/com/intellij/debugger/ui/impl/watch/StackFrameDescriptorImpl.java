@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -76,19 +77,18 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         }
         LOG.info(e);
       }
-      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, myLocation.method());
+      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, getMethod(myLocation));
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
+      mySourcePosition = ContextUtil.getSourcePosition(this);
       ApplicationManager.getApplication().runReadAction(() -> {
-        mySourcePosition = ContextUtil.getSourcePosition(this);
-        final PsiFile file = mySourcePosition != null? mySourcePosition.getFile() : null;
+        PsiFile file = mySourcePosition != null ? mySourcePosition.getFile() : null;
         if (file == null) {
           myIsInLibraryContent = true;
         }
         else {
           myBackgroundColor = FileColorManager.getInstance(file.getProject()).getFileColor(file);
-
-          final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
-          final VirtualFile vFile = file.getVirtualFile();
+          ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
+          VirtualFile vFile = file.getVirtualFile();
           myIsInLibraryContent = vFile != null && (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile));
         }
       });
@@ -100,6 +100,17 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }
+  }
+
+  @Nullable
+  private static Method getMethod(Location location) {
+    try {
+      return location.method();
+    }
+    catch (IllegalArgumentException e) { // Invalid method id
+      LOG.info(e);
+    }
+    return null;
   }
 
   public int getUiIndex() {
@@ -272,7 +283,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     catch (EvaluateException ignored) {
     }
-    return EmptyIcon.create(6);//AllIcons.Debugger.StackFrame;
+    return JBUI.scale(EmptyIcon.create(6));//AllIcons.Debugger.StackFrame;
   }
 
   public Icon getIcon() {

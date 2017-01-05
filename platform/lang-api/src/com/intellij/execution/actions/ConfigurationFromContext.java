@@ -145,6 +145,5 @@ public abstract class ConfigurationFromContext {
   /**
    * Compares configurations according to configuration type name.
    */
-  public static final Comparator<ConfigurationFromContext> NAME_COMPARATOR =
-    (p1, p2) -> p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
+  public static final Comparator<ConfigurationFromContext> NAME_COMPARATOR = Comparator.comparing(p -> p.getConfigurationType().getDisplayName());
 }

@@ -15,15 +15,9 @@
  */
 package com.jetbrains.python.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.debugger.PySignature;
-import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.debugger.PySignatureCacheManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-
-import java.io.IOException;
 
 /**
  * @author traff
@@ -51,30 +45,6 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
   public void testTypeComment() {
     doTest(PyBundle.message("INTN.annotate.types"), LanguageLevel.PYTHON27);
   }
-
-  public void testImportDict() throws IOException {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      final String testFileName = getTestName(true);
-      myFixture.configureByFile(testFileName + ".py");
-
-      String signature = PySignatureCacheManager.signatureToString(
-        new PySignature(myFixture.getFile().getVirtualFile().getCanonicalPath(), "get_dict").addReturnType("Dict[int, str]"));
-      PySignatureCacheManagerImpl.CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(myFixture.getFile().getVirtualFile(),
-                                                                                signature.getBytes());
-
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.annotate.types"));
-      assertNotNull(intentionAction);
-      myFixture.launchAction(intentionAction);
-      myFixture.checkResultByFile(testFileName + "_after.py", true);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
-
-    doTest();
-  }
-  
   
   private void doTest() {
     doTest(PyBundle.message("INTN.annotate.types"), LanguageLevel.PYTHON30);

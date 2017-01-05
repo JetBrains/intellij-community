@@ -110,7 +110,7 @@ public class PyCustomMember extends UserDataHolderBase {
     return this;
   }
 
-  public PyCustomMember resolvesToClass(String classQName) {
+  public PyCustomMember resolvesToClass(@NotNull final String classQName) {
     myPsiPath = new PyPsiPath.ToClassQName(classQName);
     return this;
   }

@@ -41,7 +41,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Comparator;
 
 /**
  * @author nik
@@ -51,7 +50,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private final Project myProject;
   private final ComboboxWithBrowseButton myServerComboBox;
-  private final ComboBox mySourceComboBox;
+  private final ComboBox<DeploymentSource> mySourceComboBox;
   private final SortedComboBoxModel<String> myServerListModel;
   private final SortedComboBoxModel<DeploymentSource> mySourceListModel;
   private final JPanel myDeploymentSettingsComponent;
@@ -65,7 +64,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     myProject = project;
 
     myServerListModel = new SortedComboBoxModel<>(String.CASE_INSENSITIVE_ORDER);
-    myServerComboBox = new ComboboxWithBrowseButton(new ComboBox(myServerListModel));
+    myServerComboBox = new ComboboxWithBrowseButton(new ComboBox<>(myServerListModel));
     fillApplicationServersList(null);
     myServerComboBox.addActionListener(new ActionListener() {
       @Override
@@ -82,9 +81,9 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         updateDeploymentSettingsEditor();
       }
     });
-    myServerComboBox.getComboBox().setRenderer(new ColoredListCellRendererWrapper<String>() {
+    myServerComboBox.getComboBox().setRenderer(new ColoredListCellRenderer<String>() {
       @Override
-      protected void doCustomize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
         if (value == null) return;
         RemoteServer<S> server = RemoteServersManager.getInstance().findByName(value, type);
         SimpleTextAttributes attributes = server == null ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
@@ -96,7 +95,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     mySourceListModel = new SortedComboBoxModel<>(
       (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
-    mySourceComboBox = new ComboBox(mySourceListModel);
+    mySourceComboBox = new ComboBox<>(mySourceListModel);
     mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
       @Override
       public void customize(JList list, DeploymentSource value, int index, boolean selected, boolean hasFocus) {
@@ -156,7 +155,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   }
 
   @Override
-  protected void resetEditorFrom(DeployToServerRunConfiguration<S,D> configuration) {
+  protected void resetEditorFrom(@NotNull DeployToServerRunConfiguration<S,D> configuration) {
     String serverName = configuration.getServerName();
     if (serverName != null && !myServerListModel.getItems().contains(serverName)) {
       myServerListModel.add(serverName);
@@ -171,7 +170,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   }
 
   @Override
-  protected void applyEditorTo(DeployToServerRunConfiguration<S,D> configuration) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull DeployToServerRunConfiguration<S,D> configuration) throws ConfigurationException {
     updateDeploymentSettingsEditor();
 
     configuration.setServerName(myServerListModel.getSelectedItem());

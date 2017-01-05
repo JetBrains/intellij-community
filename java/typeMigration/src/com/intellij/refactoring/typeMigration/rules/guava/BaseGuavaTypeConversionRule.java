@@ -46,7 +46,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     }
   };
 
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {};
+  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {}
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForMethod(PsiType from,
@@ -56,7 +56,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
     return null;
-  };
+  }
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,

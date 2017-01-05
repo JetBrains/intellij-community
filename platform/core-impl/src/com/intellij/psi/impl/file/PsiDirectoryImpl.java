@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -365,6 +366,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
       if (copyVFile == null) throw new IncorrectOperationException("File was not copied: " + vFile);
+
+      DumbService.getInstance(getProject()).completeJustSubmittedTasks();
 
       final PsiFile copyPsi = myManager.findFile(copyVFile);
       if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);

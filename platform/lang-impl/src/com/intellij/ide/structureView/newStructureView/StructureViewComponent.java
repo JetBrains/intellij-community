@@ -538,15 +538,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private void scrollToSelectedElementInner() {
-    try {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      final Object currentEditorElement = myTreeModel.getCurrentEditorElement();
-      if (currentEditorElement != null) {
-        select(currentEditorElement, false);
+    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+      try {
+        final Object currentEditorElement = myTreeModel.getCurrentEditorElement();
+        if (currentEditorElement != null) {
+          select(currentEditorElement, false);
+        }
       }
-    }
-    catch (IndexNotReadyException ignore) {
-    }
+      catch (IndexNotReadyException ignore) {
+      }
+    });
   }
 
   @Override

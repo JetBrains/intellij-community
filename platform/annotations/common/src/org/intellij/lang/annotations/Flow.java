@@ -22,9 +22,9 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation assists the 'Data flow to this' feature by describing data flow
- * from the method parameter to the corresponding container (e.g. <code>ArrayList.add(item)</code>)
- * or from the container to the method return value (e.g. <code>Set.toArray()</code>)
- * or between method parameters (e.g. <code>System.arraycopy(array1, 0, array2, length)</code>)
+ * from the method parameter to the corresponding container (e.g. {@code ArrayList.add(item)})
+ * or from the container to the method return value (e.g. {@code Set.toArray()})
+ * or between method parameters (e.g. {@code System.arraycopy(array1, 0, array2, length)})
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.PARAMETER, ElementType.METHOD})
@@ -34,12 +34,12 @@ public @interface Flow {
    * Allowed values are:<br>
    *
    * <ul>
-   * <li><code>THIS_SOURCE</code> - Means that the data flows from this container.<br>
+   * <li>{@code THIS_SOURCE} - Means that the data flows from this container.<br>
    *     E.g. annotation for java.util.List method get(index) means the method reads contents of list and returns it.<br>
    *     {@code @Flow(source = THIS_SOURCE) T get(int index);}<br>
    * </li>
    * <li>
-   *   <code>this.</code>Field name - means that the data flows from this container some (synthetic) field.<br>
+   *   {@code this.}Field name - means that the data flows from this container some (synthetic) field.<br>
    *   E.g. annotation for java.util.Map.keySet() method here means that it returns data from the map from the field named "keys".<br>
    *   {@code @Flow(source = "this.keys") Set<K> keySet();}
    * </li>
@@ -77,7 +77,7 @@ public @interface Flow {
    * Allowed values are:<br>
    *
    * <ul>
-   * <li><code>THIS_TARGET</code> - Means that the data flows inside this container (of the class the annotated method belongs to).<br>
+   * <li>{@code THIS_TARGET} - Means that the data flows inside this container (of the class the annotated method belongs to).<br>
    *     E.g. annotation for java.util.List method add(element) means the method takes the argument and passes it to this collection.<br>
    *     {@code boolean add(@Flow(target=THIS_TARGET, targetIsContainer=true) E element);}<br>
    * </li>
@@ -88,7 +88,7 @@ public @interface Flow {
    *    means that java.lang.System.arraycopy() method takes its first argument and passes it to the "dest" parameter.
    * </li>
    * <li>
-   *   <code>this.</code>Field name - means that the data flows to this container in some (synthetic) field.<br>
+   *   {@code this.}Field name - means that the data flows to this container in some (synthetic) field.<br>
    *   E.g. annotation for java.util.Map.put(key, value) method here means that it takes the argument 'key' and stores the data in some (hidden) field named "keys".<br>
    *   {@code V put(@Flow(target = "this.keys", targetIsContainer=true) K key, V value);}
    * </li>

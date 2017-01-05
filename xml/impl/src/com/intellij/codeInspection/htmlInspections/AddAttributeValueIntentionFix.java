@@ -17,11 +17,8 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -61,24 +58,15 @@ public class AddAttributeValueIntentionFix extends LocalQuickFixAndIntentionActi
       return;
     }
 
-    if (!FileModificationService.getInstance().prepareFileForWrite(attribute.getContainingFile())) {
-      return;
-    }
+    final XmlAttribute attributeWithValue = XmlElementFactory.getInstance(project).createAttribute(attribute.getName(), "", startElement);
+    final PsiElement newAttribute = attribute.replace(attributeWithValue);
 
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) {
-        final XmlAttribute attributeWithValue = XmlElementFactory.getInstance(getProject()).createAttribute(attribute.getName(), "", startElement);
-        final PsiElement newAttribute = attribute.replace(attributeWithValue);
-        
-        if (editor != null && newAttribute != null && newAttribute instanceof XmlAttribute && newAttribute.isValid()) {
-          final XmlAttributeValue valueElement = ((XmlAttribute)newAttribute).getValueElement();
-          if (valueElement != null) {
-            editor.getCaretModel().moveToOffset(valueElement.getTextOffset());
-            AutoPopupController.getInstance(newAttribute.getProject()).scheduleAutoPopup(editor);
-          }
-        }
+    if (editor != null && newAttribute != null && newAttribute instanceof XmlAttribute && newAttribute.isValid()) {
+      final XmlAttributeValue valueElement = ((XmlAttribute)newAttribute).getValueElement();
+      if (valueElement != null) {
+        editor.getCaretModel().moveToOffset(valueElement.getTextOffset());
+        AutoPopupController.getInstance(newAttribute.getProject()).scheduleAutoPopup(editor);
       }
-    }.execute();
+    }
   }
 }

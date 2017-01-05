@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1095,10 +1095,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(SvnTarget.fromURL(sourceURL, SVNRevision.HEAD),
                                                                     SvnTarget.fromURL(targetURL, SVNRevision.HEAD), os);
     }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    catch (VcsException e) {
+    catch (IOException | VcsException e) {
       LOG.info(e);
     }
     finally {

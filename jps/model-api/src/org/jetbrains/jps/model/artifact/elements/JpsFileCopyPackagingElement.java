@@ -16,6 +16,9 @@
 package org.jetbrains.jps.model.artifact.elements;
 
 /**
+ * Represents 'Copy of file' node in the output layout tree. When the artifact is being built the specified file will be copied or packed (optionally under
+ * different name) to the corresponding place under the artifact output directory.
+ *
  * @author nik
  */
 public interface JpsFileCopyPackagingElement extends JpsPackagingElement {

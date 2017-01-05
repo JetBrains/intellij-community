@@ -25,6 +25,13 @@ public abstract class HighlightingLevelManager {
     return ServiceManager.getService(project, HighlightingLevelManager.class);
   }
 
+  /**
+   * >= Syntax level
+   */
   public abstract boolean shouldHighlight(@NotNull PsiElement psiRoot);
+
+  /**
+   * >= Inspections level
+   */
   public abstract boolean shouldInspect(@NotNull PsiElement psiRoot);
 }

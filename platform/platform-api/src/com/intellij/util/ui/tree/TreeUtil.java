@@ -951,6 +951,7 @@ public final class TreeUtil {
     }
   }
 
+  @FunctionalInterface
   public interface Traverse{
     boolean accept(Object node);
   }

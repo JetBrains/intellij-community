@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorCo
 @SuppressWarnings("GroovyPointlessBoolean")
 class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
-  public void testImportAnnotationProcessorProfiles() throws Exception {
+  void testImportAnnotationProcessorProfiles() throws Exception {
     createModulePom("module1", """
 <groupId>test</groupId>
 <artifactId>module1</artifactId>
@@ -122,7 +122,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
   <module>module4</module>
 </modules>
 
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -137,7 +137,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert compilerConfiguration.moduleProcessorProfiles.size() == 2
   }
 
-  public void testOverrideGeneratedOutputDir() {
+  void testOverrideGeneratedOutputDir() {
     importProject """
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -154,7 +154,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -162,7 +162,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + "project").getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("out/generated")
   }
 
-  public void testImportAnnotationProcessorOptions() {
+  void testImportAnnotationProcessorOptions() {
     importProject """
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -186,7 +186,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -195,7 +195,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert new HashMap(processorOptions) == ['opt1': '111', 'opt2': '222', 'opt3': '333', 'opt4': '444', 'justKey': '']
   }
 
-  public void testMavenProcessorPlugin() {
+  void testMavenProcessorPlugin() {
     importProject """
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -244,7 +244,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
             </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -255,7 +255,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert new HashMap(profile.getProcessorOptions()) == ['myoption1' : 'TRUE', 'myoption2' : 'TRUE']
   }
 
-  public void testMavenProcessorPluginDefault() {
+  void testMavenProcessorPluginDefault() {
     importProject """
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -302,7 +302,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
             </plugin>
   </plugins>
 </build>
-""";
+"""
 
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
@@ -312,7 +312,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
   }
 
-  public void testProcessorsViaBscMavenPlugin() {
+  void testProcessorsViaBscMavenPlugin() {
     importProject("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
@@ -235,34 +234,23 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null && evaluationContext != null) {
       try {
-        final ReferenceType refType = exceptionObj.referenceType();
-        final List<Method> methods = refType.methodsByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
-        if (methods.size() > 0) {
+        ClassType refType = (ClassType)exceptionObj.referenceType();
+        Method method = refType.concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
+        if (method != null) {
           final DebugProcessImpl process = evaluationContext.getDebugProcess();
-          process.invokeMethod(evaluationContext, exceptionObj, methods.get(0), Collections.emptyList());
-          
+          Value trace = process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+
           // print to console as well
-          
-          final Field traceField = refType.fieldByName("stackTrace");
-          final Value trace = traceField != null? exceptionObj.getValue(traceField) : null; 
           if (trace instanceof ArrayReference) {
-            final ArrayReference traceArray = (ArrayReference)trace;
-            final Type componentType = ((ArrayType)traceArray.referenceType()).componentType();
-            if (componentType instanceof ClassType) {
-              process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj));
-              process.printToConsole("\n");
-              for (Value stackElement : traceArray.getValues()) {
-                process.printToConsole("\tat ");
-                process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, stackElement));
-                process.printToConsole("\n");
-              }
+            ArrayReference traceArray = (ArrayReference)trace;
+            process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
+            for (Value stackElement : traceArray.getValues()) {
+              process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
             }
           }
         }
       }
       catch (EvaluateException ignored) {
-      }
-      catch (ClassNotLoadedException ignored) {
       }
       catch (Throwable e) {
         LOG.info(e); // catch all exceptions to ensure the method returns gracefully

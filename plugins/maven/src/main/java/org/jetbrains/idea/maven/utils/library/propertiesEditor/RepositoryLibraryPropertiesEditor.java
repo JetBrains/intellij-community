@@ -33,6 +33,7 @@ public class RepositoryLibraryPropertiesEditor {
   @NotNull private final Project project;
   State currentState;
   List<String> versions;
+  @Nullable
   private VersionKind versionKind;
   private RepositoryLibraryPropertiesModel initialModel;
   private RepositoryLibraryPropertiesModel model;
@@ -256,7 +257,10 @@ public class RepositoryLibraryPropertiesEditor {
     ApplicationManager.getApplication().invokeLater(() -> setState(State.FailedToLoad), ModalityState.any());
   }
 
+  @Nullable
   public String getSelectedVersion() {
+    if(versionKind == null) return null;
+
     switch (versionKind) {
       case Unselected:
         return null;

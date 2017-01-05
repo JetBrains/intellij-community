@@ -20,6 +20,7 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefDirectory;
@@ -279,21 +280,22 @@ public abstract class InspectionRVContentProvider {
                 continue;
               }
             }
-            for (RefElementNode parentNode : parentNodes) {
-              final List<ProblemDescriptionNode> nodes = new ArrayList<>();
-              TreeUtil.traverse(parentNode, new TreeUtil.Traverse() {
-                @Override
-                public boolean accept(final Object node) {
+
+            //allow unused declaration to have structure at file level even when there are unused parameters
+            if (!HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME.equals(toolWrapper.getShortName())) {
+              for (RefElementNode parentNode : parentNodes) {
+                final List<ProblemDescriptionNode> nodes = new ArrayList<>();
+                TreeUtil.traverse(parentNode, node -> {
                   if (node instanceof ProblemDescriptionNode) {
                     nodes.add((ProblemDescriptionNode)node);
                   }
                   return true;
+                });
+                if (nodes.isEmpty()) continue;
+                parentNode.removeAllChildren();
+                for (ProblemDescriptionNode node : nodes) {
+                  parentNode.add(node);
                 }
-              });
-              if (nodes.isEmpty()) continue;  //FilteringInspectionTool == DeadCode
-              parentNode.removeAllChildren();
-              for (ProblemDescriptionNode node : nodes) {
-                parentNode.add(node);
               }
             }
             for (RefElementNode node : parentNodes) {
@@ -317,27 +319,24 @@ public abstract class InspectionRVContentProvider {
       final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(presentation);
       final RefEntityContainer finalContainer = container;
       final RefElementNode finalPrevNode = prevNode;
-      TreeUtil.traverseDepth(parentNode, new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(Object node) {
-          if (node instanceof RefElementNode) {
-            final RefElementNode refElementNode = (RefElementNode)node;
-            final RefEntity userObject = finalContainer.getRefEntity();
-            final RefEntity object = refElementNode.getElement();
-            if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
-              if (firstLevel.get()) {
-                result.set(refElementNode);
-                return false;
-              }
-              else {
-                refElementNode.insertByOrder(finalPrevNode, false);
-                result.set(nodeToBeAdded);
-                return false;
-              }
+      TreeUtil.traverseDepth(parentNode, node -> {
+        if (node instanceof RefElementNode) {
+          final RefElementNode refElementNode = (RefElementNode)node;
+          final RefEntity userObject = finalContainer.getRefEntity();
+          final RefEntity object = refElementNode.getElement();
+          if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
+            if (firstLevel.get()) {
+              result.set(refElementNode);
+              return false;
+            }
+            else {
+              refElementNode.insertByOrder(finalPrevNode, false);
+              result.set(nodeToBeAdded);
+              return false;
             }
           }
-          return true;
         }
+        return true;
       });
       if(!result.isNull()) return result.get();
 

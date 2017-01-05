@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.actionSystem.DataContext;
 
 /** @deprecated to be removed in IDEA 2018 */
-@SuppressWarnings("unused")
 public interface SelectionChangeListener {
   void selectionChanged(DataContext context);
 }

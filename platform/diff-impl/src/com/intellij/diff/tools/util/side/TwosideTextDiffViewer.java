@@ -36,7 +36,6 @@ import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -54,8 +53,6 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(TwosideTextDiffViewer.class);
-
   @NotNull private final List<? extends EditorEx> myEditableEditors;
   @Nullable private List<? extends EditorEx> myEditors;
 

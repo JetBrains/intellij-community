@@ -47,6 +47,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   @NotNull
+  public static <T> SyntaxTraverser<T> syntaxTraverser(@NotNull Api<T> api) {
+    return new SyntaxTraverser<T>(api, null);
+  }
+
+  @NotNull
   public static SyntaxTraverser<PsiElement> psiTraverser() {
     return new SyntaxTraverser<PsiElement>(psiApi(), null);
   }

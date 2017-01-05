@@ -233,7 +233,8 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
         if (!modifiedClasses.isEmpty()) {
           final HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
           if (modifiedClasses.keySet().size() == 1) {
-            progress.setSessionToRestartOnFail(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
+            //noinspection ConstantConditions
+            progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
           }
           application.executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
         }
@@ -297,13 +298,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     public void fileGenerated(String outputRoot, String relativePath) {
       if (StringUtil.endsWith(relativePath, ".class") && JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) {
         // collect only classes
-        final Map<String, List<String>> map = myGeneratedPaths.get();
-        List<String> paths = map.get(outputRoot);
-        if (paths == null) {
-          paths = new ArrayList<>();
-          map.put(outputRoot, paths);
-        }
-        paths.add(relativePath);
+        myGeneratedPaths.get().computeIfAbsent(outputRoot, k -> new ArrayList<>()).add(relativePath);
       }
     }
 

@@ -64,7 +64,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
       final PsiModifierListOwner candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiModifierListOwner>() {
         @Override
         public PsiModifierListOwner compute() {
-          PsiElement parent = ann.getParent();
+          PsiElement parent = ann.getContext();
           if (!(parent instanceof PsiModifierList)) {
             return null; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
           }
@@ -72,6 +72,10 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
           final PsiElement owner = parent.getParent();
           if (!isInstanceof(owner, types)) {
             return null;
+          }
+
+          if (p.isApproximate()) {
+            return (PsiModifierListOwner)owner;
           }
 
           final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();

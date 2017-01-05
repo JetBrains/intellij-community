@@ -58,6 +58,7 @@ public class Key<T> {
     return myName;
   }
 
+  @NotNull
   public static <T> Key<T> create(@NotNull @NonNls String name) {
     return new Key<T>(name);
   }
@@ -77,12 +78,12 @@ public class Key<T> {
   }
 
   /**
-   * Returns <code>true</code> if and only if the <code>holder</code> has
+   * Returns {@code true} if and only if the {@code holder} has
    * not null value by the key.
    *
    * @param holder user data holder object
-   * @return <code>true</code> if holder.getUserData(this) != null
-   * <code>false</code> otherwise.
+   * @return {@code true} if holder.getUserData(this) != null
+   * {@code false} otherwise.
    */
   public boolean isIn(@Nullable UserDataHolder holder) {
     return get(holder) != null;

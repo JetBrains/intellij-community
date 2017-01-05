@@ -22,13 +22,17 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.components.impl.stores.StateStorageBase
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
+import com.intellij.util.LineSeparator
+import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.isEmpty
 import gnu.trove.THashMap
+import gnu.trove.THashSet
 import org.jdom.Element
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -124,16 +128,15 @@ open class DirectoryBasedStorage(private val dir: Path,
       }
       else {
         val stateAndFileNameList = storage.splitter.splitState(element!!)
+        val existingFiles = THashSet<String>(stateAndFileNameList.size)
         for (pair in stateAndFileNameList) {
           doSetState(pair.second, pair.first)
+          existingFiles.add(pair.second)
         }
 
-        outerLoop@
         for (key in originalStates.keys()) {
-          for (pair in stateAndFileNameList) {
-            if (pair.second == key) {
-              continue@outerLoop
-            }
+          if (existingFiles.contains(key)) {
+            continue
           }
 
           if (copiedStorageData == null) {
@@ -201,7 +204,7 @@ open class DirectoryBasedStorage(private val dir: Path,
           storeElement.setAttribute(FileStorageCoreUtil.NAME, storage.componentName!!)
           storeElement.addContent(element)
 
-          val file = getFile(fileName, dir, this)
+          val file = dir.getOrCreateChild(fileName, this)
           // we don't write xml prolog due to historical reasons (and should not in any case)
           writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) loadFile(file).second else SystemProperties.getLineSeparator()), false)
         }

@@ -226,7 +226,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
-    @NonNls final String text = "class _Dummy_ { private " + type.getCanonicalText(true) + " " + name + "; }";
+    @NonNls final String text = "class _Dummy_ { private " + GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText(true) + " " + name + "; }";
     final PsiJavaFile aFile = createDummyJavaFile(text);
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
@@ -250,8 +250,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create method with type \"null\".");
     }
 
-    final String canonicalText = returnType.getCanonicalText(true);
-    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {} }");
+    final String canonicalText = GenericsUtil.getVariableTypeByExpressionType(returnType).getCanonicalText(true);
+    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {\n} }");
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
       throw new IncorrectOperationException("Class was not created. Method name: " + name + "; return type: " + canonicalText);
@@ -268,7 +268,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType, PsiElement context) throws IncorrectOperationException {
-    return createMethodFromText("public " + returnType.getCanonicalText(true) + " " + name + "() {}", context);
+    return createMethodFromText("public " + GenericsUtil.getVariableTypeByExpressionType(returnType).getCanonicalText(true) + " " + name + "() {}", context);
   }
 
   @NotNull
@@ -641,7 +641,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, context);
 
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
-    replace(variable.getTypeElement(), createTypeElement(type), text);
+    replace(variable.getTypeElement(), createTypeElement(GenericsUtil.getVariableTypeByExpressionType(type)), text);
 
     boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(myManager.getProject()).isGenerateFinalLocals();
     PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, generateFinalLocals);

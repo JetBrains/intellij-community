@@ -17,8 +17,6 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
@@ -101,26 +99,13 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     Document document = myEditor.getDocument();
     myFile = FileDocumentManager.getInstance().getFile(document);
 
-
     final FileStatusManager manager = FileStatusManager.getInstance(project);
     manager.addFileStatusListener(new FileStatusListener() {
       @Override
       public void fileStatusesChanged() {
         updateCrumbs();
       }
-
-      @Override
-      public void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
-      }
     }, this);
-
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings source) {
-        queueUpdate();
-      }
-    }, this);
-
 
     myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
 

@@ -15,149 +15,28 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
-import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.credentialStore.CredentialPromptDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Ref;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
-/**
- * The generic password dialog. Use it to ask a password from user with option to remember it.
- */
-public class PasswordSafePromptDialog extends DialogWrapper {
-  private final PasswordPromptComponent myComponent;
-
+@Deprecated
+public class PasswordSafePromptDialog {
   /**
-   * The private constructor. Note that it does not do init on dialog.
-   */
-  private PasswordSafePromptDialog(@Nullable Project project, @NotNull String title, @NotNull PasswordPromptComponent component) {
-    super(project, true);
-
-    setTitle(title);
-    myComponent = component;
-    setResizable(false);
-    init();
-  }
-
-  public PasswordPromptComponent getComponent() {
-    return myComponent;
-  }
-
-  @Override
-  protected JComponent createCenterPanel() {
-    return myComponent.getComponent();
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myComponent.getPreferredFocusedComponent();
-  }
-
-  /**
-   * Ask password possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
-   * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
-   * @param project       the context project
-   * @param title         the dialog title
-   * @param message       the message describing a resource for which password is asked
-   * @param requestor     the password requestor
-   * @param key           the password key
-   * @param resetPassword if true, the old password is removed from database and new password will be asked.
-   * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
+   * @deprecated Use {@link CredentialPromptDialog}
    */
   @Nullable
-  public static String askPassword(final Project project,
-                                   final String title,
-                                   final String message,
-                                   @NotNull final Class<?> requestor,
-                                   final String key,
-                                   boolean resetPassword, String error) {
-    return askPassword(project, title, message, requestor, key, resetPassword, error, null, null);
-  }
-
-  /**
-   * Ask password possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
-   * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
-   *
-   * @param title         the dialog title
-   * @param message       the message describing a resource for which password is asked
-   * @param requestor     the password requestor
-   * @param key           the password key
-   * @param resetPassword if true, the old password is removed from database and new password will be asked.
-   * @return null if dialog was cancelled or password (stored in database or a entered by user)
-   */
-  @Nullable
-  public static String askPassword(final String title,
-                                   final String message,
-                                   @NotNull final Class<?> requestor,
-                                   final String key,
-                                   boolean resetPassword) {
-    return askPassword(null, title, message, requestor, key, resetPassword, null);
-  }
-
-
-  /**
-   * Ask passphrase possibly asking password database first. The method could be invoked from any thread. If UI needs to be shown,
-   * the method invokes {@link UIUtil#invokeAndWaitIfNeeded(Runnable)}
-   * @param project       the context project (might be null)
-   * @param title         the dialog title
-   * @param message       the message describing a resource for which password is asked
-   * @param requestor     the password requestor
-   * @param key           the password key
-   * @param resetPassword if true, the old password is removed from database and new password will be asked.
-   * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
-   */
-  @Nullable
-  public static String askPassphrase(final Project project,
-                                     final String title,
-                                     final String message,
-                                     @NotNull final Class<?> requestor,
-                                     final String key,
-                                     boolean resetPassword,
-                                     String error) {
-    return askPassword(project, title, message, requestor, key, resetPassword, error,
-                       "Passphrase:", "Remember the passphrase");
-  }
-
-  @Nullable
-  private static String askPassword(Project project,
-                                    String title,
-                                    String message,
-                                    @NotNull Class<?> requestor,
-                                    String accountName,
-                                    boolean resetPassword,
-                                    String error,
-                                    String promptLabel,
-                                    String checkboxLabel) {
-    PasswordSafe ps = PasswordSafe.getInstance();
-    if (resetPassword) {
-      ps.setPassword(requestor, accountName, null);
-    }
-    else {
-      String pw = ps.getPassword(requestor, accountName);
-      if (pw != null) {
-        return pw;
-      }
-    }
-
-    Ref<String> ref = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      final PasswordPromptComponent component = new PasswordPromptComponent(ps.isMemoryOnly(), message, false, promptLabel, checkboxLabel);
-      PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, title, component);
-
-      d.setErrorText(error);
-      if (d.showAndGet()) {
-        ref.set(new String(component.getPassword()));
-        ps.setPassword(new CredentialAttributes("IntelliJ Platform — " + requestor.getName(), accountName), ref.get(), !component.isRememberSelected());
-      }
-    }, ModalityState.any());
-    return ref.get();
+  @Deprecated
+  public static String askPassword(@Nullable Project project,
+                                   String title,
+                                   String message,
+                                   @NotNull Class<?> requestor,
+                                   String key,
+                                   boolean resetPassword,
+                                   String error) {
+    return CredentialPromptDialog.askPassword(project, title, message, CredentialAttributes(requestor, key), resetPassword, error);
   }
 }
 

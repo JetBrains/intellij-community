@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -169,17 +170,8 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                                        PsiElement thenBranch,
                                        PsiExpression thenReturnValue,
                                        PsiExpression elseReturnValue) {
-    final PsiElement method = PsiTreeUtil.getParentOfType(thenBranch, PsiMethod.class, PsiLambdaExpression.class);
-    if (method == null) {
-      return null;
-    }
-    final PsiType methodType = method instanceof PsiMethod ? ((PsiMethod)method).getReturnType()
-                                                           : LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)method);
-    final String conditional = getConditionalText(condition, thenReturnValue, elseReturnValue, methodType);
-    if (conditional == null) {
-      return null;
-    }
-    return conditional;
+    final PsiType methodType = PsiTypesUtil.getMethodReturnType(thenBranch);
+    return methodType == null ? null : getConditionalText(condition, thenReturnValue, elseReturnValue, methodType);
   }
 
   private static void replaceIfStatement(PsiIfStatement ifStatement, String text) {

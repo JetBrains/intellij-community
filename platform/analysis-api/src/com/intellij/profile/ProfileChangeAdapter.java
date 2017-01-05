@@ -15,13 +15,14 @@
  */
 package com.intellij.profile;
 
+import com.intellij.codeInspection.InspectionProfile;
 import org.jetbrains.annotations.Nullable;
 
 public interface ProfileChangeAdapter {
-  default void profileChanged(@Nullable Profile profile) {
+  default void profileChanged(@Nullable InspectionProfile profile) {
   }
 
-  default void profileActivated(@Nullable Profile oldProfile, @Nullable Profile profile) {
+  default void profileActivated(@Nullable InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
   }
 
   default void profilesInitialized() {

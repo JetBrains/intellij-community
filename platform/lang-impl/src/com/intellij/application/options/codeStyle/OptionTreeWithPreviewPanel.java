@@ -282,6 +282,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
+    ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
   private void resetNode(TreeNode node, final CodeStyleSettings settings) {
@@ -301,10 +302,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       childNode.setSelected(key.getValue(settings));
       childNode.setEnabled(key.isEnabled());
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
   }
@@ -362,10 +360,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
       return childNode.isSelected() != key.getValue(settings);
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
     return false;
@@ -388,10 +383,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                                   getRenamedTitle(fieldName, title), field);
       myKeys.add(key);
     }
-    catch (NoSuchFieldException e) {
-      LOG.error(e);
-    }
-    catch (SecurityException e) {
+    catch (NoSuchFieldException | SecurityException e) {
       LOG.error(e);
     }
   }
@@ -406,10 +398,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                               option.anchor, option.anchorFieldName,
                                               option.settingClass, field));
       }
-      catch (NoSuchFieldException e) {
-        LOG.error(e);
-      }
-      catch (SecurityException e) {
+      catch (NoSuchFieldException | SecurityException e) {
         LOG.error(e);
       }
     }

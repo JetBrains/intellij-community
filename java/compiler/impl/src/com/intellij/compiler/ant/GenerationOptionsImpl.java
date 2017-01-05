@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 
 import java.io.File;
 import java.util.*;
@@ -229,30 +230,29 @@ public class GenerationOptionsImpl extends GenerationOptions {
       reverseMap.put(moduleChunk, chunk);
     }
 
-    final Graph<ModuleChunk> moduleChunkGraph =
-      GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModuleChunk>() {
-        public Collection<ModuleChunk> getNodes() {
-          return map.values();
-        }
+    final Graph<ModuleChunk> moduleChunkGraph = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleChunk>() {
+      public Collection<ModuleChunk> getNodes() {
+        return map.values();
+      }
 
-        public Iterator<ModuleChunk> getIn(ModuleChunk n) {
-          final Chunk<Module> chunk = reverseMap.get(n);
-          final Iterator<Chunk<Module>> in = chunkGraph.getIn(chunk);
-          return new Iterator<ModuleChunk>() {
-            public boolean hasNext() {
-              return in.hasNext();
-            }
+      public Iterator<ModuleChunk> getIn(ModuleChunk n) {
+        final Chunk<Module> chunk = reverseMap.get(n);
+        final Iterator<Chunk<Module>> in = chunkGraph.getIn(chunk);
+        return new Iterator<ModuleChunk>() {
+          public boolean hasNext() {
+            return in.hasNext();
+          }
 
-            public ModuleChunk next() {
-              return map.get(in.next());
-            }
+          public ModuleChunk next() {
+            return map.get(in.next());
+          }
 
-            public void remove() {
-              throw new IncorrectOperationException("Method is not supported");
-            }
-          };
-        }
-      }));
+          public void remove() {
+            throw new IncorrectOperationException("Method is not supported");
+          }
+        };
+      }
+    }));
     final Collection<ModuleChunk> nodes = moduleChunkGraph.getNodes();
     final ModuleChunk[] moduleChunks = nodes.toArray(new ModuleChunk[nodes.size()]);
     for (ModuleChunk moduleChunk : moduleChunks) {

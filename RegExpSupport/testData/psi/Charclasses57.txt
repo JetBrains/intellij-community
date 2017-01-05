@@ -3,10 +3,9 @@ REGEXP_FILE
     RegExpBranchImpl: <a\p}>
       RegExpCharImpl: <a>
         PsiElement(CHARACTER)('a')
-      RegExpPropertyImpl: <\p}>
+      RegExpPropertyImpl: <\p>
         PsiElement(PROPERTY)('\p')
-        PsiErrorElement:Character category expected
+        PsiErrorElement:'{' or category shorthand expected
           <empty list>
+      RegExpCharImpl: <}>
         PsiElement(CHARACTER)('}')
-        PsiErrorElement:Unclosed character family
-          <empty list>

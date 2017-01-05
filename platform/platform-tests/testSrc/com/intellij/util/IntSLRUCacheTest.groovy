@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,14 @@ class IntSLRUCacheTest extends UsefulTestCase {
     return new IntObjectLinkedMap.MapEntry<String>(i, i as String)
   }
 
-  public void "test cached after add"() {
+  void "test cached after add"() {
     def cache = createCache()
     cache.cacheEntry(entry(0))
     assert cache.getCachedEntry(0)
     assert !cache.getCachedEntry(1)
   }
 
-  public void "test evict infrequent"() {
+  void "test evict infrequent"() {
     def cache = createCache(2, 2)
     cache.cacheEntry(entry(0))
     cache.cacheEntry(entry(1))
@@ -48,7 +48,7 @@ class IntSLRUCacheTest extends UsefulTestCase {
     assert cache.getCachedEntry(2)
   }
 
-  public void "test frequently accessed should survive"() {
+  void "test frequently accessed should survive"() {
     def cache = createCache(2, 2)
     cache.cacheEntry(entry(0))
     cache.cacheEntry(entry(1))
@@ -62,7 +62,7 @@ class IntSLRUCacheTest extends UsefulTestCase {
     assert cache.getCachedEntry(2)
   }
 
-  public void "test drop frequently accessed in the past"() {
+  void "test drop frequently accessed in the past"() {
     def cache = createCache()
     cache.cacheEntry(entry(0))
     assert cache.getCachedEntry(0) // protected now
@@ -81,7 +81,7 @@ class IntSLRUCacheTest extends UsefulTestCase {
     assert cache.getCachedEntry(1)
   }
 
-  public void "test changing working set"() {
+  void "test changing working set"() {
     def cache = createCache()
     cache.cacheEntry(entry(0))
     assert cache.getCachedEntry(0)

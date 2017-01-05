@@ -34,9 +34,11 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public ChangesBrowserFilePathNode(FilePath userObject) {
     super(userObject);
-    if (!userObject.isDirectory()) {
-      myCount = 1;
-    }
+  }
+
+  @Override
+  protected boolean isFile() {
+    return !getUserObject().isDirectory();
   }
 
   @Override
@@ -74,7 +76,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   @Override
   public String getTextPresentation() {
-    return getUserObject().getName();
+    return getRelativePath(getUserObject());
   }
 
   @Override
@@ -103,8 +105,8 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   public int getSortWeight() {
-    if (((FilePath)userObject).isDirectory()) return 4;
-    return 5;
+    if (((FilePath)userObject).isDirectory()) return DIRECTORY_PATH_SORT_WEIGHT;
+    return FILE_PATH_SORT_WEIGHT;
   }
 
   public int compareUserObjects(final Object o2) {

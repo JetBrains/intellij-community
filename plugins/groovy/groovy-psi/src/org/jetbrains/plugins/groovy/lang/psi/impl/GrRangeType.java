@@ -52,7 +52,7 @@ public class GrRangeType extends GrLiteralClassType {
       myQualifiedName = GroovyCommonClassNames.GROOVY_LANG_INT_RANGE;
     }
     else {
-      myQualifiedName = GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE;
+      myQualifiedName = GroovyCommonClassNames.GROOVY_LANG_RANGE;
     }
 
     myParameters = inferParameters();

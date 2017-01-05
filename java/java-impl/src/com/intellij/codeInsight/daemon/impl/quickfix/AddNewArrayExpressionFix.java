@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,13 +56,18 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     return getType() != null;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return myInitializer;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myInitializer, file)) return;
     PsiManager manager = file.getManager();
     PsiType type = getType();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    @NonNls String text = "new " + type.getPresentableText() + "[]{}";
+    @NonNls String text = "new " + type.getCanonicalText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);
     newExpr = (PsiNewExpression) CodeStyleManager.getInstance(manager.getProject()).reformat(newExpr);
@@ -73,15 +79,21 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     final PsiElement parent = myInitializer.getParent();
     if (!(parent instanceof PsiAssignmentExpression)) {
       if (initializers.length <= 0) return null;
-      return initializers[0].getType();
+      return validateType(initializers[0].getType());
     }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
     final PsiType type = assignmentExpression.getType();
     if (!(type instanceof PsiArrayType)) {
       if (initializers.length <= 0) return null;
-      return initializers[0].getType();
+      return validateType(initializers[0].getType());
     }
-    return ((PsiArrayType)type).getComponentType();
+    return validateType(((PsiArrayType)type).getComponentType());
+  }
+
+  private static PsiType validateType(PsiType type) {
+    if (PsiType.NULL.equals(type)) return null;
+    return LambdaUtil.notInferredType(type) || !PsiTypesUtil.isDenotableType(type) ? null
+                                                                                   : TypeConversionUtil.erasure(type);
   }
 
   @Override

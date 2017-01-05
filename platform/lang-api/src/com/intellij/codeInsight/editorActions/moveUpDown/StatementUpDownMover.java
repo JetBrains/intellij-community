@@ -40,7 +40,7 @@ public abstract class StatementUpDownMover {
     public LineRange toMove;
 
     /**
-     * Target line range, or <code>null</code> if move not available
+     * Target line range, or {@code null} if move not available
      * @see #prohibitMove()
      */
     public LineRange toMove2;

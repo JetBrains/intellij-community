@@ -18,7 +18,6 @@ package com.intellij.openapi.application;
 import com.intellij.Patches;
 import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,6 @@ public abstract class ClipboardAnalyzeListener extends ApplicationActivationList
 
   @Override
   public void applicationDeactivated(IdeFrame ideFrame) {
-    if (SystemInfo.isMac) return;
     myCachedClipboardValue = ClipboardUtil.getTextInClipboard();
   }
 

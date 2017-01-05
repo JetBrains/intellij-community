@@ -1,11 +1,13 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.settingsRepository.test
 
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.OneTimeString
 import com.intellij.testFramework.ApplicationRule
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.URIish
+import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
 import org.junit.ClassRule
 import org.junit.Test
@@ -40,7 +42,7 @@ internal class IcsCredentialTest {
   @Test
   fun gitCredentialHelper() {
     val credentialStore = createStore()
-    credentialStore.set("bitbucket.org", null, Credentials("develar", "bike"))
+    credentialStore.set("bitbucket.org", null, Credentials("develar", OneTimeString("bike")))
 
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()
@@ -53,7 +55,7 @@ internal class IcsCredentialTest {
   @Test
   fun userByServiceName() {
     val credentialStore = createStore()
-    credentialStore.set("bitbucket.org", null, Credentials("develar", "bike"))
+    credentialStore.set("bitbucket.org", null, Credentials("develar", OneTimeString("bike")))
 
     val username = CredentialItem.Username()
     val password = CredentialItem.Password()

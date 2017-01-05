@@ -24,6 +24,7 @@ import com.intellij.diff.requests.*;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -37,6 +38,8 @@ import java.util.List;
 
 public class ErrorDiffTool implements FrameDiffTool {
   public static final ErrorDiffTool INSTANCE = new ErrorDiffTool();
+
+  private static final Logger LOG = Logger.getInstance(ErrorDiffTool.class);
 
   @NotNull
   @Override
@@ -87,6 +90,14 @@ public class ErrorDiffTool implements FrameDiffTool {
             UnknownFileTypeDiffRequest unknownFileTypeRequest = new UnknownFileTypeDiffRequest(file, myRequest.getTitle());
             return unknownFileTypeRequest.getComponent(myContext);
           }
+        }
+      }
+
+      LOG.info("Can't show diff for " + request.getClass().getName());
+      if (request instanceof ContentDiffRequest) {
+        for (DiffContent content : ((ContentDiffRequest)request).getContents()) {
+          String type = content.getContentType() != null ? content.getContentType().getName() : "null";
+          LOG.info(String.format("      %s, content type: %s", content.getClass().getName(), type));
         }
       }
 

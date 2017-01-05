@@ -70,7 +70,7 @@ public class GantScriptType extends GroovyRunnableScriptType {
 
   @Override
   public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location place) {
-    final String params = existing.getScriptParameters();
+    final String params = existing.getProgramParameters();
     final String targetName = getTargetName(place);
     if (targetName == null) {
       return StringUtil.isEmpty(params);
@@ -101,7 +101,7 @@ public class GantScriptType extends GroovyRunnableScriptType {
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
     String target = getTargetName(location);
     if (target != null) {
-      configuration.setScriptParameters(target);
+      configuration.setProgramParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
     RunManagerEx.disableTasks(file.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);

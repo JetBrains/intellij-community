@@ -107,10 +107,12 @@ public class IncompletePropertyInspectionOptionsPanel {
   }
 
   private class MyListModel extends AbstractListModel {
+    @Override
     public int getSize() {
       return mySuffixes.size();
     }
 
+    @Override
     public Object getElementAt(int index) {
       return ArrayUtil.toStringArray(mySuffixes)[index];
     }

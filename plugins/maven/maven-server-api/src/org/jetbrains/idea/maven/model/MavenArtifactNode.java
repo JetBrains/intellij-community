@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MavenArtifactNode implements Serializable {
@@ -90,7 +91,7 @@ public class MavenArtifactNode implements Serializable {
   }
 
   public void setDependencies(List<MavenArtifactNode> dependencies) {
-    myDependencies = dependencies;
+    myDependencies = new ArrayList<MavenArtifactNode>(dependencies);
   }
 
   @Override

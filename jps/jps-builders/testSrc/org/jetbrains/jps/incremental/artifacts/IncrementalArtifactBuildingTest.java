@@ -222,7 +222,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     createFile("d/2.txt");
     JpsArtifact included = addArtifact("i", root().parentDirCopy(file1));
     JpsArtifact a = addArtifact(root().artifact(included));
-    makeAll();
+    buildAllModulesAndArtifacts();
     assertOutput(included, fs().file("1.txt").file("2.txt"));
     assertOutput(a, fs().file("1.txt").file("2.txt"));
 
@@ -233,7 +233,7 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     assertOutput(included, fs().file("2.txt"));
     assertOutput(a, fs().file("1.txt").file("2.txt"));
 
-    makeAll();
+    buildAllModulesAndArtifacts();
     assertOutput(a, fs().file("2.txt"));
   }
 

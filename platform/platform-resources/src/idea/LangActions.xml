@@ -298,7 +298,16 @@
       <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
-
+    
+    <group id="ParameterNameHints" popup="true">
+      <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
+    </group>
+    
+    <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction">
+      <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="ParameterNameHints"/>
+    </action>
+    
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
     <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
@@ -361,7 +370,6 @@
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
-      <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
@@ -376,6 +384,7 @@
 
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
+      <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <separator/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
@@ -419,7 +428,7 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <group id="Bookmarks">
+    <group id="Bookmarks" text="Bookmarks">
       <reference ref="ToggleBookmark"/>
       <reference ref="ShowBookmarks"/>
       <reference ref="GotoNextBookmark"/>
@@ -447,6 +456,7 @@
       <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark8Action"/>
       <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark9Action"/>
 
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.ide.actions.NonTrivialActionGroup">
@@ -706,23 +716,10 @@
       <add-to-group group-id="RunMenu" anchor="last"/>
     </group>
 
-    <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
-    <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
-
-    <group id="EditorPopupMenuDebug">
-      <separator/>
-      <reference ref="EvaluateExpression"/>
-      <reference ref="RunToCursor"/>
-      <reference ref="ForceRunToCursor"/>
-      <reference ref="Debugger.AddToWatch"/>
-      <reference ref="Debugger.EvaluateInConsole"/>
-      <separator/>
-
-      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
-    </group>
-
-
     <group id="XDebugger.Actions">
+      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
+
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
@@ -740,7 +737,7 @@
       <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
       <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy"
               text="Duplicate Watch" use-shortcut-of="EditorDuplicate"/>
-      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.Actions.Delete"
+      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
       <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MethodUp"/>
       <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MethodDown"/>
@@ -753,6 +750,18 @@
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
+    </group>
+
+    <group id="EditorPopupMenuDebug">
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.EvaluateInConsole"/>
+      <separator/>
+
+      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">

@@ -1,0 +1,2 @@
+def abspath(path):
+    pass

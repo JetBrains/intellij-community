@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="com.intellij.psi.search.PsiNonJavaFileReferenceProcessor">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+</root>

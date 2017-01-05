@@ -26,7 +26,10 @@ import java.util.Collection;
  */
 public interface IgnoredFilesHolder extends FileHolder {
   void addFile(VirtualFile file);
+
   boolean containsFile(VirtualFile file);
+
   Collection<VirtualFile> values();
+
   void cleanAndAdjustScope(VcsModifiableDirtyScope scope);
 }

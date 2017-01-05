@@ -49,9 +49,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -255,12 +253,22 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   @Override
   public Collection<String> findConflicts(PsiElement element, PsiElement[] elements, UsageInfo[] usages) {
     String methodRefFound = null;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && (element instanceof PsiMethod || element instanceof PsiParameter)) {
-      for (UsageInfo usage : usages) {
-        final PsiElement refElement = usage.getElement();
-        if (refElement instanceof PsiMethodReferenceExpression) {
-          methodRefFound = RefactoringBundle.message("expand.method.reference.warning");
-          break;
+    if (element instanceof PsiMethod || element instanceof PsiParameter) {
+      PsiMethod method;
+      if (element instanceof PsiMethod) {
+        method = (PsiMethod)element;
+      }
+      else {
+        PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();
+        method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
+      }
+      if (method != null) {
+        for (UsageInfo usage : usages) {
+          final PsiElement refElement = usage.getElement();
+          if (refElement instanceof PsiMethodReferenceExpression && method.equals(((PsiMethodReferenceExpression)refElement).resolve())) {
+            methodRefFound = RefactoringBundle.message("expand.method.reference.warning");
+            break;
+          }
         }
       }
     }
@@ -296,15 +304,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null) {
-          final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)element);
-          final PsiMethod methodCopy = (PsiMethod)method.copy();
-          methodCopy.getParameterList().getParameters()[parameterIndex].delete();
-          final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-          ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
-          return (Collection<String>)conflicts.values();
-        }
+        final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+        collectMethodConflicts(conflicts, method, (PsiParameter)element);
+        return (Collection<String>)conflicts.values();
       }
     }
     return null;
@@ -963,7 +965,17 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
     return false;
   }
-  
+
+  public static void collectMethodConflicts(MultiMap<PsiElement, String> conflicts, PsiMethod method, PsiParameter parameter) {
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null) {
+      final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+      final PsiMethod methodCopy = (PsiMethod)method.copy();
+      methodCopy.getParameterList().getParameters()[parameterIndex].delete();
+      ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
+    }
+  }
+
   private static class SafeDeleteFunctionalExpressionUsageInfo extends SafeDeleteReferenceUsageInfo {
     public SafeDeleteFunctionalExpressionUsageInfo(@NotNull PsiElement element, PsiElement referencedElement) {
       super(element, referencedElement, false);

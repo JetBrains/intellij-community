@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -34,31 +33,28 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
+import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.lang.CompositeLanguage;
-import com.intellij.lang.ExternalLanguageAnnotators;
-import com.intellij.lang.LanguageFilter;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -73,9 +69,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -109,7 +103,6 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -236,12 +229,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = highlightErrors();
     assertEquals(0, infos.size());
     final PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
-
-      TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
-      assertEquals(getFile().getTextRange(), dirty);
-    });
+    new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
+    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+    assertEquals(getFile().getTextRange(), dirty);
 
     highlightErrors();
     assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
@@ -337,7 +327,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
-    commentLine();
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
     infos = doHighlighting(HighlightSeverity.WARNING);
 
     assertEquals(1, infos.size());
@@ -352,10 +342,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Private field 'text' is assigned but never accessed", infos.get(0).getDescription());
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      EditorModificationUtil.deleteSelectedText(getEditor());
-      type("  text");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    type("  text");
 
     List<HighlightInfo> errors = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(getFile().getText(), errors);
@@ -439,13 +427,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final AtomicBoolean run = new AtomicBoolean();
     Disposable disposable = Disposer.newDisposable();
     final AtomicReference<RuntimeException> stopDaemonReason = new AtomicReference<>();
-    StorageUtil.DEBUG_LOG = "";
+    StorageUtilKt.setDEBUG_LOG("");
     getProject().getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
             new DaemonCodeAnalyzer.DaemonListenerAdapter() {
               @Override
               public void daemonCancelEventOccurred(@NotNull String reason) {
-                stopDaemonReason.compareAndSet(null, new RuntimeException("Some bastard's restarted daemon: " + reason + "\nStorage write log: "+
-                                                                          StorageUtil.DEBUG_LOG));
+                RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason +
+                                                          "\nStorage write log: ----------\n" +
+                                                          StorageUtilKt.getDEBUG_LOG() + "\n--------------");
+                stopDaemonReason.compareAndSet(null, e);
               }
             });
     try {
@@ -469,7 +459,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
     finally {
-      StorageUtil.DEBUG_LOG = null;
+      StorageUtilKt.setDEBUG_LOG(null);
       Disposer.dispose(disposable);
     }
   }
@@ -482,19 +472,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      EditorModificationUtil.deleteSelectedText(getEditor());
-      type("xxxx");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    type("xxxx");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      EditorModificationUtil.deleteSelectedText(getEditor());
-      type("0");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    type("0");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(1, infos.size());
@@ -590,6 +576,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     int countAfter = tool.visited.size();
     assertTrue(tool.visited.toString(), countAfter > 0);
+    tool.visited.clear();
+
+    //ensure started on another file
+    configureByExistingFile(otherFile.getVirtualFile());
+    infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+
+    int countAfter2 = tool.visited.size();
+    assertTrue(tool.visited.toString(), countAfter2 > 0);
   }
 
   public void testOverriddenMethodMarkers() throws Exception {
@@ -626,14 +621,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(markers.toString(), 3, markers.size());
   }
 
-  private static void commentLine() {
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      CommentByLineCommentAction action = new CommentByLineCommentAction();
-      action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext()));
-    });
-  }
 
-  
   public void testChangeXmlIncludeLeadsToRehighlight() throws Exception {
     LanguageFilter[] extensions = ((CompositeLanguage)StdLanguages.XML).getLanguageExtensions();
     for (LanguageFilter extension : extensions) {
@@ -846,6 +834,30 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     backspace();
     backspace();
     assertEmpty(highlightErrors());
+  }
+
+  public void testLocallyUsedFieldHighlighting() {
+    configureByText(JavaFileType.INSTANCE, "class A {\n" +
+                                           "    String cons;\n" +
+                                           "    void foo() {\n" +
+                                           "        String local = null;\n" +
+                                           "        <selection>cons</selection>.substring(1);" +
+                                           "    }\n" +
+                                           "    public static void main(String[] args) {\n" +
+                                           "        new A().foo();\n" +
+                                           "    }" +
+                                           "}");
+    enableInspectionTool(new UnusedDeclarationInspection(true));
+
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertSize(1, infos);
+    assertEquals("Variable 'local' is never used", infos.get(0).getDescription());
+
+    type("local");
+
+    infos = doHighlighting(HighlightSeverity.WARNING);
+    assertSize(1, infos);
+    assertEquals("Field 'cons' is never used", infos.get(0).getDescription());
   }
 
   public void testOverrideMethodsHighlightingPersistWhenTypeInsideMethodBody() throws Throwable {
@@ -1278,8 +1290,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDaemonIgnoresFrameDeactivation() throws Throwable {
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-    InspectionProfileManager.getInstance().setRootProfile(InspectionProfileImpl.getDefaultProfile().getName()); // reset to default profile from the custom one to avoid unnecessary save
+    // return default value to avoid unnecessary save
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     String text = "class S { ArrayList<caret>XXX x;}";
     configureByText(StdFileTypes.JAVA, text);
@@ -1303,7 +1315,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-
   public void testApplyLocalQuickFix() throws Throwable {
     configureByText(StdFileTypes.JAVA, "class X { static int sss; public int f() { return this.<caret>sss; }}");
 
@@ -1312,16 +1323,16 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     List<HighlightInfo> warns = doHighlighting(HighlightSeverity.WARNING);
     assertOneElement(warns);
-    List<HighlightInfo.IntentionActionDescriptor> actions = ShowIntentionsPass.getAvailableActions(getEditor(), getFile(), -1);
+    List<HighlightInfo.IntentionActionDescriptor> actions = ShowIntentionsPass.getAvailableFixes(getEditor(), getFile(), -1);
     final HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> descriptor.getAction().invoke(getProject(), getEditor(), getFile()));
+    CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor(), "");
 
     highlightErrors();
-    actions = ShowIntentionsPass.getAvailableActions(getEditor(), getFile(), -1);
+    actions = ShowIntentionsPass.getAvailableFixes(getEditor(), getFile(), -1);
     assertEmpty(actions);
   }
 
-  
+
   public void testApplyErrorInTheMiddle() throws Throwable {
     String text = "class <caret>X { ";
     for (int i = 0; i < 100; i++) {
@@ -1349,12 +1360,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(errors);
   }
 
-  
+
   public void testErrorInTheEndOutsideVisibleArea() throws Throwable {
     String text = "<xml> \n" + StringUtil.repeatSymbol('\n', 1000) + "</xml>\nxxxxx<caret>";
     configureByText(StdFileTypes.XML, text);
 
-    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 1000));
+    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 1000), myEditor);
     assertTrue(visibleRange.getStartOffset() > 0);
 
     List<HighlightInfo> warns = highlightErrors();
@@ -1367,15 +1378,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Top level element is not completed", info.getDescription());
   }
 
-  private ProperTextRange makeEditorWindowVisible(Point viewPosition) {
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+  public static ProperTextRange makeEditorWindowVisible(Point viewPosition, Editor editor) {
+    ((EditorImpl)editor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setViewPosition(viewPosition);
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)myEditor).getPreferredHeight() - 
-                                                                                          viewPosition.y));
-    return VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    ((EditorImpl)editor).getScrollPane().getViewport().setViewPosition(viewPosition);
+    ((EditorImpl)editor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)editor).getPreferredHeight() -
+                                                                                        viewPosition.y));
+    return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 
 
@@ -1403,7 +1414,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(4, infos.size());
   }
 
-  
+
   public void testTypingNearEmptyErrorElement() throws Throwable {
     String text = "class LQF {\n" +
                   "    public void main() {\n" +
@@ -1422,7 +1433,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(infos);
   }
 
-  
+
   public void testLIPGetAllParentsAfterCodeBlockModification() throws Throwable {
     @Language("JAVA")
     String text = "class LQF {\n" +
@@ -1490,7 +1501,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(new HashSet<>(methodAndParents), new HashSet<>(visitedElements));
   }
 
-  
+
   public void testCancelsItSelfOnTypingInAlienProject() throws Throwable {
     String body = StringUtil.repeat("\"String field = null;\"\n", 1000);
     configureByText(StdFileTypes.JAVA, "class X{ void f() {" + body + "<caret>\n} }");
@@ -1500,7 +1511,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
     assertTrue(succ2);
     DaemonProgressIndicator.setDebug(true);
-    final DaemonProgressIndicator[] indicator = new DaemonProgressIndicator[1];
 
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
@@ -1528,7 +1538,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       di.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, () -> {
         if (checked[0]) return;
         checked[0] = true;
-        indicator[0] = myDaemonCodeAnalyzer.getUpdateProgress();
         typeInAlienEditor(alienEditor, 'x');
       });
     }
@@ -1552,24 +1561,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                                        "    <selection>int y = x;</selection>\n " +
                                        "\n} }");
     assertEmpty(highlightErrors());
-    copy();
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_EDITOR_COPY);
     assertEquals("int y = x;", getEditor().getSelectionModel().getSelectedText());
     getEditor().getSelectionModel().removeSelection();
-    paste();
+    PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_EDITOR_PASTE);
     List<HighlightInfo> errors = highlightErrors();
     assertEquals(1, errors.size());
-  }
-
-  private void paste() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-    WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
-  }
-
-  private void copy() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COPY);
-    WriteCommandAction.runWriteCommandAction(null, () -> actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext()));
   }
 
   public void testReactivityPerformance() throws Throwable {
@@ -1636,7 +1633,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           long end = System.currentTimeMillis();
           long interruptTime = end - now;
           interruptTimes[finalI] = interruptTime;
-          assertNull(codeAnalyzer.getUpdateProgress());
+          assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
           System.out.println(interruptTime);
           throw new ProcessCanceledException();
         };
@@ -1707,7 +1704,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         long end = System.currentTimeMillis();
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
-        assertNull(codeAnalyzer.getUpdateProgress());
+        assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
         //System.out.println(interruptTime);
         throw new ProcessCanceledException();
       };
@@ -1866,7 +1863,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                   "    }\n" +
                   "}";
     configureByText(JavaFileType.INSTANCE, body);
-    makeEditorWindowVisible(new Point());
+    makeEditorWindowVisible(new Point(), myEditor);
 
     List<HighlightInfo> errors = highlightErrors();
     assertFalse(errors.isEmpty());
@@ -2120,8 +2117,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       long elapsed = System.currentTimeMillis() - start;
 
       assertEquals(0, errors.size());
+      if (!run.get()) {
+        fail(ThreadDumper.dumpThreadsToString());
+      }
       assertTrue("Elapsed: "+elapsed, elapsed >= SLEEP);
-      assertTrue(run.get());
     }
     finally {
       ExternalLanguageAnnotators.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, annotator);
@@ -2199,7 +2198,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     IntentionManager.getInstance().addAction(longLongUpdate);
     Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(longLongUpdate));
     configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
-    makeEditorWindowVisible(new Point(0, 0));
+    makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
     myDaemonCodeAnalyzer.restart();
     DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
@@ -2311,7 +2310,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(fragment);
     myEditor = EditorFactory.getInstance().createEditor(document, getProject(), StdFileTypes.JAVA, false);
 
-    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 0));
+    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 0), myEditor);
     assertEquals(document.getTextLength(), visibleRange.getLength());
 
     try {
@@ -2365,5 +2364,57 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
     });
   }
+
+  public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() throws Exception {
+    Annotator annotator = new MyIncorrectlyRecursiveAnnotator();
+    com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
+    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    try {
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+      assertTrue(list.toString(), list.contains(annotator));
+      configureByText(StdFileTypes.JAVA, "class X {\n" +
+                                         "  int foo(Object param) {\n" +
+                                         "    if (param == this) return 1;\n" +
+                                         "    return 0;\n" +
+                                         "  }\n" +
+                                         "}\n");
+      ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+      assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+
+      assertEquals("XXX", assertOneElement(doHighlighting(HighlightSeverity.WARNING)).getDescription());
+
+      for (int i=0; i<100; i++) {
+        //System.out.println("i = " + i);
+        DaemonCodeAnalyzer.getInstance(getProject()).restart();
+        List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+        assertEquals("XXX", assertOneElement(infos).getDescription());
+      }
+    }
+    finally {
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+    }
+
+    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+    assertFalse(list.toString(), list.contains(annotator));
+  }
+
+  public static class MyIncorrectlyRecursiveAnnotator implements Annotator {
+    Random random = new Random();
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      if (psiElement instanceof PsiFile) {
+        psiElement.accept(new JavaRecursiveElementWalkingVisitor(){
+          @Override
+          public void visitKeyword(PsiKeyword keyword) {
+            if (Objects.equals(keyword.getText(), "this")) {
+              holder.createAnnotation(HighlightSeverity.WARNING, keyword.getTextRange(), "XXX");
+              TimeoutUtil.sleep(random.nextInt(100));
+            }
+          }
+        });
+      }
+    }
+  }
+
 }
 

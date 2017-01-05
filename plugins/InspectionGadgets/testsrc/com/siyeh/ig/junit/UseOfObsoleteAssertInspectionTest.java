@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,14 @@ public class UseOfObsoleteAssertInspectionTest extends LightInspectionTestCase {
       "public class Assert {" +
       "  static public void assertEquals(String message, int expected, int actual) {}" +
       "}",
+
+      "package junit.framework;" +
+      "public class TestCase extends Assert {" +
+      "  public static void assertEquals(String message, int expected, int actual) {" +
+      "    Assert.assertEquals(message, expected, actual);" +
+      "  }" +
+      "}",
+
       "package org.junit;" +
       "public class Assert {}"
     };

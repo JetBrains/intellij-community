@@ -40,10 +40,10 @@ public abstract class RainbowVisitor implements HighlightVisitor {
   }
 
   @Override
-  public final boolean analyze(@NotNull PsiFile file,
-                               boolean updateWholeFile,
-                               @NotNull HighlightInfoHolder holder,
-                               @NotNull Runnable action) {
+  public boolean analyze(@NotNull PsiFile file,
+                         boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull Runnable action) {
     myHolder = holder;
     myRainbowHighlighter = new RainbowHighlighter(myHolder.getColorsScheme());
     try {
@@ -69,7 +69,7 @@ public abstract class RainbowVisitor implements HighlightVisitor {
                                   @NotNull final PsiElement rainbowElement,
                                   @NotNull final String name,
                                   @Nullable final TextAttributesKey colorKey) {
-    int colorIndex = UsedColors.getOrAddColorIndex((UserDataHolderEx)context, name, getHighlighter());
+    int colorIndex = UsedColors.getOrAddColorIndex((UserDataHolderEx)context, name, getHighlighter().getColorsCount());
     return getHighlighter().getInfo(colorIndex, rainbowElement, colorKey);
   }
 }

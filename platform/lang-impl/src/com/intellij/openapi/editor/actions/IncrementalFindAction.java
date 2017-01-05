@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
 
 public class IncrementalFindAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
@@ -57,9 +56,14 @@ public class IncrementalFindAction extends EditorAction {
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
-          FindUtil.configureFindModel(myReplace, editor, model, true);
+          boolean consoleViewEditor = ConsoleViewUtil.isConsoleViewEditor(editor);
+          FindUtil.configureFindModel(myReplace, editor, model, consoleViewEditor);
           EditorSearchSession.start(editor, model, project).getComponent()
             .requestFocusInTheSearchFieldAndSelectContent(project);
+          if (!consoleViewEditor && editor.getSelectionModel().hasSelection()) {
+            // selection is used as string to find without search model modification so save the pattern explicitly
+            FindUtil.updateFindInFileModel(project, model, true);
+          }
         }
       }
     }

@@ -45,7 +45,7 @@ public class PathMacroTable extends Table {
   private static final int VALUE_COLUMN = 1;
 
   private final List<Couple<String>> myMacros = new ArrayList<>();
-  private static final Comparator<Couple<String>> MACRO_COMPARATOR = (pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst());
+  private static final Comparator<Couple<String>> MACRO_COMPARATOR = Comparator.comparing(pair -> pair.getFirst());
 
   private final Collection<String> myUndefinedMacroNames;
 
@@ -58,6 +58,7 @@ public class PathMacroTable extends Table {
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
     column.setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         final String macroValue = getMacroValueAt(row);
@@ -198,18 +199,22 @@ public class PathMacroTable extends Table {
   }
 
   private class MyTableModel extends AbstractTableModel{
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public int getRowCount() {
       return myMacros.size();
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       return String.class;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final Couple<String> pair = myMacros.get(rowIndex);
       switch (columnIndex) {
@@ -220,9 +225,11 @@ public class PathMacroTable extends Table {
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
         case NAME_COLUMN: return ApplicationBundle.message("column.name");
@@ -231,6 +238,7 @@ public class PathMacroTable extends Table {
       return null;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return false;
     }
@@ -243,11 +251,13 @@ public class PathMacroTable extends Table {
       myTitle = title;
     }
 
+    @Override
     public boolean checkName(String name) {
       if (name.length() == 0) return false;
       return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 
+    @Override
     public boolean isOK(String name, String value) {
       if(name.length() == 0) return false;
       if (hasMacroWithName(name)) {
@@ -260,6 +270,7 @@ public class PathMacroTable extends Table {
   }
 
   private static class EditValidator implements PathMacroEditor.Validator {
+    @Override
     public boolean checkName(String name) {
       if (name.isEmpty() || PathMacros.getInstance().getSystemMacroNames().contains(name)) {
         return false;
@@ -268,6 +279,7 @@ public class PathMacroTable extends Table {
       return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 
+    @Override
     public boolean isOK(String name, String value) {
       return checkName(name);
     }

@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -146,18 +145,14 @@ public class RepositoryUtils {
               if (library.isDisposed()) {
                 return;
               }
-              AccessToken token = WriteAction.start();
-              try {
+              WriteAction.run(() -> {
                 final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
                 editor.removeAllRoots();
                 editor.addRoots(roots);
                 final Library.ModifiableModel model = library.getModifiableModel();
                 editor.applyTo((LibraryEx.ModifiableModelEx)model);
                 model.commit();
-              }
-              finally {
-                token.finish();
-              }
+              });
             });
           }
         }

@@ -210,7 +210,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   private List<UsageInfo> findUsages(@NotNull FindModel findModel) {
-    List<UsageInfo> result = new ArrayList<>();
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<>(result);
     FindInProjectUtil.findUsages(findModel, myProject, collector, new FindUsagesProcessPresentation(FindInProjectUtil.setupViewPresentation(true, findModel)));
     return result;
@@ -895,7 +895,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCreateFileMaskCondition() {
-    Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
+    Condition<CharSequence> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
     assertTrue(condition.value("Bar.java"));
     assertTrue(!condition.value("Bar.javac"));
     assertTrue(!condition.value("Foo.java"));
@@ -918,6 +918,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     runAsyncTest(text, findModel);
     findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
     runAsyncTest("/*" + text + "*/", findModel);
+  }
+
+  public void testProperInsensitiveSearchForRegExp() throws Exception {
+    createFile("a.java", "Цитрус цитрус");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("цитрус");
+    findModel.setRegularExpressions(true);
+    assertSize(2, findUsages(findModel));
+  }
+
+  public void testProperHandlingOfEmptyLinesWhenReplacingWithRegExp() throws Exception {
+    doTestRegexpReplace(
+      "foo\n\n\n",
+      "^",
+      "// ",
+      "// foo\n// \n// \n");
   }
 
   private void runAsyncTest(String text, FindModel findModel) throws InterruptedException {

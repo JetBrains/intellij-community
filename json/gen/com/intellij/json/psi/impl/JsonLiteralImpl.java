@@ -10,14 +10,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonLiteralImpl extends JsonLiteralMixin implements JsonLiteral {
+public abstract class JsonLiteralImpl extends JsonLiteralMixin implements JsonLiteral {
 
   public JsonLiteralImpl(ASTNode node) {
     super(node);
   }
 
+  public void accept(@NotNull JsonElementVisitor visitor) {
+    visitor.visitLiteral(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitLiteral(this);
+    if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
   }
 

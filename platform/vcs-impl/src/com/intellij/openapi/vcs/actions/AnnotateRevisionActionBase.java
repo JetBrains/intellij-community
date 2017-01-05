@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -45,11 +44,6 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
   protected abstract VcsFileRevision getFileRevision(@NotNull AnActionEvent e);
 
   @Nullable
-  protected VcsRevisionDescription getRevisionDescription(@NotNull AnActionEvent e) {
-    return getFileRevision(e);
-  };
-
-  @Nullable
   protected Editor getEditor(@NotNull AnActionEvent e) {
     return null;
   }
@@ -66,14 +60,19 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
   public boolean isEnabled(@NotNull AnActionEvent e) {
     if (e.getProject() == null) return false;
 
-    VcsRevisionDescription fileRevision = getRevisionDescription(e);
+    VcsFileRevision fileRevision = getFileRevision(e);
     if (fileRevision == null) return false;
+
+    VirtualFile file = getFile(e);
+    if (file == null) return false;
 
     AbstractVcs vcs = getVcs(e);
     if (vcs == null) return false;
 
-    AnnotationProvider provider = vcs.getCachingAnnotationProvider();
-    if (provider == null || (fileRevision instanceof VcsFileRevision) && !provider.isAnnotationValid((VcsFileRevision)fileRevision)) return false;
+    AnnotationProvider provider = vcs.getAnnotationProvider();
+    if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
+
+    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
 
     return true;
   }
@@ -91,7 +90,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     final CharSequence oldContent = editor == null ? null : editor.getDocument().getImmutableCharSequence();
     final int oldLine = getAnnotatedLine(e);
 
-    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
+    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     assert annotationProvider != null;
 
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();

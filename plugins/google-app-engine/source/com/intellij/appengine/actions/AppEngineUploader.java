@@ -24,10 +24,7 @@ import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.CommandLineBuilder;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -192,7 +189,7 @@ public class AppEngineUploader {
       programParameters.add("update");
       programParameters.add(FileUtil.toSystemDependentName(myArtifact.getOutputPath()));
 
-      final GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters);
+      final GeneralCommandLine commandLine = parameters.toCommandLine();
       processHandler = new OSProcessHandler(commandLine);
     }
     catch (ExecutionException e) {

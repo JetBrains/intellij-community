@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="vcs-log-impl" />
     <orderEntry type="module" module-name="jira" scope="TEST" />
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

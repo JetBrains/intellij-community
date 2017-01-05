@@ -215,6 +215,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return new JBTableHeader();
   }
 
+  @Override
+  protected void initializeLocalVars() {
+    super.initializeLocalVars();
+    setPreferredScrollableViewportSize(JBUI.size(getPreferredScrollableViewportSize()));
+  }
+
   public boolean isEmpty() {
     return getRowCount() == 0;
   }

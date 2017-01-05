@@ -55,14 +55,8 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.delete.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.delete.quickfix");
     }
 
     @Override
@@ -93,15 +87,10 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
     public PackageDotHtmlMayBePackageInfoFix(String aPackage) {
       this.aPackage = aPackage;
     }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.convert.quickfix");
     }
 

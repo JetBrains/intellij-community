@@ -16,9 +16,9 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
@@ -50,7 +50,7 @@ public class ConsoleViewContentType {
 
   public static final ConsoleViewContentType NORMAL_OUTPUT = new ConsoleViewContentType("NORMAL_OUTPUT", NORMAL_OUTPUT_KEY);
   public static final ConsoleViewContentType ERROR_OUTPUT = new ConsoleViewContentType("ERROR_OUTPUT", ERROR_OUTPUT_KEY);
-  public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_OUTPUT", USER_INPUT_KEY);
+  public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_INPUT", USER_INPUT_KEY);
   public static final ConsoleViewContentType SYSTEM_OUTPUT = new ConsoleViewContentType("SYSTEM_OUTPUT", SYSTEM_OUTPUT_KEY);
 
   public static final ConsoleViewContentType[] OUTPUT_TYPES = {NORMAL_OUTPUT, ERROR_OUTPUT, USER_INPUT, SYSTEM_OUTPUT};
@@ -77,6 +77,12 @@ public class ConsoleViewContentType {
     return myName;
   }
 
+  /**
+   * Returns {@code TextAttributes} instance defining the visual representation of text.
+   * <p> A subclass might override this method.
+   *
+   * @return not-null TextAttributes instance
+   */
   public TextAttributes getAttributes() {
     if (myTextAttributesKey != null) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myTextAttributesKey);
@@ -95,12 +101,7 @@ public class ConsoleViewContentType {
   }
 
   public static synchronized ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
-    if (ourRegisteredTypes.containsKey(processOutputType)) {
-      return ourRegisteredTypes.get(processOutputType);
-    }
-    else {
-      return SYSTEM_OUTPUT;
-    }
+    return ourRegisteredTypes.getOrDefault(processOutputType, SYSTEM_OUTPUT);
   }
 
   public static synchronized Collection<ConsoleViewContentType> getRegisteredTypes() {

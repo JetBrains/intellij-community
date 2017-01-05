@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ import java.util.List;
     @Storage(StoragePathMacros.WORKSPACE_FILE)
   }
 )
-public class BookmarkManager extends AbstractProjectComponent implements PersistentStateComponent<Element> {
+public class BookmarkManager implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
@@ -69,26 +70,27 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
 
   private final MessageBus myBus;
+  private final Project myProject;
 
   private boolean mySortedState;
 
   public static BookmarkManager getInstance(Project project) {
-    return project.getComponent(BookmarkManager.class);
+    return ServiceManager.getService(project, BookmarkManager.class);
   }
 
   public BookmarkManager(Project project,
-                         MessageBus bus,
                          PsiDocumentManager documentManager,
                          EditorColorsManager colorsManager,
                          EditorFactory editorFactory) {
-    super(project);
-    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+    myProject = project;
+    myBus = project.getMessageBus();
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorsChanged();
       }
-    }, project);
-    myBus = bus;
+    });
     EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
     multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
@@ -114,15 +116,15 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       }
     });
     mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
-        if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
-          mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
+      public void uiSettingsChanged(UISettings uiSettings) {
+        if (mySortedState != uiSettings.SORT_BOOKMARKS) {
+          mySortedState = uiSettings.SORT_BOOKMARKS;
           EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
         }
       }
-    }, project);
+    });
   }
 
   private static void map(Document document, Bookmark bookmark) {
@@ -162,12 +164,6 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     if (description != null) {
       setDescription(bookmark, description);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "BookmarkManager";
   }
 
   public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {

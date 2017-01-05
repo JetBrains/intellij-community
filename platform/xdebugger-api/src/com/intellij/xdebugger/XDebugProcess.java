@@ -31,6 +31,7 @@ import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.event.HyperlinkListener;
 
@@ -109,7 +110,6 @@ public abstract class XDebugProcess {
   /**
    * @deprecated Use {@link #startForceStepInto(XSuspendContext)} instead
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public void startForceStepInto(){
     //noinspection deprecation
@@ -183,7 +183,7 @@ public abstract class XDebugProcess {
   @NotNull
   public Promise stopAsync() {
     stop();
-    return Promise.DONE;
+    return Promises.resolvedPromise();
   }
 
   /**

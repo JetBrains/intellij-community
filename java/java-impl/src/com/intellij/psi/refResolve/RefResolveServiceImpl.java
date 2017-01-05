@@ -287,8 +287,9 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   public static boolean isSupportedFileType(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return true;
     if (virtualFile.getFileType() == StdFileTypes.JAVA) return true;
-    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
-    if ("groovy".equals(virtualFile.getExtension())) return true;
+    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
+    final String extension = virtualFile.getExtension();
+    if ("groovy".equals(extension) || "kt".equals(extension)) return true;
     return false;
   }
 
@@ -635,10 +636,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     try {
       forward = calcForwardRefs(file, indicator);
     }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-    catch (ApplicationUtil.CannotRunReadActionException e) {
+    catch (IndexNotReadyException | ApplicationUtil.CannotRunReadActionException e) {
       return null;
     }
     catch (ProcessCanceledException e) {

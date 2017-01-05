@@ -83,10 +83,7 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
     }
 
     if (node instanceof UsageNode) {
-      TextChunk[] chunks = ((UsageNode)node).getUsage().getPresentation().getText();
-      for (TextChunk chunk : chunks) {
-        buf.append(chunk.getText());
-      }
+      appendUsageNodeText(buf, (UsageNode) node);
     }
     else if (node instanceof GroupNode) {
       UsageGroup group = ((GroupNode)node).getGroup();
@@ -102,6 +99,13 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
       buf.append(node.toString());
     }
     buf.append(lineSeparator);
+  }
+
+  protected void appendUsageNodeText(StringBuilder buf, UsageNode node) {
+    TextChunk[] chunks = node.getUsage().getPresentation().getText();
+    for (TextChunk chunk : chunks) {
+      buf.append(chunk.getText());
+    }
   }
 
   @NotNull

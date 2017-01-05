@@ -51,7 +51,7 @@ public abstract class FileIndexFacade {
   public abstract Module getModuleForFile(@NotNull VirtualFile file);
 
   /**
-   * Checks if <code>file</code> is an ancestor of <code>baseDir</code> and none of the files
+   * Checks if {@code file} is an ancestor of {@code baseDir} and none of the files
    * between them are excluded from the project.
    *
    * @param baseDir the parent directory to check for ancestry.

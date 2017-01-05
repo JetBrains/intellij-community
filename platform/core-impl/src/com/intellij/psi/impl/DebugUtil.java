@@ -146,7 +146,7 @@ public class DebugUtil {
                                   final boolean showRanges,
                                   final boolean showChildrenRanges,
                                   final boolean usePsi,
-                                  PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
+                                  @Nullable PairConsumer<PsiElement, Consumer<PsiElement>> extra) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -498,7 +498,7 @@ public class DebugUtil {
   }
 
   public static String currentStackTrace() {
-    return ExceptionUtil.getThrowableText(new Throwable());
+    return ExceptionUtil.currentStackTrace();
   }
 
   public static class IncorrectTreeStructureException extends RuntimeException {

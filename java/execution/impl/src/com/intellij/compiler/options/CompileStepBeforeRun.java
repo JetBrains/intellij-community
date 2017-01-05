@@ -29,13 +29,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.task.*;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +49,14 @@ import javax.swing.*;
 public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompileStepBeforeRun");
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
-  public static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
-  public static final Key<String> RUN_CONFIGURATION_TYPE_ID = Key.create("RUN_CONFIGURATION_TYPE_ID");
+  /**
+   * @deprecated to be removed in IDEA 2017
+   */
+  public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
+  /**
+   * @deprecated to be removed in IDEA 2017
+   */
+  public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
@@ -132,9 +138,9 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
       final Semaphore done = new Semaphore();
       done.down();
-      final CompileStatusNotification callback = new CompileStatusNotification() {
-        public void finished(final boolean aborted, final int errors, final int warnings, CompileContext compileContext) {
-          if ((errors == 0  || ignoreErrors) && !aborted) {
+      final ProjectTaskNotification callback = new ProjectTaskNotification() {
+        public void finished(@NotNull ProjectTaskResult executionResult) {
+          if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
             result.set(Boolean.TRUE);
           }
           done.up();
@@ -142,11 +148,12 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       };
 
       TransactionGuard.submitTransaction(myProject, () -> {
-        CompileScope scope;
-        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+        ProjectTask projectTask;
+        Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
+        final ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);
         if (forceMakeProject) {
           // user explicitly requested whole-project make
-          scope = compilerManager.createProjectCompileScope(myProject);
+          projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
         }
         else {
           final Module[] modules = runConfiguration.getModules();
@@ -157,18 +164,15 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                           runConfiguration.getClass().getName());
               }
             }
-            scope = compilerManager.createModulesCompileScope(modules, true, true);
+            projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true);
           }
           else {
-            scope = compilerManager.createProjectCompileScope(myProject);
+            projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
           }
         }
 
         if (!myProject.isDisposed()) {
-          scope.putUserData(RUN_CONFIGURATION, configuration);
-          scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
-          ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
-          compilerManager.make(scope, callback);
+          projectTaskManager.run(new ProjectTaskContext(sessionId, configuration), projectTask, callback);
         }
         else {
           done.up();
@@ -194,7 +198,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
   @Nullable
   public static RunConfiguration getRunConfiguration(final CompileScope compileScope) {
-    return compileScope.getUserData(RUN_CONFIGURATION);
+    return compileScope.getUserData(CompilerManager.RUN_CONFIGURATION_KEY);
   }
 
   public static class MakeBeforeRunTask extends BeforeRunTask<MakeBeforeRunTask> {

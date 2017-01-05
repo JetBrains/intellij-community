@@ -221,7 +221,7 @@ public class MavenProject {
     newState.myTestResources = model.getBuild().getTestResources();
   }
 
-  private static Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
+  private Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
     String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<>();
     for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel).entrySet()) {
@@ -230,7 +230,8 @@ public class MavenProject {
     return result;
   }
 
-  private static Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel) {
+  private Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel) {
+    String pomFileName = MavenConstants.POM_EXTENSION + '.' + StringUtil.notNullize(myFile.getExtension());
     LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
@@ -242,7 +243,7 @@ public class MavenProject {
 
       name = FileUtil.toSystemIndependentName(name);
       if (!name.endsWith("/")) name += "/";
-      name += MavenConstants.POM_XML;
+      name += pomFileName;
 
       result.put(name, originalName);
     }
@@ -288,7 +289,7 @@ public class MavenProject {
     return MavenUtil.findProfilesXmlFile(myFile);
   }
 
-  @NotNull
+  @Nullable
   public File getProfilesXmlIoFile() {
     return MavenUtil.getProfilesXmlIoFile(myFile);
   }

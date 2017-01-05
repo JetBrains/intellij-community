@@ -17,7 +17,9 @@ package com.intellij.execution.junit;
 
 import com.intellij.junit4.JUnit4TestListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.DebugUtil;
 import junit.framework.Assert;
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
@@ -29,6 +31,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class JUnitTreeByDescriptionHierarchyTest {
   @Test
@@ -68,33 +73,45 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
 
            "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='TestA']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[0|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[1|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[1|]' locationHint='java:test://a.TestA.testName|[1|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='TestA']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='TestB']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[0|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[0|]' locationHint='java:test://a.TestB.testName|[0|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[1|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[1|]' locationHint='java:test://a.TestB.testName|[1|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='TestB']\n");
   }
 
@@ -119,6 +136,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     }
     sender.testRunFinished(new Result());
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='ATest' locationHint='java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.test1' locationHint='java:test://ATest.test1']\n" +
@@ -128,6 +146,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testStarted name='ATest.test2' locationHint='java:test://ATest.test2']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.test2']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
@@ -151,19 +170,22 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                    "##teamcity[suiteTreeEnded name='MyTest']\n" +
                                    "##teamcity[treeEnded]\n",
            "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='MyTest']\n" +
            "\n" +
            "##teamcity[testStarted name='MyTest.testMe' locationHint='java:test://a.MyTest.testMe']\n" +
            "\n" +
            "##teamcity[testFinished name='MyTest.testMe']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='MyTest']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='MyTest']\n" +
            "\n" +
            "##teamcity[testStarted name='MyTest.testMe' locationHint='java:test://b.MyTest.testMe']\n" +
            "\n" +
            "##teamcity[testFinished name='MyTest.testMe']\n" +
-           "##teamcity[testSuiteFinished nam" +
-           "e='MyTest']\n");
+           "\n" +
+           "##teamcity[testSuiteFinished name='MyTest']\n");
   }
 
   @Test
@@ -184,17 +206,21 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[treeEnded]\n",
            //start
            "##teamcity[rootName name = 'TestA' comment = 'a' location = 'java:suite://a.TestA']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[0|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[1|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[1|]' locationHint='java:test://a.TestA.testName|[1|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[1|]']\n");
   }
   
@@ -222,17 +248,21 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[treeEnded]\n",
            //start
            "##teamcity[rootName name = 'TestA' comment = 'a' location = 'java:suite://a.TestA']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[0|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[0|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[0|]']\n");
   }
 
@@ -260,17 +290,21 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[treeEnded]\n",
            //start
            "##teamcity[rootName name = 'TestA' comment = 'a' location = 'java:suite://a.TestA']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[0: with - 1.1|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[0: with - 1.1|]' locationHint='java:test://a.TestA.testName|[0: with - 1.1|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[0: with - 1.1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[0: with - 1.1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[1: with - 2.1|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[1: with - 2.1|]' locationHint='java:test://a.TestA.testName|[1: with - 2.1|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[1: with - 2.1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[1: with - 2.1|]']\n");
   }
 
@@ -307,21 +341,29 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
            //started
            "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='ASuite1']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='ATest']\n" +
            "\n" +
            "##teamcity[testStarted name='ATest.test1' locationHint='java:test://ATest.test1']\n" +
            "\n" +
            "##teamcity[testFinished name='ATest.test1']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='ATest']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='ASuite1']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='ASuite2']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='ATest']\n" +
            "\n" +
            "##teamcity[testStarted name='ATest.test1' locationHint='java:test://ATest.test1']\n" +
            "\n" +
            "##teamcity[testFinished name='ATest.test1']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='ATest']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='ASuite2']\n");
   }
 
@@ -371,6 +413,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='TestA']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
@@ -378,6 +421,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
@@ -408,11 +452,13 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='Class Configuration'  locationHint='java:suite://TestA' ]\n" +
                                           "\n" +
                                           "##teamcity[testFailed name='Class Configuration' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='Class Configuration']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='TestA']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
@@ -420,7 +466,26 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testIgnored name='TestA.testName']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
+  public void testLongOutputPreservesTestName() throws Exception {
+    StringBuffer buf = new StringBuffer();
+    for (int i = 0; i < 1000; i++) {
+      buf.append(DebugUtil.currentStackTrace());
+    }
+
+    final StringBuffer output = new StringBuffer();
+    final JUnit4TestListener sender = createListener(output);
+
+    final Description description = Description.createTestDescription("A", "a");
+    sender.testFailure(new Failure(description, new ComparisonFailure(buf.toString(), buf.toString(), "diff" + buf.toString())));
+
+    final String startMessage = "##teamcity[enteredTheMatrix]\n\n" +
+                                "##teamcity[testFailed name='A.a' ";
+    assertEquals(startMessage, StringUtil.convertLineSeparators(output.toString()).substring(0, startMessage.length()));
   }
 
   @Test
@@ -497,16 +562,19 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='TestA']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='Class Configuration'  locationHint='java:suite://TestA' ]\n" +
                                           "\n" +
                                           "##teamcity[testFailed name='Class Configuration' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='Class Configuration']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
@@ -541,7 +609,9 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='TestA']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='param']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
@@ -549,7 +619,9 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='param']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
     buf.setLength(0);
 
@@ -601,17 +673,21 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testRunFinished(new Result());
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='TestA' locationHint='java:suite://a.TestA']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://a.TestA.testName']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name='TestB' locationHint='java:suite://a.TestB']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='TestB.testName' locationHint='java:test://a.TestB.testName']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestB.testName']\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteFinished name='TestB']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
@@ -655,6 +731,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
 
            "##teamcity[rootName name = 'ATest' location = 'java:suite://ATest']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='testName']\n" +
            "\n" +
            "##teamcity[testStarted name='ATest.testName|[0|]' locationHint='java:test://ATest.testName|[0|]']\n" +
@@ -664,6 +741,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[testStarted name='ATest.testName|[1|]' locationHint='java:test://ATest.testName|[1|]']\n" +
            "\n" +
            "##teamcity[testFinished name='ATest.testName|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='testName']\n");
   }
 
@@ -700,27 +778,37 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
            //start
            "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='ATest']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[0|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[0|]' locationHint='java:test://ATest.testName|[0|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[0|]']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='|[1|]']\n" +
            "\n" +
            "##teamcity[testStarted name='testName|[1|]' locationHint='java:test://ATest.testName|[1|]']\n" +
            "\n" +
            "##teamcity[testFinished name='testName|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='|[1|]']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='ATest']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='suite']\n" +
+           "\n" +
            "##teamcity[testSuiteStarted name='ATest']\n" +
            "\n" +
            "##teamcity[testStarted name='ATest.test' locationHint='java:test://ATest.test']\n" +
            "\n" +
            "##teamcity[testFinished name='ATest.test']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='ATest']\n" +
+           "\n" +
            "##teamcity[testSuiteFinished name='suite']\n");
   }
 

@@ -27,7 +27,7 @@ class CyclomaticComplexityVisitor extends GroovyRecursiveElementVisitor {
   private int complexity = 1;
 
   @Override
-  public void visitElement(GroovyPsiElement GrElement) {
+  public void visitElement(@NotNull GroovyPsiElement GrElement) {
     int oldComplexity = 0;
     if (GrElement instanceof GrMethod) {
       oldComplexity = complexity;
@@ -53,7 +53,7 @@ class CyclomaticComplexityVisitor extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitConditionalExpression(GrConditionalExpression expression) {
+  public void visitConditionalExpression(@NotNull GrConditionalExpression expression) {
     super.visitConditionalExpression(expression);
     complexity++;
   }

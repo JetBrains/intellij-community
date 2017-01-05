@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class ClassFilesIndicesBuilder extends BaseInstrumentingBuilder {
 
   @Override
   protected boolean canInstrument(final CompiledClass compiledClass, final int classFileVersion) {
-    return true;
+    return !"module-info".equals(compiledClass.getClassName());
   }
 
   @Override

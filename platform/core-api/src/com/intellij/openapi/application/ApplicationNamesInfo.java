@@ -38,6 +38,7 @@ public class ApplicationNamesInfo {
   private String myFullProductName;
   private String myLowercaseProductName;
   private String myScriptName;
+  private String myDefaultLauncherName;
 
   private static class ApplicationNamesInfoHolder {
     private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
@@ -61,11 +62,12 @@ public class ApplicationNamesInfo {
   }
 
   private void readInfo(final Element rootElement) {
-    final Element names = rootElement.getChild(ELEMENT_NAMES);
+    final Element names = rootElement.getChild(ELEMENT_NAMES, rootElement.getNamespace());
     myProductName = names.getAttributeValue(ATTRIBUTE_PRODUCT);
     myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
     myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase(Locale.US));
     myScriptName = names.getAttributeValue(ATTRIBUTE_SCRIPT);
+    myDefaultLauncherName = names.getAttributeValue("default-launcher-name", myScriptName);
   }
 
   /**
@@ -97,6 +99,13 @@ public class ApplicationNamesInfo {
    */
   public String getScriptName() {
     return myScriptName;
+  }
+
+  /**
+   * @return default name of the command-line launcher to be suggested in 'Create Launcher Script' dialog
+   */
+  public String getDefaultLauncherName() {
+    return myDefaultLauncherName;
   }
 
   public static String getComponentName() {

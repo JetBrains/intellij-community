@@ -25,7 +25,12 @@ import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 
 public interface IdeaVersion extends DomElement {
+	/**
+	 * @deprecated Use {@link #getUntilBuild()}
+	 */
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	@NotNull
+	@Deprecated
 	GenericAttributeValue<String> getMax();
 
 	@NotNull
@@ -36,6 +41,11 @@ public interface IdeaVersion extends DomElement {
 	GenericAttributeValue<String> getUntilBuild();
 
 
+	/**
+	 * @deprecated Use {@link #getSinceBuild()}
+	 */
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	@NotNull
+	@Deprecated
 	GenericAttributeValue<String> getMin();
 }

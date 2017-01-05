@@ -57,9 +57,8 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   private final ResourceBundle myResourceBundle;
 
   public ResourceBundleStructureViewComponent(final ResourceBundle resourceBundle,
-                                              final ResourceBundleEditor editor,
-                                              final PropertiesAnchorizer anchorizer) {
-    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle, anchorizer));
+                                              final ResourceBundleEditor editor) {
+    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
     getTree().setCellRenderer(new ResourceBundleEditorRenderer());
@@ -96,6 +95,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     return PsiFile.EMPTY_ARRAY;
   }
 
+  @Override
   public Object getData(final String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return new ResourceBundleAsVirtualFile(myResourceBundle);
@@ -184,6 +184,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     return super.getData(dataId);
   }
 
+  @Override
   protected boolean showScrollToFromSourceActions() {
     return false;
   }
@@ -226,6 +227,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
   }
 
+  @Override
   @NonNls
   public String getHelpID() {
     return "editing.propertyFile.bundleEditor";

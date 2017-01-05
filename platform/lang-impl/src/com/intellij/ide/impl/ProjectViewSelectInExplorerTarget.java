@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInTargetBase;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -28,7 +28,7 @@ import java.io.File;
 /**
  * @author Roman.Chernyatchik
  */
-public class ProjectViewSelectInExplorerTarget extends SelectInTargetBase implements DumbAware {
+public class ProjectViewSelectInExplorerTarget implements DumbAware, SelectInTarget {
   @Override
   public boolean canSelect(SelectInContext context) {
     VirtualFile file = ShowFilePathAction.findLocalFile(context.getVirtualFile());

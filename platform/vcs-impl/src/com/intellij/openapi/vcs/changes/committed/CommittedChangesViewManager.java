@@ -87,8 +87,8 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   }
 
   public JComponent initContent() {
-    myVcsManager.addVcsListener(myVcsListener);
     myConnection = myBus.connect();
+    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     updateChangesContent();
     myComponent.refreshChanges(true);
@@ -96,7 +96,6 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   }
 
   public void disposeContent() {
-    myVcsManager.removeVcsListener(myVcsListener);
     myConnection.disconnect();
     Disposer.dispose(myComponent);
     myComponent = null;

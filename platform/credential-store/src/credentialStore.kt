@@ -17,22 +17,41 @@ package com.intellij.credentialStore
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.EncryptionSupport
+import com.intellij.util.generateAesKey
+import com.intellij.util.io.toByteArray
+import java.nio.CharBuffer
 import java.security.MessageDigest
 import java.util.*
+import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(CredentialStore::class.java)
 
 private fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
 
-internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes("IntelliJ Platform", toOldKey(hash))
+internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(hash))
 
-internal fun toOldKey(requestor: Class<*>, accountName: String) = CredentialAttributes("IntelliJ Platform", toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$accountName".toByteArray())))
+fun toOldKey(requestor: Class<*>, userName: String): CredentialAttributes {
+  return CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$userName".toByteArray())))
+}
 
-fun joinData(user: String?, password: String?): String? {
+fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
     return null
   }
-  return "${StringUtil.escapeChars(user.orEmpty(), '\\', '@')}${if (password == null) "" else "@$password"}"
+
+  val builder = StringBuilder(user.orEmpty())
+  StringUtil.escapeChar(builder, '\\')
+  StringUtil.escapeChar(builder, '@')
+  if (password != null) {
+    builder.append('@')
+    password.appendTo(builder)
+  }
+
+  val buffer = Charsets.UTF_8.encode(CharBuffer.wrap(builder))
+  // clear password
+  builder.setLength(0)
+  return buffer.toByteArray()
 }
 
 fun splitData(data: String?): Credentials? {
@@ -77,9 +96,18 @@ private fun parseString(data: String, delimiter: Char): List<String> {
   return result
 }
 
-fun Credentials?.isFulfilled() = this != null && user != null && password != null
-
-fun Credentials?.isEmpty() = this == null || (user == null && password == null)
-
 // check isEmpty before
-fun Credentials.serialize() = joinData(user, password)!!.toByteArray()
+@JvmOverloads
+fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
+
+fun SecureString(value: CharSequence) = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
+
+class SecureString(value: ByteArray) {
+  companion object {
+    private val encryptionSupport = EncryptionSupport(SecretKeySpec(generateAesKey(), "AES"))
+  }
+
+  private val data = encryptionSupport.encrypt(value)
+
+  fun get(clearable: Boolean = true) = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
+}

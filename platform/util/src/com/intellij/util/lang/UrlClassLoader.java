@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -139,11 +140,14 @@ public class UrlClassLoader extends ClassLoader {
       return this; 
     }
     
-    public Builder allowUnescaped() { return allowUnescaped(true); }
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    public Builder noPreload() { return preload(false); }
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
+    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+
+    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
+    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
+    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
+    public Builder preload(boolean preload) { myPreload = preload; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
@@ -205,6 +209,11 @@ public class UrlClassLoader extends ClassLoader {
 
   public List<URL> getUrls() {
     return Collections.unmodifiableList(myURLs);
+  }
+
+  public boolean hasLoadedClass(String name) {
+    Class<?> aClass = findLoadedClass(name);
+    return aClass != null && aClass.getClassLoader() == this;
   }
 
   @Override
@@ -281,8 +290,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   private Resource _getResource(final String name) {
-    String n = name;
-    n = StringUtil.trimStart(n, "/");
+    String n = StringUtil.trimStart(FileUtil.toCanonicalUriPath(name), "/");
     return getClassPath().getResource(n, true);
   }
 

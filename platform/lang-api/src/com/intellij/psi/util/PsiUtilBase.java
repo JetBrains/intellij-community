@@ -206,7 +206,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
    * @see {@link com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement}
    *
    * @param element   target element
-   * @return          editor that works with a given element if the one is found; <code>null</code> otherwise
+   * @return          editor that works with a given element if the one is found; {@code null} otherwise
    */
   @Nullable
   public static Editor findEditor(@NotNull PsiElement element) {

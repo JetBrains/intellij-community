@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -76,6 +78,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private final MarkupModelWindow myDocumentMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
   private final SoftWrapModelWindow mySoftWrapModel;
+  private final InlayModelWindow myInlayModel;
 
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
@@ -113,7 +116,8 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myMarkupModelDelegate = new MarkupModelWindow(myDelegate.getMarkupModel(), myDocumentWindow);
     myDocumentMarkupModelDelegate = new MarkupModelWindow(myDelegate.getFilteredDocumentMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
-    mySoftWrapModel = new SoftWrapModelWindow(this);
+    mySoftWrapModel = new SoftWrapModelWindow();
+    myInlayModel = new InlayModelWindow();
   }
 
   public static void disposeInvalidEditors() {
@@ -302,7 +306,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @NotNull
   @Override
   public InlayModel getInlayModel() {
-    throw new UnsupportedOperationException();
+    return myInlayModel;
   }
 
   @Override
@@ -324,7 +328,9 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @Override
   public EditorHighlighter getHighlighter() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myInjectedFile.getVirtualFile(), scheme, getProject());
+    SyntaxHighlighter syntaxHighlighter =
+      SyntaxHighlighterFactory.getSyntaxHighlighter(myInjectedFile.getLanguage(), getProject(), myInjectedFile.getVirtualFile());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(syntaxHighlighter, scheme);
     highlighter.setText(getDocument().getText());
     highlighter.setEditor(new LightHighlighterClient(getDocument(), getProject()));
     return highlighter;

@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -68,7 +69,7 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
     };
     for (PsiType type : getReturnTypeCandidates(method)) {
       eachProcessor.visitType(type);
-      ExpectedTypesProvider.processAllSuperTypes(type, eachProcessor, position.getProject(), ContainerUtil.<PsiType>newHashSet());
+      ExpectedTypesProvider.processAllSuperTypes(type, eachProcessor, position.getProject(), new HashSet<>(), new HashSet<>());
     }
   }
 

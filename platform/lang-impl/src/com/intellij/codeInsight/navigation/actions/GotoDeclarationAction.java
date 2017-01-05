@@ -53,7 +53,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -156,13 +159,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }, progressTitle, true, project);
   }
 
-  public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
-    PsiElement elementAt = TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
-    if (elementAt instanceof PsiNameIdentifierOwner) {
-      LOG.assertTrue(elementAt.isValid(), elementAt);
-      return (PsiNameIdentifierOwner)elementAt;
-    }
-    return null;
+  public static PsiElement findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
+    return TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -432,7 +432,7 @@ public class GroovyIntroduceParameterUtil {
     }
 
     @Override
-    public void visitReferenceExpression(GrReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
       super.visitReferenceExpression(ref);
       final GrExpression qualifier = ref.getQualifier();
       if (!PsiUtil.isThisReference(qualifier)) return;

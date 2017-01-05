@@ -17,14 +17,12 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -35,7 +33,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.FilePathSplittingPolicy;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -82,7 +79,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
       final PsiDirectory psiDirectory = parent instanceof PsiDirectory ? (PsiDirectory)parent : null;
       VirtualFile virtualFile = psiDirectory == null ? null : psiDirectory.getVirtualFile();
       if (virtualFile == null) return null;
-      final String relativePath = getRelativePath(virtualFile, element.getProject());
+      String relativePath = GotoFileCellRenderer.getRelativePath(virtualFile, element.getProject());
       if (relativePath == null) return "( " + File.separator + " )";
       int width = myList.getWidth();
       if (width == 0) width += 800;
@@ -123,30 +120,6 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     return left + "..." + right;
   }
 
-
-  @Nullable
-  String getRelativePath(final VirtualFile virtualFile, final Project project) {
-    String url = virtualFile.getPresentableUrl();
-    if (project == null) {
-      return url;
-    }
-    VirtualFile root = ProjectFileIndex.SERVICE.getInstance(project).getContentRootForFile(virtualFile);
-    if (root != null) {
-      return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(virtualFile, root, File.separatorChar);
-    }
-
-    final VirtualFile baseDir = project.getBaseDir();
-    if (baseDir != null) {
-      //noinspection ConstantConditions
-      final String projectHomeUrl = baseDir.getPresentableUrl();
-      if (url.startsWith(projectHomeUrl)) {
-        final String cont = url.substring(projectHomeUrl.length());
-        if (cont.isEmpty()) return null;
-        url = "..." + cont;
-      }
-    }
-    return url;
-  }
 
   @Override
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,

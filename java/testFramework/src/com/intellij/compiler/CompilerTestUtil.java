@@ -19,6 +19,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -52,19 +53,19 @@ public class CompilerTestUtil {
   @TestOnly
   public static void saveApplicationSettings() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      doSaveComponent(ProjectJdkTable.getInstance());
-      doSaveComponent(FileTypeManager.getInstance());
+      doSaveComponent((PersistentStateComponent<?>)ProjectJdkTable.getInstance());
+      doSaveComponent((PersistentStateComponent<?>)FileTypeManager.getInstance());
     });
   }
 
   @TestOnly
-  public static void saveApplicationComponent(final Object appComponent) {
+  public static void saveApplicationComponent(@NotNull PersistentStateComponent<?> appComponent) {
     EdtTestUtil.runInEdtAndWait(() -> doSaveComponent(appComponent));
   }
 
-  private static void doSaveComponent(Object appComponent) {
+  private static void doSaveComponent(@NotNull PersistentStateComponent<?> component) {
     //noinspection TestOnlyProblems
-    ServiceKt.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(appComponent);
+    ServiceKt.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(component);
   }
 
   @TestOnly

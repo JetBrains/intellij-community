@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -42,6 +41,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
+  @NotNull
   @Override
   public FileType getFileType() {
     return JavaFileType.INSTANCE;
@@ -57,12 +57,17 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
 
   @NotNull
   @Override
+  public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
+    return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
+      .map(factory -> factory.getFileType().getLanguage())
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
   public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
-      PsiElement context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
-      return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
-        .map(factory -> factory.getFileType().getLanguage())
-        .collect(Collectors.toList());
+      return getSupportedLanguages(getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project));
     }
     return Collections.emptyList();
   }
@@ -86,7 +91,6 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     if (text != null) {
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context);
       JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
-      codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
 
       if (context != null) {
         PsiType contextType = context.getUserData(DebuggerUtilsImpl.PSI_TYPE_KEY);

@@ -35,12 +35,6 @@ public class CreateStaticMethodQuickFix implements LocalQuickFix {
 
   @NotNull
   @Override
-  public String getName() {
-    return QuickFixBundle.message("create.method.from.usage.family");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }

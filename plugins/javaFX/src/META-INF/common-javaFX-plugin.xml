@@ -1,5 +1,6 @@
 <idea-plugin>
   <depends>com.intellij.modules.java</depends>
+  <depends optional="true" config-file="resources-plugin.xml">com.intellij.properties</depends>
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
@@ -43,6 +44,11 @@
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxExpandAttributeIntention</className>
       <category>JavaFX</category>
     </intentionAction>
+    <intentionAction>
+      <className>org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention</className>
+      <category>JavaFX</category>
+    </intentionAction>
+
     <lang.importOptimizer language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer" order="before XML"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxReferencesContributor"/>
     <getterSetterProvider implementation="org.jetbrains.plugins.javaFX.codeInsight.JavaFxGetterSetterPrototypeProvider"/>
@@ -63,6 +69,8 @@
     <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFxMainMethodRunConfigurationProvider"/>
     <deadCode implementation="org.jetbrains.plugins.javaFX.JavaFxEntryPoint"/>
     <projectSdkSetupValidator implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator" order="after javaSdk"/>
+    <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
   </extensions>
 
   <actions>
@@ -70,6 +78,9 @@
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
   </actions>
 </idea-plugin>

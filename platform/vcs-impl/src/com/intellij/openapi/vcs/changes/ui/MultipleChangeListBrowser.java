@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
@@ -50,6 +51,8 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
+
 public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @NotNull private final ChangeListChooser myChangeListChooser;
@@ -64,10 +67,10 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private AnAction myMoveActionWithCustomShortcut;
 
   // todo terrible constructor
-  public MultipleChangeListBrowser(Project project,
-                                   List<? extends ChangeList> changeLists,
+  public MultipleChangeListBrowser(@NotNull Project project,
+                                   @NotNull List<? extends ChangeList> changeLists,
                                    @NotNull List<Object> changes,
-                                   ChangeList initialListSelection,
+                                   @Nullable ChangeList initialListSelection,
                                    boolean capableOfExcludingChanges,
                                    boolean highlightProblems,
                                    @Nullable Runnable rebuildListListener,
@@ -183,7 +186,9 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @Override
   @NotNull
   public List<Change> getCurrentIncludedChanges() {
-    return filterBySelectedChangeList(findChanges(myViewer.getIncludedChanges()));
+    Collection<Object> includedObjects = myViewer.getIncludedChanges();
+
+    return mySelectedChangeList.getChanges().stream().filter(includedObjects::contains).collect(toList());
   }
 
   @NotNull
@@ -196,7 +201,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
     builder.setChanges(findChanges(objects), changeNodeDecorator);
     if (isShowUnversioned()) {
-      builder.setUnversioned(manager.getUnversionedFiles(), manager.getUnversionedFilesSize());
+      builder.setUnversioned(manager.getUnversionedFiles());
     }
 
     return builder.build();
@@ -251,7 +256,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
       ChangesBrowserUnversionedFilesNode node = findUnversionedFilesNode();
 
       if (node != null) {
-        result = node.getUnversionedSize();
+        result = node.getFileCount();
       }
     }
 
@@ -294,11 +299,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     return ChangesUtil.getAffectedVcses(myAllChanges, myProject);
   }
 
-  @NotNull
-  private List<Change> filterBySelectedChangeList(@NotNull Collection<Change> changes) {
-    return ContainerUtil.<Change>intersection(changes, mySelectedChangeList.getChanges());
-  }
-
   @Override
   protected void buildToolBar(@NotNull DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
@@ -331,6 +331,18 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     toolBarGroup.add(editSourceAction);
 
     toolBarGroup.add(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
+  }
+
+  @Override
+  protected void afterDiffRefresh() {
+    rebuildList();
+    setDataIsDirty(false);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        IdeFocusManager.findInstance().requestFocus(myViewer.getPreferredFocusedComponent(), true);
+      }
+    });
   }
 
   @Override

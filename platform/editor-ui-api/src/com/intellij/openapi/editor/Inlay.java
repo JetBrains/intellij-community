@@ -17,6 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolderEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * WARNING! This is an experimental API, it can change at any time.
  */
+@ApiStatus.Experimental
 public interface Inlay extends Disposable, UserDataHolderEx {
   /**
    * Tells whether this element is valid. Inlay becomes invalid on explicit disposal,

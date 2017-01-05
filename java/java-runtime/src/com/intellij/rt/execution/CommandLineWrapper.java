@@ -30,65 +30,84 @@ import java.util.jar.Manifest;
 /**
  * @author anna
  * @since 12-Aug-2008
+ * @noinspection SSBasedInspection
  */
 public class CommandLineWrapper {
+  private static class AppData {
+    private final List properties;
+    private final Class mainClass;
+    private final String[] args;
 
-  private static final String PREFIX = "-D";
-
-  public static void main(String[] args) throws Exception {
-    final File jarFile = new File(args[0]);
-    final MainPair mainPair = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(jarFile, args) 
-                                                       : loadMainClassWithOldCustomLoader(jarFile, args);
-    String[] mainArgs = mainPair.getArgs();
-    Class mainClass = mainPair.getMainClass();
-    //noinspection SSBasedInspection
-    Class mainArgType = (new String[0]).getClass();
-    Method main = mainClass.getMethod("main", new Class[]{mainArgType});
-    ensureAccess(main);
-    main.invoke(null, new Object[]{mainArgs});
+    private AppData(List properties, Class mainClass, String[] args) {
+      this.properties = properties;
+      this.mainClass = mainClass;
+      this.args = args;
+    }
   }
 
-  private static MainPair loadMainClassFromClasspathJar(File jarFile, String[] args) throws Exception {
-    String[] mainArgs;
-    final JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
-    try {
-      final Manifest manifest = inputStream.getManifest();
-      final String vmParams = manifest.getMainAttributes().getValue("VM-Options");
-      if (vmParams != null) {
-        final HashMap vmOptions = new HashMap();
-        parseVmOptions(vmParams, vmOptions);
-        for (Iterator iterator = vmOptions.keySet().iterator(); iterator.hasNext(); ) {
-          String optionName = (String)iterator.next();
-          System.setProperty(optionName, (String)vmOptions.get(optionName));
+  public static void main(String[] args) throws Exception {
+    File file = new File(args[0]);
+    AppData appData = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(file, args) : loadMainClassWithCustomLoader(file, args);
+
+    List properties = appData.properties;
+    for (int i = 0; i < properties.size(); i++) {
+      String property = (String)properties.get(i);
+      if (property.startsWith("-D")) {
+        int p = property.indexOf('=');
+        if (p > 0) {
+          System.setProperty(property.substring(2, p), property.substring(p + 1));
+        }
+        else {
+          System.setProperty(property.substring(2), "");
         }
       }
-      String programParameters = manifest.getMainAttributes().getValue("Program-Parameters");
+    }
+
+    Method main = appData.mainClass.getMethod("main", new Class[]{String[].class});
+    main.setAccessible(true);  // need to launch package-private classes
+    main.invoke(null, new Object[]{appData.args});
+  }
+
+  private static AppData loadMainClassFromClasspathJar(File jarFile, String[] args) throws Exception {
+    List properties = Collections.EMPTY_LIST;
+    String[] mainArgs;
+
+    JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
+    try {
+      Manifest manifest = inputStream.getManifest();
+
+      String vmOptions = manifest != null ? manifest.getMainAttributes().getValue("VM-Options") : null;
+      if (vmOptions != null) {
+        properties = splitBySpaces(vmOptions);
+      }
+
+      String programParameters = manifest != null ? manifest.getMainAttributes().getValue("Program-Parameters") : null;
       if (programParameters == null) {
         mainArgs = new String[args.length - 2];
         System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
       }
       else {
-        mainArgs = splitBySpaces(programParameters);
+        List list = splitBySpaces(programParameters);
+        mainArgs = (String[])list.toArray(new String[list.size()]);
       }
     }
     finally {
-      if (inputStream != null) {
-        inputStream.close();
-      }
+      inputStream.close();
       jarFile.deleteOnExit();
     }
 
-    return new MainPair(Class.forName(args[1]), mainArgs);
+    return new AppData(properties, Class.forName(args[1]), mainArgs);
   }
 
   /**
    * The implementation is copied from copied from com.intellij.util.execution.ParametersListUtil.parse and adapted to old Java versions
+   * @noinspection Duplicates
    */
-  private static String[] splitBySpaces(String parameterString) {
+  private static List splitBySpaces(String parameterString) {
     parameterString = parameterString.trim();
 
-    final ArrayList params = new ArrayList();
-    final StringBuffer token = new StringBuffer(128);
+    List params = new ArrayList();
+    StringBuffer token = new StringBuffer(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
     boolean nonEmpty = false;
@@ -128,125 +147,101 @@ public class CommandLineWrapper {
       params.add(token.toString());
     }
 
-    //noinspection SSBasedInspection
-    return (String[])params.toArray(new String[params.size()]);
+    return params;
   }
 
-  private static class MainPair {
-    private Class mainClass;
-    private String[] args;
-
-    public MainPair(Class mainClass, String[] args) {
-      this.mainClass = mainClass;
-      this.args = args;
-    }
-
-    public Class getMainClass() {
-      return mainClass;
-    }
-
-    public String[] getArgs() {
-      return args;
-    }
-  }
-  
-  public static void parseVmOptions(String vmParams, Map vmOptions) {
-    int idx = vmParams.indexOf(PREFIX);
-    while (idx >= 0) {
-      final int indexOf = vmParams.indexOf(PREFIX, idx + PREFIX.length());
-      final String vmParam = indexOf < 0 ? vmParams.substring(idx) : vmParams.substring(idx, indexOf - 1);
-      final int eqIdx = vmParam.indexOf('=');
-      String vmParamName;
-      String vmParamValue;
-      if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
-        vmParamName = vmParam.substring(0, eqIdx);
-        vmParamValue = vmParam.substring(eqIdx + 1);
-      } else {
-        vmParamName = vmParam;
-        vmParamValue = "";
-      }
-      vmOptions.put(vmParamName.trim().substring(PREFIX.length()), vmParamValue);
-      idx = indexOf;
-    }
-  }
-
-  private static void ensureAccess(Object reflectionObject) {
-    // need to call setAccessible here in order to be able to launch package-private classes
-    // calling setAccessible() via reflection because the method is missing from java version 1.1.x
-    final Class aClass = reflectionObject.getClass();
+  /**
+   * args: "classpath file" [ @vm_params "VM options file" ] [ @app_params "args file" ] "main class" [ args ... ]
+   * @noinspection Duplicates, ResultOfMethodCallIgnored
+   */
+  private static AppData loadMainClassWithCustomLoader(File classpathFile, String[] args) throws Exception {
+    List classpathUrls = new ArrayList();
+    StringBuffer classpathString = new StringBuffer();
+    BufferedReader classpathReader = new BufferedReader(new FileReader(classpathFile));
     try {
-      final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[]{boolean.class});
-      setAccessibleMethod.invoke(reflectionObject, new Object[]{Boolean.TRUE});
-    }
-    catch (Exception e) {
-      // the method not found
-    }
-  }
-
-  //todo delete; but new idea won't run correctly tests which start process with CommandLineWrapper
-  private static MainPair loadMainClassWithOldCustomLoader(File file, String[] args) throws Exception {
-    final List urls = new ArrayList();
-    final StringBuffer buf = new StringBuffer();
-    final BufferedReader reader = new BufferedReader(new FileReader(file));
-    try {
-      while (reader.ready()) {
-        final String fileName = reader.readLine();
-        if (buf.length() > 0) {
-          buf.append(File.pathSeparator);
-        }
-        buf.append(fileName);
-        File classpathElement = new File(fileName);
-        try {
-          //noinspection Since15, deprecation
-          urls.add(classpathElement.toURI().toURL());
-        }
-        catch (NoSuchMethodError e) {
-          //noinspection deprecation
-          urls.add(classpathElement.toURL());
-        }
+      String pathElement;
+      while ((pathElement = classpathReader.readLine()) != null) {
+        if (classpathString.length() > 0) classpathString.append(File.pathSeparator);
+        classpathString.append(pathElement);
+        classpathUrls.add(toUrl(new File(pathElement)));
       }
     }
     finally {
-      reader.close();
+      classpathReader.close();
+      classpathFile.delete();
     }
-    if (!file.delete()) file.deleteOnExit();
-    System.setProperty("java.class.path", buf.toString());
+    System.setProperty("java.class.path", classpathString.toString());
 
     int startArgsIdx = 2;
 
-    String mainClassName = args[startArgsIdx - 1];
-    String[] mainArgs = new String[args.length - startArgsIdx];
-    System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
+    List properties = Collections.EMPTY_LIST;
+    if (args.length > startArgsIdx && "@vm_params".equals(args[startArgsIdx - 1])) {
+      File vmParamsFile = new File(args[startArgsIdx]);
+      BufferedReader vmParamsReader = new BufferedReader(new FileReader(vmParamsFile));
+      try {
+        properties = new ArrayList();
+        String property;
+        while ((property = vmParamsReader.readLine()) != null) {
+          properties.add(property);
+        }
+      }
+      finally {
+        vmParamsReader.close();
+        vmParamsFile.delete();
+      }
 
-    for (int i = 0; i < urls.size(); i++) {
-      URL url = (URL)urls.get(i);
-      urls.set(i, internFileProtocol(url));
+      startArgsIdx += 2;
     }
 
-    ClassLoader loader = new URLClassLoader((URL[])urls.toArray(new URL[urls.size()]), null);
-    final String classLoader = System.getProperty("java.system.class.loader");
-    if (classLoader != null) {
+    String[] mainArgs;
+    if (args.length > startArgsIdx && "@app_params".equals(args[startArgsIdx - 1])) {
+      File appParamsFile = new File(args[startArgsIdx]);
+      BufferedReader appParamsReader = new BufferedReader(new FileReader(appParamsFile));
       try {
-        loader = (ClassLoader)Class.forName(classLoader).getConstructor(new Class[]{ClassLoader.class}).newInstance(new Object[]{loader});
+        List list = new ArrayList();
+        String arg;
+        while ((arg = appParamsReader.readLine()) != null) {
+          list.add(arg);
+        }
+        mainArgs = (String[])list.toArray(new String[list.size()]);
       }
-      catch (Exception e) {
-        //leave URL class loader
+      finally {
+        appParamsReader.close();
+        appParamsFile.delete();
       }
+
+      startArgsIdx += 2;
+    }
+    else {
+      mainArgs = new String[args.length - startArgsIdx];
+      System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
+    }
+
+    String mainClassName = args[startArgsIdx - 1];
+    ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[classpathUrls.size()]), null);
+    String systemLoaderName = System.getProperty("java.system.class.loader");
+    if (systemLoaderName != null) {
+      try {
+        loader = (ClassLoader)Class.forName(systemLoaderName).getConstructor(new Class[]{ClassLoader.class}).newInstance(new Object[]{loader});
+      }
+      catch (Exception ignored) { }
     }
     Class mainClass = loader.loadClass(mainClassName);
     Thread.currentThread().setContextClassLoader(loader);
 
-    return new MainPair(mainClass, mainArgs);
+    return new AppData(properties, mainClass, mainArgs);
   }
 
-  private static URL internFileProtocol(URL url) {
+  /** @noinspection Since15, deprecation */
+  private static URL toUrl(File classpathElement) throws MalformedURLException {
+    URL url;
     try {
-      if ("file".equals(url.getProtocol())) {
-        return new URL("file", url.getHost(), url.getPort(), url.getFile());
-      }
+      url = classpathElement.toURI().toURL();
     }
-    catch (MalformedURLException ignored) {
+    catch (NoSuchMethodError e) {
+      url = classpathElement.toURL();
     }
+    url = new URL("file", url.getHost(), url.getPort(), url.getFile());
     return url;
   }
 }

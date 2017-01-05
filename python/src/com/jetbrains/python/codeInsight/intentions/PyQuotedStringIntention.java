@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -33,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * User: catherine
  * Intention to convert between single-quoted and double-quoted strings 
  */
-public class PyQuotedStringIntention extends BaseIntentionAction {
+public class PyQuotedStringIntention extends PyBaseIntentionAction {
 
   @NotNull
   public String getFamilyName() {
@@ -73,7 +72,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {

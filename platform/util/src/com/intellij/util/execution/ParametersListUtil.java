@@ -66,23 +66,23 @@ public class ParametersListUtil {
    * <p>
    * <strong>Conversion rules:</strong>
    * <ul>
-   * <li>double quotes are escaped by backslash (<code>&#92;</code>);</li>
-   * <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes (<code>"</code>);</li>
+   * <li>double quotes are escaped by backslash ({@code &#92;});</li>
+   * <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes ({@code "});</li>
    * <li>parameters are separated by single whitespace.</li>
    * </ul>
    * </p>
    * <p/>
    * <p><strong>Examples:</strong></p>
    * <p>
-   * <code>['a', 'b'] => 'a  b'</code><br/>
-   * <code>['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'</code>
+   * {@code ['a', 'b'] => 'a  b'}<br/>
+   * {@code ['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'}
    * </p>
    *
    * @param parameters a list of parameters to join.
    * @return a string with parameters.
    */
   @NotNull
-  public static String join(@NotNull final List<String> parameters) {
+  public static String join(@NotNull final List<? extends CharSequence> parameters) {
     return encode(parameters);
   }
 
@@ -108,17 +108,17 @@ public class ParametersListUtil {
    * <ul>
    * <li>starting/whitespaces are trimmed;</li>
    * <li>parameters are split by whitespaces, whitespaces itself are dropped</li>
-   * <li>parameters inside double quotes (<code>"a b"</code>) are kept as single one;</li>
-   * <li>double quotes are dropped, escaped double quotes (<code>&#92;"</code>) are un-escaped.</li>
+   * <li>parameters inside double quotes ({@code "a b"}) are kept as single one;</li>
+   * <li>double quotes are dropped, escaped double quotes ({@code &#92;"}) are un-escaped.</li>
    * </ul>
    * </p>
    * <p/>
    * <p><strong>Examples:</strong></p>
    * <p>
-   * <code>' a  b ' => ['a', 'b']</code><br/>
-   * <code>'a="1 2" b' => ['a=1 2', 'b']</code><br/>
-   * <code>'a " " b' => ['a', ' ', 'b']</code><br/>
-   * <code>'"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']</code>
+   * {@code ' a  b ' => ['a', 'b']}<br/>
+   * {@code 'a="1 2" b' => ['a=1 2', 'b']}<br/>
+   * {@code 'a " " b' => ['a', ' ', 'b']}<br/>
+   * {@code '"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']}
    * </p>
    *
    * @param parameterString parameter string to split.
@@ -182,25 +182,30 @@ public class ParametersListUtil {
   }
 
   @NotNull
-  private static String encode(@NotNull final List<String> parameters) {
+  private static String encode(@NotNull final List<? extends CharSequence> parameters) {
+    if (parameters.isEmpty()) {
+      return "";
+    }
+
     final StringBuilder buffer = new StringBuilder();
-    for (final String parameter : parameters) {
+    final StringBuilder paramBuilder = new StringBuilder();
+    for (CharSequence parameter : parameters) {
       if (buffer.length() > 0) {
         buffer.append(' ');
       }
-      buffer.append(encode(parameter));
+
+      paramBuilder.append(parameter);
+      encodeParam(paramBuilder);
+      buffer.append(paramBuilder);
+      paramBuilder.setLength(0);
     }
     return buffer.toString();
   }
 
-  @NotNull
-  private static String encode(@NotNull String parameter) {
-    final StringBuilder builder = new StringBuilder();
-    builder.append(parameter);
+  private static void encodeParam(@NotNull StringBuilder builder) {
     StringUtil.escapeQuotes(builder);
     if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
       StringUtil.quote(builder);
     }
-    return builder.toString();
   }
 }

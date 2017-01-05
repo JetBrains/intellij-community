@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,10 +49,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IndentedIcon;
-import com.intellij.util.ui.Table;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -147,15 +144,23 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myCellEditor = new MyCellEditor();
 
     addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(final MouseEvent e){
         final int row = rowAtPoint(e.getPoint());
+        final int column = columnAtPoint(e.getPoint());
         if (row == -1){
           return;
         }
         final Property property = myProperties.get(row);
-        int indent = getPropertyIndent(property) * 11;
+        int indent = getPropertyIndentDepth(property) * getPropertyIndentWidth();
         final Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
-        if (e.getX() < rect.x + indent || e.getX() > rect.x + 9 + indent || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
+
+        Component rendererComponent = myCellRenderer.getTableCellRendererComponent(PropertyInspectorTable.this,
+                                                                                   property, false, false, row, column);
+        if (!rect.contains(e.getX(), e.getY()) ||
+            !(rendererComponent instanceof ColoredTableCellRenderer) ||
+            ((ColoredTableCellRenderer)rendererComponent).findFragmentAt(e.getX()) != SimpleColoredComponent.FRAGMENT_ICON ||
+            e.getX() < rect.x + indent) {
           return;
         }
 
@@ -164,7 +169,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           return;
         }
 
-        if (isPropertyExpanded(property, property.getParent())) {
+        if (isPropertyExpanded(property)) {
           collapseProperty(row);
         }
         else {
@@ -253,6 +258,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       .findClass(className, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
   }
 
+  @Override
   public Object getData(final String dataId) {
     if(getClass().getName().equals(dataId)){
       return this;
@@ -305,11 +311,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     LafManager.getInstance().addLafManagerListener(myLafManagerListener);
   }
 
+  @Override
   public void removeNotify() {
     LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
     super.removeNotify();
@@ -319,6 +327,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * Standard JTable's UI has non convenient keybinding for
    * editing. Therefore we have to replace some standard actions.
    */
+  @Override
   public void setUI(final TableUI ui){
     super.setUI(ui);
 
@@ -351,6 +360,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT,0));
   }
 
+  @Override
   public void setValueAt(final Object aValue, final int row, final int column) {
     final Property property = myProperties.get(row);
     super.setValueAt(aValue, row, column);
@@ -569,14 +579,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   private void addProperty(final ArrayList<Property> result, final Property property) {
     result.add(property);
-    if (isPropertyExpanded(property, property.getParent())) {
+    if (isPropertyExpanded(property)) {
       for(Property child: getPropChildren(property)) {
         addProperty(result, child);
       }
     }
   }
 
-  private boolean isPropertyExpanded(final Property property, final Property parent) {
+  private boolean isPropertyExpanded(final Property property) {
     return myExpandedProperties.contains(getDottedName(property));
   }
 
@@ -588,7 +598,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return property.getName();
   }
 
-  private static int getPropertyIndent(final Property property) {
+  private static int getPropertyIndentDepth(final Property property) {
     final Property parent = property.getParent();
     if (parent != null) {
       return parent.getParent() != null ? 2 : 1;
@@ -596,10 +606,15 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return 0;
   }
 
+  private static int getPropertyIndentWidth() {
+    return JBUI.scale(11);
+  }
+
   private Property[] getPropChildren(final Property property) {
     return property.getChildren(mySelection.get(0));
   }
 
+  @Override
   public TableCellEditor getCellEditor(final int row, final int column){
     final PropertyEditor editor = myProperties.get(row).getEditor();
     editor.removePropertyEditorListener(myPropertyEditorListener); // we do not need to add listener on every invocation
@@ -608,7 +623,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return myCellEditor;
   }
 
-  public TableCellRenderer getCellRenderer(final int row,final int column){
+  @Override
+  public TableCellRenderer getCellRenderer(final int row, final int column){
     return myCellRenderer;
   }
 
@@ -617,6 +633,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * JTree does not properly repaint edited cell if the editor is opaque or
    * has opaque child components.
    */
+  @Override
   public boolean editCellAt(final int row, final int column, final EventObject e){
     final boolean result = super.editCellAt(row, column, e);
     final Rectangle cellRect = getCellRect(row, column, true);
@@ -653,6 +670,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     editingStopped(new ChangeEvent(cellEditor));
   }
 
+  @Override
   public void editingStopped(final ChangeEvent ignored){
     LOG.assertTrue(isEditing());
     LOG.assertTrue(editingRow!=-1);
@@ -730,7 +748,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     // Expand property
     final Property property=myProperties.get(index);
-    LOG.assertTrue(isPropertyExpanded(property, property.getParent()));
+    LOG.assertTrue(isPropertyExpanded(property));
     myExpandedProperties.remove(getDottedName(property));
 
     final Property[] children=getPropChildren(property);
@@ -786,6 +804,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return errorInfo != null ? errorInfo.myDescription : null;
   }
 
+  @Override
   public String getToolTipText(final MouseEvent e) {
     final int row = rowAtPoint(e.getPoint());
     if(row == -1){
@@ -882,26 +901,32 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         UIDesignerBundle.message("column.value")};
     }
 
+    @Override
     public int getColumnCount(){
       return 2;
     }
 
+    @Override
     public String getColumnName(final int column){
       return myColumnNames[column];
     }
 
+    @Override
     public int getRowCount(){
       return myProperties.size();
     }
 
+    @Override
     public boolean isCellEditable(final int row, final int column){
       return  column==1 && myProperties.get(row).getEditor() != null;
     }
 
+    @Override
     public Object getValueAt(final int row, final int column){
       return myProperties.get(row);
     }
 
+    @Override
     public void setValueAt(final Object newValue, final int row, final int column){
       if (column != 1){
         throw new IllegalArgumentException("wrong index: " + column);
@@ -937,6 +962,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   private final class MyPropertyEditorListener extends PropertyEditorAdapter{
+    @Override
     public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
       if(isEditing()){
         final Object value;
@@ -958,6 +984,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
     }
 
+    @Override
     public void editingCanceled(final PropertyEditor source) {
       if(isEditing()){
         cellEditor.cancelCellEditing();
@@ -979,6 +1006,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     public MyCompositeTableCellRenderer(){
       myPropertyNameRenderer = new ColoredTableCellRenderer() {
+        @Override
         protected void customizeCellRenderer(
           final JTable table,
           final Object value,
@@ -994,20 +1022,22 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       };
 
       myErrorRenderer = new ColoredTableCellRenderer() {
+        @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setPaintFocusBorder(false);
         }
       };
 
-      myExpandIcon= UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
-      myCollapseIcon=UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
-      for(int i=0; i<myIndentIcons.length; i++) {
-        myIndentIcons [i] = new EmptyIcon(myExpandIcon.getIconWidth() + 11 * i, myExpandIcon.getIconHeight());
+      myExpandIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
+      myCollapseIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
+      for (int i = 0; i < myIndentIcons.length; i++) {
+        myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
       }
-      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, 11);
-      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, 11);
+      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, getPropertyIndentWidth());
+      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, getPropertyIndentWidth());
     }
 
+    @Override
     public Component getTableCellRendererComponent(
       final JTable table,
       @NotNull final Object value,
@@ -1043,14 +1073,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         if(getPropChildren(property).length>0) {
           // This is composite property and we have to show +/- sign
           if (parent != null) {
-            if(isPropertyExpanded(property, parent)){
+            if(isPropertyExpanded(property)){
               myPropertyNameRenderer.setIcon(myIndentedCollapseIcon);
             }else{
               myPropertyNameRenderer.setIcon(myIndentedExpandIcon);
             }
           }
           else {
-            if(isPropertyExpanded(property, parent)){
+            if(isPropertyExpanded(property)){
               myPropertyNameRenderer.setIcon(myCollapseIcon);
             }else{
               myPropertyNameRenderer.setIcon(myExpandIcon);
@@ -1059,7 +1089,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }else{
           // If property doesn't have children then we have shift its text
           // to the right
-          myPropertyNameRenderer.setIcon(myIndentIcons [getPropertyIndent(property)]);
+          myPropertyNameRenderer.setIcon(myIndentIcons [getPropertyIndentDepth(property)]);
         }
       }
       else if(column==1){ // painter for second column
@@ -1163,6 +1193,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       myEditor = editor;
     }
 
+    @Override
     public Object getCellEditorValue(){
       try {
         return myEditor.getValue();
@@ -1172,6 +1203,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
     }
 
+    @Override
     public Component getTableCellEditorComponent(final JTable table, @NotNull final Object value, final boolean isSelected, final int row, final int column){
       final Property property=(Property)value;
       try {
@@ -1201,6 +1233,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @see javax.swing.plaf.basic.BasicTableUI
    */
   private final class MySelectPreviousRowAction extends AbstractAction{
+    @Override
     public void actionPerformed(final ActionEvent e){
       final int rowCount=getRowCount();
       LOG.assertTrue(rowCount>0);
@@ -1228,6 +1261,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @see javax.swing.plaf.basic.BasicTableUI
    */
   private final class MySelectNextRowAction extends AbstractAction{
+    @Override
     public void actionPerformed(final ActionEvent e){
       final int rowCount=getRowCount();
       LOG.assertTrue(rowCount>0);
@@ -1251,6 +1285,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @see javax.swing.plaf.basic.BasicTableUI
    */
   private final class MyStartEditingAction extends AbstractAction{
+    @Override
     public void actionPerformed(final ActionEvent e){
       final int selectedRow=getSelectedRow();
       if(selectedRow==-1 || isEditing()){
@@ -1266,6 +1301,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * property.
    */
   private final class MyEnterAction extends AbstractAction{
+    @Override
     public void actionPerformed(final ActionEvent e){
       final int selectedRow=getSelectedRow();
       if(isEditing() || selectedRow==-1){
@@ -1274,7 +1310,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
       final Property property=myProperties.get(selectedRow);
       if(getPropChildren(property).length>0){
-        if(isPropertyExpanded(property, property.getParent())){
+        if(isPropertyExpanded(property)){
           collapseProperty(selectedRow);
         }else{
           expandProperty(selectedRow);
@@ -1292,6 +1328,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       myExpand = expand;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final int selectedRow=getSelectedRow();
       if(isEditing() || selectedRow==-1){
@@ -1300,12 +1337,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Property property=myProperties.get(selectedRow);
       if(getPropChildren(property).length>0) {
         if (myExpand) {
-          if (!isPropertyExpanded(property, property.getParent())) {
+          if (!isPropertyExpanded(property)) {
             expandProperty(selectedRow);
           }
         }
         else {
-          if (isPropertyExpanded(property, property.getParent())) {
+          if (isPropertyExpanded(property)) {
             collapseProperty(selectedRow);
           }
         }
@@ -1337,6 +1374,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
     }
 
+    @Override
     public void lookAndFeelChanged(final LafManager source) {
       updateUI(myBorderProperty);
       updateUI(MarginProperty.getInstance(myProject));

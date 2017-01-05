@@ -36,16 +36,6 @@ abstract class TextFragment implements LineFragment {
     return myCharPositions.length;
   }
 
-  @Override
-  public int getLogicalColumnCount(int startColumn) {
-    return myCharPositions.length;
-  }
-
-  @Override
-  public int getVisualColumnCount(float startX) {
-    return myCharPositions.length;
-  }
-  
   abstract boolean isRtl();
 
   @NotNull
@@ -57,6 +47,8 @@ abstract class TextFragment implements LineFragment {
     if (startOffset == 0 && endOffset == myCharPositions.length) return this;
     return new TextFragmentWindow(startOffset, endOffset);
   }
+
+  abstract int offsetToLogicalColumn(int offset);
 
   @Override
   public float offsetToX(float startX, int startOffset, int offset) {
@@ -77,32 +69,17 @@ abstract class TextFragment implements LineFragment {
     return column;
   }
 
-  @Override
-  public int[] xToVisualColumn(float startX, float x) {
-    float relX = x - startX;
-    float prevPos = 0;
-    for (int i = 0; i < myCharPositions.length; i++) {
-      float newPos = myCharPositions[i];
-      if (relX < (newPos + prevPos) / 2) {
-        return new int[] {i, relX <= prevPos ? 0 : 1};
-      }
-      prevPos = newPos;
-    }
-    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
-  }
-
-  @Override
-  public float visualColumnToX(float startX, int column) {
-    return startX + getX(column);
-  }
-
   private class TextFragmentWindow implements LineFragment {
     private final int myStartOffset;
     private final int myEndOffset;
+    private final int myStartColumn; // logical
+    private final int myEndColumn; // logical
 
     private TextFragmentWindow(int startOffset, int endOffset) {
       myStartOffset = startOffset;
       myEndOffset = endOffset;
+      myStartColumn = TextFragment.this.offsetToLogicalColumn(startOffset);
+      myEndColumn = TextFragment.this.offsetToLogicalColumn(endOffset);
     }
 
     @Override
@@ -112,12 +89,12 @@ abstract class TextFragment implements LineFragment {
 
     @Override
     public int getLogicalColumnCount(int startColumn) {
-      return getLength();
+      return myEndColumn - myStartColumn;
     }
 
     @Override
     public int getVisualColumnCount(float startX) {
-      return getLength();
+      return myEndColumn - myStartColumn;
     }
 
     @Override
@@ -132,37 +109,44 @@ abstract class TextFragment implements LineFragment {
 
     @Override
     public float offsetToX(float startX, int startOffset, int offset) {
-      return TextFragment.this.offsetToX(startX, visualColumnToParent(startOffset), visualColumnToParent(offset));
+      return TextFragment.this.offsetToX(startX, visualOffsetToParent(startOffset), visualOffsetToParent(offset));
     }
 
     @Override
     public float visualColumnToX(float startX, int column) {
-      return startX + getX(visualColumnToParent(column)) - getX(visualColumnToParent(0));
+      int startColumnInParent = visualColumnToParent(0);
+      float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
+      int columnInParent = visualColumnToParent(column);
+      return TextFragment.this.visualColumnToX(parentStartX, columnInParent);
     }
 
     @Override
     public int[] xToVisualColumn(float startX, float x) {
       int startColumnInParent = visualColumnToParent(0);
-      float parentStartX = startX - getX(startColumnInParent);
+      float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
       int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
       int column = parentColumn[0] - startColumnInParent;
-      int length = getLength();
-      return column < 0 ? new int[] {0, 0} : column > length ? new int[] {length, 1} : new int[] {column, parentColumn[1]};
+      int columnCount = getVisualColumnCount(startX);
+      return column < 0 ? new int[] {0, 0} : column > columnCount ? new int[] {columnCount, 1} : new int[] {column, parentColumn[1]};
+    }
+
+    private int visualOffsetToParent(int offset) {
+      return offset + (isRtl() ? myCharPositions.length - myEndOffset : myStartOffset);
     }
 
     private int visualColumnToParent(int column) {
-      return column + (isRtl() ? myCharPositions.length - myEndOffset : myStartOffset);
+      return column + (isRtl() ? TextFragment.this.getVisualColumnCount(0) - myEndColumn : myStartColumn);
     }
 
     @Override
-    public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
-      TextFragment.this.draw(g, x, y, visualColumnToParent(startColumn), visualColumnToParent(endColumn));
+    public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
+      TextFragment.this.draw(g, x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
     }
 
     @NotNull
     @Override
     public LineFragment subFragment(int startOffset, int endOffset) {
-      return new TextFragmentWindow(startOffset + myStartOffset, endOffset + myStartOffset);
+      return TextFragment.this.subFragment(startOffset + myStartOffset, endOffset + myStartOffset);
     }
   }
 }

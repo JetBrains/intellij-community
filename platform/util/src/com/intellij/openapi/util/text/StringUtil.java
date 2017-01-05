@@ -41,9 +41,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class StringUtil extends StringUtilRt {
@@ -129,7 +126,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
+  public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
     return new Function<T, String>() {
       @Override
       public String fun(@NotNull T o) {
@@ -139,7 +136,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static Function<String, String> TRIMMER = new Function<String, String>() {
+  public static final Function<String, String> TRIMMER = new Function<String, String>() {
     @Nullable
     @Override
     public String fun(@Nullable String s) {
@@ -270,7 +267,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int indexOfIgnoreCase(@NotNull String where, char what, int fromIndex) {
     int sourceCount = where.length();
-    for (int i = max(fromIndex, 0); i < sourceCount; i++) {
+    for (int i = Math.max(fromIndex, 0); i < sourceCount; i++) {
       if (charsEqualIgnoreCase(where.charAt(i), what)) {
         return i;
       }
@@ -320,8 +317,8 @@ public class StringUtil extends StringUtilRt {
    * Given a fqName returns the package name for the type or the containing type.
    * <p/>
    * <ul>
-   * <li><code>java.lang.String</code> -> <code>java.lang</code></li>
-   * <li><code>java.util.Map.Entry</code> -> <code>java.util.Map</code></li>
+   * <li>{@code java.lang.String} -> {@code java.lang}</li>
+   * <li>{@code java.util.Map.Entry} -> {@code java.util.Map}</li>
    * </ul>
    *
    * @param fqName    a fully qualified type name. Not supposed to contain any type arguments
@@ -460,7 +457,7 @@ public class StringUtil extends StringUtilRt {
     for (int i = 1; i < s1.length(); i++) {
       for (int j = 1; j < s2.length(); j++) {
 
-        a[i][j] = min(min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1), a[i - 1][j] + 1), a[i][j - 1] + 1);
+        a[i][j] = Math.min(Math.min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1), a[i - 1][j] + 1), a[i][j - 1] + 1);
       }
     }
 
@@ -829,49 +826,13 @@ public class StringUtil extends StringUtilRt {
     if (escaped) buffer.append('\\');
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   @Contract(pure = true)
-  public static String pluralize(@NotNull String suggestion) {
-    if (suggestion.endsWith("Child") || suggestion.endsWith("child")) {
-      return suggestion + "ren";
-    }
-
-    if (suggestion.equals("this")) {
-      return "these";
-    }
-    if (suggestion.equals("This")) {
-      return "These";
-    }
-    if (suggestion.equals("fix") || suggestion.equals("Fix")) {
-      return suggestion + "es";
-    }
-
-    if (endsWithIgnoreCase(suggestion, "es")) {
-      return suggestion;
-    }
-
-    int len = suggestion.length();
-    if (endsWithIgnoreCase(suggestion, "ex") || endsWithIgnoreCase(suggestion, "ix")) {
-      return suggestion.substring(0, len - 2) + "ices";
-    }
-    if (endsWithIgnoreCase(suggestion, "um")) {
-      return suggestion.substring(0, len - 2) + "a";
-    }
-    if (endsWithIgnoreCase(suggestion, "an")) {
-      return suggestion.substring(0, len - 2) + "en";
-    }
-
-    if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") ||
-        endsWithIgnoreCase(suggestion, "ch") || endsWithIgnoreCase(suggestion, "sh")) {
-      return suggestion + "es";
-    }
-
-    if (endsWithIgnoreCase(suggestion, "y") && len > 1 && !isVowel(toLowerCase(suggestion.charAt(len - 2)))) {
-      return suggestion.substring(0, len - 1) + "ies";
-    }
-
-    return suggestion + "s";
+  public static String pluralize(@NotNull String word) {
+    String plural = Pluralizer.PLURALIZER.plural(word);
+    if (plural != null) return plural;
+    if (word.endsWith("s")) return Pluralizer.restoreCase(word, word + "es");
+    return Pluralizer.restoreCase(word, word + "s");
   }
 
   @NotNull
@@ -913,6 +874,9 @@ public class StringUtil extends StringUtilRt {
     return VOWELS.indexOf(c) >= 0;
   }
 
+  /**
+   * Capitalize the first letter of the sentence.
+   */
   @NotNull
   @Contract(pure = true)
   public static String capitalize(@NotNull String s) {
@@ -1137,13 +1101,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String trimExtension(@NotNull String name) {
-    int index = name.lastIndexOf('.');
-    return index < 0 ? name : name.substring(0, index);
-  }
-
-  @NotNull
-  @Contract(pure = true)
   public static String trimExtensions(@NotNull String name) {
     int index = name.indexOf('.');
     return index < 0 ? name : name.substring(0, index);
@@ -1246,7 +1203,7 @@ public class StringUtil extends StringUtilRt {
    * Allows to answer if given symbol is white space, tabulation or line feed.
    *
    * @param c symbol to check
-   * @return <code>true</code> if given symbol is white space, tabulation or line feed; <code>false</code> otherwise
+   * @return {@code true} if given symbol is white space, tabulation or line feed; {@code false} otherwise
    */
   @Contract(pure = true)
   public static boolean isWhiteSpace(char c) {
@@ -1425,7 +1382,7 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * @return list containing all words in {@code text}, or {@link ContainerUtil#emptyList()} if there are none.
-   * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are <code>Character.isJavaIdentifierPart(c)</code>.
+   * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are {@code Character.isJavaIdentifierPart(c)}.
    */
   @NotNull
   @Contract(pure = true)
@@ -1682,59 +1639,18 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
-   * Returns <code>null</code> if failed to match appropriate heuristic.
+   * Returns {@code null} if failed to match appropriate heuristic.
    *
-   * @param name english word in plural form
-   * @return name in singular form or <code>null</code> if failed to find one.
+   * @param word english word in plural form
+   * @return name in singular form or {@code null} if failed to find one.
    */
-  @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
   @Contract(pure = true)
-  public static String unpluralize(@NotNull final String name) {
-    if (name.endsWith("sses") || name.endsWith("shes") || name.endsWith("ches") || name.endsWith("xes")) { //?
-      return name.substring(0, name.length() - 2);
-    }
-
-    if (name.endsWith("ses")) {
-      return name.substring(0, name.length() - 1);
-    }
-
-    if (name.endsWith("ies")) {
-      if (name.endsWith("cookies") || name.endsWith("Cookies")) {
-        return name.substring(0, name.length() - "ookies".length()) + "ookie";
-      }
-
-      return name.substring(0, name.length() - 3) + "y";
-    }
-
-    if (name.endsWith("leaves") || name.endsWith("Leaves")) {
-      return name.substring(0, name.length() - "eaves".length()) + "eaf";
-    }
-
-    String result = stripEnding(name, "s");
-    if (result != null) {
-      return result;
-    }
-
-    if (name.endsWith("children")) {
-      return name.substring(0, name.length() - "children".length()) + "child";
-    }
-
-    if (name.endsWith("Children") && name.length() > "Children".length()) {
-      return name.substring(0, name.length() - "Children".length()) + "Child";
-    }
-
-
-    return null;
-  }
-
-  @Nullable
-  @Contract(pure = true)
-  private static String stripEnding(@NotNull String name, @NotNull String ending) {
-    if (name.endsWith(ending)) {
-      if (name.equals(ending)) return name; // do not return empty string
-      return name.substring(0, name.length() - 1);
-    }
+  public static String unpluralize(@NotNull String word) {
+    String singular = Pluralizer.PLURALIZER.singular(word);
+    if (singular != null) return singular;
+    if (word.endsWith("es")) return nullize(trimEnd(word, "es", true));
+    if (word.endsWith("s")) return nullize(trimEnd(word, "s", true));
     return null;
   }
 
@@ -1912,7 +1828,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int i;
-    int minLength = min(s1.length(), s2.length());
+    int minLength = Math.min(s1.length(), s2.length());
     for (i = 0; i < minLength; i++) {
       if (s1.charAt(i) != s2.charAt(i)) {
         break;
@@ -1942,14 +1858,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to answer if target symbol is contained at given char sequence at <code>[start; end)</code> interval.
+   * Allows to answer if target symbol is contained at given char sequence at {@code [start; end)} interval.
    *
    * @param s     target char sequence to check
    * @param start start offset to use within the given char sequence (inclusive)
    * @param end   end offset to use within the given char sequence (exclusive)
    * @param c     target symbol to check
-   * @return <code>true</code> if given symbol is contained at the target range of the given char sequence;
-   * <code>false</code> otherwise
+   * @return {@code true} if given symbol is contained at the target range of the given char sequence;
+   * {@code false} otherwise
    */
   @Contract(pure = true)
   public static boolean contains(@NotNull CharSequence s, int start, int end, char c) {
@@ -1978,8 +1894,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
-    end = min(end, s.length());
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (s.charAt(i) == c) return i;
     }
     return -1;
@@ -2007,8 +1923,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end, boolean caseSensitive) {
-    end = min(end, s.length());
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (charsMatch(s.charAt(i), c, !caseSensitive)) return i;
     }
     return -1;
@@ -2016,8 +1932,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull char[] s, char c, int start, int end, boolean caseSensitive) {
-    end = min(end, s.length);
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length);
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (charsMatch(s[i], c, !caseSensitive)) return i;
     }
     return -1;
@@ -2047,8 +1963,8 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, int end) {
-    end = min(end, s.length());
-    for (int i = max(start, 0); i < end; i++) {
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
       if (containsChar(chars, s.charAt(i))) return i;
     }
     return -1;
@@ -2079,14 +1995,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text.
+   * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
    * @param s     target text
    * @param c     target symbol which last occurrence we want to check
    * @param start start offset of the target text (inclusive)
    * @param end   end offset of the target text (exclusive)
    * @return index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
-   * <code>-1</code> otherwise
+   * {@code -1} otherwise
    */
   @Contract(pure = true)
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
@@ -2135,7 +2051,7 @@ public class StringUtil extends StringUtilRt {
     return buf.toString();
   }
 
-  private static void escapeChar(@NotNull final StringBuilder buf, final char character) {
+  public static void escapeChar(@NotNull final StringBuilder buf, final char character) {
     int idx = 0;
     while ((idx = indexOf(buf, character, idx)) >= 0) {
       buf.insert(idx, "\\");
@@ -2390,7 +2306,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
     int count = 0;
-    for (int i = start, len = min(text.length(), end); i < len; ++i) {
+    for (int i = start, len = Math.min(text.length(), end); i < len; ++i) {
       if (text.charAt(i) == c) {
         count++;
       }
@@ -2676,7 +2592,7 @@ public class StringUtil extends StringUtilRt {
       String context =
         String.valueOf(last(s.subSequence(0, slashRIndex), 10, true)) + first(s.subSequence(slashRIndex, s.length()), 10, true);
       context = escapeStringCharacters(context);
-      LOG.error("Wrong line separators: '" + context + "' at offset " + slashRIndex);
+      throw new AssertionError("Wrong line separators: '" + context + "' at offset " + slashRIndex);
     }
   }
 
@@ -2974,7 +2890,6 @@ public class StringUtil extends StringUtilRt {
   public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int start1 = 0;
     int end1 = s1.length();
-    int start2 = 0;
     int end2 = s2.length();
 
     while (start1 < end1) {
@@ -2989,6 +2904,7 @@ public class StringUtil extends StringUtilRt {
       end1--;
     }
 
+    int start2 = 0;
     while (start2 < end2) {
       char c = s2.charAt(start2);
       if (!isWhiteSpace(c)) break;
@@ -3147,10 +3063,23 @@ public class StringUtil extends StringUtilRt {
   public static LineSeparator detectSeparators(@NotNull CharSequence text) {
     int index = indexOfAny(text, "\n\r");
     if (index == -1) return null;
-    if (startsWith(text, index, "\r\n")) return LineSeparator.CRLF;
-    if (text.charAt(index) == '\r') return LineSeparator.CR;
-    if (text.charAt(index) == '\n') return LineSeparator.LF;
-    throw new IllegalStateException();
+    LineSeparator lineSeparator = getLineSeparatorAt(text, index);
+    if (lineSeparator == null) {
+      throw new AssertionError();
+    }
+    return lineSeparator;
+  }
+
+  @Nullable
+  public static LineSeparator getLineSeparatorAt(@NotNull CharSequence text, int index) {
+    if (index < 0 || index >= text.length()) {
+      return null;
+    }
+    char ch = text.charAt(index);
+    if (ch == '\r') {
+      return index + 1 < text.length() && text.charAt(index + 1) == '\n' ? LineSeparator.CRLF : LineSeparator.CR;
+    }
+    return ch == '\n' ? LineSeparator.LF : null;
   }
 
   @NotNull
@@ -3230,7 +3159,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * Strips class name from Object#toString if present.
    * To be used as custom data type renderer for java.lang.Object.
-   * To activate just add <code>StringUtil.toShortString(this)</code>
+   * To activate just add {@code StringUtil.toShortString(this)}
    * expression in <em>Settings | Debugger | Data Views</em>.
    */
   @Contract("null->null;!null->!null")
@@ -3387,7 +3316,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
-  @SuppressWarnings("unused")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }

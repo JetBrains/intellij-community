@@ -4,7 +4,6 @@ import com.intellij.util.get
 import com.intellij.util.getOrCreate
 import org.jdom.Element
 import org.jdom.xpath.XPath
-import org.linguafranca.pwdb.kdbx.KdbxSerializer
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
@@ -66,13 +65,8 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
     val element = Element(ENTRY_ELEMENT_NAME)
     ensureElements(element, mandatoryEntryElements)
 
-    val result = KdbxEntry(element, this)
+    val result = KdbxEntry(element, this, null)
     result.title = title
-    result.ensureProperty("Notes")
-    result.ensureProperty("Title")
-    result.ensureProperty("URL")
-    result.ensureProperty("UserName")
-    result.ensureProperty("Password")
     return result
   }
 
@@ -87,22 +81,6 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
 
 interface Icon {
   var index: Int
-}
-
-class DomIconWrapper(private val element: Element) : Icon {
-  override var index: Int
-    get() = element.text.toInt()
-    set(index) {
-      element.text = index.toString()
-    }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || other !is Icon) return false
-    return this.index == other.index
-  }
-
-  override fun hashCode() = index
 }
 
 private val mandatoryEntryElements: Map<String, ValueCreator> = linkedMapOf (
@@ -161,9 +139,4 @@ private fun base64FromUuid(uuid: UUID): String {
   b.putLong(uuid.mostSignificantBits)
   b.putLong(uuid.leastSignificantBits)
   return Base64.getEncoder().encodeToString(b.array())
-}
-
-internal fun uuidFromBase64(base64: String): UUID {
-  val b = ByteBuffer.wrap(Base64.getDecoder().decode(base64))
-  return UUID(b.long, b.long)
 }

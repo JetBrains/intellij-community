@@ -43,4 +43,63 @@ public class PyConvertFormatOperatorToMethodIntentionTest extends PyIntentionTes
   public void testConcatenated() {
     doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
   }
+  
+  // PY-20752
+  public void testTupleReference() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
+  
+  // PY-20798
+  public void testDictReference() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);    
+  }
+
+  // PY-20798
+  public void testDictCallReference() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
+  
+  // PY-20754
+  public void testBytes() {
+    doNegativeTest(PyBundle.message("INTN.replace.with.method"));
+  }
+
+  // PY-20800
+  public void testRepr() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
+  
+  // PY-20803
+  public void testStarWidth() {
+    doNegativeTest(PyBundle.message("INTN.replace.with.method"));
+  }
+  
+  // PY-20803
+  public void testStarPrecision() {
+    doNegativeTest(PyBundle.message("INTN.replace.with.method"));
+  }
+
+  // PY-20803
+  public void testStarWidthPrecision() {
+    doNegativeTest(PyBundle.message("INTN.replace.with.method"));    
+  }
+  
+  // PY-20876
+  public void testSet() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
+  
+  // PY-20917
+  public void testSetCall() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);    
+  }
+
+  // PY-20917
+  public void testCallWithNoneReturnType() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
+  
+  public void testDictSubclass() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);    
+  }
 }

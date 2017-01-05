@@ -519,6 +519,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public String getDescription(String threadId, String frameId, String cmd) {
+    return debugger(threadId).getDescription(threadId, frameId, cmd);
+  }
+
+  @Override
   public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
     for (RemoteDebugger d : allDebuggers()) {
       d.execute(factory.createAddCommand(d));

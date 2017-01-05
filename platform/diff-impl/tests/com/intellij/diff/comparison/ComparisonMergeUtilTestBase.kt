@@ -84,9 +84,9 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   private fun convertDiffFragments(fragments: List<MergeRange>): List<Change> {
     return fragments.map {
       Change(
-          it.start1, it.end1,
-          it.start2, it.end2,
-          it.start3, it.end3)
+        it.start1, it.end1,
+        it.start2, it.end2,
+        it.start3, it.end3)
     }
   }
 
@@ -162,7 +162,7 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
 
 
   class Change(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int)
-  : Trio<IntPair>(IntPair(start1, end1), IntPair(start2, end2), IntPair(start3, end3)) {
+    : Trio<IntPair>(IntPair(start1, end1), IntPair(start2, end2), IntPair(start3, end3)) {
 
     val start1 = start(ThreeSide.LEFT)
     val start2 = start(ThreeSide.BASE)

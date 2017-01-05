@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -340,15 +339,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     final ExtractClosureHelperImpl mockHelper =
       new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false,
                                    IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
-    final PsiType returnType;
-    final AccessToken token = WriteAction.start();
-    try {
-      returnType = ExtractClosureProcessorBase.generateClosure(mockHelper).getReturnType();
-    }
-    finally {
-      token.finish();
-    }
-    return returnType;
+    return WriteAction.compute(() -> ExtractClosureProcessorBase.generateClosure(mockHelper).getReturnType());
   }
 
   private NameSuggestionsField createNameField(GrVariable var) {

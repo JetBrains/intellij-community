@@ -61,6 +61,7 @@ public class PluginDescriptorChooser {
       .put("vcs-impl", "VcsExtensions.xml")
       .put("openapi", "IdeaPlugin.xml")
       .put("java-impl", "IdeaPlugin.xml")
+      .put("java-analysis-impl", "IdeaPlugin.xml")
       .build();
 
   public static void show(final Project project,
@@ -152,14 +153,14 @@ public class PluginDescriptorChooser {
     ModuleManager moduleManager = ModuleManager.getInstance(currentModule.getProject());
     final String[] groupPath = moduleManager.getModuleGroupPath(currentModule);
 
-    Collections.sort(elements, (o1, o2) -> {
+    elements.sort((o1, o2) -> {
       // current module = first group
       final Module module1 = o1.getModule();
       final Module module2 = o2.getModule();
 
       if (currentModule.equals(module1)) return -1;
       if (currentModule.equals(module2)) return 1;
-      
+
       if (module1 != null && module2 != null) {
         int groupComparison = Comparing.compare(groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module2)),
                                                 groupMatchLevel(groupPath, moduleManager.getModuleGroupPath(module1)));
@@ -169,7 +170,7 @@ public class PluginDescriptorChooser {
       }
       return ModulesAlphaComparator.INSTANCE.compare(module1, module2);
     });
-    Collections.sort(elements, (o1, o2) -> {
+    elements.sort((o1, o2) -> {
       if (!Comparing.equal(o1.getModule(), o2.getModule())) return 0;
       String pluginId1 = o1.getRootElement().getPluginId();
       String pluginId2 = o2.getRootElement().getPluginId();
@@ -207,7 +208,7 @@ public class PluginDescriptorChooser {
     return 0;
   }
 
-  private static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
+  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
                                                                                 List<DomFileElement<IdeaPlugin>> elements) {
     String extensionsFile = INTELLIJ_MODULES.get(moduleName);
     if (extensionsFile != null) {

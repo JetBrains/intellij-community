@@ -311,10 +311,10 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (element == null) return null;
 
-    String standard = element.getNavigationElement() instanceof PsiDocCommentOwner ? JavaDocumentationProvider.generateExternalJavadoc(element) : null;
+    String standard = generateExternalJavaDoc(element);
 
     if (element instanceof GrVariable &&
-        ((GrVariable)element).getTypeElementGroovy() == null &&
+        ((GrVariable)element).getDeclaredType() == null &&
         standard != null) {
       final String truncated = StringUtil.trimEnd(standard, BODY_HTML);
 
@@ -347,6 +347,12 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
 
     return standard;
+  }
+
+  @Nullable
+  protected static String generateExternalJavaDoc(@NotNull PsiElement element) {
+    JavaDocInfoGenerator generator = new GroovyDocInfoGenerator(element);
+    return JavaDocumentationProvider.generateExternalJavadoc(element, generator);
   }
 
   private static PsiElement getDocumentationElement(PsiElement element, PsiElement originalElement) {

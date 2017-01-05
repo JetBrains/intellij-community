@@ -46,8 +46,8 @@ import java.util.regex.Pattern;
 public class ConflictsDialog extends DialogWrapper{
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
 
-  private final String[] myConflictDescriptions;
-  private MultiMap<PsiElement, String> myElementConflictDescription;
+  protected final String[] myConflictDescriptions;
+  protected MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
   private Runnable myDoRefactoringRunnable;
   private final boolean myCanShowConflictsInView;

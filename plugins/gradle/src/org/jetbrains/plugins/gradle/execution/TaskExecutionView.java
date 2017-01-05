@@ -71,7 +71,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
 
   public TaskExecutionView(Project project) {
     myProject = project;
-    final ColumnInfo[] COLUMNS = new ColumnInfo[]{
+    final ColumnInfo[] COLUMNS = {
       new TreeColumnInfo("name"),
       new ColumnInfo("time elapsed") {
         @Nullable
@@ -307,22 +307,22 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   }
 
   @Override
-  public void performWhenNoDeferredOutput(Runnable runnable) {
+  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
 
   }
 
   @Override
-  public void setHelpId(String helpId) {
+  public void setHelpId(@NotNull String helpId) {
 
   }
 
   @Override
-  public void addMessageFilter(Filter filter) {
+  public void addMessageFilter(@NotNull Filter filter) {
 
   }
 
   @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info) {
 
   }
 

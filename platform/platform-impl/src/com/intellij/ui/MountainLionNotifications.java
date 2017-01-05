@@ -49,7 +49,7 @@ class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
         cleanupDeliveredNotifications();
       }
     });
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         cleanupDeliveredNotifications();

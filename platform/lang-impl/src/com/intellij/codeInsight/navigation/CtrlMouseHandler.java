@@ -49,7 +49,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
@@ -66,7 +65,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -85,7 +83,6 @@ import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.intellij.lang.annotations.JdkConstants;
@@ -156,7 +153,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   };
 
-  private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerAdapter() {
+  private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
     @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent e) {
       disposeHighlighter();
@@ -445,26 +442,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     @NotNull
     public DocInfo getInfo() {
-      return ApplicationManager.getApplication().runReadAction(new Computable<DocInfo>() {
-        @Override
-        public DocInfo compute() {
-          try {
-            return generateInfo(myTargetElement, myElementAtPointer, isNavigatable());
-          }
-          catch (IndexNotReadyException e) {
-            showDumbModeNotification(myTargetElement.getProject());
-            return DocInfo.EMPTY;
-          }
-        }
-      });
+      return areElementsValid() ? generateInfo(myTargetElement, myElementAtPointer, isNavigatable()) : DocInfo.EMPTY;
+    }
+
+    private boolean areElementsValid() {
+      return myTargetElement.isValid() && myElementAtPointer.isValid();
     }
 
     @Override
     public boolean isValid(@NotNull Document document) {
-      if (!myTargetElement.isValid()) return false;
-      if (!myElementAtPointer.isValid()) return false;
-
-      return rangesAreCorrect(document);
+      return areElementsValid() && rangesAreCorrect(document);
     }
 
     @Override
@@ -530,7 +517,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
     else if (browseMode == BrowseMode.Declaration) {
       final PsiReference ref = TargetElementUtil.findReference(editor, offset);
-      final List<PsiElement> resolvedElements = ref == null ? Collections.<PsiElement>emptyList() : resolve(ref);
+      final List<PsiElement> resolvedElements = ref == null ? Collections.emptyList() : resolve(ref);
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(project, editor, offset, false);
@@ -597,9 +584,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
-    if (element != null) {
-      PsiElement identifier = element.getNameIdentifier();
+    final PsiElement element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
+    if (element instanceof PsiNameIdentifierOwner) {
+      PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
       if (identifier != null && identifier.isValid()) {
         return new Info(identifier){
           @Override
@@ -643,7 +630,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       return result;
     }
-    return resolvedElement == null ? Collections.<PsiElement>emptyList() : Collections.singletonList(resolvedElement);
+    return resolvedElement == null ? Collections.emptyList() : Collections.singletonList(resolvedElement);
   }
 
   private void disposeHighlighter() {
@@ -972,7 +959,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     for (TextRange range : info.getRanges()) {
       TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                                                       HighlighterLayer.SELECTION + 1,
+                                                                                       HighlighterLayer.HYPERLINK, 
                                                                                        attr,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(highlighter);

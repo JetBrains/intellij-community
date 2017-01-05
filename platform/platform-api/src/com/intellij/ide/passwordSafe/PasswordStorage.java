@@ -32,7 +32,7 @@ public interface PasswordStorage extends CredentialStore {
 
   @Deprecated
   default void setPassword(@NotNull Class<?> requestor, @NotNull String accountName, @Nullable String value) {
-    set(CredentialAttributes(requestor, accountName), new Credentials(accountName, value));
+    set(CredentialAttributes(requestor, accountName), value == null ? null : new Credentials(accountName, value));
   }
 
   /**

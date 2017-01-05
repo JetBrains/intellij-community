@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package org.jetbrains.idea.maven.dom
  */
 class MavenPropertyInActivationSectionTest extends MavenDomTestCase {
 
-  public void testResolvePropertyFromActivationSection() throws IOException {
+  void testResolvePropertyFromActivationSection() throws IOException {
     importProject("""
   <groupId>example</groupId>
   <artifactId>parent</artifactId>
@@ -47,7 +47,7 @@ class MavenPropertyInActivationSectionTest extends MavenDomTestCase {
   <properties>
     <aaa>\${env.GLASSFISH_HOME_123}</aaa>
   </properties>
-""");
+""")
 
 
     assert getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1).resolve() != null

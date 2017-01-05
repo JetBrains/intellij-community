@@ -1,10 +1,10 @@
+import os
+import shutil
+import tempfile
 import vmprof
 
-import os
 import six
 from _prof_imports import TreeStats, CallTreeStat
-import tempfile
-import shutil
 
 
 class VmProfProfile(object):
@@ -30,7 +30,10 @@ class VmProfProfile(object):
             if not os.path.exists(self.basepath):
                 os.makedirs(self.basepath)
             self.file = tempfile.NamedTemporaryFile(delete=False, dir=self.basepath)
-            vmprof.enable(self.file.fileno())
+            try:
+                vmprof.enable(self.file.fileno(), lines=True)
+            except:
+                vmprof.enable(self.file.fileno())
             self.is_enabled = True
 
     def disable(self):

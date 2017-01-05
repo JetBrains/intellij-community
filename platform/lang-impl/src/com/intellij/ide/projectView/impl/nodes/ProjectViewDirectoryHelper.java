@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,6 +124,12 @@ public class ProjectViewDirectoryHelper {
   }
 
   public boolean isEmptyMiddleDirectory(PsiDirectory directory, final boolean strictlyEmpty) {
+    return isEmptyMiddleDirectory(directory, strictlyEmpty, null);
+  }
+
+  public boolean isEmptyMiddleDirectory(PsiDirectory directory,
+                                        final boolean strictlyEmpty,
+                                        @Nullable PsiFileSystemItemFilter filter) {
     return false;
   }
 
@@ -142,9 +149,18 @@ public class ProjectViewDirectoryHelper {
     return false;
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getDirectoryChildren(final PsiDirectory psiDirectory,
                                                            final ViewSettings settings,
                                                            final boolean withSubDirectories) {
+    return getDirectoryChildren(psiDirectory, settings, withSubDirectories, null);
+  }
+
+  @NotNull
+  public Collection<AbstractTreeNode> getDirectoryChildren(final PsiDirectory psiDirectory,
+                                                           final ViewSettings settings,
+                                                           final boolean withSubDirectories,
+                                                           @Nullable PsiFileSystemItemFilter filter) {
     final List<AbstractTreeNode> children = new ArrayList<>();
     final Project project = psiDirectory.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -152,17 +168,17 @@ public class ProjectViewDirectoryHelper {
     final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
     if (!settings.isFlattenPackages() || skipDirectory(psiDirectory)) {
       processPsiDirectoryChildren(psiDirectory, directoryChildrenInProject(psiDirectory, settings),
-                                  children, fileIndex, null, settings, withSubDirectories);
+                                  children, fileIndex, null, settings, withSubDirectories, filter);
     }
     else { // source directory in "flatten packages" mode
       final PsiDirectory parentDir = psiDirectory.getParentDirectory();
       if (parentDir == null || skipDirectory(parentDir) && withSubDirectories) {
-        addAllSubpackages(children, psiDirectory, moduleFileIndex, settings);
+        addAllSubpackages(children, psiDirectory, moduleFileIndex, settings, filter);
       }
       if (withSubDirectories) {
         PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
         for (PsiDirectory subdir : subdirs) {
-          if (!skipDirectory(subdir)) {
+          if (!skipDirectory(subdir) || filter != null && !filter.shouldShow(subdir)) {
             continue;
           }
           VirtualFile directoryFile = subdir.getVirtualFile();
@@ -174,11 +190,11 @@ public class ProjectViewDirectoryHelper {
             if (FileTypeRegistry.getInstance().isFileIgnored(directoryFile)) continue;
           }
 
-          children.add(new PsiDirectoryNode(project, subdir, settings));
+          children.add(new PsiDirectoryNode(project, subdir, settings, filter));
         }
       }
       processPsiDirectoryChildren(psiDirectory, psiDirectory.getFiles(), children, fileIndex, moduleFileIndex, settings,
-                                  withSubDirectories);
+                                  withSubDirectories, filter);
     }
     return children;
   }
@@ -196,6 +212,19 @@ public class ProjectViewDirectoryHelper {
     }
     return topLevelContentRoots;
   }
+
+  public List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
+    return ContainerUtil.filter(ModuleRootManager.getInstance(module).getContentRoots(), root -> {
+      if (!shouldBeShown(root, settings)) return false;
+      VirtualFile parent = root.getParent();
+      if (parent == null) return true;
+      DirectoryInfo info = myIndex.getInfoForFile(parent);
+      if (!module.equals(info.getModule())) return true;
+      //show inner content root separately only if it won't be shown under outer content root
+      return info.isExcluded() && !shouldShowExcludedFiles(settings);
+    });
+  }
+
 
   private static boolean isFileInContent(ProjectFileIndex index, VirtualFile file) {
     while (file != null) {
@@ -245,12 +274,11 @@ public class ProjectViewDirectoryHelper {
 
   private boolean shouldBeShown(VirtualFile dir, ViewSettings settings) {
     DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
-    if (directoryInfo.isInProject()) return true;
+    return directoryInfo.isInProject() || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded();
+  }
 
-    if (!Registry.is("ide.hide.excluded.files") && settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
-      return directoryInfo.isExcluded();
-    }
-    return false;
+  private static boolean shouldShowExcludedFiles(ViewSettings settings) {
+    return !Registry.is("ide.hide.excluded.files") && settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles();
   }
 
   // used only for non-flatten packages mode
@@ -260,7 +288,8 @@ public class ProjectViewDirectoryHelper {
                                           ProjectFileIndex projectFileIndex,
                                           @Nullable ModuleFileIndex moduleFileIndex,
                                           ViewSettings viewSettings,
-                                          boolean withSubDirectories) {
+                                          boolean withSubDirectories,
+                                          @Nullable PsiFileSystemItemFilter filter) {
     for (PsiElement child : children) {
       LOG.assertTrue(child.isValid());
 
@@ -275,6 +304,9 @@ public class ProjectViewDirectoryHelper {
       if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
         continue;
       }
+      if (filter != null && !filter.shouldShow((PsiFileSystemItem)child)) {
+        continue;
+      }
       if (child instanceof PsiFile) {
         container.add(new PsiFileNode(child.getProject(), (PsiFile) child, viewSettings));
       }
@@ -282,13 +314,14 @@ public class ProjectViewDirectoryHelper {
         if (withSubDirectories) {
           PsiDirectory dir = (PsiDirectory)child;
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
-            if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true)) {
-              processPsiDirectoryChildren(dir, directoryChildrenInProject(dir, viewSettings),
-                                          container, projectFileIndex, moduleFileIndex, viewSettings, withSubDirectories); // expand it recursively
+            if (viewSettings.isHideEmptyMiddlePackages() && !skipDirectory(psiDir) && isEmptyMiddleDirectory(dir, true, filter)) {
+              processPsiDirectoryChildren(
+                dir, directoryChildrenInProject(dir, viewSettings), container, projectFileIndex, moduleFileIndex, viewSettings, true, filter
+              ); // expand it recursively
               continue;
             }
           }
-          container.add(new PsiDirectoryNode(child.getProject(), (PsiDirectory) child, viewSettings));
+          container.add(new PsiDirectoryNode(child.getProject(), (PsiDirectory)child, viewSettings, filter));
         }
       }
     }
@@ -298,27 +331,28 @@ public class ProjectViewDirectoryHelper {
   public void addAllSubpackages(List<AbstractTreeNode> container,
                                 PsiDirectory dir,
                                 @Nullable ModuleFileIndex moduleFileIndex,
-                                ViewSettings viewSettings) {
+                                ViewSettings viewSettings,
+                                @Nullable PsiFileSystemItemFilter filter) {
     final Project project = dir.getProject();
     PsiDirectory[] subdirs = dir.getSubdirectories();
     for (PsiDirectory subdir : subdirs) {
-      if (skipDirectory(subdir)) {
+      if (skipDirectory(subdir) || filter != null && !filter.shouldShow(subdir)) {
         continue;
       }
       if (moduleFileIndex != null && !moduleFileIndex.isInContent(subdir.getVirtualFile())) {
-        container.add(new PsiDirectoryNode(project, subdir, viewSettings));
+        container.add(new PsiDirectoryNode(project, subdir, viewSettings, filter));
         continue;
       }
       if (viewSettings.isHideEmptyMiddlePackages()) {
-        if (!isEmptyMiddleDirectory(subdir, false)) {
+        if (!isEmptyMiddleDirectory(subdir, false, filter)) {
 
-          container.add(new PsiDirectoryNode(project, subdir, viewSettings));
+          container.add(new PsiDirectoryNode(project, subdir, viewSettings, filter));
         }
       }
       else {
-        container.add(new PsiDirectoryNode(project, subdir, viewSettings));
+        container.add(new PsiDirectoryNode(project, subdir, viewSettings, filter));
       }
-      addAllSubpackages(container, subdir, moduleFileIndex, viewSettings);
+      addAllSubpackages(container, subdir, moduleFileIndex, viewSettings, filter);
     }
   }
 }

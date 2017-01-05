@@ -402,14 +402,6 @@
                       <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </vspacer>
-                  <component id="d83cc" class="com.intellij.ui.components.JBLabel" binding="myStripTrailingSpacesExplanationLabel">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="explanation"/>
-                    </properties>
-                  </component>
                   <component id="95944" class="javax.swing.JCheckBox" binding="myShowLSTInGutterCheckBox">
                     <constraints>
                       <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -424,6 +416,14 @@
                     </constraints>
                     <properties>
                       <text value="Different color for lines with whitespace-only modifications"/>
+                    </properties>
+                  </component>
+                  <component id="e6a86" class="javax.swing.JCheckBox" binding="myCbKeepTrailingSpacesOnCaretLine">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/ApplicationBundle" key="editor.settings.keep.trailing.spaces.on.caret.line"/>
                     </properties>
                   </component>
                 </children>

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
@@ -154,7 +155,9 @@ public class HighlightNamesUtil {
     }
 
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
-    return RainbowHighlighter.isRainbowEnabled() ? builder.createUnconditionally() : builder.create();
+    return RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, JavaLanguage.INSTANCE)
+           ? builder.createUnconditionally()
+           : builder.create();
   }
 
   @Nullable

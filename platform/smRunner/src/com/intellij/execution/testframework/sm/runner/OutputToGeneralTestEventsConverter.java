@@ -42,7 +42,7 @@ import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerE
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
-  private final int CYCLE_BUFFER_SIZE = ConsoleBuffer.getCycleBufferSize();
+  private static final boolean USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer();
 
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
@@ -52,9 +52,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private boolean myPendingLineBreakFlag;
 
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
+    this(testFrameworkName, consoleProperties.isEditable());
+  }
+
+  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, boolean stdinEnabled) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputLineSplitter(consoleProperties.isEditable()) {
+    mySplitter = new OutputLineSplitter(stdinEnabled) {
       @Override
       protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
         processConsistentText(text, outputType, tcLikeFakeOutput);
@@ -92,10 +96,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
   }
 
-  private void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
-    if (text.length() > CYCLE_BUFFER_SIZE) {
-      final StringBuilder builder = new StringBuilder(CYCLE_BUFFER_SIZE);
-      builder.append(text, 0, CYCLE_BUFFER_SIZE - 105);
+  protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
+    final int cycleBufferSize = ConsoleBuffer.getCycleBufferSize();
+    if (USE_CYCLE_BUFFER && text.length() > cycleBufferSize) {
+      final StringBuilder builder = new StringBuilder(cycleBufferSize);
+      builder.append(text, 0, cycleBufferSize - 105);
       builder.append("<...>");
       builder.append(text, text.length() - 100, text.length());
       text = builder.toString();

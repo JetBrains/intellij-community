@@ -16,10 +16,10 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +30,6 @@ import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.GenerateToStringClassFilter;
 import org.jetbrains.java.generate.config.Config;
+import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 import org.jetbrains.java.generate.view.TemplatesPanel;
@@ -51,6 +51,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -79,6 +80,9 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     }
 
     private static void doExecuteAction(@NotNull final Project project, @NotNull final PsiClass clazz, final Editor editor) {
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
+            return;
+        }
         logger.debug("+++ doExecuteAction - START +++");
 
         if (logger.isDebugEnabled()) {
@@ -102,7 +106,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         chooser.setTitle("Generate toString()");
 
         chooser.setCopyJavadocVisible(false);
-        chooser.selectElements(dialogMembers);
+        chooser.selectElements(getPreselection(clazz, dialogMembers));
         header.setChooser(chooser);
         chooser.show();
 
@@ -113,9 +117,12 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
 
             if (template.isValidTemplate()) {
+                final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation());
+                // decide what to do if the method already exists
+                ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
                 WriteAction.run(() -> {
                     try {
-                        new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation()).execute(selectedMembers, template);
+                        worker.execute(selectedMembers, template, resolutionPolicy);
                     }
                     catch (Exception e) {
                         GenerationUtil.handleException(project, e);
@@ -130,15 +137,21 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         logger.debug("+++ doExecuteAction - END +++");
     }
 
+    private static PsiElementClassMember[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember[] dialogMembers) {
+        return Arrays.stream(dialogMembers)
+          .filter(member -> member.getElement().getContainingClass() == clazz)
+          .toArray(PsiElementClassMember[]::new);
+    }
+
     public static void updateDialog(PsiClass clazz, MemberChooser<PsiElementClassMember> dialog) {
         final PsiElementClassMember[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
-        dialog.selectElements(members);
+        dialog.selectElements(getPreselection(clazz, members));
     }
 
-    private static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
+    public static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
         Config config = GenerateToStringContext.getConfig();
-        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, config.getFilterPattern());
+        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, true, config.getFilterPattern());
         if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
         PsiMethod[] filteredMethods;
         if (config.enableMethods) {
@@ -207,8 +220,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
-                  Disposable disposable = Disposer.newDisposable();
-                  Configurable composite = new TabbedConfigurable(disposable) {
+                  Configurable composite = new TabbedConfigurable() {
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(clazz.getProject()));
@@ -238,7 +250,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                     };
 
                     ShowSettingsUtil.getInstance().editConfigurable(MemberChooserHeaderPanel.this, composite, () -> ui.selectItem(ToStringTemplatesManager.getInstance().getDefaultTemplate()));
-                  Disposer.dispose(disposable);
+                  composite.disposeUIResources();
                 }
             });
 

@@ -34,5 +34,13 @@ public interface AirContentRevision {
   @NotNull
   PathDescription getPath();
 
-  Charset getCharset();
+  @Nullable
+  default Charset getCharset() {
+    return null;
+  }
+
+  @Nullable
+  default String getLineSeparator() {
+    return null;
+  }
 }

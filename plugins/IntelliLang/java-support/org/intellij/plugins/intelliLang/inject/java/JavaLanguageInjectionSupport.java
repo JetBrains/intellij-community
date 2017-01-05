@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.compiler.PatternCompiler;
@@ -96,6 +97,13 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   @Override
   public boolean isApplicableTo(PsiLanguageInjectionHost host) {
     return host instanceof PsiLiteralExpression;
+  }
+
+  @Nullable
+  @Override
+  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
+    boolean compiled = host.getContainingFile().getOriginalFile() instanceof PsiCompiledFile;
+    return compiled ? null : super.findCommentInjection(host, commentRef);
   }
 
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {

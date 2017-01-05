@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
@@ -25,24 +26,28 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class InlayModelImpl implements InlayModel, Disposable {
+  private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
   private static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset)
                                                                      .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
 
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   final RangeMarkerTree<InlayImpl> myInlayTree;
-  boolean myStickToLargerOffsetsOnUpdate = true;
+  boolean myStickToLargerOffsetsOnUpdate;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -74,6 +79,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
       @Override
       public void beforeDocumentChange(DocumentEvent event) {
+        if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
         if (event.getOldLength() == 0 &&
             offset == myEditor.getCaretModel().getOffset() &&
@@ -107,6 +113,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
   public Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DocumentEx document = myEditor.getDocument();
+    if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
     InlayImpl inlay = new InlayImpl(myEditor, offset, renderer);
     notifyAdded(inlay);
@@ -116,7 +123,6 @@ public class InlayModelImpl implements InlayModel, Disposable {
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     List<Inlay> result = new ArrayList<>();
     myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> {
       result.add(inlay);
@@ -139,6 +145,25 @@ public class InlayModelImpl implements InlayModel, Disposable {
     return visualPosition.equals(inlayStartPosition);
   }
 
+  @Nullable
+  @Override
+  public Inlay getElementAt(@NotNull Point point) {
+    if (myInlayTree.size() == 0) return null;
+
+    int offset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(point));
+    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+    if (inlays.isEmpty()) return null;
+
+    VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
+    int x = myEditor.visualPositionToXY(startVisualPosition).x;
+    for (Inlay inlay : inlays) {
+      int endX = x + inlay.getWidthInPixels();
+      if (point.x >= x && point.x < endX) return inlay;
+      x = endX;
+    }
+    return null;
+  }
+
   @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
     myDispatcher.addListener(listener, disposable);
@@ -154,5 +179,12 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   void notifyRemoved(InlayImpl inlay) {
     myDispatcher.getMulticaster().onRemoved(inlay);
+  }
+
+  @TestOnly
+  public void validateState() {
+    for (Inlay inlay : getInlineElementsInRange(0, myEditor.getDocument().getTextLength())) {
+      LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
+    }
   }
 }

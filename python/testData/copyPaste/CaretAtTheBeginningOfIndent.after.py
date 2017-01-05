@@ -7,10 +7,7 @@ def foo():
 
     bar(7)
 
-
-def bar(num):
-    for _ in range(num):
-        print 'bar'
-
-
-bar(7)
+    def bar(num):
+        for _ in range(num):
+            print 'bar'
+    bar(7)

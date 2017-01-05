@@ -572,7 +572,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
           @Override
           public boolean process(T aClass) {
-            if (System.currentTimeMillis() - start > 500) {
+            if (System.currentTimeMillis() - start > 500 && !ApplicationManager.getApplication().isUnitTestMode()) {
               return false;
             }
             if ((getTreeClassChooserDialog().getFilter().isAccepted(aClass)) && aClass.getName() != null) {

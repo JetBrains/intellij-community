@@ -240,7 +240,7 @@ public abstract class AbstractQuickFixManager {
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
    *         area that contains errors. This methods is invoked only if {@link #getErrorInfos()}
-   *         returned non empty list of error infos. <code>null</code> means that
+   *         returned non empty list of error infos. {@code null} means that
    *         error bounds are not defined.
    */
   @Nullable
@@ -319,8 +319,7 @@ public abstract class AbstractQuickFixManager {
     BorderFactory
       .createCompoundBorder(BorderFactory.createLineBorder(Color.orange, 2), BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-  private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(
-    AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
+  private static final Icon INACTIVE_ARROW_ICON = EmptyIcon.create(AllIcons.General.ArrowDown);
 
   private class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;

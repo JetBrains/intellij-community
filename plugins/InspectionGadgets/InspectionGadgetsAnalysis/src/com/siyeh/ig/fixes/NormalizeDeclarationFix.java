@@ -24,15 +24,10 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class NormalizeDeclarationFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("normalize.declaration.quickfix");
   }
 

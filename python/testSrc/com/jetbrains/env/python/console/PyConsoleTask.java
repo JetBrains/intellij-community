@@ -17,7 +17,7 @@ package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -71,9 +71,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void setUp(final String testName) throws Exception {
-    if (myFixture == null) {
-      super.setUp(testName);
-    }
+    super.setUp(testName);
   }
 
   @NotNull
@@ -122,14 +120,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     disposeConsoleProcess();
 
-    if (!myContentDescriptorRef.isNull()) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(myContentDescriptorRef.get());
-        }
-      });
-    }
+    ExecutionManager.getInstance(getProject()).getContentManager().getAllDescriptors().forEach((Disposer::dispose));
 
     if (myConsoleView != null) {
       new WriteAction() {
@@ -151,20 +142,14 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     setProcessCanTerminate(false);
 
     PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.<String, String>newHashMap(), PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                             new String[]{}) {
-        @Override
-        protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
-          myContentDescriptorRef.set(contentDescriptor);
-          super.showConsole(defaultExecutor, contentDescriptor);
-        }
-      };
-
+      new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
+                                 PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
+                                 (s) -> {});
     before();
 
     myConsoleInitSemaphore = new Semaphore(0);
 
-    consoleRunner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+    consoleRunner.addConsoleListener(new PydevConsoleRunnerImpl.ConsoleListener() {
       @Override
       public void handleConsoleInitialized(LanguageConsoleView consoleView) {
         myConsoleInitSemaphore.release();
@@ -178,9 +163,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommandSemaphore = new Semaphore(1);
 
     myConsoleView = consoleRunner.getConsoleView();
-    myProcessHandler = (PyConsoleProcessHandler)consoleRunner.getProcessHandler();
+    myProcessHandler = consoleRunner.getProcessHandler();
 
-    myExecuteHandler = (PydevConsoleExecuteActionHandler)consoleRunner.getConsoleExecuteActionHandler();
+    myExecuteHandler = consoleRunner.getConsoleExecuteActionHandler();
 
     myCommunication = consoleRunner.getPydevConsoleCommunication();
 
@@ -337,6 +322,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         myConsoleView.executeInConsole(command);
       }
     });
+    Assert.assertTrue(String.format("Command execution wasn't finished: `%s` \n" +
+                                    "Output: %s", command, output()), waitFor(myCommandSemaphore));
+    myCommandSemaphore.release();
   }
 
   protected boolean hasValue(String varName, String value) throws PyDebuggerException {

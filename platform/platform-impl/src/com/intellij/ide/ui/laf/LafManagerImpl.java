@@ -33,6 +33,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -73,6 +74,8 @@ import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
@@ -431,10 +434,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         }
         return null;
       }
-      catch (InvocationTargetException e1) {
-        return null;
-      }
-      catch (IllegalAccessException e1) {
+      catch (InvocationTargetException | IllegalAccessException e1) {
         return null;
       }
     }
@@ -531,20 +531,34 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static void patchHiDPI(UIDefaults defaults) {
     Object prevScaleVal = defaults.get("hidpi.scaleFactor");
-    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : JBUI.scale(1f);
+    // used to normalize previously patched values
+    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
     if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                           "Tree.rightChildIndent");
+                                           "Tree.rightChildIndent",
+                                           "Tree.rowHeight");
+
+    List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
+                                                 "Slider.verticalSize",
+                                                 "Slider.minimumHorizontalSize",
+                                                 "Slider.minimumVerticalSize");
+
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
-      if (value instanceof Dimension && value instanceof UIResource) {
-        entry.setValue(JBUI.size((Dimension)value).asUIResource());
-      } else if (value instanceof Insets && value instanceof UIResource) {
-        entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
-      } else if (value instanceof Integer) {
+      if (value instanceof Dimension) {
+        if (value instanceof UIResource || myDimensionKeys.contains(key)) {
+          entry.setValue(JBUI.size((Dimension)value).asUIResource());
+        }
+      }
+      else if (value instanceof Insets) {
+        if (value instanceof UIResource) {
+          entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
+        }
+      }
+      else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
           entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
@@ -722,7 +736,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
-      JBUI.setScaleFactor(uiSettings.FONT_SIZE/UIUtil.DEF_SYSTEM_FONT_SIZE);
+      JBUI.setUserScaleFactor(uiSettings.FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE);
       initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
@@ -738,7 +752,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUI.setScaleFactor(JBUI.Fonts.label().getSize()/UIUtil.DEF_SYSTEM_FONT_SIZE);
+    JBUI.setUserScaleFactor(JBUI.Fonts.label().getSize() / UIUtil.DEF_SYSTEM_FONT_SIZE);
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
@@ -827,7 +841,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
+  public static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
     defaults.put("Tree.ancestorInputMap", null);
     FontUIResource textFont = new FontUIResource("Serif", Font.PLAIN, fontSize);
     FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, fontSize);
@@ -836,7 +850,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put(fontResource, uiFont);
     }
 
-    defaults.put("PasswordField.font", monoFont);
+    if (!SystemInfo.isMac) {
+      defaults.put("PasswordField.font", monoFont);
+    }
     defaults.put("TextArea.font", monoFont);
     defaults.put("TextPane.font", textFont);
     defaults.put("EditorPane.font", textFont);
@@ -866,7 +882,22 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         PopupUtil.setPopupType(myDelegate, popupType);
       }
 
-      final Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+      Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
+      Window window = UIUtil.getWindow(contents);
+      String cleanupKey = "LafManagerImpl.rootPaneCleanup";
+      if (window instanceof RootPaneContainer && window != UIUtil.getWindow(owner) &&
+          ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
+        ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
+        window.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            window.removeWindowListener(this);
+            ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+            DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
+            DialogWrapper.cleanupWindowListeners(window);
+          }
+        });
+      }
       fixPopupSize(popup, contents);
       return popup;
     }

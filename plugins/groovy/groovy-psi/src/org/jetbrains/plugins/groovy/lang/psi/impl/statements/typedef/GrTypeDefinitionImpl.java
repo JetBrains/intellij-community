@@ -295,12 +295,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return myCache.getCodeMethods();
   }
 
-  @Override
-  public void subtreeChanged() {
-    myCache.dropCaches();
-    super.subtreeChanged();
-  }
-
   @NotNull
   @Override
   public PsiMethod[] getConstructors() {

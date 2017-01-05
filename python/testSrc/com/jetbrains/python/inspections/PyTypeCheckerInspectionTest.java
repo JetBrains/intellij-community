@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,6 +297,16 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20460
+  public void testStringGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-20460
+  public void testUnicodeGetItemWithSlice() {
+    doTest();
+  }
+
   // PY-19884
   public void testAbsSetAndMutableSet() {
     doTest();
@@ -314,6 +324,45 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
 
   // PY-16055
   public void testFunctionReturnType() {
+    doTest();
+  }
+
+  // PY-19522
+  public void testCsvRegisterDialect() {
+    doMultiFileTest();
+  }
+
+  // PY-20364
+  public void testActualBasestringExpectedUnionStrUnicode() {
+    doTest();
+  }
+
+  // PY-21083
+  public void testFloatFromhex() {
+    doTest();
+  }
+
+  // PY-20073
+  public void testMapArgumentsInOppositeOrder() {
+    doTest();
+  }
+
+  public void testPositionalArguments() {
+    doTest();
+  }
+
+  // PY-19723
+  public void testKeywordArguments() {
+    doTest();
+  }
+
+  // PY-21350
+  public void testBuiltinInputPy2() {
+    doTest();
+  }
+
+  // PY-21350
+  public void testBuiltinRawInput() {
     doTest();
   }
 }

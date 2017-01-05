@@ -22,6 +22,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager;
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,9 +51,8 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.ui.ComponentSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +61,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class EditorOptionsPanel {
+public class EditorOptionsPanel implements SearchableConfigurable {
   private JPanel    myBehaviourPanel;
   private JCheckBox myCbHighlightBraces;
   private static final String STRIP_CHANGED = ApplicationBundle.message("combobox.strip.modified.lines");
@@ -103,15 +103,15 @@ public class EditorOptionsPanel {
   private JTextField   myQuickDocDelayTextField;
   private JComboBox    myRichCopyColorSchemeComboBox;
   private JCheckBox    myShowInlineDialogForCheckBox;
-  private JBLabel      myStripTrailingSpacesExplanationLabel;
   private JCheckBox    myCbEnableRichCopyByDefault;
   private JCheckBox    myShowLSTInGutterCheckBox;
   private JCheckBox    myShowWhitespacesModificationsInLSTGutterCheckBox;
+  private JCheckBox myCbKeepTrailingSpacesOnCaretLine;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
+  private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
 
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
-  private final MyConfigurable myConfigurable;
 
 
   public EditorOptionsPanel() {
@@ -123,15 +123,13 @@ public class EditorOptionsPanel {
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
     myStripTrailingSpacesCombo.addItem(STRIP_NONE);
-    ActionListener explainer = new ActionListener() {
+
+    myStripTrailingSpacesCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        explainTrailingSpaces(getStripTrailingSpacesValue());
+        myCbKeepTrailingSpacesOnCaretLine.setEnabled(!STRIP_NONE.equals(myStripTrailingSpacesCombo.getSelectedItem()));
       }
-    };
-    myStripTrailingSpacesCombo.addActionListener(explainer);
-    myCbVirtualSpace.addActionListener(explainer);
-
+    });
 
 
     myHighlightSettingsPanel.setLayout(new BorderLayout());
@@ -154,7 +152,6 @@ public class EditorOptionsPanel {
       }
     });
 
-    myConfigurable = new MyConfigurable();
     initQuickDocProcessing();
     initSoftWrapsSettingsProcessing();
     initVcsSettingsProcessing();
@@ -205,7 +202,7 @@ public class EditorOptionsPanel {
     else if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(stripTrailingSpaces)) {
       myStripTrailingSpacesCombo.setSelectedItem(STRIP_ALL);
     }
-    explainTrailingSpaces(stripTrailingSpaces);
+    myCbKeepTrailingSpacesOnCaretLine.setSelected(editorSettings.isKeepTrailingSpacesOnCaretLine());
 
     myCbEnsureBlankLineBeforeCheckBox.setSelected(editorSettings.isEnsureNewLineAtEOF());
     myCbShowQuickDocOnMouseMove.setSelected(editorSettings.isShowQuickDocOnMouseOverElement());
@@ -251,24 +248,6 @@ public class EditorOptionsPanel {
     }
   }
 
-  private void explainTrailingSpaces(@NotNull @EditorSettingsExternalizable.StripTrailingSpaces String stripTrailingSpaces) {
-    if(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(stripTrailingSpaces)) {
-      myStripTrailingSpacesExplanationLabel.setVisible(false);
-      return;
-    }
-    myStripTrailingSpacesExplanationLabel.setVisible(true);
-    boolean isVirtualSpace = myCbVirtualSpace.isSelected();
-    String text;
-    String virtSpaceText = myCbVirtualSpace.getText();
-    if (isVirtualSpace) {
-      text = "Trailing spaces will be trimmed even in the line under caret.<br>To disable trimming in that line uncheck the '<b>"+virtSpaceText+"</b>' above.";
-    }
-    else {
-      text = "Trailing spaces will <b><font color=red>NOT</font></b> be trimmed in the line under caret.<br>To enable trimming in that line too check the '<b>"+virtSpaceText+"</b>' above.";
-    }
-    myStripTrailingSpacesExplanationLabel.setText(XmlStringUtil.wrapInHtml(text));
-  }
-
   public void apply() throws ConfigurationException {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
@@ -278,6 +257,7 @@ public class EditorOptionsPanel {
     // Display
 
     editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
+    ComponentSettings.getInstance().setSmoothScrollingEnabled(myCbSmoothScrolling.isSelected());
 
 
     // Brace Highlighting
@@ -323,6 +303,7 @@ public class EditorOptionsPanel {
     else {
       editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
     }
+    editorSettings.setKeepTrailingSpacesOnCaretLine(myCbKeepTrailingSpacesOnCaretLine.isSelected());
 
     editorSettings.setEnsureNewLineAtEOF(myCbEnsureBlankLineBeforeCheckBox.isSelected());
 
@@ -332,8 +313,8 @@ public class EditorOptionsPanel {
       ServiceManager.getService(QuickDocOnMouseOverManager.class).setEnabled(enabled);
     }
 
-    Long quickDocDelay = getQuickDocDelayFromGui();
-    if (quickDocDelay != null) {
+    int quickDocDelay = getQuickDocDelayFromGui();
+    if (quickDocDelay != -1) {
       editorSettings.setQuickDocOnMouseOverElementDelayMillis(quickDocDelay);
     }
 
@@ -391,20 +372,12 @@ public class EditorOptionsPanel {
     restartDaemons();
   }
 
-  @Nullable
-  private Long getQuickDocDelayFromGui() {
-    String quickDocDelayAsText = myQuickDocDelayTextField.getText();
-    if (StringUtil.isEmptyOrSpaces(quickDocDelayAsText)) {
-      return null;
-    }
-
+  private int getQuickDocDelayFromGui() {
     try {
-      long delay = Long.parseLong(quickDocDelayAsText);
-      return delay > 0 ? delay : null;
+      return EditorSettingsExternalizable.QUICK_DOC_DELAY_RANGE.fit(Integer.parseInt(myQuickDocDelayTextField.getText().trim()));
     }
     catch (NumberFormatException e) {
-      // Ignore incorrect value.
-      return null;
+      return -1;
     }
   }
 
@@ -480,23 +453,22 @@ public class EditorOptionsPanel {
 
     // Strip trailing spaces, ensure EOL on EOF on save
     isModified |= !getStripTrailingSpacesValue().equals(editorSettings.getStripTrailingSpaces());
+    isModified |= isModified(myCbKeepTrailingSpacesOnCaretLine, editorSettings.isKeepTrailingSpacesOnCaretLine());
+
     isModified |= isModified(myCbEnsureBlankLineBeforeCheckBox, editorSettings.isEnsureNewLineAtEOF());
 
     isModified |= isModified(myCbShowQuickDocOnMouseMove, editorSettings.isShowQuickDocOnMouseOverElement());
-    Long quickDocDelay = getQuickDocDelayFromGui();
-    if (quickDocDelay != null && !quickDocDelay.equals(Long.valueOf(editorSettings.getQuickDocOnMouseOverElementDelayMillis()))) {
-      return true;
-    }
+    isModified |= isModified(myQuickDocDelayTextField, editorSettings.getQuickDocOnMouseOverElementDelayMillis(), EditorSettingsExternalizable.QUICK_DOC_DELAY_RANGE);
 
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
     isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
     isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
 
-    isModified |= myRbPreferMovingCaret.isSelected() != editorSettings.isRefrainFromScrolling();
+    isModified |= isModified(myRbPreferMovingCaret,  editorSettings.isRefrainFromScrolling());
 
 
-    isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
+    isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT, RECENT_FILES_RANGE);
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
     isModified |= isModified(myPreselectCheckBox, editorSettings.isPreselectRename());
     isModified |= isModified(myShowInlineDialogForCheckBox, editorSettings.isShowInlineLocalDialog());
@@ -514,20 +486,6 @@ public class EditorOptionsPanel {
     isModified |= !Comparing.equal(settings.getSchemeName(), myRichCopyColorSchemeComboBox.getSelectedItem());
 
     return isModified;
-  }
-
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
-  }
-
-  private static boolean isModified(JTextField textField, int value) {
-    try {
-      int fieldValue = Integer.parseInt(textField.getText().trim());
-      return fieldValue != value;
-    }
-    catch(NumberFormatException e) {
-      return false;
-    }
   }
 
   @NotNull
@@ -596,11 +554,6 @@ public class EditorOptionsPanel {
     });
   }
 
-  public JComponent getComponent() {
-    return myBehaviourPanel;
-  }
-
-  public class MyConfigurable implements SearchableConfigurable {
     @Override
     @NotNull
     public String getId() {
@@ -621,26 +574,4 @@ public class EditorOptionsPanel {
     public JComponent createComponent() {
       return myBehaviourPanel;
     }
-
-    @Override
-    public boolean isModified() {
-      return EditorOptionsPanel.this.isModified();
-    }
-
-    @Override
-    public void apply() throws ConfigurationException {
-      EditorOptionsPanel.this.apply();
-    }
-
-    @Override
-    public void reset() {
-      EditorOptionsPanel.this.reset();
-    }
-
-    @Override
-    public void disposeUIResources() {
-      EditorOptionsPanel.this.disposeUIResources();
-    }
-  }
-
 }

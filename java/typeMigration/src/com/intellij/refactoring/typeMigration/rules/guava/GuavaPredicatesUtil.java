@@ -69,7 +69,7 @@ public class GuavaPredicatesUtil {
 
   @NotNull
   private static TypeConversionDescriptorWithLocalVariable createConstantPredicate(String methodName, boolean value) {
-    return new TypeConversionDescriptorWithLocalVariable(methodName, "$x$ -> " + value + "");
+    return new TypeConversionDescriptorWithLocalVariable(methodName, "$x$ -> " + value);
   }
 
   private static class TypeConversionDescriptorWithLocalVariable extends TypeConversionDescriptor {
@@ -81,7 +81,7 @@ public class GuavaPredicatesUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       final String chosenName = FluentIterableConversionUtil.chooseName(expression, getIntroducedVariableType(expression));
       setReplaceByString(StringUtil.replace(myReplaceByStringTemplate, "$x$", chosenName));
       return super.replace(expression, evaluator);

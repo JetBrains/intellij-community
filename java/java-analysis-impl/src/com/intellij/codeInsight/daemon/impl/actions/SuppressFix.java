@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -93,6 +93,11 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     if (doSuppress(project, getContainer(element))) return;
     // todo suppress
@@ -108,7 +113,6 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   private boolean doSuppress(@NotNull Project project, PsiDocCommentOwner container) {
     assert container != null;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return true;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {
@@ -116,27 +120,31 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       }
     }
     else {
-      PsiDocComment docComment = container.getDocComment();
-      PsiManager manager = PsiManager.getInstance(project);
-      if (docComment == null) {
-        String commentText = "/** @" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container) + "*/";
-        docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText);
-        PsiElement firstChild = container.getFirstChild();
-        container.addBefore(docComment, firstChild);
-      }
-      else {
-        PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
-        if (noInspectionTag != null) {
-          String tagText = noInspectionTag.getText() + ", " + getID(container);
-          noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
-        }
-        else {
-          String tagText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container);
-          docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
-        }
-      }
+      WriteCommandAction.runWriteCommandAction(project, null, null, () -> suppressByDocComment(project, container), container.getContainingFile());
     }
     return false;
+  }
+
+  private void suppressByDocComment(@NotNull Project project, PsiDocCommentOwner container) {
+    PsiDocComment docComment = container.getDocComment();
+    PsiManager manager = PsiManager.getInstance(project);
+    if (docComment == null) {
+      String commentText = "/** @" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container) + "*/";
+      docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText);
+      PsiElement firstChild = container.getFirstChild();
+      container.addBefore(docComment, firstChild);
+    }
+    else {
+      PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
+      if (noInspectionTag != null) {
+        String tagText = noInspectionTag.getText() + ", " + getID(container);
+        noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
+      }
+      else {
+        String tagText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container);
+        docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
+      }
+    }
   }
 
   protected boolean use15Suppressions(@NotNull PsiDocCommentOwner container) {

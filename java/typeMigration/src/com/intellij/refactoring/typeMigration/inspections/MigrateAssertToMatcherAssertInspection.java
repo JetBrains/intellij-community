@@ -99,13 +99,6 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Replace with 'assertThat'";
     }
@@ -142,7 +135,7 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
         replaced = TypeConversionDescriptor.replaceExpression(methodCall, templatePair.getFirst(), templatePair.getSecond());
       }
       catch (IncorrectOperationException e) {
-        LOG.error("Replacer can't can't match expression:\n" +
+        LOG.error("Replacer can't match expression:\n" +
                   methodCall.getText() +
                   "\nwith replacement template:\n(" +
                   templatePair.getFirst() +
@@ -263,8 +256,8 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
           toRightPart = "org.hamcrest.CoreMatchers.containsString($sub$)";
         } else if (InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           fromTemplate = "$collection$.contains($element$)";
-          toLeftPart = "$element$, ";
-          toRightPart = "org.hamcrest.CoreMatchers.anyOf($collection$)";
+          toLeftPart = "$collection$, ";
+          toRightPart = "org.hamcrest.CoreMatchers.hasItem($element$)";
         }
       }
     }

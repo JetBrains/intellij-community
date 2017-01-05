@@ -33,7 +33,7 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
   void setUp() {
     super.setUp()
 
-    myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}");
+    myFixture.addClass("package java.math; public class BigDecimal extends Number implements Comparable<BigDecimal> {}")
   }
 
   protected void doTest(String text, @Nullable String type) {

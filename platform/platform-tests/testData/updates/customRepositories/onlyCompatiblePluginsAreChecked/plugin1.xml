@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<idea-plugin version="2">
+<idea-plugin>
   <id>testPluginId</id>
   <name>testPluginId</name>
   <description>

@@ -46,13 +46,16 @@ public class ConfigurationUtil {
     GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
 
-    ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
-      @Override
-      public boolean processInReadAction(PsiClass aClass) {
-        if (testClassFilter.isAccepted(aClass)) found.add(aClass);
-        return true;
-      }
-    });
+    final PsiClass base = testClassFilter.getBase();
+    if (base != null) {
+      ClassInheritorsSearch.search(base, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+        @Override
+        public boolean processInReadAction(PsiClass aClass) {
+          if (testClassFilter.isAccepted(aClass)) found.add(aClass);
+          return true;
+        }
+      });
+    }
 
     // classes having suite() method
     final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
@@ -77,7 +80,6 @@ public class ConfigurationUtil {
 
     Set<PsiClass> processed = ContainerUtil.newHashSet();
     boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.TEST_ANNOTATION);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.TEST5_ANNOTATION);
     hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.RUN_WITH);
     return hasJunit4;
   }

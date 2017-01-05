@@ -26,6 +26,7 @@ import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.Maven2ServerGlobals;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -36,6 +37,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 public class Maven2ModelConverter {
+  @NotNull
   public static MavenModel convertModel(Model model, File localRepository) throws RemoteException {
     Build build = model.getBuild();
     return convertModel(model,
@@ -51,6 +53,7 @@ public class Maven2ModelConverter {
     return directory == null ? Collections.<String>emptyList() : Collections.singletonList(directory);
   }
 
+  @NotNull
   public static MavenModel convertModel(Model model,
                                         List<String> sources,
                                         List<String> testSources,

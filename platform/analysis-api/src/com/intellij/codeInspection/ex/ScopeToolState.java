@@ -27,31 +27,42 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.util.containers.Queue;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ScopeToolState {
-  private NamedScope myScope;
+  private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
   @NotNull
   private final String myScopeName;
+  private NamedScope myScope;
   private InspectionToolWrapper myToolWrapper;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
+  private ConfigPanelState myAdditionalConfigPanelState;
+  private InspectionToolWrapper myTool;
 
-  private boolean myAdditionalConfigPanelCreated = false;
-  private JComponent myAdditionalConfigPanel;
-  private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
-
-  public ScopeToolState(@NotNull NamedScope scope, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level) {
+  public ScopeToolState(@NotNull NamedScope scope,
+                        @NotNull InspectionToolWrapper toolWrapper,
+                        boolean enabled,
+                        @NotNull HighlightDisplayLevel level) {
     this(scope.getName(), toolWrapper, enabled, level);
     myScope = scope;
   }
 
-  public ScopeToolState(@NotNull String scopeName, @NotNull InspectionToolWrapper toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level) {
+  public ScopeToolState(@NotNull String scopeName,
+                        @NotNull InspectionToolWrapper toolWrapper,
+                        boolean enabled,
+                        @NotNull HighlightDisplayLevel level) {
     myScopeName = scopeName;
     myToolWrapper = toolWrapper;
     myEnabled = enabled;
@@ -100,16 +111,14 @@ public class ScopeToolState {
 
   @Nullable
   public JComponent getAdditionalConfigPanel() {
-    if (!myAdditionalConfigPanelCreated) {
-      myAdditionalConfigPanel = myToolWrapper.getTool().createOptionsPanel();
-      myAdditionalConfigPanelCreated = true;
+    if (myAdditionalConfigPanelState == null) {
+      myAdditionalConfigPanelState = ConfigPanelState.of(myToolWrapper.getTool().createOptionsPanel());
     }
-    return myAdditionalConfigPanel;
+    return myAdditionalConfigPanelState.getPanel(isEnabled());
   }
 
   public void resetConfigPanel(){
-    myAdditionalConfigPanelCreated = false;
-    myAdditionalConfigPanel = null;
+    myAdditionalConfigPanelState = null;
   }
 
   public void setTool(@NotNull InspectionToolWrapper tool) {
@@ -138,5 +147,69 @@ public class ScopeToolState {
 
   public void scopesChanged() {
     myScope = null;
+  }
+
+  private static class ConfigPanelState {
+    private static ConfigPanelState EMPTY = new ConfigPanelState(null);
+
+    private final JComponent myOptionsPanel;
+    private final Set<Component> myEnableRequiredComponent = new HashSet<>();
+
+    private boolean myLastState = true;
+    private boolean myDeafListeners;
+
+    private ConfigPanelState(JComponent optionsPanel) {
+      myOptionsPanel = optionsPanel;
+      if (myOptionsPanel != null) {
+        Queue<Component> q = new Queue<>(1);
+        q.addLast(optionsPanel);
+        while (!q.isEmpty()) {
+          final Component current = q.pullFirst();
+          current.addPropertyChangeListener("enabled", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+              if (!myDeafListeners) {
+                final boolean newValue = (boolean)evt.getNewValue();
+                if (newValue) {
+                  myEnableRequiredComponent.add(current);
+                }
+                else {
+                  LOG.assertTrue(myEnableRequiredComponent.remove(current));
+                }
+              }
+            }
+          });
+          if (current.isEnabled()) {
+            myEnableRequiredComponent.add(current);
+          }
+          if (current instanceof Container) {
+            for (Component child : ((Container)current).getComponents()) {
+              q.addLast(child);
+            }
+          }
+        }
+      }
+    }
+
+    private JComponent getPanel(boolean currentState) {
+      if (myOptionsPanel != null) {
+        if (myLastState != currentState) {
+          myDeafListeners = true;
+          try {
+            for (Component c : myEnableRequiredComponent) {
+              c.setEnabled(currentState);
+            }
+            myLastState = currentState;
+          } finally {
+            myDeafListeners = false;
+          }
+        }
+      }
+      return myOptionsPanel;
+    }
+
+    private static ConfigPanelState of(JComponent panel) {
+      return panel == null ? EMPTY : new ConfigPanelState(panel);
+    }
   }
 }

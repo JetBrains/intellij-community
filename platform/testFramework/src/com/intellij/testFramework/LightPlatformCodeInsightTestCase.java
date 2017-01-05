@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
@@ -147,12 +146,28 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    */
   @NotNull
   protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) {
+    return configureFromFileText(fileName, fileText, false);
+  }
+
+  /**
+   * Same as configureByFile but text is provided directly.
+   * @param fileName - name of the file.
+   * @param fileText - data file text.
+   * @param checkCaret - if true, if will be verified that file contains at least one caret or selection marker
+   */
+  @NotNull
+  protected static Document configureFromFileText(@NonNls @NotNull final String fileName,
+                                                  @NonNls @NotNull final String fileText,
+                                                  boolean checkCaret) {
     return new WriteCommandAction<Document>(null) {
       @Override
       protected void run(@NotNull Result<Document> result) throws Throwable {
         final Document fakeDocument = new DocumentImpl(fileText);
 
         EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+        if(checkCaret) {
+          assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
+        }
 
         String newFileText = fakeDocument.getText();
         Document document;
@@ -237,6 +252,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
+  @NotNull
+  protected static VirtualFile createAndSaveFile(@NotNull String relativePath, @NotNull String fileText) throws IOException {
+    return WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> {
+      VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
+      VfsUtil.saveText(myVFile, fileText);
+      return myVFile;
+    });
+  }
+
   private static void setupEditorForInjectedLanguage() {
     if (myEditor != null) {
       final Ref<EditorWindow> editorWindowRef = new Ref<>();
@@ -273,8 +297,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void tearDown() throws Exception {
     try {
       FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-      VirtualFile[] openFiles = editorManager.getOpenFiles();
-      for (VirtualFile openFile : openFiles) {
+      for (VirtualFile openFile : editorManager.getOpenFiles()) {
         editorManager.closeFile(openFile);
       }
       deleteVFile();
@@ -309,7 +332,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       final Editor editor = myEditor;
-      TrailingSpacesStripper.stripIfNotCurrentLine(editor.getDocument(), false);
+      TrailingSpacesStripper.strip(editor.getDocument(), false, true);
       EditorUtil.fillVirtualSpaceUntilCaret(editor);
     }
 
@@ -604,6 +627,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction("EditorRight");
   }
 
+  protected static void leftWithSelection() {
+    executeAction("EditorLeftWithSelection");
+  }
+
+  protected static void rightWithSelection() {
+    executeAction("EditorRightWithSelection");
+  }
+
   protected static void up() {
     executeAction("EditorUp");
   }
@@ -613,7 +644,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected static void lineComment() {
-    new CommentByLineCommentAction().actionPerformedImpl(getProject(), getEditor());
+    executeAction(IdeActions.ACTION_COMMENT_LINE);
   }
 
   protected static void executeAction(@NonNls @NotNull final String actionId) {

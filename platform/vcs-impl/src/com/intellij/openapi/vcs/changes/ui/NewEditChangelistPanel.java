@@ -30,9 +30,11 @@ import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.Set;
 
@@ -48,7 +50,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
   public NewEditChangelistPanel(final Project project) {
     super(new GridBagLayout());
     myProject = project;
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                          JBUI.insets(1), 0, 0);
 
     final JLabel nameLabel = new JLabel(VcsBundle.message("edit.changelist.name"));
@@ -69,16 +71,20 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
     gb.weightx = 0;
     gb.fill = GridBagConstraints.NONE;
+    gb.anchor = GridBagConstraints.NORTHWEST;
     final JLabel commentLabel = new JLabel(VcsBundle.message("edit.changelist.description"));
+    UIUtil.addInsets(commentLabel, JBUI.insetsRight(4));
     add(commentLabel, gb);
     ++ gb.gridx;
     gb.weightx = 1;
     gb.weighty = 1;
     gb.fill = GridBagConstraints.BOTH;
+    gb.insets = JBUI.insetsTop(2);
     myDescriptionTextArea = createEditorField(project, 4);
     myDescriptionTextArea.setOneLineMode(false);
     add(myDescriptionTextArea, gb);
     commentLabel.setLabelFor(myDescriptionTextArea);
+    gb.insets = JBUI.insetsTop(0);
 
     ++ gb.gridy;
     gb.gridx = 0;
@@ -88,6 +94,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     final BoxLayout layout = new BoxLayout(myAdditionalControlsPanel, BoxLayout.X_AXIS);
     myAdditionalControlsPanel.setLayout(layout);
     myMakeActiveCheckBox = new JCheckBox(VcsBundle.message("new.changelist.make.active.checkbox"));
+    myMakeActiveCheckBox.setBorder(JBUI.Borders.emptyRight(4));
     myAdditionalControlsPanel.add(myMakeActiveCheckBox);
     add(myAdditionalControlsPanel, gb);
   }
@@ -175,16 +182,20 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
     final Set<EditorCustomization> editorFeatures = ContainerUtil.newHashSet();
     ContainerUtil.addIfNotNull(editorFeatures, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
-
+    double scaleFactor = 1.3;
     if (defaultLines == 1) {
       editorFeatures.add(HorizontalScrollBarEditorCustomization.DISABLED);
       editorFeatures.add(OneLineEditorCustomization.ENABLED);
-    } else {
+    }
+    else {
       editorFeatures.add(SoftWrapsEditorCustomization.ENABLED);
+      scaleFactor = 2.1;
     }
     editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
-    editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * 1.3)));
+    editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * scaleFactor)));
+    editorField.addSettingsProvider(editor -> editor.getContentComponent()
+      .setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2))));
     return editorField;
   }
 

@@ -1,0 +1,1 @@
+print("Other string %(<caret>)d" % dict(zip(['one', 'two', 'three'], [1, 2, 3])))

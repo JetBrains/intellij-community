@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
 public class DemorgansLawIntention extends MutablyNamedIntention {
 
@@ -52,7 +52,7 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     GrBinaryExpression exp = (GrBinaryExpression)element;
     final IElementType tokenType = exp.getOperationTokenType();
     PsiElement parent = exp.getParent();

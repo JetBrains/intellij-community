@@ -27,7 +27,7 @@ public class CourseInfo {
 
   List<StepicUser> myAuthors = new ArrayList<>();
   @SerializedName("summary") private String myDescription;
-  @SerializedName("course_format") private String myType = "pycharm Python"; //course type in format "pycharm <language>"
+  @SerializedName("course_format") private String myType = "pycharm" + /*EduStepicConnector.CURRENT_VERSION +*/ " Python"; //course type in format "pycharm <language>"
   @Nullable private String username;
 
   @SerializedName("update_date") private Date updateDate;
@@ -60,9 +60,17 @@ public class CourseInfo {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     CourseInfo that = (CourseInfo)o;
-    if (that.getName() == null || that.getDescription() == null) return false;
-    return that.getName().equals(getName())
-           && that.getDescription().equals(myDescription);
+    final String thatName = that.getName();
+    final String thatDescription = that.getDescription();
+    if (thatName == null && getName() == null && thatDescription == null &&
+        getDescription() == null) {
+      return true;
+    }
+    if (thatName == null || thatDescription == null) {
+      return false;
+    }
+    return thatName.equals(getName())
+           && thatDescription.equals(myDescription);
   }
 
   @Override

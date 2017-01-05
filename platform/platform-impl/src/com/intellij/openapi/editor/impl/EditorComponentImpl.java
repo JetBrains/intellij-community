@@ -89,6 +89,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
       @Override
       public Point magnify(double scale, Point at) {
+        if (myEditor.isDisposed()) return at;
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
         double currentSize = myEditor.getColorsScheme().getEditorFontSize();
         int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
@@ -235,24 +236,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  @Override
-  public void revalidate() {
-    // Null-check necessary because JTextView constructor invokes overridden method (updateUI, which calls revalidate)
-    // before our own constructor has had a chance to run
-    //noinspection ConstantConditions
-    if (myEditor != null) {
-      myEditor.resetPaintersWidth();
-    }
-    super.revalidate();
-  }
-
   public void repaintEditorComponent() {
     repaint();
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
-    int topOverhang = myEditor.myView.getTopOverhang();
-    int bottomOverhang = myEditor.myView.getBottomOverhang();
+    int topOverhang = Math.max(0, myEditor.myView.getTopOverhang());
+    int bottomOverhang = Math.max(0, myEditor.myView.getBottomOverhang());
     repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
   }
 
@@ -373,6 +363,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // work. We do however need to provide a TextUI implementation since some
     // screen reader support code will invoke it
     setUI(new EditorAccessibilityTextUI());
+    UISettings.setupEditorAntialiasing(this);
     invalidate();
   }
 

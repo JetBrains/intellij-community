@@ -18,31 +18,30 @@ package com.intellij.profile.codeInspection
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.configurationStore.SchemeDataHolder
-import com.intellij.configurationStore.digest
+import com.intellij.configurationStore.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
-import com.intellij.profile.Profile
+import com.intellij.profile.ProfileChangeAdapter
+import com.intellij.project.isDirectoryBased
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.loadElement
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -50,8 +49,6 @@ import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.concurrency.runAsync
 import java.util.*
 import java.util.function.Function
-
-const val PROFILE = "profile"
 
 private const val VERSION = "1.0"
 private const val SCOPE = "scope"
@@ -72,16 +69,18 @@ class ProjectInspectionProfileManager(val project: Project,
                                       schemeManagerFactory: SchemeManagerFactory) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstanceImpl(project: Project): ProjectInspectionProfileManager {
-      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
+    fun getInstance(project: Project): ProjectInspectionProfileManager {
+      return project.getComponent(ProjectInspectionProfileManager::class.java)
     }
   }
+
+  private val profileListeners: MutableList<ProfileChangeAdapter> = ContainerUtil.createLockFreeCopyOnWriteList<ProfileChangeAdapter>()
 
   private var scopeListener: NamedScopesHolder.ScopeListener? = null
 
   private var state = State()
 
-  private val initialLoadSchemesFuture: Promise<*>
+  private val initialLoadSchemesFuture: Promise<Any?>
 
   private val skipDefaultsSerializationFilter = object : SkipDefaultValuesSerializationFilters(State()) {
     override fun accepts(accessor: Accessor, bean: Any, beanValue: Any?): Boolean {
@@ -92,44 +91,47 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  override val schemeManager: SchemeManager<InspectionProfileImpl>
+  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
-  private data class State(@field:com.intellij.util.xmlb.annotations.OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
-                           @field:com.intellij.util.xmlb.annotations.OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
+  override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
+    override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
+                              name: String,
+                              attributeProvider: Function<String, String?>,
+                              isBundled: Boolean): InspectionProfileImpl {
+      val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
+      profile.isProjectLevel = true
+      return profile
+    }
+
+    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+
+    override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
+      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && Arrays.equals(digest, defaultSchemeDigest)
+    }
+
+    override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
+      schemeRemoved(scheme)
+    }
+
+    override fun onSchemeAdded(scheme: InspectionProfileImpl) {
+      if (scheme.wasInitialized()) {
+        fireProfileChanged(scheme)
+      }
+    }
+
+    override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?, newScheme: InspectionProfileImpl?) {
+      for (adapter in profileListeners) {
+        adapter.profileActivated(oldScheme, newScheme)
+      }
+    }
+  }, isUseOldFileNameSanitize = true, streamProvider = schemeManagerIprProvider)
+
+  private data class State(@field:OptionTag("PROJECT_PROFILE") var projectProfile: String? = PROJECT_DEFAULT_PROFILE_NAME,
+                           @field:OptionTag("USE_PROJECT_PROFILE") var useProjectProfile: Boolean = true)
 
   init {
-    schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
-      override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>, name: String, attributeProvider: Function<String, String?>): InspectionProfileImpl {
-        val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, InspectionProfileImpl.getDefaultProfile(), dataHolder)
-        profile.isProjectLevel = true
-        return profile
-      }
-
-      override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
-
-      override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
-        return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && Arrays.equals(digest, defaultSchemeDigest)
-      }
-
-      override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
-        schemeRemoved(scheme)
-      }
-
-      override fun onSchemeAdded(scheme: InspectionProfileImpl) {
-        if (scheme.wasInitialized()) {
-          fireProfileChanged(scheme)
-        }
-      }
-
-      override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?, newScheme: InspectionProfileImpl?) {
-        for (adapter in profileListeners) {
-          adapter.profileActivated(oldScheme, newScheme)
-        }
-      }
-    }, isUseOldFileNameSanitize = true)
-
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode) {
+    if (!project.isDirectoryBased || app.isUnitTestMode) {
       initialLoadSchemesFuture = resolvedPromise()
     }
     else {
@@ -162,30 +164,17 @@ class ProjectInspectionProfileManager(val project: Project,
 
   fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
 
-  @Synchronized override fun updateProfile(profile: Profile) {
-    super.updateProfile(profile)
-
-    (profile as InspectionProfileImpl).initInspectionTools(project)
-  }
-
-  override fun schemeRemoved(scheme: InspectionProfile) {
+  override fun schemeRemoved(scheme: InspectionProfileImpl) {
     scheme.cleanup(project)
   }
 
   @Suppress("unused")
   private class ProjectInspectionProfileStartUpActivity : StartupActivity {
     override fun runActivity(project: Project) {
-      getInstanceImpl(project).apply {
+      getInstance(project).apply {
         initialLoadSchemesFuture.done {
           currentProfile.initInspectionTools(project)
           fireProfilesInitialized()
-
-          val app = ApplicationManager.getApplication()
-          if (app.isUnitTestMode && app.isDispatchThread) {
-            // do not restart daemon in the middle of the test
-            //noinspection TestOnlyProblems
-            UIUtil.dispatchAllInvocationEvents()
-          }
         }
 
         scopeListener = NamedScopesHolder.ScopeListener {
@@ -204,8 +193,28 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
+  @Synchronized override fun getState(): Element? {
+    val result = Element("settings")
+
+    schemeManagerIprProvider?.writeState(result)
+
+    val state = this.state
+    if (state.useProjectProfile) {
+      state.projectProfile = schemeManager.currentSchemeName
+    }
+
+    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
+    if (!result.children.isEmpty()) {
+      result.addContent(Element("version").setAttribute("value", VERSION))
+    }
+
+    severityRegistrar.writeExternal(result)
+
+    return wrapState(result, project)
+  }
+
   @Synchronized override fun loadState(state: Element) {
-    val data = state.getChild("settings")
+    val data = unwrapState(state, project, schemeManagerIprProvider, schemeManager)
 
     val newState = State()
 
@@ -240,33 +249,14 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  @Synchronized override fun getState(): Element? {
-    val result = Element("settings")
-    val state = this.state
-    state.projectProfile = schemeManager.currentSchemeName
-    XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
-    if (!result.children.isEmpty()) {
-      result.addContent(Element("version").setAttribute("value", VERSION))
-    }
-
-    severityRegistrar.writeExternal(result)
-    if (JDOMUtil.isEmpty(result)) {
-      result.name = "state"
-      return result
-    }
-    else {
-      return Element("state").addContent(result)
-    }
-  }
-
   override fun getScopesManager() = scopeManager
 
-  @Synchronized override fun getProfiles(): Collection<Profile> {
+  @Synchronized override fun getProfiles(): Collection<InspectionProfileImpl> {
     currentProfile
     return schemeManager.allSchemes
   }
 
-  @Synchronized override fun getAvailableProfileNames(): Array<String> = schemeManager.allSchemeNames.toTypedArray()
+  @Synchronized fun getAvailableProfileNames(): Array<String> = schemeManager.allSchemeNames.toTypedArray()
 
   val projectProfile: String?
     get() = schemeManager.currentSchemeName
@@ -278,6 +268,14 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
+  @Synchronized fun useApplicationProfile(name: String) {
+    schemeManager.currentSchemeName = null
+    state.useProjectProfile = false
+    // yes, we reuse the same field - useProjectProfile field will be used to distinguish — is it app or project level
+    // to avoid data format change
+    state.projectProfile = name
+  }
+
   @Synchronized fun setCurrentProfile(profile: InspectionProfileImpl?) {
     schemeManager.setCurrent(profile)
     state.useProjectProfile = profile != null
@@ -285,15 +283,16 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun getCurrentProfile(): InspectionProfileImpl {
     if (!state.useProjectProfile) {
-      return applicationProfileManager.currentProfile as InspectionProfileImpl
+      return (state.projectProfile?.let {
+        applicationProfileManager.getProfile(it, false)
+      } ?: applicationProfileManager.currentProfile)
     }
 
     var currentScheme = schemeManager.currentScheme
     if (currentScheme == null) {
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
-        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
-                                              InspectionProfileImpl.getDefaultProfile(), null)
+        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this)
         currentScheme.copyFrom(applicationProfileManager.currentProfile)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME
@@ -316,8 +315,29 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): Profile? {
+  @Synchronized override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
     val profile = schemeManager.findSchemeByName(name)
     return profile ?: applicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent)
+  }
+
+  fun fireProfileChanged() {
+    fireProfileChanged(currentProfile)
+  }
+
+  fun addProfileChangeListener(listener: ProfileChangeAdapter, parentDisposable: Disposable) {
+    ContainerUtil.add(listener, profileListeners, parentDisposable)
+  }
+
+  fun fireProfileChanged(oldProfile: InspectionProfile?, profile: InspectionProfile) {
+    for (adapter in profileListeners) {
+      adapter.profileActivated(oldProfile, profile)
+    }
+  }
+
+  override fun fireProfileChanged(profile: InspectionProfileImpl) {
+    profile.profileChanged()
+    for (adapter in profileListeners) {
+      adapter.profileChanged(profile)
+    }
   }
 }

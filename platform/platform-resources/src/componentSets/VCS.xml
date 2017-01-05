@@ -46,7 +46,6 @@
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangesViewI</interface-class>

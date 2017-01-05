@@ -25,9 +25,9 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.XMLChar;
@@ -148,7 +148,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     String response;
     try {
       if (method.getStatusCode() != 200) {
-        throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
+        throw new HttpRequests.HttpStatusException("Cannot login", method.getStatusCode(), method.getPath());
       }
       response = method.getResponseBodyAsString(1000);
     }

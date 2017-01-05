@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -50,7 +51,7 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     final GrExpression cast = findExpressionToCast(descriptor);
     if (cast == null) return;
     doCast(project, myExpectedType, cast);
@@ -98,5 +99,12 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
   @Override
   public String getName() {
     return "Cast to " + myExpectedType.getPresentableText();
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Add cast";
   }
 }

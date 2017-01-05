@@ -18,8 +18,6 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.profile.Profile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SortedComboBoxModel;
@@ -32,23 +30,26 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
-public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
+public abstract class ProfilesComboBox<T extends InspectionProfileImpl> extends ComboBox<T> {
   private static final String PROJECT_LEVEL_SEPARATOR_TEXT = "Project Level";
   private static final String GLOBAL_LEVEL_SEPARATOR_TEXT = "Global Level";
 
-  private SortedComboBoxModel<InspectionProfileImpl> myComboModel;
-  private InspectionProfileImpl myFirstGlobalProfile;
+  private SortedComboBoxModel<T> myComboModel;
+  private T myFirstGlobalProfile;
 
   public ProfilesComboBox() {
-    myComboModel = new SortedComboBoxModel<>(this::compare);
+    myComboModel = new SortedComboBoxModel<>(Comparator.comparing(T::isProjectLevel)
+                                               .reversed()
+                                               .thenComparing(InspectionProfileImpl::getDisplayName));
     setModel(myComboModel);
     //noinspection GtkPreferredJComboBoxRenderer
-    setRenderer(new ListCellRenderer<Object>() {
+    setRenderer(new ListCellRenderer<InspectionProfileImpl>() {
       ListCellRendererWrapper<InspectionProfileImpl> baseRenderer = new ListCellRendererWrapper<InspectionProfileImpl>() {
         @Override
         public void customize(final JList list,
@@ -57,33 +58,32 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
                               final boolean selected,
                               final boolean hasFocus) {
           if (index == -1) {
-            setIcon(isProjectLevel(value) ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
+            setIcon(value.isProjectLevel() ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
           }
-          setText(getProfileName(value));
+          setText(value.getDisplayName());
         }
       };
 
       @Override
       public Component getListCellRendererComponent(JList list,
-                                                    Object o,
+                                                    InspectionProfileImpl o,
                                                     int index,
                                                     boolean isSelected,
                                                     boolean cellHasFocus) {
-        InspectionProfileImpl value = (InspectionProfileImpl)o;
         TitledSeparator separator = null;
         if (index != -1) {
-          if (!value.isProjectLevel()) {
-            if (value == myFirstGlobalProfile) {
+          if (!o.isProjectLevel()) {
+            if (o == myFirstGlobalProfile) {
               separator = new TitledSeparator(GLOBAL_LEVEL_SEPARATOR_TEXT);
             }
           }
           else {
-            if (value == myComboModel.get(0)) {
+            if (o == myComboModel.get(0)) {
               separator = new TitledSeparator(PROJECT_LEVEL_SEPARATOR_TEXT);
             }
           }
         }
-        Component renderedComponent = baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component renderedComponent = baseRenderer.getListCellRendererComponent(list, o, index, isSelected, cellHasFocus);
         if (separator == null) {
           return renderedComponent;
         }
@@ -111,65 +111,49 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
     });
   }
 
-  protected abstract boolean isProjectLevel(final InspectionProfileImpl p);
-
-  @NotNull
-  protected abstract String getProfileName(final InspectionProfileImpl p);
-
   protected abstract void onProfileChosen(final InspectionProfileImpl inspectionProfile);
 
   public void selectProfile(InspectionProfileImpl inspectionProfile) {
     setSelectedItem(inspectionProfile);
   }
 
-  public void reset(final Collection<? extends Profile> profiles) {
+  public void reset(final Collection<T> profiles) {
     myComboModel.clear();
-    for (Profile profile : profiles) {
-      myComboModel.add((InspectionProfileImpl)profile);
+    for (T profile : profiles) {
+      myComboModel.add(profile);
     }
     findFirstGlobalProfile();
     setSelectedIndex(0);
+    resort();
   }
 
-  void removeProfile(InspectionProfileImpl profile) {
+  void removeProfile(T profile) {
     myComboModel.remove(profile);
-    if (!isProjectLevel(profile) && profile == myFirstGlobalProfile) {
+    if (!profile.isProjectLevel() && profile == myFirstGlobalProfile) {
       findFirstGlobalProfile();
     }
   }
 
-  public void addProfile(InspectionProfileImpl inspectionProfile) {
+  public void addProfile(T inspectionProfile) {
     myComboModel.add(inspectionProfile);
-    if (!isProjectLevel(inspectionProfile)) {
+    if (!inspectionProfile.isProjectLevel()) {
       findFirstGlobalProfile();
     }
   }
 
-  InspectionProfileImpl getSelectedProfile() {
+  T getSelectedProfile() {
     return myComboModel.getSelectedItem();
   }
 
   @NotNull
-  List<InspectionProfileImpl> getProfiles() {
+  List<T> getProfiles() {
     return myComboModel.getItems();
-  }
-
-  private int compare(@NotNull InspectionProfileImpl p1, @NotNull InspectionProfileImpl p2) {
-    final boolean isProjectLevel1 = isProjectLevel(p1);
-    final boolean isProjectLevel2 = isProjectLevel(p2);
-    int res = Comparing.compare(isProjectLevel2, isProjectLevel1);
-    if (res != 0) {
-      return res;
-    }
-    final String currentProfileName1 = getProfileName(p1);
-    final String currentProfileName2 = getProfileName(p2);
-    return Comparing.compare(currentProfileName1, currentProfileName2);
   }
 
   private void findFirstGlobalProfile() {
     myFirstGlobalProfile = null;
-    for (InspectionProfileImpl profile : getProfiles()) {
-      if (!isProjectLevel(profile)) {
+    for (T profile : getProfiles()) {
+      if (!profile.isProjectLevel()) {
         myFirstGlobalProfile = profile;
         break;
       }

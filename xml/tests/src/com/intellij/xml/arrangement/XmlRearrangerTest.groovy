@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
-  public void testAttributeSorting4() throws Exception {
+  void testAttributeSorting4() throws Exception {
     doTest(
       initial: '''<root attr3="value3" attr2="value2" attr1="value1" xmlns:ns="http://ns.com"/>''',
       expected: '''<root xmlns:ns="http://ns.com" attr1="value1" attr2="value2" attr3="value3"/>''',
@@ -81,7 +81,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
-  public void testAttributeSortingByNamespace1() throws Exception {
+  void testAttributeSortingByNamespace1() throws Exception {
     doTest(
       initial: '''\
 <root attr1="value1" ns1:attr2="value2" xmlns:ns1="http://ns1.com" xmlns:ns2="http://ns2.com" ns1:attr1="value1">
@@ -99,7 +99,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
-  public void testAttributeSortingByNamespace2() throws Exception {
+  void testAttributeSortingByNamespace2() throws Exception {
     doTest(
       initial: '''\
 <root attr1="value1" ns1:attr2="value2" xmlns:ns1="http://ns1.com" xmlns:ns2="http://ns2.com" ns1:attr1="value1">
@@ -117,7 +117,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
-  public void testAttributeSortingByNamespace3() throws Exception {
+  void testAttributeSortingByNamespace3() throws Exception {
     doTest(
       initial: '''\
 <root attr1="value1" ns1:attr2="value2" xmlns:ns1="http://ns1.com" xmlns:ns2="http://ns2.com" ns1:attr1="value1">
@@ -136,7 +136,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
-  public void testAttributeSortingByNamespace4() throws Exception {
+  void testAttributeSortingByNamespace4() throws Exception {
     doTest(
       initial: '''\
 <root attr1="value1" ns1:attr2="value2" xmlns:ns1="http://ns1.com" xmlns:ns2="http://ns2.com" ns1:attr1="value1">
@@ -155,7 +155,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
-  public void testAttributeSortingByNamespace5() throws Exception {
+  void testAttributeSortingByNamespace5() throws Exception {
     doTest(
       initial: '''\
 <root attr1="value1" ns1:attr2="value2" xmlns:ns1="http://ns1.com" xmlns:ns2="http://ns2.com" ns1:attr1="value1">
@@ -174,7 +174,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     )
   }
 
-  public void testAttributeSortingByNamespace6() throws Exception {
+  void testAttributeSortingByNamespace6() throws Exception {
     doTest(
       initial: '''\
 <root attr1="value1" ns1:attr2="value2" xmlns:ns1="http://ns1.com" xmlns:ns2="http://ns2.com" ns1:attr1="value1">
@@ -202,6 +202,6 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
   @NotNull
   protected static StdArrangementMatchRule compositeRule(@NotNull String nameFilter, @NotNull String namespaceFilter) {
     return rule(new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
-                new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter));
+                new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter))
   }
 }

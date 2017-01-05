@@ -49,12 +49,6 @@ import java.util.*;
  */
 public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
-  @NotNull
-  @Override
-  public String getName() {
-    return PyBundle.message("QFIX.rename.unresolved.reference");
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {

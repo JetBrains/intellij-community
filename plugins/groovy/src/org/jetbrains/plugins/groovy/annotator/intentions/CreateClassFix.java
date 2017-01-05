@@ -62,7 +62,7 @@ public abstract class CreateClassFix {
     return new CreateClassActionBase(GrCreateClassKind.CLASS, expression.getReferenceElement()) {
 
       @Override
-      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+      protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
@@ -118,8 +118,7 @@ public abstract class CreateClassFix {
                                           @NotNull PsiType[] argTypes,
                                           @NotNull GrTypeDefinition targetClass,
                                           @NotNull Project project) {
-    final AccessToken writeLock = WriteAction.start();
-    try {
+    WriteAction.run(() -> {
       ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
       String[] paramTypes = new String[argTypes.length];
       String[] paramNames = new String[argTypes.length];
@@ -138,16 +137,13 @@ public abstract class CreateClassFix {
       method = (GrMethod)targetClass.addBefore(method, null);
       final PsiElement context = PsiTreeUtil.getParentOfType(refElement, PsiMethod.class, PsiClass.class, PsiFile.class);
       IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, targetClass, TypeConstraint.EMPTY_ARRAY, true, context);
-    }
-    finally {
-      writeLock.finish();
-    }
+    });
   }
 
   public static IntentionAction createClassFixAction(final GrReferenceElement refElement, GrCreateClassKind type) {
     return new CreateClassActionBase(type, refElement) {
       @Override
-      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+      protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
@@ -182,21 +178,16 @@ public abstract class CreateClassFix {
           return;
         }
 
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(resolved)) return;
 
-        AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(CreateClassFix.class);
-        try {
-          FileModificationService.getInstance().preparePsiElementForWrite(resolved);
-
+        WriteAction.run(() -> {
           PsiClass added = (PsiClass)resolved.add(template);
           PsiModifierList modifierList = added.getModifierList();
           if (modifierList != null) {
             modifierList.setModifierProperty(PsiModifier.STATIC, true);
           }
           IntentionUtils.positionCursor(project, added.getContainingFile(), added);
-        }
-        finally {
-          lock.finish();
-        }
+        });
       }
 
       @Nullable

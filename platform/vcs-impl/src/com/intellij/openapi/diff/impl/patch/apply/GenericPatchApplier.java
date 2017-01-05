@@ -659,7 +659,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private class SequentialStepsChecker implements SequenceDescriptor {
+  private class SequentialStepsChecker {
     private int myDistance;
     // in the end, will be [excluding] end of changing interval
     private int myIdx;
@@ -677,7 +677,6 @@ public class GenericPatchApplier {
       return myUsesAlreadyApplied;
     }
 
-    @Override
     public int getDistance() {
       return myDistance;
     }
@@ -719,7 +718,6 @@ public class GenericPatchApplier {
       }
     }
     
-    @Override
     public int getSizeOfFragmentToBeReplaced() {
       return myForward ? (myIdx - myStartIdx) : (myStartIdx - myIdx);
     }
@@ -841,7 +839,7 @@ public class GenericPatchApplier {
       myLeftWalk = leftWalk;
 
       myDirection = direction;
-      myCurrentIdx = start - 1;
+      myCurrentIdx = direction ? start - 1 : start; 
       step();
     }
 
@@ -876,7 +874,7 @@ public class GenericPatchApplier {
           }
         }
       } else {
-        int i = myCurrentIdx;
+        int i = myCurrentIdx - 1;
         int maxWalk = Math.max(-1, i - myLeftWalk);
         myCurrentIdx = -1;
         for (; i >= 0 && i > maxWalk && i < myLines.size(); i--) {

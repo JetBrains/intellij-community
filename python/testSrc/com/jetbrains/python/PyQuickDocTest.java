@@ -263,6 +263,18 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-17705
   public void testOptionalParameterType() {
-    checkHTMLOnly();
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  public void testHomogeneousTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  public void testHeterogeneousTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  public void testUnknownTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
   }
 }

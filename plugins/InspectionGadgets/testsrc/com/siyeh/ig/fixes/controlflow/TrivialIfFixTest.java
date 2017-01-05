@@ -40,4 +40,8 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
   public void testNegatedConditional() {
     doTest();
   }
+
+  public void testNegatedConditional1() {
+    doTest();
+  }
 }

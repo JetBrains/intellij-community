@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="testng_rt" />
     <orderEntry type="module" module-name="junit_rt" />
     <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="library" name="JaCoCo" level="project" />
     <orderEntry type="module" module-name="coverage_rt" />
     <orderEntry type="module" module-name="java-psi-impl" />

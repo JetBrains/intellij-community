@@ -69,14 +69,8 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 
     @Override

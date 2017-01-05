@@ -127,6 +127,9 @@ public class OnePixelDivider extends Divider {
     @Override
     public void mouseReleased(MouseEvent e) {
       _processMouseEvent(e);
+      if (myDragging) {
+        e.consume();
+      }
       setDragging(false);
     }
 

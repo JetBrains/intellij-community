@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -32,8 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ public class JavaSuppressionUtil {
   }
 
   @Nullable
-  public static String getInspectionIdSuppressedInAnnotationAttribute(PsiElement element) {
+  private static String getInspectionIdSuppressedInAnnotationAttribute(PsiElement element) {
     if (element instanceof PsiLiteralExpression) {
       final Object value = ((PsiLiteralExpression)element).getValue();
       if (value instanceof String) {
@@ -73,7 +73,7 @@ public class JavaSuppressionUtil {
   }
 
   @NotNull
-  public static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierList modifierList) {
+  public static Collection<String> getInspectionIdsSuppressedInAnnotation(@Nullable PsiModifierList modifierList) {
     if (modifierList == null) {
       return Collections.emptyList();
     }
@@ -86,6 +86,13 @@ public class JavaSuppressionUtil {
     if (annotation == null) {
       return Collections.emptyList();
     }
+    return CachedValuesManager.getCachedValue(annotation, () ->
+      CachedValueProvider.Result.create(getInspectionIdsSuppressedInAnnotation(annotation),
+                                        PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+  }
+
+  @NotNull
+  private static Collection<String> getInspectionIdsSuppressedInAnnotation(PsiAnnotation annotation) {
     final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     if (attributes.length == 0) {
       return Collections.emptyList();
@@ -261,7 +268,7 @@ public class JavaSuppressionUtil {
     final PsiAnnotation newAnnotation = createNewAnnotation(project, container, annotation, id);
     if (newAnnotation != null) {
       if (annotation != null && annotation.isPhysical()) {
-        annotation.replace(newAnnotation);
+        WriteCommandAction.runWriteCommandAction(project, null, null, () -> annotation.replace(newAnnotation), annotation.getContainingFile());
       }
       else {
         final PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();
@@ -324,14 +331,38 @@ public class JavaSuppressionUtil {
 
   @Nullable
   public static PsiElement getElementToAnnotate(PsiElement element, PsiElement container) {
-    if (container instanceof PsiDeclarationStatement && canHave15Suppressions(element)) {
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)container;
-      final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
-      for (PsiElement declaredElement : declaredElements) {
-        if (declaredElement instanceof PsiLocalVariable) {
-          final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
-          if (modifierList != null) {
-            return declaredElement;
+    if (container instanceof PsiDeclarationStatement) {
+      if (canHave15Suppressions(element)) {
+        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)container;
+        final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+        for (PsiElement declaredElement : declaredElements) {
+          if (declaredElement instanceof PsiLocalVariable) {
+            final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
+            if (modifierList != null) {
+              return declaredElement;
+            }
+          }
+        }
+      }
+    }
+    else if (container instanceof PsiForeachStatement) {
+      if (canHave15Suppressions(element)) {
+        final PsiParameter parameter = ((PsiForeachStatement)container).getIterationParameter();
+        final PsiModifierList modifierList = element.getParent() == parameter ? parameter.getModifierList() : null;
+        if (modifierList != null) {
+          return parameter;
+        }
+      }
+    }
+    else if (container instanceof PsiTryStatement) {
+      final PsiResourceList resourceList = ((PsiTryStatement)container).getResourceList();
+      if (resourceList != null) {
+        for (PsiResourceListElement listElement : resourceList) {
+          if (listElement instanceof PsiResourceVariable && listElement == element.getParent()) {
+            final PsiModifierList modifierList = ((PsiResourceVariable)listElement).getModifierList();
+            if (modifierList != null) {
+              return listElement;
+            }
           }
         }
       }

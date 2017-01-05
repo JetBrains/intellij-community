@@ -85,7 +85,17 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(false);
   }
 
+  public void testInnerArrayConstructorRef() { doTest(true); }
+
   public void testNoConstraintsWildcard() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondCollapsedInsideAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondCollapsedInFieldInitializerInsideAnonymous() throws Exception {
     doTest();
   }
 
@@ -144,6 +154,11 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest(true);
   }
 
+  public void testStaticMethodReference() { doTest(false); }
+
+  public void testOuterMethodReference() { doTest(true); }
+  public void testNoAnonymousOuterMethodReference() { doAntiTest(); }
+
   public void testMethodReferenceOnAncestor() { doTest(true); }
 
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() throws Exception {
@@ -172,6 +187,12 @@ public void testConvertToObjectStream() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
+  public void testInferThrowableBoundInCompletion() {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
   public void testInsideNewExpressionWithDiamondAndOverloadConstructors() throws Exception {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
@@ -189,9 +210,9 @@ public void testConvertToObjectStream() {
     doTest(true);
   }
 
-  private void doTest(boolean checkItems) {
+  private void doTest(boolean insertSelectedItem) {
     configureByFile("/" + getTestName(false) + ".java");
-    if (checkItems) {
+    if (insertSelectedItem) {
       assertNotNull(myItems);
       assertTrue(myItems.length > 0);
       final Lookup lookup = getLookup();

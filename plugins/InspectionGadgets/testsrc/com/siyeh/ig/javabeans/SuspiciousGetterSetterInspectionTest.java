@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,13 @@ public class SuspiciousGetterSetterInspectionTest extends LightInspectionTestCas
     }
   }
 
+  public void testNoPrefix() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    final SuspiciousGetterSetterInspection inspection = new SuspiciousGetterSetterInspection();
-    inspection.onlyWarnWhenFieldPresent = true;
-    return inspection;
+    return new SuspiciousGetterSetterInspection();
   }
 }

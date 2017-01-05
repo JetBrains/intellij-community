@@ -84,7 +84,17 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
   }
 
   @Override
+  public PsiElement getNavigationElement() {
+    if (getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
+      PsiElement parent = this.getParent();
+      return parent != null ? parent : this;
+    }
+    return super.getNavigationElement();
+  }
+
+  @Override
   public boolean canNavigate() {
-    return getTokenType() == XmlTokenType.XML_NAME && PsiNavigationSupport.getInstance().canNavigate(this);
+    return getTokenType() == XmlTokenType.XML_NAME && PsiNavigationSupport.getInstance().canNavigate(this) ||
+           getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS; // Custom regions
   }
 }

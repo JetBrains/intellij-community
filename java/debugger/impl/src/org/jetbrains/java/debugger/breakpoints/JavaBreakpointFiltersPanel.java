@@ -30,6 +30,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
@@ -266,12 +267,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
         }
       }
     }
-    for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (!instanceFilter.isEnabled()) {
-        idxs.add(instanceFilter);
-      }
-    }
-    myInstanceFilters = idxs.toArray(new InstanceFilter[idxs.size()]);
+    myInstanceFilters = StreamEx.of(myInstanceFilters).remove(InstanceFilter::isEnabled).prepend(idxs).toArray(InstanceFilter[]::new);
   }
 
   private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {

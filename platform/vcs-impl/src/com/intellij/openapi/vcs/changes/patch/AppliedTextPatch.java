@@ -1,5 +1,5 @@
  /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus.NOT_APPLIED;
@@ -52,7 +53,7 @@ public class AppliedTextPatch {
       }
     }
 
-    ContainerUtil.sort(hunks, (o1, o2) -> Integer.compare(o1.getLineRangeBefore().start, o2.getLineRangeBefore().start));
+    ContainerUtil.sort(hunks, Comparator.comparingInt(o -> o.getLineRangeBefore().start));
 
     return new AppliedTextPatch(hunks);
   }

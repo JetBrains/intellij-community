@@ -35,10 +35,7 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -348,11 +345,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
       // check in current package
       final PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(getPackageName());
-      if (aPackage != null) {
-        if (!aPackage.processDeclarations(processor, state, null, place)) {
-          return false;
-        }
-      }
+      if (aPackage != null && !processPackageDeclarations(processor, state, place, aPackage)) return false;
 
       // on-demand processing
       for (PsiImportStatement statement : importStatements) {
@@ -414,6 +407,31 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
+  private static boolean processPackageDeclarations(PsiScopeProcessor processor,
+                                                    @NotNull ResolveState state,
+                                                    PsiElement place,
+                                                    @NotNull PsiPackage aPackage) {
+    if (!aPackage.getQualifiedName().isEmpty()) {
+      processor = new DelegatingScopeProcessor(processor) {
+        @Nullable
+        @Override
+        public <T> T getHint(@NotNull Key<T> hintKey) {
+          if (hintKey == ElementClassHint.KEY) {
+            //noinspection unchecked
+            return (T)new ElementClassHint() {
+              @Override
+              public boolean shouldProcess(DeclarationKind kind) {
+                return kind == DeclarationKind.CLASS;
+              }
+            };
+          }
+          return super.getHint(hintKey);
+        }
+      };
+    }
+    return aPackage.processDeclarations(processor, state, null, place);
+  }
+
   @NotNull
   private static PsiSubstitutor createRawSubstitutor(PsiClass containingClass) {
     return JavaPsiFacade.getElementFactory(containingClass.getProject()).createRawSubstitutor(containingClass);
@@ -421,7 +439,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private static boolean processOnDemandTarget(PsiElement target, PsiScopeProcessor processor, ResolveState substitutor, PsiElement place) {
     if (target instanceof PsiPackage) {
-      if (!target.processDeclarations(processor, substitutor, null, place)) {
+      if (!processPackageDeclarations(processor, substitutor, place, (PsiPackage)target)) {
         return false;
       }
     }
@@ -436,7 +454,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
     else {
-      LOG.assertTrue(false);
+      LOG.error(target);
     }
     return true;
   }

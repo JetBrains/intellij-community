@@ -106,7 +106,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       final Project project = psi.getProject();
       final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
       final PsiBuilder builder = factory.createBuilder(project, node, lexer, getLanguage(), node.getChars());
-      final PyParser parser = new PyConsoleParser(consoleData);
+      final PyParser parser = new PyConsoleParser(consoleData, getLanguageLevel(psi));
 
       return parser.parse(this, builder).getFirstChildNode();
     }

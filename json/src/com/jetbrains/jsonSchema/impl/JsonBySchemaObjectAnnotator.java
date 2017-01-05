@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.*;
@@ -34,7 +49,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final PsiFile psiFile = element.getContainingFile();
     if (! (psiFile instanceof JsonFile)) return;
 
-    final JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
+    final JsonProperty firstProp = getFirstProperty(element);
     if (firstProp == null) {
       checkRootObject(holder, element);
       return;
@@ -75,8 +90,21 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
   }
 
+  private static JsonProperty getFirstProperty(@NotNull PsiElement element) {
+    JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
+    if (firstProp == null) {
+      final JsonObject firstObject = PsiTreeUtil.getParentOfType(element, JsonObject.class, false);
+      if (firstObject != null && firstObject.getParent() instanceof JsonValue) {
+        final List<JsonProperty> propertyList = firstObject.getPropertyList();
+        if (!propertyList.isEmpty()) firstProp = propertyList.get(0);
+      }
+    }
+    return firstProp;
+  }
+
   private void checkRootObject(@NotNull AnnotationHolder holder, PsiElement property) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    JsonValue object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    if (object == null) object = PsiTreeUtil.getParentOfType(property, JsonArray.class);
     if (object != null) {
       final BySchemaChecker rootChecker = new BySchemaChecker();
 
@@ -198,10 +226,17 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         final JsonSchemaObject propertySchema = properties.get(property.getName());
         if (propertySchema != null) {
           checkByScheme(property.getValue(), propertySchema, new HashSet<>());
-        } else if (schema.getAdditionalPropertiesSchema() != null) {
-          checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<>());
-        } else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
-          error("Property '" + property.getName() + "' is not allowed", property);
+        }
+        else {
+          final JsonSchemaObject patternSchema = schema.getMatchingPatternPropertySchema(property.getName());
+          if (patternSchema != null) {
+            checkByScheme(property.getValue(), patternSchema, new HashSet<>());
+          } else if (schema.getAdditionalPropertiesSchema() != null) {
+            checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<>());
+          }
+          else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
+            error("Property '" + property.getName() + "' is not allowed", property);
+          }
         }
         validatedProperties.add(property.getName());
       }
@@ -244,7 +279,8 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
 
     private boolean checkForEnum(JsonValue value, JsonSchemaObject schema) {
-      if (schema.getEnum() == null) return true;
+      //enum values + pattern -> don't check enum values
+      if (schema.getEnum() == null || schema.getPattern() != null)  return true;
       final String text = value.getText();
       final List<Object> objects = schema.getEnum();
       for (Object object : objects) {
@@ -357,10 +393,13 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           return;
         }
       }
-      if (schema.getMultipleOf() != null) {
-        final double leftOver = value.doubleValue() % schema.getMultipleOf().doubleValue();
+      final Number multipleOf = schema.getMultipleOf();
+      if (multipleOf != null) {
+        final double leftOver = value.doubleValue() % multipleOf.doubleValue();
         if (leftOver > 0.000001) {
-          error("Is not multiple of " + propValue.getText(), propValue);
+          final String multipleOfValue = String.valueOf(Math.abs(multipleOf.doubleValue() - multipleOf.intValue()) < 0.000001 ?
+                                                        multipleOf.intValue() : multipleOf);
+          error("Is not multiple of " + multipleOfValue, propValue);
           return;
         }
       }

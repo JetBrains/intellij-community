@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface RunProfileWithCompileBeforeLaunchOption extends RunProfile {
   /**
-   * @return modules to compile before run. Empty list to make project
+   * @return modules to compile before run. Empty list to build project
    */
   @NotNull
   Module[] getModules();

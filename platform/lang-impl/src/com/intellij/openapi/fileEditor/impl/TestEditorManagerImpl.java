@@ -360,7 +360,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public JComponent getComponent() {
-    throw new UnsupportedOperationException();
+    return new JLabel();
   }
 
   @Override

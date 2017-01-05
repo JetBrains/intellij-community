@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
  * @author ilyas
  */
 public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
-  private final String[] myAnnotations;
+  private final @NotNull String[] myAnnotations;
   private final StringRef myName;
   private final boolean isScript;
 
@@ -39,12 +39,13 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
     final GrPackageDefinition definition = file.getPackageDefinition();
     if (definition != null) {
       myAnnotations = GrStubUtils.getAnnotationNames(definition);
-    } else {
+    }
+    else {
       myAnnotations = ArrayUtil.EMPTY_STRING_ARRAY;
     }
   }
 
-  public GrFileStub(StringRef name, boolean isScript, String[] annotations) {
+  public GrFileStub(StringRef name, boolean isScript, @NotNull String[] annotations) {
     super(null);
     myName = name;
     this.isScript = isScript;
@@ -65,6 +66,7 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
     return isScript;
   }
 
+  @NotNull
   public String[] getAnnotations() {
     return myAnnotations;
   }
