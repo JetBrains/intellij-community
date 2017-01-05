@@ -86,4 +86,13 @@ public interface RegExpLanguageHost {
   String getPropertyDescription(@Nullable final String name);
   @NotNull
   String[][] getKnownCharacterClasses();
+
+  /**
+   * @param number  the number element to extract the value from
+   * @return the value, or null when the value is out of range
+   */
+  @Nullable
+  default Number getQuantifierValue(@NotNull RegExpNumber number) {
+    return Double.parseDouble(number.getText());
+  }
 }

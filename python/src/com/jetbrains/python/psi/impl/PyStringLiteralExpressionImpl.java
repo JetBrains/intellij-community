@@ -37,6 +37,7 @@ import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -460,6 +461,18 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
     return false;
+  }
+
+  @Override
+  public Long getQuantifierValue(@NotNull RegExpNumber number) {
+    try {
+      final long result = Long.parseLong(number.getText());
+      if (result >= 0xFFFFFFFFL /* max unsigned int 32 bits */) return null;
+      return result;
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
   }
 
   @Override

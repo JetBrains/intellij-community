@@ -198,6 +198,13 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("(?x)a\\ b\\ c");
   }
 
+  public void testCountedQuantifier() {
+    doTest("a{2147483647}");
+    doTest("a{<error descr=\"Repetition value too large\">2147483648</error>}");
+    doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}");
+    doTest("a{<error descr=\"Number expected\">,</error>}");
+  }
+
   private void doTest(@Language("RegExp") String code) {
     code = StringUtil.escapeBackSlashes(code);
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
