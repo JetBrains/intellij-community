@@ -225,14 +225,18 @@ public class RegExpParser implements PsiParser {
   private void parseClassIntersection(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
-    parseClassdef(builder);
+    boolean left = parseClassdef(builder);
     if (RegExpTT.ANDAND != builder.getTokenType()) {
       marker.drop();
       return;
     }
     while (RegExpTT.ANDAND == builder.getTokenType()) {
       builder.advanceLexer();
-      parseClassdef(builder);
+      final boolean right = parseClassdef(builder);
+      if (!left && !right) {
+        builder.error("character class expected");
+      }
+      left = right;
     }
     marker.done(RegExpElementTypes.INTERSECTION);
   }
