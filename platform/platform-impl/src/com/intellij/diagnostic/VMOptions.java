@@ -131,7 +131,10 @@ public class VMOptions {
 
   private static void writeOption(MemoryKind option, int value) {
     File file = getWriteFile();
-    if (file == null) return;
+    if (file == null) {
+      LOG.warn("VM options file not configured");
+      return;
+    }
 
     try {
       String content = file.exists() ? FileUtil.loadFile(file) : read();
@@ -197,7 +200,6 @@ public class VMOptions {
     String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
     if (vmOptionsFile == null) {
       // launchers should specify a path to an options file used to configure a JVM
-      LOG.warn("VM options file path missing");
       return null;
     }
 
@@ -208,7 +210,6 @@ public class VMOptions {
 
     String location = PathManager.getCustomOptionsDirectory();
     if (location == null) {
-      LOG.warn("custom options directory not specified (" + PathManager.PROPERTY_PATHS_SELECTOR + " not set?)");
       return null;
     }
 
