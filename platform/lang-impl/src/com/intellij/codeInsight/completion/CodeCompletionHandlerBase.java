@@ -19,6 +19,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction;
+import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
@@ -29,6 +31,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -74,6 +78,17 @@ public class CodeCompletionHandlerBase {
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
+
+  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
+    return createHandler(completionType, true, false, true);
+  }
+
+  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
+    AnAction codeCompletionAction = ActionManager.getInstance().getAction("CodeCompletion");
+    assert (codeCompletionAction instanceof BaseCodeCompletionAction);
+    BaseCodeCompletionAction baseCodeCompletionAction = (BaseCodeCompletionAction) codeCompletionAction;
+    return baseCodeCompletionAction.createHandler(completionType, invokedExplicitly, autopopup, synchronous);
+  }
 
   public CodeCompletionHandlerBase(@NotNull CompletionType completionType) {
     this(completionType, true, false, true);
