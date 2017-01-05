@@ -617,7 +617,7 @@ public class CodeCompletionHandlerBase {
     return context;
   }
 
-  private static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
+  public static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
     if (laterRunnable != null) {
       final Runnable runnable1 = () -> {
         if (!indicator.getProject().isDisposed()) {
