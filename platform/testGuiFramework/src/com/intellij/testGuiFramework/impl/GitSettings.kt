@@ -59,7 +59,7 @@ object GitSettings{
   private fun setGitGlobalUserName(userName: String) { executeGitCommand("config --global user.name \"$userName\"") }
   private fun setGitGlobalUserEmail(userEmail: String) { executeGitCommand("config --global user.email $userEmail") }
 
-  private fun setPathToGit() { GitVcsApplicationSettings.getInstance().pathToGit = ExecutableHelper.findGitExecutable() }
+  private fun setPathToGit() { GitVcsApplicationSettings.getInstance().setPathToGit(ExecutableHelper.findGitExecutable()) }
 
   private fun executeGitCommand(commandLine: String) = executeGitCommand(commandLine.splitSpaceIgnoreQuotes())
 
