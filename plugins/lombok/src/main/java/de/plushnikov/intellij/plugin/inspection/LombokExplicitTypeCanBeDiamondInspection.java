@@ -11,7 +11,7 @@ import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Overwrites intellij standard diamond inspection, to filter out lombok "val" declarations
+ * Overwrites intellij standard diamond inspection, to filter out lombok "val", "var" declarations
  */
 public class LombokExplicitTypeCanBeDiamondInspection extends ExplicitTypeCanBeDiamondInspection {
 
@@ -30,7 +30,7 @@ public class LombokExplicitTypeCanBeDiamondInspection extends ExplicitTypeCanBeD
 
       private boolean possibleValDeclaration(PsiNewExpression expression) {
         final PsiElement expressionParent = expression.getParent();
-        return expressionParent instanceof PsiLocalVariable && ValProcessor.isVal((PsiLocalVariable) expressionParent);
+        return expressionParent instanceof PsiLocalVariable && ValProcessor.isValOrVar((PsiLocalVariable) expressionParent);
       }
     };
   }

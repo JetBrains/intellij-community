@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import lombok.experimental.var;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +40,31 @@ public class ValProcessor extends AbstractProcessor {
 
   private static final String LOMBOK_VAL_FQN = "lombok.val";
   private static final String LOMBOK_VAL_SHORT_NAME = "val";
+  private static final String LOMBOK_VAR_FQN = "lombok.experimental.var";
+  private static final String LOMBOK_VAR_SHORT_NAME = "var";
 
   public ValProcessor() {
-    super(PsiElement.class, val.class);
+    super(PsiElement.class, val.class, var.class);
+  }
+
+  public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {
+    return psiLocalVariable.getInitializer() != null && isSameName(psiLocalVariable.getTypeElement().getText());
+  }
+
+  public static boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
+    return psiLocalVariable.getInitializer() != null && isValOrVar(psiLocalVariable.getTypeElement().getText());
+  }
+
+  private static boolean isSameName(String className) {
+    return LOMBOK_VAL_SHORT_NAME.equals(className) || LOMBOK_VAL_FQN.equals(className);
+  }
+
+  private static boolean isVar(String className) {
+    return LOMBOK_VAR_SHORT_NAME.equals(className) || LOMBOK_VAR_FQN.equals(className);
+  }
+
+  private static boolean isValOrVar(String className) {
+    return isSameName(className) || isVar(className);
   }
 
   public boolean isEnabled(@NotNull Project project) {
@@ -66,18 +89,21 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   public void verifyVariable(@NotNull final PsiLocalVariable psiLocalVariable, @NotNull final ProblemsHolder holder) {
-    if (isSameName(psiLocalVariable.getTypeElement().getText())) {
+    boolean isVal = isSameName(psiLocalVariable.getTypeElement().getText());
+    boolean isVar = isVar(psiLocalVariable.getTypeElement().getText());
+    final String ann = isVal ? "val" : "var";
+    if (isVal || isVar) {
       final PsiExpression initializer = psiLocalVariable.getInitializer();
       if (initializer == null) {
-        holder.registerProblem(psiLocalVariable, "'val' on a local variable requires an initializer expression", ProblemHighlightType.ERROR);
+        holder.registerProblem(psiLocalVariable, "'" + ann + "' on a local variable requires an initializer expression", ProblemHighlightType.ERROR);
       } else if (initializer instanceof PsiArrayInitializerExpression) {
-        holder.registerProblem(psiLocalVariable, "'val' is not compatible with array initializer expressions. Use the full form (new int[] { ... } instead of just { ... })", ProblemHighlightType.ERROR);
+        holder.registerProblem(psiLocalVariable, "'" + ann + "' is not compatible with array initializer expressions. Use the full form (new int[] { ... } instead of just { ... })", ProblemHighlightType.ERROR);
       } else if (initializer instanceof PsiLambdaExpression) {
-        holder.registerProblem(psiLocalVariable, "'val' is not allowed with lambda expressions.", ProblemHighlightType.ERROR);
-      } else {
+        holder.registerProblem(psiLocalVariable, "'" + ann + "' is not allowed with lambda expressions.", ProblemHighlightType.ERROR);
+      } else if (isVal) {
         final PsiElement typeParentParent = psiLocalVariable.getParent();
         if (typeParentParent instanceof PsiDeclarationStatement && typeParentParent.getParent() instanceof PsiForStatement) {
-          holder.registerProblem(psiLocalVariable, "'val' is not allowed in old-style for loops", ProblemHighlightType.ERROR);
+          holder.registerProblem(psiLocalVariable, "'" + ann + "' is not allowed in old-style for loops", ProblemHighlightType.ERROR);
         }
       }
     }
@@ -85,23 +111,22 @@ public class ValProcessor extends AbstractProcessor {
 
   public void verifyParameter(@NotNull final PsiParameter psiParameter, @NotNull final ProblemsHolder holder) {
     final PsiTypeElement typeElement = psiParameter.getTypeElement();
-    if (null != typeElement && isSameName(typeElement.getText())) {
-      if (!(psiParameter.getDeclarationScope() instanceof PsiForeachStatement)) {
+    boolean isVal = null != typeElement && isSameName(typeElement.getText());
+    boolean isVar = null != typeElement && isVar(typeElement.getText());
+    if (isVar || isVal) {
+      PsiElement scope = psiParameter.getDeclarationScope();
+      boolean isForeachStatement = scope instanceof PsiForeachStatement;
+      boolean isForStatement = scope instanceof PsiForStatement;
+      if (isVal && !isForeachStatement) {
         holder.registerProblem(psiParameter, "'val' works only on local variables and on foreach loops", ProblemHighlightType.ERROR);
+      } else if (isVar && !(isForeachStatement || isForStatement)) {
+        holder.registerProblem(psiParameter, "'var' works only on local variables and on for/foreach loops", ProblemHighlightType.ERROR);
       }
     }
   }
 
-  public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {
-    return psiLocalVariable.getInitializer() != null && isSameName(psiLocalVariable.getTypeElement().getText());
-  }
-
-  private boolean isVal(@NotNull PsiParameter psiParameter) {
-    return psiParameter.getParent() instanceof PsiForeachStatement && isSameName(psiParameter.getTypeElement().getText());
-  }
-
-  private static boolean isSameName(String className) {
-    return LOMBOK_VAL_SHORT_NAME.equals(className) || LOMBOK_VAL_FQN.equals(className);
+  private boolean isValOrVarForEach(@NotNull PsiParameter psiParameter) {
+    return psiParameter.getParent() instanceof PsiForeachStatement && isValOrVar(psiParameter.getTypeElement().getText());
   }
 
   @Nullable
@@ -109,8 +134,8 @@ public class ValProcessor extends AbstractProcessor {
     PsiType psiType = null;
 
     final PsiElement parent = typeElement.getParent();
-    if ((parent instanceof PsiLocalVariable && isVal((PsiLocalVariable) parent)) ||
-      (parent instanceof PsiParameter && isVal((PsiParameter) parent))) {
+    if ((parent instanceof PsiLocalVariable && isValOrVar((PsiLocalVariable) parent)) ||
+      (parent instanceof PsiParameter && isValOrVarForEach((PsiParameter) parent))) {
 
       if (parent instanceof PsiLocalVariable) {
         psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());

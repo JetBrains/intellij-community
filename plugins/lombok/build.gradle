@@ -109,7 +109,7 @@ configurations {
 }
 
 dependencies {
-    lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.10', classifier: 'sources', ext: 'jar'
+    lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.12', classifier: 'sources', ext: 'jar'
     hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
     bnf files("$buildDir/tools/GrammarKit/lib/grammar-kit.jar")
@@ -145,6 +145,7 @@ copy {
         include 'lombok/SneakyThrows.java'
         include 'lombok/Value.java'
         include 'lombok/val.java'
+        include 'lombok/var.java'
         include 'lombok/Singular.java'
         include 'lombok/core/handlers/Singulars.java'
     }
