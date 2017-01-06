@@ -40,8 +40,7 @@ import git4idea.commands.GitCommandResult
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.*
-import git4idea.test.GitPlatformTest
+import git4idea.test.*
 import git4idea.test.GitScenarios.*
 import java.util.*
 import java.util.regex.Matcher

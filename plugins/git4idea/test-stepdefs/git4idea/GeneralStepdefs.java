@@ -24,10 +24,10 @@ import cucumber.api.java.en.Then;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.GitCucumberWorld.myNotificator;
 import static git4idea.GitCucumberWorld.virtualCommits;
 import static git4idea.test.GitExecutor.git;
-import static git4idea.test.GitExecutor.touch;
 import static git4idea.test.GitScenarios.checkout;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;

@@ -117,7 +117,7 @@ public class GitCucumberWorld {
 
     myGit = ServiceManager.getService(myProject, Git.class);
     mySettings = GitVcsSettings.getInstance(myProject);
-    mySettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
+    mySettings.getAppSettings().setPathToGit(GitExecutor.gitExecutable());
 
     // dynamic overriding is used instead of making it in plugin.xml,
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.

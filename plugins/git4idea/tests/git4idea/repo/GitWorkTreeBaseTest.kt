@@ -15,14 +15,14 @@
  */
 package git4idea.repo
 
+import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vfs.LocalFileSystem
 import git4idea.GitUtil
 import git4idea.branch.GitBranchesCollection
 import git4idea.config.GitVersion
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
 import git4idea.test.GitPlatformTest
 import git4idea.test.GitTestUtil
+import git4idea.test.git
 import org.junit.Assume.assumeTrue
 import java.io.File
 

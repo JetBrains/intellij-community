@@ -28,12 +28,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
-import git4idea.test.GitPlatformTest
-import git4idea.test.GitTestUtil
-import git4idea.test.MockVcsHelper
-import git4idea.test.TestDialogHandler
+import git4idea.test.*
 import git4idea.update.GitUpdateResult
 import java.io.File
 

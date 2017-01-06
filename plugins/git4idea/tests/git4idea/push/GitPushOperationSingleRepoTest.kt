@@ -31,7 +31,7 @@ import git4idea.branch.GitBranchUtil
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.*
+import git4idea.test.*
 import git4idea.test.GitTestUtil.makeCommit
 import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult

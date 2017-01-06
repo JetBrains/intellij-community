@@ -42,6 +42,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.overwrite;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static com.intellij.openapi.vcs.VcsTestUtil.*;
 import static git4idea.test.GitExecutor.*;

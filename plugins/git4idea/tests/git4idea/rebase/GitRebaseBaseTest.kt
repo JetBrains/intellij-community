@@ -24,8 +24,6 @@ import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
 
 abstract class GitRebaseBaseTest : GitPlatformTest() {
 
@@ -224,7 +222,7 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
   class LocalChange(val repository: GitRepository, val filePath: String, val content: String = "Some content") {
     fun generate() : LocalChange {
       cd(repository)
-      GitExecutor.file(filePath).create(content).add()
+      file(filePath).create(content).add()
       return this
     }
 

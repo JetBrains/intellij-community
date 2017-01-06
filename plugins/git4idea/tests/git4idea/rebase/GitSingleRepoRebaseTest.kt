@@ -25,11 +25,7 @@ import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.file
-import git4idea.test.GitExecutor.git
-import git4idea.test.RepoBuilder
-import git4idea.test.UNKNOWN_ERROR_TEXT
-import git4idea.test.build
+import git4idea.test.*
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates

@@ -47,7 +47,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     super.setUp()
 
     myGitSettings = GitVcsSettings.getInstance(myProject)
-    myGitSettings.appSettings.setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE)
+    myGitSettings.appSettings.setPathToGit(gitExecutable())
 
     myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
     myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
@@ -94,9 +94,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     val target = "parent.git"
     val targetName = "origin"
     Executor.cd(myProjectRoot)
-    GitExecutor.git("clone --bare '%s' %s", source.root.path, target)
-    GitExecutor.cd(source)
-    GitExecutor.git("remote add %s '%s'", targetName, "$myProjectRoot/$target")
+    git("clone --bare '%s' %s", source.root.path, target)
+    cd(source)
+    git("remote add %s '%s'", targetName, "$myProjectRoot/$target")
   }
 
   protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {

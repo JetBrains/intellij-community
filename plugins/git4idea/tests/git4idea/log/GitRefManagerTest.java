@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static git4idea.test.GitExecutor.cd;
+import static com.intellij.openapi.vcs.Executor.cd;
 import static git4idea.test.GitExecutor.git;
 
 public abstract class GitRefManagerTest extends GitSingleRepoTest {
