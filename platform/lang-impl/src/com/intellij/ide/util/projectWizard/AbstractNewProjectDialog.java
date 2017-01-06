@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -52,6 +53,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     setTitle(generators.length == 0 ? "Create Project" : "New Project");
     DefaultActionGroup root = createRootStep();
+    Disposer.register(getDisposable(), () -> root.removeAll());
 
     Pair<JPanel, JBList> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null, getDisposable());
     Dimension size = JBUI.size(666, 385);
