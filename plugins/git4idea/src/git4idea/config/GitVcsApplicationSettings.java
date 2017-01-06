@@ -72,7 +72,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     return myState.myPathToGit;
   }
 
-  public void setPathToGit(String pathToGit) {
+  public void setPathToGit(@Nullable String pathToGit) {
     myState.myPathToGit = pathToGit;
   }
 
