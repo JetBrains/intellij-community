@@ -75,10 +75,6 @@ fun git(repository: GitRepository?, command: String): String {
   return git(command)
 }
 
-fun git(formatString: String, vararg args: String): String {
-  return git(String.format(formatString, *args))
-}
-
 fun cd(repository: GitRepository) {
   cd(repository.root.path)
 }
