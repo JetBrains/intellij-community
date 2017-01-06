@@ -563,7 +563,7 @@ public class BuilderHandler {
 
   private void addTypeParameters(PsiClass builderClass, PsiMethod psiMethod, LombokLightMethodBuilder methodBuilder) {
     final PsiTypeParameter[] psiTypeParameters;
-    if (null == psiMethod) {
+    if (null == psiMethod || psiMethod.isConstructor()) {
       psiTypeParameters = builderClass.getTypeParameters();
     } else {
       psiTypeParameters = psiMethod.getTypeParameters();
