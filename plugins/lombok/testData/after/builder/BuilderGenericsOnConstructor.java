@@ -28,7 +28,7 @@ class BarBar<T> {
     @java.lang.SuppressWarnings("all")
     @javax.annotation.Generated("lombok")
     public BarBar<T> build() {
-      return new BarBar(content);
+      return new BarBar<T>(content);
     }
 
     @java.lang.Override

@@ -481,16 +481,17 @@ public class BuilderHandler {
   }
 
   @NotNull
-  private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass,
-                                      PsiSubstitutor builderSubstitutor, @NotNull String buildMethodName, @NotNull String buildMethodPrepare, @NotNull String buildMethodParameters) {
-    final PsiType buildMethodReturnType = getReturnTypeOfBuildMethod(parentClass, psiMethod);
+  private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass, @NotNull PsiSubstitutor builderSubstitutor,
+                                      @NotNull String buildMethodName, @NotNull String buildMethodPrepare, @NotNull String buildMethodParameters) {
+    final PsiType builderType = getReturnTypeOfBuildMethod(parentClass, psiMethod);
+    final PsiType returnType = builderSubstitutor.substitute(builderType);
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
-      .withMethodReturnType(builderSubstitutor.substitute(buildMethodReturnType))
+      .withMethodReturnType(returnType)
       .withContainingClass(builderClass)
       .withNavigationElement(parentClass)
       .withModifier(PsiModifier.PUBLIC)
-      .withBody(createBuildMethodCodeBlock(psiMethod, builderClass, buildMethodReturnType, buildMethodPrepare, buildMethodParameters));
+      .withBody(createBuildMethodCodeBlock(psiMethod, builderClass, returnType, buildMethodPrepare, buildMethodParameters));
 
     if (null == psiMethod) {
       final Collection<PsiMethod> classConstructors = PsiClassUtil.collectClassConstructorIntern(parentClass);
