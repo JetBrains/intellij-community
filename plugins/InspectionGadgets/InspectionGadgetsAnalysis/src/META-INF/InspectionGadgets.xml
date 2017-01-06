@@ -1349,10 +1349,13 @@
                      key="try.finally.can.be.try.with.resources.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.TryFinallyCanBeTryWithResourcesInspection"/>
+    <!-- In Android Studio this inspection has been disabled here, and a copy registered in Studio; the only difference
+         in the copy is that it checks the API level and does not check for identical branches unless the API level is Java 8
     <localInspection groupPath="Java" language="JAVA" shortName="TryWithIdenticalCatches" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="try.with.identical.catches.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.TryWithIdenticalCatchesInspection"/>
+    -->
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryBoxing" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.boxing.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.migration.UnnecessaryBoxingInspection"/>

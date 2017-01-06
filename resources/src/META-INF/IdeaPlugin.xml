@@ -649,9 +649,11 @@
                      implementationClass="com.intellij.codeInspection.javaDoc.JavadocHtmlLintInspection"/>
     <externalAnnotator language="JAVA" implementationClass="com.intellij.codeInspection.javaDoc.JavadocHtmlLintAnnotator"/>
 
+    <!-- In Android Studio this is registered via a subclass which does its own filtering
     <localInspection groupPath="Java" language="JAVA" suppressId="deprecation" shortName="Deprecation" displayName="Deprecated API usage" groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
+    -->
     <localInspection language="XML" shortName="DeprecatedClassUsageInspection" displayName="Deprecated API usage in XML" groupKey="group.names.xml" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING" implementationClass="com.intellij.codeInspection.xml.DeprecatedClassUsageInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsAndHashcode" bundle="messages.InspectionsBundle" key="inspection.equals.hashcode.display.name"

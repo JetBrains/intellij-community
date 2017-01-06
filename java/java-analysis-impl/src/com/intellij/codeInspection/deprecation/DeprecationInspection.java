@@ -18,23 +18,21 @@ package com.intellij.codeInspection.deprecation;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.DeprecationUtil;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -285,101 +283,6 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
 
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     String description = JavaErrorMessages.message("deprecated.symbol", symbolName);
-
-    List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(4);
-    for (DeprecationFilter filter : getExtensions()) {
-      if (filter.isExcluded(refElement, elementToHighlight, symbolName)) {
-        return;
-      }
-      description = filter.getDeprecationMessage(refElement, elementToHighlight, symbolName, description);
-      LocalQuickFix[] additionalFixes = filter.getQuickFixes(refElement, elementToHighlight, symbolName);
-      Collections.addAll(fixes, additionalFixes);
-    }
-
-    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED, rangeInElement,
-                           fixes.toArray(new LocalQuickFix[fixes.size()]));
-  }
-
-  // Android Studio: TEMPORARY local version of part of our deprecation filter implementation,
-  // until we decide how to proceed with
-  //   https://android-review.googlesource.com/149417
-  // (This part does not depend on Android APIs; the full AndroidDeprecationFilter is here:
-  //  https://android-review.googlesource.com/149601 )
-
-  @NotNull
-  private static DeprecationFilter[] getExtensions() {
-    // Replace with actual extension lookup later:
-    //return DeprecationFilter.EP_NAME.getExtensions();
-    return DEPRECATION_FILTERS;
-  }
-
-  private static final DeprecationFilter[] DEPRECATION_FILTERS = new DeprecationFilter[]{new AndroidDeprecationFilter()};
-
-  private static class AndroidDeprecationFilter extends DeprecationFilter {
-    private static final String ACTION_BAR_ACTIVITY = "android.support.v7.app.ActionBarActivity";
-    private static final String APP_COMPAT_ACTIVITY = "android.support.v7.app.AppCompatActivity";
-
-    @Override
-    public boolean isExcluded(@NotNull PsiElement deprecatedElement, @NotNull PsiElement referenceElement, @Nullable String symbolName) {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getDeprecationMessage(@NotNull PsiElement deprecatedElement,
-                                        @NotNull PsiElement referenceElement,
-                                        @Nullable String symbolName,
-                                        @NotNull String defaultMessage) {
-      if (ACTION_BAR_ACTIVITY.equals(symbolName)) {
-        return "ActionBarActivity is deprecated; use `AppCompatActivity` instead";
-      }
-
-      return defaultMessage;
-    }
-
-    @NotNull
-    @Override
-    public LocalQuickFix[] getQuickFixes(@NotNull PsiElement deprecatedElement,
-                                         @NotNull PsiElement referenceElement,
-                                         @Nullable String symbolName) {
-      if (ACTION_BAR_ACTIVITY.equals(symbolName)) {
-        return new LocalQuickFix[] {new ReplaceSuperClassFix(referenceElement, APP_COMPAT_ACTIVITY)};
-      }
-
-      return LocalQuickFix.EMPTY_ARRAY;
-    }
-
-    private static class ReplaceSuperClassFix implements LocalQuickFix {
-      private final String myQualifiedName;
-      private final PsiElement myElement;
-
-      public ReplaceSuperClassFix(@NotNull PsiElement element, @NotNull String qualifiedName) {
-        myElement = element;
-        myQualifiedName = qualifiedName;
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getName() {
-        return "Replace With " + myQualifiedName.substring(myQualifiedName.lastIndexOf('.') + 1);
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return "Replace Deprecated Code";
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        PsiElementFactory elementFactory = facade.getElementFactory();
-        PsiElement newReference = elementFactory.createReferenceFromText(myQualifiedName, myElement);
-        PsiElement replace = myElement;
-        newReference = replace.replace(newReference);
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(newReference);
-      }
-    }
+    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED, rangeInElement);
   }
 }
