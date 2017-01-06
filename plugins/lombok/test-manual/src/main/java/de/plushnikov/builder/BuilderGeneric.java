@@ -14,7 +14,7 @@ public class BuilderGeneric<T extends Number> {
 
   public static void main(String[] args) {
 
-    BuilderGeneric instance = BuilderGeneric.<Integer>builder().number(234).build();
+    BuilderGeneric<Integer> instance = BuilderGeneric.<Integer>builder().number(234).build();
     System.out.println(instance);
   }
 }

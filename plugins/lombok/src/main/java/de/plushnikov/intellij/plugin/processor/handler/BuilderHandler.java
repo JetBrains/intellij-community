@@ -2,7 +2,22 @@ package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
@@ -293,14 +308,9 @@ public class BuilderHandler {
     builderClass.withConstructors(createConstructors(builderClass, psiAnnotation));
 
     final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
-    PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
+    final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
     builderClass.withFields(generateFields(builderParameters, builderClass, AccessorsInfo.EMPTY, builderSubstitutor));
-    builderClass.withMethods(createMethods(psiClass, psiMethod, builderClass, psiBuilderType, psiAnnotation, builderParameters, builderSubstitutor));
-ччччч
-    final Collection<PsiParameter> builderParameters = getBuilderParameters(psiMethod, Collections.<PsiField>emptySet());
-    builderClass.withFields(generateFields(builderParameters, builderClass, AccessorsInfo.EMPTY));
-    builderClass.withMethods(createMethods(psiClass, psiMethod, builderClass, psiAnnotation, builderParameters));
-
+    builderClass.withMethods(createMethods(psiClass, psiMethod, builderClass, psiAnnotation, builderParameters, builderSubstitutor));
 
     return builderClass;
   }
@@ -314,8 +324,9 @@ public class BuilderHandler {
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
     final Collection<PsiField> psiFields = getBuilderFields(psiClass, Collections.<PsiField>emptySet(), accessorsInfo);
-    PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
-    builderClass.withFields(generateFields(psiFields, builderClass, accessorsInf, builderSubstitutoro));
+
+    final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
+    builderClass.withFields(generateFields(psiFields, builderClass, accessorsInfo, builderSubstitutor));
     builderClass.withMethods(createMethods(psiClass, null, builderClass, psiAnnotation, psiFields, builderSubstitutor));
 
     return builderClass;
@@ -363,10 +374,8 @@ public class BuilderHandler {
       if (buildMethodParameterString.length() > 0) {
         buildMethodParameterString.deleteCharAt(buildMethodParameterString.length() - 1);
       }
-      sss
-      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, builderSubstitutor.substitute(psiBuilderType), buildMethodName, buildMethodPrepareString.toString(), buildMethodParameterString.toString()));
 
-      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass,
+      psiMethods.add(createBuildMethod(psiParentClass, psiMethod, psiBuilderClass, builderSubstitutor,
         buildMethodName, buildMethodPrepareString.toString(), buildMethodParameterString.toString()));
     }
 
@@ -473,11 +482,11 @@ public class BuilderHandler {
 
   @NotNull
   private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderClass,
-                                      @NotNull String buildMethodName, @NotNull String buildMethodPrepare, @NotNull String buildMethodParameters) {
+                                      PsiSubstitutor builderSubstitutor, @NotNull String buildMethodName, @NotNull String buildMethodPrepare, @NotNull String buildMethodParameters) {
     final PsiType buildMethodReturnType = getReturnTypeOfBuildMethod(parentClass, psiMethod);
 
     final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(parentClass.getManager(), buildMethodName)
-      .withMethodReturnType(buildMethodReturnType)
+      .withMethodReturnType(builderSubstitutor.substitute(buildMethodReturnType))
       .withContainingClass(builderClass)
       .withNavigationElement(parentClass)
       .withModifier(PsiModifier.PUBLIC)
