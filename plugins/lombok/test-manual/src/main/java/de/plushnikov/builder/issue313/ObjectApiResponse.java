@@ -9,8 +9,8 @@ public class ObjectApiResponse<K> {
   private K response;
 
 	public static <Z> void create(Z res, ObjectApiResponseBuilder<Z> builder) {
-//		ObjectApiResponseBuilder<Integer> response1 = ObjectApiResponse.<Integer>builder().response(Integer.valueOf(1));
-//		ObjectApiResponseBuilder<Integer> response1 = ObjectApiResponse.builder().response(res);
+		ObjectApiResponseBuilder<Integer> response1 = ObjectApiResponse.<Integer>builder().response(1);
+		ObjectApiResponseBuilder<Z> response11 = ObjectApiResponse.<Z>builder().response(res);
 		ObjectApiResponseBuilder<Z> response2 = builder.response(res);
 	}
 
