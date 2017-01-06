@@ -90,7 +90,9 @@
       <w>enqueued</w>
       <w>errno</w>
       <w>executables</w>
+      <w>exifinterface</w>
       <w>expectedly</w>
+      <w>extern</w>
       <w>filenames</w>
       <w>filepath</w>
       <w>firebase</w>
@@ -185,6 +187,7 @@
       <w>lookupswitch</w>
       <w>looper</w>
       <w>lorem</w>
+      <w>lossless</w>
       <w>lpackage</w>
       <w>makefile</w>
       <w>malloc</w>
@@ -197,6 +200,7 @@
       <w>mipmap</w>
       <w>mipmaps</w>
       <w>mkdirs</w>
+      <w>mockup</w>
       <w>monospace</w>
       <w>moreunit</w>
       <w>multimap</w>
@@ -313,6 +317,7 @@
       <w>userdata</w>
       <w>userdebug</w>
       <w>versioncode</w>
+      <w>versionless</w>
       <w>vert</w>
       <w>viewport</w>
       <w>vmsig</w>
