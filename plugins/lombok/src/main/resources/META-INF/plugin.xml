@@ -36,6 +36,7 @@
         <li><a href="https://projectlombok.org/features/experimental/Wither.html">@Wither</a></li>
         <li><a href="https://projectlombok.org/features/SneakyThrows.html">@SneakyThrows</a></li>
         <li><a href="https://projectlombok.org/features/val.html">from Intellij 14.1 @val</a></li>
+        <li><a href="https://projectlombok.org/features/experimental/var.html">from Intellij 14.1 @var</a></li>
         <li><a href="https://projectlombok.org/features/experimental/UtilityClass.html">from Intellij 2016.2 @UtilityClass</a></li>
         <li><a href="https://projectlombok.org/features/configuration.html">Lombok config system</a></li>
         <li>Code inspections</li>
@@ -257,6 +258,7 @@
             <li>Fixed #306: Problem with @Builder and generics</li>
             <li>Fixed #308: Write access is allowed from write-safe contexts only</li>
             <li>Fixed #313: Missed substitution when class and builder have generics</li>
+            <li>Fixed #322: Added support of lombok.experimental.var</li>
 				</ol>
 			</li>
 		<li>0.13

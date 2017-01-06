@@ -13,7 +13,7 @@ Twentieth version of plugin released. Bugfixes, performance optimization and new
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 14.1.4, 15.0.4, 2016.2  
+Tested and supports IntelliJ versions: 14.1.4, 15.0.4, 2016.2
 
 Last support for IntelliJ 11.1.5, 12.1.7, 13.1.6 by plugin version 0.11!
 
@@ -57,7 +57,7 @@ Installation
   - <kbd>Preferences</kbd> > <kbd>Settings</kbd> > <kbd>Plugins</kbd> > <kbd>Browse repositories...</kbd> > <kbd>Search for "lombok"</kbd> > <kbd>Install Plugin</kbd>
 - Manually:
   - Download the [latest release](https://github.com/mplushnikov/lombok-intellij-plugin/releases/latest) and install it manually using <kbd>Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Install plugin from disk...</kbd>
-  
+
 Restart IDE.
 
 ### Required IntelliJ Configuration
@@ -112,16 +112,17 @@ Developed By
 [**@mplushnikov** Michail Plushnikov] (https://github.com/mplushnikov)
 
 **Contributors**
-- [**@AlexejK** Alexej Kubarev](https://github.com/AlexejK)
 - [**@akozlova** Anna Kozlova](https://github.com/akozlova)
-- [**@twillouer** William Delanoue](https://github.com/twillouer)
-- [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
-- [**@toadzky** David Harris](https://github.com/toadzky)
-- [**@mlueders** Mike Lueders](https://github.com/mlueders)
+- [**@AlexejK** Alexej Kubarev](https://github.com/AlexejK)
+- [**@bulgakovalexander** Alexander Bulgakov](https://github.com/bulgakovalexander)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
+- [**@mlueders** Mike Lueders](https://github.com/mlueders)
 - [**@Sheigutn** Florian Böhm](https://github.com/Sheigutn)
 - [**@siosio** siosio](https://github.com/siosio)
 - [**@Siriah** Iris Hupkens](https://github.com/Siriah)
+- [**@toadzky** David Harris](https://github.com/toadzky)
+- [**@twillouer** William Delanoue](https://github.com/twillouer)
+- [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
 
 Supporters
 --------
