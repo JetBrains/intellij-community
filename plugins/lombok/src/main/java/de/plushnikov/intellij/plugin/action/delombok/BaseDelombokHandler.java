@@ -131,7 +131,7 @@ public class BaseDelombokHandler {
   }
 
   private PsiClass rebuildClass(@NotNull Project project, @NotNull PsiClass fromClass) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     PsiClass resultClass = elementFactory.createClass(StringUtil.defaultIfEmpty(fromClass.getName(), "UnknownClassName"));
     copyModifiers(fromClass.getModifierList(), resultClass.getModifierList());
@@ -148,7 +148,7 @@ public class BaseDelombokHandler {
   }
 
   private PsiMethod rebuildMethod(@NotNull Project project, @NotNull PsiMethod fromMethod) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     final PsiMethod resultMethod;
     final PsiType returnType = fromMethod.getReturnType();
@@ -221,7 +221,7 @@ public class BaseDelombokHandler {
   }
 
   private PsiField rebuildField(@NotNull Project project, @NotNull PsiField fromField) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     final PsiField resultField = elementFactory.createField(fromField.getName(), fromField.getType());
     copyModifiers(fromField.getModifierList(), resultField.getModifierList());

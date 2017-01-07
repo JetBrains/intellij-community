@@ -79,7 +79,7 @@ public class CreateFieldQuickFix implements IntentionAction, LocalQuickFix {
       new WriteCommandAction(project, psiFile) {
         protected void run(@NotNull Result result) throws Throwable {
 
-          final PsiElementFactory psiElementFactory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+          final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(myClass.getProject());
           final PsiField psiField = psiElementFactory.createField(myName, myType);
 
           final PsiModifierList modifierList = psiField.getModifierList();

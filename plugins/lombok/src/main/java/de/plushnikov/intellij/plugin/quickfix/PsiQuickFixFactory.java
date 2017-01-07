@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiQuickFixFactory {
   public static LocalQuickFix createAddAnnotationQuickFix(@NotNull PsiClass psiClass, @NotNull String annotationFQN, @Nullable String annotationParam) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     PsiAnnotation newAnnotation = elementFactory.createAnnotationFromText("@" + annotationFQN + "(" + StringUtil.notNullize(annotationParam) + ")", psiClass);
     final PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();
 

@@ -179,14 +179,14 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
       builder.append(')');
       builder.append('{').append("  ").append('}');
 
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
       return elementFactory.createMethodFromText(builder.toString(), getContainingClass());
     } finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
   }
 
-  public String getAllModifierProperties(LightModifierList modifierList) {
+  private String getAllModifierProperties(LightModifierList modifierList) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       for (String modifier : modifierList.getModifiers()) {

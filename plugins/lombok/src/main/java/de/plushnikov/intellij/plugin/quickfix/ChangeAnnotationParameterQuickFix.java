@@ -82,7 +82,7 @@ public class ChangeAnnotationParameterQuickFix implements IntentionAction, Local
 
           if (null != myNewValue) {
             //add new parameter
-            final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myAnnotation.getProject()).getElementFactory();
+            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myAnnotation.getProject());
             PsiAnnotation newAnnotation = elementFactory.createAnnotationFromText("@" + myAnnotation.getQualifiedName() + "(" + myName + "=" + myNewValue + ")", myAnnotation.getContext());
             final PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();
 

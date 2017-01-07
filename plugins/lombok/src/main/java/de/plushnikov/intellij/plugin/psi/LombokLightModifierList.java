@@ -70,7 +70,7 @@ public class LombokLightModifierList extends LightModifierList {
   @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     final PsiAnnotation psiAnnotation = elementFactory.createAnnotationFromText('@' + qualifiedName, null);
     myAnnotations.put(qualifiedName, psiAnnotation);
     return psiAnnotation;

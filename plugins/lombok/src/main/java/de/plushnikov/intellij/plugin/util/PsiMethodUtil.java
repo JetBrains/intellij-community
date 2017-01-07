@@ -2,9 +2,9 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameter;
@@ -19,9 +19,9 @@ import java.util.Collection;
  */
 public class PsiMethodUtil {
   @NotNull
-  public static PsiCodeBlock createCodeBlockFromText(@NotNull String blockText, @NotNull PsiClass psiClass) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-    return elementFactory.createCodeBlockFromText("{" + blockText + "}", psiClass);
+  public static PsiCodeBlock createCodeBlockFromText(@NotNull String blockText, @NotNull PsiElement psiElement) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiElement.getProject());
+    return elementFactory.createCodeBlockFromText("{" + blockText + "}", psiElement);
   }
 
   @Nullable
@@ -29,7 +29,7 @@ public class PsiMethodUtil {
     PsiTypeParameter[] psiTypeParameters = psiTypeParameterList.getTypeParameters();
     if (psiTypeParameters.length > 0) {
 
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiTypeParameterList.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiTypeParameterList.getProject());
 
       final StringBuilder builder = new StringBuilder("public <");
 
@@ -58,7 +58,6 @@ public class PsiMethodUtil {
     }
     return null;
   }
-
 
   public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName) {
     boolean hasMethod = false;

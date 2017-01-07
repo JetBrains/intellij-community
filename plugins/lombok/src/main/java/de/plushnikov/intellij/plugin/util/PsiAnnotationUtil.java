@@ -43,7 +43,7 @@ public class PsiAnnotationUtil {
 
   @NotNull
   public static PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Class<? extends Annotation> annotationClass, @Nullable String value) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiModifierListOwner.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiModifierListOwner.getProject());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiModifierListOwner, PsiClass.class);
     final String valueString = StringUtil.isNotEmpty(value) ? "(" + value + ")" : "";
     return elementFactory.createAnnotationFromText("@" + annotationClass.getName() + valueString, psiClass);
