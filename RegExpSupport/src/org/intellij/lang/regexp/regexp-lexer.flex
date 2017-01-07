@@ -248,7 +248,7 @@ HEX_CHAR=[0-9a-fA-F]
   {ESCAPE}  {BOUNDARY}          { return RegExpTT.BOUNDARY; }
 }
 
-{ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
 
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }

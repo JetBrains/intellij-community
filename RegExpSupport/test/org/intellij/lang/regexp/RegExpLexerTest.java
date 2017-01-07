@@ -368,6 +368,12 @@ public class RegExpLexerTest extends LexerTestCase {
                                                                  "CLASS_END (']')", lexer);
   }
 
+  public void testValidEscapes() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\%\\ä", "REDUNDANT_ESCAPE ('\\%')\n" +
+                     "REDUNDANT_ESCAPE ('\\ä')", lexer);
+  }
+
   public void testEscapesInsideCharClass() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("[\\k<a> (?<t>t)\\g'q'\\R]", "CLASS_BEGIN ('[')\n" +
