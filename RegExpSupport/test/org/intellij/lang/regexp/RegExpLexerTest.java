@@ -459,6 +459,14 @@ public class RegExpLexerTest extends LexerTestCase {
                     "CHARACTER (',')\n" +
                     "CHARACTER (',')\n" +
                     "CHARACTER ('}')", lexer);
+
+    doTest("[{1,2}]", "CLASS_BEGIN ('[')\n" +
+                      "CHARACTER ('{')\n" +
+                      "CHARACTER ('1')\n" +
+                      "CHARACTER (',')\n" +
+                      "CHARACTER ('2')\n" +
+                      "CHARACTER ('}')\n" +
+                      "CLASS_END (']')", lexer);
   }
 
   @Override
