@@ -2,11 +2,13 @@ package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -15,6 +17,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -288,58 +291,67 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
   private PsiMethod createStaticConstructor(PsiClass psiClass, String staticName, boolean useJavaDefaults, Collection<PsiField> params, PsiAnnotation psiAnnotation) {
     LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), staticName)
-      .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiClass))
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
 
-    //Static method need type parameter
-    for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
-      method.withTypeParameter(typeParameter);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+
+    final PsiType[] methodTypeParameterTypes;
+    if (psiClass.hasTypeParameters()) {
+      final PsiTypeParameter[] psiClassTypeParameters = psiClass.getTypeParameters();
+      // create new type parameters
+      for (int index = 0; index < psiClassTypeParameters.length; index++) {
+        final PsiTypeParameter psiClassTypeParameter = psiClassTypeParameters[index];
+        method.withTypeParameter(new LightTypeParameterBuilder(psiClassTypeParameter.getName(), method, index));
+      }
+
+      // create psiType for each of type parameter
+      final PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
+      methodTypeParameterTypes = new PsiType[methodTypeParameters.length];
+      for (int index = 0; index < methodTypeParameters.length; index++) {
+        methodTypeParameterTypes[index] = factory.createType(methodTypeParameters[index]);
+      }
+    } else {
+      methodTypeParameterTypes = PsiType.EMPTY_ARRAY;
     }
 
-//    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-//    final PsiTypeParameter typeParameter = psiClass.getTypeParameters()[0];
-//    final PsiClassType methodParameterType = factory.createType(typeParameter, PsiSubstitutor.EMPTY);
-//    method.addParameter(new LightParameter("myParam1", methodParameterType, psiClass, psiClass.getLanguage()));
+    final PsiType returnType = factory.createType(psiClass, methodTypeParameterTypes);
+    method.withMethodReturnType(returnType);
 
     if (!useJavaDefaults) {
       for (PsiField param : params) {
-        final PsiType methodParameterType = param.getType();
-        method.withParameter(param.getName(), methodParameterType);
+        method.withParameter(param.getName(), chooseType(param.getType(), methodTypeParameterTypes));
       }
     }
 
-    method.withBody(createStaticCodeBlock(psiClass, useJavaDefaults, method.getParameterList()));
+    method.withBody(createStaticCodeBlock(returnType, useJavaDefaults, method.getParameterList()));
 
     return method;
   }
 
   @NotNull
-  private PsiCodeBlock createStaticCodeBlock(@NotNull PsiClass psiClass, boolean useJavaDefaults, @NotNull final PsiParameterList parameterList) {
+  private PsiType chooseType(@NotNull PsiType typeOfField, @NotNull PsiType[] typeParameterTypes) {
+    final String presentableText = typeOfField.getPresentableText();
+    for (PsiType typeParameterType : typeParameterTypes) {
+      if (presentableText.equals(typeParameterType.getPresentableText())) {
+        return typeParameterType;
+      }
+    }
+    return typeOfField;
+  }
+
+  @NotNull
+  private PsiCodeBlock createStaticCodeBlock(@NotNull PsiType psiType, boolean useJavaDefaults, @NotNull final PsiParameterList parameterList) {
     final String blockText;
     if (isShouldGenerateFullBodyBlock()) {
-      final String psiClassName = buildClassNameWithGenericTypeParameters(psiClass);
+      final String psiClassName = psiType.getPresentableText();
       final String paramsText = useJavaDefaults ? "" : joinParameters(parameterList);
       blockText = String.format("return new %s(%s);", psiClassName, paramsText);
     } else {
       blockText = "return null;";
     }
-    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
-  }
-
-  private String buildClassNameWithGenericTypeParameters(@NotNull final PsiClass psiClass) {
-    StringBuilder psiClassName = new StringBuilder(getConstructorName(psiClass));
-
-    final PsiTypeParameter[] psiClassTypeParameters = psiClass.getTypeParameters();
-    if (psiClassTypeParameters.length > 0) {
-      psiClassName.append('<');
-      for (PsiTypeParameter psiClassTypeParameter : psiClassTypeParameters) {
-        psiClassName.append(psiClassTypeParameter.getName()).append(',');
-      }
-      psiClassName.setCharAt(psiClassName.length() - 1, '>');
-    }
-    return psiClassName.toString();
+    return PsiMethodUtil.createCodeBlockFromText(blockText, parameterList);
   }
 
   private String joinParameters(PsiParameterList parameterList) {
@@ -356,5 +368,4 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       StringBuilderSpinAllocator.dispose(builder);
     }
   }
-
 }

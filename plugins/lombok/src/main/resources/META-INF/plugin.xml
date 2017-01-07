@@ -259,6 +259,7 @@
             <li>Fixed #308: Write access is allowed from write-safe contexts only</li>
             <li>Fixed #313: Missed substitution when class and builder have generics</li>
             <li>Fixed #322: Added support of lombok.experimental.var</li>
+            <li>Fixed #332: @Value(staticConstructor = "of") breaks intellij's type inference</li>
 				</ol>
 			</li>
 		<li>0.13
