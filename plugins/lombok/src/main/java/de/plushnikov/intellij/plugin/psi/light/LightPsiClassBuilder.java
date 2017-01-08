@@ -81,7 +81,6 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
   @NotNull
   @Override
   public PsiField[] getFields() {
-    // TODO
     return PsiField.EMPTY_ARRAY;
   }
 
@@ -94,7 +93,6 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
   @NotNull
   @Override
   public PsiClass[] getInnerClasses() {
-    // TODO
     return PsiClass.EMPTY_ARRAY;
   }
 

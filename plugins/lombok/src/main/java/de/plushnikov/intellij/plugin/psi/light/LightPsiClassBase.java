@@ -55,9 +55,8 @@ import java.util.List;
  */
 public abstract class LightPsiClassBase extends LightElement implements PsiClass, SyntheticElement {
 
-  private final
   @NotNull
-  String myName;
+  private final String myName;
 
   public LightPsiClassBase(@NotNull PsiElement context, @NotNull String name) {
     this(context.getManager(), context.getLanguage(), name);
