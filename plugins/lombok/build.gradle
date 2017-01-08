@@ -5,7 +5,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.1.10"
+    id "org.jetbrains.intellij" version "0.2.0"
     id 'de.undercouch.download' version '2.1.0'
 }
 
