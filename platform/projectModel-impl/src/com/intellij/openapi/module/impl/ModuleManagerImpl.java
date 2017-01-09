@@ -722,7 +722,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     @NotNull
     private ThrowableComputable<Module, IOException> loadModuleInternal(@NotNull String filePath) throws IOException {
       String resolvedPath = resolveShortWindowsName(filePath);
-      VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(resolvedPath);
+      Ref<VirtualFile> ref = Ref.create();
+      ApplicationManager.getApplication().invokeAndWait(() -> ref.set(StandardFileSystems.local().refreshAndFindFileByPath(resolvedPath)));
+      VirtualFile moduleFile = ref.get();
       if (moduleFile == null || !moduleFile.exists()) {
         throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", resolvedPath));
       }
