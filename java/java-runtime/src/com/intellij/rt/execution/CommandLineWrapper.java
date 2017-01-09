@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.rt.execution;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -152,23 +149,16 @@ public class CommandLineWrapper {
 
   /**
    * args: "classpath file" [ @vm_params "VM options file" ] [ @app_params "args file" ] "main class" [ args ... ]
-   * @noinspection Duplicates, ResultOfMethodCallIgnored
    */
   private static AppData loadMainClassWithCustomLoader(File classpathFile, String[] args) throws Exception {
     List classpathUrls = new ArrayList();
     StringBuffer classpathString = new StringBuffer();
-    BufferedReader classpathReader = new BufferedReader(new FileReader(classpathFile));
-    try {
-      String pathElement;
-      while ((pathElement = classpathReader.readLine()) != null) {
-        if (classpathString.length() > 0) classpathString.append(File.pathSeparator);
-        classpathString.append(pathElement);
-        classpathUrls.add(toUrl(new File(pathElement)));
-      }
-    }
-    finally {
-      classpathReader.close();
-      classpathFile.delete();
+    List pathElements = readLinesAndDeleteFile(classpathFile);
+    for (int i = 0; i < pathElements.size(); i++) {
+      String pathElement = (String)pathElements.get(i);
+      classpathUrls.add(toUrl(new File(pathElement)));
+      if (classpathString.length() > 0) classpathString.append(File.pathSeparator);
+      classpathString.append(pathElement);
     }
     System.setProperty("java.class.path", classpathString.toString());
 
@@ -176,40 +166,14 @@ public class CommandLineWrapper {
 
     List properties = Collections.EMPTY_LIST;
     if (args.length > startArgsIdx && "@vm_params".equals(args[startArgsIdx - 1])) {
-      File vmParamsFile = new File(args[startArgsIdx]);
-      BufferedReader vmParamsReader = new BufferedReader(new FileReader(vmParamsFile));
-      try {
-        properties = new ArrayList();
-        String property;
-        while ((property = vmParamsReader.readLine()) != null) {
-          properties.add(property);
-        }
-      }
-      finally {
-        vmParamsReader.close();
-        vmParamsFile.delete();
-      }
-
+      properties = readLinesAndDeleteFile(new File(args[startArgsIdx]));
       startArgsIdx += 2;
     }
 
     String[] mainArgs;
     if (args.length > startArgsIdx && "@app_params".equals(args[startArgsIdx - 1])) {
-      File appParamsFile = new File(args[startArgsIdx]);
-      BufferedReader appParamsReader = new BufferedReader(new FileReader(appParamsFile));
-      try {
-        List list = new ArrayList();
-        String arg;
-        while ((arg = appParamsReader.readLine()) != null) {
-          list.add(arg);
-        }
-        mainArgs = (String[])list.toArray(new String[list.size()]);
-      }
-      finally {
-        appParamsReader.close();
-        appParamsFile.delete();
-      }
-
+      List lines = readLinesAndDeleteFile(new File(args[startArgsIdx]));
+      mainArgs = (String[])lines.toArray(new String[lines.size()]);
       startArgsIdx += 2;
     }
     else {
@@ -230,6 +194,21 @@ public class CommandLineWrapper {
     Thread.currentThread().setContextClassLoader(loader);
 
     return new AppData(properties, mainClass, mainArgs);
+  }
+
+  /** @noinspection ResultOfMethodCallIgnored*/
+  private static List readLinesAndDeleteFile(File file) throws IOException {
+    BufferedReader reader = new BufferedReader(new FileReader(file));
+    try {
+      List lines = new ArrayList();
+      String line;
+      while ((line = reader.readLine()) != null) lines.add(line);
+      return lines;
+    }
+    finally {
+      reader.close();
+      file.delete();
+    }
   }
 
   /** @noinspection Since15, deprecation */
