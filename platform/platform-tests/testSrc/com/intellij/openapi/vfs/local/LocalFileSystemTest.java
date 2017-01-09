@@ -110,7 +110,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     File dir = createTempDirectory(false);
     ManagingFS managingFS = ManagingFS.getInstance();
 
-    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath());
     assertNotNull(vFile);
     assertFalse(managingFS.areChildrenLoaded(vFile));
     assertFalse(managingFS.wereChildrenAccessed(vFile));
@@ -127,12 +127,12 @@ public class LocalFileSystemTest extends PlatformTestCase {
     boolean subChildCreated = subChild.createNewFile();
     assertTrue(subChildCreated);
 
-    VirtualFile childVFile = myFS.refreshAndFindFileByPath(child.getPath().replace(File.separatorChar, '/'));
+    VirtualFile childVFile = myFS.refreshAndFindFileByPath(child.getPath());
     assertNotNull(childVFile);
     assertFalse(managingFS.areChildrenLoaded(vFile));
     assertTrue(managingFS.wereChildrenAccessed(vFile));
 
-    VirtualFile subdirVFile = myFS.refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile subdirVFile = myFS.refreshAndFindFileByPath(subdir.getPath());
     assertNotNull(subdirVFile);
     assertFalse(managingFS.areChildrenLoaded(subdirVFile));
     assertFalse(managingFS.wereChildrenAccessed(subdirVFile));
@@ -145,7 +145,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertFalse(managingFS.areChildrenLoaded(subdirVFile));
     assertFalse(managingFS.wereChildrenAccessed(subdirVFile));
 
-    VirtualFile subChildVFile = myFS.refreshAndFindFileByPath(subChild.getPath().replace(File.separatorChar, '/'));
+    VirtualFile subChildVFile = myFS.refreshAndFindFileByPath(subChild.getPath());
     assertNotNull(subChildVFile);
     assertTrue(managingFS.areChildrenLoaded(vFile));
     assertTrue(managingFS.wereChildrenAccessed(vFile));
@@ -156,7 +156,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
   public void testRefreshAndFindFile() throws Exception {
     File dir = createTempDirectory();
 
-    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath());
     assertNotNull(vFile);
     vFile.getChildren();
 
@@ -168,7 +168,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     File subdir = new File(dir, "aaa");
     assertTrue(subdir.mkdir());
 
-    VirtualFile file = myFS.refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile file = myFS.refreshAndFindFileByPath(subdir.getPath());
     assertNotNull(file);
   }
 
@@ -176,8 +176,8 @@ public class LocalFileSystemTest extends PlatformTestCase {
     File fromDir = createTempDirectory();
     File toDir = createTempDirectory();
 
-    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
-    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath());
+    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath());
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
     final VirtualFile fileToCopy = createChildData(fromVDir, "temp_file");
@@ -193,8 +193,8 @@ public class LocalFileSystemTest extends PlatformTestCase {
     File fromDir = createTempDirectory();
     File toDir = createTempDirectory();
 
-    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
-    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath());
+    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath());
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
     final VirtualFile dirToCopy = createChildDirectory(fromVDir, "dir");
