@@ -910,6 +910,12 @@ public class UsageViewImpl implements UsageView {
     TreeUtil.expand(myTree, 2);
   }
 
+  public void expandRoot() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    fireEvents();
+    myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
+  }
+
   @NotNull
   DefaultMutableTreeNode getModelRoot() {
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();

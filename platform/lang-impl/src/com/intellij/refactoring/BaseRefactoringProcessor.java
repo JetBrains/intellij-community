@@ -59,12 +59,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -423,6 +425,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
     addDoRefactoringAction(usageView, refactoringRunnable, canNotMakeString);
+    UIUtil.invokeLaterIfNeeded(((UsageViewImpl)usageView)::expandRoot);
   }
 
   private void addDoRefactoringAction(@NotNull UsageView usageView, @NotNull Runnable refactoringRunnable, @NotNull String canNotMakeString) {
