@@ -491,6 +491,34 @@ public class Py3TypeTest extends PyTestCase {
            "expr = D1() / D2()");
   }
 
+  // PY-22181
+  public void testIterationOverIterableWithSeparateIterator() {
+    doTest("int",
+           "class AIter(object):\n" +
+           "    def __next__(self):\n" +
+           "        return 5\n" +
+           "class A(object):\n" +
+           "    def __iter__(self):\n" +
+           "        return AIter()\n" +
+           "a = A()\n" +
+           "for expr in a:\n" +
+           "    print(expr)");
+  }
+
+  // PY-22181
+  public void testAsyncIterationOverIterableWithSeparateIterator() {
+    doTest("int",
+           "class AIter(object):\n" +
+           "    def __anext__(self):\n" +
+           "        return 5\n" +
+           "class A(object):\n" +
+           "    def __aiter__(self):\n" +
+           "        return AIter()\n" +
+           "a = A()\n" +
+           "async for expr in a:\n" +
+           "    print(expr)");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
