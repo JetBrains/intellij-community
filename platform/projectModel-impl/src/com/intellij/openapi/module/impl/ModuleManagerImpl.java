@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
@@ -70,22 +71,22 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   public static final String ELEMENT_MODULES = "modules";
   public static final String ELEMENT_MODULE = "module";
-  static final String ATTRIBUTE_FILEURL = "fileurl";
+  public static final String ATTRIBUTE_FILEURL = "fileurl";
   public static final String ATTRIBUTE_FILEPATH = "filepath";
-  static final String ATTRIBUTE_GROUP = "group";
+  public static final String ATTRIBUTE_GROUP = "group";
+  public static final String IML_EXTENSION = ".iml";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
-  public static final String IML_EXTENSION = ".iml";
+  private static final String MODULE_GROUP_SEPARATOR = "/";
+
   protected final Project myProject;
   protected final MessageBus myMessageBus;
+  protected final MessageBusConnection myMessageBusConnection;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
-  private static final String MODULE_GROUP_SEPARATOR = "/";
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
-
-  protected final MessageBusConnection myMessageBusConnection;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -720,15 +721,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @NotNull
     private ThrowableComputable<Module, IOException> loadModuleInternal(@NotNull String filePath) throws IOException {
-      filePath = resolveShortWindowsName(filePath);
-      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
+      String resolvedPath = resolveShortWindowsName(filePath);
+      VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(resolvedPath);
       if (moduleFile == null || !moduleFile.exists()) {
-        throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
+        throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", resolvedPath));
       }
 
       String path = moduleFile.getPath();
       ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
-      return () -> ApplicationManager.getApplication().runReadAction((ThrowableComputable<ModuleEx, IOException>)() -> {
+      return () -> ReadAction.compute(() -> {
         if (myManager.myProject.isDisposed()) return null;
         ModuleEx result = myManager.createAndLoadModule(path);
         initModule(result, path, null);
