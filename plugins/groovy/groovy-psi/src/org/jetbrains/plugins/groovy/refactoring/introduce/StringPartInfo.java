@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -153,12 +153,16 @@ public class StringPartInfo {
 
   @Nullable
   private static GrLiteral findLiteral(@NotNull PsiElement psi) {
-    if (isStringLiteral(psi.getParent())) {
-      return (GrLiteral)psi.getParent();
+    PsiElement parent = psi.getParent();
+    if (isStringLiteral(parent)) {
+      return (GrLiteral)parent;
     }
 
-    if (isStringLiteral(psi.getParent().getParent())) {
-      return (GrLiteral)psi.getParent().getParent();
+    if (parent == null) return null;
+
+    PsiElement gParent = parent.getParent();
+    if (isStringLiteral(gParent)) {
+      return (GrLiteral)gParent;
     }
 
     if (psi instanceof GrString) {
@@ -168,7 +172,8 @@ public class StringPartInfo {
     return null;
   }
 
-  private static boolean isStringLiteral(final PsiElement psi) {
+  @Contract("null -> false")
+  private static boolean isStringLiteral(@Nullable PsiElement psi) {
     return psi instanceof GrLiteral && TokenSets.STRING_LITERAL_SET.contains(GrLiteralImpl.getLiteralType((GrLiteral)psi)) || psi instanceof GrString;
   }
 
