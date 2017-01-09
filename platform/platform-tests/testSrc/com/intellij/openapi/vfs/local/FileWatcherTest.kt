@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -454,17 +454,14 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.renameTo(newFile) }, mapOf(newFile to 'P'))
   }
 
-  @Test fun testPartialRefresh() {
-    // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
-    val top = tempDir.newFolder("top")
-    LocalFileSystemTest.doTestPartialRefresh(top)
-  }
+  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+  @Test fun testPartialRefresh() = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
 
-  @Test fun testInterruptedRefresh() {
-    // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
-    val top = tempDir.newFolder("top")
-    LocalFileSystemTest.doTestInterruptedRefresh(top)
-  }
+  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+  @Test fun testInterruptedRefresh() = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
+
+  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+  @Test fun testRefreshAndFindFile() = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
     val root = tempDir.newFolder(UNICODE_NAME_1)
