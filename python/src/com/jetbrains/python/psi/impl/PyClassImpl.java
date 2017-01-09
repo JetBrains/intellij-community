@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -926,7 +926,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
     @Nullable
     @Override
-    public PyType getType(@NotNull TypeEvalContext context) {
+    public PyType getType(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
       if (mySite instanceof PyTargetExpressionImpl) {
         final PyType targetDocStringType = ((PyTargetExpressionImpl)mySite).getTypeFromDocString();
         if (targetDocStringType != null) {
@@ -939,7 +939,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
           return null;
         }
-        return context.getReturnType(callable);
+        return callable.getCallType(receiver, Collections.emptyMap(), context);
       }
       return null;
     }
