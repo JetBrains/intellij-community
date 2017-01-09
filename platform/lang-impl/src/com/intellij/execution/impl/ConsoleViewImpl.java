@@ -16,6 +16,7 @@
 
 package com.intellij.execution.impl;
 
+import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.execution.ConsoleFolding;
@@ -87,6 +88,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -101,6 +103,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
 
   private static boolean ourTypedHandlerInitialized;
+  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final StringBuilder myUserInputText = new StringBuilder(); // guarded by LOCK
+  private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
 
   private static synchronized void initTypedHandler() {
     if (ourTypedHandlerInitialized) return;
@@ -515,6 +520,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @TestOnly
   void waitAllRequests() {
     myFlushAlarm.flush();
+    myFlushUserInputAlarm.flush();
   }
   
   protected void disposeEditor() {
@@ -558,11 +564,32 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myDeferredBuffer.print(text, contentType, info);
 
       if (contentType == ConsoleViewContentType.USER_INPUT) {
+        sendUserInput(text);
         requestFlushImmediately();
       }
       if (myEditor != null) {
         final boolean shouldFlushNow = myDeferredBuffer.length() >= myDeferredBuffer.getCycleBufferSize();
         addFlushRequest(FLUSH, shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY);
+      }
+    }
+  }
+
+  private void sendUserInput(@NotNull String text) {
+    if (myState.isRunning()) {
+      myUserInputText.append(text);
+      if (NEW_LINE_MATCHER.indexIn(text) >= 0) {
+        String textToSend = myUserInputText.toString();
+        myUserInputText.setLength(0);
+        myFlushUserInputAlarm.addRequest(() -> {
+          if (myState.isRunning()) {
+            try {
+              // this may block forever, see IDEA-54340
+              myState.sendUserInput(textToSend);
+            }
+            catch (IOException ignored) {
+            }
+          }
+        }, 0);
       }
     }
   }
