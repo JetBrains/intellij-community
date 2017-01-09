@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_BRANCH_NUM;
-import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
+import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavorites;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
@@ -79,10 +79,9 @@ class GitBranchPopupActions {
         .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
         .collect(toList());
     int numOfFavorites = getNumOfFavorites(localBranchActions);
-    List<AnAction> localBranchPresentationList = localBranchActions.stream().sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
     // if there are only a few local favorites -> show several non-favorite;  for remotes it's better to show only favorites; 
-    addMoreActionIfNeeded(localBranchPresentationList, numOfFavorites > MAX_BRANCH_NUM ? numOfFavorites : MAX_BRANCH_NUM);
-    popupGroup.addAll(localBranchPresentationList);
+    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               numOfFavorites > MAX_BRANCH_NUM ? numOfFavorites : MAX_BRANCH_NUM);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<BranchActionGroup> remoteBranchActions =
@@ -91,9 +90,8 @@ class GitBranchPopupActions {
         .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
         .collect(toList());
     numOfFavorites = getNumOfFavorites(remoteBranchActions);
-    List<AnAction> remoteBranchPresentationList = remoteBranchActions.stream().sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
-    addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM);
-    popupGroup.addAll(remoteBranchPresentationList);
+    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM);
     return popupGroup;
   }
 

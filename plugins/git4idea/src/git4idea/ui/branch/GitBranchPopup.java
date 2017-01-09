@@ -20,10 +20,12 @@ import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.RootAction;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
@@ -37,7 +39,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.*;
-import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
+import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavorites;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -119,11 +121,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
         .collect(toList());
     int numOfFavorites = getNumOfFavorites(localBranchActions);
-    List<AnAction> localBranchPresentationList =
-      localBranchActions.stream().sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
-    addMoreActionIfNeeded(localBranchPresentationList, numOfFavorites > MAX_BRANCH_NUM ? numOfFavorites : MAX_BRANCH_NUM);
-    popupGroup.addAll(localBranchPresentationList);
-
+    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               numOfFavorites > MAX_BRANCH_NUM ? numOfFavorites : MAX_BRANCH_NUM);
     popupGroup.addSeparator("Common Remote Branches");
     List<BranchActionGroup> remoteBranchActions = map(((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches(),
                                                       remoteBranch -> new GitBranchPopupActions.RemoteBranchActions(myProject,
@@ -131,10 +130,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                                                                                                                     remoteBranch,
                                                                                                                     myCurrentRepository));
     numOfFavorites = getNumOfFavorites(remoteBranchActions);
-    List<AnAction> remoteBranchPresentationList =
-      remoteBranchActions.stream().sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
-    addMoreActionIfNeeded(remoteBranchPresentationList, numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM);
-    popupGroup.addAll(remoteBranchPresentationList);
+    wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
+                               numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM);
   }
 
   @Nullable
@@ -151,14 +148,11 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    List<AnAction> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
+    List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(repo -> new RootAction<>(repo, highlightCurrentRepo() ? myCurrentRepository : null,
                                     new GitBranchPopupActions(repo.getProject(), repo).createActions(),
                                     GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
-    if (rootActions.size() > MAX_REPO_NUM) {
-      addMoreActionIfNeeded(rootActions, DEFAULT_REPO_NUM);
-    }
-    popupGroup.addAll(rootActions);
+    wrapWithMoreActionIfNeeded(popupGroup, rootActions, rootActions.size() > MAX_REPO_NUM ? DEFAULT_REPO_NUM : MAX_REPO_NUM);
     return popupGroup;
   }
 

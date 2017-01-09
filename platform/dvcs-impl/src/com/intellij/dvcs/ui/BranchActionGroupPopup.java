@@ -54,7 +54,6 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
-  private int myIgnoreNextItem = 0;
   private MyPopupListElementRenderer myListElementRenderer;
 
   public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
@@ -99,6 +98,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         else if (childGroup instanceof BranchActionGroup) {
           speedSearchActions.add(createSpeedSearchActionGroupWrapper(childGroup));
         }
+        else if (childGroup instanceof HideableActionGroup) {
+          speedSearchActions.add(createSpeedSearchActionGroupWrapper(((HideableActionGroup)childGroup).getDelegate()));
+        }
       }
     }
   }
@@ -140,12 +142,10 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected boolean shouldShow(@NotNull AnAction action) {
-    if (action instanceof MoreAction) {
-      if (getSpeedSearch().isHoldingFilter() || !action.getTemplatePresentation().isVisible()) return false;
-      myIgnoreNextItem = ((MoreAction)action).getHiddenNodesNum();
-      return true;
-    }
-    return myIgnoreNextItem-- <= 0;
+    if (getSpeedSearch().isHoldingFilter()) return true;
+    if (action instanceof MoreAction) return !((MoreAction)action).myIsExpanded;
+    if (action instanceof MoreHideableActionGroup) return ((MoreHideableActionGroup)action).shouldBeShown();
+    return true;
   }
 
   @Override
@@ -285,23 +285,17 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private static class MoreAction extends DumbAwareAction implements KeepingPopupOpenAction {
-    private static final String MORE_TEXT = "more...";
-    private final int myHiddenNodesNum;
+    private boolean myIsExpanded = false;
 
     public MoreAction(int numberOfHiddenNodes) {
       super();
-      myHiddenNodesNum = numberOfHiddenNodes;
-      String num = myHiddenNodesNum > 0 ? myHiddenNodesNum + " " : "";
-      getTemplatePresentation().setText(num + MORE_TEXT);
-    }
-
-    public int getHiddenNodesNum() {
-      return myHiddenNodesNum;
+      assert numberOfHiddenNodes > 0;
+      getTemplatePresentation().setText(numberOfHiddenNodes + " more...");
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      getTemplatePresentation().setEnabledAndVisible(false);
+      myIsExpanded = true;
       InputEvent event = e.getInputEvent();
       if (event != null && event.getSource() instanceof JComponent) {
         DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
@@ -312,9 +306,36 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
   }
 
-  public static void addMoreActionIfNeeded(@NotNull List<AnAction> actionList, int maxIndex) {
+  interface MoreHideableActionGroup {
+    boolean shouldBeShown();
+  }
+
+  private static class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup {
+    @NotNull private final MoreAction myMoreAction;
+
+    private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {
+      super(actionGroup);
+      myMoreAction = moreAction;
+    }
+
+    @Override
+    public boolean shouldBeShown() {
+      return myMoreAction.myIsExpanded;
+    }
+  }
+
+  public static void wrapWithMoreActionIfNeeded(@NotNull DefaultActionGroup parentGroup,
+                                                @NotNull List<? extends ActionGroup> actionList,
+                                                int maxIndex) {
     if (actionList.size() > maxIndex) {
-      actionList.add(maxIndex, new MoreAction(actionList.size() - maxIndex));
+      MoreAction moreAction = new MoreAction(actionList.size() - maxIndex);
+      for (int i = 0; i < actionList.size(); i++) {
+        parentGroup.add(i < maxIndex ? actionList.get(i) : new HideableActionGroup(actionList.get(i), moreAction));
+      }
+      parentGroup.add(moreAction);
+    }
+    else {
+      parentGroup.addAll(actionList);
     }
   }
 }
