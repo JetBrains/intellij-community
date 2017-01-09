@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build
 import org.codehaus.gant.GantBinding
 
 /**
- * @author nik
+ * @author victor
  */
 class MPSBuilder {
     private final GantBinding binding

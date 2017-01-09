@@ -5,7 +5,7 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import java.util.function.Consumer
 
 /**
- * @author nik
+ * @author victor
  */
 class MPSProperties extends ProductProperties {
     MPSProperties(String home) {
