@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * See <a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code</a>.
@@ -34,10 +33,11 @@ import java.util.regex.Pattern;
 public class AnsiEscapeDecoder {
   private static final char ESC_CHAR = '\u001B'; // Escape sequence start character
   private static final String CSI = ESC_CHAR + "["; // "Control Sequence Initiator"
-  private static final Pattern INNER_PATTERN = Pattern.compile(Pattern.quote("m" + CSI));
+  private static final String M_CSI = "m" + CSI;
   private static final char BACKSPACE = '\b';
 
   private Key myCurrentTextAttributes;
+  private final ColoredOutputTypeRegistry myColoredOutputTypeRegistry = ColoredOutputTypeRegistry.getInstance();
 
   /**
    * Parses ansi-color codes from text and sends text fragments with color attributes to textAcceptor
@@ -48,9 +48,9 @@ public class AnsiEscapeDecoder {
    *                     It can implement ColoredChunksAcceptor to receive list of pairs (text, attribute).
    */
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
-    List<Pair<String, Key>> chunks = null;
-    int pos = 0;
     text = normalizeAsciiControlCharacters(text);
+    int pos = 0;
+    List<Pair<String, Key>> chunks = null;
     while (true) {
       int escSeqBeginInd = text.indexOf(CSI, pos);
       if (escSeqBeginInd < 0) {
@@ -67,8 +67,8 @@ public class AnsiEscapeDecoder {
         String escSeq = text.substring(escSeqBeginInd, escSeqEndInd);
         // this is a simple fix for RUBY-8996:
         // we replace several consecutive escape sequences with one which contains all these sequences
-        String colorAttribute = INNER_PATTERN.matcher(escSeq).replaceAll(";");
-        myCurrentTextAttributes = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
+        String colorAttribute = StringUtil.replace(escSeq, M_CSI, ";");
+        myCurrentTextAttributes = myColoredOutputTypeRegistry.getOutputKey(colorAttribute);
       }
       pos = escSeqEndInd;
     }
@@ -189,17 +189,12 @@ public class AnsiEscapeDecoder {
     return myCurrentTextAttributes != null ? myCurrentTextAttributes : outputType;
   }
 
-  public void coloredTextAvailable(@NotNull List<Pair<String, Key>> textChunks, ColoredTextAcceptor textAcceptor) {
-    for (Pair<String, Key> textChunk : textChunks) {
-      textAcceptor.coloredTextAvailable(textChunk.getFirst(), textChunk.getSecond());
-    }
-  }
-
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {
-    void coloredChunksAvailable(List<Pair<String, Key>> chunks);
+    void coloredChunksAvailable(@NotNull List<Pair<String, Key>> chunks);
   }
 
+  @FunctionalInterface
   public interface ColoredTextAcceptor {
-    void coloredTextAvailable(String text, Key attributes);
+    void coloredTextAvailable(@NotNull String text, @NotNull Key attributes);
   }
 }
