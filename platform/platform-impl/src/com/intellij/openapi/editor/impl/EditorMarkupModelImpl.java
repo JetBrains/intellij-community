@@ -51,6 +51,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
@@ -478,8 +479,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
 
        Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
-       This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
-    return !SystemProperties.isTrueSmoothScrollingEnabled() &&
+       This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
+
+       When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
+    return !(SystemProperties.isTrueSmoothScrollingEnabled() && !IdeBackgroundUtil.isBackgroundImageSet(myEditor.getProject())) &&
            Registry.is("editor.transparent.scrollbar", false) &&
            EditorUtil.isRealFileEditor(myEditor);
   }

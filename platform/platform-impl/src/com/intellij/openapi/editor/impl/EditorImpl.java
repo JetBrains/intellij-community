@@ -504,11 +504,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myVerticalScrollBar.setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
+    myVerticalScrollBar.setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
+                                  !IdeBackgroundUtil.isBackgroundImageSet(project));
     myPanel = new JPanel();
 
     // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myScrollPane.getHorizontalScrollBar().setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
+    myScrollPane.getHorizontalScrollBar().setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
+                                                    !IdeBackgroundUtil.isBackgroundImageSet(project));
 
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
@@ -2774,8 +2776,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
 
         Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
-        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
-      setOpaque(SystemProperties.isTrueSmoothScrollingEnabled());
+        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
+
+        When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
+      setOpaque(SystemProperties.isTrueSmoothScrollingEnabled() &&
+                !IdeBackgroundUtil.isBackgroundImageSet(myProject));
     }
 
     /**
