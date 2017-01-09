@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,9 +150,13 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           resetCommentText();
           String oldComment = doc.getCharsSequence()
             .subSequence(range.getFirst().getTextRange().getStartOffset(), range.getLast().getTextRange().getEndOffset()).toString().trim();
-          if (!StringUtil.isEmptyOrSpaces(myOptions.getAllowReplaceKeyword()) &&
-              !oldComment.contains(myOptions.getAllowReplaceKeyword())) {
-            return;
+          final String replaceRegexp = myOptions.getAllowReplaceRegexp();
+          if (!StringUtil.isEmptyOrSpaces(replaceRegexp)) {
+            final Pattern pattern = Pattern.compile(replaceRegexp);
+            final Matcher matcher = pattern.matcher(oldComment);
+            if (!matcher.find()) {
+              return;
+            }
           }
           if (newComment.trim().equals(oldComment)) {
             if (!getLanguageOptions().isAddBlankAfter()) {

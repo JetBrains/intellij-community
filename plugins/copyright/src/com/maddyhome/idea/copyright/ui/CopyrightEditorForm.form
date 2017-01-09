@@ -43,7 +43,7 @@
         </constraints>
         <properties>
           <labelFor value="31075"/>
-          <text value="Allow replacing copyright if old copyright contains:"/>
+          <text value="Allow replacing copyright if old copyright matches:"/>
         </properties>
       </component>
       <component id="31075" class="javax.swing.JTextField" binding="myAllowReplaceTextField">
