@@ -967,9 +967,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }, ModalityState.defaultModalityState());
       return;
     }
+    
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
       CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null);
+      if (postRunnable != null) {
+        postRunnable.run();
+      }
     };
     TransactionGuard.submitTransaction(getProject(), runnable);
   }
