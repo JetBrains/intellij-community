@@ -33,7 +33,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +98,7 @@ public class InputVariables {
     for (PsiVariable var : inputVariables) {
       final String defaultName = getParameterName(var);
       String name = nameGenerator.generateUniqueName(defaultName);
-      PsiType type = var.getType();
+      PsiType type = GenericsUtil.getVariableTypeByExpressionType(var.getType());
       if (type instanceof PsiEllipsisType) {
         type = ((PsiEllipsisType)type).toArrayType();
       }
