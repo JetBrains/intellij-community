@@ -653,18 +653,22 @@ public class EditorWindow {
         }
       }
       else {
+        int indexToInsert;
+
         Integer initialIndex = editor.getFile().getUserData(INITIAL_INDEX_KEY);
-        int indexToInsert = 0;
-        if (Registry.is("ide.editor.tabs.open.at.the.end")) {
+        if (initialIndex != null) {
+          indexToInsert = initialIndex;
+        }
+        else if (Registry.is("ide.editor.tabs.open.at.the.end")) {
           indexToInsert = myTabbedPane.getTabCount();
-        } else {
-          if (initialIndex == null) {
-            int selectedIndex = myTabbedPane.getSelectedIndex();
-            if (selectedIndex >= 0) {
-              indexToInsert = selectedIndex + 1;
-            }
-          } else {
-            indexToInsert = initialIndex;
+        }
+        else {
+          int selectedIndex = myTabbedPane.getSelectedIndex();
+          if (selectedIndex >= 0) {
+            indexToInsert = selectedIndex + 1;
+          }
+          else {
+            indexToInsert = 0;
           }
         }
 
