@@ -18,20 +18,16 @@ package com.intellij.openapi.compiler.ex;
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.OrderedSet;
@@ -77,86 +73,81 @@ public class CompilerPathsEx extends CompilerPaths {
   }
 
   /**
-   * Presents .class file in form of {@link File} for files inside output directories or {@link VirtualFile} inside jars for library classes.
-   * Building virtual files for output directories is not feasible for the task and io.File won't work inside jars.
+   * A decorator for a .class file (library classes usually live inside .jars and are better accessed via VFS; compiled classes
+   * may be absent from VFS and are better accessed via I/O files).
    */
   public interface ClassFileDescriptor {
-    /**
-     * Loads content of the class file
-     */
+    /** Returns file contents. */
     byte[] loadFileBytes() throws IOException;
 
-    /**
-     * Returns system independent path to the class file
-     */
+    /** Returns file path in a system-independent format. */
     String getPath();
   }
 
   @Nullable
-  public static ClassFileDescriptor findClassFileInOutput(@NotNull PsiClass sourceClass) {
-    String classVMName = getJVMClassName(sourceClass);
-    if (classVMName == null) {
-      return null;
-    }
-    Module module = ModuleUtilCore.findModuleForPsiElement(sourceClass);
-    if (module == null){
-      final Project project = sourceClass.getProject();
-      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(sourceClass);
-      final String qualifiedName = topLevelClass != null ? topLevelClass.getQualifiedName() : null;
-      final PsiClass aClass = qualifiedName != null
-                              ? JavaPsiFacade.getInstance(project).findClass(qualifiedName, sourceClass.getResolveScope())
-                              : null;
-      if (aClass != null) {
-        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        if (virtualFile != null && fileIndex.isInLibraryClasses(virtualFile)) {
-          return new ClassFileDescriptor() {
-            @Override
-            public byte[] loadFileBytes() throws IOException {
-              return virtualFile.contentsToByteArray();
-            }
+  public static ClassFileDescriptor findClassFileInOutput(@NotNull PsiClass aClass) {
+    String jvmClassName = getJVMClassName(aClass);
+    if (jvmClassName != null) {
+      String relativePath = jvmClassName.replace('.', '/') + ".class";
+      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(aClass.getProject());
 
-            @Override
-            public String getPath() {
-              return virtualFile.getPath();
+      PsiElement originalClass = aClass.getOriginalElement();
+      if (originalClass instanceof PsiCompiledElement) {
+        // compiled class; looking for a .class file inside a library
+        VirtualFile file = originalClass.getContainingFile().getVirtualFile();
+        if (file != null) {
+          VirtualFile classRoot = index.getClassRootForFile(file);
+          if (classRoot != null) {
+            VirtualFile classFile = classRoot.findFileByRelativePath(relativePath);
+            if (classFile != null) {
+              return new ClassFileDescriptor() {
+                @Override
+                public byte[] loadFileBytes() throws IOException {
+                  return classFile.contentsToByteArray(false);
+                }
+
+                @Override
+                public String getPath() {
+                  return classFile.getPath();
+                }
+              };
             }
-          };
+          }
         }
       }
-      return null;
-    }
+      else {
+        // source code; looking for a .class file in compiler output
+        VirtualFile file = aClass.getContainingFile().getVirtualFile();
+        if (file != null) {
+          Module module = index.getModuleForFile(file);
+          if (module != null) {
+            CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+            if (extension != null) {
+              boolean inTests = index.isInTestSourceContent(file);
+              VirtualFile classRoot = inTests ? extension.getCompilerOutputPathForTests() : extension.getCompilerOutputPath();
+              if (classRoot != null) {
+                File classFile = new File(classRoot.getPath(), relativePath);
+                if (classFile.exists()) {
+                  return new ClassFileDescriptor() {
+                    @Override
+                    public byte[] loadFileBytes() throws IOException {
+                      return FileUtil.loadFileBytes(classFile);
+                    }
 
-    final PsiFile containingFile = sourceClass.getContainingFile();
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null) return null;
-    final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
-    if (moduleExtension == null) return null;
-    VirtualFile classRoot;
-    if (ProjectRootManager.getInstance(module.getProject()).getFileIndex().isInTestSourceContent(virtualFile)) {
-      classRoot = moduleExtension.getCompilerOutputPathForTests();
-    }
-    else {
-      classRoot = moduleExtension.getCompilerOutputPath();
-    }
-    if (classRoot == null) return null;
-
-    String classFilePath = classRoot.getPath() + "/" + classVMName.replace('.', '/') + ".class";
-
-    final File classFile = new File(classFilePath);
-    if (!classFile.exists()) {
-      return null;
-    }
-    return new ClassFileDescriptor() {
-      @Override
-      public byte[] loadFileBytes() throws IOException {
-        return FileUtil.loadFileBytes(classFile);
+                    @Override
+                    public String getPath() {
+                      return FileUtil.toSystemIndependentName(classFile.getPath());
+                    }
+                  };
+                }
+              }
+            }
+          }
+        }
       }
+    }
 
-      @Override
-      public String getPath() {
-        return FileUtil.toSystemIndependentName(classFile.getPath());
-      }
-    };
+    return null;
   }
 
   @Nullable
