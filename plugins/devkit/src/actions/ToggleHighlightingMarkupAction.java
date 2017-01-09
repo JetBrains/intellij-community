@@ -27,14 +27,14 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,14 +59,10 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     Object commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
     try {
       WriteAction.run(() -> {
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        int[] starts = selectionModel.getBlockSelectionStarts();
-        int[] ends = selectionModel.getBlockSelectionEnds();
-
-        int startOffset = starts.length == 0? 0 : starts[0];
-        int endOffset = ends.length == 0? editor.getDocument().getTextLength() : ends[ends.length - 1];
-
-        perform(project, editor.getDocument(), startOffset, endOffset);
+        TextRange range = editor.getSelectionModel().hasSelection()
+                          ? EditorUtil.getSelectionInAnyMode(editor)
+                          : TextRange.create(0, editor.getDocument().getTextLength());
+        perform(project, editor.getDocument(), range);
       });
     }
     finally {
@@ -74,39 +70,38 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     }
   }
 
-  private static void perform(Project project, final Document document, final int startOffset, final int endOffset) {
+  private static void perform(Project project, final Document document, TextRange selection) {
     final CharSequence sequence = document.getCharsSequence();
     final StringBuilder sb = new StringBuilder();
-    Pattern pattern = Pattern.compile("<(error|warning|EOLError|EOLWarning|info|weak_warning)((?:\\s|=|\\w+|\\\"(?:[^\"]|\\\\\\\")*?\\\")*?)>(.*?)</\\1>");
+    Pattern pattern = Pattern.compile("<(/?(?:error|warning|EOLError|EOLWarning|info|weak_warning))((?:\\s|=|\\w+|\"(?:[^\"]|\\\\\")*?\")*?)>(.*?)");
     Matcher matcher = pattern.matcher(sequence);
-    List<TextRange> ranges = new ArrayList<>();
-    if (matcher.find(startOffset)) {
+    if (matcher.find(selection.getStartOffset())) {
       boolean compactMode = false;
-      int pos;
+      int pos = 0;
       do {
-        if (matcher.start(0) >= endOffset) break;
-        if (matcher.start(2) < matcher.end(2)) {
-          if (!compactMode) {
-            ranges.clear();
-            compactMode = true;
+        if (matcher.start(0) >= selection.getEndOffset()) break;
+        String tag = matcher.group(1);
+        if (!tag.startsWith("/")) {
+          boolean hasDescription = matcher.start(2) < matcher.end(2);
+          if (hasDescription) {
+            if (!compactMode) {
+              sb.setLength(pos = 0); // restart in compact mode from the first description
+              compactMode = true;
+            }
+            sb.append(sequence, pos, matcher.start(2));
+            pos = matcher.end(2);
           }
-          ranges.add(new TextRange(matcher.start(2), matcher.end(2)));
+          else if (!compactMode) {
+            sb.append(sequence, pos, matcher.start());
+            pos = matcher.end();
+          }
         }
         else if (!compactMode) {
-          ranges.add(new TextRange(matcher.start(0), matcher.start(3)));
-          ranges.add(new TextRange(matcher.end(3), matcher.end(0)));
+          sb.append(sequence, pos, matcher.start());
+          pos = matcher.end();
         }
-        pos = Math.max(matcher.end(1), matcher.end(2));
       }
-      while (matcher.find(pos));
-      Collections.sort(ranges, Segment.BY_START_OFFSET_THEN_END_OFFSET);
-    }
-    if (!ranges.isEmpty()) {
-      int pos = 0;
-      for (TextRange range : ranges) {
-        sb.append(sequence, pos, range.getStartOffset());
-        pos = range.getEndOffset();
-      }
+      while (matcher.find(matcher.end()));
       sb.append(sequence, pos, sequence.length());
     }
     else {
@@ -116,8 +111,8 @@ public class ToggleHighlightingMarkupAction extends AnAction {
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
         info -> {
           if (info.getSeverity() != HighlightSeverity.WARNING && info.getSeverity() != HighlightSeverity.ERROR) return true;
-          if (info.getStartOffset() >= endOffset) return false;
-          if (info.getEndOffset() > startOffset) {
+          if (info.getStartOffset() >= selection.getEndOffset()) return false;
+          if (info.getEndOffset() > selection.getStartOffset()) {
             offset[0] = appendInfo(info, sb, sequence, offset[0], infos);
           }
           return true;
