@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.execution.process.AnsiEscapeDecoderTest;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
@@ -27,6 +28,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -39,11 +42,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,6 +77,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     console.flushDeferredText();
     console.clear();
     console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
+    console.waitAllRequests();
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(2, console.getContentSize());
   }
@@ -278,13 +284,65 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testCanPrintUserInputFromBackground() throws ExecutionException, InterruptedException {
-    Future<?> future = JobScheduler.getScheduler().submit(() -> {
-      myConsole.print("input", ConsoleViewContentType.USER_INPUT);
-    });
+    Future<?> future = JobScheduler.getScheduler().submit(() -> myConsole.print("input", ConsoleViewContentType.USER_INPUT));
 
     while (!future.isDone()) {
       UIUtil.dispatchAllInvocationEvents();
     }
     future.get();
+  }
+
+  public void testUserInputIsSentToProcessAfterNewLinePressed() {
+    byte[] buffer = new byte[10000];
+    BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(buffer);
+    BufferExposingByteArrayInputStream inputStream = new BufferExposingByteArrayInputStream(buffer);
+    AtomicBoolean finished = new AtomicBoolean();
+    Process testProcess = new Process() {
+      @Override
+      public OutputStream getOutputStream() {
+        return outputStream;
+      }
+
+      @Override
+      public InputStream getInputStream() {
+        return inputStream;
+      }
+
+      @Override
+      public InputStream getErrorStream() {
+        return inputStream;
+      }
+
+      @Override
+      public int waitFor() {
+        while (!finished.get());
+        return 0;
+      }
+
+      @Override
+      public int exitValue() {
+        return 0;
+      }
+
+      @Override
+      public void destroy() {
+        finished.set(true);
+      }
+    };
+    AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
+      withCycleConsole(100, console -> {
+        console.attachToProcess(handler);
+        outputStream.reset();
+        console.print("I", ConsoleViewContentType.USER_INPUT);
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+        console.print("K", ConsoleViewContentType.USER_INPUT);
+        console.waitAllRequests();
+        assertEquals(0, outputStream.size());
+        console.print("\n", ConsoleViewContentType.USER_INPUT);
+        console.waitAllRequests();
+        assertEquals(3, outputStream.size());
+        assertEquals("IK\n", outputStream.toString());
+    }));
   }
 }
