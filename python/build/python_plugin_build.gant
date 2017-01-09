@@ -127,6 +127,7 @@ target('default': "Build Python Plugin") {
               exclude(name: "**/plugin.xml")
               exclude(name: "**/python-community-configure-ide.xml")
               exclude(name: "**/python-plugin-dependencies.xml")
+              exclude(name: "**/icon-robots.txt")
             }
           }
           dir("META-INF") {
