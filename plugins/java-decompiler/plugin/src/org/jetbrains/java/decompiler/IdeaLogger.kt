@@ -29,7 +29,7 @@ class IdeaLogger : IFernflowerLogger() {
   override fun writeMessage(message: String, severity: IFernflowerLogger.Severity) {
     val text = extendMessage(message)
     when (severity) {
-      IFernflowerLogger.Severity.ERROR -> LOG.error(text)
+      IFernflowerLogger.Severity.ERROR -> LOG.warn(text)
       IFernflowerLogger.Severity.WARN -> LOG.warn(text)
       IFernflowerLogger.Severity.INFO -> LOG.info(text)
       else -> LOG.debug(text)
