@@ -67,7 +67,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    * override coloredChunksAvailable method.
    */
   @Override
-  public void coloredTextAvailable(String text, Key attributes) {
+  public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
     textAvailable(text, attributes);
     notifyColoredListeners(text, attributes);
   }
