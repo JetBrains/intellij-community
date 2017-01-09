@@ -76,6 +76,17 @@ def get_exception_breakpoint(exctype, exceptions):
                         exc = exception_breakpoint
     return exc
 
+
+def _set_additional_info_if_needed(thread):
+    try:
+        additional_info = thread.additional_info
+        if additional_info is None:
+            raise AttributeError()
+    except:
+        from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
+        thread.additional_info = PyDBAdditionalThreadInfo()
+
+
 #=======================================================================================================================
 # _excepthook
 #=======================================================================================================================
@@ -116,6 +127,7 @@ def _excepthook(exctype, value, tb):
     else:
         frame = frames[-1]
     exception = (exctype, value, tb)
+    _set_additional_info_if_needed(thread)
     try:
         thread.additional_info.pydev_message = exception_breakpoint.qname
     except:
