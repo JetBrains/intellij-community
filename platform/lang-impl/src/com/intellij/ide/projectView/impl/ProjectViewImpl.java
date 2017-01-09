@@ -671,7 +671,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           if (isGlobalOptions()) {
             setAbbreviatePackageNames(flag, myCurrentViewId);
           }
-          super.setSelected(event, flag);
+          setPaneOption(myOptionsMap, flag, myCurrentViewId, true);
         }
 
         @Override
@@ -859,7 +859,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
 
   private class PaneOptionAction extends ToggleAction implements DumbAware {
-    private final Map<String, Boolean> myOptionsMap;
+    final Map<String, Boolean> myOptionsMap;
     private final boolean myOptionDefaultValue;
 
     PaneOptionAction(@NotNull Map<String, Boolean> optionsMap,
