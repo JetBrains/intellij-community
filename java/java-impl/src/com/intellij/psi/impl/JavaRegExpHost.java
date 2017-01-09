@@ -24,9 +24,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.AsciiUtil;
-import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
+import org.intellij.lang.regexp.UnicodeCharacterNames;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,6 +326,16 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
     return UnicodeCharacterNames.getCodePoint(namedCharacter.getName()) >= 0;
+  }
+
+  @Override
+  public Integer getQuantifierValue(@NotNull RegExpNumber number) {
+    try {
+      return Integer.valueOf(number.getText());
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
   }
 
   @NotNull

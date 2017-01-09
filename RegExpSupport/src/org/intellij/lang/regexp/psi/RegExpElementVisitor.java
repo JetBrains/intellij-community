@@ -101,4 +101,8 @@ public class RegExpElementVisitor extends PsiElementVisitor {
     public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
         visitRegExpElement(posixBracketExpression);
     }
+
+    public void visitRegExpNumber(RegExpNumber number) {
+        visitRegExpElement(number);
+    }
 }

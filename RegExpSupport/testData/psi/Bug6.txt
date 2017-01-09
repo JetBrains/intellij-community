@@ -17,7 +17,8 @@ REGEXP_FILE
           PsiElement(CHARACTER)('-')
         RegExpQuantifierImpl: <{3,}>
           PsiElement(LBRACE)('{')
-          PsiElement(NUMBER)('3')
+          RegExpNumberImpl: <3>
+            PsiElement(NUMBER)('3')
           PsiElement(COMMA)(',')
           PsiElement(RBRACE)('}')
       RegExpGroupImpl: <(?>\s)>

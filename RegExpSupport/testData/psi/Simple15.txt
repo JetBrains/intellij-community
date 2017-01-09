@@ -6,5 +6,6 @@ REGEXP_FILE
           PsiElement(CHARACTER)('a')
         RegExpQuantifierImpl: <{1}>
           PsiElement(LBRACE)('{')
-          PsiElement(NUMBER)('1')
+          RegExpNumberImpl: <1>
+            PsiElement(NUMBER)('1')
           PsiElement(RBRACE)('}')

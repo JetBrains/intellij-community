@@ -34,7 +34,6 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -265,13 +264,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpIntersection(RegExpIntersection intersection) {
-    if (intersection.getOperands().length == 0) {
-      myHolder.createErrorAnnotation(intersection, "Illegal empty intersection");
-    }
-  }
-
-  @Override
   public void visitRegExpGroup(RegExpGroup group) {
     final RegExpPattern pattern = group.getPattern();
     if (pattern != null) {
@@ -352,12 +344,20 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitRegExpClosure(RegExpClosure closure) {
+    if (closure.getAtom() instanceof RegExpSetOptions) {
+      myHolder.createErrorAnnotation(closure.getQuantifier(), "Dangling metacharacter");
+    }
+  }
+
+  @Override
   public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
-    final RegExpQuantifier.Count count = quantifier.getCount();
-    if (!(count instanceof RegExpQuantifier.SimpleCount)) {
-      String min = count.getMin();
-      String max = count.getMax();
-      if (max.equals(min)) {
+    if (quantifier.isCounted()) {
+      final RegExpNumber minElement = quantifier.getMin();
+      final String min = minElement == null ? "" : minElement.getText();
+      final RegExpNumber maxElement = quantifier.getMax();
+      final String max = maxElement == null ? "" : maxElement.getText();
+      if (!max.isEmpty() && max.equals(min)) {
         if ("1".equals(max)) { // TODO: is this safe when reluctant or possessive modifier is present?
           final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Single repetition");
           registerFix(a, new SimplifyQuantifierAction(quantifier, null));
@@ -382,23 +382,27 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '+'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "+"));
       }
-      else if (!min.isEmpty() && !max.isEmpty()) {
-        try {
-          BigInteger minInt = new BigInteger(min);
-          BigInteger maxInt = new BigInteger(max);
-          if (maxInt.compareTo(minInt) < 0) {
-            myHolder.createErrorAnnotation(quantifier, "Illegal repetition range");
-          }
-        }
-        catch (NumberFormatException ex) {
-          myHolder.createErrorAnnotation(quantifier, "Illegal repetition value");
+      Number minValue = null;
+      if (minElement != null) {
+        minValue = myLanguageHosts.getQuantifierValue(minElement);
+        if (minValue == null) myHolder.createErrorAnnotation(minElement, "Repetition value too large");
+      }
+      Number maxValue = null;
+      if (maxElement != null) {
+        maxValue= myLanguageHosts.getQuantifierValue(maxElement);
+        if (maxValue == null) myHolder.createErrorAnnotation(maxElement, "Repetition value too large");
+      }
+      if (minValue != null && maxValue != null) {
+        if (minValue.longValue() > maxValue.longValue() || minValue.doubleValue() > maxValue.doubleValue()) {
+          final TextRange range = new TextRange(minElement.getTextOffset(), maxElement.getTextOffset() + maxElement.getTextLength());
+          myHolder.createErrorAnnotation(range, "Illegal repetition range (min > max)");
         }
       }
     }
-    if (quantifier.getType() == RegExpQuantifier.Type.POSSESSIVE) {
-      if (!myLanguageHosts.supportsPossessiveQuantifiers(quantifier)) {
-        myHolder.createErrorAnnotation(quantifier, "Nested quantifier in regexp");
-      }
+    if (quantifier.isPossessive() && !myLanguageHosts.supportsPossessiveQuantifiers(quantifier)) {
+      final ASTNode modifier = quantifier.getModifier();
+      assert modifier != null;
+      myHolder.createErrorAnnotation(modifier, "Nested quantifier in regexp");
     }
   }
 

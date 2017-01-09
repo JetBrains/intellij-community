@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.projectRoots;
+package org.intellij.lang.regexp.psi.impl;
 
-import com.intellij.openapi.options.UnnamedConfigurable;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.ASTNode;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpNumber;
 
-public interface AdditionalDataConfigurable extends UnnamedConfigurable {
-  void setSdk(Sdk sdk);
+/**
+ * @author Bas Leijdekkers
+ */
+public class RegExpNumberImpl extends RegExpElementImpl implements RegExpNumber {
 
-  /**
-   *  In case of non-null value the component returned by {@link #createComponent()} will be added as a tab to myTabbedPane in SdkEditor
-   */
-  @Nullable
-  default String getTabName() {
-    return null;
+  public RegExpNumberImpl(ASTNode node) {
+    super(node);
+  }
+
+  @Override
+  public void accept(RegExpElementVisitor visitor) {
+    visitor.visitRegExpNumber(this);
   }
 }

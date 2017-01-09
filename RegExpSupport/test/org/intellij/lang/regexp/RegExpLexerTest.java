@@ -368,6 +368,12 @@ public class RegExpLexerTest extends LexerTestCase {
                                                                  "CLASS_END (']')", lexer);
   }
 
+  public void testValidEscapes() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\%\\ä", "REDUNDANT_ESCAPE ('\\%')\n" +
+                     "REDUNDANT_ESCAPE ('\\ä')", lexer);
+  }
+
   public void testEscapesInsideCharClass() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("[\\k<a> (?<t>t)\\g'q'\\R]", "CLASS_BEGIN ('[')\n" +
@@ -426,6 +432,47 @@ public class RegExpLexerTest extends LexerTestCase {
                            "BAD_HEX_VALUE ('\\x')\n" +
                            "CHARACTER ('1')\n" +
                            "HEX_CHAR ('\\x01')", lexer2);
+  }
+
+  public void testQuantifier() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
+    doTest("a{,10}", "CHARACTER ('a')\n" +
+                     "LBRACE ('{')\n" +
+                     "COMMA (',')\n" +
+                     "NUMBER ('10')\n" +
+                     "RBRACE ('}')", lexer);
+
+    doTest("a{10,}", "CHARACTER ('a')\n" +
+                     "LBRACE ('{')\n" +
+                     "NUMBER ('10')\n" +
+                     "COMMA (',')\n" +
+                     "RBRACE ('}')", lexer);
+
+    doTest("a{", "CHARACTER ('a')\n" +
+                 "CHARACTER ('{')", lexer);
+
+    doTest("a{1", "CHARACTER ('a')\n" +
+                  "CHARACTER ('{')\n" +
+                  "CHARACTER ('1')", lexer);
+
+    doTest("a{1,", "CHARACTER ('a')\n" +
+                   "CHARACTER ('{')\n" +
+                   "CHARACTER ('1')\n" +
+                   "CHARACTER (',')", lexer);
+
+    doTest("a{,,}", "CHARACTER ('a')\n" +
+                    "CHARACTER ('{')\n" +
+                    "CHARACTER (',')\n" +
+                    "CHARACTER (',')\n" +
+                    "CHARACTER ('}')", lexer);
+
+    doTest("[{1,2}]", "CLASS_BEGIN ('[')\n" +
+                      "CHARACTER ('{')\n" +
+                      "CHARACTER ('1')\n" +
+                      "CHARACTER (',')\n" +
+                      "CHARACTER ('2')\n" +
+                      "CHARACTER ('}')\n" +
+                      "CLASS_END (']')", lexer);
   }
 
   @Override

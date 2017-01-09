@@ -19,11 +19,13 @@ import com.intellij.BundleBase;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -48,9 +50,9 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
-public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware {
-  protected final DirectoryProjectGenerator myProjectGenerator;
-  private final NullableConsumer<ProjectSettingsStepBase> myCallback;
+public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware, Disposable {
+  protected DirectoryProjectGenerator myProjectGenerator;
+  protected NullableConsumer<ProjectSettingsStepBase> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
   protected File myProjectDirectory;
   protected JButton myCreateButton;
@@ -80,6 +82,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     final JLabel label = createErrorLabel();
     final JButton button = createActionButton();
     button.addActionListener(createCloseActionListener());
+    Disposer.register(this, () -> UIUtil.dispose(button));
     final JPanel scrollPanel = createAndFillContentPanel();
     initGeneratorListeners();
     registerValidators();
@@ -165,12 +168,14 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   protected void registerValidators() {
-    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+    final DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         checkValid();
       }
-    });
+    };
+    myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
+    Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
     final ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -178,6 +183,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
       }
     };
     myLocationField.getTextField().addActionListener(listener);
+    Disposer.register(this, () -> myLocationField.getTextField().removeActionListener(listener));
   }
 
   public boolean checkValid() {
@@ -302,5 +308,11 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   @NotNull
   protected File findSequentNonExistingUntitled() {
     return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
+  }
+
+  @Override
+  public void dispose() {
+    myProjectGenerator = null;
+    myCallback = null;
   }
 }

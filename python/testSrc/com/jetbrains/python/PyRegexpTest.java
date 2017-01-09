@@ -39,6 +39,10 @@ import java.util.List;
  */
 public class PyRegexpTest extends PyTestCase {
 
+  public void testCountedQuantifier() {
+    doTestHighlighting();
+  }
+
   public void testNotEmptyGroup() { // PY-14381
     doTestHighlighting();
   }

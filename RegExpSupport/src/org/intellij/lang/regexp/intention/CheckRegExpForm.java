@@ -47,7 +47,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.RegExpMatchResult;
 import org.intellij.lang.regexp.RegExpMatcherProvider;
 import org.intellij.lang.regexp.RegExpModifierProvider;
@@ -69,7 +69,7 @@ public class CheckRegExpForm {
 
   private final PsiFile myRegexpFile;
 
-  private EditorTextField mySampleText; //TODO[kb]: make it multiline
+  private EditorTextField mySampleText;
 
   private EditorTextField myRegExp;
   private JPanel myRootPanel;
@@ -84,7 +84,8 @@ public class CheckRegExpForm {
     myProject = myRegexpFile.getProject();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(myRegexpFile);
 
-    myRegExp = new EditorTextField(document, myProject, RegExpLanguage.INSTANCE.getAssociatedFileType());
+    final RegExpFileType tmpFileType = new RegExpFileType(myRegexpFile.getLanguage()); // for correct syntax highlighting
+    myRegExp = new EditorTextField(document, myProject, tmpFileType);
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
     mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE) {
       @Override

@@ -162,6 +162,15 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null && host.isValidNamedCharacter(namedCharacter);
   }
 
+  @Nullable
+  public Number getQuantifierValue(@NotNull RegExpNumber valueElement) {
+    final RegExpLanguageHost host = findRegExpHost(valueElement);
+    if (host == null) {
+      return Double.valueOf(valueElement.getText());
+    }
+    return host.getQuantifierValue(valueElement);
+  }
+
   @NotNull
   public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);

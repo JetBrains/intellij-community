@@ -119,6 +119,8 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpPyCondRefImpl(node);
         } else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) {
             return new RegExpPosixBracketExpressionImpl(node);
+        } else if (type == RegExpElementTypes.NUMBER) {
+            return new RegExpNumberImpl(node);
         }
       
         return new ASTWrapperPsiElement(node);

@@ -60,7 +60,7 @@ public class InstalledPackagesPanel extends JPanel {
   private final Set<String> myCurrentlyInstalling = ContainerUtil.newHashSet();
   private final Set<InstalledPackage> myWaitingToUpgrade = ContainerUtil.newHashSet();
 
-  public InstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
+  public InstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(new BorderLayout());
     myProject = project;
     myNotificationArea = area;

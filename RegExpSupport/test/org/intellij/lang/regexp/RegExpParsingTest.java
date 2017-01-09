@@ -148,6 +148,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharclasses67() throws IOException { doCodeTest("\\-[\\*\\-\\[\\]\\\\\\+]"); }
   public void testCharclasses68() throws IOException { doCodeTest("[\\b]"); }
   public void testCharClasses69() throws IOException { doCodeTest("\\p{^L}"); }
+  public void testCharClasses70() throws IOException { doCodeTest("[&&&&a]"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }

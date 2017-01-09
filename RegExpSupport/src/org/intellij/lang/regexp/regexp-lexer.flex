@@ -248,7 +248,7 @@ HEX_CHAR=[0-9a-fA-F]
   {ESCAPE}  {BOUNDARY}          { return RegExpTT.BOUNDARY; }
 }
 
-{ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
 
 {ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
@@ -264,12 +264,14 @@ HEX_CHAR=[0-9a-fA-F]
   {ANY}                       { yypopstate(); yypushback(1); }
 }
 
-/* "{" \d+(,\d*)? "}" */
-/* "}" outside counted closure is treated as regular character */
-{LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-{LBRACE} / [:digit:]+ "," [:digit:]+ {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-{LBRACE} / "," [:digit:]+ {RBRACE}            { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-{LBRACE}  { if (yystate() != CLASS2 && allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+<YYINITIAL> {
+  /* "{" \d+(,\d*)? "}" */
+  /* "}" outside counted quantifier is treated as regular character */
+  {LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+  {LBRACE} / [:digit:]+ "," [:digit:]* {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+  {LBRACE} / "," [:digit:]+ {RBRACE}            { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+  {LBRACE}  { if (allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+}
 
 <QUANTIFIER> {
   [:digit:]+          { return RegExpTT.NUMBER; }
