@@ -311,8 +311,5 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   @Override
-  public void dispose() {
-    myProjectGenerator = null;
-    myCallback = null;
-  }
+  public void dispose() {}
 }
