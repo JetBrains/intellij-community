@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -126,11 +127,23 @@ public class GrKeywordAndDeclarationHighlighter extends TextEditorHighlightingPa
 
   @Nullable
   private static TextAttributesKey getDeclarationAttribute(PsiElement element) {
-    if (element.getParent() instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof GrAnnotation && element.getNode().getElementType() == GroovyTokenTypes.mAT) {
       return GroovySyntaxHighlighter.ANNOTATION;
     }
+    else if (parent instanceof GrAnnotationNameValuePair && ((GrAnnotationNameValuePair)parent).getNameIdentifierGroovy() == element) {
+      return GroovySyntaxHighlighter.ANNOTATION_ATTRIBUTE_NAME;
+    }
+    else if (parent instanceof GrCodeReferenceElement) {
+      GrCodeReferenceElement referenceElement = (GrCodeReferenceElement)parent;
+      PsiElement gParent = referenceElement.getParent();
+      if (gParent instanceof GrAnonymousClassDefinition) {
+        if (((GrAnonymousClassDefinition)gParent).getBaseClassReferenceGroovy() == referenceElement) {
+          return GroovySyntaxHighlighter.ANONYMOUS_CLASS_NAME;
+        }
+      }
+    }
 
-    PsiElement parent = element.getParent();
     if (!(parent instanceof GrNamedElement) || ((GrNamedElement)parent).getNameIdentifierGroovy() != element) {
       return null;
     }
