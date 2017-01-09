@@ -85,7 +85,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
-    return new PythonTRunnerConsoleProperties(myConfiguration, executor, false, getTestLocator());
+    return new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
   }
 
   @Nullable
