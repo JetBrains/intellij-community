@@ -890,6 +890,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override
+          public void windowOpened(WindowEvent e) {
+            // cleanup will be handled by AbstractPopup wrapper
+            if (PopupUtil.getPopupContainerFor(((RootPaneContainer)window).getRootPane()) != null) {
+              window.removeWindowListener(this);
+              ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+            }
+          }
+
+          @Override
           public void windowClosed(WindowEvent e) {
             window.removeWindowListener(this);
             ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
