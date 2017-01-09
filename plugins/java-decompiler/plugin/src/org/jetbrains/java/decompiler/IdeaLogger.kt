@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,27 +57,15 @@ class IdeaLogger : IFernflowerLogger() {
     myClass = null
   }
 
-  override fun startClass(className: String) {
-    LOG.debug("processing class " + className)
-  }
+  override fun startClass(className: String) = LOG.debug("processing class " + className)
 
-  override fun endClass() {
-    LOG.debug("... class processed")
-  }
+  override fun endClass() = LOG.debug("... class processed")
 
-  override fun startMethod(methodName: String) {
-    LOG.debug("processing method " + methodName)
-  }
+  override fun startMethod(methodName: String) = LOG.debug("processing method " + methodName)
 
-  override fun endMethod() {
-    LOG.debug("... method processed")
-  }
+  override fun endMethod() = LOG.debug("... method processed")
 
-  override fun startWriteClass(className: String) {
-    LOG.debug("writing class " + className)
-  }
+  override fun startWriteClass(className: String) = LOG.debug("writing class " + className)
 
-  override fun endWriteClass() {
-    LOG.debug("... class written")
-  }
+  override fun endWriteClass() = LOG.debug("... class written")
 }
