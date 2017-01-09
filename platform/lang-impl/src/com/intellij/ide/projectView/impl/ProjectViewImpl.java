@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -663,9 +663,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                                             ourAbbreviatePackagesDefaults) {
         @Override
         public boolean isSelected(AnActionEvent event) {
-          return super.isSelected(event) && isAbbreviatePackageNames(myCurrentViewId);
+          return isFlattenPackages(myCurrentViewId) && isAbbreviatePackageNames(myCurrentViewId);
         }
 
+        @Override
+        public void setSelected(AnActionEvent event, boolean flag) {
+          if (isGlobalOptions()) {
+            setAbbreviatePackageNames(flag, myCurrentViewId);
+          }
+          super.setSelected(event, flag);
+        }
 
         @Override
         public void update(AnActionEvent e) {
