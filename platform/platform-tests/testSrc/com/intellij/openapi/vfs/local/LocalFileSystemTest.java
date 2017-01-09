@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -730,19 +729,12 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNotNull(vFile);
     assertWritable(file, vFile, true);
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      vFile.setWritable(false);
-      return null;
-    });
-
+    WriteAction.run(() -> vFile.setWritable(false));
     assertWritable(file, vFile, false);
     vFile.refresh(false, false);
     assertWritable(file, vFile, false);
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      vFile.setWritable(true);
-      return null;
-    });
+    WriteAction.run(() -> vFile.setWritable(true));
     assertWritable(file, vFile, true);
     vFile.refresh(false, false);
     assertWritable(file, vFile, true);
