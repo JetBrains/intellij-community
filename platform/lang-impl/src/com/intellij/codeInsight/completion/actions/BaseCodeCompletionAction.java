@@ -62,7 +62,7 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing() && !ApplicationManager.getApplication().isOnAir()) return;
     e.getPresentation().setEnabled(true);
   }
 }
