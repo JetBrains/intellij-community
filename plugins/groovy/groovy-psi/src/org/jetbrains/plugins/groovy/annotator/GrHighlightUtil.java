@@ -142,17 +142,17 @@ public class GrHighlightUtil {
         }
       }
       else {
-        boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-        if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
-          return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
-        }
-        else {
-          if (refElement != null) {
-            return isStatic ? GroovySyntaxHighlighter.STATIC_METHOD_ACCESS : GroovySyntaxHighlighter.METHOD_CALL;
+        if (refElement != null) {
+          boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
+          if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
+            return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
           }
           else {
-            return GroovySyntaxHighlighter.METHOD_DECLARATION;
+            return isStatic ? GroovySyntaxHighlighter.STATIC_METHOD_ACCESS : GroovySyntaxHighlighter.METHOD_CALL;
           }
+        }
+        else {
+          return GroovySyntaxHighlighter.METHOD_DECLARATION;
         }
       }
     }
