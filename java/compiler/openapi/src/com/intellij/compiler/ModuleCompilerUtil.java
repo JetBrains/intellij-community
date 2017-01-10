@@ -149,10 +149,10 @@ public final class ModuleCompilerUtil {
       Collection<Chunk<ModifiableRootModel>> nodesAfter = buildChunks(models);
       for (Chunk<ModifiableRootModel> chunk : nodesAfter) {
         if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) {
-          Iterator<ModifiableRootModel> nodes = chunk.getNodes().iterator();
-          List<Module> modules = new ArrayList<>(Arrays.asList(nodes.next().getModule(), nodes.next().getModule()));
-          modules.sort(Comparator.comparing(Module::getName));
-          return Couple.of(modules.get(0), modules.get(1));
+          List<ModifiableRootModel> nodes = ContainerUtil.collect(chunk.getNodes().iterator());
+          // graph algorithms collections are inherently unstable, so sort to return always the same modules to avoid blinking tests
+          nodes.sort(Comparator.comparing(m -> m.getModule().getName()));
+          return Couple.of(nodes.get(0).getModule(), nodes.get(1).getModule());
         }
       }
     }
