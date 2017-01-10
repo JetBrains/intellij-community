@@ -1608,6 +1608,19 @@ public class PyTypeTest extends PyTestCase {
            "expr = sum([1, 2, 3])");
   }
 
+  // PY-21994
+  public void testOptionalAfterIfNot() {
+    doTest("List[int]",
+           "def bug(foo):\n" +
+           "    \"\"\"\n" +
+           "    Args:\n" +
+           "        foo (list[int]|None): an optional list of ints \n" +
+           "    \"\"\"\n" +
+           "    if not foo:\n" +
+           "        return None\n" +
+           "    expr = foo");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

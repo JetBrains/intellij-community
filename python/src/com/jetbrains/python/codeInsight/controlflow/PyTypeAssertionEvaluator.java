@@ -198,7 +198,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private static boolean isUnderIf(@NotNull PyReferenceExpression node) {
     final PsiElement parent = node.getParent();
     return parent instanceof PyIfPart ||
-           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition();
+           parent instanceof PyConditionalExpression && node == ((PyConditionalExpression)parent).getCondition() ||
+           parent instanceof PyPrefixExpression &&
+           ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
+           parent.getParent() instanceof PyIfPart;
   }
 
   private static boolean isRevertedIfReferenceStatement(@NotNull PyReferenceExpression node, boolean positive) {
