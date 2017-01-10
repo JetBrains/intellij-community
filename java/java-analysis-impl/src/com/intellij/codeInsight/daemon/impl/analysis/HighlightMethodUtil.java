@@ -1350,7 +1350,7 @@ public class HighlightMethodUtil {
                 return null;
               }
             }
-            if (otherSuperMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(curType, otherReturnType)) return null;
+            if (otherSuperMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(otherReturnType, curType)) return null;
           }
           return createIncompatibleReturnTypeMessage(otherSuperMethod, currentMethod, curType, otherReturnType,
                                                      JavaErrorMessages.message("unrelated.overriding.methods.return.types"), TextRange.EMPTY_RANGE);
