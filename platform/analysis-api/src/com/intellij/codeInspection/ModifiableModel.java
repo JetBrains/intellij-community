@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ModifiableModel extends InspectionProfile {
-  void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project);
+  void enableTool(@NotNull String toolShortName, NamedScope namedScope, Project project);
 
-  void disableTool(@NotNull String toolId, @NotNull PsiElement element);
+  void disableTool(@NotNull String toolShortName, @NotNull PsiElement element);
 
-  void disableTool(@NotNull String inspectionTool, @Nullable Project project);
+  void disableTool(@NotNull String toolShortName, @Nullable Project project);
 }
