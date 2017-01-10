@@ -17,6 +17,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.process.AnsiEscapeDecoderTest;
+import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
@@ -40,7 +41,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -208,32 +208,10 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
                                                   false,
                                                   false);
     console.getComponent();
-    ProcessHandler processHandler = new MyProcessHandler();
+    ProcessHandler processHandler = new NopProcessHandler();
     processHandler.startNotify();
     console.attachToProcess(processHandler);
     return console;
-  }
-
-  static class MyProcessHandler extends ProcessHandler {
-    @Override
-    protected void destroyProcessImpl() {
-      notifyProcessTerminated(0);
-    }
-
-    @Override
-    protected void detachProcessImpl() {
-    }
-
-    @Override
-    public boolean detachIsDefault() {
-      return false;
-    }
-
-    @Nullable
-    @Override
-    public OutputStream getProcessInput() {
-      return null;
-    }
   }
 
   public void testPerformance() throws Exception {
