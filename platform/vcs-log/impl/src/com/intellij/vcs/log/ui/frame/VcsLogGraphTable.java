@@ -25,6 +25,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -131,7 +132,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     PopupHandler.installPopupHandler(this, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     ScrollingUtil.installActions(this, false);
-    new IndexSpeedSearch(myLogData.getIndex(), this);
+    new IndexSpeedSearch(myLogData.getIndex(), this) {
+      @Override
+      protected boolean isSpeedSearchEnabled() {
+        return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
+      }
+    };
 
     initColumnSize();
     addComponentListener(new ComponentAdapter() {
@@ -140,6 +146,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         updateCommitColumnWidth();
       }
     });
+  }
+
+  protected boolean isSpeedSearchEnabled() {
+    return Registry.is("vcs.log.speedsearch");
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
