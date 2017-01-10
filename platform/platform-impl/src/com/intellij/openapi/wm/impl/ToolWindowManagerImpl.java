@@ -22,6 +22,7 @@ import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -2473,7 +2474,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
     info.setShowStripeButton(visibleOnPanel);
-    UsageTrigger.trigger("StripeButton[" + id + "]." + (visibleOnPanel ? "shown" : "hidden"));
+    triggerUsage("StripeButton[" + id + "]." + (visibleOnPanel ? "shown" : "hidden"));
 
     List<FinalizableCommand> commandList = new ArrayList<>();
     appendApplyWindowInfoCmd(info, commandList);
@@ -2500,5 +2501,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         });
       }
     }
+  }
+
+  private static void triggerUsage(@NotNull String feature) {
+    UsageTrigger.trigger(ConvertUsagesUtil.escapeDescriptorName(feature));
   }
 }
