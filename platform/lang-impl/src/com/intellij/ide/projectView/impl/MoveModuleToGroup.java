@@ -20,15 +20,15 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
 import com.intellij.ide.projectView.actions.MoveModulesToSubGroupAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MoveModuleToGroup extends ActionGroup {
   private final ModuleGroup myModuleGroup;
@@ -54,19 +54,15 @@ public class MoveModuleToGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
 
-    List<ModuleGroup> children = new ArrayList<>(myModuleGroup.childGroups(e.getDataContext()));
-    Collections.sort (children, (moduleGroup1, moduleGroup2) -> {
-      assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
-      return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
-    });
-
+    ModifiableModuleModel modifiableModuleModel = LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(e.getDataContext());
     List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesToGroupAction(myModuleGroup, IdeBundle.message("action.move.module.to.this.group")));
     result.add(new MoveModulesToSubGroupAction(myModuleGroup));
-     result.add(Separator.getInstance());
-    for (final ModuleGroup child : children) {
-      result.add(new MoveModuleToGroup(child));
-    }
+    result.add(Separator.getInstance());
+    result.addAll(myModuleGroup.childGroups(modifiableModuleModel, getEventProject(e)).stream().sorted((moduleGroup1, moduleGroup2) -> {
+          assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
+          return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
+    }).map(MoveModuleToGroup::new).collect(Collectors.toList()));
 
     return result.toArray(new AnAction[result.size()]);
   }
