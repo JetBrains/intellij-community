@@ -4268,7 +4268,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       editor.getCaretModel().moveToOffset(editor.mySavedCaretOffsetForDNDUndoHack);
     }
 
-    CommandProcessor.getInstance().executeCommand(editor.myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    CommandProcessor.getInstance().executeCommand(editor.myProject, () -> {
       try {
         editor.getSelectionModel().removeSelection();
 
@@ -4299,7 +4299,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       catch (Exception exception) {
         LOG.error(exception);
       }
-    }), EditorBundle.message("paste.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+    }, EditorBundle.message("paste.command.name"), DND_COMMAND_KEY, UndoConfirmationPolicy.DEFAULT, editor.getDocument());
 
     return true;
   }
