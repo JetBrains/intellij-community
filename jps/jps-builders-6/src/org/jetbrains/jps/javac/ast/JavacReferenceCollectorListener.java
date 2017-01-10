@@ -32,6 +32,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -39,11 +40,15 @@ import java.util.*;
 final class JavacReferenceCollectorListener implements TaskListener {
   private final boolean myDivideImportRefs;
   private final Consumer<JavacFileData> myDataConsumer;
+  private final JavacTask myJavacTask;
   private final JavacTreeRefScanner myAstScanner;
-  private final Elements myElementUtility;
-  private final Types myTypeUtility;
-  private final Trees myTreeUtility;
-  private final JavacNameTable myNameTableCache;
+  private final boolean myAtLeastJdk8;
+
+  private boolean myInitialized;
+  private Elements myElementUtility;
+  private Types myTypeUtility;
+  private Trees myTreeUtility;
+  private JavacNameTable myNameTableCache;
 
   private final Map<String, ReferenceCollector> myIncompletelyProcessedFiles = new HashMap<String, ReferenceCollector>(10);
 
@@ -60,9 +65,8 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
     final JavacReferenceCollectorListener taskListener = new JavacReferenceCollectorListener(divideImportRefs,
                                                                                              dataConsumer,
-                                                                                             javacTask.getElements(),
-                                                                                             javacTask.getTypes(),
-                                                                                             Trees.instance(javacTask));
+                                                                                             javacTask,
+                                                                                             addTaskMethod != null);
     if (addTaskMethod != null) {
       try {
         addTaskMethod.setAccessible(true);
@@ -82,16 +86,13 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   private JavacReferenceCollectorListener(boolean divideImportRefs,
                                           Consumer<JavacFileData> dataConsumer,
-                                          Elements elementUtility,
-                                          Types typeUtility,
-                                          Trees treeUtility) {
+                                          JavacTask javacTask,
+                                          boolean atLeastJdk8) {
     myDivideImportRefs = divideImportRefs;
     myDataConsumer = dataConsumer;
-    myElementUtility = elementUtility;
-    myTypeUtility = typeUtility;
-    myTreeUtility = treeUtility;
+    myJavacTask = javacTask;
+    myAtLeastJdk8 = atLeastJdk8;
     myAstScanner = JavacTreeRefScanner.createASTScanner();
-    myNameTableCache = new JavacNameTable(elementUtility);
   }
 
   @Override
@@ -101,6 +102,9 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   @Override
   public void finished(TaskEvent e) {
+    // Should be initialized only when JavaCompiler was created (jdk 6-7).
+    // Otherwise JavacReferenceCollectorListener will not be loaded to javac Context.
+    initializeUtilitiesIfNeeded();
     try {
       if (e.getKind() == TaskEvent.Kind.ANALYZE) {
         // javac creates an event on each processed top level declared class not file
@@ -156,6 +160,16 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
     catch (Exception ex) {
       throw new ClientCodeException(ex);
+    }
+  }
+
+  private void initializeUtilitiesIfNeeded() {
+    if (!myInitialized) {
+      myElementUtility = myJavacTask.getElements();
+      myTypeUtility = myJavacTask.getTypes();
+      myTreeUtility = Trees.instance(myJavacTask);
+      myNameTableCache = new JavacNameTable(myElementUtility);
+      myInitialized = true;
     }
   }
 
@@ -249,7 +263,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     return new ArrayList<JavacDef>();
   }
 
-  private static class JavacTreeHelper {
+  private class JavacTreeHelper {
     private final TreePath myUnitPath;
     private final Trees myTreeUtil;
 
@@ -259,11 +273,35 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
 
     private Element getReferencedElement(Tree tree) {
-      return myTreeUtil.getElement(new TreePath(myUnitPath, tree));
+      final TreePath path = new TreePath(myUnitPath, tree);
+      if (myAtLeastJdk8) {
+        return myTreeUtil.getElement(path);
+      } else {
+        return getElementIfJdkUnder8(tree);
+      }
     }
 
     public TypeMirror getType(Tree tree) {
       return myTreeUtil.getTypeMirror(new TreePath(myUnitPath, tree));
+    }
+
+  }
+
+  //TODO
+  private static Element getElementIfJdkUnder8(Tree tree) {
+    if (tree == null) return null;
+    Field symField;
+    try {
+      symField = tree.getClass().getField("sym");
+    }
+    catch (NoSuchFieldException e) {
+      throw new RuntimeException(e);
+    }
+    try {
+      return (Element) symField.get(tree);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
     }
   }
 }
