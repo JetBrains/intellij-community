@@ -122,8 +122,8 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public void apply() throws ConfigurationException {
     myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText()));
-    myCopyrightProfile.setKeyword(validateRegexpAndGet(myKeywordTf.getText().trim(), "Detect keyword pattern syntax is incorrect: "));
-    myCopyrightProfile.setAllowReplaceRegexp(validateRegexpAndGet(myAllowReplaceTextField.getText().trim(), "Replace keyword pattern syntax is incorrect: "));
+    myCopyrightProfile.setKeyword(validateRegexpAndGet(myKeywordTf.getText().trim(), "Detect copyright regexp is incorrect: "));
+    myCopyrightProfile.setAllowReplaceRegexp(validateRegexpAndGet(myAllowReplaceTextField.getText().trim(), "Replace copyright regexp is incorrect: "));
     CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
     myModified = false;
