@@ -162,6 +162,7 @@ public class JdkBundleTest {
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
+    assertNotNull(bundle.getUpdateNumber());
 
     final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
     assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));

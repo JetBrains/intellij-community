@@ -16,13 +16,16 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +85,31 @@ public class AddReturnFix implements IntentionAction {
         return variable.getName();
       }
     }
+    // then try to find a conversion of local variable to the required type
+    for (PsiVariable variable : variables) {
+      String conversion = getConversionToType(variable, type);
+      if (conversion != null) {
+        return conversion;
+      }
+    }
     return PsiTypesUtil.getDefaultValueOfType(type);
+  }
+
+  private String getConversionToType(@NotNull PsiVariable variable, @Nullable PsiType type) {
+    PsiType varType = variable.getType();
+    if (type instanceof PsiArrayType && InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
+      if (collectionItemType != null) {
+        PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
+        if (arrayComponentType.isAssignableFrom(collectionItemType)) {
+          if (arrayComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            return variable.getName() + ".toArray()";
+          }
+          return variable.getName() + ".toArray(new " + arrayComponentType.getCanonicalText() + "[0])";
+        }
+      }
+    }
+    return null;
   }
 
   private static PsiVariable[] getDeclaredVariables(PsiMethod method) {

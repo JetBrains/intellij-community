@@ -138,7 +138,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                          final RefManager refManager,
                          final ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
-    if (!context.isToCheckFile(file, this)) return;
+    if (!context.isToCheckFile(file, this) || SuppressionUtil.inspectionResultSuppressed(file, this)) return;
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();

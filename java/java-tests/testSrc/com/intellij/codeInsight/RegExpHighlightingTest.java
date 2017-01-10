@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("Annotator")
 public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testSingleRepetition() {
