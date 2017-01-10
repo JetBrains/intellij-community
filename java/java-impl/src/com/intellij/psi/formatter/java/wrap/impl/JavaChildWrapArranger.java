@@ -173,8 +173,12 @@ public class JavaChildWrapArranger {
 
     else if (nodeType == JavaElementType.MODIFIER_LIST) {
       if (childType == JavaElementType.ANNOTATION) {
+        ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+        if (prev instanceof PsiKeyword) {
+          return null;
+        }
+        
         if (isTypeAnnotationOrFalseIfDumb(child)) {
-          ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
           if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotationOrFalseIfDumb(prev)) {
             return Wrap.createWrap(WrapType.NONE, false);
           }

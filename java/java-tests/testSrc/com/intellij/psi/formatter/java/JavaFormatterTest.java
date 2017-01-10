@@ -3293,5 +3293,41 @@ public void testSCR260() throws Exception {
       "};"
     );
   }
+
+  public void testKeepTypeAnnotationNearType() {
+    doTextTest(
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "\n" +
+      "@Target(value=ElementType.TYPE_USE)\n" +
+      "@Retention(value= RetentionPolicy.RUNTIME)\n" +
+      "public @interface X {}\n" +
+      "class Q {\n" +
+      "  @Override\n" +
+      "  public @X List<Object> objects() {\n" +
+      "    return null;\n" +
+      "  }\n" +
+      "}",
+      
+      "import java.lang.annotation.ElementType;\n" +
+      "import java.lang.annotation.Retention;\n" +
+      "import java.lang.annotation.RetentionPolicy;\n" +
+      "import java.lang.annotation.Target;\n" +
+      "\n" +
+      "@Target(value = ElementType.TYPE_USE)\n" +
+      "@Retention(value = RetentionPolicy.RUNTIME)\n" +
+      "public @interface X {\n" +
+      "}\n" +
+      "\n" +
+      "class Q {\n" +
+      "    @Override\n" +
+      "    public @X List<Object> objects() {\n" +
+      "        return null;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
   
 }
