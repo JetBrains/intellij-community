@@ -191,7 +191,7 @@ public class NewExprent extends Exprent {
             buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass));
           }
           else {
-            if (descriptor.superinterfaces.size() > 1) {
+            if (descriptor.superinterfaces.size() > 1 && !lambda) {
               DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
                                                          IFernflowerLogger.Severity.WARN);
             }
