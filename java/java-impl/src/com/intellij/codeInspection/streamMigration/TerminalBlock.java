@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -447,7 +447,7 @@ class TerminalBlock {
 
   String generate(boolean noStreamForEmpty) {
     if(noStreamForEmpty && myOperations.length == 1 && myOperations[0] instanceof CollectionStream) {
-      return myOperations[0].getExpression().getText();
+      return ParenthesesUtils.getText(myOperations[0].getExpression(), ParenthesesUtils.POSTFIX_PRECEDENCE);
     }
     return StreamEx.of(myOperations).map(Operation::createReplacement).joining();
   }
