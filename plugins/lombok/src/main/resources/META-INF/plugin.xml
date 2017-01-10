@@ -111,6 +111,8 @@
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection" order="last"/>
+
+    <inlineActionHandler implementation="de.plushnikov.intellij.plugin.action.inline.LombokInlineMethodHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
@@ -260,6 +262,7 @@
             <li>Fixed #313: Missed substitution when class and builder have generics</li>
             <li>Fixed #322: Added support of lombok.experimental.var</li>
             <li>Fixed #332: @Value(staticConstructor = "of") breaks intellij's type inference</li>
+            <li>Fixed #334: Added support for inlining getters/setters</li>
 				</ol>
 			</li>
 		<li>0.13
