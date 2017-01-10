@@ -58,7 +58,13 @@ public class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     public AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      myProvider = TypeAnnotationProvider.Static.create(provider.getAnnotations());
+      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), new Function<PsiAnnotation, PsiAnnotation>() {
+        @Override
+        public PsiAnnotation fun(PsiAnnotation annotation) {
+          return (PsiAnnotation)annotation.copy();
+        }
+      }, PsiAnnotation.EMPTY_ARRAY);
+      myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }
 
