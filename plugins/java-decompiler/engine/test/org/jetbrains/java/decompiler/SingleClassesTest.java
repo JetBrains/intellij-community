@@ -77,6 +77,7 @@ public class SingleClassesTest {
   @Test public void testInnerLocalPkg() { doTest("pkg/TestInnerLocalPkg"); }
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
   @Test public void testAnonymousSignature() { doTest("pkg/TestAnonymousSignature"); }
+  @Test public void testLocalsSignature() { doTest("pkg/TestLocalsSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }

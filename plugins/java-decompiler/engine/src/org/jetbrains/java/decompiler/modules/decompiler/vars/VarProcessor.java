@@ -83,6 +83,14 @@ public class VarProcessor {
     }
   }
 
+  public Integer getVarOriginalIndex(VarVersionPair pair) {
+    if (varVersions == null) {
+      return null;
+    }
+
+    return varVersions.getMapOriginalVarIndices().get(pair.var);
+  }
+
   public void refreshVarNames(VarNamesCollector vc) {
     Map<VarVersionPair, String> tempVarNames = new HashMap<>(mapVarNames);
     for (Entry<VarVersionPair, String> ent : tempVarNames.entrySet()) {
