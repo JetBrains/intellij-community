@@ -121,7 +121,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     if (javaProcess instanceof DebugProcessImpl) {
       final DebugProcessImpl processImpl = (DebugProcessImpl)javaProcess;
       final ClassesFilteredView classesFilteredView = new ClassesFilteredView(debugProcess.getSession());
-      myDispatcher.addListener(visible -> classesFilteredView.setActive(visible), project);
+      myDispatcher.addListener(visible -> classesFilteredView.setActive(visible), classesFilteredView);
 
       final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
       final ToolWindow toolWindow = getToolWindow(processImpl.getProject());
