@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,6 +176,11 @@ public class JdkBundle {
   @Nullable
   public Version getVersion() {
     return myVersionUpdate != null ? myVersionUpdate.first : null;
+  }
+
+  @Nullable
+  public Integer getUpdateNumber() {
+    return myVersionUpdate != null ? myVersionUpdate.second : null;
   }
 
   @NotNull
