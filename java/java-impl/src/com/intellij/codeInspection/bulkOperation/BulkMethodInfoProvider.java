@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,12 @@ import java.util.stream.Stream;
  * @author Tagir Valeev
  */
 public interface BulkMethodInfoProvider {
-  public static final ExtensionPointName<BulkMethodInfoProvider> KEY =
-    ExtensionPointName.create("com.intellij.java.inspection.bulkMethodInfo");
+  ExtensionPointName<BulkMethodInfoProvider> KEY = ExtensionPointName.create("com.intellij.java.inspection.bulkMethodInfo");
 
   /**
    * @return stream of BulkMethodInfo structures which represent the consumers
    * Simple method should accept an element parameter and bulk method should accept Iterable or Collection of given elements
    */
   @NotNull
-  default Stream<BulkMethodInfo> consumers() {
-    return Stream.empty();
-  }
+  Stream<BulkMethodInfo> consumers();
 }
