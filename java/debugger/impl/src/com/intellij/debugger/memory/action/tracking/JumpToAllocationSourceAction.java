@@ -17,7 +17,7 @@ package com.intellij.debugger.memory.action.tracking;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.memory.action.DebuggerTreeAction;
-import com.intellij.debugger.memory.component.CreationPositionTracker;
+import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.StackFramePopup;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -62,7 +62,13 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
     }
 
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    final CreationPositionTracker tracker = CreationPositionTracker.getInstance(project);
-    return session != null && tracker != null ? tracker.getStack(session, ref) : null;
+    if (session != null) {
+      final MemoryViewDebugProcessData data =
+        DebuggerManager.getInstance(project).getDebugProcess(session.getDebugProcess().getProcessHandler()).getUserData(
+          MemoryViewDebugProcessData.KEY);
+      return data != null ? data.getTrackedStacks().getStack(ref) : null;
+    }
+
+    return null;
   }
 }

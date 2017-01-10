@@ -16,13 +16,14 @@
 package com.intellij.debugger.memory.tracking;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.memory.component.CreationPositionTracker;
 import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
@@ -55,8 +56,7 @@ import java.util.List;
 public class ConstructorInstancesTracker implements TrackerForNewInstances, Disposable, BackgroundTracker {
   private static final int TRACKED_INSTANCES_LIMIT = 2000;
   private final ReferenceType myReference;
-  private final XDebugSession myDebugSession;
-  private final CreationPositionTracker myPositionTracker;
+  private final Project myProject;
   private final DebugProcessImpl myDebugProcess;
   private final MyConstructorBreakpoints myBreakpoint;
 
@@ -72,13 +72,11 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   public ConstructorInstancesTracker(@NotNull ReferenceType ref,
                                      @NotNull XDebugSession debugSession) {
     myReference = ref;
-    myDebugSession = debugSession;
-    myPositionTracker = CreationPositionTracker.getInstance(debugSession.getProject());
-    Project project = debugSession.getProject();
-    myIsBackgroundTrackingEnabled = InstancesTracker.getInstance(myDebugSession.getProject())
+    myProject = debugSession.getProject();
+    myIsBackgroundTrackingEnabled = InstancesTracker.getInstance(myProject)
       .isBackgroundTrackingEnabled();
 
-    InstancesTracker.getInstance(myDebugSession.getProject()).addTrackerListener(new InstancesTrackerListener() {
+    InstancesTracker.getInstance(myProject).addTrackerListener(new InstancesTrackerListener() {
       @Override
       public void backgroundTrackingValueChanged(boolean newState) {
         if (myIsBackgroundTrackingEnabled != newState) {
@@ -98,16 +96,16 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       }
     }, this);
 
-    myDebugProcess = (DebugProcessImpl)DebuggerManager.getInstance(project)
+    myDebugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
       .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
     JavaLineBreakpointType breakPointType = new JavaLineBreakpointType();
 
     XBreakpoint bpn = new XLineBreakpointImpl<>(breakPointType,
-                                                ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getBreakpointManager(),
+                                                ((XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject)).getBreakpointManager(),
                                                 new JavaLineBreakpointProperties(),
                                                 new LineBreakpointState<>());
 
-    myBreakpoint = new MyConstructorBreakpoints(project, bpn);
+    myBreakpoint = new MyConstructorBreakpoints(myProject, bpn);
     myBreakpoint.createRequestForPreparedClass(myDebugProcess, myReference);
   }
 
@@ -120,7 +118,15 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     if (!myIsBackgroundMode || myIsBackgroundTrackingEnabled) {
       myBreakpoint.enable();
     }
-    myPositionTracker.releaseBySession(myDebugSession);
+
+    final XDebugSession session = XDebuggerManager.getInstance(myProject).getCurrentSession();
+    if (session != null) {
+      final DebugProcess process = DebuggerManager.getInstance(myProject).getDebugProcess(session.getDebugProcess().getProcessHandler());
+      final MemoryViewDebugProcessData data = process.getUserData(MemoryViewDebugProcessData.KEY);
+      if (data != null) {
+        data.getTrackedStacks().release();
+      }
+    }
   }
 
   public void commitTracked() {
@@ -227,11 +233,13 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       try {
         SuspendContextImpl suspendContext = action.getSuspendContext();
         if (suspendContext != null) {
+          final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
           ObjectReference thisRef = getThisObject(suspendContext, event);
-          if (myReference.equals(thisRef.referenceType()) && myPositionTracker != null) {
+          if (myReference.equals(thisRef.referenceType()) && data != null) {
             thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
-            myPositionTracker.addStack(myDebugSession, thisRef, StackFrameItem.createFrames(suspendContext.getThread()));
+            final List<StackFrameItem> frame = StackFrameItem.createFrames(suspendContext.getThread());
+            data.getTrackedStacks().addStack(thisRef, frame);
           }
         }
       }

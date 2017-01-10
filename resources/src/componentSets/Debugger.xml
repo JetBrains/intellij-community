@@ -29,10 +29,6 @@
     <component>
       <implementation-class>com.intellij.debugger.memory.component.InstancesTracker</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.debugger.memory.component.CreationPositionTracker</implementation-class>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">

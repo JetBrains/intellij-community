@@ -19,6 +19,7 @@ import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.openapi.util.Key;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,20 +33,63 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MemoryViewDebugProcessData {
   public static final Key<MemoryViewDebugProcessData> KEY = Key.create("MemoryView.DebugProcessData");
 
+  private final TrackedStacksContainer myStacksContainer = new MyStackContainer();
   private final ClassesFilteredView myClassesFilteredView;
-  private final Map<ObjectReference, List<StackFrameItem>> myTrackedFrames = new ConcurrentHashMap<>();
 
   public MemoryViewDebugProcessData(@NotNull ClassesFilteredView classesView) {
     myClassesFilteredView = classesView;
   }
 
-  @Nullable
-  List<StackFrameItem> getStackFrames(@NotNull ObjectReference reference) {
-    return myTrackedFrames.get(reference);
-  }
-
   @NotNull
   public ClassesFilteredView getClassesFilteredView() {
     return myClassesFilteredView;
+  }
+
+  @NotNull
+  public TrackedStacksContainer getTrackedStacks() {
+    return myStacksContainer;
+  }
+
+  private static class MyStackContainer implements TrackedStacksContainer {
+    private final Map<ReferenceType, Map<ObjectReference, List<StackFrameItem>>> myType2Reference2Stack = new ConcurrentHashMap<>();
+
+    private final Map<ReferenceType, Map<ObjectReference, List<StackFrameItem>>> myPinnedType2Reference2Stack = new ConcurrentHashMap<>();
+
+    @Nullable
+    @Override
+    public List<StackFrameItem> getStack(@NotNull ObjectReference reference) {
+      final List<StackFrameItem> stack = extract(myType2Reference2Stack, reference);
+      return stack != null ? stack : extract(myPinnedType2Reference2Stack, reference);
+    }
+
+    @Override
+    public void addStack(@NotNull ObjectReference ref, @NotNull List<StackFrameItem> frames) {
+      myType2Reference2Stack.computeIfAbsent(ref.referenceType(), referenceType -> new ConcurrentHashMap<>()).put(ref, frames);
+    }
+
+    @Override
+    public void pinStacks(@NotNull ReferenceType referenceType) {
+      final Map<ObjectReference, List<StackFrameItem>> ref2Stack = myType2Reference2Stack.get(referenceType);
+      if (ref2Stack != null) {
+        myPinnedType2Reference2Stack.put(referenceType, ref2Stack);
+      }
+    }
+
+    @Override
+    public void unpinStacks(@NotNull ReferenceType referenceType) {
+      myPinnedType2Reference2Stack.remove(referenceType);
+    }
+
+    @Override
+    public void release() {
+      myType2Reference2Stack.clear();
+    }
+
+    @Nullable
+    private static List<StackFrameItem> extract(@NotNull Map<ReferenceType, Map<ObjectReference, List<StackFrameItem>>> map,
+                                                @NotNull ObjectReference ref) {
+      final Map<ObjectReference, List<StackFrameItem>> ref2Stack = map.get(ref.referenceType());
+      return ref2Stack != null ? ref2Stack.get(ref) : null;
+    }
   }
 }
