@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ public class SingleClassesTest {
   @Test public void testInnerLocal() { doTest("pkg/TestInnerLocal"); }
   @Test public void testInnerLocalPkg() { doTest("pkg/TestInnerLocalPkg"); }
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
+  @Test public void testAnonymousSignature() { doTest("pkg/TestAnonymousSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
