@@ -257,6 +257,7 @@
 		<li>0.14
 				<ol>
             <li>Fixed #302: Changed linked text in "Lombok Requires Annotation Processing" notification</li>
+            <li>Fixed #304: Fixed @FieldDefaults`s access level 'PUBLIC' doesn't work</li>
             <li>Fixed #306: Problem with @Builder and generics</li>
             <li>Fixed #308: Write access is allowed from write-safe contexts only</li>
             <li>Fixed #313: Missed substitution when class and builder have generics</li>

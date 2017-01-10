@@ -75,6 +75,7 @@ public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
     assertTrue("@FieldDefaults(level = AccessLevel.PUBLIC) should make non-@PackagePrivate fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
     assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
     assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
   }
@@ -84,6 +85,7 @@ public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
     assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
     assertTrue("@FieldDefaults(level = AccessLevel.PROTECTED) should non-@PackagePrivate make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
     assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
   }
@@ -94,6 +96,7 @@ public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
 
     assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
     assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
+    assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
     assertTrue("@FieldDefaults(level = AccessLevel.PRIVATE) should make non-@PackagePrivate fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
   }
 

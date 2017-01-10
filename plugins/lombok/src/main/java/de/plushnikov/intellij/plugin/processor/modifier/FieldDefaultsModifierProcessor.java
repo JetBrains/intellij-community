@@ -71,18 +71,17 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
     switch (defaultAccessLevel) {
       case PRIVATE:
         modifiers.add(PsiModifier.PRIVATE);
+        modifiers.remove(PsiModifier.PACKAGE_LOCAL);
         break;
-
       case PROTECTED:
         modifiers.add(PsiModifier.PROTECTED);
+        modifiers.remove(PsiModifier.PACKAGE_LOCAL);
         break;
-
       case PUBLIC:
         modifiers.add(PsiModifier.PUBLIC);
+        modifiers.remove(PsiModifier.PACKAGE_LOCAL);
         break;
-
       default:
-        // no-op
         break;
     }
   }
