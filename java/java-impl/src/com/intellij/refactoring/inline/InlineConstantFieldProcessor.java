@@ -211,6 +211,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     if (expr instanceof PsiReferenceExpression) {
       PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
       if (qExpression != null) {
+        initializer1 = (PsiExpression)initializer1.copy();
         PsiReferenceExpression referenceExpression = null;
         if (initializer1 instanceof PsiReferenceExpression) {
           referenceExpression = (PsiReferenceExpression)initializer1;
