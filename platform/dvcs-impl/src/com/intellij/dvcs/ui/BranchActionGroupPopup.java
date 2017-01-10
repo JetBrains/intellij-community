@@ -140,9 +140,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     ScrollingUtil.ensureSelectionExists(getList());
   }
 
-  @Override
-  protected boolean shouldShow(@NotNull AnAction action) {
-    if (getSpeedSearch().isHoldingFilter()) return true;
+  protected boolean shouldBeShowing(@NotNull AnAction action) {
+    if (!super.shouldBeShowing(action)) return false;
+    if (getSpeedSearch().isHoldingFilter()) return !(action instanceof MoreAction);
     if (action instanceof MoreAction) return !((MoreAction)action).myIsExpanded;
     if (action instanceof MoreHideableActionGroup) return ((MoreHideableActionGroup)action).shouldBeShown();
     return true;
