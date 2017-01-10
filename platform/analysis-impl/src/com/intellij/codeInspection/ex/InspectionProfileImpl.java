@@ -447,25 +447,25 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  public void disableTool(@NotNull String toolId, @NotNull PsiElement element) {
-    getTools(toolId, element.getProject()).disableTool(element);
+  public void disableTool(@NotNull String toolShortName, @NotNull PsiElement element) {
+    getTools(toolShortName, element.getProject()).disableTool(element);
   }
 
-  public void disableToolByDefault(@NotNull Collection<String> toolIds, @Nullable Project project) {
-    for (String toolId : toolIds) {
+  public void disableToolByDefault(@NotNull Collection<String> toolShortNames, @Nullable Project project) {
+    for (String toolId : toolShortNames) {
       getTools(toolId, project).setDefaultEnabled(false);
     }
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
   @NotNull
-  public ScopeToolState getToolDefaultState(@NotNull String toolId, @Nullable Project project) {
-    return getTools(toolId, project).getDefaultState();
+  public ScopeToolState getToolDefaultState(@NotNull String toolShortName, @Nullable Project project) {
+    return getTools(toolShortName, project).getDefaultState();
   }
 
-  public void enableToolsByDefault(@NotNull List<String> toolIds, Project project) {
-    for (final String toolId : toolIds) {
-      getTools(toolId, project).setDefaultEnabled(true);
+  public void enableToolsByDefault(@NotNull List<String> toolShortNames, Project project) {
+    for (final String shortName : toolShortNames) {
+      getTools(shortName, project).setDefaultEnabled(true);
     }
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
@@ -657,8 +657,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  public void enableTool(@NotNull String toolId, Project project) {
-    final ToolsImpl tools = getTools(toolId, project);
+  public void enableTool(@NotNull String toolShortName, Project project) {
+    final ToolsImpl tools = getTools(toolShortName, project);
     tools.setEnabled(true);
     tools.getDefaultState().setEnabled(true);
     schemeState = SchemeState.POSSIBLY_CHANGED;
@@ -817,14 +817,14 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return getTools(key.toString(), project).isEnabled(namedScope,project);
   }
 
-  public void removeScope(@NotNull String toolId, @NotNull String scopeName, Project project) {
-    getTools(toolId, project).removeScope(scopeName);
+  public void removeScope(@NotNull String toolShortName, @NotNull String scopeName, Project project) {
+    getTools(toolShortName, project).removeScope(scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void removeScopes(@NotNull List<String> toolIds, @NotNull String scopeName, Project project) {
-    for (final String toolId : toolIds) {
-      removeScope(toolId, scopeName, project);
+  public void removeScopes(@NotNull List<String> shortNames, @NotNull String scopeName, Project project) {
+    for (final String shortName : shortNames) {
+      removeScope(shortName, scopeName, project);
     }
   }
 
@@ -884,9 +884,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  public ToolsImpl getTools(@NotNull String toolId, @Nullable Project project) {
+  public ToolsImpl getTools(@NotNull String toolShortName, @Nullable Project project) {
     initInspectionTools(project);
-    return myTools.get(toolId);
+    return myTools.get(toolShortName);
   }
 
   public void enableAllTools(Project project) {
