@@ -34,10 +34,14 @@ public class StudySubtaskUtils {
   private StudySubtaskUtils() {
   }
 
+  public static void switchStep(@NotNull Project project, @NotNull Task task, int toSubtaskIndex) {
+    switchStep(project, task, toSubtaskIndex, true);
+  }
+
   /***
    * @param toSubtaskIndex from 0 to subtaskNum - 1
    */
-  public static void switchStep(@NotNull Project project, @NotNull Task task, int toSubtaskIndex) {
+  public static void switchStep(@NotNull Project project, @NotNull Task task, int toSubtaskIndex, boolean navigateToTask) {
     if (toSubtaskIndex == task.getActiveSubtaskIndex()) {
       return;
     }
@@ -79,7 +83,7 @@ public class StudySubtaskUtils {
     }
     transformTestFile(project, toSubtaskIndex, taskDir);
     task.setActiveSubtaskIndex(toSubtaskIndex);
-    updateUI(project, task, taskDir);
+    updateUI(project, task, taskDir, navigateToTask);
 
     for (StudySubtaskChangeListener listener : Extensions.getExtensions(StudySubtaskChangeListener.EP_NAME)) {
       listener.subtaskChanged(project, task, fromSubtaskIndex, toSubtaskIndex);
@@ -112,7 +116,7 @@ public class StudySubtaskUtils {
     }
   }
 
-  public static void updateUI(@NotNull Project project, @NotNull Task task, VirtualFile taskDir) {
+  public static void updateUI(@NotNull Project project, @NotNull Task task, VirtualFile taskDir, boolean navigateToTask) {
     StudyCheckUtils.drawAllPlaceholders(project, task);
     ProjectView.getInstance(project).refresh();
     StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
@@ -124,7 +128,9 @@ public class StudySubtaskUtils {
       }
       toolWindow.setTaskText(text, taskDir, project);
     }
-    StudyNavigator.navigateToTask(project, task);
+    if (navigateToTask) {
+      StudyNavigator.navigateToTask(project, task);
+    }
   }
 
   private static void updatePlaceholderTexts(@NotNull Document document,
