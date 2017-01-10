@@ -521,8 +521,8 @@ public class EduAdaptiveStepicConnector {
     }
     if (attemptId != -1) {
       final Editor editor = StudyUtils.getSelectedEditor(project);
-      String language = getLanguageString(task, project);
-      if (editor != null && language != null) {
+      String language = "python3";
+      if (editor != null) {
         final String answer = PYCHARM_COMMENT + editor.getDocument().getText();
         final StepicWrappers.SubmissionToPostWrapper submissionToPost =
           new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, answer);
