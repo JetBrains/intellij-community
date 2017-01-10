@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -471,5 +471,12 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     finally {
       keymap.removeShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
     }
+  }
+
+  public void testTypingAdjacentSpaces() throws Exception {
+    initText("<caret>\t<caret>\t");
+    rightWithSelection();
+    type(' ');
+    checkResultByText(" <caret> <caret>");
   }
 }

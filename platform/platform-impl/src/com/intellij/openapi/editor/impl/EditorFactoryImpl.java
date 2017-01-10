@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
@@ -26,6 +27,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -60,7 +64,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public EditorFactoryImpl() {
+  public EditorFactoryImpl(EditorActionManager editorActionManager) {
     Application application = ApplicationManager.getApplication();
     MessageBus bus = application.getMessageBus();
     MessageBusConnection connect = bus.connect();
@@ -82,6 +86,9 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
         refreshAllEditors();
       }
     });
+    TypedAction typedAction = editorActionManager.getTypedAction();
+    TypedActionHandler originalHandler = typedAction.getRawHandler();
+    typedAction.setupRawHandler(new MyTypedHandler(originalHandler));
   }
 
   @Override
@@ -277,5 +284,24 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   @NotNull
   public EditorEventMulticaster getEventMulticaster() {
     return myEditorEventMulticaster;
+  }
+
+  private static class MyTypedHandler implements TypedActionHandler {
+    private final TypedActionHandler myDelegate;
+
+    private MyTypedHandler(TypedActionHandler delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+      editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, Boolean.TRUE);
+      try {
+        myDelegate.execute(editor, charTyped, dataContext);
+      }
+      finally {
+        editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null);
+      }
+    }
   }
 }
