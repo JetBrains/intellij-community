@@ -660,13 +660,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public void enableTool(@NotNull String toolId, Project project) {
     final ToolsImpl tools = getTools(toolId, project);
     tools.setEnabled(true);
-    if (tools.getNonDefaultTools() == null) {
-      tools.getDefaultState().setEnabled(true);
-    }
+    tools.getDefaultState().setEnabled(true);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project) {
+  public void enableTool(@NotNull String inspectionTool, @NotNull NamedScope namedScope, Project project) {
     getTools(inspectionTool, project).enableTool(namedScope, project);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

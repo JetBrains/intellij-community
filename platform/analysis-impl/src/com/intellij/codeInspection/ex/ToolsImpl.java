@@ -394,10 +394,10 @@ public class ToolsImpl implements Tools {
     myEnabled = enabled;
   }
 
-  public void enableTool(NamedScope namedScope, Project project) {
+  public void enableTool(@NotNull NamedScope namedScope, Project project) {
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
-        if (Comparing.equal(state.getScope(project), namedScope)) {
+        if (namedScope.equals(state.getScope(project))) {
           state.setEnabled(true);
         }
       }
