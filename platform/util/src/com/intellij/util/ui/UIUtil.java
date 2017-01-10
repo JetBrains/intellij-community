@@ -3782,8 +3782,10 @@ public class UIUtil {
    * @return the first window ancestor of the component; or {@code null}
    *         if the component is not a window and is not contained inside a window
    */
-  public static Window getWindow(Component component) {
-    return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+  @Nullable
+  public static Window getWindow(@Nullable Component component) {
+    return component == null ? null :
+           component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
   }
 
   /**
@@ -3792,10 +3794,9 @@ public class UIUtil {
    *
    * @param window the window to activate
    */
-  public static void toFront(Window window) {
+  public static void toFront(@Nullable Window window) {
     if (window instanceof Frame) {
-      Frame frame = (Frame)window;
-      frame.setState(Frame.NORMAL);
+      ((Frame)window).setState(Frame.NORMAL);
     }
     if (window != null) {
       window.toFront();
