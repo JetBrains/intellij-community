@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class VarProcessor {
     Map<Integer, Integer> mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
 
     List<VarVersionPair> listVars = new ArrayList<>(mapVarNames.keySet());
-    Collections.sort(listVars, (o1, o2) -> o1.var - o2.var);
+    Collections.sort(listVars, Comparator.comparingInt(o -> o.var));
 
     Map<String, Integer> mapNames = new HashMap<>();
 
