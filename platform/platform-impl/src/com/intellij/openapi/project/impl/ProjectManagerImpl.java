@@ -153,6 +153,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         for (int i = 0; i < 42; i++) {
           if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
           System.gc();
+          if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
           TimeoutUtil.sleep(100);
           System.gc();
         }
