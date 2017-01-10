@@ -46,6 +46,7 @@ public class FindUsagesHelper {
     UsageInfoFactory factory = new UsageInfoFactory() {
       @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+        if (!element.isValid()) return new UsageInfo(usage, startOffset, endOffset, true);
         if (elementTextRange != null
             && usage.getContainingFile() == element.getContainingFile()
             && elementTextRange.contains(startOffset)
