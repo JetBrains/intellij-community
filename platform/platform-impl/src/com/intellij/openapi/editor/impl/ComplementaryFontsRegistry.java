@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -146,7 +147,7 @@ public class ComplementaryFontsRegistry {
                                               FontRenderContext context) {
     boolean tryDefaultFont = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
-    boolean useLigatures = preferences.useLigatures();
+    boolean useLigatures = SystemInfo.isJetbrainsJvm && preferences.useLigatures();
     FontInfo result;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, len = fontFamilies.size(); i < len; ++i) { // avoid foreach, it instantiates ArrayList$Itr, this traversal happens very often
