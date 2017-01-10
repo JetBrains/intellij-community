@@ -57,7 +57,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   private static final int TRACKED_INSTANCES_LIMIT = 2000;
   private final ReferenceType myReference;
   private final Project myProject;
-  private final DebugProcessImpl myDebugProcess;
   private final MyConstructorBreakpoints myBreakpoint;
 
   @Nullable
@@ -76,12 +75,15 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     myIsBackgroundTrackingEnabled = InstancesTracker.getInstance(myProject)
       .isBackgroundTrackingEnabled();
 
+    final DebugProcessImpl debugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
+      .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
+
     InstancesTracker.getInstance(myProject).addTrackerListener(new InstancesTrackerListener() {
       @Override
       public void backgroundTrackingValueChanged(boolean newState) {
         if (myIsBackgroundTrackingEnabled != newState) {
           myIsBackgroundTrackingEnabled = newState;
-          myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+          debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() throws Exception {
               if (newState) {
@@ -96,17 +98,24 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       }
     }, this);
 
-    myDebugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
-      .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
-    JavaLineBreakpointType breakPointType = new JavaLineBreakpointType();
+    final JavaLineBreakpointType breakPointType = new JavaLineBreakpointType();
 
-    XBreakpoint bpn = new XLineBreakpointImpl<>(breakPointType,
-                                                ((XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject)).getBreakpointManager(),
-                                                new JavaLineBreakpointProperties(),
-                                                new LineBreakpointState<>());
+    final XBreakpoint bpn = new XLineBreakpointImpl<>(breakPointType,
+                                                      ((XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject))
+                                                        .getBreakpointManager(),
+                                                      new JavaLineBreakpointProperties(),
+                                                      new LineBreakpointState<>());
 
     myBreakpoint = new MyConstructorBreakpoints(myProject, bpn);
-    myBreakpoint.createRequestForPreparedClass(myDebugProcess, myReference);
+    myBreakpoint.createRequestForPreparedClass(debugProcess, myReference);
+    Disposer.register(myBreakpoint, () -> debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        disable();
+        debugProcess.getRequestsManager().deleteRequest(myBreakpoint);
+        myBreakpoint.delete();
+      }
+    }));
   }
 
   public void obsolete() {
@@ -189,8 +198,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   }
 
   private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties> implements Disposable {
-    private boolean myIsEnabled = false;
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
+    private volatile boolean myIsEnabled = false;
     private volatile boolean myIsDeleted = false;
 
     MyConstructorBreakpoints(Project project, XBreakpoint xBreakpoint) {
@@ -215,16 +224,12 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     public void reload() {
     }
 
+    void delete() {
+      myIsDeleted = true;
+    }
+
     @Override
     public void dispose() {
-      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        protected void action() throws Exception {
-          disable();
-          myDebugProcess.getRequestsManager().deleteRequest(MyConstructorBreakpoints.this);
-          myIsDeleted = true;
-        }
-      });
     }
 
     @Override
