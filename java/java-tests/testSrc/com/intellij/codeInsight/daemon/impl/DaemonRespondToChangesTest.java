@@ -1688,7 +1688,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, true));
-    //System.out.println("N = " + N);
+    System.out.println("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
       codeAnalyzer.restart();
@@ -1705,7 +1705,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
         assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
-        //System.out.println(interruptTime);
+        System.out.println(interruptTime);
         throw new ProcessCanceledException();
       };
       try {
@@ -1885,7 +1885,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     codeAnalyzer.restart();
-    Runnable interrupt = () -> type(' ');
     try {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -1894,7 +1893,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       Project project = file.getProject();
       CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-      codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, interrupt);
+      codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, () -> type(' '));
     }
     catch (ProcessCanceledException ignored) {
       return;
@@ -1908,7 +1907,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     highlightErrors();
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    Runnable interrupt = () -> type(' ');
     type(' ');
     for (int i=0; i<100; i++) {
       backspace();
@@ -1921,7 +1919,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         Project project = file.getProject();
         CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
         TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, interrupt);
+        codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtil.EMPTY_INT_ARRAY, true, () -> type(' '));
       }
       catch (ProcessCanceledException ignored) {
         codeAnalyzer.waitForTermination();
@@ -2415,6 +2413,5 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
   }
-
 }
 
