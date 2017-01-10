@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
@@ -177,7 +178,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
 
     if (changed) {
-      myModificationCount++;
+      stateChanged();
     }
   }
 
@@ -186,13 +187,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     rootModel.dispose();
 
     try {
-      ((ModuleRootManagerImpl)getInstance(rootModel.getModule())).myModificationCount++;
+      ((ModuleRootManagerImpl)getInstance(rootModel.getModule())).stateChanged();
     }
     catch (Exception e) {
       LOG.error(e);
     }
   }
-
 
   @Override
   @NotNull
@@ -362,6 +362,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     catch (InvalidDataException e) {
       LOG.error(e);
     }
+  }
+
+  private void stateChanged() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("ModelRootManager state changed");
+    }
+    myModificationCount++;
   }
 
   public static class ModuleRootManagerState implements JDOMExternalizable {
