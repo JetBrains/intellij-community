@@ -28,16 +28,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author max
@@ -207,42 +208,20 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     }
 
     private static void replaceReturnStatements(@NotNull final PsiMethod method) {
-      final PsiCodeBlock body = method.getBody();
-      if (body != null) {
-        final List<PsiReturnStatement> returnStatements = new ArrayList<>();
-        body.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitReturnStatement(final PsiReturnStatement statement) {
-            super.visitReturnStatement(statement);
-            returnStatements.add(statement);
+      for (PsiReturnStatement returnStatement : PsiUtil.findReturnStatements(method)) {
+        try {
+          final PsiExpression expression = returnStatement.getReturnValue();
+          if (expression != null && !SideEffectChecker.mayHaveSideEffects(expression)) {
+            WriteAction.run(() -> {
+              PsiReturnStatement ret = (PsiReturnStatement)returnStatement.replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
+              if (UnnecessaryReturnInspection.isReturnRedundant(ret, false, null)) {
+                ret.delete();
+              }
+            });
           }
-
-          @Override
-          public void visitClass(PsiClass aClass) {}
-
-          @Override
-          public void visitLambdaExpression(PsiLambdaExpression expression) {}
-        });
-        final PsiStatement[] psiStatements = body.getStatements();
-        final PsiStatement lastStatement = psiStatements[psiStatements.length - 1];
-        for (PsiReturnStatement returnStatement : returnStatements) {
-          try {
-            final PsiExpression expression = returnStatement.getReturnValue();
-            if (expression instanceof PsiLiteralExpression || expression instanceof PsiThisExpression) {    //avoid side effects
-              WriteAction.run(() -> {
-                if (returnStatement == lastStatement) {
-                  returnStatement.delete();
-                }
-                else {
-                  returnStatement
-                    .replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createStatementFromText("return;", returnStatement));
-                }
-              });
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
     }
