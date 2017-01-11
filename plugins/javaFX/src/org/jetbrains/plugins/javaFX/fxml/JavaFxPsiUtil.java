@@ -903,8 +903,8 @@ public class JavaFxPsiUtil {
       if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) continue;
       final PsiParameter[] parameters = constructor.getParameterList().getParameters();
       for (PsiParameter parameter : parameters) {
-        String propertyName = getPropertyNameFromNamedArgAnnotation(parameter);
-        if (propertyName != null && !acceptableMembers.containsKey(propertyName)) {
+        final String propertyName = getPropertyNameFromNamedArgAnnotation(parameter);
+        if (!StringUtil.isEmpty(propertyName) && !acceptableMembers.containsKey(propertyName)) {
           final PsiField field = psiClass.findFieldByName(propertyName, true);
           if (field != null && !field.hasModifierProperty(PsiModifier.STATIC)) {
             acceptableMembers.put(propertyName, field);
@@ -964,6 +964,34 @@ public class JavaFxPsiUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Unlike normal properties (fields, getters/setters) named constructor parameters can be declared many times, possibly with different types
+   */
+  @NotNull
+  public static Set<String> getConstructorNamedArgProperties(@Nullable PsiClass psiClass) {
+    if (psiClass != null) {
+      return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result.create(
+        prepareConstructorNamedArgProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+    }
+    return Collections.emptySet();
+  }
+
+  private static Set<String> prepareConstructorNamedArgProperties(@NotNull PsiClass psiClass) {
+    final Set<String> properties = new THashSet<>();
+    for (PsiMethod constructor : psiClass.getConstructors()) {
+      if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+        final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+        for (PsiParameter parameter : parameters) {
+          final String propertyName = getPropertyNameFromNamedArgAnnotation(parameter);
+          if (!StringUtil.isEmpty(propertyName)) {
+            properties.add(propertyName);
+          }
+        }
+      }
+    }
+    return properties;
   }
 
   @Nullable
