@@ -73,7 +73,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    MessageBusConnection connection = project.getMessageBus().connect(project);
+    final MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(XDebuggerManager.TOPIC, new MyDebuggerStatusChangedListener());
     connection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
@@ -95,7 +95,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
           if (isVisible != myIsToolWindowVisible) {
             myDispatcher.getMulticaster().visibilityChanged(isVisible);
-            myIsToolWindowVisible ^= myIsToolWindowVisible;
+            myIsToolWindowVisible = isVisible;
           }
         }
       }, project);
@@ -154,7 +154,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
   private static void replaceToolWindowContent(@NotNull ToolWindow toolWindow, JComponent comp) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    JComponent toolWindowComp = toolWindow.getComponent();
+    final JComponent toolWindowComp = toolWindow.getComponent();
     toolWindowComp.removeAll();
     toolWindowComp.add(comp);
     toolWindowComp.repaint();
@@ -168,7 +168,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
   public static class Condition implements com.intellij.openapi.util.Condition<Project> {
     @Override
     public boolean value(Project project) {
-      MessageBusConnection connection = project.getMessageBus().connect(project);
+      final MessageBusConnection connection = project.getMessageBus().connect(project);
       connection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
         @Override
         public void processStarted(@NotNull XDebugProcess debugProcess) {
@@ -178,15 +178,15 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
         @Override
         public void processStopped(@NotNull XDebugProcess debugProcess) {
           final Project project = debugProcess.getSession().getProject();
-          boolean enabled = Arrays.stream(XDebuggerManager.getInstance(project)
-                                            .getDebugSessions()).anyMatch(session -> !session.getDebugProcess().equals(debugProcess));
+          final boolean enabled = Arrays.stream(XDebuggerManager.getInstance(project)
+                                                  .getDebugSessions()).anyMatch(session -> !session.getDebugProcess().equals(debugProcess));
           updateIcon(project, enabled);
         }
 
         private void updateIcon(@NotNull Project project, boolean enabled) {
-          ToolWindow toolWindow = MemoryViewManager.getInstance().getToolWindow(project);
+          final ToolWindow toolWindow = MemoryViewManager.getInstance().getToolWindow(project);
           if (toolWindow != null) {
-            Icon icon = enabled ? AllIcons.Debugger.MemoryView.ToolWindowEnabled : AllIcons.Debugger.MemoryView.ToolWindowDisabled;
+            final Icon icon = enabled ? AllIcons.Debugger.MemoryView.ToolWindowEnabled : AllIcons.Debugger.MemoryView.ToolWindowDisabled;
             ApplicationManager.getApplication().invokeLater(() -> toolWindow.setIcon(icon));
           }
         }
@@ -203,7 +203,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
     @Override
     public void processStopped(@NotNull XDebugProcess xDebugProcess) {
-      XDebugSession session = xDebugProcess.getSession();
+      final XDebugSession session = xDebugProcess.getSession();
       if (xDebugProcess instanceof JavaDebugProcess) {
         final DebugProcessImpl process = ((JavaDebugProcess)xDebugProcess).getDebuggerSession().getProcess();
 
@@ -219,7 +219,7 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     private void updateView(@NotNull XDebugSession debugSession) {
       final Project project = debugSession.getProject();
       if (!project.isDisposed()) {
-        ToolWindow toolWindow = getToolWindow(project);
+        final ToolWindow toolWindow = getToolWindow(project);
         if (toolWindow != null) {
           updateCurrentMemoryView(project, toolWindow);
         }
