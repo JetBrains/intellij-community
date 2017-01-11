@@ -1832,12 +1832,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
-    if (iterable.isEmpty()) return emptyList();
-    List<V> result = new ArrayList<V>(iterable.size());
-    for (T t : iterable) {
-      result.add(mapping.fun(t));
-    }
-    return result;
+    return ContainerUtilRt.map2List(iterable, mapping);
   }
 
   /**
