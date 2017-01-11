@@ -23,7 +23,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.IntArrayList;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -36,6 +35,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * This immutable class represents the code which should be performed
@@ -97,7 +97,7 @@ class TerminalBlock {
     PsiStatement statement = getSingleStatement();
     if(statement instanceof PsiExpressionStatement) {
       PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-      return ObjectUtils.tryCast(expression, wantedType);
+      return tryCast(expression, wantedType);
     }
     return null;
   }
@@ -195,16 +195,13 @@ class TerminalBlock {
         PsiDeclarationStatement decl = (PsiDeclarationStatement)first;
         PsiElement[] elements = decl.getDeclaredElements();
         if(elements.length == 1) {
-          PsiElement element = elements[0];
-          if(element instanceof PsiLocalVariable) {
-            PsiLocalVariable declaredVar = (PsiLocalVariable)element;
-            if (isSupported(declaredVar.getType())) {
-              PsiExpression initializer = declaredVar.getInitializer();
-              PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
-              if (initializer != null && ReferencesSearch.search(myVariable, new LocalSearchScope(leftOver)).findFirst() == null) {
-                MapOp op = new MapOp(initializer, myVariable, declaredVar.getType());
-                return new TerminalBlock(this, op, declaredVar, leftOver);
-              }
+          PsiLocalVariable declaredVar = tryCast(elements[0], PsiLocalVariable.class);
+          if (declaredVar != null && isSupported(declaredVar.getType())) {
+            PsiExpression initializer = declaredVar.getInitializer();
+            PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
+            if (initializer != null && ReferencesSearch.search(myVariable, new LocalSearchScope(leftOver)).findFirst() == null) {
+              MapOp op = new MapOp(initializer, myVariable, declaredVar.getType());
+              return new TerminalBlock(this, op, declaredVar, leftOver);
             }
           }
         }
@@ -244,11 +241,9 @@ class TerminalBlock {
     }
     if (tb == null || !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), getMainLoop())) return this;
     FilterOp filter = tb.getLastOperation(FilterOp.class);
-    if(filter == null) return this;
-    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(filter.getExpression());
-    if(!(condition instanceof PsiBinaryExpression)) return this;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-    if(!ComparisonUtils.isComparison(binOp)) return this;
+    if (filter == null) return this;
+    PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(filter.getExpression()), PsiBinaryExpression.class);
+    if (binOp == null || !ComparisonUtils.isComparison(binOp)) return this;
     String comparison = filter.isNegated() ? ComparisonUtils.getNegatedComparison(binOp.getOperationTokenType())
                         : binOp.getOperationSign().getText();
     boolean flipped = false;
@@ -276,10 +271,8 @@ class TerminalBlock {
     PsiLocalVariable var = null;
     if (dedicatedCounter) {
       if (!(incrementedValue instanceof PsiReferenceExpression)) return this;
-      PsiElement element = ((PsiReferenceExpression)incrementedValue).resolve();
-      if (!(element instanceof PsiLocalVariable)) return this;
-      var = (PsiLocalVariable)element;
-      if (!ExpressionUtils.isZero(var.getInitializer()) || ReferencesSearch.search(var).findAll().size() != 1) return this;
+      var = tryCast(((PsiReferenceExpression)incrementedValue).resolve(), PsiLocalVariable.class);
+      if (var == null || !ExpressionUtils.isZero(var.getInitializer()) || ReferencesSearch.search(var).findAll().size() != 1) return this;
     }
     PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
     if(!ExpressionUtils.isSimpleExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
@@ -308,11 +301,19 @@ class TerminalBlock {
     if (!isCallOf(call, CommonClassNames.JAVA_UTIL_COLLECTION, "add")) return null;
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (args.length != 1 || !ExpressionUtils.isReferenceTo(args[0], myVariable)) return null;
-    PsiLocalVariable collectionVariable = extractCollectionVariable(call.getMethodExpression().getQualifierExpression());
-    if (collectionVariable == null || getInitializerUsageStatus(collectionVariable, getMainLoop()) == InitializerUsageStatus.UNKNOWN) {
+    PsiReferenceExpression qualifier = tryCast(call.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+    if (qualifier == null) return null;
+    PsiLocalVariable var = tryCast(qualifier.resolve(), PsiLocalVariable.class);
+    if (var == null) return null;
+    PsiNewExpression initializer = tryCast(var.getInitializer(), PsiNewExpression.class);
+    if (initializer == null) return null;
+    PsiExpressionList argumentList = initializer.getArgumentList();
+    if (argumentList == null ||
+        argumentList.getExpressions().length != 0 ||
+        getInitializerUsageStatus(var, getMainLoop()) == InitializerUsageStatus.UNKNOWN) {
       return null;
     }
-    return collectionVariable;
+    return var;
   }
 
   @NotNull
@@ -367,7 +368,7 @@ class TerminalBlock {
 
   @Nullable
   <T extends Operation> T getLastOperation(Class<T> clazz) {
-    return ObjectUtils.tryCast(getLastOperation(), clazz);
+    return tryCast(getLastOperation(), clazz);
   }
 
   @Nullable
@@ -463,45 +464,5 @@ class TerminalBlock {
 
   boolean isReferencedInOperations(PsiVariable variable) {
     return intermediateAndSourceExpressions().anyMatch(expr -> VariableAccessUtils.variableIsUsed(variable, expr));
-  }
-
-  private static boolean isExpressionDependsOnUpdatedCollections(PsiExpression condition,
-                                                                 PsiExpression qualifierExpression) {
-    final PsiElement collection = qualifierExpression instanceof PsiReferenceExpression
-                                  ? ((PsiReferenceExpression)qualifierExpression).resolve()
-                                  : null;
-    if (collection != null) {
-      return collection instanceof PsiVariable && VariableAccessUtils.variableIsUsed((PsiVariable)collection, condition);
-    }
-
-    final boolean[] dependsOnCollection = {false};
-    condition.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        super.visitMethodCallExpression(expression);
-        final PsiExpression callQualifier = expression.getMethodExpression().getQualifierExpression();
-        if (callQualifier == null ||
-            callQualifier instanceof PsiThisExpression && ((PsiThisExpression)callQualifier).getQualifier() == null ||
-            callQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)callQualifier).getQualifier() == null) {
-          dependsOnCollection[0] = true;
-        }
-      }
-
-      @Override
-      public void visitThisExpression(PsiThisExpression expression) {
-        super.visitThisExpression(expression);
-        if (expression.getQualifier() == null && expression.getParent() instanceof PsiExpressionList) {
-          dependsOnCollection[0] = true;
-        }
-      }
-
-      @Override
-      public void visitClass(PsiClass aClass) {}
-
-      @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
-    });
-
-    return dependsOnCollection[0];
   }
 }
