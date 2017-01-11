@@ -11,7 +11,7 @@ stop_frame_eval = None
 
 if IS_PY36_OR_OLDER:
     try:
-        from _pydevd_frame_eval.pydevd_frame_evaluator import set_frame_eval, stop_frame_eval
+        from _pydevd_frame_eval.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval
     except ImportError:
         from _pydev_bundle.pydev_monkey import log_error_once
 

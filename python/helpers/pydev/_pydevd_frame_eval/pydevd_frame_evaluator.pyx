@@ -31,7 +31,7 @@ cdef PyObject*get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
                 update_globals_dict(<object> frame.f_globals)
     return _PyEval_EvalFrameDefault(frame, exc)
 
-def set_frame_eval():
+def frame_eval_func():
     cdef PyThreadState *state = PyThreadState_Get()
     state.interp.eval_frame = get_bytecode_while_frame_eval
 

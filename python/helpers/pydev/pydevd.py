@@ -36,7 +36,7 @@ from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_fr
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch
-from _pydevd_frame_eval.pydevd_frame_eval_main import set_frame_eval, stop_frame_eval
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
@@ -868,13 +868,10 @@ class PyDB:
 
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
-        if set_frame_eval is None:
-            self.patch_threads()
-            pydevd_tracing.SetTrace(self.trace_dispatch)
-        else:
-            # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
-            # functions, because frame evaluation function is set to all threads by default.
-            set_frame_eval()
+        self.patch_threads()
+        pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func)
+        # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
+        # functions, because frame evaluation function is set to all threads by default.
 
         PyDBCommandThread(self).start()
         if self.signature_factory is not None or self.thread_analyser is not None:
@@ -883,6 +880,9 @@ class PyDB:
 
 
     def patch_threads(self):
+        if self.frame_eval_func is not None:
+            # There is no need to patch thread functions, because frame evaluation function is set to all threads by default.
+            return
         try:
             # not available in jython!
             import threading
@@ -1008,6 +1008,7 @@ class PyDB:
             time.sleep(0.01)
 
     trace_dispatch = _trace_dispatch
+    frame_eval_func = frame_eval_func
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
@@ -1245,7 +1246,7 @@ def _locked_settrace(
 
         # note that we do that through pydevd_tracing.SetTrace so that the tracing
         # is not warned to the user!
-        pydevd_tracing.SetTrace(debugger.trace_dispatch)
+        pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func)
 
         if not trace_only_current_thread:
             # Trace future threads?
@@ -1278,7 +1279,7 @@ def _locked_settrace(
             additional_info = PyDBAdditionalThreadInfo()
             t.additional_info = additional_info
 
-        pydevd_tracing.SetTrace(debugger.trace_dispatch)
+        pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func)
 
         if not trace_only_current_thread:
             # Trace future threads?
