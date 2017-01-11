@@ -215,7 +215,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   @Nullable
-  protected static HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
+  protected HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
     if (StringUtil.isEmpty(mimeType)) {
       return ourDefaultLanguage != null ? LanguageHtmlScriptContentProvider.getScriptContentProvider(ourDefaultLanguage) : null;
     }
