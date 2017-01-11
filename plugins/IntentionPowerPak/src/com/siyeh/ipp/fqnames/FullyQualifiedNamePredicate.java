@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
       return false;
@@ -46,6 +47,10 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
     final Project project = element.getProject();
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     if (isInsideCommentInPackageInfo(referenceElement)) {
+      return false;
+    }
+    final PsiFile file = element.getContainingFile();
+    if ("module-info.java".equals(file.getName())) {
       return false;
     }
     final PsiElement qualifier = referenceElement.getQualifier();
@@ -68,14 +73,11 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate {
     }
     final PsiClass aClass = (PsiClass)target;
     final String fqName = aClass.getQualifiedName();
-    if (fqName == null) {
-      return false;
-    }
-    return ImportUtils.nameCanBeImported(fqName, element);
+    return fqName != null && ImportUtils.nameCanBeImported(fqName, element);
   }
 
   private static boolean isInsideCommentInPackageInfo(@Nullable PsiJavaCodeReferenceElement referenceElement) {
-    PsiDocComment containingComment = PsiTreeUtil.getParentOfType(referenceElement, PsiDocComment.class);
+    final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(referenceElement, PsiDocComment.class);
     return JavaDocUtil.isInsidePackageInfo(containingComment);
   }
 }
