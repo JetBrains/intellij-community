@@ -6,6 +6,11 @@ from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInf
 from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK
 
 
+def update_globals_dict(globals_dict):
+    new_globals = {'_pydev_stop_at_break': _pydev_stop_at_break}
+    globals_dict.update(new_globals)
+
+
 def _pydev_stop_at_break():
     debugger = get_global_debugger()
     t = threading.currentThread()
@@ -24,5 +29,5 @@ def _pydev_stop_at_break():
 
 def pydev_trace_code_wrapper():
     # import this module again, because it's inserted inside user's code
-    from _pydevd_frame_eval.pydevd_frame_tracing import _pydev_stop_at_break
+    global _pydev_stop_at_break
     _pydev_stop_at_break()
