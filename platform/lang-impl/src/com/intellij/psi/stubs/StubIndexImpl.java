@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 @State(name = "FileBasedIndex", storages = @Storage(value = "stubIndex.xml", roamingType = RoamingType.DISABLED))
-public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
+public class StubIndexImpl extends StubIndex implements ApplicationComponentAdapter, PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
 
@@ -464,12 +464,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "Stub.IndexManager";
-  }
-
-  @Override
   public void initComponent() {
     long started = System.nanoTime();
     StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
@@ -488,12 +482,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  @Override
-  public void disposeComponent() {
+  //@Override
+  //public void dispose() {
     // This index must be disposed only after StubUpdatingIndex is disposed
     // To ensure this, disposing is done explicitly from StubUpdatingIndex by calling dispose() method
     // do not call this method here to avoid double-disposal
-  }
+  //}
 
   public void dispose() {
     for (UpdatableIndex index : getAsyncState().myIndices.values()) {
