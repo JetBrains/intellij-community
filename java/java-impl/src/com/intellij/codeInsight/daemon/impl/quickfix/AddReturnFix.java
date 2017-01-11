@@ -97,11 +97,12 @@ public class AddReturnFix implements IntentionAction {
 
   private String getConversionToType(@NotNull PsiVariable variable, @Nullable PsiType type) {
     PsiType varType = variable.getType();
-    if (type instanceof PsiArrayType && InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-      PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
-      if (collectionItemType != null) {
-        PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
-        if (arrayComponentType.isAssignableFrom(collectionItemType)) {
+    if (type instanceof PsiArrayType) {
+      PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
+      if (!(arrayComponentType instanceof PsiPrimitiveType) &&
+          InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
+        if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
           if (arrayComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             return variable.getName() + ".toArray()";
           }
