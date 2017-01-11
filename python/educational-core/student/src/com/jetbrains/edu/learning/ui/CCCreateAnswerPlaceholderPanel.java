@@ -51,6 +51,8 @@ public class CCCreateAnswerPlaceholderPanel {
         myPlaceholderTextArea.selectAll();
       }
     });
+    myPlaceholderTextArea.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+    myPlaceholderTextArea.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
     
     myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
