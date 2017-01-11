@@ -15,7 +15,7 @@ public class VersionUtilTest extends TestCase {
     Pattern.compile("^[a-zA-Z() \\d]*([\\d]+\\.[\\d]+\\.?[\\d]*).*", Pattern.MULTILINE)
   };
   private static final Pattern[] VERSION_UPDATE_PATTERNS = {
-    Pattern.compile("^java version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+)\".*", Pattern.MULTILINE),
+    Pattern.compile("^java version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE),
     Pattern.compile("^openjdk version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE),
     Pattern.compile("^[a-zA-Z() \"\\d]*([\\d]+\\.[\\d]+\\.?[\\d]*).*", Pattern.MULTILINE)
   };
@@ -39,6 +39,7 @@ public class VersionUtilTest extends TestCase {
     {"java version \"1.6.0\"",                                                          new Version(1, 6, 0), new Integer(0)},
     {"java version \"1.6.0_36\"",                                                       new Version(1, 6, 0), new Integer(36)},
     {"java version \"1.7.0_85\"",                                                       new Version(1, 7, 0), new Integer(85)},
+    {"java version \"1.8.0_122-ea\"",                                                   new Version(1, 8, 0), new Integer(122)},
     {"openjdk version \"1.8.0_45-internal\"",                                           new Version(1, 8, 0), new Integer(45)},
     {"openjdk version \"1.8.1_60-release\"",                                            new Version(1, 8, 1), new Integer(60)}
   };
