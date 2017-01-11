@@ -24,7 +24,11 @@ public interface ApplicationComponentAdapter extends ApplicationComponent {
     return getClass().getSimpleName();
   }
 
+  /**
+   * @deprecated Please use {@link com.intellij.openapi.Disposable}
+   */
   @Override
+  @Deprecated
   default void disposeComponent() {
   }
 }
