@@ -35,6 +35,8 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.*;
+import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -109,15 +111,17 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Local Branches");
-    List<GitBranchPopupActions.LocalBranchActions> localBranchActions =
+    List<AnAction> localBranchActions =
       myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
         .collect(toList());
+    addMoreActionIfNeeded(localBranchActions, MAX_BRANCH_NUM);
     popupGroup.addAll(localBranchActions);
 
     popupGroup.addSeparator("Common Remote Branches");
-    List<GitBranchPopupActions.RemoteBranchActions> remoteBranchActions =
+    List<AnAction> remoteBranchActions =
       ((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches().stream()
         .map(r -> new GitBranchPopupActions.RemoteBranchActions(myProject, allRepositories, r, myCurrentRepository)).collect(toList());
+    addMoreActionIfNeeded(remoteBranchActions, MAX_BRANCH_NUM);
     popupGroup.addAll(remoteBranchActions);
   }
 
@@ -135,10 +139,13 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    List<RootAction<GitRepository>> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
+    List<AnAction> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(repo -> new RootAction<>(repo, highlightCurrentRepo() ? myCurrentRepository : null,
                                     new GitBranchPopupActions(repo.getProject(), repo).createActions(),
                                     GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
+    if (rootActions.size() > MAX_REPO_NUM) {
+      addMoreActionIfNeeded(rootActions, DEFAULT_REPO_NUM);
+    }
     popupGroup.addAll(rootActions);
     return popupGroup;
   }

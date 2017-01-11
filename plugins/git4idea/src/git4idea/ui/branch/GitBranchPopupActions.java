@@ -38,6 +38,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_BRANCH_NUM;
+import static com.intellij.dvcs.ui.BranchActionGroupPopup.addMoreActionIfNeeded;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 
 class GitBranchPopupActions {
@@ -70,12 +72,14 @@ class GitBranchPopupActions {
       myRepository.getBranches().getLocalBranches().stream().sorted().filter(l -> !l.equals(myRepository.getCurrentBranch()))
         .map(l -> new LocalBranchActions(myProject, repositoryList, l.getName(), myRepository)).collect(
         Collectors.toList());
+    addMoreActionIfNeeded(localBranchActions, MAX_BRANCH_NUM);
     popupGroup.addAll(localBranchActions);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<AnAction> remoteBranchActions = myRepository.getBranches().getRemoteBranches().stream().sorted()
       .map(r -> new RemoteBranchActions(myProject, repositoryList, r.getName(), myRepository))
       .collect(Collectors.toList());
+    addMoreActionIfNeeded(remoteBranchActions, MAX_BRANCH_NUM);
     popupGroup.addAll(remoteBranchActions);
     return popupGroup;
   }
@@ -139,7 +143,7 @@ class GitBranchPopupActions {
 
     private final Project myProject;
     private final List<GitRepository> myRepositories;
-    private String myBranchName;
+    private final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
 
     LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
@@ -285,7 +289,7 @@ class GitBranchPopupActions {
 
     private final Project myProject;
     private final List<GitRepository> myRepositories;
-    private String myBranchName;
+    private final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
 
     RemoteBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,

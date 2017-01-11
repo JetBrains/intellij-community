@@ -15,11 +15,10 @@
  */
 package com.intellij.dvcs.ui;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -30,10 +29,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,23 +43,29 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.util.List;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
-private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
+  private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
+  private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
+  private int myIgnoreNextItem = 0;
 
   public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
                                 @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
     super(title, new DefaultActionGroup(actions, createBranchSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project),
           preselectActionCondition, true);
     setDimensionServiceKey(DIMENSION_SERVICE_KEY);
+    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
   }
 
   //for child popups only
   private BranchActionGroupPopup(@Nullable WizardPopup aParent, @NotNull ListPopupStep aStep, @Nullable Object parentValue) {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
+    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
   }
 
   @NotNull
@@ -94,6 +102,16 @@ private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
   protected void onSpeedSearchPatternChanged() {
     super.onSpeedSearchPatternChanged();
     ScrollingUtil.ensureSelectionExists(getList());
+  }
+
+  @Override
+  protected boolean shouldShow(@NotNull AnAction action) {
+    if (action instanceof MoreAction) {
+      if (getSpeedSearch().isHoldingFilter() || !action.getTemplatePresentation().isVisible()) return false;
+      myIgnoreNextItem = ((MoreAction)action).getHiddenNodesNum();
+      return true;
+    }
+    return myIgnoreNextItem-- <= 0;
   }
 
   @Override
@@ -148,6 +166,10 @@ private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
 
     @Override
     protected void customizeComponent(JList list, Object value, boolean isSelected) {
+      MoreAction more = getSpecificAction(value, MoreAction.class);
+      if (more != null) {
+        myTextLabel.setForeground(JBColor.gray);
+      }
       super.customizeComponent(list, value, isSelected);
 
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
@@ -198,6 +220,40 @@ private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
 
     @Override
     protected void paintLine(Graphics g, int x, int y, int width) {
+    }
+  }
+
+  private static class MoreAction extends DumbAwareAction implements KeepingPopupOpenAction {
+    private static final String MORE_TEXT = "more...";
+    private final int myHiddenNodesNum;
+
+    public MoreAction(int numberOfHiddenNodes) {
+      super();
+      myHiddenNodesNum = numberOfHiddenNodes;
+      String num = myHiddenNodesNum > 0 ? myHiddenNodesNum + " " : "";
+      getTemplatePresentation().setText(num + MORE_TEXT);
+    }
+
+    public int getHiddenNodesNum() {
+      return myHiddenNodesNum;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      getTemplatePresentation().setEnabledAndVisible(false);
+      InputEvent event = e.getInputEvent();
+      if (event != null && event.getSource() instanceof JComponent) {
+        DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
+        if (dataProvider != null) {
+          ObjectUtils.assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
+        }
+      }
+    }
+  }
+
+  public static void addMoreActionIfNeeded(@NotNull List<AnAction> actionList, int maxIndex) {
+    if (actionList.size() > maxIndex) {
+      actionList.add(maxIndex, new MoreAction(actionList.size() - maxIndex));
     }
   }
 }

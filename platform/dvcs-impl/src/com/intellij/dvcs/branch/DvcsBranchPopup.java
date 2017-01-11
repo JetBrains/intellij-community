@@ -160,4 +160,10 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   protected abstract void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup,
                                                                 @Nullable DefaultActionGroup actions);
+
+  public static class MyMoreIndex {
+    public static final int MAX_REPO_NUM = 8;
+    public static final int DEFAULT_REPO_NUM = 5;
+    public static final int MAX_BRANCH_NUM = 8;
+  }
 }
