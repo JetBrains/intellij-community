@@ -283,8 +283,11 @@ public class PyBlock implements ASTBlock {
         }
         if (childType == PyTokenTypes.RPAR) {
           childIndent = Indent.getNoneIndent();
-          if (!hasHangingIndent(myNode.getPsi()) || settings.HANG_CLOSING_BRACKETS) {
+          if (!hasHangingIndent(myNode.getPsi())) {
             childAlignment = getAlignmentForChildren();
+          }
+          else if (settings.HANG_CLOSING_BRACKETS) {
+            childIndent = Indent.getNormalIndent();
           }
         }
       }

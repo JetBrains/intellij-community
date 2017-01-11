@@ -676,6 +676,8 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-10182
   public void testHangClosingParenthesisInFromImport() {
+    // Shouldn't affect the result
+    getPythonCodeStyleSettings().ALIGN_MULTILINE_IMPORTS = false;
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
   }
@@ -692,7 +694,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  // PY-10182  
+  // PY-10182
   public void testHangClosingParenthesisInListLiteral() {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
