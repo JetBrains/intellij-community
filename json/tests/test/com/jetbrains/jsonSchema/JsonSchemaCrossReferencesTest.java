@@ -368,6 +368,62 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  public void testNavigateToPropertyDefinitionNestedDefinitions() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testNestedDefinitionsNavigation.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/nestedDefinitionsSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/testNestedDefinitionsNavigation.json", "/nestedDefinitionsSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("nestedDefinitionsSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"definitions\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testNavigateToAllOfOneOfDefinitions() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testNestedAllOfOneOfDefinitionsSchema.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/nestedAllOfOneOfDefinitionsSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/testNestedAllOfOneOfDefinitionsSchema.json", "/nestedAllOfOneOfDefinitionsSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("nestedAllOfOneOfDefinitionsSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"begriff\"", resolve.getText());
+      }
+    });
+  }
+
   @NotNull
   private static String getModuleDir(@NotNull final Project project) {
     String moduleDir = null;

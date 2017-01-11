@@ -25,6 +25,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,14 +57,21 @@ public class JsonSchemaDefinitionsClimber {
     final JsonSchemaWalker.CompletionSchemesConsumer consumer = new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
       public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
-        processDefinitionAddress(schema, myShortPropertyName);
+        int cnt = 1000;
+        final List<JsonSchemaObject> list = new ArrayList<>();
+        final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
+        queue.add(schema);
+        while (!queue.isEmpty() && cnt > 0) {
+          final JsonSchemaObject object = queue.removeFirst();
+          list.add(object);
+          if (object.getAllOf() != null) queue.addAll(object.getAllOf());
+          if (object.getAnyOf() != null) queue.addAll(object.getAnyOf());
+          if (object.getOneOf() != null) queue.addAll(object.getOneOf());
+          --cnt;
+        }
 
-        List<JsonSchemaObject> list = new ArrayList<>();
-        if (schema.getAllOf() != null) list.addAll(schema.getAllOf());
-        if (schema.getAnyOf() != null) list.addAll(schema.getAnyOf());
-        if (schema.getOneOf() != null) list.addAll(schema.getOneOf());
-        for (JsonSchemaObject schemaObject : list) {
-          processDefinitionAddress(schemaObject, myShortPropertyName);
+        for (JsonSchemaObject object : list) {
+          processDefinitionAddress(object, myShortPropertyName);
         }
       }
     };

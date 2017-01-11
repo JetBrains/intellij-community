@@ -68,7 +68,7 @@ public class JsonSchemaWalker {
 
   public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
     final String[] chain = JsonSchemaExportedDefinitions.normalizeId(nameInSchema).replace("\\", "/").split("/");
-    final List<Step> steps = Arrays.stream(chain).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
+    final List<Step> steps = Arrays.stream(chain).filter(s -> !s.isEmpty()).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
       .collect(Collectors.toList());
     return Pair.create(steps, chain[chain.length - 1]);
   }
