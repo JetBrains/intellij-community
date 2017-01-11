@@ -40,6 +40,14 @@ class IdeaCommunityBuilder {
     BuildTasks.create(buildContext).compileProjectAndTests(["jps-builders"])
   }
 
+  void buildIntelliJCore() {
+    buildContext.projectBuilder.targetFolder = buildContext.options.outputRootPath
+    BuildTasks.create(buildContext).compileModules(binding["analysisApiModules"] + binding["analysisImplModules"])
+
+    def layouts = binding["includeFile"]("$buildContext.paths.communityHome/build/scripts/layouts.gant")
+    layoutIntelliJCore(layouts)
+  }
+
   void buildDistJars() {
     BuildTasks.create(buildContext).buildDistributions()
     layoutAdditionalArtifacts()
@@ -58,6 +66,17 @@ class IdeaCommunityBuilder {
 
   void layoutAdditionalArtifacts(boolean buildJps = false) {
     def layouts = binding["includeFile"]("$buildContext.paths.communityHome/build/scripts/layouts.gant")
+    layoutIntelliJCore(layouts)
+    if (buildJps) {
+      buildContext.messages.block("Build standalone JPS") {
+        String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
+        layouts.layoutJps(buildContext.paths.communityHome, jpsArtifactDir, buildContext.fullBuildNumber, {})
+        buildContext.notifyArtifactBuilt(jpsArtifactDir)
+      }
+    }
+  }
+
+  private void layoutIntelliJCore(layouts) {
     buildContext.messages.block("Build intellij-core") {
       String coreArtifactDir = "$buildContext.paths.artifacts/core"
       buildContext.ant.mkdir(dir: coreArtifactDir)
@@ -69,13 +88,6 @@ class IdeaCommunityBuilder {
         fileset(dir: coreArtifactDir)
       }
       buildContext.notifyArtifactBuilt(intellijCoreZip)
-    }
-    if (buildJps) {
-      buildContext.messages.block("Build standalone JPS") {
-        String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
-        layouts.layoutJps(buildContext.paths.communityHome, jpsArtifactDir, buildContext.fullBuildNumber, {})
-        buildContext.notifyArtifactBuilt(jpsArtifactDir)
-      }
     }
   }
 }

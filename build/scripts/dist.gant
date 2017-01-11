@@ -48,6 +48,12 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
   new IdeaCommunityBuilder(home, binding, options).buildDistJars()
 }
 
+target('build-intellij-core' : 'Build intellij-core.zip') {
+  def options = new BuildOptions()
+  options.outputRootPath = out
+  new IdeaCommunityBuilder(home, binding, options).buildIntelliJCore()
+}
+
 target('update-from-sources': 'Update locally installed distribution from compiled classes') {
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
