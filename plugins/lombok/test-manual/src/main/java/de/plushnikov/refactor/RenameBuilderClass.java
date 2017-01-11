@@ -2,7 +2,7 @@ package de.plushnikov.refactor;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Builder;
+import lombok.Builder;
 
 @Builder
 @Getter

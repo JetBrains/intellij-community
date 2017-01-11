@@ -1,6 +1,6 @@
 package de.plushnikov.builder;
 
-import lombok.experimental.Builder;
+import lombok.Builder;
 
 @Builder
 public class BuilderExperimentalExample {

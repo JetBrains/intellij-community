@@ -1,6 +1,6 @@
 package de.plushnikov.refactoringbug;
 
-import lombok.Delegate;
+import lombok.experimental.Delegate;
 
 public class SomeDelegate {
   @Delegate

@@ -1,7 +1,7 @@
 package de.plushnikov.builder;
 
 import lombok.Data;
-import lombok.experimental.Builder;
+import lombok.Builder;
 
 @Data
 public class BuilderGeneric<T extends Number> {

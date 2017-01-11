@@ -2,7 +2,7 @@ package de.plushnikov.delegate;
 
 public class DelegateWithException implements Callable<Integer> {
 
-  @lombok.Delegate
+  @lombok.experimental.Delegate
   private final Callable<Integer> delegated;
 
   public DelegateWithException(Callable<Integer> delegated) {

@@ -1,6 +1,6 @@
 package de.plushnikov.delegate;
 
-import lombok.Delegate;
+import lombok.experimental.Delegate;
 
 import java.util.ArrayList;
 

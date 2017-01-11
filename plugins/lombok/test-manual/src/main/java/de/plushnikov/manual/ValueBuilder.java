@@ -1,7 +1,7 @@
 package de.plushnikov.manual;
 
 import lombok.Value;
-import lombok.experimental.Builder;
+import lombok.Builder;
 
 @Value
 @Builder

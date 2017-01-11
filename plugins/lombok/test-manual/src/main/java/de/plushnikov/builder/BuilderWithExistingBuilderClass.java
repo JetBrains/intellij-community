@@ -1,7 +1,7 @@
 package de.plushnikov.builder;
 
 class BuilderWithExistingBuilderClass {
-  @lombok.experimental.Builder
+  @lombok.Builder
   public static BuilderWithExistingBuilderClass staticMethod(Integer arg1, boolean arg2, String arg3) {
     return null;
   }

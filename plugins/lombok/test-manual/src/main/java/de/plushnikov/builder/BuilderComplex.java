@@ -1,6 +1,6 @@
 package de.plushnikov.builder;
 
-import lombok.experimental.Builder;
+import lombok.Builder;
 
 public class BuilderComplex {
   @Builder(buildMethodName = "execute")
