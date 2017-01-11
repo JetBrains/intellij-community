@@ -84,9 +84,7 @@ public class StructMember {
       in.discard(length);
     }
     else {
-      byte[] data = in.read(length);
-      attribute.setInfo(data);
-      attribute.initContent(pool);
+      attribute.initContent(in, pool);
     }
     return attribute;
   }

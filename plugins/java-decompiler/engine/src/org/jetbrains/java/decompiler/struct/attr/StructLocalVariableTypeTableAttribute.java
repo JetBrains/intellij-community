@@ -37,9 +37,7 @@ public class StructLocalVariableTypeTableAttribute extends StructGeneralAttribut
   private Map<Integer, String> mapVarSignatures = Collections.emptyMap();
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputFullStream data = stream();
-
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int len = data.readUnsignedShort();
     if (len > 0) {
       mapVarSignatures = new HashMap<>(len);
