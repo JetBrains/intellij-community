@@ -227,6 +227,10 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   }
 
   protected abstract void setText(@NotNull String text);
+  
+  public void updateFonts(@NotNull Project project) {
+    
+  }
 
   public void setEmptyText(@NotNull Project project) {
     if (StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
