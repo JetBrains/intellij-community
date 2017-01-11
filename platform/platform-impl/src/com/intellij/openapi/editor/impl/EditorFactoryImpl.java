@@ -27,9 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -286,7 +284,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     return myEditorEventMulticaster;
   }
 
-  private static class MyTypedHandler implements TypedActionHandler {
+  private static class MyTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
     private MyTypedHandler(TypedActionHandler delegate) {
@@ -302,6 +300,11 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
       finally {
         editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null);
       }
+    }
+
+    @Override
+    public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+      if (myDelegate instanceof TypedActionHandlerEx) ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
     }
   }
 }
