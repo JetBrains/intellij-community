@@ -93,6 +93,10 @@ public class StudyProjectGenerator {
       Messages.showWarningDialog("Some problems occurred while creating the course", "Error in Course Creation");
       return;
     }
+    else if (course.isAdaptive() && course.getLessons().isEmpty()) {
+      Messages.showWarningDialog("There is no recommended tasks for this adaptive course", "Error in Course Creation");
+      return;
+    }
     final File courseDirectory = StudyUtils.getCourseDirectory(course);
     StudyTaskManager.getInstance(project).setCourse(course);
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -135,7 +139,7 @@ public class StudyProjectGenerator {
       ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
       return execCancelable(() -> {
         final Course course = EduStepicConnector.getCourse(project, mySelectedCourseInfo);
-        if (course != null) {
+        if (StudyUtils.isCourseValid(course)) {
           flushCourse(course);
           course.initCourse(false);
         }
