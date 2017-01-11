@@ -87,7 +87,7 @@ public class InstancesWindow extends DialogWrapper {
   private final DebugProcessImpl myDebugProcess;
   private final InstancesProvider myInstancesProvider;
   private final String myClassName;
-  private MyInstancesView myInstancesView;
+  private final MyInstancesView myInstancesView;
 
   public InstancesWindow(@NotNull XDebugSession session,
                          @NotNull InstancesProvider provider,
@@ -178,25 +178,25 @@ public class InstancesWindow extends DialogWrapper {
       super(new BorderLayout(0, JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP)));
 
       Disposer.register(InstancesWindow.this.myDisposable, this);
-      XValueMarkers<?, ?> markers = getValueMarkers(session);
+      final XValueMarkers<?, ?> markers = getValueMarkers(session);
       if (markers != null) {
         final MyActionListener listener = new MyActionListener(markers);
         ActionManager.getInstance().addAnActionListener(listener, InstancesWindow.this.myDisposable);
       }
       session.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
-      JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
+      final JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
 
       myFilterConditionEditor = new ExpressionEditorWithHistory(myProject, myClassName,
                                                                 editorsProvider, InstancesWindow.this.myDisposable);
 
       myFilterButton.setBorder(BorderFactory.createEmptyBorder());
-      Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
+      final Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
       filteringButtonSize.width = JBUI.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
                                   myFilterButton.getPreferredSize().width;
       myFilterButton.setPreferredSize(filteringButtonSize);
 
-      JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
-      JBLabel sideEffectsWarning = new JBLabel("Warning: filtering may have side effects", SwingConstants.RIGHT);
+      final JBPanel filteringPane = new JBPanel(new BorderLayout(JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP), 0));
+      final JBLabel sideEffectsWarning = new JBLabel("Warning: filtering may have side effects", SwingConstants.RIGHT);
       sideEffectsWarning.setBorder(JBUI.Borders.empty(1, 0, 0, 0));
       sideEffectsWarning.setComponentStyle(UIUtil.ComponentStyle.SMALL);
       sideEffectsWarning.setFontColor(UIUtil.FontColor.BRIGHTER);
@@ -211,7 +211,7 @@ public class InstancesWindow extends DialogWrapper {
       myInstancesTree = new InstancesTree(myProject, editorsProvider, markers, this::updateInstances);
 
       myFilterButton.addActionListener(e -> {
-        String expression = myFilterConditionEditor.getExpression().getExpression();
+        final String expression = myFilterConditionEditor.getExpression().getExpression();
         if (!expression.isEmpty()) {
           myFilterConditionEditor.saveTextInHistory();
         }
@@ -221,7 +221,7 @@ public class InstancesWindow extends DialogWrapper {
       });
 
 
-      StackFrameList list = new StackFrameList(myProject,
+      final StackFrameList list = new StackFrameList(myProject,
                                                Collections.emptyList(),
                                                GlobalSearchScope.allScope(myProject));
 
@@ -234,13 +234,13 @@ public class InstancesWindow extends DialogWrapper {
         }
       }.installOn(list);
 
-      InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(session,
+      final InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(session,
                                                                                             myInstancesTree, list, myClassName);
 
       add(filteringPane, BorderLayout.NORTH);
       add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
 
-      JComponent focusedComponent = myFilterConditionEditor.getEditorComponent();
+      final JComponent focusedComponent = myFilterConditionEditor.getEditorComponent();
       UiNotifyConnector.doWhenFirstShown(focusedComponent, () ->
         IdeFocusManager.findInstanceByComponent(focusedComponent)
           .requestFocus(focusedComponent, true));
@@ -264,12 +264,12 @@ public class InstancesWindow extends DialogWrapper {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           myIsAndroidVM = AndroidUtil.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine());
-          int limit = myIsAndroidVM
-                      ? AndroidUtil.ANDROID_INSTANCES_LIMIT
-                      : DEFAULT_INSTANCES_LIMIT;
+          final int limit = myIsAndroidVM
+                            ? AndroidUtil.ANDROID_INSTANCES_LIMIT
+                            : DEFAULT_INSTANCES_LIMIT;
           List<ObjectReference> instances = myInstancesProvider.getInstances(limit + 1);
 
-          EvaluationContextImpl evaluationContext = myDebugProcess
+          final EvaluationContextImpl evaluationContext = myDebugProcess
             .getDebuggerContext().createEvaluationContext();
 
           if (instances.size() > limit) {
@@ -336,9 +336,9 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == myInstancesView.myInstancesTree &&
+        if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == myInstancesTree &&
             (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
-          final XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);
+          XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);
 
           if (selectedNode != null) {
             TreeNode currentNode = selectedNode;
