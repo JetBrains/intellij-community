@@ -17,6 +17,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +30,12 @@ import java.util.Set;
  */
 public interface JsonSchemaServiceEx extends JsonSchemaService {
 
+  void visitSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Processor<JsonSchemaObject> consumer);
+
   boolean checkFileForId(@NotNull String id, @NotNull VirtualFile file);
 
   @Nullable
-  VirtualFile getSchemaFileById(@NotNull String id);
+  VirtualFile getSchemaFileById(@NotNull String id, VirtualFile referent);
 
   @Nullable
   Collection<Pair<VirtualFile, String>> getSchemaFilesByFile(@NotNull final VirtualFile file);

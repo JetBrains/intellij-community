@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Irina.Chernushina on 3/28/2016.
@@ -290,7 +291,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
         addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/refToDefinitionInFileSchema.json", false, Collections.emptyList()));
-        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
       }
 
       @Override
@@ -307,6 +308,62 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(resolve);
         Assert.assertEquals("definitionsSchema.json", resolve.getContainingFile().getName());
         Assert.assertEquals("\"findMe\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testFindRefToOtherFile() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/refToOtherFileSchema.json", false, Collections.emptyList()));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/refToOtherFileSchema.json", "/definitionsSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("definitionsSchema.json", resolve.getContainingFile().getName());
+      }
+    });
+  }
+
+  public void testNavigateToPropertyDefinitionInPackageJsonSchema() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("package.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/packageJsonSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "/package.json", "/packageJsonSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        final String text = myFile.getText();
+        final int indexOf = text.indexOf("dependencies");
+        assertTrue(indexOf > 0);
+        final PsiReference referenceAt = myFile.findReferenceAt(indexOf);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("packageJsonSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"dependencies\"", resolve.getText());
       }
     });
   }

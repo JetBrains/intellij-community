@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -159,6 +161,16 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @Override
   public void iterateSchemaObjects(VirtualFile file, @NotNull Processor<JsonSchemaObject> consumer) {
     final CodeInsightProviders wrapper = getWrapper(file);
+    if (wrapper == null) return;
+    wrapper.iterateSchemaObjects(consumer);
+  }
+
+  @Override
+  public void visitSchemaObject(@NotNull final VirtualFile schemaFile, @NotNull Processor<JsonSchemaObject> consumer) {
+    final JsonSchemaObjectCodeInsightWrapper wrapper;
+    synchronized (myLock) {
+      wrapper = myWrappers.get(schemaFile);
+    }
     if (wrapper == null) return;
     wrapper.iterateSchemaObjects(consumer);
   }
@@ -366,8 +378,16 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
 
   @Override
   @Nullable
-  public VirtualFile getSchemaFileById(@NotNull String id) {
-    return myDefinitions.getSchemaFileById(id);
+  public VirtualFile getSchemaFileById(@NotNull String id, @Nullable VirtualFile referent) {
+    final VirtualFile schemaFile = myDefinitions.getSchemaFileById(id);
+    if (schemaFile != null) return schemaFile;
+    final String normalizedId = JsonSchemaExportedDefinitions.normalizeId(id);
+    if (FileUtil.isAbsolute(normalizedId) || referent == null) return VfsUtil.findFileByIoFile(new File(normalizedId), false);
+    VirtualFile dir = referent.isDirectory() ? referent : referent.getParent();
+    if (dir != null && dir.isValid()) {
+      return VfsUtil.findRelativeFile(dir, normalizedId.replace("\\", "/").split("/"));
+    }
+    return null;
   }
 
   @Override

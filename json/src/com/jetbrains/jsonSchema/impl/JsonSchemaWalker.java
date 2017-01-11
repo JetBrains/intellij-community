@@ -13,10 +13,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 10/22/2015.
@@ -48,7 +46,7 @@ public class JsonSchemaWalker {
 
   public static void findSchemasForAnnotation(@NotNull final PsiElement element, @NotNull final CompletionSchemesConsumer consumer,
                                               @NotNull final JsonSchemaObject rootSchema) {
-    final List<Step> position = findPosition(element, false);
+    final List<Step> position = findPosition(element, false, true);
     if (position == null || position.isEmpty()) return;
 
     extractSchemaVariants(consumer, rootSchema, false, position);
@@ -59,13 +57,20 @@ public class JsonSchemaWalker {
     final PsiElement checkable = goUpToCheckable(element);
     if (checkable == null) return;
     final boolean isName = isName(checkable);
-    final List<Step> position = findPosition(checkable, isName);
+    final List<Step> position = findPosition(checkable, isName, !isName);
     if (position == null || position.isEmpty()) {
       if (isName) consumer.consume(true, rootSchema);
       return;
     }
 
     extractSchemaVariants(consumer, rootSchema, isName, position);
+  }
+
+  public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
+    final String[] chain = JsonSchemaExportedDefinitions.normalizeId(nameInSchema).replace("\\", "/").split("/");
+    final List<Step> steps = Arrays.stream(chain).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
+      .collect(Collectors.toList());
+    return Pair.create(steps, chain[chain.length - 1]);
   }
 
   public static void extractSchemaVariants(@NotNull CompletionSchemesConsumer consumer,
@@ -82,7 +87,8 @@ public class JsonSchemaWalker {
         consumer.consume(isName, schema);
         continue;
       }
-      if (step.getTransition() != null && !step.getTransition().possibleFromState(step.getType())) continue;
+      if (step.getTransition() != null && !StateType._unknown.equals(step.getType())
+          && !step.getTransition().possibleFromState(step.getType())) continue;
 
       final Condition<JsonSchemaObject> byTypeFilter = object -> byStateType(step.getType(), object);
       // not??
@@ -112,7 +118,7 @@ public class JsonSchemaWalker {
         for (JsonSchemaObject object : list) {
           final TransitionResultConsumer transitionResultConsumer = new TransitionResultConsumer();
           step.getTransition().step(object, transitionResultConsumer);
-          // nothing or anything does not contribute to competion
+          // nothing or anything does not contribute to completion
           if (transitionResultConsumer.getSchema() != null) {
             if ((pair.getSecond() + 1) >= position.size()) consumer.consume(isName, transitionResultConsumer.getSchema());
             else queue.add(Pair.create(transitionResultConsumer.getSchema(), pair.getSecond() + 1));
@@ -123,6 +129,7 @@ public class JsonSchemaWalker {
   }
 
   private static boolean byStateType(@NotNull final StateType type, @NotNull final JsonSchemaObject schema) {
+    if (StateType._unknown.equals(type)) return true;
     final JsonSchemaType requiredType = type.getCorrespondingJsonType();
     if (requiredType == null) return true;
     if (schema.getType() != null) {
@@ -159,7 +166,7 @@ public class JsonSchemaWalker {
     return null;
   }
 
-  public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName) {
+  public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition) {
     final List<Step> steps = new ArrayList<>();
     if (!(element.getParent() instanceof JsonObject) && !isName) {
       steps.add(new Step(StateType._value, null));
@@ -186,12 +193,12 @@ public class JsonSchemaWalker {
         current = current.getParent();
         if (!(current instanceof JsonObject)) return null;//incorrect syntax?
         // if either value or not first in the chain - needed for completion variant
-        if (position != element || !isName) {
+        if (position != element || forceLastTransition) {
           steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
         }
       } else if (current instanceof JsonObject && position instanceof JsonProperty) {
         // if either value or not first in the chain - needed for completion variant
-        if (position != element || !isName) {
+        if (position != element || forceLastTransition) {
           final String propertyName = ((JsonProperty)position).getName();
           steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
         }
@@ -225,10 +232,10 @@ public class JsonSchemaWalker {
     }
   }
 
-  private static class PropertyTransition implements Transition {
+  public static class PropertyTransition implements Transition {
     @NotNull private final String myName;
 
-    private PropertyTransition(@NotNull String name) {
+    protected PropertyTransition(@NotNull String name) {
       myName = name;
     }
 
@@ -258,6 +265,11 @@ public class JsonSchemaWalker {
           }
         }
       }
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
     }
   }
 
@@ -297,8 +309,8 @@ public class JsonSchemaWalker {
     void step(@NotNull JsonSchemaObject parent, @NotNull TransitionResultConsumer resultConsumer);
   }
 
-  private enum StateType {
-    _object(JsonSchemaType._object), _array(JsonSchemaType._array), _value(null);
+  public enum StateType {
+    _object(JsonSchemaType._object), _array(JsonSchemaType._array), _value(null), _unknown(null);
 
     @Nullable
     private final JsonSchemaType myCorrespondingJsonType;

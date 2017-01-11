@@ -139,7 +139,8 @@ public class JsonSchemaExportedDefinitions {
   }
 
   @NotNull
-  public static String normalizeId(@NotNull final String id) {
-    return id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+  public static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
   }
 }
