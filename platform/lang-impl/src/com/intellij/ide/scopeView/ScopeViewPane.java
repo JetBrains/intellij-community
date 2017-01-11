@@ -68,9 +68,13 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     myDependencyValidationManager = dependencyValidationManager;
     myNamedScopeManager = namedScopeManager;
     myScopeListener = new NamedScopesHolder.ScopeListener() {
-      Alarm refreshProjectViewAlarm = new Alarm();
+      final Alarm refreshProjectViewAlarm = new Alarm(myProject);
       @Override
       public void scopesChanged() {
+        if (refreshProjectViewAlarm.isDisposed()) {
+          return;
+        }
+
         // amortize batch scope changes
         refreshProjectViewAlarm.cancelAllRequests();
         refreshProjectViewAlarm.addRequest(() -> {
