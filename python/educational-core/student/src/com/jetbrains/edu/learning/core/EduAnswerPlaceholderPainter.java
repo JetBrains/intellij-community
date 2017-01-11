@@ -13,7 +13,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.DocumentUtil;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,36 +35,26 @@ public class EduAnswerPlaceholderPainter {
     final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
                                                              EffectType.BOXED, Font.PLAIN);
     textAttributes.setEffectColor(color);
-    if (placeholder.isActive()) {
-      drawAnswerPlaceholder(editor, placeholder, textAttributes, PLACEHOLDERS_LAYER);
-    }
-    else if (!placeholder.getUseLength()) {
-      int offset = placeholder.getOffset();
-      drawAnswerPlaceholderFromPrevStep(editor, offset, offset + placeholder.getVisibleLength(placeholder.getActiveSubtaskIndex()));
-    }
-  }
-
-  public static void drawAnswerPlaceholder(@NotNull Editor editor,
-                                           @NotNull AnswerPlaceholder placeholder,
-                                           @Nullable TextAttributes textAttributes,
-                                           int placeholdersLayer) {
     int startOffset = placeholder.getOffset();
     if (startOffset == -1) {
       return;
     }
-    final int length = placeholder.getRealLength();
+    final int length =
+      placeholder.isActive() ? placeholder.getRealLength() : placeholder.getVisibleLength(placeholder.getActiveSubtaskIndex());
     int delta = 0;
-    AnswerPlaceholderSubtaskInfo info = placeholder.getActiveSubtaskInfo();
-    if (info != null && info.isNeedInsertText()) {
-      Document document = editor.getDocument();
-      int nonSpaceCharOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, startOffset, startOffset + length);
-      if (nonSpaceCharOffset != startOffset) {
-        delta = startOffset - nonSpaceCharOffset;
-        startOffset = nonSpaceCharOffset;
-      }
+    Document document = editor.getDocument();
+    int nonSpaceCharOffset = DocumentUtil.getFirstNonSpaceCharOffset(document, startOffset, startOffset + length);
+    if (nonSpaceCharOffset != startOffset) {
+      delta = startOffset - nonSpaceCharOffset;
+      startOffset = nonSpaceCharOffset;
     }
     final int endOffset = startOffset + length + delta;
-    drawAnswerPlaceholder(editor, startOffset, endOffset, textAttributes, placeholdersLayer);
+    if (placeholder.isActive()) {
+      drawAnswerPlaceholder(editor, startOffset, endOffset, textAttributes, PLACEHOLDERS_LAYER);
+    }
+    else if (!placeholder.getUseLength()) {
+      drawAnswerPlaceholderFromPrevStep(editor, startOffset, endOffset);
+    }
   }
 
   public static void drawAnswerPlaceholder(@NotNull Editor editor,
