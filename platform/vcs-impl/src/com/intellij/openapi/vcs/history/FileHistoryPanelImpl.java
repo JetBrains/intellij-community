@@ -65,6 +65,7 @@ import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
 import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -778,6 +779,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         setForeground(table.getForeground());
       }
       if (value != null) append(value.toString());
+      SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
     }
   }
 
@@ -852,6 +854,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
           if (value instanceof String) {
             String message = (String)value;
             myIssueLinkRenderer.appendTextWithLinks(message);
+            SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
           }
         }
       };
