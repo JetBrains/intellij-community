@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +52,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   protected Map<String, PsiElement> loadTest(int expected_marks) {
     Map<String, PsiElement> marks = loadTest();
-    Assert.assertEquals("Test data sanity", marks.size(), expected_marks);
+    assertEquals("Test data sanity", marks.size(), expected_marks);
     return marks;
   }
 
@@ -405,14 +404,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   public void testNoArgsException() {
     Map<String, PsiElement> marks = loadTest(1);
-    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("<no parameters>", new String[0], new String[]{"<no parameters>"});
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("<no parameters>", ArrayUtil.EMPTY_STRING_ARRAY, new String[]{"<no parameters>"});
   }
 
   public void testMultilineStringDefault() {
-    Map<String, PsiElement> marks = loadTest(1);
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("length=12, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'",
-                                                          new String[]{"allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'"},
-                                                          new String[0]);
+    final int offset = loadTest(1).get("<arg2>").getTextOffset();
+    feignCtrlP(offset).check("length=12, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'",
+                             new String[]{"allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'"},
+                             ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   /**
@@ -427,7 +426,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     final PyArgumentList parameterOwner = handler.findElementForParameterInfo(collector);
     collector.setParameterOwner(parameterOwner); // finds arglist, sets items to show
     if (collector.getParameterOwner() != null) {
-      Assert.assertEquals("Collected one analysis result", 1, collector.myItems.length);
+      assertEquals("Collected one analysis result", 1, collector.myItems.length);
       handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector); // moves offset to correct parameter
       handler.updateUI((PyCallExpression.PyArgumentsMapping)collector.getItemsToShow()[0], collector); // sets hint text and flags
     }
@@ -501,7 +500,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     @Override
     public void setParameterOwner(PsiElement o) {
-      Assert.assertTrue("Found element is a python arglist", o == null || o instanceof PyArgumentList);
+      assertTrue("Found element is a python arglist", o == null || o instanceof PyArgumentList);
       myParamOwner = (PyArgumentList)o;
     }
 
@@ -586,7 +585,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
      * @param disabled expected disabled substrings of hint
      */
     public void check(String text, String[] highlighted, String[] disabled) {
-      Assert.assertEquals("Signature", text, StringUtil.join(myTexts, ""));
+      assertEquals("Signature", text, StringUtil.join(myTexts, ""));
       StringBuilder wrongs = new StringBuilder();
       // see if highlighted matches
       Set<String> highlightSet = new HashSet<>();
@@ -615,7 +614,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         }
       }
       //
-      if (wrongs.length() > 0) Assert.fail(wrongs.toString());
+      if (wrongs.length() > 0) fail(wrongs.toString());
     }
 
     public void check(String text, String[] highlighted) {
@@ -623,7 +622,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     public void assertNotFound() {
-      Assert.assertNull(myParamOwner);
+      assertNull(myParamOwner);
     }
   }
 }
