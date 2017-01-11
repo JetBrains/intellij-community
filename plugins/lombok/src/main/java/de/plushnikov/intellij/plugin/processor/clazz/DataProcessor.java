@@ -50,16 +50,12 @@ public class DataProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    validateCallSuperParam(psiAnnotation, psiClass, builder, "equals/hashCode");
-
-    return validateAnnotationOnRightType(psiClass, builder);
-  }
-
-  private void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, String generatedMethodName) {
     final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, EqualsAndHashCode.class);
     if (null == equalsAndHashCodeAnnotation) {
-      equalsAndHashCodeProcessor.validateCallSuperParam(psiAnnotation, psiClass, builder, generatedMethodName);
+      equalsAndHashCodeProcessor.validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
     }
+
+    return validateAnnotationOnRightType(psiClass, builder);
   }
 
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {

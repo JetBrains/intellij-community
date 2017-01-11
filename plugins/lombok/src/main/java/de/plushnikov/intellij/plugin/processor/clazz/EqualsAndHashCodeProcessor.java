@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
@@ -68,21 +69,31 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
     validateOfParam(psiClass, builder, psiAnnotation, ofProperty);
 
-    validateCallSuperParam(psiAnnotation, psiClass, builder, "equals/hashCode");
+    validateCallSuperParamIntern(psiAnnotation, psiClass, builder);
     validateCallSuperParamForObject(psiAnnotation, psiClass, builder);
 
     return result;
   }
 
-  void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, String generatedMethodName) {
+  private void validateCallSuperParamIntern(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    validateCallSuperParam(psiAnnotation, psiClass, builder,
+      PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
+      PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"));
+  }
+
+  void validateCallSuperParamExtern(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    validateCallSuperParam(psiAnnotation, psiClass, builder,
+      PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper = true"));
+  }
+
+  private void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, LocalQuickFix... quickFixes) {
     final Boolean declaredBooleanAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
     if (null == declaredBooleanAnnotationValue) {
       final String configProperty = ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
       if (!"SKIP".equalsIgnoreCase(configProperty) && PsiClassUtil.hasSuperClass(psiClass) && !hasOneOfMethodsDefined(psiClass)) {
-        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
+        builder.addWarning("Generating equals/hashCode implementation but without a call to superclass, " +
             "even though this class does not extend java.lang.Object. If this is intentional, add '(callSuper=false)' to your type.",
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
+          quickFixes);
       }
     }
   }

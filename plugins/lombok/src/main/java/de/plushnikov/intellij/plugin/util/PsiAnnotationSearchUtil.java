@@ -99,7 +99,7 @@ public class PsiAnnotationSearchUtil {
   }
 
   @NotNull
-  static String getSimpleNameOf(@NotNull PsiAnnotation psiAnnotation) {
+  public static String getSimpleNameOf(@NotNull PsiAnnotation psiAnnotation) {
     PsiJavaCodeReferenceElement referenceElement = psiAnnotation.getNameReferenceElement();
     return StringUtil.notNullize(null == referenceElement ? null : referenceElement.getReferenceName());
   }
