@@ -58,10 +58,9 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     if (project == null || view == null) {
-      presentation.setEnabledAndVisible(false);
       return;
     }
-    if (!StudyUtils.isStudyProject(project)) {
+    if (!StudyUtils.isStudyProject(project) || !CCUtils.isCourseCreator(project)) {
       return;
     }
     final PsiDirectory[] directories = view.getDirectories();
