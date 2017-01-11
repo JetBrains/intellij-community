@@ -372,6 +372,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
       }
       if (component != null) {
         if (configurable.getTabName() != null) {
+          for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
+            if (configurable.getTabName().equals(myTabbedPane.getTitleAt(i))) {
+              myTabbedPane.removeTabAt(i);
+            }
+          }
           myTabbedPane.addTab(configurable.getTabName(), component);
         }
         else {
