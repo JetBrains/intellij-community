@@ -101,16 +101,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
+  private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
 
   private static boolean ourTypedHandlerInitialized;
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private final StringBuilder myUserInputText = new StringBuilder(); // guarded by LOCK
   private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
 
   private static synchronized void initTypedHandler() {
     if (ourTypedHandlerInitialized) return;
-    final EditorActionManager actionManager = EditorActionManager.getInstance();
-    final TypedAction typedAction = actionManager.getTypedAction();
+    TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
     typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
     ourTypedHandlerInitialized = true;
   }
@@ -521,6 +520,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   void waitAllRequests() {
     myFlushAlarm.flush();
     myFlushUserInputAlarm.flush();
+    myFlushAlarm.flush();
+    myFlushUserInputAlarm.flush();
   }
   
   protected void disposeEditor() {
@@ -564,7 +565,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myDeferredBuffer.print(text, contentType, info);
 
       if (contentType == ConsoleViewContentType.USER_INPUT) {
-        sendUserInput(text);
         requestFlushImmediately();
       }
       if (myEditor != null) {
@@ -574,17 +574,29 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private void sendUserInput(@NotNull String text) {
-    if (myState.isRunning()) {
-      myUserInputText.append(text);
-      if (NEW_LINE_MATCHER.indexIn(text) >= 0) {
-        String textToSend = myUserInputText.toString();
-        myUserInputText.setLength(0);
+  private void sendUserInput(@NotNull CharSequence typedText) {
+    if (myState.isRunning() && NEW_LINE_MATCHER.indexIn(typedText) >= 0) {
+      StringBuilder textToSend = new StringBuilder();
+      // compute text input from the console contents:
+      // all range markers beginning from the caret offset backwards, marked as user input and not marked as already sent
+      for (RangeMarker marker = findTokenMarker(myEditor.getCaretModel().getOffset());
+           marker != null;
+           marker = ((RangeMarkerImpl)marker).findRangeMarkerBefore()) {
+        ConsoleViewContentType tokenType = getTokenType(marker);
+        if (tokenType != null) {
+          if (tokenType != ConsoleViewContentType.USER_INPUT || marker.getUserData(USER_INPUT_SENT) == Boolean.TRUE) {
+            break;
+          }
+          marker.putUserData(USER_INPUT_SENT, true);
+          textToSend.insert(0, marker.getDocument().getText(TextRange.create(marker)));
+        }
+      }
+      if (textToSend.length() != 0) {
         myFlushUserInputAlarm.addRequest(() -> {
           if (myState.isRunning()) {
             try {
               // this may block forever, see IDEA-54340
-              myState.sendUserInput(textToSend);
+              myState.sendUserInput(textToSend.toString());
             }
             catch (IOException ignored) {
             }
@@ -713,6 +725,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (shouldStickToEnd) {
       scrollToEnd();
     }
+    sendUserInput(addedText);
   }
 
   private void createTokenRangeMarker(@NotNull Document document,
@@ -1111,7 +1124,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return marker[0];
   }
 
-  private static ConsoleViewContentType getTokenType(RangeMarker m) {
+  private static ConsoleViewContentType getTokenType(@Nullable RangeMarker m) {
     return m == null ? null : m.getUserData(CONTENT_TYPE);
   }
 
@@ -1498,6 +1511,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     moveScrollRemoveSelection(editor, newEndOffset);
+    sendUserInput(text);
   }
 
   private void replaceUserText(int start, int end, @NotNull String text) {
@@ -1506,8 +1520,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = editor.getDocument();
 
     document.replaceString(start, end, text);
+
     int offset = start + text.length();
     moveScrollRemoveSelection(editor, offset);
+    sendUserInput(text);
   }
 
   private static void moveScrollRemoveSelection(@NotNull Editor editor, int offset) {

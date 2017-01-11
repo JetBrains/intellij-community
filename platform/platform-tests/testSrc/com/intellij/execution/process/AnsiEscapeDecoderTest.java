@@ -100,12 +100,13 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     };
   }
 
-  public void testPerformance() throws IOException {
-    byte[] buffer = new byte[100000];
+  @NotNull
+  public static Process createTestProcess() {
+    byte[] buffer = new byte[1000];
     BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(buffer);
     BufferExposingByteArrayInputStream inputStream = new BufferExposingByteArrayInputStream(buffer);
     AtomicBoolean finished = new AtomicBoolean();
-    Process testProcess = new Process() {
+    return new Process() {
       @Override
       public OutputStream getOutputStream() {
         return outputStream;
@@ -137,6 +138,10 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
         finished.set(true);
       }
     };
+  }
+
+  public void testPerformance() throws IOException {
+    Process testProcess = createTestProcess();
 
     withProcessHandlerFrom(testProcess, handler -> {
       PlatformTestUtil.startPerformanceTest("ansi color", 15000, ()->{
@@ -148,14 +153,14 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     });
   }
 
-  public static void withProcessHandlerFrom(@NotNull Process testProcess, @NotNull Consumer<ProcessHandler> consumer) {
+  public static void withProcessHandlerFrom(@NotNull Process testProcess, @NotNull Consumer<ProcessHandler> actionToTest) {
     KillableColoredProcessHandler handler = new KillableColoredProcessHandler(testProcess, "testProcess");
     handler.setShouldDestroyProcessRecursively(false);
     handler.startNotify();
     handler.notifyTextAvailable("Running stuff...\n", ProcessOutputTypes.STDOUT);
 
     try {
-      consumer.consume(handler);
+      actionToTest.consume(handler);
     }
     finally {
       handler.doDestroyProcess();
