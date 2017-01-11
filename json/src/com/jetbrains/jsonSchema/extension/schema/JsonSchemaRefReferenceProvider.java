@@ -66,11 +66,11 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         schemaFile = JsonSchemaServiceEx.Impl.getEx(getElement().getProject()).getSchemaFileById(splitter.getSchemaId(), schemaFile);
         if (schemaFile == null) return null;
       }
-      if (StringUtil.isEmptyOrSpaces(splitter.getRelativePath())) {
-        return myElement.getManager().findFile(schemaFile);
-      }
 
       final String normalized = JsonSchemaExportedDefinitions.normalizeId(splitter.getRelativePath());
+      if (StringUtil.isEmptyOrSpaces(normalized) || normalized.replace("\\", "/").split("/").length == 0) {
+        return myElement.getManager().findFile(schemaFile);
+      }
       final Pair<List<JsonSchemaWalker.Step>, String> steps = JsonSchemaWalker.buildSteps(normalized);
       return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, normalized, steps.getFirst())
         .resolveInSchemaRecursively();
