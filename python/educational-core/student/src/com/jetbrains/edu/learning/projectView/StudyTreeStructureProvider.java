@@ -8,11 +8,10 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,11 +53,5 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
 
   protected boolean shouldModify(@NotNull final Project project) {
     return StudyUtils.isStudentProject(project);
-  }
-
-  @Nullable
-  @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    return null;
   }
 }
