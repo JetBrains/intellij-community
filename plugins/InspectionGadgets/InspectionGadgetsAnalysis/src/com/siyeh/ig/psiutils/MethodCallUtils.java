@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -119,13 +120,15 @@ public class MethodCallUtils {
 
   public static boolean isCallToStaticMethod(@NotNull PsiMethodCallExpression expression, @NonNls @NotNull String calledOnClassName,
                                              @NonNls @NotNull String methodName, int parameterCount) {
-    if (!methodName.equals(getMethodName(expression)) || expression.getArgumentList().getExpressions().length != parameterCount) {
+    PsiExpression[] args = expression.getArgumentList().getExpressions();
+    if (!methodName.equals(getMethodName(expression)) || args.length < parameterCount) {
       return false;
     }
     PsiMethod method = expression.resolveMethod();
     if (method == null ||
-        !method.getModifierList().hasExplicitModifier(PsiModifier.STATIC) ||
-        method.getParameterList().getParametersCount() != parameterCount) {
+        !method.hasModifierProperty(PsiModifier.STATIC) ||
+        method.getParameterList().getParametersCount() != parameterCount ||
+        !method.isVarArgs() && args.length != parameterCount) {
       return false;
     }
     PsiClass aClass = method.getContainingClass();
@@ -137,6 +140,9 @@ public class MethodCallUtils {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     if (methodNamePattern != null) {
       final String referenceName = methodExpression.getReferenceName();
+      if (referenceName == null) {
+        return false;
+      }
       final Matcher matcher = methodNamePattern.matcher(referenceName);
       if (!matcher.matches()) {
         return false;
@@ -287,6 +293,20 @@ public class MethodCallUtils {
     }
     final PsiMethod targetMethod = expression.resolveMethod();
     return targetMethod != null && MethodSignatureUtil.isSuperMethod(targetMethod, method);
+  }
+
+  /**
+   * Returns true if given method call is a var-arg call
+   *
+   * @param call a call to test
+   * @return true if call is resolved to the var-arg method and var-arg form is actually used
+   */
+  public static boolean isVarArgCall(PsiMethodCallExpression call) {
+    PsiMethod method = call.resolveMethod();
+    if(method == null || !method.isVarArgs()) return false;
+    PsiSubstitutor substitutor = call.resolveMethodGenerics().getSubstitutor();
+    return MethodCallInstruction
+      .isVarArgCall(method, substitutor, call.getArgumentList().getExpressions(), method.getParameterList().getParameters());
   }
 
   public static boolean containsSuperMethodCall(@NotNull PsiMethod method) {
