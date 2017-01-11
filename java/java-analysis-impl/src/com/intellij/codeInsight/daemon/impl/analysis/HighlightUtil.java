@@ -564,6 +564,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithOptionalFix(lType, expression));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapExpressionFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
+      registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;
@@ -625,6 +626,7 @@ public class HighlightUtil extends HighlightUtilBase {
             if (returnType instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType)) {
               QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, returnValue));
             }
+            registerCollectionToArrayFixAction(errorResult, valueType, returnType, returnValue);
           }
         }
       }
@@ -637,6 +639,22 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     return errorResult;
+  }
+
+  private static void registerCollectionToArrayFixAction(@Nullable HighlightInfo info,
+                                                         @Nullable PsiType fromType,
+                                                         @Nullable PsiType toType,
+                                                         @NotNull PsiExpression expression) {
+    if (toType instanceof PsiArrayType) {
+      PsiType arrayComponentType = ((PsiArrayType)toType).getComponentType();
+      if (!(arrayComponentType instanceof PsiPrimitiveType) &&
+          InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
+        if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCollectionToArrayFix(expression, (PsiArrayType)toType));
+        }
+      }
+    }
   }
 
   @NotNull

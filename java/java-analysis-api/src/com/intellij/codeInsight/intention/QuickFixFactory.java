@@ -280,4 +280,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair);
+
+  @NotNull
+  public abstract IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType);
 }

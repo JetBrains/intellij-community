@@ -643,4 +643,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
     return Collections.emptyList();
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

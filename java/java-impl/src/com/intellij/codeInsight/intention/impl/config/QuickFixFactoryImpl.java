@@ -824,4 +824,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
     return hasErrorsExceptUnresolvedImports;
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+    return new ConvertCollectionToArrayFix(collectionExpression, arrayType);
+  }
 }
