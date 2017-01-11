@@ -21,6 +21,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,11 +114,27 @@ public class JdkBundle {
   @Nullable
   static JdkBundle createBoot(boolean adjustToMacBundle) {
     File bootJDK = new File(System.getProperty("java.home")).getParentFile();
+    JdkBundle bundle;
     if (SystemInfo.isMac && adjustToMacBundle) {
       bootJDK = bootJDK.getParentFile().getParentFile();
-      return createBundle(bootJDK, true, false);
+      bundle = createBundle(bootJDK, true, false);
     }
-    return createBundle(bootJDK, "", true, false, true);
+    else {
+      bundle = createBundle(bootJDK, "", true, false, true);
+    }
+    if (bundle != null) {
+      if (isBundledJDK(bundle)) bundle.setBundled(true);
+    }
+    return bundle;
+  }
+
+  @NotNull
+  public static File getBundledJDKAbsoluteLocation() {
+    return new File(PathManager.getHomePath(), SystemInfo.isMac ? "jdk" : "jre");
+  }
+
+  static public boolean isBundledJDK(@NotNull JdkBundle bundle) {
+    return FileUtil.filesEqual(bundle.getAbsoluteLocation(), getBundledJDKAbsoluteLocation());
   }
 
   @NotNull

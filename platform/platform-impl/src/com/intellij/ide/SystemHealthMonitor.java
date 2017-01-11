@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
@@ -61,6 +62,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
+  public static final String LATEST_JDK_RELEASE = "1.8.0u112";
 
   private final PropertiesComponent myProperties;
 
@@ -82,11 +84,15 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       showNotification(new KeyHyperlinkAdapter("unsupported.jvm.ea.message"));
     }
     JdkBundle bundle = JdkBundle.createBoot();
-    if (bundle != null) {
+    if (bundle != null && !bundle.isBundled()) {
       Version version = bundle.getVersion();
       Integer updateNumber = bundle.getUpdateNumber();
       if (version != null && (version.lessThan(1, 8, 0) || (updateNumber != null && updateNumber < 112))) {
-        showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message") {
+        final String bundleVersion = version.toCompactString() + (updateNumber != null ? "u" + updateNumber : "");
+        if (JdkBundle.getBundledJDKAbsoluteLocation().exists() &&
+            (bundle.getBitness() == Bitness.x64 && (SystemInfo.isMacIntel64 || SystemInfo.isWindows || SystemInfo.isLinux)))
+        {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message1") {
                            @Override
                            protected void hyperlinkActivated(HyperlinkEvent e) {
                              String url = e.getDescription();
@@ -100,8 +106,12 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                                BrowserUtil.browse(url);
                              }
                            }
-                         },
-                         version.toCompactString() + (updateNumber != null ? "u" + updateNumber : ""), "1.8.0u112");
+                         }, bundleVersion, LATEST_JDK_RELEASE);
+        }
+        else {
+          showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message2"),
+                           bundleVersion, LATEST_JDK_RELEASE);
+        }
       }
     }
   }
