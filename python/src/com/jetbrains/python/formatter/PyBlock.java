@@ -250,7 +250,7 @@ public class PyBlock implements ASTBlock {
 
     final PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(child.getPsi().getProject()).getCustomSettings(PyCodeStyleSettings.class);
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
+      if ((childType == PyTokenTypes.RBRACKET && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -259,7 +259,7 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
              parentType == PyElementTypes.SET_COMP_EXPRESSION || parentType == PyElementTypes.DICT_COMP_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACE || !hasLineBreaksBeforeInSameParent(child, 1)) {
+      if ((childType == PyTokenTypes.RBRACE && !settings.HANG_CLOSING_BRACKETS) || !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -283,7 +283,7 @@ public class PyBlock implements ASTBlock {
         }
         if (childType == PyTokenTypes.RPAR) {
           childIndent = Indent.getNoneIndent();
-          if (!hasHangingIndent(myNode.getPsi())) {
+          if (!hasHangingIndent(myNode.getPsi()) || settings.HANG_CLOSING_BRACKETS) {
             childAlignment = getAlignmentForChildren();
           }
         }
@@ -320,18 +320,16 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.ARGUMENT_LIST || parentType == PyElementTypes.PARAMETER_LIST) {
-      if (childType == PyTokenTypes.RPAR) {
+      if (childType == PyTokenTypes.RPAR && !settings.HANG_CLOSING_BRACKETS) {
         childIndent = Indent.getNoneIndent();
       }
+      else if (parentType == PyElementTypes.PARAMETER_LIST ||
+               settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS ||
+               argumentMayHaveSameIndentAsFollowingStatementList()) {
+        childIndent = Indent.getContinuationIndent();
+      }
       else {
-        if (parentType == PyElementTypes.PARAMETER_LIST ||
-            settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS || 
-            argumentMayHaveSameIndentAsFollowingStatementList()) {
-          childIndent = Indent.getContinuationIndent();
-        }
-        else {
-          childIndent = Indent.getNormalIndent();
-        }
+        childIndent = Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {

@@ -129,6 +129,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_NEW_LINE_BEFORE_RIGHT_BRACE",
                                 ApplicationBundle.message("wrapping.rbrace.on.new.line"),
                                 PyBundle.message("formatter.dictionary.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "HANG_CLOSING_BRACKETS", PyBundle.message("formatter.hang.closing.brackets"), null);
     }
   }
 

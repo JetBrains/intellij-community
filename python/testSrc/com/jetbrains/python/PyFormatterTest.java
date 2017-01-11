@@ -674,6 +674,31 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-10182
+  public void testHangClosingParenthesisInFromImport() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-10182
+  public void testHangClosingParenthesisInFunctionCall() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-10182  
+  public void testHangClosingParenthesisInFunctionDefinition() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-10182  
+  public void testHangClosingParenthesisInListLiteral() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+  
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
