@@ -66,7 +66,6 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
           final VirtualFile schemaFile = pair.getFirst();
           final List<JsonSchemaWalker.Step> steps = JsonSchemaWalker.findPosition(getElement(), true, true);
           if (steps == null) continue;
-          //steps.add(0, new JsonSchemaWalker.Step(JsonSchemaWalker.StateType._unknown, new JsonSchemaWalker.PropertyTransition("properties")));
           final PsiElement element =
             new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, reference, steps).resolveInSchemaRecursively();
           if (element != null) return element;
@@ -85,8 +84,8 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
         names.add(StringUtil.unquoteString(element.getName()));
         if (!(element.getParent() instanceof JsonObject)) break;
         final PsiElement grand = element.getParent().getParent();
-        if (grand instanceof JsonProperty && ((JsonProperty)grand).getValue() != null &&
-            ((JsonProperty)grand).getValue().equals(element.getParent())) {
+        //noinspection ConstantConditions
+        if (grand instanceof JsonProperty && ((JsonProperty)grand).getValue() != null && ((JsonProperty)grand).getValue().equals(element.getParent())) {
           element = (JsonProperty)grand;
         }
         else break;

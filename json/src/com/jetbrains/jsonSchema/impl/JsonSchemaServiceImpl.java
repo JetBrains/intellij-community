@@ -95,19 +95,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     return wrapper != null ? wrapper.getContributor() : null;
   }
 
-  public boolean hasSchema(@Nullable VirtualFile file) {
-    CodeInsightProviders wrapper = getWrapper(file);
-    return wrapper != null;
-  }
-
-  @Override
-  public boolean isRegisteredSchemaFile(@NotNull Project project, @NotNull VirtualFile file) {
-    if (!initialized) {
-      ensureSchemaFiles();
-    }
-    return mySchemaFiles.contains(file);
-  }
-
   private void ensureSchemaFiles() {
     synchronized (myLock) {
       if (!initialized) {
@@ -156,13 +143,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public DocumentationProvider getDocumentationProvider(@Nullable VirtualFile file) {
     CodeInsightProviders wrapper = getWrapper(file);
     return wrapper != null ? wrapper.getDocumentationProvider() : null;
-  }
-
-  @Override
-  public void iterateSchemaObjects(VirtualFile file, @NotNull Processor<JsonSchemaObject> consumer) {
-    final CodeInsightProviders wrapper = getWrapper(file);
-    if (wrapper == null) return;
-    wrapper.iterateSchemaObjects(consumer);
   }
 
   @Override
@@ -369,11 +349,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
         wrapper.iterateSchemaFiles(consumer);
       }
     }
-  }
-
-  @Override
-  public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
-    return myDefinitions.checkFileForId(id, file);
   }
 
   @Override

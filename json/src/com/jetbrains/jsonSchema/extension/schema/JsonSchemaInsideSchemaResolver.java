@@ -59,10 +59,13 @@ public class JsonSchemaInsideSchemaResolver {
   }
 
   public PsiElement resolveInSchemaRecursively() {
+    int cnt = 1000;
     final ArrayDeque<Trinity<VirtualFile, List<JsonSchemaWalker.Step>, String>> queue = new ArrayDeque<>();
     queue.add(Trinity.create(mySchemaFile, mySteps, myReference));
     myVisitedDefinitions.putValue(mySchemaFile, myReference);
     while (!queue.isEmpty()) {
+      if (cnt < 0) break;
+      --cnt;
       final Trinity<VirtualFile, List<JsonSchemaWalker.Step>, String> trinity = queue.removeFirst();
       final VirtualFile schemaFile = trinity.getFirst();
       final String reference = JsonSchemaExportedDefinitions.normalizeId(trinity.getThird());
@@ -71,8 +74,8 @@ public class JsonSchemaInsideSchemaResolver {
       final List<String> parts = ContainerUtil.filter(reference.replace("\\", "/").split("/"), s -> !StringUtil.isEmptyOrSpaces(s));
       final String shortName = parts.get(parts.size() - 1);
       final List<JsonSchemaWalker.Step> steps = trinity.getSecond();
-      new JsonSchemaBySchemaObjectResolver(myProject, schemaFile, shortName, steps,
-                                           (file, relativeReference) -> {
+      new JsonSchemaDefinitionsClimber(myProject, schemaFile, shortName, steps,
+                                       (file, relativeReference) -> {
                                              final Pair<List<JsonSchemaWalker.Step>, String> innerSteps = JsonSchemaWalker.buildSteps(relativeReference);
                                              if (mySchemaFile.equals(file) &&
                                                  (myReference.equals(relativeReference) || myVisitedDefinitions.get(file).contains(relativeReference)))

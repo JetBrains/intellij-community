@@ -33,18 +33,18 @@ import static com.jetbrains.jsonSchema.extension.schema.JsonSchemaInsideSchemaRe
 /**
  * @author Irina.Chernushina on 1/10/2017.
  */
-public class JsonSchemaBySchemaObjectResolver {
+public class JsonSchemaDefinitionsClimber {
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile mySchemaFile;
   @NotNull private final String myShortPropertyName;
   @NotNull private final List<JsonSchemaWalker.Step> myPosition;
   @NotNull private final PairConsumer<VirtualFile, String> myConsumer;
 
-  public JsonSchemaBySchemaObjectResolver(@NotNull Project project,
-                                          @NotNull VirtualFile schemaFile,
-                                          @NotNull String shortPropertyName,
-                                          @NotNull List<JsonSchemaWalker.Step> position,
-                                          @NotNull PairConsumer<VirtualFile, String> consumer) {
+  public JsonSchemaDefinitionsClimber(@NotNull Project project,
+                                      @NotNull VirtualFile schemaFile,
+                                      @NotNull String shortPropertyName,
+                                      @NotNull List<JsonSchemaWalker.Step> position,
+                                      @NotNull PairConsumer<VirtualFile, String> consumer) {
     myProject = project;
     mySchemaFile = schemaFile;
     myShortPropertyName = shortPropertyName;
@@ -56,7 +56,6 @@ public class JsonSchemaBySchemaObjectResolver {
     final JsonSchemaWalker.CompletionSchemesConsumer consumer = new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
       public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
-        //myConsumer.consume(mySchemaFile, myShortPropertyName);//todo using short property name here is wrong
         processDefinitionAddress(schema, myShortPropertyName);
 
         List<JsonSchemaObject> list = new ArrayList<>();

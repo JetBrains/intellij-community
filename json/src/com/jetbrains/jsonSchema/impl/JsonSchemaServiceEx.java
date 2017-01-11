@@ -32,8 +32,6 @@ public interface JsonSchemaServiceEx extends JsonSchemaService {
 
   void visitSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Processor<JsonSchemaObject> consumer);
 
-  boolean checkFileForId(@NotNull String id, @NotNull VirtualFile file);
-
   @Nullable
   VirtualFile getSchemaFileById(@NotNull String id, VirtualFile referent);
 
