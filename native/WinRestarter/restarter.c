@@ -21,11 +21,11 @@
 
 
 #define PROVIDER_NAME L"JB-Restarter"
-#define ERR_OPEN_PROCESS (0xE0000000 + 1)
-#define ERR_COMMAND_TOO_LONG (0xE0000000 + 2)
-#define ERR_CREATE_PROCESS (0xE0000000 + 3)
-#define ERR_GET_EXIT_CODE (0xE0000000 + 4)
-#define WARN_COMMAND_FAILED (0x80000000 + 11)
+#define ERR_OPEN_PROCESS (0xE0000000 + 101)
+#define ERR_COMMAND_TOO_LONG (0xE0000000 + 102)
+#define ERR_CREATE_PROCESS (0xE0000000 + 103)
+#define ERR_GET_EXIT_CODE (0xE0000000 + 104)
+#define WARN_COMMAND_FAILED (0x80000000 + 201)
 
 #define COMMAND_SIZE 32768
 #define MESSAGE_SIZE (COMMAND_SIZE + 1024)
@@ -122,11 +122,13 @@ static void log_event(unsigned int event_id, const char *format, ...) {
   va_list ap;
   va_start(ap, format);
   if (event_log != NULL) {
-    int severity = event_id >> 30;
-    WORD type = severity == 3 ? EVENTLOG_ERROR_TYPE : severity == 2 ? EVENTLOG_WARNING_TYPE : EVENTLOG_INFORMATION_TYPE;
     char message[MESSAGE_SIZE];
-    int n = vsnprintf(message, MESSAGE_SIZE, format, ap);
-    ReportEventW(event_log, type, 0, event_id, NULL, 0, n, NULL, message);
+    int n = vsnprintf_s(message, MESSAGE_SIZE, _TRUNCATE, format, ap);
+    if (n > 0) {
+      int severity = event_id >> 30;
+      WORD type = severity == 3 ? EVENTLOG_ERROR_TYPE : severity == 2 ? EVENTLOG_WARNING_TYPE : EVENTLOG_INFORMATION_TYPE;
+      ReportEventW(event_log, type, 0, event_id, NULL, 0, n, NULL, message);
+    }
   }
   va_end(ap);
 }
