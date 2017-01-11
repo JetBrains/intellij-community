@@ -695,11 +695,10 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   // PY-10182
-  public void testHangClosingParenthesisInListLiteral() {
+  public void testHangClosingBracketsInCollectionLiterals() {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
   }
-  
 
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);

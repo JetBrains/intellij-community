@@ -315,7 +315,10 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.GENERATOR_EXPRESSION || parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
-      if (childType == PyTokenTypes.RPAR || !hasLineBreaksBeforeInSameParent(child, 1)) {
+      final boolean insideTuple = parentType == PyElementTypes.PARENTHESIZED_EXPRESSION &&
+                                  myNode.getPsi(PyParenthesizedExpression.class).getContainedExpression() instanceof PyTupleExpression;
+      if ((childType == PyTokenTypes.RPAR && !(insideTuple && settings.HANG_CLOSING_BRACKETS)) || 
+          !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
