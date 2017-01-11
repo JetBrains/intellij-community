@@ -139,12 +139,9 @@ public class JsonSchemaReader {
       if (current.getRef() != null) {
         final JsonSchemaObject definition = findDefinition(myKey, current.getRef(), root, definitions);
         if (definition == null) {
-          if (definitions == null) {
-            // just skip current item
-            current.setRef(null);
-            continue;
-          }
-          throw new RuntimeException("Can not find definition: " + current.getRef());
+          // just skip current item
+          current.setRef(null);
+          continue;
         }
         if (definition.getRef() != null && !"#".equals(definition.getRef())) {
           queue.addFirst(current);
