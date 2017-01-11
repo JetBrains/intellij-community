@@ -40,7 +40,7 @@ import java.util.Locale;
 /**
  * @author Maxim.Mossienko
  */
-abstract class BaseHtmlLexer extends DelegateLexer {
+public abstract class BaseHtmlLexer extends DelegateLexer {
   protected static final int BASE_STATE_MASK = 0x3F;
   private static final int SEEN_STYLE = 0x40;
   private static final int SEEN_TAG = 0x80;
@@ -65,8 +65,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   protected String styleType = null;
 
   private final boolean caseInsensitive;
-  private boolean seenContentType;
-  private boolean seenStylesheetType;
+  protected boolean seenContentType;
+  protected boolean seenStylesheetType;
   private CharSequence cachedBufferSequence;
   private Lexer lexerOfCacheBufferSequence;
 
