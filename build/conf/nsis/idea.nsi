@@ -1195,7 +1195,7 @@ keep_current_user:
   RMDir  "$SMPROGRAMS\$R9"
 
   Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk"
+  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} х64.lnk"
 
 registry:
   StrCpy $5 "Software\${MANUFACTURER}"
