@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
@@ -53,6 +55,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
   private int myIgnoreNextItem = 0;
+  private MyPopupListElementRenderer myListElementRenderer;
 
   public BranchActionGroupPopup(@NotNull String title, @NotNull Project project,
                                 @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
@@ -60,12 +63,14 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
           preselectActionCondition, true);
     setDimensionServiceKey(DIMENSION_SERVICE_KEY);
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
+    installOnHoverIconsSupport(getListElementRenderer());
   }
 
   //for child popups only
   private BranchActionGroupPopup(@Nullable WizardPopup aParent, @NotNull ListPopupStep aStep, @Nullable Object parentValue) {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
+    installOnHoverIconsSupport(getListElementRenderer());
   }
 
   @NotNull
@@ -96,6 +101,34 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         }
       }
     }
+  }
+
+  @Override
+  public void handleSelect(boolean handleFinalChoices, InputEvent e) {
+    BranchActionGroup branchActionGroup = getSelectedBranchGroup();
+    if (branchActionGroup != null && e instanceof MouseEvent && myListElementRenderer.isIconAt(((MouseEvent)e).getPoint())) {
+      branchActionGroup.toggle();
+    }
+    else {
+      super.handleSelect(handleFinalChoices, e);
+    }
+  }
+
+  @Override
+  protected void handleToggleAction() {
+    BranchActionGroup branchActionGroup = getSelectedBranchGroup();
+    if (branchActionGroup != null) {
+      branchActionGroup.toggle();
+      getList().repaint();
+    }
+    else {
+      super.handleToggleAction();
+    }
+  }
+
+  @Nullable
+  private BranchActionGroup getSelectedBranchGroup() {
+    return getSpecificAction(getList().getSelectedValue(), BranchActionGroup.class);
   }
 
   @Override
@@ -142,18 +175,26 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       if (clazz.isInstance(action)) {
         return clazz.cast(action);
       }
+      else if (action instanceof MySpeedSearchActionGroup) {
+        ActionGroup group = ((MySpeedSearchActionGroup)action).getActionGroup();
+        return clazz.isInstance(group) ? clazz.cast(group) : null;
+      }
     }
     return null;
   }
 
   @Override
-  protected ListCellRenderer getListElementRenderer() {
-    return new MyPopupListElementRenderer(this);
+  protected MyPopupListElementRenderer getListElementRenderer() {
+    if (myListElementRenderer == null) {
+      myListElementRenderer = new MyPopupListElementRenderer(this);
+    }
+    return myListElementRenderer;
   }
 
-  private static class MyPopupListElementRenderer extends PopupListElementRenderer<Object> {
+  private class MyPopupListElementRenderer extends PopupListElementRenderer<Object> implements IconListPopupRenderer {
 
     private ErrorLabel myInfoLabel;
+    private IconComponent myIconLabel;
 
     public MyPopupListElementRenderer(ListPopupImpl aPopup) {
       super(aPopup);
@@ -165,13 +206,27 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
 
     @Override
+    public boolean isIconAt(@NotNull Point point) {
+      JList list = getList();
+      int index = getList().locationToIndex(point);
+      Rectangle bounds = getList().getCellBounds(index, index);
+      Component renderer = getListCellRendererComponent(list, list.getSelectedValue(), index, true, true);
+      renderer.setBounds(bounds);
+      renderer.doLayout();
+      point.translate(-bounds.x, -bounds.y);
+      return SwingUtilities.getDeepestComponentAt(renderer, point.x, point.y) instanceof IconComponent;
+    }
+
+    @Override
     protected void customizeComponent(JList list, Object value, boolean isSelected) {
       MoreAction more = getSpecificAction(value, MoreAction.class);
       if (more != null) {
         myTextLabel.setForeground(JBColor.gray);
       }
       super.customizeComponent(list, value, isSelected);
-
+      myTextLabel.setIcon(null);
+      myTextLabel.setDisabledIcon(null);
+      myIconLabel.setIcon(myDescriptor.getIconFor(value));
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       String infoText = additionalInfoAction != null ? additionalInfoAction.getInfoText() : null;
       if (infoText != null) {
@@ -202,10 +257,15 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
 
       JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
+      myIconLabel = new IconComponent();
+      compoundPanel.add(myIconLabel, BorderLayout.WEST);
       compoundPanel.add(myTextLabel, BorderLayout.CENTER);
       compoundPanel.add(myInfoLabel, BorderLayout.EAST);
 
       return layoutComponent(compoundPanel);
+    }
+
+    private class IconComponent extends JLabel {
     }
   }
 

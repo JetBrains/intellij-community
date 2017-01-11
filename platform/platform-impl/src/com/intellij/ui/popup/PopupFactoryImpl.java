@@ -423,7 +423,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         Rectangle bounds = getList().getCellBounds(index, index);
         Object selectedValue = getList().getSelectedValue();
         if (selectedValue instanceof ActionItem) {
-          ((ActionItem)selectedValue).setIconHovered(myRenderer.iconContains(point));
+          ((ActionItem)selectedValue).setIconHovered(myRenderer.isIconAt(point));
         }
         if (bounds != null) {
           getList().repaint(bounds);

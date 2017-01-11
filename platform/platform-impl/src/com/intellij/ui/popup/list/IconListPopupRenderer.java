@@ -21,5 +21,5 @@ import java.awt.*;
 
 public interface IconListPopupRenderer {
 
-  boolean iconContains(@NotNull Point point);
+  boolean isIconAt(@NotNull Point point);
 }
