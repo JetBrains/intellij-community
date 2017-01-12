@@ -106,6 +106,14 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   @Override
+  public void handleSelect(boolean handleFinalChoices) {
+    super.handleSelect(handleFinalChoices, null);
+    if (getSpecificAction(getList().getSelectedValue(), MoreAction.class) != null) {
+      getListModel().refilter();
+    }
+  }
+
+  @Override
   public void handleSelect(boolean handleFinalChoices, InputEvent e) {
     BranchActionGroup branchActionGroup = getSelectedBranchGroup();
     if (branchActionGroup != null && e instanceof MouseEvent && myListElementRenderer.isIconAt(((MouseEvent)e).getPoint())) {
