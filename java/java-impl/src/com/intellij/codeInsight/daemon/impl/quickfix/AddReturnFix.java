@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,6 +101,7 @@ public class AddReturnFix implements IntentionAction {
     if (type instanceof PsiArrayType) {
       PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
       if (!(arrayComponentType instanceof PsiPrimitiveType) &&
+          !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
           InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
         PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
         if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
