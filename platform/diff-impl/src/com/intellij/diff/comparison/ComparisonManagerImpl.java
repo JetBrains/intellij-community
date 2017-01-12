@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
+
 public class ComparisonManagerImpl extends ComparisonManager {
   private static final Logger LOG = Logger.getInstance(ComparisonManagerImpl.class);
 
@@ -79,63 +81,83 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull ComparisonPolicy policy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<LineFragment> lineFragments = compareLines(text1, text2, policy, indicator);
+    return createInnerFragments(lineFragments, text1, text2, policy, indicator);
+  }
 
-    List<LineFragment> fineFragments = new ArrayList<>(lineFragments.size());
+  private static List<LineFragment> createInnerFragments(@NotNull List<LineFragment> lineFragments,
+                                                         @NotNull CharSequence text1,
+                                                         @NotNull CharSequence text2,
+                                                         @NotNull ComparisonPolicy policy,
+                                                         @NotNull ProgressIndicator indicator) {
+    List<LineFragment> result = new ArrayList<>(lineFragments.size());
+
     int tooBigChunksCount = 0;
-
     for (LineFragment fragment : lineFragments) {
-      CharSequence subSequence1 = text1.subSequence(fragment.getStartOffset1(), fragment.getEndOffset1());
-      CharSequence subSequence2 = text2.subSequence(fragment.getStartOffset2(), fragment.getEndOffset2());
-
-      if (fragment.getStartLine1() == fragment.getEndLine1() ||
-          fragment.getStartLine2() == fragment.getEndLine2()) { // Insertion / Deletion
-        if (isEquals(subSequence1, subSequence2, policy)) {
-          fineFragments.add(new LineFragmentImpl(fragment, Collections.<DiffFragment>emptyList()));
-        }
-        else {
-          fineFragments.add(new LineFragmentImpl(fragment, null));
-        }
-        continue;
-      }
-
-      if (tooBigChunksCount >= FilesTooBigForDiffException.MAX_BAD_LINES) { // Do not try to build fine blocks after few fails)
-        fineFragments.add(new LineFragmentImpl(fragment, null));
-        continue;
-      }
+      assert fragment.getInnerFragments() == null;
 
       try {
-        List<ByWord.LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy, indicator);
-        assert lineBlocks.size() != 0;
-
-        int startOffset1 = fragment.getStartOffset1();
-        int startOffset2 = fragment.getStartOffset2();
-
-        int currentStartLine1 = fragment.getStartLine1();
-        int currentStartLine2 = fragment.getStartLine2();
-
-        for (int i = 0; i < lineBlocks.size(); i++) {
-          ByWord.LineBlock block = lineBlocks.get(i);
-          Range offsets = block.offsets;
-
-          // special case for last line to void problem with empty last line
-          int currentEndLine1 = i != lineBlocks.size() - 1 ? currentStartLine1 + block.newlines1 : fragment.getEndLine1();
-          int currentEndLine2 = i != lineBlocks.size() - 1 ? currentStartLine2 + block.newlines2 : fragment.getEndLine2();
-
-          fineFragments.add(new LineFragmentImpl(currentStartLine1, currentEndLine1, currentStartLine2, currentEndLine2,
-                                                 offsets.start1 + startOffset1, offsets.end1 + startOffset1,
-                                                 offsets.start2 + startOffset2, offsets.end2 + startOffset2,
-                                                 block.fragments));
-
-          currentStartLine1 = currentEndLine1;
-          currentStartLine2 = currentEndLine2;
-        }
+        // Do not try to build fine blocks after few fails
+        boolean tryComputeDifferences = tooBigChunksCount < FilesTooBigForDiffException.MAX_BAD_LINES;
+        result.addAll(createInnerFragments(fragment, text1, text2, policy, indicator, tryComputeDifferences));
       }
       catch (DiffTooBigException e) {
-        fineFragments.add(new LineFragmentImpl(fragment, null));
+        result.add(fragment);
         tooBigChunksCount++;
       }
     }
-    return fineFragments;
+
+    return result;
+  }
+
+  @NotNull
+  private static List<LineFragment> createInnerFragments(@NotNull LineFragment fragment,
+                                                         @NotNull CharSequence text1,
+                                                         @NotNull CharSequence text2,
+                                                         @NotNull ComparisonPolicy policy,
+                                                         @NotNull ProgressIndicator indicator,
+                                                         boolean tryComputeDifferences) throws DiffTooBigException {
+    CharSequence subSequence1 = text1.subSequence(fragment.getStartOffset1(), fragment.getEndOffset1());
+    CharSequence subSequence2 = text2.subSequence(fragment.getStartOffset2(), fragment.getEndOffset2());
+
+    if (fragment.getStartLine1() == fragment.getEndLine1() ||
+        fragment.getStartLine2() == fragment.getEndLine2()) { // Insertion / Deletion
+      if (ComparisonUtil.isEquals(subSequence1, subSequence2, policy)) {
+        return singletonList(new LineFragmentImpl(fragment, Collections.emptyList()));
+      }
+      else {
+        return singletonList(fragment);
+      }
+    }
+
+    if (!tryComputeDifferences) return singletonList(fragment);
+
+    List<ByWord.LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy, indicator);
+    assert lineBlocks.size() != 0;
+
+    int startOffset1 = fragment.getStartOffset1();
+    int startOffset2 = fragment.getStartOffset2();
+
+    int currentStartLine1 = fragment.getStartLine1();
+    int currentStartLine2 = fragment.getStartLine2();
+
+    List<LineFragment> chunks = new ArrayList<>();
+    for (int i = 0; i < lineBlocks.size(); i++) {
+      ByWord.LineBlock block = lineBlocks.get(i);
+      Range offsets = block.offsets;
+
+      // special case for last line to void problem with empty last line
+      int currentEndLine1 = i != lineBlocks.size() - 1 ? currentStartLine1 + block.newlines1 : fragment.getEndLine1();
+      int currentEndLine2 = i != lineBlocks.size() - 1 ? currentStartLine2 + block.newlines2 : fragment.getEndLine2();
+
+      chunks.add(new LineFragmentImpl(currentStartLine1, currentEndLine1, currentStartLine2, currentEndLine2,
+                                      offsets.start1 + startOffset1, offsets.end1 + startOffset1,
+                                      offsets.start2 + startOffset2, offsets.end2 + startOffset2,
+                                      block.fragments));
+
+      currentStartLine1 = currentEndLine1;
+      currentStartLine2 = currentEndLine2;
+    }
+    return chunks;
   }
 
   @NotNull
@@ -322,7 +344,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
 
     if (start == end) return Collections.emptyList();
     if (squash) {
-      return Collections.singletonList(doSquash(fragments.subList(start, end)));
+      return singletonList(doSquash(fragments.subList(start, end)));
     }
     return fragments.subList(start, end);
   }
@@ -383,12 +405,12 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static List<? extends DiffFragment> extractInnerFragments(@NotNull LineFragment lineFragment) {
+  private static List<DiffFragment> extractInnerFragments(@NotNull LineFragment lineFragment) {
     if (lineFragment.getInnerFragments() != null) return lineFragment.getInnerFragments();
 
     int length1 = lineFragment.getEndOffset1() - lineFragment.getStartOffset1();
     int length2 = lineFragment.getEndOffset2() - lineFragment.getStartOffset2();
-    return Collections.singletonList(new DiffFragmentImpl(0, length1, 0, length2));
+    return singletonList(new DiffFragmentImpl(0, length1, 0, length2));
   }
 
   @NotNull
