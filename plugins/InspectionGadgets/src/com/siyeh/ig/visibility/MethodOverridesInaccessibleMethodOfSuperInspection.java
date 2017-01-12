@@ -15,42 +15,44 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class MethodOverridesPackageLocalMethodInspectionBase
-  extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "MethodOverridesPrivateMethodOfSuperclass";
-  }
+public class MethodOverridesInaccessibleMethodOfSuperInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
-      "method.overrides.package.local.method.display.name");
+      "method.overrides.inaccessible.method.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "method.overrides.package.local.method.problem.descriptor");
+    return InspectionGadgetsBundle.message(infos[0].equals(PsiModifier.PACKAGE_LOCAL) ?
+      "method.overrides.package.local.method.problem.descriptor" :
+      "method.overrides.private.display.name.problem.descriptor"
+    );
   }
 
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+  
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
@@ -61,8 +63,7 @@ public class MethodOverridesPackageLocalMethodInspectionBase
     return new MethodOverridesPrivateMethodVisitor();
   }
 
-  private static class MethodOverridesPrivateMethodVisitor
-    extends BaseInspectionVisitor {
+  private static class MethodOverridesPrivateMethodVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -73,36 +74,40 @@ public class MethodOverridesPackageLocalMethodInspectionBase
       if (method.getNameIdentifier() == null) {
         return;
       }
+
+      if (JavaHighlightUtil.isSerializationRelatedMethod(method, aClass)) {
+        return;
+      }
+      
       PsiClass ancestorClass = aClass.getSuperClass();
       final Set<PsiClass> visitedClasses = new HashSet<>();
       while (ancestorClass != null) {
         if (!visitedClasses.add(ancestorClass)) {
-          return;
+          break;
         }
-        final PsiMethod overridingMethod =
-          ancestorClass.findMethodBySignature(method, true);
+        final PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(ancestorClass, aClass, PsiSubstitutor.EMPTY);
+        final PsiMethod overridingMethod = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(aClass, ancestorClass, 
+                                                                                                          method.getSignature(classSubstitutor), false);
         if (overridingMethod != null) {
-          if (overridingMethod.hasModifierProperty(
-            PsiModifier.PACKAGE_LOCAL)) {
-            final PsiJavaFile file =
-              PsiTreeUtil.getParentOfType(aClass,
-                                          PsiJavaFile.class);
+          if (overridingMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+            final PsiJavaFile file = PsiTreeUtil.getParentOfType(aClass, PsiJavaFile.class);
             if (file == null) {
-              return;
+              break;
             }
-            final PsiJavaFile ancestorFile =
-              PsiTreeUtil.getParentOfType(ancestorClass,
-                                          PsiJavaFile.class);
+            final PsiJavaFile ancestorFile = PsiTreeUtil.getParentOfType(ancestorClass, PsiJavaFile.class);
             if (ancestorFile == null) {
-              return;
+              break;
             }
             final String packageName = file.getPackageName();
-            final String ancestorPackageName =
-              ancestorFile.getPackageName();
+            final String ancestorPackageName = ancestorFile.getPackageName();
             if (!packageName.equals(ancestorPackageName)) {
-              registerMethodError(method);
-              return;
+              registerMethodError(method, PsiModifier.PACKAGE_LOCAL);
+              break;
             }
+          }
+          else if (overridingMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+            registerMethodError(method, PsiModifier.PRIVATE);
+            break;
           }
         }
         ancestorClass = ancestorClass.getSuperClass();

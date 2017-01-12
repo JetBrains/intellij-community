@@ -8,6 +8,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.inheritance.MethodDoesntCallSuperMethodInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.threading.WaitNotifyNotInSynchronizedContextInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.internationalization.CallToSuspiciousStringMethodInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -2777,18 +2778,14 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="local.variable.hides.member.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.LocalVariableHidingMemberVariableInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MethodOverridesPrivateMethodOfSuperclass" shortName="MethodOverridesPackageLocalMethod"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="method.overrides.package.local.method.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.visibility.MethodOverridesPackageLocalMethodInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MethodOverloadsMethodOfSuperclass" shortName="MethodOverloadsParentMethod"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="method.overloads.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.visibility.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.visibility.MethodOverloadsParentMethodInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MethodOverridesPrivateMethodOfSuperclass" shortName="MethodOverridesPrivateMethod"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="method.overrides.private.display.name"
+    <localInspection groupPath="Java" language="JAVA" suppressId="MethodOverridesInaccessibleMethodOfSuper" shortName="MethodOverridesInaccessibleMethodOfSuper"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="method.overrides.inaccessible.method.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.visibility.MethodOverridesPrivateMethodInspection"/>
+                     level="WARNING" implementationClass="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodOfSuperInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MethodOverridesStaticMethodOfSuperclass" shortName="MethodOverridesStaticMethod"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="method.overrides.static.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
