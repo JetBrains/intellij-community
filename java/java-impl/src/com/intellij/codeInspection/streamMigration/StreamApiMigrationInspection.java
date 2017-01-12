@@ -556,7 +556,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           // Don't suggest to convert the loop which can be trivially replaced via addAll:
           // this is covered by UseBulkOperationInspection and ManualArrayToCollectionCopyInspection
           if(addAll) return null;
-          if(!REPLACE_TRIVIAL_FOREACH && !tb.hasOperations() && terminal.isTrivial()) return null;
+          if (!REPLACE_TRIVIAL_FOREACH &&
+              !tb.hasOperations() &&
+              !(tb.getLastOperation() instanceof BufferedReaderLines) &&
+              terminal.isTrivial()) {
+            return null;
+          }
           return new CollectMigration(terminal.getMethodName());
         }
       }
