@@ -38,10 +38,10 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.*;
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_REPO_NUM;
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_REPO_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
-import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
-import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavorites;
+import static com.intellij.dvcs.ui.BranchActionUtil.*;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.stream.Collectors.toList;
 
@@ -120,18 +120,16 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     List<BranchActionGroup> localBranchActions =
       myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
         .collect(toList());
-    int numOfFavorites = getNumOfFavorites(localBranchActions);
     wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               numOfFavorites > MAX_BRANCH_NUM ? numOfFavorites : MAX_BRANCH_NUM);
+                               getNumOfTopShownBranches(localBranchActions));
     popupGroup.addSeparator("Common Remote Branches");
     List<BranchActionGroup> remoteBranchActions = map(((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches(),
                                                       remoteBranch -> new GitBranchPopupActions.RemoteBranchActions(myProject,
                                                                                                                     allRepositories,
                                                                                                                     remoteBranch,
                                                                                                                     myCurrentRepository));
-    numOfFavorites = getNumOfFavorites(remoteBranchActions);
     wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM);
+                               getNumOfFavorites(remoteBranchActions));
   }
 
   @Nullable

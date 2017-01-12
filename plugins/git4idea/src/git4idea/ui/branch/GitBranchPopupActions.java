@@ -37,10 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_BRANCH_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
-import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
-import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfFavorites;
+import static com.intellij.dvcs.ui.BranchActionUtil.*;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 import static git4idea.branch.GitBranchType.GIT_LOCAL;
 import static git4idea.branch.GitBranchType.GIT_REMOTE;
@@ -78,10 +76,9 @@ class GitBranchPopupActions {
         .filter(branch -> !branch.equals(myRepository.getCurrentBranch()))
         .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
         .collect(toList());
-    int numOfFavorites = getNumOfFavorites(localBranchActions);
-    // if there are only a few local favorites -> show several non-favorite;  for remotes it's better to show only favorites; 
+    // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
     wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               numOfFavorites > MAX_BRANCH_NUM ? numOfFavorites : MAX_BRANCH_NUM);
+                              getNumOfTopShownBranches(localBranchActions));
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<BranchActionGroup> remoteBranchActions =
@@ -89,9 +86,8 @@ class GitBranchPopupActions {
         .sorted()
         .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
         .collect(toList());
-    numOfFavorites = getNumOfFavorites(remoteBranchActions);
     wrapWithMoreActionIfNeeded(popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM);
+                               getNumOfFavorites(remoteBranchActions));
     return popupGroup;
   }
 

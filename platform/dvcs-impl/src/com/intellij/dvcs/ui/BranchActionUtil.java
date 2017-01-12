@@ -16,15 +16,24 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.List;
+
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_BRANCH_NUM;
 
 public class BranchActionUtil {
   public static final Comparator<BranchActionGroup> FAVORITE_BRANCH_COMPARATOR =
     Comparator.comparing(branch -> branch.isFavorite() ? -1 : 0);
 
-  public static int getNumOfFavorites(List<? extends BranchActionGroup> branchActions) {
+  public static int getNumOfFavorites(@NotNull List<? extends BranchActionGroup> branchActions) {
     return ContainerUtil.count(branchActions, BranchActionGroup::isFavorite);
   }
+
+  public static int getNumOfTopShownBranches(@NotNull List<? extends BranchActionGroup> branchActions) {
+    int numOfFavorites = getNumOfFavorites(branchActions);
+    return branchActions.size() > MAX_BRANCH_NUM && numOfFavorites > 0 ? numOfFavorites : MAX_BRANCH_NUM;
+  }   
+    
 }
