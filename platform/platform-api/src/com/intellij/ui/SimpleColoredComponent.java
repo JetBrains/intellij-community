@@ -57,12 +57,12 @@ import java.util.List;
  *
  * @author Vladimir Kondratyev
  */
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
   public static final Color SHADOW_COLOR = new JBColor(new Color(250, 250, 250, 140), Gray._0.withAlpha(50));
-  public static final Color STYLE_SEARCH_MATCH_BACKGROUND = SHADOW_COLOR; //api compatibility
+  @SuppressWarnings("unused") public static final Color STYLE_SEARCH_MATCH_BACKGROUND = SHADOW_COLOR; //api compatibility
   public static final int FRAGMENT_ICON = -2;
 
   private final List<String> myFragments;
@@ -137,6 +137,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return new MyIterator();
   }
 
+  @SuppressWarnings("unused")
   public boolean isIconOnTheRight() {
     return myIconOnTheRight;
   }
@@ -406,7 +407,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     width += borderInsets.left;
 
     Font font = getBaseFont();
-    LOG.assertTrue(font != null);
 
     width += computeTextWidth(font, mainTextOnly);
     width += myIpad.right + borderInsets.right;
@@ -760,7 +760,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     applyAdditionalHints(g);
     final Font baseFont = getBaseFont();
     g.setFont(baseFont);
-    offset += computeTextAlignShift(baseFont);
+    offset += computeTextAlignShift();
     int baseSize = baseFont.getSize();
     FontMetrics baseMetrics = g.getFontMetrics();
     Rectangle area = computePaintArea();
@@ -897,7 +897,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return g.getFontMetrics().charWidth('a');
   }
 
-  private int computeTextAlignShift(@NotNull Font font) {
+  private int computeTextAlignShift() {
     if (myTextAlign == SwingConstants.LEFT || myTextAlign == SwingConstants.LEADING) {
       return 0;
     }
