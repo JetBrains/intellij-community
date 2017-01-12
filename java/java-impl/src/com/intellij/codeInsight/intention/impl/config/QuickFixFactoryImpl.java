@@ -44,6 +44,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -723,7 +724,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
     final long stamp = document.getModificationStamp();
-    ApplicationManager.getApplication().invokeLater(() -> {
+    DumbService.getInstance(file.getProject()).smartInvokeLater(() -> {
       if (project.isDisposed() || document.getModificationStamp() != stamp) return;
       //no need to optimize imports on the fly during undo/redo
       final UndoManager undoManager = UndoManager.getInstance(project);
