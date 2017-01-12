@@ -40,8 +40,8 @@ import java.util.List;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.*;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
-import static git4idea.branch.GitBranchType.GIT_LOCAL;
-import static git4idea.branch.GitBranchType.GIT_REMOTE;
+import static git4idea.branch.GitBranchType.LOCAL;
+import static git4idea.branch.GitBranchType.REMOTE;
 import static java.util.stream.Collectors.toList;
 
 class GitBranchPopupActions {
@@ -163,7 +163,7 @@ class GitBranchPopupActions {
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
-      setFavorite(myGitBranchManager.isFavorite(GIT_LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+      setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
     @NotNull
@@ -205,7 +205,7 @@ class GitBranchPopupActions {
     @Override
     public void toggle() {
       super.toggle();
-      myGitBranchManager.setFavorite(GIT_LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
+      myGitBranchManager.setFavorite(LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
     }
 
     static class CheckoutAction extends DumbAwareAction {
@@ -319,13 +319,13 @@ class GitBranchPopupActions {
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
-      setFavorite(myGitBranchManager.isFavorite(GIT_REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
+      setFavorite(myGitBranchManager.isFavorite(REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
     @Override
     public void toggle() {
       super.toggle();
-      myGitBranchManager.setFavorite(GIT_REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
+      myGitBranchManager.setFavorite(REMOTE, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
     }
 
     @NotNull

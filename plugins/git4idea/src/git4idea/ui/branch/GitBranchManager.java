@@ -54,7 +54,7 @@ public class GitBranchManager {
 
   @NotNull
   private static String getDefaultBranchName(@NotNull GitBranchType type) {
-    return type == GitBranchType.GIT_LOCAL ? MASTER : ORIGIN_MASTER;
+    return type == GitBranchType.LOCAL ? MASTER : ORIGIN_MASTER;
   }
 
   public boolean isFavorite(@NotNull GitBranchType branchType, @Nullable GitRepository repository, @NotNull String branchName) {

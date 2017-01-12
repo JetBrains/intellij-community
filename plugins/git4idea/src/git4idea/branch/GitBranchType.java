@@ -15,7 +15,6 @@
  */
 package git4idea.branch;
 
-
 public enum GitBranchType {
-  GIT_LOCAL, GIT_REMOTE
+  LOCAL, REMOTE
 }
