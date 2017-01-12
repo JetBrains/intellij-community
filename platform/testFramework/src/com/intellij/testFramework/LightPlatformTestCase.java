@@ -33,6 +33,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -630,7 +631,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (!ourProject.isDisposed()) {
       @SuppressWarnings("ConstantConditions")
       File ioFile = new File(ourProject.getProjectFilePath());
-      Disposer.dispose(ourProject);
+      WriteAction.run(() -> Disposer.dispose(ourProject));
       if (ioFile.exists()) {
         File dir = ioFile.getParentFile();
         if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
