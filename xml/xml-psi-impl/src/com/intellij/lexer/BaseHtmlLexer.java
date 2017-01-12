@@ -366,9 +366,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
           String name = TreeUtil.getTokenText(base);
           if (caseInsensitive) name = name.toLowerCase();
 
-          if((hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
-             (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
-             CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name)) {
+          if(endOfTheEmbeddment(name)) {
             break; // really found end
           }
         }
@@ -392,6 +390,12 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       base.getTokenType();
     }
     return tokenEnd;
+  }
+
+  protected boolean endOfTheEmbeddment(String name) {
+    return (hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
+           (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
+           CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name);
   }
 
   protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
