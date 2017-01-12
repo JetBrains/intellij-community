@@ -163,10 +163,6 @@ class TerminalBlock {
       StreamSource source = StreamSource.tryCreate(loopStatement);
       final PsiStatement body = loopStatement.getBody();
       if(source == null || body == null) return null;
-      // flatMap from primitive to primitive is supported only if primitive types match
-      // otherwise it would be necessary to create bogus step like
-      // .mapToObj(var -> collection.stream()).flatMap(Function.identity())
-      if(myVariable.getType() instanceof PsiPrimitiveType && !myVariable.getType().equals(source.getVariable().getType())) return null;
       FlatMapOp op = new FlatMapOp(source, myVariable);
       TerminalBlock withFlatMap = new TerminalBlock(this, op, source.getVariable(), body);
       if(!VariableAccessUtils.variableIsUsed(myVariable, body)) {

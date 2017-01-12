@@ -837,17 +837,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Override
     public String createReplacement() {
       String operation = "flatMap";
-      PsiType type = mySource.getVariable().getType();
-      if(type instanceof PsiPrimitiveType && !type.equals(myVariable.getType())) {
-        if(type.equals(PsiType.INT)) {
+      PsiType inType = myVariable.getType();
+      PsiType outType = mySource.getVariable().getType();
+      String lambda = myVariable.getName() + " -> " + getStreamExpression();
+      if(outType instanceof PsiPrimitiveType && !outType.equals(inType)) {
+        if(outType.equals(PsiType.INT)) {
           operation = "flatMapToInt";
-        } else if(type.equals(PsiType.LONG)) {
+        } else if(outType.equals(PsiType.LONG)) {
           operation = "flatMapToLong";
-        } else if(type.equals(PsiType.DOUBLE)) {
+        } else if(outType.equals(PsiType.DOUBLE)) {
           operation = "flatMapToDouble";
         }
       }
-      return "." + operation + "(" + myVariable.getName() + " -> " + getStreamExpression() + ")";
+      if(inType instanceof PsiPrimitiveType && !outType.equals(inType)) {
+        return ".mapToObj(" + lambda + ")." + operation + "(" + CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity())";
+      }
+      return "." + operation + "(" + lambda + ")";
     }
 
     @NotNull
