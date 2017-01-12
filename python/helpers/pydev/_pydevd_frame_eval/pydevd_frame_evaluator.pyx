@@ -2,8 +2,8 @@ import dis
 from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
+from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 
-ignore_list = ['pydevd.py', 'pydevd_comm.py']
 
 def get_breakpoints_for_file(filename):
     main_debugger = get_global_debugger()
@@ -14,9 +14,10 @@ cdef PyObject*get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
     filepath = str(<object> frame.f_code.co_filename)
     skip_file = False
     breakpoints = None
-    for file in ignore_list:
+    for file in DONT_TRACE.keys():
         if filepath.endswith(file):
             skip_file = True
+            break
 
     if not skip_file:
         breakpoints = get_breakpoints_for_file(filepath)
