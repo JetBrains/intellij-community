@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
   private final IdeFatalErrorsIcon myIdeFatal;
+  private Balloon myBalloon;
 
   static final String INTERNAL_ERROR_NOTICE = DiagnosticBundle.message("error.notification.tooltip");
 
@@ -153,6 +155,9 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
     myMessagePool.addListener(myDialog);
     if (!isOtherModalWindowActive()) {
+      if (myBalloon != null) {
+        myBalloon.hide();
+      }
       myDialog.show();
     }
     else {
@@ -267,9 +272,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     layoutData.fillColor = new JBColor(0XF5E6E7, 0X593D41);
     layoutData.borderColor = new JBColor(0XE0A8A9, 0X73454B);
 
-    Balloon balloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
-    layout.add(balloon);
-}
+    assert myBalloon == null;
+    myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
+    Disposer.register(myBalloon, () -> myBalloon = null);
+    layout.add(myBalloon);
+  }
 
   private static String tryGetFromMessages(List<AbstractMessage> messages) {
     String result = null;
