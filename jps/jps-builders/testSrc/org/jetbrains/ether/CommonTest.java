@@ -156,6 +156,10 @@ public class CommonTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
+  public void testCompileDependenciesOnMovedClassesInFirstRound() throws Exception {
+    doTest().assertSuccessful();
+  }
+
   public void testIntegrateOnSuperclassRemovedAndRestored() throws Exception {
     setupInitialProject();
 
