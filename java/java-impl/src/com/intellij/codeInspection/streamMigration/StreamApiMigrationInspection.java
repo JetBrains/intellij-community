@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
@@ -566,6 +567,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
       }
       if (tb.getCountExpression() != null || tb.isEmpty()) return null;
+      if (nonFinalVariables.isEmpty() && extractArray(tb) != null) {
+        return new ToArrayMigration();
+      }
       if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
         return new SumMigration();
       }
@@ -689,6 +693,34 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         throw new IllegalStateException("Unexpected statement type: "+statement);
       }
     }
+  }
+
+  @Nullable
+  static PsiLocalVariable extractArray(TerminalBlock tb) {
+    CountingLoop loop = tb.getLastOperation(CountingLoop.class);
+    if(loop == null || loop.myIncluding) return null;
+    PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
+    if(assignment == null || !assignment.getOperationTokenType().equals(JavaTokenType.EQ)) return null;
+    PsiArrayAccessExpression arrayAccess = tryCast(assignment.getLExpression(), PsiArrayAccessExpression.class);
+    if(arrayAccess == null) return null;
+    if(!ExpressionUtils.isReferenceTo(arrayAccess.getIndexExpression(), loop.getVariable())) return null;
+    PsiReferenceExpression arrayReference = tryCast(arrayAccess.getArrayExpression(), PsiReferenceExpression.class);
+    if(arrayReference == null) return null;
+    PsiLocalVariable arrayVariable = tryCast(arrayReference.resolve(), PsiLocalVariable.class);
+    if(arrayVariable == null || getInitializerUsageStatus(arrayVariable, tb.getMainLoop()) == UNKNOWN) return null;
+    PsiNewExpression initializer = tryCast(arrayVariable.getInitializer(), PsiNewExpression.class);
+    if(initializer == null) return null;
+    PsiArrayType arrayType = tryCast(initializer.getType(), PsiArrayType.class);
+    if(arrayType == null || !isSupported(arrayType.getComponentType())) return null;
+    PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
+    if(dimension == null) return null;
+    PsiExpression bound = loop.myBound;
+    if (!PsiEquivalenceUtil.areElementsEquivalent(dimension, bound) &&
+        !ExpressionUtils.isReferenceTo(ExpressionUtils.getArrayFromLengthExpression(bound), arrayVariable)) {
+      return null;
+    }
+    if(VariableAccessUtils.variableIsUsed(arrayVariable, assignment.getRExpression())) return null;
+    return arrayVariable;
   }
 
   /**
@@ -1085,7 +1117,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     final boolean myIncluding;
 
     private CountingLoop(PsiLoopStatement loop,
-                         PsiLocalVariable counter,
+                         PsiVariable counter,
                          PsiExpression initializer,
                          PsiExpression bound,
                          boolean including) {
@@ -1104,6 +1136,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       String className = myVariable.getType().equals(PsiType.LONG) ? "java.util.stream.LongStream" : "java.util.stream.IntStream";
       String methodName = myIncluding ? "rangeClosed" : "range";
       return className+"."+methodName+"("+myExpression.getText()+", "+myBound.getText()+")";
+    }
+
+    CountingLoop withBound(PsiExpression bound) {
+      return new CountingLoop(getLoop(), getVariable(), getExpression(), bound, myIncluding);
     }
 
     @Override
