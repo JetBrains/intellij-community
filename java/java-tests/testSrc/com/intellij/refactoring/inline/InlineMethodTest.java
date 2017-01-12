@@ -402,7 +402,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
     final InlineMethodProcessor processor =
-      new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode, options.isDeleteTheDeclaration());
+      new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode,
+                                !options.isKeepTheDeclaration());
     processor.run();
   }
 }
