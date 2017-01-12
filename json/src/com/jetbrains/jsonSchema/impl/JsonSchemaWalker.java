@@ -168,7 +168,7 @@ public class JsonSchemaWalker {
 
   public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition) {
     final List<Step> steps = new ArrayList<>();
-    if (!(element.getParent() instanceof JsonObject) && !isName) {
+    if (!isName) {
       steps.add(new Step(StateType._value, null));
     }
     PsiElement current = element;

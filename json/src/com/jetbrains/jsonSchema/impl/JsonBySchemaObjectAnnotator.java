@@ -49,9 +49,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final PsiFile psiFile = element.getContainingFile();
     if (! (psiFile instanceof JsonFile)) return;
 
-    final JsonProperty firstProp = getFirstProperty(element);
+    final JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
     if (firstProp == null) {
-      checkRootObject(holder, element);
+      final JsonValue root = findTopLevelElement(element);
+      if (root != null) {
+        checkRootObject(holder, root);
+      }
       return;
     }
     if (checkIfAlreadyProcessed(holder, firstProp)) return;
@@ -86,25 +89,23 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     if (processCheckerResults(holder, checker)) return;
     if (firstProp.getParent() instanceof JsonObject && firstProp.getParent().getParent() instanceof PsiFile) {
-      checkRootObject(holder, element);
+      checkRootObject(holder, firstProp.getParent());
     }
   }
 
-  private static JsonProperty getFirstProperty(@NotNull PsiElement element) {
-    JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
-    if (firstProp == null) {
-      final JsonObject firstObject = PsiTreeUtil.getParentOfType(element, JsonObject.class, false);
-      if (firstObject != null && firstObject.getParent() instanceof JsonValue) {
-        final List<JsonProperty> propertyList = firstObject.getPropertyList();
-        if (!propertyList.isEmpty()) firstProp = propertyList.get(0);
-      }
+  private static JsonValue findTopLevelElement(@NotNull PsiElement element) {
+    PsiElement current = element;
+    while (true) {
+      final JsonValue value = PsiTreeUtil.getParentOfType(current, JsonValue.class, true);
+      if (value != null && (value.getParent() instanceof PsiFile)) return value;
+      if (value == null) return current instanceof JsonValue ? (JsonValue)current : null;
+      current = value;
     }
-    return firstProp;
   }
 
   private void checkRootObject(@NotNull AnnotationHolder holder, PsiElement property) {
-    JsonValue object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
-    if (object == null) object = PsiTreeUtil.getParentOfType(property, JsonArray.class);
+    JsonValue object = property instanceof JsonObject ? (JsonObject)property : PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    if (object == null) object = property instanceof JsonArray ? (JsonValue)property : PsiTreeUtil.getParentOfType(property, JsonArray.class);
     if (object != null) {
       final BySchemaChecker rootChecker = new BySchemaChecker();
 
