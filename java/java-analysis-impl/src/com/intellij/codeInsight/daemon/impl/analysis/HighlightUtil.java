@@ -651,6 +651,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (toType instanceof PsiArrayType) {
       PsiType arrayComponentType = ((PsiArrayType)toType).getComponentType();
       if (!(arrayComponentType instanceof PsiPrimitiveType) &&
+          !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
           InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
         PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
         if (collectionItemType != null && arrayComponentType.isAssignableFrom(collectionItemType)) {
