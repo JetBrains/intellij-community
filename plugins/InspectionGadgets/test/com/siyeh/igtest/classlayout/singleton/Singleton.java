@@ -38,3 +38,15 @@ class NonSingleton {
         return new NonSingleton(copy);
     }
 }
+class <warning descr="Class 'Singleton2' is a singleton">Singleton2</warning> {
+
+    private Singleton2() {}
+
+    public static Singleton2 getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    private static class SingletonHolder {
+        private static final Singleton2 INSTANCE = new Singleton2();
+    }
+}
