@@ -19,9 +19,7 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 
 /*
   u2 local_variable_type_table_length;
@@ -33,31 +31,19 @@ import java.util.Map;
     } local_variable_type_table[local_variable_type_table_length];
 */
 public class StructLocalVariableTypeTableAttribute extends StructGeneralAttribute {
-
-  private Map<Integer, String> mapVarSignatures = Collections.emptyMap();
+  // store signature instead of descriptor
+  private final StructLocalVariableTableAttribute backingAttribute = new StructLocalVariableTableAttribute();
 
   @Override
   public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
-    int len = data.readUnsignedShort();
-    if (len > 0) {
-      mapVarSignatures = new HashMap<>(len);
-      for (int i = 0; i < len; i++) {
-        data.discard(6);
-        int signatureIndex = data.readUnsignedShort();
-        int varIndex = data.readUnsignedShort();
-        mapVarSignatures.put(varIndex, pool.getPrimitiveConstant(signatureIndex).getString());
-      }
-    }
-    else {
-      mapVarSignatures = Collections.emptyMap();
-    }
+    backingAttribute.initContent(data, pool);
   }
 
   public void add(StructLocalVariableTypeTableAttribute attr) {
-    mapVarSignatures.putAll(attr.getMapVarSignatures());
+    backingAttribute.add(attr.backingAttribute);
   }
 
-  public Map<Integer, String> getMapVarSignatures() {
-    return mapVarSignatures;
+  public String getSignature(int index, int visibleOffset) {
+    return backingAttribute.getDescriptor(index, visibleOffset);
   }
 }

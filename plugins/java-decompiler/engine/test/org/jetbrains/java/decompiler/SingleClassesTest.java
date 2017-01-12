@@ -93,6 +93,7 @@ public class SingleClassesTest {
   @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
   @Test public void testKotlinConstructor() { doTest("pkg/TestKotlinConstructorKt"); }
   @Test public void testAsserts() { doTest("pkg/TestAsserts"); }
+  @Test public void testLocalsNames() { doTest("pkg/TestLocalsNames"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

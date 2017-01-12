@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class FieldExprent extends Exprent {
     if (method != null) {
       StructLocalVariableTableAttribute attr = method.methodStruct.getLocalVariableAttr();
       if (attr != null) {
-        return attr.getMapVarNames().containsValue(name);
+        return attr.containsName(name);
       }
     }
 

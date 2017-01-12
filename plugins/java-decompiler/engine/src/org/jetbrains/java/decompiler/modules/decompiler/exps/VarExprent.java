@@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
@@ -36,6 +37,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,15 +51,21 @@ public class VarExprent extends Exprent {
   private VarType varType;
   private boolean definition = false;
   private VarProcessor processor;
+  private final int visibleOffset;
   private int version = 0;
   private boolean classDef = false;
   private boolean stack = false;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
+    this(index, varType, processor, -1);
+  }
+
+  public VarExprent(int index, VarType varType, VarProcessor processor, int visibleOffset) {
     super(EXPRENT_VAR);
     this.index = index;
     this.varType = varType;
     this.processor = processor;
+    this.visibleOffset = visibleOffset;
   }
 
   @Override
@@ -77,7 +85,7 @@ public class VarExprent extends Exprent {
 
   @Override
   public Exprent copy() {
-    VarExprent var = new VarExprent(index, getVarType(), processor);
+    VarExprent var = new VarExprent(index, getVarType(), processor, visibleOffset);
     var.setDefinition(definition);
     var.setVersion(version);
     var.setClassDef(classDef);
@@ -97,43 +105,85 @@ public class VarExprent extends Exprent {
       tracer.incrementCurrentSourceLine(buffer.countLines());
     }
     else {
-      String name = null;
-      if (processor != null) {
-        name = processor.getVarName(new VarVersionPair(index, version));
-      }
+      VarVersionPair varVersion = new VarVersionPair(index, version);
+      String name = getName(varVersion);
 
       if (definition) {
-        if (processor != null && processor.getVarFinal(new VarVersionPair(index, version)) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
+        if (processor != null && processor.getVarFinal(varVersion) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
           buffer.append("final ");
         }
-        boolean generic = false;
-        if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-          MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-          StructLocalVariableTypeTableAttribute attr = (StructLocalVariableTypeTableAttribute)method.methodStruct.getAttributes()
-            .getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
-          if (attr != null && processor != null) {
-            Integer index = processor.getVarOriginalIndex(new VarVersionPair(this.index, version));
-            if (index != null) {
-              String signature = attr.getMapVarSignatures().get(index);
+        appendDefinitionType(buffer, varVersion);
+        buffer.append(" ");
+      }
+
+      buffer.append(name == null ? ("var" + index + (this.version == 0 ? "" : "_" + this.version)) : name);
+    }
+
+    return buffer;
+  }
+
+  private String getName(VarVersionPair varVersion) {
+    String name = null;
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+      if (method != null) {
+        StructLocalVariableTableAttribute attr = method.methodStruct.getLocalVariableAttr();
+        if (attr != null && processor != null) {
+          Integer index = processor.getVarOriginalIndex(varVersion);
+          if (index != null) {
+            name = attr.getName(index, visibleOffset);
+            if (name != null && TextUtil.isValidIdentifier(name, method.methodStruct.getClassStruct().getBytecodeVersion())) {
+              return name;
+            }
+          }
+        }
+      }
+    }
+    if (processor != null) {
+      name = processor.getVarName(varVersion);
+    }
+    return name;
+  }
+
+  private void appendDefinitionType(TextBuffer buffer, VarVersionPair varVersion) {
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+      if (method != null) {
+        Integer originalIndex = null;
+        if (processor != null) {
+          originalIndex = processor.getVarOriginalIndex(varVersion);
+        }
+        if (originalIndex != null) {
+          // first try from signature
+          if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+            StructLocalVariableTypeTableAttribute attr = (StructLocalVariableTypeTableAttribute)method.methodStruct.getAttributes()
+              .getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
+            if (attr != null) {
+              String signature = attr.getSignature(originalIndex, visibleOffset);
               if (signature != null) {
                 GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                 if (descriptor != null) {
                   buffer.append(GenericMain.getGenericCastTypeName(descriptor.type));
-                  generic = true;
+                  return;
                 }
               }
             }
           }
+
+          // then try from descriptor
+          StructLocalVariableTableAttribute attr = method.methodStruct.getLocalVariableAttr();
+          if (attr != null) {
+            String descriptor = attr.getDescriptor(originalIndex, visibleOffset);
+            if (descriptor != null) {
+              buffer.append(ExprProcessor.getCastTypeName(new VarType(descriptor)));
+              return;
+            }
+          }
         }
-        if (!generic) {
-          buffer.append(ExprProcessor.getCastTypeName(getVarType()));
-        }
-        buffer.append(" ");
       }
-      buffer.append(name == null ? ("var" + index + (version == 0 ? "" : "_" + version)) : name);
     }
 
-    return buffer;
+    buffer.append(ExprProcessor.getCastTypeName(getVarType()));
   }
 
   @Override

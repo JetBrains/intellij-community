@@ -61,7 +61,7 @@ public class StructMember {
         if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
           // merge all variable tables
           StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.getWithKey(name);
-          table.addLocalVariableTable((StructLocalVariableTableAttribute)attribute);
+          table.add((StructLocalVariableTableAttribute)attribute);
         }
         else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(name)) {
           // merge all variable tables

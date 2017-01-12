@@ -40,8 +40,9 @@ public class VarProcessor {
   }
 
   public void setVarVersions(RootStatement root) {
+    VarVersionsProcessor oldProcessor = varVersions;
     varVersions = new VarVersionsProcessor(method, methodDescriptor);
-    varVersions.setVarVersions(root);
+    varVersions.setVarVersions(root, oldProcessor);
   }
 
   public void setVarDefinitions(Statement root) {
