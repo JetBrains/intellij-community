@@ -623,8 +623,11 @@ public class HighlightUtil extends HighlightUtilBase {
               QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true));
             }
             registerChangeParameterClassFix(returnType, valueType, errorResult);
-            if (returnType instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType)) {
-              QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, returnValue));
+            if (returnType instanceof PsiArrayType) {
+              final PsiType erasedValueType = TypeConversionUtil.erasure(valueType);
+              if (erasedValueType != null && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), erasedValueType)) {
+                QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, returnValue));
+              }
             }
             registerCollectionToArrayFixAction(errorResult, valueType, returnType, returnValue);
           }
