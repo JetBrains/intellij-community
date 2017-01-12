@@ -305,7 +305,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     return action instanceof PopupAction
            || action instanceof CopyAction
            || action instanceof CutAction
-           || action instanceof ScrollingUtil.ListScrollAction;
+           || action instanceof ScrollingUtil.ScrollingAction;
   }
 
   @Override
