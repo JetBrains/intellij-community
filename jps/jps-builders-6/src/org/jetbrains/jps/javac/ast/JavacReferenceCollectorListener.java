@@ -16,9 +16,11 @@
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
@@ -189,7 +191,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {
-                elements.add(JavacRef.JavacElementRefBase.fromElement(memberElement, myNameTableCache));
+                ContainerUtilRt.addIfNotNull(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, myNameTableCache));
               }
             }
           }
@@ -206,7 +208,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
     for (Element element = baseImport;
          element != null && element.getKind() != ElementKind.PACKAGE;
          element = element.getEnclosingElement()) {
-      collector.add(JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache));
+      ContainerUtilRt.addIfNotNull(collector, JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache));
     }
   }
 
@@ -226,14 +228,15 @@ final class JavacReferenceCollectorListener implements TaskListener {
       myTreeHelper = new JavacTreeHelper(unitTree, myTreeUtility);
     }
 
-    void sinkReference(JavacRef.JavacElementRefBase ref) {
-      myFileData.getRefs().add(ref);
+    void sinkReference(@Nullable JavacRef.JavacElementRefBase ref) {
+      ContainerUtilRt.addIfNotNull(myFileData.getRefs(), ref);
     }
 
     void sinkDeclaration(JavacDef def) {
      myFileData.getDefs().add(def);
     }
 
+    @Nullable
     JavacRef.JavacElementRefBase asJavacRef(Element element) {
       return JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache);
     }

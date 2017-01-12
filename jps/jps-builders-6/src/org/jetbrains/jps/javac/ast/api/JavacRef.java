@@ -16,6 +16,7 @@
 package org.jetbrains.jps.javac.ast.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.*;
 import java.util.Set;
@@ -149,6 +150,7 @@ public interface JavacRef {
       return myNameTableCache.parseBinaryName(myOriginalElement.getEnclosingElement());
     }
 
+    @Nullable
     public static JavacElementRefBase fromElement(Element element, JavacNameTable nameTableCache) {
       if (element instanceof TypeElement) {
         return new JavacElementClassImpl(element, nameTableCache);
@@ -158,6 +160,10 @@ public interface JavacRef {
       }
       else if (element instanceof ExecutableElement) {
         return new JavacElementMethodImpl(element, nameTableCache);
+      }
+      else if (element.getKind() == ElementKind.OTHER) {
+        // javac reserved symbol kind (e.g: com.sun.tools.javac.comp.Resolve.ResolveError)
+        return null;
       }
       throw new AssertionError("unexpected element: " + element + " class: " + element.getClass());
     }
