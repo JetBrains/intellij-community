@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Singleton{
+public class <warning descr="Class 'Singleton' is a singleton">Singleton</warning>{
     private static Singleton ourInstance = new Singleton();
 
     public static Singleton getInstance(){
