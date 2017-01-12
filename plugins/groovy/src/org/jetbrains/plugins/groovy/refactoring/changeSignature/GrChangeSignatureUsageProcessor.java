@@ -284,7 +284,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final GrDocTag[] tags = docComment == null ? null : docComment.getTags();
 
 
-    
+    int newParamIndex = 0;
     for (JavaParameterInfo newParameter : newParameters) {
       //if old parameter name differs from base method parameter name we don't change it
       final String newName;
@@ -329,6 +329,14 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       anchor = (GrParameter)parameterList.addAfter(grParameter, anchor);
+      if (newParamIndex < oldParameters.length) {
+        GrParameter oldParam = oldParameters[newParamIndex];
+        PsiElement prev = oldParam.getPrevSibling();
+        if (prev instanceof PsiWhiteSpace) {
+          parameterList.addBefore(prev, anchor);
+        }
+      }
+      newParamIndex++;
     }
 
     for (GrParameter oldParameter : toRemove) {
