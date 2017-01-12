@@ -44,6 +44,8 @@ cdef extern from "frameobject.h":
 
 
 cdef extern from "Python.h":
+    void Py_INCREF(object o)
+    void Py_DECREF(object o)
     object PyImport_ImportModule(char *name)
     PyObject* PyObject_CallFunction(PyObject *callable, const char *format, ...)
     object PyObject_GetAttrString(object o, char *attr_name)
