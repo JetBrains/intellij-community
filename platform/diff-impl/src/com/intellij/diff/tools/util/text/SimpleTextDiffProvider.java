@@ -25,15 +25,14 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static com.intellij.diff.tools.util.base.HighlightPolicy.*;
 import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
 
-public class SimpleTextDiffProvider extends TextDiffProviderBase implements TwosideTextDiffProvider {
-  private static final DiffUserDataKeysEx.DiffComputer DEFAULT_COMPUTER = (text1, text2, policy, innerChanges, indicator) -> {
+public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implements TwosideTextDiffProvider {
+  static final DiffUserDataKeysEx.DiffComputer DEFAULT_COMPUTER = (text1, text2, policy, innerChanges, indicator) -> {
     if (innerChanges) {
       return ComparisonManager.getInstance().compareLinesInner(text1, text2, policy, indicator);
     }
@@ -67,25 +66,15 @@ public class SimpleTextDiffProvider extends TextDiffProviderBase implements Twos
     myDiffComputer = diffComputer;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public List<LineFragment> compare(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ProgressIndicator indicator) {
-    IgnorePolicy ignorePolicy = getIgnorePolicy();
-    HighlightPolicy highlightPolicy = getHighlightPolicy();
-
-    if (!highlightPolicy.isShouldCompare()) return null;
-
+  protected List<LineFragment> doCompare(@NotNull CharSequence text1,
+                                         @NotNull CharSequence text2,
+                                         @NotNull IgnorePolicy ignorePolicy,
+                                         boolean innerFragments,
+                                         @NotNull ProgressIndicator indicator) {
     ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
-    boolean innerFragments = highlightPolicy.isFineFragments();
-    boolean squashFragments = highlightPolicy.isShouldSquash();
-    boolean trimFragments = ignorePolicy.isShouldTrimChunks();
-
-    indicator.checkCanceled();
-    List<LineFragment> fragments = myDiffComputer.compute(text1, text2, policy, innerFragments, indicator);
-
-    indicator.checkCanceled();
-    return ComparisonManager.getInstance().processBlocks(fragments, text1, text2,
-                                                         policy, squashFragments, trimFragments);
+    return myDiffComputer.compute(text1, text2, policy, innerFragments, indicator);
   }
 
 

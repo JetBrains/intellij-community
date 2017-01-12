@@ -23,9 +23,11 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil.IgnorePolicySettingA
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.list;
 
 public class TextDiffProviderBase implements TextDiffProvider {
@@ -36,8 +38,8 @@ public class TextDiffProviderBase implements TextDiffProvider {
                               @NotNull Runnable rediff,
                               @NotNull IgnorePolicy[] ignorePolicies,
                               @NotNull HighlightPolicy[] highlightPolicies) {
-    myIgnorePolicySettingAction = new IgnorePolicySettingAction(settings, rediff, ignorePolicies);
-    myHighlightPolicySettingAction = new HighlightPolicySettingAction(settings, rediff, highlightPolicies);
+    myIgnorePolicySettingAction = new MyIgnorePolicySettingAction(settings, rediff, ignorePolicies);
+    myHighlightPolicySettingAction = new MyHighlightPolicySettingAction(settings, rediff, highlightPolicies);
   }
 
   @NotNull
@@ -68,5 +70,45 @@ public class TextDiffProviderBase implements TextDiffProvider {
 
   public boolean isHighlightingDisabled() {
     return myHighlightPolicySettingAction.getValue() == HighlightPolicy.DO_NOT_HIGHLIGHT;
+  }
+
+
+  @Nullable
+  protected String getText(@NotNull IgnorePolicy option) {
+    return null;
+  }
+
+  @Nullable
+  protected String getText(@NotNull HighlightPolicy option) {
+    return null;
+  }
+
+
+  private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
+    public MyIgnorePolicySettingAction(@NotNull TextDiffSettings settings,
+                                       @NotNull Runnable rediff,
+                                       @NotNull IgnorePolicy[] ignorePolicies) {
+      super(settings, rediff, ignorePolicies);
+    }
+
+    @NotNull
+    @Override
+    protected String getText(@NotNull IgnorePolicy option) {
+      return notNullize(TextDiffProviderBase.this.getText(option), super.getText(option));
+    }
+  }
+
+  private class MyHighlightPolicySettingAction extends HighlightPolicySettingAction {
+    public MyHighlightPolicySettingAction(@NotNull TextDiffSettings settings,
+                                          @NotNull Runnable rediff,
+                                          @NotNull HighlightPolicy[] highlightPolicies) {
+      super(settings, rediff, highlightPolicies);
+    }
+
+    @NotNull
+    @Override
+    protected String getText(@NotNull HighlightPolicy option) {
+      return notNullize(TextDiffProviderBase.this.getText(option), super.getText(option));
+    }
   }
 }

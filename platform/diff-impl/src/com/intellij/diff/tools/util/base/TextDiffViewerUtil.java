@@ -336,6 +336,9 @@ public class TextDiffViewerUtil {
       if (value == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) {
         return list(IgnorePolicy.IGNORE_WHITESPACES);
       }
+      if (value == IgnorePolicy.FORMATTING) {
+        return list(IgnorePolicy.TRIM_WHITESPACES);
+      }
       return list(IgnorePolicy.DEFAULT);
     }
 

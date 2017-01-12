@@ -22,6 +22,7 @@ import com.intellij.diff.util.IntPair
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.util.text.StringUtil.isWhiteSpace
+import java.util.*
 
 fun isPunctuation(c: Char): Boolean {
   if (c == '_') return false
@@ -40,6 +41,11 @@ fun isAlpha(c: Char): Boolean {
 fun trim(text: CharSequence, start: Int, end: Int): IntPair {
   return trim(start, end,
               { index -> isWhiteSpace(text[index]) })
+}
+
+fun trim(start: Int, end: Int, ignored: BitSet): IntPair {
+  return trim(start, end,
+              { index -> ignored[index] })
 }
 
 fun trimStart(text: CharSequence, start: Int, end: Int): Int {
@@ -156,12 +162,25 @@ fun expandWhitespacesBackward(text1: CharSequence, text2: CharSequence, text3: C
 }
 
 
-fun expandIW(text1: CharSequence, text2: CharSequence,
-                        start1: Int, start2: Int, end1: Int, end2: Int): Range {
+fun <T> trimExpandList(text1: List<T>, text2: List<T>,
+                       start1: Int, start2: Int, end1: Int, end2: Int,
+                       equals: (T, T) -> Boolean,
+                       ignored1: (T) -> Boolean,
+                       ignored2: (T) -> Boolean): Range {
+  return trimExpand(start1, start2, end1, end2,
+                    { index1, index2 -> equals(text1[index1], text2[index2]) },
+                    { index -> ignored1(text1[index]) },
+                    { index -> ignored2(text2[index]) })
+}
+
+fun trimExpandText(text1: CharSequence, text2: CharSequence,
+                   start1: Int, start2: Int, end1: Int, end2: Int,
+                   ignored1: BitSet,
+                   ignored2: BitSet): Range {
   return trimExpand(start1, start2, end1, end2,
                     { index1, index2 -> text1[index1] == text2[index2] },
-                    { index -> isWhiteSpace(text1[index]) },
-                    { index -> isWhiteSpace(text2[index]) })
+                    { index -> ignored1[index] },
+                    { index -> ignored2[index] })
 }
 
 

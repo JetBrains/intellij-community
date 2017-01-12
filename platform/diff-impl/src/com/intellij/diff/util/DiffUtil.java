@@ -36,10 +36,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
-import com.intellij.diff.tools.util.text.LineOffsets;
-import com.intellij.diff.tools.util.text.MergeInnerDifferences;
-import com.intellij.diff.tools.util.text.SimpleTextDiffProvider;
-import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
+import com.intellij.diff.tools.util.text.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -600,24 +597,30 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static TwosideTextDiffProvider createTextDiffProvider(@NotNull ContentDiffRequest request,
+  public static TwosideTextDiffProvider createTextDiffProvider(@Nullable Project project,
+                                                               @NotNull ContentDiffRequest request,
                                                                @NotNull TextDiffSettings settings,
                                                                @NotNull Runnable rediff) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
-    if (diffComputer != null) {
-      return new SimpleTextDiffProvider(settings, rediff, diffComputer);
-    }
+    if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, diffComputer);
+
+    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff);
+    if (smartProvider != null) return smartProvider;
+
     return new SimpleTextDiffProvider(settings, rediff);
   }
 
   @NotNull
-  public static TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@NotNull ContentDiffRequest request,
+  public static TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@Nullable Project project,
+                                                                                @NotNull ContentDiffRequest request,
                                                                                 @NotNull TextDiffSettings settings,
                                                                                 @NotNull Runnable rediff) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
-    if (diffComputer != null) {
-      return new SimpleTextDiffProvider.NoIgnore(settings, rediff, diffComputer);
-    }
+    if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, diffComputer);
+
+    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff);
+    if (smartProvider != null) return smartProvider;
+
     return new SimpleTextDiffProvider.NoIgnore(settings, rediff);
   }
 

@@ -80,7 +80,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     myModifierProvider = new ModifierProvider();
 
-    myTextDiffProvider = DiffUtil.createTextDiffProvider(getRequest(), getTextSettings(), this::rediff);
+    myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff);
 
     DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.LEFT, true), myPanel);
     DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT, true), myPanel);
