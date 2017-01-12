@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -62,8 +61,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement forElement = descriptor.getPsiElement();
       final PsiElement parent = forElement.getParent();
       if (!(parent instanceof PsiForStatement)) {
@@ -90,8 +88,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     }
 
     @Nullable
-    private String createListIterationText(
-      @NotNull PsiForStatement forStatement) {
+    private String createListIterationText(@NotNull PsiForStatement forStatement) {
       final PsiBinaryExpression condition =
         (PsiBinaryExpression)ParenthesesUtils.stripParentheses(
           forStatement.getCondition());
@@ -205,22 +202,16 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         finalString = "";
         statementToSkip = null;
       }
-      @NonNls final StringBuilder out = new StringBuilder();
-      out.append("for(");
-      out.append(finalString);
-      out.append(typeString);
-      out.append(' ');
-      out.append(contentVariableName);
-      out.append(": ");
+      @NonNls final StringBuilder out = new StringBuilder("for(");
+      out.append(finalString).append(typeString).append(' ').append(contentVariableName).append(": ");
       @NonNls final String listName;
       if (listReference == null) {
         listName = "this";
       }
       else {
-        listName = listReference.getText();
+        listName = getVariableReferenceText(listReference, listVariable, forStatement);
       }
-      out.append(listName);
-      out.append(')');
+      out.append(listName).append(')');
       if (body != null) {
         replaceCollectionGetAccess(body, contentVariableName, listVariable, indexName, statementToSkip, out);
       }
@@ -292,9 +283,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     }
 
     @Nullable
-    private String createCollectionIterationText(
-      @NotNull PsiForStatement forStatement)
-      throws IncorrectOperationException {
+    private String createCollectionIterationText(@NotNull PsiForStatement forStatement) {
       final PsiStatement body = forStatement.getBody();
       final PsiStatement firstStatement = getFirstStatement(body);
       final PsiStatement initialization =
@@ -396,14 +385,8 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
       out.append(' ');
       out.append(contentVariableName);
       out.append(": ");
-      if (!contentType.equals(javaLangObject)) {
-        @NonNls final String iterableTypeString =
-          "java.lang.Iterable<" + contentTypeString + '>';
-        if (iteratorContentType == null) {
-          out.append('(');
-          out.append(iterableTypeString);
-          out.append(')');
-        }
+      if (!contentType.equals(javaLangObject) && iteratorContentType == null) {
+        out.append('(').append("java.lang.Iterable<").append(contentTypeString).append('>').append(')');
       }
       if (collection == null) {
         out.append("this");
@@ -412,8 +395,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         out.append(collection.getText());
       }
       out.append(')');
-      replaceIteratorNext(body, contentVariableName, iteratorVariable,
-                          contentType, statementToSkip, out);
+      replaceIteratorNext(body, contentVariableName, iteratorVariable, contentType, statementToSkip, out);
       return out.toString();
     }
 
@@ -536,7 +518,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
       out.append(' ');
       out.append(contentVariableName);
       out.append(": ");
-      final String arrayName = arrayReference.getText();
+      final String arrayName = getVariableReferenceText(arrayReference, arrayVariable, forStatement);
       out.append(arrayName);
       out.append(')');
       if (body != null) {
@@ -891,5 +873,13 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     final PsiBlockStatement block = (PsiBlockStatement)body;
     final PsiCodeBlock codeBlock = block.getCodeBlock();
     return ControlFlowUtils.getFirstStatementInBlock(codeBlock);
+  }
+
+  @NotNull
+  private String getVariableReferenceText(PsiReferenceExpression reference, PsiVariable variable, PsiElement context) {
+    final String text = reference.getText();
+    final PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(context.getProject());
+    final PsiVariable target = resolveHelper.resolveReferencedVariable(text, context);
+    return variable != target ? "this." + text : text;
   }
 }
