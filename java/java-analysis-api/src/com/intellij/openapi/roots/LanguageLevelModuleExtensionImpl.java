@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LanguageLevelModuleExtensionImpl  extends ModuleExtension<LanguageLevelModuleExtensionImpl> implements LanguageLevelModuleExtension {
+public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements LanguageLevelModuleExtension {
+  private static final Logger LOG = Logger.getInstance(LanguageLevelModuleExtensionImpl.class);
+
   @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
   private Module myModule;
   private final boolean myWritable;
-  private static final Logger LOG = Logger.getInstance("#" + LanguageLevelModuleExtensionImpl.class.getName());
 
   private LanguageLevel myLanguageLevel;
   private final LanguageLevelModuleExtensionImpl mySource;
