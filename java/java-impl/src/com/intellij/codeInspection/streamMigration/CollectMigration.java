@@ -161,6 +161,25 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
       return argumentList != null && argumentList.getExpressions().length == 0;
     }
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      String name = call.getMethodExpression().getReferenceName();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if(name != null && name.startsWith("new") && argumentList.getExpressions().length == 0) {
+        PsiMethod method = call.resolveMethod();
+        if(method != null && method.getParameterList().getParametersCount() == 0) {
+          PsiClass aClass = method.getContainingClass();
+          if(aClass != null) {
+            String qualifiedName = aClass.getQualifiedName();
+            if("com.google.common.collect.Maps".equals(qualifiedName) ||
+               "com.google.common.collect.Lists".equals(qualifiedName) ||
+               "com.google.common.collect.Sets".equals(qualifiedName)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
     return false;
   }
 
