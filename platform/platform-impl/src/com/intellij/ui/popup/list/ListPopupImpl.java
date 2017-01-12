@@ -25,16 +25,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -530,14 +529,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JBListWithHintProvider implements DataProvider {
+  private class MyList extends JBList implements DataProvider {
     public MyList() {
       super(myListModel);
-    }
-
-    @Override
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
-      return selectedValue instanceof PsiElement ? (PsiElement)selectedValue : null;
+      HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
     @Override

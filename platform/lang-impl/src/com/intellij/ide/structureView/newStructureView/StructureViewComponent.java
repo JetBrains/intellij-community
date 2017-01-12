@@ -19,6 +19,7 @@ package com.intellij.ide.structureView.newStructureView;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
@@ -45,6 +46,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -169,9 +171,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
   }
   
-  private static class MyTree extends JBTreeWithHintProvider implements PlaceProvider<String> {
-    public MyTree(javax.swing.tree.TreeModel treemodel) {
-      super(treemodel);
+  private static class MyTree extends DnDAwareTree implements PlaceProvider<String> {
+
+    MyTree(javax.swing.tree.TreeModel model) {
+      super(model);
+      HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
 
     @Override

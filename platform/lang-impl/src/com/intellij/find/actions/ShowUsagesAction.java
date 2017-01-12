@@ -1150,7 +1150,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     public MyTable() {
       ScrollingUtil.installActions(this);
-      HintUpdateSupply.installSimpleHintUpdateSupply(this);
+      HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
 
     @Override
