@@ -1218,7 +1218,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
           @Override
           protected void paintComponent(@NotNull Graphics g) {
-            if (myVisualLine ==-1) return;
+            if (myVisualLine ==-1 || myEditor.isDisposed()) return;
             Dimension size = getPreferredSize();
             EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
             EditorComponentImpl content = myEditor.getContentComponent();
