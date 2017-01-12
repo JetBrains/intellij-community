@@ -87,7 +87,13 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
   @Nullable
   @Override
   protected String getElementText(@NotNull Object row) {
-    Integer id = myComponent.getModel().getIdAtRow((Integer)row);
+    throw new UnsupportedOperationException(
+      "Getting row text in a Log is unsupported since we match commit subject and author separately.");
+  }
+
+  @Nullable
+  private String getCommitSubject(@NotNull Integer row) {
+    Integer id = myComponent.getModel().getIdAtRow(row);
     String message = myIndex.getFullMessage(id);
     if (message == null) return super.getElementText(row);
     return IndexedDetails.getSubject(message);
@@ -95,7 +101,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
 
   @Override
   protected boolean isMatchingElement(Object row, String pattern) {
-    String str = this.getElementText(row);
+    String str = getCommitSubject((Integer)row);
     return (str != null && compare(str, pattern)) ||
            (myMatchedByUserCommits != null &&
             !myMatchedByUserCommits.isEmpty() &&
