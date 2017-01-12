@@ -40,8 +40,8 @@ object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..6
   // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  private val WHITE_LIST = setOf("typing", "six")
-  private val BLACK_LIST = setOf("__builtin__", "builtins", "exceptions")
+  private val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions")
+  private val BLACK_LIST = setOf<String>()
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
