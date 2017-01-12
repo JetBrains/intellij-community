@@ -301,13 +301,17 @@ class CollectMigration extends BaseStreamApiMigration {
       }
       String method = MethodCallUtils.isVarArgCall(myAddAllCall) ? CommonClassNames.JAVA_UTIL_STREAM_STREAM + "." + generic + "of"
                                                                  : CommonClassNames.JAVA_UTIL_ARRAYS + "." + generic + "stream";
-      return ".flatMap(" + myElement.getName() + "->" + method + "(" +
-             StreamEx.of(myAddAllCall.getArgumentList().getExpressions()).skip(1).map(PsiExpression::getText).joining(",") + "))";
+      String lambda = myElement.getName() + "->" + method + "(" +
+                      StreamEx.of(myAddAllCall.getArgumentList().getExpressions()).skip(1).map(PsiExpression::getText).joining(",") + ")";
+      return myElement.getType() instanceof PsiPrimitiveType ?
+             ".mapToObj(" + lambda + ").flatMap("+ CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION+".identity())" :
+             ".flatMap(" + lambda + ")";
     }
 
     @Nullable
     static AddingAllTerminal tryExtractAddAll(TerminalBlock tb, PsiMethodCallExpression call) {
-      if(!MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COLLECTIONS, "addAll", 2)) {
+      if(tb.getCountExpression() != null ||
+         !MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COLLECTIONS, "addAll", 2)) {
         return null;
       }
       PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -501,7 +505,7 @@ class CollectMigration extends BaseStreamApiMigration {
       myStatement.delete();
     }
 
-    @Contract("null, _ -> null")
+    @Nullable
     public static CollectTerminal tryWrap(CollectTerminal terminal, PsiElement element) {
       PsiVariable list = terminal.getTargetVariable();
       if (list == null || !(element instanceof PsiExpressionStatement)) return null;
@@ -606,7 +610,7 @@ class CollectMigration extends BaseStreamApiMigration {
       myUpstream.cleanUp();
     }
 
-    @Contract("null, _, _ -> null")
+    @Nullable
     public static ToArrayTerminal tryWrap(CollectTerminal terminal, PsiLoopStatement loopStatement, PsiElement element) {
       PsiVariable collectionVariable = terminal.getTargetVariable();
       if (collectionVariable == null || StreamApiMigrationInspection.getInitializerUsageStatus(collectionVariable, loopStatement)
