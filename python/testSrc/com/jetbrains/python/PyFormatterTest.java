@@ -700,6 +700,19 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15874
+  public void testHangClosingOffComprehensionsAndGeneratorExpressions() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = false;
+    doTest();
+  }
+  
+  // PY-15874
+  public void testHangClosingOnComprehensionsAndGeneratorExpressions() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
