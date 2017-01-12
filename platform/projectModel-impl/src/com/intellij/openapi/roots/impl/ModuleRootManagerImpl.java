@@ -93,11 +93,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
         entries = new ArrayList<>(myModelCreations.entrySet());
       }
       for (final Map.Entry<RootModelImpl, Throwable> entry : entries) {
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
-        System.err.println("***********************************************************************************************");
-        System.err.println("Created at:");
-        entry.getValue().printStackTrace(System.err);
+        LOG.warn("\n" +
+                 "***********************************************************************************************\n" +
+                 "***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***\n" +
+                 "***********************************************************************************************\n" +
+                 "Created at:", entry.getValue());
         entry.getKey().dispose();
       }
     }
