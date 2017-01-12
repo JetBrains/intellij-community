@@ -18,7 +18,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -269,7 +268,7 @@ class VisiblePackBuilder {
       final VirtualFile root = entry.getKey();
 
       if (!visibleRoots.contains(root) ||
-          (filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUserNames(root).isEmpty())) {
+          (filterCollection.getUserFilter() != null && filterCollection.getUserFilter().getUsers(root).isEmpty())) {
         // there is a structure or user filter, but it doesn't match this root
         continue;
       }

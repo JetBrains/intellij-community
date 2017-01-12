@@ -32,6 +32,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.UserNameRegex;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -250,7 +251,8 @@ public class HgLogProvider implements VcsLogProvider {
     if (filterCollection.getUserFilter() != null) {
       filterParameters.add("-r");
       String authorFilter =
-        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.EXTENDED_INSTANCE), "|");
+        StringUtil.join(ContainerUtil.map(ContainerUtil.map(filterCollection.getUserFilter().getUsers(root), VcsUserUtil::toExactString),
+                                          UserNameRegex.EXTENDED_INSTANCE), "|");
       filterParameters.add("user('re:" + authorFilter + "')");
     }
 

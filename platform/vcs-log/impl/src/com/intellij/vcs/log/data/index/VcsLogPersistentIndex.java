@@ -36,7 +36,6 @@ import com.intellij.util.io.*;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
@@ -319,7 +318,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     if (filters.isEmpty() || myIndexStorage == null) return false;
     for (VcsLogDetailsFilter filter : filters) {
       if (filter instanceof VcsLogTextFilter ||
-          filter instanceof VcsLogUserFilterImpl ||
+          filter instanceof VcsLogUserFilter ||
           filter instanceof VcsLogStructureFilter) {
         continue;
       }
@@ -332,7 +331,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull
   public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
     VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
-    VcsLogUserFilterImpl userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilterImpl.class);
+    VcsLogUserFilter userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilter.class);
     VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
 
     TIntHashSet filteredByMessage = null;

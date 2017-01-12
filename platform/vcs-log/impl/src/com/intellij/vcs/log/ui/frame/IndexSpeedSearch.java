@@ -19,12 +19,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -95,12 +96,10 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
             myMatchedByUserCommits.contains(myComponent.getModel().getIdAtRow((Integer)row)));
   }
 
-  private static class SimpleVcsLogUserFilter extends VcsLogUserFilterImpl {
+  private static class SimpleVcsLogUserFilter implements VcsLogUserFilter {
     @NotNull private final List<VcsUser> myMatchedUsers;
 
     public SimpleVcsLogUserFilter(@NotNull List<VcsUser> matchedUsers) {
-      super(ContainerUtil.map(matchedUsers, VcsUserUtil::getShortPresentation), Collections.emptyMap(),
-            ContainerUtil.newHashSet(matchedUsers));
       myMatchedUsers = matchedUsers;
     }
 
@@ -108,6 +107,11 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
     @Override
     public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
       return myMatchedUsers;
+    }
+
+    @Override
+    public boolean matches(@NotNull VcsCommitMetadata details) {
+      return myMatchedUsers.contains(details.getAuthor());
     }
   }
 }
