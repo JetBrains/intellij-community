@@ -149,11 +149,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
-      if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
+      // Check for leaked projects ~ every 20 tests
+      if (LOG_PROJECT_LEAKAGE_IN_TESTS && Math.random() < 0.05) {
         for (int i = 0; i < 42; i++) {
           if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
           System.gc();
-          if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
           TimeoutUtil.sleep(100);
           System.gc();
         }
