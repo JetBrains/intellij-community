@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 public class IndexSpeedSearch extends VcsLogSpeedSearch {
@@ -41,6 +40,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
   @NotNull private final VcsUserRegistry myUserRegistry;
 
   @Nullable private Set<Integer> myMatchedByUserCommits;
+  @Nullable private Collection<VcsUser> myMatchedUsers;
 
   public IndexSpeedSearch(@NotNull Project project, @NotNull VcsLogIndex index, @NotNull VcsLogGraphTable component) {
     super(component);
@@ -49,14 +49,21 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
 
     addChangeListener(evt -> {
       if (evt.getPropertyName().equals(ENTERED_PREFIX_PROPERTY_NAME)) {
-        String pattern = (String)evt.getNewValue();
-        if (pattern != null) {
-          List<VcsUser> matchedUsers = ContainerUtil.filter(myUserRegistry.getUsers(),
-                                                            user -> compare(VcsUserUtil.getShortPresentation(user), pattern));
-          myMatchedByUserCommits = myIndex.filter(Collections.singletonList(new SimpleVcsLogUserFilter(matchedUsers)));
+        String newValue = (String)evt.getNewValue();
+        if (newValue != null) {
+          String oldValue = (String)evt.getOldValue();
+          Collection<VcsUser> usersToExamine = myUserRegistry.getUsers();
+          if (oldValue != null && newValue.contains(oldValue) && myMatchedUsers != null) {
+            if (myMatchedUsers.isEmpty()) return;
+            usersToExamine = myMatchedUsers;
+          }
+          myMatchedUsers = ContainerUtil.filter(usersToExamine,
+                                                user -> compare(VcsUserUtil.getShortPresentation(user), newValue));
+          myMatchedByUserCommits = myIndex.filter(Collections.singletonList(new SimpleVcsLogUserFilter(myMatchedUsers)));
         }
         else {
           myMatchedByUserCommits = null;
+          myMatchedUsers = null;
         }
       }
     });
@@ -97,9 +104,9 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
   }
 
   private static class SimpleVcsLogUserFilter implements VcsLogUserFilter {
-    @NotNull private final List<VcsUser> myMatchedUsers;
+    @NotNull private final Collection<VcsUser> myMatchedUsers;
 
-    public SimpleVcsLogUserFilter(@NotNull List<VcsUser> matchedUsers) {
+    public SimpleVcsLogUserFilter(@NotNull Collection<VcsUser> matchedUsers) {
       myMatchedUsers = matchedUsers;
     }
 
