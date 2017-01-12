@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -125,11 +126,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     final String constructorName = getConstructorName(psiClass);
 
-    if (containsMethod(definedConstructors, constructorName, paramTypes)) {
+    final PsiMethod existedMethod = findExistedMethod(definedConstructors, constructorName, paramTypes);
+    if (null != existedMethod) {
       if (paramTypes.isEmpty()) {
-        builder.addError("Constructor without parameters is already defined");
+        builder.addError("Constructor without parameters is already defined", new SafeDeleteFix(existedMethod));
       } else {
-        builder.addError("Constructor with %d parameters is already defined", paramTypes.size());
+        builder.addError(String.format("Constructor with %d parameters is already defined", paramTypes.size()), new SafeDeleteFix(existedMethod));
       }
       result = false;
     }
@@ -137,11 +139,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     if (isStaticConstructor(staticConstructorName)) {
       final Collection<PsiMethod> definedMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
 
-      if (containsMethod(definedMethods, staticConstructorName, paramTypes)) {
+      final PsiMethod existedStaticMethod = findExistedMethod(definedMethods, staticConstructorName, paramTypes);
+      if (null != existedStaticMethod) {
         if (paramTypes.isEmpty()) {
-          builder.addError("Method '%s' matched staticConstructorName is already defined", staticConstructorName);
+          builder.addError(String.format("Method '%s' matched staticConstructorName is already defined", staticConstructorName), new SafeDeleteFix(existedStaticMethod));
         } else {
-          builder.addError("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size());
+          builder.addError(String.format("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size()), new SafeDeleteFix(existedStaticMethod));
         }
         result = false;
       }
@@ -155,13 +158,14 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return psiClass.getName();
   }
 
-  private boolean containsMethod(final Collection<PsiMethod> definedMethods, final String methodName, final List<PsiType> paramTypes) {
+  @Nullable
+  private PsiMethod findExistedMethod(final Collection<PsiMethod> definedMethods, final String methodName, final List<PsiType> paramTypes) {
     for (PsiMethod method : definedMethods) {
       if (PsiElementUtil.methodMatches(method, null, null, methodName, paramTypes)) {
-        return true;
+        return method;
       }
     }
-    return false;
+    return null;
   }
 
   @NotNull

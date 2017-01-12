@@ -160,13 +160,17 @@
     <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableMethodsProcessor"/>
     <processor implementation="pl.mg6.hrisey.intellij.plugin.processor.clazz.ParcelableFieldsProcessor"/>
 
-    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor" />
-    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor" />
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor"/>
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor"/>
     <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.UtilityClassModifierProcessor"/>
-    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.FieldDefaultsModifierProcessor" />
+    <modifierProcessor implementation="de.plushnikov.intellij.plugin.processor.modifier.FieldDefaultsModifierProcessor"/>
   </extensions>
 
   <actions>
+    <!--Override existing action from jetbrains by customized, to support constructor generation for classes with lombok defined constructors-->
+    <action id="GenerateConstructor" text="Constructor" overrides="true"
+            class="de.plushnikov.intellij.plugin.action.generate.LombokGenerateConstructorAction"/>
+
     <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
            icon="/icons/lombok.png" popup="true">
 
@@ -267,6 +271,7 @@
             <li>Fixed #306: Problem with @Builder and generics</li>
             <li>Fixed #308: Write access is allowed from write-safe contexts only</li>
             <li>Fixed #313: Missed substitution when class and builder have generics</li>
+            <li>Fixed #320: Fixed No availability to generate any constructor</li>
             <li>Fixed #322: Added support of lombok.experimental.var</li>
             <li>Fixed #332: @Value(staticConstructor = "of") breaks intellij's type inference</li>
             <li>Fixed #334: Added support for inlining getters/setters</li>
