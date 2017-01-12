@@ -1,5 +1,6 @@
 import dis
 from types import CodeType
+from opcode import opmap
 
 
 def _modify_code_arguments(original_code, insert_code, insert_code_obj, attr, op_list):
@@ -63,6 +64,10 @@ def _modify_labels(code_obj, offset_of_inserted_code, size_of_inserted_code):
     return bytes(code_list)
 
 
+def _return_none_fun():
+    return None
+
+
 def insert_code(code_to_modify, code_to_insert, before_line):
     """
     Insert piece of code `code_to_insert` to `code_to_modify` right inside the line `before_line` before the
@@ -81,11 +86,12 @@ def insert_code(code_to_modify, code_to_insert, before_line):
         if line_no == before_line:
             offset = off
 
-    code_to_insert_obj = code_to_insert.co_code[:-4]
+    return_none_size = len(_return_none_fun.__code__.co_code)
+    code_to_insert_obj = code_to_insert.co_code[:-return_none_size]
     code_to_insert_obj, new_names = _modify_code_arguments(code_to_modify, code_to_insert, code_to_insert_obj,
                                                            'co_names', dis.hasname)
     code_to_insert_obj, new_consts = _modify_code_arguments(code_to_modify, code_to_insert, code_to_insert_obj,
-                                                            'co_consts', [100])
+                                                            'co_consts', [opmap['LOAD_CONST']])
     code_to_insert_obj, new_vars = _modify_code_arguments(code_to_modify, code_to_insert, code_to_insert_obj,
                                                           'co_varnames', dis.haslocal)
     modified_code = _modify_labels(code_to_modify.co_code, offset, len(code_to_insert_obj))
