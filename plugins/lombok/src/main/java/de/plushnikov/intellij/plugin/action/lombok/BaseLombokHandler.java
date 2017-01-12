@@ -75,6 +75,11 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
           addAnnotation(propertyField, propertyMethod, annotationClass);
         }
 
+        // Move all annotations to field declaration
+        for (PsiAnnotation psiMethodAnnotation : propertyMethod.getModifierList().getAnnotations()) {
+          psiClass.addBefore(psiMethodAnnotation, propertyField);
+        }
+
         propertyMethod.delete();
       }
     }
