@@ -996,6 +996,7 @@ public class UsageViewImpl implements UsageView {
     if (!myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(() -> {
         if (isDisposed) return;
+        fireEvents();
         TreeUtil.expand(myTree, 2);
       });
     }
