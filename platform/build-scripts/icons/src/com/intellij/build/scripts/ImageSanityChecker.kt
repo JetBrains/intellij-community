@@ -15,6 +15,7 @@
  */
 package com.intellij.build.scripts
 
+import com.intellij.build.scripts.ImageSanityCheckerBase.Severity.*
 import com.intellij.build.scripts.ImageType.*
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.module.JpsModule
@@ -22,20 +23,96 @@ import java.awt.Dimension
 import java.io.File
 import java.util.*
 
-class ImageSanityChecker(val projectHome: File) {
-  private val infos: StringBuilder = StringBuilder()
-  private val warnings: StringBuilder = StringBuilder()
-
+abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: Boolean) {
   fun check(module: JpsModule) {
-    val allImages = ImageCollector(projectHome, false).collect(module)
+    val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
 
     val (images, broken) = allImages.partition { it.file != null }
-    log(warnings, "ERROR: icons without base version found in module", module, broken)
+    logErrors(Severity.ERROR, "image without base version", module, broken)
 
     checkHaveRetinaVersion(images, module)
     checkHaveCompleteIconSet(images, module)
     checkHaveValidSize(images, module)
+    checkAreNotAmbiguous(images, module)
   }
+
+  private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
+    process(images, Severity.INFO, "image without retina version", module) { image ->
+      val hasRetina = image.files[RETINA] != null
+      val hasRetinaDarcula = image.files[RETINA_DARCULA] != null
+      return@process hasRetina || hasRetinaDarcula
+    }
+  }
+
+  private fun checkHaveCompleteIconSet(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "image without complete set of additional icons", module) { image ->
+      val hasRetina = image.files[RETINA] != null
+      val hasDarcula = image.files[DARCULA] != null
+      val hasRetinaDarcula = image.files[RETINA_DARCULA] != null
+
+      if (hasRetinaDarcula) {
+        return@process hasRetina && hasDarcula
+      }
+      else {
+        return@process !hasRetina || !hasDarcula
+      }
+    }
+  }
+
+  private fun checkHaveValidSize(images: List<ImagePaths>, module: JpsModule) {
+    val excludedPaths = arrayOf(
+      "/tips/images/",
+      "/ide/ui/laf/icons/"
+    )
+
+    process(images, WARNING, "icon with suspicious size", module) { image ->
+      if (!isIcon(image.file!!)) return@process true
+      val path = FileUtil.normalize(image.file!!.path)
+      if (excludedPaths.any { path.contains(it) }) return@process true
+      val sizes = image.files.mapValues { imageSize(it.value) }
+
+      val sizeBasic = sizes[BASIC]!!
+      val sizeRetina = sizes[RETINA]
+      val sizeDarcula = sizes[DARCULA]
+      val sizeRetinaDarcula = sizes[RETINA_DARCULA]
+
+      val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
+      return@process (sizeDarcula == null || sizeBasic == sizeDarcula) &&
+                     (sizeRetina == null || sizeRetinaDarcula == null || sizeRetina == sizeRetinaDarcula) &&
+                     (sizeRetina == null || sizeBasicTwice == sizeRetina)
+    }
+  }
+
+  private fun checkAreNotAmbiguous(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "image with ambiguous definition (ex: has both '.png' and '.gif' versions)", module) { image ->
+      return@process !image.ambiguous
+    }
+  }
+
+  private fun process(images: List<ImagePaths>, severity: Severity, message: String, module: JpsModule,
+                      processor: (ImagePaths) -> Boolean) {
+    val result = ArrayList<ImagePaths>()
+    images.forEach {
+      if (!processor(it)) result.add(it)
+    }
+    logErrors(severity, message, module, result)
+  }
+
+  private fun logErrors(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>) {
+    log(severity, message, module, images.map {
+      val path = it.file ?: it.files.values.first()
+      Pair(it.id, path)
+    })
+  }
+
+  abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<Pair<String, File>>)
+
+  enum class Severity { INFO, WARNING, ERROR }
+}
+
+class ImageSanityChecker(projectHome: File) : ImageSanityCheckerBase(projectHome, false) {
+  private val infos: StringBuilder = StringBuilder()
+  private val warnings: StringBuilder = StringBuilder()
 
   fun printInfo() {
     if (infos.isNotEmpty()) {
@@ -51,62 +128,22 @@ class ImageSanityChecker(val projectHome: File) {
     }
   }
 
-  private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
-    process(images, infos, "INFO: icons without retina version found in module", module) { image ->
-      val hasRetina = image.files[RETINA] != null
-      val hasRetinaDarcula = image.files[RETINA_DARCULA] != null
-      return@process hasRetina || hasRetinaDarcula
+  override fun log(severity: Severity, message: String, module: JpsModule, images: Collection<Pair<String, File>>) {
+    val logger = when (severity) {
+      ERROR -> warnings
+      WARNING -> warnings
+      INFO -> infos
     }
-  }
-
-  private fun checkHaveCompleteIconSet(images: List<ImagePaths>, module: JpsModule) {
-    process(images, warnings, "WARNING: icons without complete set of additional icons found in module", module) { image ->
-      val hasRetina = image.files[RETINA] != null
-      val hasDarcula = image.files[DARCULA] != null
-      val hasRetinaDarcula = image.files[RETINA_DARCULA] != null
-
-      if (hasRetinaDarcula) {
-        return@process hasRetina && hasDarcula
-      }
-      else {
-        return@process !hasRetina || !hasDarcula
-      }
+    val prefix = when (severity) {
+      ERROR -> "ERROR:"
+      WARNING -> "WARNING:"
+      INFO -> "INFO:"
     }
-  }
 
-  private fun checkHaveValidSize(images: List<ImagePaths>, module: JpsModule) {
-    process(images, warnings, "WARNING: icons with suspicious size found in module", module) { image ->
-      if (!isIcon(image.file!!)) return@process true
-      if (FileUtil.normalize(image.file!!.path).contains("/tips/images/")) return@process true
-      val sizes = image.files.mapValues { imageSize(it.value) }
-
-      val sizeBasic = sizes[BASIC]!!
-      val sizeRetina = sizes[RETINA]
-      val sizeDarcula = sizes[DARCULA]
-      val sizeRetinaDarcula = sizes[RETINA_DARCULA]
-
-      val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
-      return@process (sizeDarcula == null || sizeBasic == sizeDarcula) &&
-                     (sizeRetina == null || sizeRetinaDarcula == null || sizeRetina == sizeRetinaDarcula) &&
-                     (sizeRetina == null || sizeBasicTwice == sizeRetina)
-    }
-  }
-
-  private fun process(images: List<ImagePaths>, logger: StringBuilder, message: String, module: JpsModule,
-                      processor: (ImagePaths) -> Boolean) {
-    val result = ArrayList<ImagePaths>()
-    images.forEach {
-      if (!processor(it)) result.add(it)
-    }
-    log(logger, message, module, result)
-  }
-
-  private fun log(logger: StringBuilder, message: String, module: JpsModule, images: Collection<ImagePaths>) {
     if (images.isEmpty()) return
-    logger.append("$message '${module.name}'\n")
-    images.sortedBy { it.id }.forEach {
-      val path = it.file ?: it.files.values.first()
-      logger.append("    ${it.id} - $path\n")
+    logger.append("$prefix $message found in module '${module.name}'\n")
+    images.sortedBy { it.first }.forEach {
+      logger.append("    ${it.first} - ${it.second}\n")
     }
     logger.append("\n")
   }

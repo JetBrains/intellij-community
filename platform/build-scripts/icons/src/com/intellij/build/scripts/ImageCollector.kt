@@ -29,11 +29,12 @@ import java.util.regex.Pattern
 
 internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, val used: Boolean, val deprecated: Boolean) {
   var files: MutableMap<ImageType, File> = HashMap()
+  var ambiguous: Boolean = false
 
   val file: File? get() = files[ImageType.BASIC]
 }
 
-internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true) {
+internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
   private val result = HashMap <String, ImagePaths>()
 
   private val usedIconsRobots: MutableSet<File> = HashSet()
@@ -92,8 +93,12 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     if (skipped) return
 
     val iconPaths = result.computeIfAbsent(id, { ImagePaths(id, sourceRoot, used, deprecated) })
-    assert(iconPaths.files[type] == null)
-    iconPaths.files[type] = file
+    if (iconPaths.files[type] == null) {
+      iconPaths.files[type] = file
+    }
+    else {
+      iconPaths.ambiguous = true
+    }
   }
 
   private fun upToProjectHome(dir: File): IconRobotsData {
@@ -158,7 +163,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     private val used: MutableSet<Matcher> = HashSet()
     private val deprecated: MutableSet<Matcher> = HashSet()
 
-    fun isSkipped(file: File): Boolean = matches(file, skip) || parent?.isSkipped(file) ?: false
+    fun isSkipped(file: File): Boolean = !ignoreSkipTag && (matches(file, skip) || parent?.isSkipped(file) ?: false)
     fun isUsed(file: File): Boolean = matches(file, used) || parent?.isUsed(file) ?: false
     fun isDeprecated(file: File): Boolean = matches(file, deprecated) || parent?.isDeprecated(file) ?: false
 
