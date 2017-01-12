@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
 import java.util.Map;
@@ -50,11 +49,11 @@ public class GrBinaryExpressionTypeCalculators {
     MAP.put(GroovyTokenTypes.mSTAR_STAR, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mSTAR_STAR_ASSIGN, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
 
-    MAP.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mRSHIFT, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mSR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mLSHIFT, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mSL_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
+    MAP.put(GroovyTokenTypes.mTRIPLE_SHIFT, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mBSR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
 
     MAP.put(GroovyTokenTypes.mRANGE_EXCLUSIVE, GrRangeExpressionTypeCalculator.INSTANCE);

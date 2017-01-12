@@ -145,6 +145,10 @@ public interface GroovyTokenTypes {
   IElementType mSTAR_STAR_ASSIGN = new GroovyElementType("**=");
   IElementType mCLOSABLE_BLOCK_OP = new GroovyElementType("->");
   IElementType mAT = new GroovyElementType("@");
+  IElementType mLSHIFT = new GroovyElementType("<<");
+  IElementType mRSHIFT = new GroovyElementType(">>");
+  IElementType mTRIPLE_SHIFT = new GroovyElementType(">>>");
+
 
   /* **************************************************************************************************
  *  Keywords (in alphabetic order)

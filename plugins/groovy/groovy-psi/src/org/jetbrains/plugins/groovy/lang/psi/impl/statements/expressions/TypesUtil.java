@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
@@ -151,9 +150,9 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mLT, COMPARE_TO);
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mLE, COMPARE_TO);
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR_STAR, POWER);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, LEFT_SHIFT);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, RIGHT_SHIFT);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, RIGHT_SHIFT_UNSIGNED);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLSHIFT, LEFT_SHIFT);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mRSHIFT, RIGHT_SHIFT);
+    ourOperationsToOperatorNames.put(GroovyTokenTypes.mTRIPLE_SHIFT, RIGHT_SHIFT_UNSIGNED);
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mEQUAL, EQUALS);
     ourOperationsToOperatorNames.put(GroovyTokenTypes.mNOT_EQUAL, EQUALS);
 

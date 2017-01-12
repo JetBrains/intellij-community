@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -43,7 +42,7 @@ public class ParenthesesUtils {
   private static final int ADDITIVE_PRECEDENCE;
   private static final int SHIFT_PRECEDENCE;
   public static final int INSTANCEOF_PRECEDENCE;
-  private static final int RELATIONAL_PRECEDENCE;
+  public static final int RELATIONAL_PRECEDENCE;
   public static final int EQUALITY_PRECEDENCE;
 
   private static final int BINARY_AND_PRECEDENCE;
@@ -52,6 +51,7 @@ public class ParenthesesUtils {
   public static final int AND_PRECEDENCE;
   public static final int OR_PRECEDENCE;
   public static final int CONDITIONAL_PRECEDENCE;
+  public static final int SAFE_CAST_PRECEDENCE;
   private static final int ASSIGNMENT_PRECEDENCE;
 
   private static final int NUM_PRECEDENCES;
@@ -79,6 +79,7 @@ public class ParenthesesUtils {
     AND_PRECEDENCE = i++;
     OR_PRECEDENCE = i++;
     CONDITIONAL_PRECEDENCE = i++;
+    SAFE_CAST_PRECEDENCE = i++;
     ASSIGNMENT_PRECEDENCE = i++;
 
     NUM_PRECEDENCES = i;
@@ -98,9 +99,9 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mBAND, BINARY_AND_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mBOR, BINARY_OR_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mBXOR, BINARY_XOR_PRECEDENCE);
-    s_binaryOperatorPrecedence.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, SHIFT_PRECEDENCE);
-    s_binaryOperatorPrecedence.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, SHIFT_PRECEDENCE);
-    s_binaryOperatorPrecedence.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, SHIFT_PRECEDENCE);
+    s_binaryOperatorPrecedence.put(GroovyTokenTypes.mLSHIFT, SHIFT_PRECEDENCE);
+    s_binaryOperatorPrecedence.put(GroovyTokenTypes.mRSHIFT, SHIFT_PRECEDENCE);
+    s_binaryOperatorPrecedence.put(GroovyTokenTypes.mTRIPLE_SHIFT, SHIFT_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mGT, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mGE, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mLT, RELATIONAL_PRECEDENCE);
@@ -109,6 +110,7 @@ public class ParenthesesUtils {
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.kIN, RELATIONAL_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mNOT_EQUAL, EQUALITY_PRECEDENCE);
     s_binaryOperatorPrecedence.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
+    s_binaryOperatorPrecedence.put(GroovyTokenTypes.kAS, SAFE_CAST_PRECEDENCE);
   }
 
   public static int getPrecedence(GrExpression expression) {
@@ -147,7 +149,7 @@ public class ParenthesesUtils {
     return -1;
   }
 
-  private static int precedenceForBinaryOperator(@NotNull IElementType sign) {
+  public static int precedenceForBinaryOperator(@NotNull IElementType sign) {
     return s_binaryOperatorPrecedence.get(sign);
   }
 }

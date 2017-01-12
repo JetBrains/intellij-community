@@ -45,7 +45,7 @@ public interface SpacingTokens {
   TokenSet BITWISE_OPERATORS = TokenSet.create(GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR, GroovyTokenTypes.mBXOR);
   TokenSet ADDITIVE_OPERATORS = TokenSet.create(GroovyTokenTypes.mPLUS, GroovyTokenTypes.mMINUS);
   TokenSet MULTIPLICATIVE_OPERATORS = TokenSet.create(GroovyTokenTypes.mSTAR, GroovyTokenTypes.mDIV, GroovyTokenTypes.mMOD);
-  TokenSet SHIFT_OPERATORS = TokenSet.create(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN,
-                                             GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
+  TokenSet SHIFT_OPERATORS = TokenSet.create(GroovyTokenTypes.mLSHIFT, GroovyTokenTypes.mRSHIFT,
+                                             GroovyTokenTypes.mTRIPLE_SHIFT);
   TokenSet REGEX_OPERATORS = TokenSet.create(GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH);
 }

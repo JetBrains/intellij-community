@@ -15,20 +15,30 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
+import java.util.Objects;
+
+import static com.siyeh.ig.psiutils.ParenthesesUtils.ASSIGNMENT_PRECEDENCE;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 
 class PutAtTransformation extends Transformation {
+  @Override
+  public void apply(@NotNull GrMethodCall call, @NotNull Options options) {
+    GrExpression[] arguments = call.getExpressionArguments();
+    GrExpression base = requireNonNull(getBase(call));
+    String result = format("%s[%s] = %s", base.getText(), arguments[0].getText(), parenthesize(arguments[1], ASSIGNMENT_PRECEDENCE).getText());
+    replaceExpression(call, result);
+  }
 
   @Override
-  @Nullable
-  public String getReplacement(MethodCallData methodInfo, OptionsData optionsData) {
-    String[] arguments = methodInfo.getArguments();
-    if (arguments.length != 2) return null;
-
-    return format("%s[%s] = %s", methodInfo.getBase(), arguments[0], arguments[1]);
+  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression[] arguments = methodCall.getExpressionArguments();
+    return getBase(methodCall) != null && arguments.length == 2 && arguments[0] != null && arguments[1] != null;
   }
 }

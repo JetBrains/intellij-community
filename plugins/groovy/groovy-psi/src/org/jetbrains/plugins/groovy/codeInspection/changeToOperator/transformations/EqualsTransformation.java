@@ -15,28 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
+import static java.lang.String.format;
+import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils.isNegation;
 
-class EqualsTransformation extends BinaryTransformation {
-
-  @NotNull
+public class EqualsTransformation extends BinaryTransformation {
   @Override
-  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
-    PsiElement parent = callExpression.getParent();
-    return isNegation(parent) ? (GrExpression)parent : super.getExpandedElement(callExpression);
-  }
+  public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression rhsParenthesized = parenthesize(getRhs(methodCall), ParenthesesUtils.EQUALITY_PRECEDENCE);
+    GrExpression replacedElement = methodCall;
+    String operator = "==";
+    if (isNegation(methodCall.getParent())) {
+      replacedElement = (GrExpression) methodCall.getParent();
+      operator = "!=";
+    }
 
-  @Override
-  @Nullable
-  protected String getOperator(MethodCallData methodInfo, OptionsData optionsData) {
-    return methodInfo.isNegated() ? "!=" : "==";
+    replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), operator, rhsParenthesized.getText()));
   }
 }
