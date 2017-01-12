@@ -15,22 +15,50 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
+import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class IndexSpeedSearch extends VcsLogSpeedSearch {
   @NotNull private final VcsLogIndex myIndex;
+  @NotNull private final VcsUserRegistry myUserRegistry;
 
-  public IndexSpeedSearch(@NotNull VcsLogIndex index, @NotNull VcsLogGraphTable component) {
+  @Nullable private Set<Integer> myMatchedByUserCommits;
+
+  public IndexSpeedSearch(@NotNull Project project, @NotNull VcsLogIndex index, @NotNull VcsLogGraphTable component) {
     super(component);
     myIndex = index;
+    myUserRegistry = ServiceManager.getService(project, VcsUserRegistry.class);
+
+    addChangeListener(evt -> {
+      if (evt.getPropertyName().equals(ENTERED_PREFIX_PROPERTY_NAME)) {
+        String pattern = (String)evt.getNewValue();
+        if (pattern != null) {
+          List<VcsUser> matchedUsers = ContainerUtil.filter(myUserRegistry.getUsers(),
+                                                            user -> compare(VcsUserUtil.getShortPresentation(user), pattern));
+          myMatchedByUserCommits = myIndex.filter(Collections.singletonList(new SimpleVcsLogUserFilter(matchedUsers)));
+        }
+        else {
+          myMatchedByUserCommits = null;
+        }
+      }
+    });
   }
 
   @Override
@@ -55,5 +83,31 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
     String message = myIndex.getFullMessage(id);
     if (message == null) return super.getElementText(row);
     return IndexedDetails.getSubject(message);
+  }
+
+  @Override
+  protected boolean isMatchingElement(Object row, String pattern) {
+    String str = this.getElementText(row);
+    return (str != null && compare(str, pattern)) ||
+           (myMatchedByUserCommits != null &&
+            !myMatchedByUserCommits.isEmpty() &&
+            // getting id from row takes time, so optimizing a little here
+            myMatchedByUserCommits.contains(myComponent.getModel().getIdAtRow((Integer)row)));
+  }
+
+  private static class SimpleVcsLogUserFilter extends VcsLogUserFilterImpl {
+    @NotNull private final List<VcsUser> myMatchedUsers;
+
+    public SimpleVcsLogUserFilter(@NotNull List<VcsUser> matchedUsers) {
+      super(ContainerUtil.map(matchedUsers, VcsUserUtil::getShortPresentation), Collections.emptyMap(),
+            ContainerUtil.newHashSet(matchedUsers));
+      myMatchedUsers = matchedUsers;
+    }
+
+    @NotNull
+    @Override
+    public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
+      return myMatchedUsers;
+    }
   }
 }
