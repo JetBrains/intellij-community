@@ -49,7 +49,7 @@ def _modify_labels(code_obj, offset_of_inserted_code, size_of_inserted_code):
         if arg is not None:
             if op in dis.hasjrel:
                 label = offset + 2 + arg
-                if offset <= offset_of_inserted_code <= label:
+                if offset < offset_of_inserted_code < label:
                     # change labels for relative jump targets if code was inserted inside
                     offsets_for_modification.append(offset)
             elif op in dis.hasjabs:
