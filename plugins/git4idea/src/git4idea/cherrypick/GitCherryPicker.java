@@ -204,9 +204,6 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private static boolean isNothingToCommitMessage(@NotNull GitCommandResult result) {
-    if (!result.getErrorOutputAsJoinedString().isEmpty()) {
-      return false;
-    }
     String stdout = result.getOutputAsJoinedString();
     return stdout.contains("nothing to commit") || stdout.contains("previous cherry-pick is now empty");
   }
