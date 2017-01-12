@@ -45,7 +45,11 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                          @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     List<Line> lines1 = getLines(text1);
     List<Line> lines2 = getLines(text2);
-    FairDiffIterable iterable = ByLine.compare(lines1, lines2, policy, indicator);
+
+    List<CharSequence> lineTexts1 = ContainerUtil.map(lines1, Line::getContent);
+    List<CharSequence> lineTexts2 = ContainerUtil.map(lines2, Line::getContent);
+
+    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, policy, indicator);
     return convertIntoLineFragments(lines1, lines2, iterable);
   }
 
@@ -59,7 +63,12 @@ public class ComparisonManagerImpl extends ComparisonManager {
     List<Line> lines1 = getLines(text1);
     List<Line> lines2 = getLines(text2);
     List<Line> lines3 = getLines(text3);
-    List<MergeRange> ranges = ByLine.compare(lines1, lines2, lines3, policy, indicator);
+
+    List<CharSequence> lineTexts1 = ContainerUtil.map(lines1, Line::getContent);
+    List<CharSequence> lineTexts2 = ContainerUtil.map(lines2, Line::getContent);
+    List<CharSequence> lineTexts3 = ContainerUtil.map(lines3, Line::getContent);
+
+    List<MergeRange> ranges = ByLine.compare(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
     return convertIntoMergeLineFragments(ranges);
   }
 
@@ -402,13 +411,14 @@ public class ComparisonManagerImpl extends ComparisonManager {
     return lines;
   }
 
-  private static class Line extends CharSequenceSubSequence {
+  private static class Line {
+    @NotNull private final CharSequence myChars;
     private final int myOffset1;
     private final int myOffset2;
     private final boolean myNewline;
 
     public Line(@NotNull CharSequence chars, int offset1, int offset2, boolean newline) {
-      super(chars, offset1, offset2);
+      myChars = chars;
       myOffset1 = offset1;
       myOffset2 = offset2;
       myNewline = newline;
@@ -420,6 +430,11 @@ public class ComparisonManagerImpl extends ComparisonManager {
 
     public int getOffset2() {
       return myOffset2 + (myNewline ? 1 : 0);
+    }
+
+    @NotNull
+    public CharSequence getContent() {
+      return new CharSequenceSubSequence(myChars, myOffset1, myOffset2);
     }
   }
 }
