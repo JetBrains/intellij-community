@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
       String paths = orderRootType.getModulePathsName();
       if (paths != null) {
@@ -116,7 +116,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     for (OrderRootType orderRootType : myOrderRootPointerContainers.keySet()) {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
       if (container != null && container.size() > 0) {

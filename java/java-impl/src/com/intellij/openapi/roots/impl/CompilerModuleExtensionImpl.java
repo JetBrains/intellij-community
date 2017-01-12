@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
 
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     assert !myDisposed;
     final String value = element.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE);
     myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
@@ -101,7 +101,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     assert !myDisposed;
     if (!myInheritedCompilerOutput) {
       if (myCompilerOutput != null) {
