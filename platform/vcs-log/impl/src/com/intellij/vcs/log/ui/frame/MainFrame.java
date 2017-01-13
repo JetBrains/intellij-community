@@ -67,9 +67,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final SearchTextField myTextFilter;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
 
-  @NotNull private Runnable myContainingBranchesListener;
-  @NotNull private Runnable myMiniDetailsLoadedListener;
-
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull VcsLogUiImpl ui,
                    @NotNull Project project,
@@ -109,7 +106,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    updateWhenDetailsAreLoaded();
+    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
 
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
@@ -144,19 +141,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-  }
-
-  private void updateWhenDetailsAreLoaded() {
-    myMiniDetailsLoadedListener = () -> {
-      myGraphTable.initColumnSize();
-      myGraphTable.repaint();
-    };
-    myContainingBranchesListener = () -> {
-      myDetailsPanel.branchesChanged();
-      myGraphTable.repaint(); // we may need to repaint highlighters
-    };
-    myLogData.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogData.getContainingBranchesGetter().addTaskCompletedListener(myContainingBranchesListener);
   }
 
   public void setupDetailsSplitter(boolean state) {
@@ -277,9 +261,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
-    myLogData.getMiniDetailsGetter().removeDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogData.getContainingBranchesGetter().removeTaskCompletedListener(myContainingBranchesListener);
-
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
   }

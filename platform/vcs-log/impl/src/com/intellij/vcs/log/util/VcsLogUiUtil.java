@@ -17,9 +17,11 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
@@ -59,5 +61,26 @@ public class VcsLogUiUtil {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(graphTable, border);
     graphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
+  }
+
+  public static void installDetailsListeners(@NotNull VcsLogGraphTable graphTable,
+                                             @NotNull DetailsPanel detailsPanel,
+                                             @NotNull VcsLogData logData,
+                                             @NotNull Disposable disposableParent) {
+    Runnable miniDetailsLoadedListener = () -> {
+      graphTable.initColumnSize();
+      graphTable.repaint();
+    };
+    Runnable containingBranchesListener = () -> {
+      detailsPanel.branchesChanged();
+      graphTable.repaint(); // we may need to repaint highlighters
+    };
+    logData.getMiniDetailsGetter().addDetailsLoadedListener(miniDetailsLoadedListener);
+    logData.getContainingBranchesGetter().addTaskCompletedListener(containingBranchesListener);
+
+    Disposer.register(disposableParent, () -> {
+      logData.getContainingBranchesGetter().removeTaskCompletedListener(containingBranchesListener);
+      logData.getMiniDetailsGetter().removeDetailsLoadedListener(miniDetailsLoadedListener);
+    });
   }
 }

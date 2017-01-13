@@ -61,9 +61,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final FilePath myFilePath;
   @NotNull private final FileHistoryUi myUi;
 
-  @NotNull private Runnable myContainingBranchesListener;
-  @NotNull private Runnable myMiniDetailsLoadedListener;
-
   @NotNull private List<Change> mySelectedChanges = Collections.emptyList();
 
   public FileHistoryPanel(@NotNull FileHistoryUi ui,
@@ -89,7 +86,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    updateWhenDetailsAreLoaded();
+    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
 
     setLayout(new BorderLayout());
     add(myDetailsSplitter, BorderLayout.CENTER);
@@ -108,19 +105,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, toolbarGroup, false);
     toolbar.setTargetComponent(myGraphTable);
     return toolbar.getComponent();
-  }
-
-  private void updateWhenDetailsAreLoaded() {
-    myMiniDetailsLoadedListener = () -> {
-      myGraphTable.initColumnSize();
-      myGraphTable.repaint();
-    };
-    myContainingBranchesListener = () -> {
-      myDetailsPanel.branchesChanged();
-      myGraphTable.repaint(); // we may need to repaint highlighters
-    };
-    myLogData.getMiniDetailsGetter().addDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogData.getContainingBranchesGetter().addTaskCompletedListener(myContainingBranchesListener);
   }
 
   @NotNull
@@ -214,9 +198,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   @Override
   public void dispose() {
-    myLogData.getMiniDetailsGetter().removeDetailsLoadedListener(myMiniDetailsLoadedListener);
-    myLogData.getContainingBranchesGetter().removeTaskCompletedListener(myContainingBranchesListener);
-
     myDetailsSplitter.dispose();
   }
 
