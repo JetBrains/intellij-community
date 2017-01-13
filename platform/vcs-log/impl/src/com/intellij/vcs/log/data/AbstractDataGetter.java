@@ -17,6 +17,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.index.IndexedDetails;
+import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
@@ -57,14 +59,17 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private long myCurrentTaskIndex = 0;
 
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<>();
+  @NotNull private VcsLogIndex myIndex;
 
   AbstractDataGetter(@NotNull VcsLogStorage hashMap,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                      @NotNull VcsCommitCache<Integer, T> cache,
+                     @NotNull VcsLogIndex index,
                      @NotNull Disposable parentDisposable) {
     myHashMap = hashMap;
     myLogProviders = logProviders;
     myCache = cache;
+    myIndex = index;
     Disposer.register(parentDisposable, this);
     myLoader =
       new SequentialLimitedLifoExecutor<>(this, MAX_LOADING_TASKS, task -> {
@@ -218,7 +223,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
     if (!myCache.isKeyCached(commitId)) {
-      myCache.put(commitId, (T)new LoadingDetails(() -> myHashMap.getCommitId(commitId), taskNumber));
+      myCache.put(commitId, (T)new IndexedDetails(myIndex, myHashMap, commitId, taskNumber));
     }
   }
 

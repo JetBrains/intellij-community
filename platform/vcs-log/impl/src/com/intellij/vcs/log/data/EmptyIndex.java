@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -51,6 +52,12 @@ public class EmptyIndex implements VcsLogIndex {
   @Override
   public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
     throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  @Override
+  public String getFullMessage(int index) {
+    return null;
   }
 
   @Override
