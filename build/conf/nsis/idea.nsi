@@ -1237,6 +1237,10 @@ finish:
   StrCpy $1 "${PRODUCT_PATHS_SELECTOR}"
   Call un.OMDeleteRegKey
 
+  StrCpy $0 "${MUI_LANGDLL_REGISTRY_ROOT}"
+  StrCpy $1 "${MUI_LANGDLL_REGISTRY_KEY}"
+  Call un.OMDeleteRegKey
+
   StrCpy $0 "HKCR"
   StrCpy $1 "IntelliJIdeaProjectFile\DefaultIcon"
   StrCpy $2 ""
