@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentSerializationUtil;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -34,6 +37,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +126,15 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     RootModelImpl originalRootModel = moduleRootManager.getRootModel();
     for (ModuleExtension extension : originalRootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(false);
-      model.readExternal(element);
+
+      if (model instanceof PersistentStateComponent) {
+        PersistentStateComponent<?> component = (PersistentStateComponent)model;
+        component.loadState(XmlSerializer.deserialize(element, ComponentSerializationUtil.getStateClass((component.getClass()))));
+      }
+      else {
+        model.readExternal(element);
+      }
+
       registerOnDispose(model);
       myExtensions.add(model);
     }
@@ -407,9 +419,24 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return e;
   }
 
+  public long getStateModificationCount() {
+    long result = 0;
+    for (ModuleExtension extension : myExtensions) {
+      if (extension instanceof PersistentStateComponentWithModificationTracker) {
+        result += ((PersistentStateComponentWithModificationTracker)extension).getStateModificationCount();
+      }
+    }
+    return result;
+  }
+
   public void writeExternal(@NotNull Element element) {
     for (ModuleExtension extension : myExtensions) {
-      extension.writeExternal(element);
+      if (extension instanceof PersistentStateComponent) {
+        XmlSerializer.serializeInto(((PersistentStateComponent)extension).getState(), element);
+      }
+      else {
+        extension.writeExternal(element);
+      }
     }
 
     for (ContentEntry contentEntry : getContent()) {

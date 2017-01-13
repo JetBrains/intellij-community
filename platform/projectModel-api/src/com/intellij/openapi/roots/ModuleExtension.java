@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,13 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.JDOMExternalizable;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ModuleExtension<T extends ModuleExtension> implements JDOMExternalizable, Disposable, Comparable<ModuleExtension> {
+/**
+ * Implement {@link com.intellij.openapi.components.PersistentStateComponent} to be serializable.
+ */
+public abstract class ModuleExtension<T extends ModuleExtension> implements Disposable, Comparable<ModuleExtension> {
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
 
   /**
@@ -57,5 +60,21 @@ public abstract class ModuleExtension<T extends ModuleExtension> implements JDOM
   @Override
   public int compareTo(@NotNull final ModuleExtension o) {
     return getClass().getName().compareTo(o.getClass().getName());
+  }
+
+  /**
+   * @deprecated Please implement PersistentStateComponent instead.
+   */
+  @Deprecated
+  public void readExternal(@NotNull Element element) {
+    throw new Error("Please implement PersistentStateComponent");
+  }
+
+  /**
+   * @deprecated Please implement PersistentStateComponent instead.
+   */
+  @Deprecated
+  public void writeExternal(@NotNull Element element) {
+    throw new Error("Please implement PersistentStateComponent");
   }
 }

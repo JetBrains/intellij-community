@@ -89,6 +89,10 @@ class BeanBinding extends Binding {
     for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
 
+      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(accessor,  o)) {
+        continue;
+      }
+
       if (filter instanceof SkipDefaultsSerializationFilter) {
         if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
           continue;

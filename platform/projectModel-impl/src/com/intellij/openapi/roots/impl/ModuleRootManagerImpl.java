@@ -51,7 +51,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   private final Module myModule;
   private final ProjectRootManagerImpl myProjectRootManager;
   private final VirtualFilePointerManager myFilePointerManager;
-  private RootModelImpl myRootModel;
+  protected RootModelImpl myRootModel;
   private boolean myIsDisposed = false;
   private boolean myLoaded = false;
   private final OrderRootsCache myOrderRootsCache;
