@@ -61,7 +61,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private boolean myWritable;
   private final VirtualFilePointerManager myFilePointerManager;
   private boolean myDisposed = false;
-  private final Set<ModuleExtension> myExtensions = new TreeSet<>();
+  private final Set<ModuleExtension> myExtensions = new TreeSet<>((o1, o2) -> Comparing.compare(o1.getClass().getName(), 
+                                                                                                o2.getClass().getName()));
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 

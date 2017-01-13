@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Implement {@link com.intellij.openapi.components.PersistentStateComponent} to be serializable.
  */
-public abstract class ModuleExtension implements Disposable, Comparable<ModuleExtension> {
+public abstract class ModuleExtension implements Disposable {
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
 
   /**
@@ -57,7 +57,10 @@ public abstract class ModuleExtension implements Disposable, Comparable<ModuleEx
 
   public abstract boolean isChanged();
 
-  @Override
+  /**
+   * Explicit comparator is used. To be deleted in 2018
+   */
+  @Deprecated
   public int compareTo(@NotNull final ModuleExtension o) {
     return getClass().getName().compareTo(o.getClass().getName());
   }
