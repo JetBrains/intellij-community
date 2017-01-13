@@ -32,6 +32,8 @@ import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
+
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestLoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
@@ -100,6 +102,8 @@ public class TestLoggerFactory implements Logger.Factory {
   }
 
   public static String getTestLogDir() {
+    if (System.getProperty(PROPERTY_LOG_PATH) != null) return System.getProperty(PROPERTY_LOG_PATH);
+
     return PathManager.getSystemPath() + "/" + LOG_DIR;
   }
 
