@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
@@ -105,14 +106,17 @@ public class VarExprent extends Exprent {
       tracer.incrementCurrentSourceLine(buffer.countLines());
     }
     else {
-      VarVersionPair varVersion = new VarVersionPair(index, version);
-      String name = getName(varVersion);
+      VarVersionPair varVersion = getVarVersionPair();
+      String name = null;
+      if (processor != null) {
+        name = processor.getVarName(varVersion);
+      }
 
       if (definition) {
         if (processor != null && processor.getVarFinal(varVersion) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
           buffer.append("final ");
         }
-        appendDefinitionType(buffer, varVersion);
+        appendDefinitionType(buffer);
         buffer.append(" ");
       }
 
@@ -122,36 +126,31 @@ public class VarExprent extends Exprent {
     return buffer;
   }
 
-  private String getName(VarVersionPair varVersion) {
-    String name = null;
-    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
-      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-      if (method != null) {
-        StructLocalVariableTableAttribute attr = method.methodStruct.getLocalVariableAttr();
-        if (attr != null && processor != null) {
-          Integer index = processor.getVarOriginalIndex(varVersion);
-          if (index != null) {
-            name = attr.getName(index, visibleOffset);
-            if (name != null && TextUtil.isValidIdentifier(name, method.methodStruct.getClassStruct().getBytecodeVersion())) {
-              return name;
-            }
-          }
+  public VarVersionPair getVarVersionPair() {
+    return new VarVersionPair(index, version);
+  }
+
+  public String getDebugName(StructMethod method) {
+    StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
+    if (attr != null && processor != null) {
+      Integer origIndex = processor.getVarOriginalIndex(index);
+      if (origIndex != null) {
+        String name = attr.getName(origIndex, visibleOffset);
+        if (name != null && TextUtil.isValidIdentifier(name, method.getClassStruct().getBytecodeVersion())) {
+          return name;
         }
       }
     }
-    if (processor != null) {
-      name = processor.getVarName(varVersion);
-    }
-    return name;
+    return null;
   }
 
-  private void appendDefinitionType(TextBuffer buffer, VarVersionPair varVersion) {
+  private void appendDefinitionType(TextBuffer buffer) {
     if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
       MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
       if (method != null) {
         Integer originalIndex = null;
         if (processor != null) {
-          originalIndex = processor.getVarOriginalIndex(varVersion);
+          originalIndex = processor.getVarOriginalIndex(index);
         }
         if (originalIndex != null) {
           // first try from signature
@@ -208,7 +207,7 @@ public class VarExprent extends Exprent {
   public VarType getVarType() {
     VarType vt = null;
     if (processor != null) {
-      vt = processor.getVarType(new VarVersionPair(index, version));
+      vt = processor.getVarType(getVarVersionPair());
     }
 
     if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {

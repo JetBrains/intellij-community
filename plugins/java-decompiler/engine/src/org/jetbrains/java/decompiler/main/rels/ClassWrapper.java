@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -35,6 +36,7 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ClassWrapper {
@@ -165,6 +167,22 @@ public class ClassWrapper {
         if (attr != null) {
           // only param names here
           varProc.setDebugVarNames(attr.getMapParamNames());
+
+          // the rest is here
+          methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
+            List<Exprent> lst = exprent.getAllExprents(true);
+            lst.add(exprent);
+            lst.stream()
+              .filter(e -> e.type == Exprent.EXPRENT_VAR)
+              .forEach(e -> {
+                VarExprent varExprent = (VarExprent)e;
+                String name = varExprent.getDebugName(mt);
+                if (name != null) {
+                  varProc.setVarName(varExprent.getVarVersionPair(), name);
+                }
+              });
+            return 0;
+          });
         }
       }
 

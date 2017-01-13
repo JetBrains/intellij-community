@@ -84,12 +84,12 @@ public class VarProcessor {
     }
   }
 
-  public Integer getVarOriginalIndex(VarVersionPair pair) {
+  public Integer getVarOriginalIndex(int index) {
     if (varVersions == null) {
       return null;
     }
 
-    return varVersions.getMapOriginalVarIndices().get(pair.var);
+    return varVersions.getMapOriginalVarIndices().get(index);
   }
 
   public void refreshVarNames(VarNamesCollector vc) {
