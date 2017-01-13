@@ -54,14 +54,22 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is BaseState) return false
-
-    return properties == other.properties
-  }
+  override fun equals(other: Any?) = this === other || (other is BaseState && properties == other.properties)
 
   override fun hashCode() = properties.hashCode()
+
+  override fun toString(): String {
+    if (properties.isEmpty()) {
+      return ""
+    }
+
+    val builder = StringBuilder()
+    for (property in properties) {
+      builder.append(property.value).append(" ")
+    }
+    builder.setLength(builder.length - 1)
+    return builder.toString()
+  }
 }
 
 internal class StoredProperty<T>(internal val defaultValue: T?) : ReadWriteProperty<BaseState, T?> {
@@ -80,13 +88,9 @@ internal class StoredProperty<T>(internal val defaultValue: T?) : ReadWritePrope
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is StoredProperty<*>) return false
-
-    if (value != other.value) return false
-    return true
-  }
+  override fun equals(other: Any?) = this === other || (other is StoredProperty<*> && value == other.value)
 
   override fun hashCode() = value?.hashCode() ?: 0
+
+  override fun toString() = value?.toString() ?: super.toString()
 }

@@ -67,7 +67,7 @@ public abstract class ModuleExtension implements Disposable, Comparable<ModuleEx
    */
   @Deprecated
   public void readExternal(@NotNull Element element) {
-    throw new Error("Please implement PersistentStateComponent");
+    throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }
 
   /**
@@ -75,6 +75,6 @@ public abstract class ModuleExtension implements Disposable, Comparable<ModuleEx
    */
   @Deprecated
   public void writeExternal(@NotNull Element element) {
-    throw new Error("Please implement PersistentStateComponent");
+    throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }
 }
