@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,7 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Comparator;
+import java.util.Arrays;
 
 /**
  * @author Eugene Zhuravlev
@@ -307,14 +306,14 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
 
     @NotNull
     private static Sdk[] sortSdks(@NotNull final Sdk[] sdks) {
-      final ContainerUtil.KeyOrderedMultiMap<MyComparatorWrapper, Sdk> comparatorToSdkMap = new ContainerUtil.KeyOrderedMultiMap<>();
-      for (Sdk sdk : sdks) {
-        final SdkTypeId sdkType = sdk.getSdkType();
-        comparatorToSdkMap.putValue(new MyComparatorWrapper(sdkType instanceof SdkType ? (SdkType)sdkType : null), sdk);
-      }
-
-      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> entry.getValue().stream().sorted(entry.getKey().getComparator()))
-        .toArray(size -> new Sdk[size]);
+      Sdk[] clone = sdks.clone();
+      Arrays.sort(clone, (sdk1, sdk2) -> {
+        SdkType sdkType1 = (SdkType)sdk1.getSdkType();
+        SdkType sdkType2 = (SdkType)sdk2.getSdkType();
+        if (sdkType1.getComparator() != sdkType2.getComparator()) return SdkType.ALPHABETICAL_COMPARATOR.compare(sdk1, sdk2);
+        return sdkType1.getComparator().compare(sdk1, sdk2);
+      });
+      return clone;
     }
 
     protected void addSuggestedItems(@Nullable Condition<SdkTypeId> sdkTypeFilter, Sdk[] jdks) {
@@ -326,32 +325,6 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
             addElement(new SuggestedJdkItem(type, homePath));
           }
         }
-      }
-    }
-
-    private static class MyComparatorWrapper implements Comparable<MyComparatorWrapper> {
-      @Nullable
-      private SdkType mySdkType = null;
-
-      private MyComparatorWrapper(@Nullable final SdkType type) {
-        mySdkType = type;
-      }
-
-      @Nullable
-      private String getNameToCompare() {
-        return mySdkType == null ? null : mySdkType.getPresentableName();
-      }
-
-      @NotNull
-      private Comparator<Sdk> getComparator() {
-        return mySdkType == null ? SdkType.ALPHABETICAL_COMPARATOR : mySdkType.getComparator();
-      }
-
-      @Override
-      public int compareTo(@NotNull final MyComparatorWrapper comparatorWrapper) {
-        if (getComparator() == comparatorWrapper.getComparator()) return 0;
-
-        return StringUtil.compare(getNameToCompare(), comparatorWrapper.getNameToCompare(), true);
       }
     }
 
