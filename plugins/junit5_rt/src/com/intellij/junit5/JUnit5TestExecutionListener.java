@@ -173,6 +173,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
             testFailure(childIdentifier, MapSerializerUtil.TEST_IGNORED, status == TestExecutionResult.Status.ABORTED ? throwableOptional : null, 0, reason, status == TestExecutionResult.Status.ABORTED);
             testFinished(childIdentifier, 0);
           }
+          myFinishCount = 0;
         }
       }
       myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "\']");
