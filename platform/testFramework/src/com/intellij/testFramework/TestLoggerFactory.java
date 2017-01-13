@@ -58,13 +58,18 @@ public class TestLoggerFactory implements Logger.Factory {
   }
 
   private void init() {
+    if (!reconfigure()) return;
+    myInitialized = true;
+  }
+
+  public static boolean reconfigure() {
     try {
       File logXmlFile = new File(PathManager.getHomePath(), "test-log.xml");
       if (!logXmlFile.exists()) {
         logXmlFile = new File(PathManager.getBinPath(), "log.xml");
       }
       if (!logXmlFile.exists()) {
-        return;
+        return false;
       }
 
       final String logDir = getTestLogDir();
@@ -94,10 +99,11 @@ public class TestLoggerFactory implements Logger.Factory {
         FileUtil.writeToFile(ideaLog, "");
       }
 
-      myInitialized = true;
+      return true;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       e.printStackTrace();
+      return false;
     }
   }
 
