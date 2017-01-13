@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
@@ -59,7 +60,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
       if (assignedValue == null) return;
       PyType type = myTypeEvalContext.getType(assignedValue);
-      if (assignedValue instanceof PyReferenceExpression && !(type instanceof PyTupleType)) return;
+      if (assignedValue instanceof PyReferenceExpression && !(type instanceof PyTupleType) && !(type instanceof PyNoneType)) return;
       if (lhsExpression instanceof PyTupleExpression && type != null) {
         int valuesLength = PyUtil.getElementsCount(assignedValue, myTypeEvalContext);
         if (valuesLength == -1) return;

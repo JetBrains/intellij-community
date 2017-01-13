@@ -19,3 +19,6 @@ def test_tuple_slice():
     def f():
         return 1, 2, 3
     x, y = f()[:2]
+
+# PY-22224
+a, b = <warning descr="Need more values to unpack">None</warning>

@@ -1384,7 +1384,7 @@ public class PyUtil {
     else if (expression instanceof PyStringLiteralExpression) {
       valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
     }
-    else if (expression instanceof PyNumericLiteralExpression) {
+    else if (expression instanceof PyNumericLiteralExpression || expression instanceof PyNoneLiteralExpression || type instanceof PyNoneType) {
       valuesLength = 1;
     }
     else if (expression instanceof PyCallExpression) {
