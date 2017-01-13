@@ -23,7 +23,6 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -38,7 +37,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -299,13 +297,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     if (!(candidate instanceof PsiCallExpression)) return true;
     final PsiMethod method = ((PsiCallExpression)candidate).resolveMethod();
     return method == null;
-  }
-
-  static boolean isSupported(PsiType type) {
-    if(type instanceof PsiPrimitiveType) {
-      return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
-    }
-    return true;
   }
 
   @Nullable
@@ -711,7 +702,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     PsiNewExpression initializer = tryCast(arrayVariable.getInitializer(), PsiNewExpression.class);
     if(initializer == null) return null;
     PsiArrayType arrayType = tryCast(initializer.getType(), PsiArrayType.class);
-    if(arrayType == null || !isSupported(arrayType.getComponentType())) return null;
+    if(arrayType == null || !StreamApiUtil.isSupportedStreamElement(arrayType.getComponentType())) return null;
     PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
     if(dimension == null) return null;
     PsiExpression bound = loop.myBound;
@@ -819,37 +810,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     public String createReplacement() {
-      if (ExpressionUtils.isReferenceTo(myExpression, myVariable)) {
-        if (!(myType instanceof PsiPrimitiveType)) {
-          return myVariable.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
-        }
-        if(myType.equals(myVariable.getType())) {
-          return "";
-        }
-        if (PsiType.LONG.equals(myType) && PsiType.INT.equals(myVariable.getType())) {
-          return ".asLongStream()";
-        }
-        if (PsiType.DOUBLE.equals(myType) && (PsiType.LONG.equals(myVariable.getType()) || PsiType.INT.equals(myVariable.getType()))) {
-          return ".asDoubleStream()";
-        }
-      }
-      String operationName = "map";
-      if(myType instanceof PsiPrimitiveType) {
-        if(!myType.equals(myVariable.getType())) {
-          if(PsiType.INT.equals(myType)) {
-            operationName = "mapToInt";
-          } else if(PsiType.LONG.equals(myType)) {
-            operationName = "mapToLong";
-          } else if(PsiType.DOUBLE.equals(myType)) {
-            operationName = "mapToDouble";
-          }
-        }
-      } else if(myVariable.getType() instanceof PsiPrimitiveType) {
-        operationName = "mapToObj";
-      }
-      PsiExpression expression = myType == null ? myExpression : RefactoringUtil.convertInitializerToNormalExpression(myExpression, myType);
-      return "." + OptionalUtil.getMapTypeArgument(expression, myType) + operationName +
-             "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
+      return StreamApiUtil.generateMapOperation(myVariable, myType, myExpression);
     }
 
     @Override
@@ -1067,7 +1028,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiArrayType iteratedValueType = tryCast(iteratedValue.getType(), PsiArrayType.class);
       PsiParameter parameter = statement.getIterationParameter();
 
-      if (iteratedValueType != null && isSupported(iteratedValueType.getComponentType()) &&
+      if (iteratedValueType != null && StreamApiUtil.isSupportedStreamElement(iteratedValueType.getComponentType()) &&
           (!(parameter.getType() instanceof PsiPrimitiveType) || parameter.getType().equals(iteratedValueType.getComponentType()))) {
         return new ArrayStream(statement, parameter, iteratedValue);
       }
@@ -1105,7 +1066,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (collectionClass == null ||
           !InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true) ||
           isRawSubstitution(iteratedValueType, collectionClass) ||
-          !isSupported(statement.getIterationParameter().getType())) {
+          !StreamApiUtil.isSupportedStreamElement(statement.getIterationParameter().getType())) {
         return null;
       }
       return new CollectionStream(statement, statement.getIterationParameter(), iteratedValue);

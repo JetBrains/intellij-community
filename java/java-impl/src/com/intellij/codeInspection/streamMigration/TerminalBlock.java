@@ -192,7 +192,7 @@ class TerminalBlock {
         PsiElement[] elements = decl.getDeclaredElements();
         if(elements.length == 1) {
           PsiLocalVariable declaredVar = tryCast(elements[0], PsiLocalVariable.class);
-          if (declaredVar != null && isSupported(declaredVar.getType())) {
+          if (declaredVar != null && StreamApiUtil.isSupportedStreamElement(declaredVar.getType())) {
             PsiExpression initializer = declaredVar.getInitializer();
             PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
             if (initializer != null && ReferencesSearch.search(myVariable, new LocalSearchScope(leftOver)).findFirst() == null) {

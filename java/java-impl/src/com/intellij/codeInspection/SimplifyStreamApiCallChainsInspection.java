@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -134,6 +140,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         }
         else {
           handleMapToObj(methodCall);
+          handleIndexedIteration(methodCall);
           handleStreamForEach(methodCall, method);
         }
       }
@@ -156,6 +163,20 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
         if(nameElement != null) {
           holder.registerProblem(nameElement, fix.getMessage(), new SimplifyCallChainFix(fix));
+        }
+      }
+
+      private void handleIndexedIteration(PsiMethodCallExpression methodCall) {
+        PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
+        if (nameElement == null || !nameElement.getText().startsWith("map")) return;
+        PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+        if (args.length != 1) return;
+        PsiExpression mapper = args[0];
+        PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
+        IndexedContainer container = extractContainer(qualifier, mapper);
+        if (container != null) {
+          holder.registerProblem(nameElement, "Can be replaced with element iteration",
+                                 new SimplifyCallChainFix(new ReplaceWithElementIterationFix(container, nameElement.getText())));
         }
       }
 
@@ -504,6 +525,34 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     return null;
   }
 
+  @Contract("null, _ -> null")
+  static IndexedContainer extractContainer(PsiExpression qualifier, PsiExpression mapper) {
+    if (!(qualifier instanceof PsiMethodCallExpression)) return null;
+    PsiMethodCallExpression qualifierCall = (PsiMethodCallExpression)qualifier;
+    if (!MethodCallUtils.isCallToStaticMethod(qualifierCall, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range", 2)) {
+      return null;
+    }
+    PsiExpression[] rangeArgs = qualifierCall.getArgumentList().getExpressions();
+    if (rangeArgs.length != 2 || !ExpressionUtils.isZero(rangeArgs[0])) return null;
+    PsiExpression bound = rangeArgs[1];
+    IndexedContainer container = IndexedContainer.fromLengthExpression(bound);
+    if (container == null || !StreamApiUtil.isSupportedStreamElement(container.getElementType())) return null;
+    if (mapper instanceof PsiMethodReferenceExpression && container.isGetMethodReference((PsiMethodReferenceExpression)mapper)) {
+      return container;
+    }
+    if (mapper instanceof PsiLambdaExpression) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)mapper;
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      if (parameters.length != 1) return null;
+      PsiParameter indexParameter = parameters[0];
+      PsiElement body = lambda.getBody();
+      if (body != null && ReferencesSearch.search(indexParameter, new LocalSearchScope(body)).forEach(
+        indexReference -> container.extractGetExpressionFromIndex(ObjectUtils.tryCast(indexReference, PsiExpression.class)) != null)) {
+        return container;
+      }
+    }
+    return null;
+  }
   static boolean isParentNegated(PsiMethodCallExpression methodCall) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     return parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent);
@@ -1014,6 +1063,84 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       CommentTracker ct = new CommentTracker();
       PsiElement result = ct.replaceAndRestoreComments(toArrayCall, ct.text(collectionExpression) + ".toArray(" + myReplacement + ")");
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+    }
+  }
+
+  private static class ReplaceWithElementIterationFix implements CallChainFix {
+    private final String myName;
+
+    public ReplaceWithElementIterationFix(IndexedContainer container, String name) {
+      PsiType type = container.getQualifier().getType();
+      String replacement = type instanceof PsiArrayType ? "Arrays.stream()" : "collection.stream()";
+      myName = "Replace IntStream.range()." + name + "() with " + replacement;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, PsiElement element) {
+      PsiMethodCallExpression mapToObjCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if (mapToObjCall == null) return;
+      PsiExpression mapper = ArrayUtil.getFirstElement(mapToObjCall.getArgumentList().getExpressions());
+      PsiExpression qualifier = mapToObjCall.getMethodExpression().getQualifierExpression();
+      IndexedContainer container = extractContainer(qualifier, mapper);
+      if (container == null) return;
+      PsiExpression containerQualifier = container.getQualifier();
+      PsiType type = containerQualifier.getType();
+      PsiType elementType = container.getElementType();
+      PsiType outElementType = StreamApiUtil.getStreamElementType(mapToObjCall.getType());
+      if (type == null || elementType == null) return;
+      String replacement;
+      if (type instanceof PsiArrayType) {
+        replacement = CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + containerQualifier.getText() + ")";
+      }
+      else {
+        replacement = ParenthesesUtils.getText(containerQualifier, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()";
+      }
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      CommentTracker ct = new CommentTracker();
+      if (mapper instanceof PsiLambdaExpression) {
+        PsiLambdaExpression lambda = (PsiLambdaExpression)mapper;
+        PsiParameter indexParameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
+        PsiElement body = lambda.getBody();
+        if (body == null || indexParameter == null) return;
+        String nameCandidate = null;
+        if (containerQualifier instanceof PsiReferenceExpression) {
+          String name = ((PsiReferenceExpression)containerQualifier).getReferenceName();
+          if (name != null) {
+            nameCandidate = StringUtil.unpluralize(name);
+            if (name.equals(nameCandidate)) {
+              nameCandidate = null;
+            }
+          }
+        }
+        JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+        SuggestedNameInfo info =
+          javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, nameCandidate, null, elementType, true);
+        nameCandidate = ArrayUtil.getFirstElement(info.names);
+        String name = javaCodeStyleManager.suggestUniqueVariableName(nameCandidate == null ? "item" : nameCandidate, mapToObjCall, true);
+        Collection<PsiReference> refs = ReferencesSearch.search(indexParameter, new LocalSearchScope(body)).findAll();
+        for (PsiReference ref : refs) {
+          PsiExpression getExpression = container.extractGetExpressionFromIndex(ObjectUtils.tryCast(ref, PsiExpression.class));
+          if (getExpression != null) {
+            PsiElement result = ct.replace(getExpression, factory.createIdentifier(name));
+            if (getExpression == body) {
+              body = result;
+            }
+          }
+        }
+        PsiLambdaExpression newLambda = (PsiLambdaExpression)factory
+          .createExpressionFromText("(" + elementType.getCanonicalText() + " " + name + ")->" + ct.text(body), mapToObjCall);
+        PsiParameter newParameter = ArrayUtil.getFirstElement(newLambda.getParameterList().getParameters());
+        replacement += StreamApiUtil.generateMapOperation(newParameter, outElementType, newLambda.getBody());
+      }
+      PsiElement result = ct.replaceAndRestoreComments(mapToObjCall, replacement);
+      LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+      result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
+      CodeStyleManager.getInstance(project).reformat(result);
     }
   }
 }

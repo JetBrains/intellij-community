@@ -15,9 +15,13 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Tagir Valeev
@@ -62,5 +66,53 @@ public class StreamApiUtil {
     if(aClass == null) return false;
     String qualifiedName = aClass.getQualifiedName();
     return qualifiedName != null && qualifiedName.startsWith("java.util.stream.");
+  }
+
+  @Contract("null -> false")
+  public static boolean isSupportedStreamElement(PsiType type) {
+    if(type == null) return false;
+    if(type instanceof PsiPrimitiveType) {
+      return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
+    }
+    return true;
+  }
+
+  @NotNull
+  public static String generateMapOperation(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
+    PsiType inType = variable.getType();
+    if (mapper instanceof PsiExpression && ExpressionUtils.isReferenceTo((PsiExpression)mapper, variable)) {
+      if (!(outType instanceof PsiPrimitiveType)) {
+        return inType instanceof PsiPrimitiveType ? ".boxed()" : "";
+      }
+      if(outType.equals(inType)) {
+        return "";
+      }
+      if (PsiType.LONG.equals(outType) && PsiType.INT.equals(inType)) {
+        return ".asLongStream()";
+      }
+      if (PsiType.DOUBLE.equals(outType) && (PsiType.LONG.equals(inType) || PsiType.INT.equals(inType))) {
+        return ".asDoubleStream()";
+      }
+    }
+    String operationName = "map";
+    if(outType instanceof PsiPrimitiveType) {
+      if(!outType.equals(inType)) {
+        if(PsiType.INT.equals(outType)) {
+          operationName = "mapToInt";
+        } else if(PsiType.LONG.equals(outType)) {
+          operationName = "mapToLong";
+        } else if(PsiType.DOUBLE.equals(outType)) {
+          operationName = "mapToDouble";
+        }
+      }
+    } else if(inType instanceof PsiPrimitiveType) {
+      operationName = "mapToObj";
+    }
+    if(outType != null && mapper instanceof PsiArrayInitializerExpression) {
+      mapper = RefactoringUtil.convertInitializerToNormalExpression((PsiExpression)mapper, outType);
+    }
+    String typeArgument = mapper instanceof PsiExpression ? OptionalUtil.getMapTypeArgument((PsiExpression)mapper, outType) : "";
+    return "." + typeArgument + operationName +
+           "(" + variable.getName() + "->" + mapper.getText() + ")";
   }
 }
