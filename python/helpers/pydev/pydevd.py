@@ -555,6 +555,8 @@ class PyDB:
     def set_tracing_for_untraced_contexts(self, ignore_frame=None, overwrite_prev_trace=False):
         # Enable the tracing for existing threads (because there may be frames being executed that
         # are currently untraced).
+        if self.frame_eval_func is not None:
+            return
         threads = threadingEnumerate()
         try:
             for t in threads:
