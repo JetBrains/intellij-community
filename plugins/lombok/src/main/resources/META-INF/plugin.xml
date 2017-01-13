@@ -260,6 +260,7 @@
 				<ol>
             <li>Fixed #209: Fixed @EqualsAndHashCode unnecessary warning</li>
             <li>Fixed #212: Fixed Inspection "Field may be 'final'" triggers in spite of @Setter</li>
+            <li>Fixed #253: Fixed Refactor "Default @Getter" removes annotation on JPA entity classes</li>
             <li>Fixed #302: Changed linked text in "Lombok Requires Annotation Processing" notification</li>
             <li>Fixed #304: Fixed @FieldDefaults`s access level 'PUBLIC' doesn't work</li>
             <li>Fixed #306: Problem with @Builder and generics</li>
