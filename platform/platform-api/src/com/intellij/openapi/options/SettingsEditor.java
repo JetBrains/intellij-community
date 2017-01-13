@@ -83,13 +83,19 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   public final void resetFrom(Settings s) {
-    myIsInUpdate = true;
+    bulkUpdate(() -> resetEditorFrom(s));
+  }
+
+  public final void bulkUpdate(Runnable runnable) {
+    boolean wasInUpdate = myIsInUpdate;
     try {
-      resetEditorFrom(s);
+      myIsInUpdate = true;
+      runnable.run();
     }
     finally {
-      myIsInUpdate = false;
+      myIsInUpdate = wasInUpdate;
     }
+    fireEditorStateChanged();
   }
 
   public final void applyTo(Settings s) throws ConfigurationException {
