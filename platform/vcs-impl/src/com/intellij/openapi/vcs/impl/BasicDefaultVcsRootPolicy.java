@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +40,14 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     myBaseDir = project.getBaseDir();
   }
 
-  public void addDefaultVcsRoots(final NewMappings mappingList, @NotNull final String vcsName, final List<VirtualFile> result) {
+  @NotNull
+  public List<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
+    List<VirtualFile> result = ContainerUtil.newArrayList();
     final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
     if (baseDir != null && vcsName.equals(mappingList.getVcsFor(baseDir))) {
       result.add(baseDir);
     }
+    return result;
   }
 
   public boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext) {

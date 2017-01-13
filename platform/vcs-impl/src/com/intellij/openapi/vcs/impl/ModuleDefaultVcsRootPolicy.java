@@ -61,7 +61,9 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   @Override
-  public void addDefaultVcsRoots(final NewMappings mappingList, @NotNull final String vcsName, final List<VirtualFile> result) {
+  @NotNull
+  public List<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
+    List<VirtualFile> result = ContainerUtil.newArrayList();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (myBaseDir != null && vcsName.equals(mappingList.getVcsFor(myBaseDir))) {
       final AbstractVcs vcsFor = vcsManager.getVcsFor(myBaseDir);
@@ -92,6 +94,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         }
       }
     }
+    return result;
   }
 
   @Override

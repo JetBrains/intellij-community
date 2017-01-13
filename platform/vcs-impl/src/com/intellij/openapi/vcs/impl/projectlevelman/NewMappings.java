@@ -271,8 +271,7 @@ public class NewMappings {
 
     for (VcsDirectoryMapping mapping : mappings) {
       if (mapping.isDefaultMapping()) {
-        // todo callback here; don't like it
-        myDefaultVcsRootPolicy.addDefaultVcsRoots(this, vcsName, result);
+        result.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, vcsName));
       }
       else {
         final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
@@ -533,7 +532,7 @@ public class NewMappings {
       final String defaultVcs = haveDefaultMapping();
       if (defaultVcs == null) return Collections.emptyList();
       final List<VirtualFile> list = new ArrayList<>();
-      myDefaultVcsRootPolicy.addDefaultVcsRoots(this, defaultVcs, list);
+      list.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
       if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
         return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
       }
