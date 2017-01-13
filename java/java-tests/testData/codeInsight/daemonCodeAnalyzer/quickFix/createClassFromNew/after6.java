@@ -5,5 +5,5 @@ public class Test {
     }
 }
 
-<caret>public class MyCollection {
+public class <caret>MyCollection {
 }
