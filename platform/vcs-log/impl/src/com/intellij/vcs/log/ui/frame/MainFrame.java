@@ -24,7 +24,6 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
@@ -32,9 +31,9 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
-import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.BekUtil;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import net.miginfocom.swing.MigLayout;
@@ -115,32 +114,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
 
-    ProgressStripe progressStripe =
-      new ProgressStripe(setupScrolledGraph(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
-        @Override
-        public void updateUI() {
-          super.updateUI();
-          if (myDecorator != null && myLogData.getProgress().isRunning()) startLoadingImmediately();
-        }
-      };
-    myLogData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
-      @Override
-      public void progressStarted() {
-        progressStripe.startLoading();
-      }
-
-      @Override
-      public void progressStopped() {
-        progressStripe.stopLoading();
-      }
-    }, this);
-
-
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
-    toolbarsAndTable.add(progressStripe, BorderLayout.CENTER);
+    toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
+                                                      myLogData, this), BorderLayout.CENTER);
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, "vcs.log.changes.splitter.proportion", 0.7f);
     myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
@@ -182,13 +161,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public void setupDetailsSplitter(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
-  }
-
-  @NotNull
-  private JScrollPane setupScrolledGraph() {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.TOP);
-    myGraphTable.viewportSet(scrollPane.getViewport());
-    return scrollPane;
   }
 
   @NotNull

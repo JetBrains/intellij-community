@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.history;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -33,16 +32,15 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.frame.CommitSelectionListenerForDiff;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
-import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,28 +82,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel = new DetailsPanel(logData, myUi.getColorManager(), this);
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
-    ProgressStripe progressStripe =
-      new ProgressStripe(setupScrolledGraph(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
-        @Override
-        public void updateUI() {
-          super.updateUI();
-          if (myDecorator != null && myLogData.getProgress().isRunning()) startLoadingImmediately();
-        }
-      };
-    myLogData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
-      @Override
-      public void progressStarted() {
-        progressStripe.startLoading();
-      }
-
-      @Override
-      public void progressStopped() {
-        progressStripe.stopLoading();
-      }
-    }, this);
-
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    myDetailsSplitter.setFirstComponent(progressStripe);
+    myDetailsSplitter.setFirstComponent(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
+                                                                     myLogData, this));
     myDetailsSplitter.setSecondComponent(myUi.getProperties().get(MainVcsLogUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myGraphTable.getSelectionModel().addListSelectionListener(new MyCommitSelectionListenerForDiff());
@@ -119,13 +98,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
 
     Disposer.register(myUi, this);
-  }
-
-  @NotNull
-  private JScrollPane setupScrolledGraph() {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myGraphTable, SideBorder.LEFT);
-    myGraphTable.viewportSet(scrollPane.getViewport());
-    return scrollPane;
   }
 
   @NotNull
