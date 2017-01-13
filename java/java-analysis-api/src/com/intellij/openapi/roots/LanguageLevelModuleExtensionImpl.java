@@ -79,11 +79,6 @@ public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements
   }
 
   @Override
-  public int compareTo(@NotNull ModuleExtension o) {
-    return 0;
-  }
-
-  @Override
   public ModuleExtension getModifiableModel(final boolean writable) {
     return new LanguageLevelModuleExtensionImpl(this, writable);
   }
