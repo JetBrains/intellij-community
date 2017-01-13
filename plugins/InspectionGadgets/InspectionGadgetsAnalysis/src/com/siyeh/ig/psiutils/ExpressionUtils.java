@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 Bas Leijdekkers
+ * Copyright 2005-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -612,6 +612,7 @@ public class ExpressionUtils {
     return JavaTokenType.MINUS.equals(tokenType);
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
     final PsiReferenceExpression referenceExpression = getReferenceExpressionFromNullComparison(expression, equals);
@@ -619,6 +620,7 @@ public class ExpressionUtils {
     return target instanceof PsiVariable ? (PsiVariable)target : null;
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -662,10 +664,10 @@ public class ExpressionUtils {
    */
   @Nullable
   public static PsiExpression getValueComparedWithNull(@NotNull PsiBinaryExpression binOp) {
-    if(!binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
-       !binOp.getOperationTokenType().equals(JavaTokenType.NE)) return null;
-    PsiExpression left = binOp.getLOperand();
-    PsiExpression right = binOp.getROperand();
+    final IElementType tokenType = binOp.getOperationTokenType();
+    if(!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) return null;
+    final PsiExpression left = binOp.getLOperand();
+    final PsiExpression right = binOp.getROperand();
     if(isNullLiteral(right)) return left;
     if(isNullLiteral(left)) return right;
     return null;
