@@ -123,17 +123,17 @@ public class Utils {
 
   public static void copy(File from, File to) throws IOException {
     if (from.isDirectory()) {
-      if (! to.exists()) {
+      if (!to.exists()) {
         Runner.logger().info("Dir: " + from.getPath() + " to " + to.getPath());
-        to.mkdirs();
+        if (!to.mkdirs()) throw new IOException("Cannot create: " + to);
         File[] files = from.listFiles();
-        if (files == null) throw new IOException("Cannot get directory's content: " + from);
+        if (files == null) throw new IOException("Cannot list directory: " + from);
         for (File each : files) {
           copy(each, new File(to, each.getName()));
         }
       }
     }
-    else if (!isLink(from) && from.exists()) {
+    else if (from.exists() && !isLink(from)) {
       Runner.logger().info("File: " + from.getPath() + " to " + to.getPath());
       try (InputStream in = new BufferedInputStream(new FileInputStream(from))) {
         copyStreamToFile(in, to);
@@ -158,7 +158,10 @@ public class Utils {
   }
 
   public static void copyStreamToFile(InputStream from, File to) throws IOException {
-    to.getParentFile().mkdirs();
+    File directory = to.getParentFile();
+    if (!(directory.isDirectory() || directory.mkdirs())) {
+      throw new IOException("Cannot create: " + directory);
+    }
     try (OutputStream out = new BufferedOutputStream(new FileOutputStream(to))) {
       copyStream(from, out);
     }
