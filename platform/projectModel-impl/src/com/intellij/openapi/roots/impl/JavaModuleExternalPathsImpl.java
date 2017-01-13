@@ -91,10 +91,18 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   private void setRootUrls(final OrderRootType orderRootType, @NotNull final String[] urls) {
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
+      if (urls.length == 0) {
+        // do not store if no container and nothing to store
+        return;
+      }
+
       container = VirtualFilePointerManager.getInstance().createContainer(this, null);
       myOrderRootPointerContainers.put(orderRootType, container);
     }
-    container.clear();
+    else {
+      container.clear();
+    }
+
     for (final String url : urls) {
       container.add(url);
     }
