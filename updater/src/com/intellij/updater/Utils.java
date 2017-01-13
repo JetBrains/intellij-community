@@ -18,10 +18,7 @@ package com.intellij.updater;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -108,24 +105,19 @@ public class Utils {
 
   public static void setExecutable(File file, boolean executable) throws IOException {
     if (executable && !file.setExecutable(true, false)) {
-      Runner.logger().error("Can't set executable permissions for file");
+      Runner.logger().error("Can't set executable permissions for file: " + file);
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
 
   public static boolean isLink(File file) throws IOException {
-    return Files.isSymbolicLink(Paths.get(file.getAbsolutePath()));
+    return Files.isSymbolicLink(file.toPath());
   }
 
   public static void createLink(String target, File link) throws IOException {
-    if (target == "") {
-      Runner.logger().error("Can't create link for " +  link.getName());
-    } else {
-      if (link.exists()) {
-        delete(link);
-      }
-      Files.createSymbolicLink(Paths.get(link.getAbsolutePath()), Paths.get(target));
-    }
+    Path path = link.toPath();
+    Files.deleteIfExists(path);
+    Files.createSymbolicLink(path, Paths.get(target));
   }
 
   public static void copy(File from, File to) throws IOException {
@@ -139,48 +131,35 @@ public class Utils {
           copy(each, new File(to, each.getName()));
         }
       }
-    } else {
-      if (! isLink(from) && from.exists()) {
-        Runner.logger().info("File: " + from.getPath() + " to " + to.getPath());
-        InputStream in = new BufferedInputStream(new FileInputStream(from));
-        try {
-          copyStreamToFile(in, to);
-        }
-        finally {
-          in.close();
-        }
-        setExecutable(to, from.canExecute());
+    }
+    else if (!isLink(from) && from.exists()) {
+      Runner.logger().info("File: " + from.getPath() + " to " + to.getPath());
+      try (InputStream in = new BufferedInputStream(new FileInputStream(from))) {
+        copyStreamToFile(in, to);
       }
+      setExecutable(to, from.canExecute());
     }
   }
-
 
   public static void mirror(File from, File to) throws IOException {
     if (from.exists()) {
       copy(from, to);
-    } else {
+    }
+    else {
       delete(to);
     }
   }
 
   public static void copyFileToStream(File from, OutputStream out) throws IOException {
-    InputStream in = new BufferedInputStream(new FileInputStream(from));
-    try {
+    try (InputStream in = new BufferedInputStream(new FileInputStream(from))) {
       copyStream(in, out);
-    }
-    finally {
-      in.close();
     }
   }
 
   public static void copyStreamToFile(InputStream from, File to) throws IOException {
     to.getParentFile().mkdirs();
-    OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
-    try {
+    try (OutputStream out = new BufferedOutputStream(new FileOutputStream(to))) {
       copyStream(from, out);
-    }
-    finally {
-      out.close();
     }
   }
 
@@ -200,12 +179,7 @@ public class Utils {
 
   public static byte[] readBytes(InputStream in) throws IOException {
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-    try {
-      copyStream(in, byteOut);
-    }
-    finally {
-      byteOut.close();
-    }
+    copyStream(in, byteOut);
     return byteOut.toByteArray();
   }
 
@@ -224,8 +198,7 @@ public class Utils {
 
   public static InputStream findEntryInputStream(ZipFile zipFile, String entryPath) throws IOException {
     ZipEntry entry = zipFile.getEntry(entryPath);
-    if (entry == null) return null;
-    return findEntryInputStreamForEntry(zipFile, entry);
+    return entry != null ? findEntryInputStreamForEntry(zipFile, entry) : null;
   }
 
   public static ZipEntry getZipEntry(ZipFile zipFile, String entryPath) throws IOException {
@@ -245,24 +218,21 @@ public class Utils {
     return new BufferedInputStream(zipFile.getInputStream(entry));
   }
 
-  public static LinkedHashSet<String> collectRelativePaths(File dir, boolean includeDirectories) {
+  public static LinkedHashSet<String> collectRelativePaths(File dir) {
     LinkedHashSet<String> result = new LinkedHashSet<>();
-    collectRelativePaths(dir, result, null, includeDirectories);
+    collectRelativePaths(dir, result, null);
     return result;
   }
 
-  private static void collectRelativePaths(File dir, LinkedHashSet<String> result, String parentPath, boolean includeDirectories) {
+  private static void collectRelativePaths(File dir, LinkedHashSet<String> result, String parentPath) {
     File[] children = dir.listFiles();
     if (children == null) return;
 
     for (File each : children) {
-      String relativePath = (parentPath == null ? "" : parentPath + "/") + each.getName();
+      String relativePath = (parentPath == null ? "" : parentPath + '/') + each.getName();
       if (each.isDirectory()) {
-        if (includeDirectories) {
-          // The trailing slash is very important, as it's used by zip to determine whether it is a directory.
-          result.add(relativePath + "/");
-        }
-        collectRelativePaths(each, result, relativePath, includeDirectories);
+        result.add(relativePath + '/');  // the trailing slash is used by zip to determine whether it is a directory
+        collectRelativePaths(each, result, relativePath);
       }
       else {
         result.add(relativePath);
@@ -275,25 +245,24 @@ public class Utils {
   }
 
   private static class NormalizedZipInputStream extends InputStream {
-    private List<? extends ZipEntry> myEntries;
+    private final ZipFile myZip;
+    private final List<? extends ZipEntry> myEntries;
     private InputStream myStream = null;
     private int myNextEntry = 0;
-    private final ZipFile myZip;
     private byte[] myByte = new byte[1];
 
-    NormalizedZipInputStream(File file) throws IOException {
+    private NormalizedZipInputStream(File file) throws IOException {
       myZip = new ZipFile(file);
       myEntries = Collections.list(myZip.entries());
-      Collections.sort(myEntries, (Comparator<ZipEntry>)(a, b) -> a.getName().compareTo(b.getName()));
-
+      Collections.sort(myEntries, Comparator.comparing(ZipEntry::getName));
       loadNextEntry();
     }
 
     private void loadNextEntry() throws IOException {
       if (myStream != null) {
         myStream.close();
+        myStream = null;
       }
-      myStream = null;
       while (myNextEntry < myEntries.size() && myStream == null) {
         myStream = findEntryInputStreamForEntry(myZip, myEntries.get(myNextEntry++));
       }
