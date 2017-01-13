@@ -27,6 +27,7 @@ cdef PyObject*get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
                 if line in breakpoints:
                     was_break = True
                     new_code = insert_code(<object> frame.f_code, pydev_trace_code_wrapper.__code__, line)
+                    Py_INCREF(new_code)
                     frame.f_code = <PyCodeObject *> new_code
             if was_break:
                 update_globals_dict(<object> frame.f_globals)
