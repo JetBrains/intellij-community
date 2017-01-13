@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Implement {@link com.intellij.openapi.components.PersistentStateComponent} to be serializable.
  */
-public abstract class ModuleExtension<T extends ModuleExtension> implements Disposable, Comparable<ModuleExtension> {
+public abstract class ModuleExtension implements Disposable, Comparable<ModuleExtension> {
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
 
   /**

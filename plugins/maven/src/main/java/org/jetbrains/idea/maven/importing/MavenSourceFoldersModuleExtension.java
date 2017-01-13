@@ -47,7 +47,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  * @since 4/30/2014
  */
-public class MavenSourceFoldersModuleExtension extends ModuleExtension<MavenSourceFoldersModuleExtension> {
+public class MavenSourceFoldersModuleExtension extends ModuleExtension {
 
   private ModifiableRootModel myRootModel;
   private JpsModule myDummyJpsModule;
