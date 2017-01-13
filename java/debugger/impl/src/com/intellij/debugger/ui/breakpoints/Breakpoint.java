@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Function;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor {
@@ -393,7 +394,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                           TextWithImports text,
                                           EvaluatingComputable<ExpressionEvaluator> supplier) throws EvaluateException {
       EvaluatorCache cache = (EvaluatorCache)request.getProperty(propertyName);
-      if (cache != null && cache.myContext.equals(context) && cache.myTextWithImports.equals(text)) {
+      if (cache != null && Objects.equals(cache.myContext, context) && Objects.equals(cache.myTextWithImports, text)) {
         return cache.myEvaluator;
       }
       ExpressionEvaluator evaluator = supplier.compute();
