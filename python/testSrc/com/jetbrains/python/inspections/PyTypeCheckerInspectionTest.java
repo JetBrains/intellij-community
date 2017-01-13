@@ -366,6 +366,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22222
+  public void testPassClassWithDunderSlotsToMethodThatUsesSlottedAttribute() {
+    doTest();
+  }
+
   // PY-22391
   public void testIteratingOverListAfterIfNot() {
     doTest();

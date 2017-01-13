@@ -29,6 +29,7 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -682,6 +683,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
       result.add(expression.getName());
     }
+
+    result.addAll(ObjectUtils.notNull(myClass.getSlots(context), Collections.emptyList()));
 
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyCustomMember member : provider.getMembers(this, null, context)) {
