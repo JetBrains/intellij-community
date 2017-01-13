@@ -34,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,26 +61,20 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       myCbUseSoftWrapsAtConsole = new JCheckBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"), false);
       myCommandsHistoryLimitField = new JTextField(3);
       myCbOverrideConsoleCycleBufferSize = new JCheckBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", String.valueOf(ConsoleBuffer.getLegacyCycleBufferSize() / 1024)), false);
-      myCbOverrideConsoleCycleBufferSize.addChangeListener(new ChangeListener(){
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected());
-        }
-      });
+      myCbOverrideConsoleCycleBufferSize.addChangeListener(e -> myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected()));
       myConsoleCycleBufferSizeField = new JTextField(3);
 
       JPanel northPanel = new JPanel(new GridBagLayout());
       GridBag gridBag = new GridBag();
       gridBag.anchor(GridBagConstraints.WEST).setDefaultAnchor(GridBagConstraints.WEST);
-      northPanel
-        .add(myCbUseSoftWrapsAtConsole,
-             gridBag.nextLine().next());
+      northPanel.add(myCbUseSoftWrapsAtConsole, gridBag.nextLine().next());
       northPanel.add(Box.createHorizontalGlue(), gridBag.next().coverLine());
       northPanel.add(new JLabel(ApplicationBundle.message("editbox.console.history.limit")), gridBag.nextLine().next());
       northPanel.add(myCommandsHistoryLimitField, gridBag.next());
       if (ConsoleBuffer.useCycleBuffer()) {
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
+        northPanel.add(new JLabel(" KB"), gridBag.next());
       }
       if (!editFoldingsOnly()) {
         JPanel wrapper = new JPanel(new BorderLayout());
@@ -211,7 +203,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
     private final String myQuery;
 
-    public MyAddDeleteListPanel(String title, String query) {
+    MyAddDeleteListPanel(String title, String query) {
       super(title, new ArrayList<>());
       myQuery = query;
     }
@@ -262,11 +254,6 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     public void addRule(String rule) {
       addElement(rule);
-    }
-
-    @Override
-    public void setBounds(int x, int y, int width, int height) {
-      super.setBounds(x, y, width, height);
     }
 
     @Override
