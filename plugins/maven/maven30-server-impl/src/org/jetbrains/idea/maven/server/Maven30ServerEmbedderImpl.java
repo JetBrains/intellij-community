@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -203,18 +204,18 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
 
     // reset threshold
-    myContainer = FieldAccessor.get(MavenCli.class, cli, "container");
+    myContainer = ReflectionUtil.getField(MavenCli.class, cli, DefaultPlexusContainer.class, "container");
     myContainer.getLoggerManager().setThreshold(settings.getLoggingLevel());
 
-    mySystemProperties = FieldAccessor.get(cliRequestClass, cliRequest, "systemProperties");
+    mySystemProperties = ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
 
     if (settings.getProjectJdk() != null) {
       mySystemProperties.setProperty("java.home", settings.getProjectJdk());
     }
 
     myMavenSettings =
-      buildSettings(FieldAccessor.<SettingsBuilder>get(MavenCli.class, cli, "settingsBuilder"), settings, mySystemProperties,
-                    FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
+      buildSettings(ReflectionUtil.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder"), settings, mySystemProperties,
+                    ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
   }
