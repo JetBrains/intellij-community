@@ -20,11 +20,10 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -884,5 +883,36 @@ public class ExpressionUtils {
     final PsiType type = qualifier.getType();
     if (type == null || type.getArrayDimensions() <= 0) return null;
     return qualifier;
+  }
+
+  /**
+   * Returns a qualifier for reference or creates a corresponding {@link PsiThisExpression} statement if
+   * a qualifier is null
+   *
+   * @param ref a reference expression to get a qualifier from
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
+   */
+  @NotNull
+  public static PsiExpression getQualifierOrThis(@NotNull PsiReferenceExpression ref) {
+    PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) return qualifier;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
+    PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+    if (member != null) {
+      PsiClass memberClass = member.getContainingClass();
+      if (memberClass != null) {
+        PsiClass containingClass = ClassUtils.getContainingClass(ref);
+        if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+          containingClass = ClassUtils.getContainingClass(containingClass);
+          while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+            containingClass = ClassUtils.getContainingClass(containingClass);
+          }
+          if (containingClass != null) {
+            return factory.createExpressionFromText(containingClass.getQualifiedName() + "." + PsiKeyword.THIS, ref);
+          }
+        }
+      }
+    }
+    return factory.createExpressionFromText(PsiKeyword.THIS, ref);
   }
 }
