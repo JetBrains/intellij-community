@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,9 @@ public class Digester {
     if (file.isDirectory()) {
       return DIRECTORY;
     }
-    InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize));
-    try {
+
+    try (InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize))) {
       return digestStream(in);
-    }
-    finally {
-      in.close();
     }
   }
 
@@ -44,7 +41,8 @@ public class Digester {
     ZipFile zipFile;
     try {
       zipFile = new ZipFile(file);
-    } catch (ZipException e) {
+    }
+    catch (ZipException e) {
       // This was not a zip file...
       return digestRegularFile(file, false);
     }
@@ -54,23 +52,22 @@ public class Digester {
       Enumeration<? extends ZipEntry> temp = zipFile.entries();
       while (temp.hasMoreElements()) {
         ZipEntry each = temp.nextElement();
-        if (!each.isDirectory()) sorted.add(each);
+        if (!each.isDirectory()) {
+          sorted.add(each);
+        }
       }
 
-      Collections.sort(sorted, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+      Collections.sort(sorted, Comparator.comparing(ZipEntry::getName));
 
       CRC32 crc = new CRC32();
       for (ZipEntry each : sorted) {
-        InputStream in = zipFile.getInputStream(each);
-        try {
+        try (InputStream in = zipFile.getInputStream(each)) {
           doDigestStream(in, crc);
-        }
-        finally {
-          in.close();
         }
       }
       return crc.getValue();
-    } finally {
+    }
+    finally {
       zipFile.close();
     }
   }
@@ -82,7 +79,7 @@ public class Digester {
   }
 
   private static void doDigestStream(InputStream in, CRC32 crc) throws IOException {
-    final byte[] BUFFER = new byte[65536];
+    byte[] BUFFER = new byte[65536];
     int size;
     while ((size = in.read(BUFFER)) != -1) {
       crc.update(BUFFER, 0, size);

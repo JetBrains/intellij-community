@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,8 @@ public class CreateAction extends PatchAction {
     if (!newerFile.isDirectory()) {
       if (Utils.isLink(newerFile)) {
         writeLinkInfo(newerFile, patchOutput);
-      } else {
+      }
+      else {
         writeExecutableFlag(patchOutput, newerFile);
         Utils.copyFileToStream(newerFile, patchOutput);
       }
@@ -81,20 +82,21 @@ public class CreateAction extends PatchAction {
       if (!toFile.mkdir()) {
         throw new IOException("Unable to create directory " + myPath);
       }
-    } else {
-      InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
-      try {
+    }
+    else {
+      try (InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry)) {
+        if (in == null) {
+          throw new IOException("Invalid entry " + myPath);
+        }
+
         int filePermissions = in.read();
-        if (filePermissions > 1 ) {
+        if (filePermissions > 1) {
           Utils.createLink(readLinkInfo(in, filePermissions), toFile);
         }
         else {
           Utils.copyStreamToFile(in, toFile);
-          Utils.setExecutable(toFile, filePermissions == 1 );
+          Utils.setExecutable(toFile, filePermissions == 1);
         }
-      }
-      finally {
-        in.close();
       }
     }
   }

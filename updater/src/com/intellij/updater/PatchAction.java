@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,13 @@
 package com.intellij.updater;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.Path;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.Iterator;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
@@ -65,18 +63,17 @@ public abstract class PatchAction {
   }
 
   protected static void writeLinkInfo(File file, OutputStream out) throws IOException {
-    Path path = Paths.get(file.getAbsolutePath());
-    String link = Files.readSymbolicLink(path).toString();
-    if (link.isEmpty()) throw new IOException("Invalid link: " + path);
-    out.write(link.length());
-    byte[] byteArray = link.getBytes("UTF-8");
-    out.write(byteArray);
+    String target = Files.readSymbolicLink(file.toPath()).toString();
+    if (target.isEmpty()) throw new IOException("Invalid link: " + file);
+    byte[] bytes = target.getBytes("UTF-8");
+    out.write(bytes.length);
+    out.write(bytes);
   }
 
   protected static String readLinkInfo(InputStream in, int length) throws IOException {
-    byte[] byteArray = new byte[length];
-    if (length == 0 || in.read(byteArray) != length) throw new IOException("Stream format error");
-    return new String(byteArray, "UTF-8");
+    byte[] bytes = new byte[length];
+    if (length == 0 || in.read(bytes) != length) throw new IOException("Stream format error");
+    return new String(bytes, "UTF-8");
   }
 
   public boolean calculate(File olderDir, File newerDir) throws IOException {
@@ -98,9 +95,7 @@ public abstract class PatchAction {
     ValidationResult.Option option = options.get(myPath);
     if (option == ValidationResult.Option.KEEP || option == ValidationResult.Option.IGNORE) return false;
     if (option == ValidationResult.Option.KILL_PROCESS) {
-      for (NativeFileManager.Process process : NativeFileManager.getProcessesUsing(file)) {
-        process.terminate();
-      }
+      NativeFileManager.getProcessesUsing(file).forEach(p -> p.terminate());
     }
     return doShouldApply(toDir);
   }
@@ -112,26 +107,17 @@ public abstract class PatchAction {
   protected abstract ValidationResult validate(File toDir) throws IOException;
 
   protected ValidationResult doValidateAccess(File toFile, ValidationResult.Action action) {
-    if (!toFile.exists()) return null;
-    if (toFile.isDirectory()) return null;
+    if (!toFile.exists() || toFile.isDirectory()) return null;
     ValidationResult result = validateProcessLock(toFile, action);
-    if (result != null) {
-      return result;
-    }
+    if (result != null) return result;
     if (toFile.canRead() && toFile.canWrite() && isWritable(toFile)) return null;
-    return new ValidationResult(ValidationResult.Kind.ERROR,
-                                myPath,
-                                action,
-                                ValidationResult.ACCESS_DENIED_MESSAGE,
-                                myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
+    ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
+    return new ValidationResult(ValidationResult.Kind.ERROR, myPath, action, ValidationResult.ACCESS_DENIED_MESSAGE, options);
   }
 
   private static boolean isWritable(File toFile) {
-    try (FileOutputStream s = new FileOutputStream(toFile, true); FileChannel ch = s.getChannel()) {
-      FileLock lock = ch.tryLock();
-      if (lock == null) return false;
-      lock.release();
-      return true;
+    try (FileOutputStream s = new FileOutputStream(toFile, true); FileChannel ch = s.getChannel(); FileLock lock = ch.tryLock()) {
+      return lock != null;
     }
     catch (OverlappingFileLockException | IOException e) {
       Runner.printStackTrace(e);
@@ -141,23 +127,12 @@ public abstract class PatchAction {
 
   private ValidationResult validateProcessLock(File toFile, ValidationResult.Action action) {
     List<NativeFileManager.Process> processes = NativeFileManager.getProcessesUsing(toFile);
-    if (processes.size() > 0) {
-      Iterator<NativeFileManager.Process> it = processes.iterator();
-      String message = "Locked by: " + it.next().name;
-      while (it.hasNext()) {
-        message += ", " + it.next().name;
-      }
-      return new ValidationResult(ValidationResult.Kind.ERROR,
-                                  myPath,
-                                  action,
-                                  message,
-                                  ValidationResult.Option.KILL_PROCESS);
-    }
-    return null;
+    if (processes.size() == 0) return null;
+    String message = "Locked by: " + processes.stream().map(p -> p.name).collect(Collectors.joining(", "));
+    return new ValidationResult(ValidationResult.Kind.ERROR, myPath, action, message, ValidationResult.Option.KILL_PROCESS);
   }
 
-  protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Kind kind, ValidationResult.Action action)
-    throws IOException {
+  protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Kind kind, ValidationResult.Action action) throws IOException {
     if (toFile.exists()) {
       if (isModified(toFile)) {
         ValidationResult.Option[] options;
@@ -176,20 +151,14 @@ public abstract class PatchAction {
             options = new ValidationResult.Option[]{ ValidationResult.Option.IGNORE };
           }
         }
-        return new ValidationResult(kind,
-                                    myPath,
-                                    action,
-                                    ValidationResult.MODIFIED_MESSAGE,
-                                    options);
+        return new ValidationResult(kind, myPath, action, ValidationResult.MODIFIED_MESSAGE, options);
       }
     }
     else if (!isOptional) {
-      return new ValidationResult(kind,
-                                  myPath,
-                                  action,
-                                  ValidationResult.ABSENT_MESSAGE,
-                                  myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
+      ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
+      return new ValidationResult(kind, myPath, action, ValidationResult.ABSENT_MESSAGE, options);
     }
+
     return null;
   }
 
