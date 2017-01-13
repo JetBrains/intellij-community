@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,26 +53,22 @@ public class MappingsToRoots {
     if (! vcs.allowsNestedRoots()) {
       final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
       final List<VirtualFile> finalResult = result;
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          int i=1;
-          while(i < finalResult.size()) {
-            final VirtualFile previous = finalResult.get(i - 1);
-            final VirtualFile current = finalResult.get(i);
-            if (facade.isValidAncestor(previous, current)) {
-    //        if (FileIndexFacade.getInstance(myProject).isValidAncestor(previous, current) && vcs.isVersionedDirectory(previous)) {
-              finalResult.remove(i);
-            }
-            else {
-              i++;
-            }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        int i=1;
+        while(i < finalResult.size()) {
+          final VirtualFile previous = finalResult.get(i - 1);
+          final VirtualFile current = finalResult.get(i);
+          if (facade.isValidAncestor(previous, current)) {
+            finalResult.remove(i);
+          }
+          else {
+            i++;
           }
         }
       });
     }
     result.removeIf(file -> !file.isDirectory());
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   // not only set mappings, but include all modules inside: modules might have different settings
@@ -93,23 +89,20 @@ public class MappingsToRoots {
     Collections.sort(result, FilePathComparator.getInstance());
     if (addInnerModules) {
       final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
-      final DefaultVcsRootPolicy defaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(myProject);
-      final List<VirtualFile> modules = defaultVcsRootPolicy.getDefaultVcsRoots(myMappings, vcsName);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final Iterator<VirtualFile> iterator = modules.iterator();
-          while (iterator.hasNext()) {
-            final VirtualFile module = iterator.next();
-            boolean included = false;
-            for (VirtualFile root : result) {
-              if (facade.isValidAncestor(root, module)) {
-                included = true;
-                break;
-              }
+      final List<VirtualFile> modules = DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(myMappings, vcsName);
+      ApplicationManager.getApplication().runReadAction(() -> {
+        Iterator<VirtualFile> iterator = modules.iterator();
+        while (iterator.hasNext()) {
+          final VirtualFile module = iterator.next();
+          boolean included = false;
+          for (VirtualFile root : result) {
+            if (facade.isValidAncestor(root, module)) {
+              included = true;
+              break;
             }
-            if (! included) {
-              iterator.remove();
-            }
+          }
+          if (! included) {
+            iterator.remove();
           }
         }
       });
