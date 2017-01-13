@@ -79,7 +79,7 @@ public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements
   }
 
   @Override
-  public int compareTo(@NotNull Object o) {
+  public int compareTo(@NotNull ModuleExtension o) {
     return 0;
   }
 
