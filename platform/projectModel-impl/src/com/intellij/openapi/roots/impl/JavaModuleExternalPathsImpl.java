@@ -23,12 +23,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   @NonNls private static final String ROOT_ELEMENT = JpsJavaModelSerializerExtension.ROOT_TAG;
-  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<>();
+  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new THashMap<>();
   private JavaModuleExternalPathsImpl mySource;
 
   public JavaModuleExternalPathsImpl() {
@@ -127,10 +127,10 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     }
   }
 
-  private void copyContainersFrom(@NotNull JavaModuleExternalPathsImpl paths) {
+  private void copyContainersFrom(@NotNull JavaModuleExternalPathsImpl source) {
     myOrderRootPointerContainers.clear();
-    for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
-      final VirtualFilePointerContainer otherContainer = paths.myOrderRootPointerContainers.get(orderRootType);
+    for (OrderRootType orderRootType : source.myOrderRootPointerContainers.keySet()) {
+      final VirtualFilePointerContainer otherContainer = source.myOrderRootPointerContainers.get(orderRootType);
       if (otherContainer != null) {
         myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(this, null));
       }
