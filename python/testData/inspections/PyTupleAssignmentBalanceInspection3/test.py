@@ -1,21 +1,10 @@
-a, b, c = <warning descr="Too many values to unpack">(1, 2, 3, 4)</warning>
-
-#PY-4357
-c = 1, 2, 3
-a, b = <warning descr="Too many values to unpack">c</warning>
-
-#PY-4360
-(a, b) = <warning descr="Too many values to unpack">1, 2, 3</warning>
-(a, b) = <warning descr="Too many values to unpack">(1, 2, 3)</warning>
-
-#PY-4358
-a, b = <warning descr="Too many values to unpack">[1, 2, 3]</warning>
-a, b = <warning descr="Too many values to unpack">'str'</warning>
-a, b = <warning descr="Too many values to unpack">{1, 2, 3}</warning>
-a, b = <warning descr="Too many values to unpack">{1:2, 2: 3, 3:4}</warning>
-
-# PY-6315
-def test_tuple_slice():
-    def f():
-        return 1, 2, 3
-    x, y = f()[:2]
+a, b, c = <warning descr="Too many values to unpack">1, 2, 3, 4</warning>
+a, b, c = <warning descr="Need more values to unpack">foo, bar</warning>
+a, b, c, d = 1, 2, 3, 4
+a = 1, 2, 3, 4
+a, b, c = <warning descr="Need more values to unpack">2</warning>
+*a, b = 1, 2, 3
+*a, b, c = 1, 2
+b, c, *a, d = <warning descr="Need more values to unpack">1, 2</warning>
+*a, b = 1, 2
+a, *b, c, <warning descr="Only one starred expression allowed in assignment">*d</warning> = 1, 2, 3, 4, 5, 6

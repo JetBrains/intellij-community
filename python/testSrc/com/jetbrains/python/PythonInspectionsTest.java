@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,13 +133,15 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyTupleAssignmentBalanceInspection() {
-    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
   }
 
   public void testPyTupleAssignmentBalanceInspection2() {
-    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
-    doTestWithPy3k(getTestName(false), inspection);
+    doHighlightingTest(PyTupleAssignmentBalanceInspection.class, LanguageLevel.PYTHON27);
+  }
+
+  public void testPyTupleAssignmentBalanceInspection3() {
+    doHighlightingTest(PyTupleAssignmentBalanceInspection.class, LanguageLevel.PYTHON30);
   }
 
   public void testPyClassicStyleClassInspection() {
@@ -293,16 +295,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyDictDuplicateKeysInspection() {
     doHighlightingTest(PyDictDuplicateKeysInspection.class);
-  }
-
-
-  public void testPyTupleAssignmentBalanceInspection3() {
-    try {
-      setLanguageLevel(LanguageLevel.PYTHON27);
-      doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
-    } finally {
-      setLanguageLevel(null);
-    }
   }
 
   public void testPyListCreationInspection() {         //PY-2823
