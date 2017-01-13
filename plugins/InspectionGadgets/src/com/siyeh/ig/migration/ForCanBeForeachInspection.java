@@ -196,8 +196,16 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         finalString = "";
         statementToSkip = null;
       }
-      @NonNls final StringBuilder out = new StringBuilder(
-        "for(" + finalString + typeString + ' ' + contentVariableName + ": " + qualifier.getText() + ')');
+      @NonNls final StringBuilder out = new StringBuilder("for(");
+      out.append(finalString).append(typeString).append(' ').append(contentVariableName).append(": ");
+      @NonNls final String listName;
+      if (listReference == null) {
+        listName = qualifier.getText();
+      }
+      else {
+        listName = getVariableReferenceText(listReference, listVariable, forStatement);
+      }
+      out.append(listName).append(')');
       if (body != null) {
         replaceCollectionGetAccess(body, contentVariableName, listVariable, indexName, statementToSkip, out);
       }
