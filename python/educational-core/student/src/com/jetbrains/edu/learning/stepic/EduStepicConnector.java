@@ -212,13 +212,13 @@ public class EduStepicConnector {
       }
     }
     else {
+      final Lesson lesson = new Lesson();
+      lesson.setName("Adaptive");
+      course.addLesson(lesson);
       course.setName(info.getName());
       //TODO: more specific name?
       final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
       if (recommendation != null) {
-        final Lesson lesson = new Lesson();
-        lesson.setName("Adaptive");
-        course.addLesson(lesson);
         lesson.addTask(recommendation);
       }
       return course;
