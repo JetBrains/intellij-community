@@ -26,11 +26,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class PatchFileCreatorNotBinaryTest extends PatchFileCreatorTest {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-  }
-
   @Test
   public void failOnEmptyTargetJar() throws Exception {
     final File sourceJar = new File(myOlderDir, "lib/empty.jar");
@@ -50,11 +45,11 @@ public class PatchFileCreatorNotBinaryTest extends PatchFileCreatorTest {
         assertEquals("Corrupted target file: " + targetJar, reason);
       }
       finally {
-        targetJar.delete();
+        FileUtil.delete(targetJar);
       }
     }
     finally {
-      sourceJar.delete();
+      FileUtil.delete(sourceJar);
     }
   }
 
@@ -77,11 +72,11 @@ public class PatchFileCreatorNotBinaryTest extends PatchFileCreatorTest {
         assertEquals("Corrupted source file: " + sourceJar, reason);
       }
       finally {
-        targetJar.delete();
+        FileUtil.delete(targetJar);
       }
     }
     finally {
-      sourceJar.delete();
+      FileUtil.delete(sourceJar);
     }
   }
 }

@@ -15,58 +15,66 @@
  */
 package com.intellij.updater;
 
-import junit.framework.TestCase;
+import com.intellij.testFramework.rules.TempDirectory;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class UtilsTest extends TestCase {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
-  public static boolean mIsWindows = System.getProperty("os.name").startsWith("Windows");
+public class UtilsTest {
+  public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-  }
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
+  @Test
   public void testDelete() throws Exception {
-    File f = File.createTempFile("test", "tmp");
+    File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
-    try {
-      Utils.delete(f);
-      assertFalse(f.exists());
-    } finally {
-      f.delete();
-    }
+    Utils.delete(f);
+    assertFalse(f.exists());
   }
 
-  public void testDelete_LockedFile() throws Exception {
-    File f = File.createTempFile("test", "tmp");
+  @Test
+  public void testDeleteLockedFileOnWindows() throws Exception {
+    assumeTrue(IS_WINDOWS);
+
+    File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
     long millis = 0;
-    FileWriter fw = new FileWriter(f);
-    try {
+    try (FileWriter fw = new FileWriter(f)) {
       // This locks the file on Windows, preventing it from being deleted.
       // Utils.delete() will retry for about 100 ms.
       fw.write("test");
       millis = System.currentTimeMillis();
 
       Utils.delete(f);
-
-    } catch (IOException e) {
+      fail("Utils.delete did not fail with the expected IOException on Windows");
+    }
+    catch (IOException e) {
       millis = System.currentTimeMillis() - millis;
       assertEquals("Cannot delete file " + f.getAbsolutePath(), e.getMessage());
-      assertTrue("Utils.delete took " + millis + " ms, which is less than the expected 100 ms.", millis >= 100);
-      return;
-
-    } finally {
-      fw.close();
-      f.delete();
+      assertThat(millis).as("Utils.delete took " + millis + " ms, which is less than expected").isGreaterThanOrEqualTo(100);
     }
+  }
 
-    assertFalse("Utils.delete did not fail with the expected IOException on Windows.", mIsWindows);
+  @Test
+  public void testDeleteLockedFileOnUnix() throws Exception {
+    assumeTrue(!IS_WINDOWS);
+
+    File f = tempDir.newFile("temp_file");
+    assertTrue(f.exists());
+
+    try (FileWriter fw = new FileWriter(f)) {
+      fw.write("test");
+      Utils.delete(f);
+    }
   }
 }

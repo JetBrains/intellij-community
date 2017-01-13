@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class UpdateZipAction extends BaseUpdateAction {
-  Set<String> myFilesToCreate;
-  Set<String> myFilesToUpdate;
-  Set<String> myFilesToDelete;
+  private Set<String> myFilesToCreate;
+  private Set<String> myFilesToUpdate;
+  private Set<String> myFilesToDelete;
 
   public UpdateZipAction(Patch patch, String path, String source, long checksum, boolean move) {
     super(patch, path, source, checksum, move);
@@ -145,7 +145,7 @@ public class UpdateZipAction extends BaseUpdateAction {
           if (!filesToProcess.contains(name)) return;
 
           try {
-            patchOutput.putNextEntry(new ZipEntry(myPath + "/" + name));
+            patchOutput.putNextEntry(new ZipEntry(getPath() + "/" + name));
             InputStream olderEntryIn = Utils.findEntryInputStream(olderZip, name);
             if (olderEntryIn == null) {
               Utils.copyStream(newerEntryIn, patchOutput);
@@ -181,7 +181,7 @@ public class UpdateZipAction extends BaseUpdateAction {
           if (myFilesToUpdate.contains(path)) {
             OutputStream entryOut = out.zipStream(path);
             try {
-              applyDiff(Utils.findEntryInputStream(patchFile, myPath + "/" + path), in, entryOut);
+              applyDiff(Utils.findEntryInputStream(patchFile, getPath() + "/" + path), in, entryOut);
             }
             finally {
               entryOut.close();
@@ -194,7 +194,7 @@ public class UpdateZipAction extends BaseUpdateAction {
       });
 
       for (String each : myFilesToCreate) {
-        try (InputStream in = Utils.getEntryInputStream(patchFile, myPath + "/" + each)) {
+        try (InputStream in = Utils.getEntryInputStream(patchFile, getPath() + "/" + each)) {
           out.zipEntry(each, in);
         }
       }

@@ -27,11 +27,11 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public abstract class PatchAction {
-  protected String myPath;
-  protected long myChecksum;
+  protected final transient Patch myPatch;
+  private final String myPath;
+  private final long myChecksum;
   private boolean isCritical;
   private boolean isOptional;
-  protected transient Patch myPatch;
 
   public PatchAction(Patch patch, String path, long checksum) {
     myPatch = patch;
@@ -56,6 +56,30 @@ public abstract class PatchAction {
 
   public String getPath() {
     return myPath;
+  }
+
+  protected File getFile(File baseDir) {
+    return new File(baseDir, myPath);
+  }
+
+  public long getChecksum() {
+    return myChecksum;
+  }
+
+  public boolean isCritical() {
+    return isCritical;
+  }
+
+  public void setCritical(boolean critical) {
+    isCritical = critical;
+  }
+
+  public boolean isOptional() {
+    return isOptional;
+  }
+
+  public void setOptional(boolean optional) {
+    isOptional = optional;
   }
 
   protected static void writeExecutableFlag(OutputStream out, File file) throws IOException {
@@ -183,26 +207,6 @@ public abstract class PatchAction {
   }
 
   protected abstract void doRevert(File toFile, File backupFile) throws IOException;
-
-  protected File getFile(File baseDir) {
-    return new File(baseDir, myPath);
-  }
-
-  public boolean isCritical() {
-    return isCritical;
-  }
-
-  public void setCritical(boolean critical) {
-    isCritical = critical;
-  }
-
-  public boolean isOptional() {
-    return isOptional;
-  }
-
-  public void setOptional(boolean optional) {
-    isOptional = optional;
-  }
 
   @Override
   public String toString() {

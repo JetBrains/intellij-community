@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,26 +24,23 @@ import static org.junit.Assert.assertEquals;
 public class DigesterTest extends UpdaterTestCase {
   @Test
   public void testBasics() throws Exception {
-    assertEquals(CHECKSUMS.README_TXT, Digester.digestRegularFile(new File(getDataDir(), "Readme.txt"), false));
-    assertEquals(CHECKSUMS.FOCUS_KILLER_DLL, Digester.digestRegularFile(new File(getDataDir(), "/bin/focuskiller.dll"), false));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, Digester.digestZipFile(new File(getDataDir(), "/lib/bootstrap.jar")));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BINARY, Digester.digestRegularFile(new File(getDataDir(), "/lib/bootstrap.jar"), false));
+    File binDir = new File(dataDir, "bin"), libDir = new File(dataDir, "lib");
 
-    assertEquals(CHECKSUMS.ANNOTATIONS_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/annotations.jar"), true));
-    assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/annotations_changed.jar"), true));
-    assertEquals(CHECKSUMS.BOOT_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/boot.jar"), true));
-    assertEquals(CHECKSUMS.BOOT2_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/boot2.jar"), true));
-    assertEquals(CHECKSUMS.BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/boot2_changed_with_unchanged_content.jar"), true));
-    assertEquals(CHECKSUMS.BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/boot_with_directory_becomes_file.jar"), true));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/bootstrap.jar"), true));
-    assertEquals(CHECKSUMS.BOOTSTRAP_DELETED_JAR_NORM,
-                 Digester.digestRegularFile(new File(getDataDir(), "/lib/bootstrap_deleted.jar"), true));
+    assertEquals(Digester.DIRECTORY, Digester.digestRegularFile(binDir, false));
+    assertEquals(Digester.DIRECTORY, Digester.digestRegularFile(libDir, true));
+
+    assertEquals(CHECKSUMS.README_TXT, Digester.digestRegularFile(new File(dataDir, "Readme.txt"), false));
+    assertEquals(CHECKSUMS.FOCUS_KILLER_DLL, Digester.digestRegularFile(new File(binDir, "focuskiller.dll"), false));
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_BINARY, Digester.digestRegularFile(new File(libDir, "bootstrap.jar"), false));
+    assertEquals(CHECKSUMS.ANNOTATIONS_JAR_NORM, Digester.digestRegularFile(new File(libDir, "annotations.jar"), true));
+    assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR_NORM, Digester.digestRegularFile(new File(libDir, "annotations_changed.jar"), true));
+    assertEquals(CHECKSUMS.BOOT_JAR_NORM, Digester.digestRegularFile(new File(libDir, "boot.jar"), true));
+    assertEquals(CHECKSUMS.BOOT2_JAR_NORM, Digester.digestRegularFile(new File(libDir, "boot2.jar"), true));
+    assertEquals(CHECKSUMS.BOOT2_CHANGED_WITH_UNCHANGED_CONTENT_JAR_NORM, Digester.digestRegularFile(new File(libDir, "boot2_changed_with_unchanged_content.jar"), true));
+    assertEquals(CHECKSUMS.BOOT_WITH_DIRECTORY_BECOMES_FILE_JAR_NORM, Digester.digestRegularFile(new File(libDir, "boot_with_directory_becomes_file.jar"), true));
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR_NORM, Digester.digestRegularFile(new File(libDir, "bootstrap.jar"), true));
+    assertEquals(CHECKSUMS.BOOTSTRAP_DELETED_JAR_NORM, Digester.digestRegularFile(new File(libDir, "bootstrap_deleted.jar"), true));
+
+    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, Digester.digestZipFile(new File(libDir, "bootstrap.jar")));
   }
 }

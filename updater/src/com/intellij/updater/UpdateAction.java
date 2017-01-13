@@ -35,8 +35,8 @@ public class UpdateAction extends BaseUpdateAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    if (!myIsMove) {
-      patchOutput.putNextEntry(new ZipEntry(myPath));
+    if (!isMove()) {
+      patchOutput.putNextEntry(new ZipEntry(getPath()));
       if (Utils.isLink(newerFile)) {
         writeLinkInfo(newerFile, patchOutput);
       }
@@ -54,12 +54,12 @@ public class UpdateAction extends BaseUpdateAction {
     Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
 
     File updated;
-    if (!myIsMove) {
+    if (!isMove()) {
       int filePermissions;
 
-      try (InputStream in = Utils.findEntryInputStream(patchFile, myPath)) {
+      try (InputStream in = Utils.findEntryInputStream(patchFile, getPath())) {
         if (in == null) {
-          throw new IOException("Invalid entry " + myPath);
+          throw new IOException("Invalid entry " + getPath());
         }
 
         filePermissions = in.read();

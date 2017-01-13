@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.zip.ZipOutputStream;
 
 public abstract class BaseUpdateAction extends PatchAction {
   private final String mySource;
-  protected final boolean myIsMove;
+  private final boolean myIsMove;
 
   public BaseUpdateAction(Patch patch, String path, String source, long checksum, boolean move) {
     super(patch, path, checksum);
@@ -50,6 +50,10 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   public String getSourcePath() {
     return mySource;
+  }
+
+  public boolean isMove() {
+    return myIsMove;
   }
 
   @Override
@@ -100,8 +104,7 @@ public abstract class BaseUpdateAction extends PatchAction {
     }
   }
 
-  protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput)
-    throws IOException {
+  protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
     Runner.logger().info("writing diff");
     ByteArrayOutputStream diffOutput = new ByteArrayOutputStream();
     byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
@@ -129,13 +132,9 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   public String toString() {
     String moveInfo = "";
-    if (!mySource.equals(myPath)) {
+    if (!mySource.equals(getPath())) {
       moveInfo = "[" + (myIsMove ? "= " : "~ ") + mySource + "]";
     }
     return super.toString() + moveInfo;
-  }
-
-  public boolean isMove() {
-    return myIsMove;
   }
 }

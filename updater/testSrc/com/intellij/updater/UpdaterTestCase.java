@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,25 +25,27 @@ import org.junit.Rule;
 import java.io.File;
 
 public abstract class UpdaterTestCase {
-  protected static final UpdaterUI TEST_UI = new ConsoleUpdaterUI(){
+  protected static final UpdaterUI TEST_UI = new ConsoleUpdaterUI() {
     @Override public void startProcess(String title) { }
     @Override public void setStatus(String status) { }
     @Override public void setDescription(String oldBuildDesc, String newBuildDesc) { }
     @Override public boolean showWarning(String message) { return false; }
   };
 
-  @Rule public TempDirectory myTempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   protected CheckSums CHECKSUMS;
+  protected File dataDir;
 
   @Before
   public void setUp() throws Exception {
-    FileUtil.copyDir(PathManagerEx.findFileUnderCommunityHome("updater/testData"), getDataDir());
+    dataDir = getTempFile("data");
+    FileUtil.copyDir(PathManagerEx.findFileUnderCommunityHome("updater/testData"), dataDir);
 
-    Runner.checkCaseSensitivity(getDataDir().getPath());
+    Runner.checkCaseSensitivity(dataDir.getPath());
     Runner.initLogger();
 
-    boolean windowsLineEnds = new File(getDataDir(), "Readme.txt").length() == 7132;
+    boolean windowsLineEnds = new File(dataDir, "Readme.txt").length() == 7132;
     CHECKSUMS = new CheckSums(windowsLineEnds);
   }
 
@@ -52,12 +54,8 @@ public abstract class UpdaterTestCase {
     Utils.cleanup();
   }
 
-  public File getDataDir() {
-    return getTempFile("data");
-  }
-
   public File getTempFile(String fileName) {
-    return new File(myTempDir.getRoot(), fileName);
+    return new File(tempDir.getRoot(), fileName);
   }
 
   protected static class CheckSums {
@@ -81,9 +79,8 @@ public abstract class UpdaterTestCase {
       IDEA_BAT = windowsLineEnds ? 3088608749L : 1493936069L;
       ANNOTATIONS_JAR = 2119442657L;
       BOOTSTRAP_JAR = 2082851308L;
-      FOCUS_KILLER_DLL = 1991212227L;
       BOOTSTRAP_JAR_BINARY = 2745721972L;
-
+      FOCUS_KILLER_DLL = 1991212227L;
       ANNOTATIONS_JAR_NORM = 2119442657L;
       ANNOTATIONS_CHANGED_JAR_NORM = 4088078858L;
       BOOT_JAR_NORM = 3018038682L;

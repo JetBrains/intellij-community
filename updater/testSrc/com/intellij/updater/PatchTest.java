@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class PatchTest extends PatchTestCase {
   @Test
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
-    Map<String, Long> checkSums = patch.digestFiles(getDataDir(), Collections.emptyList(), false, TEST_UI);
+    Map<String, Long> checkSums = patch.digestFiles(dataDir, Collections.emptyList(), false, TEST_UI);
     assertThat(checkSums.size()).isEqualTo(11);
   }
 
@@ -179,12 +179,12 @@ public class PatchTest extends PatchTestCase {
     Patch patch = createPatch();
     File f = new File(myOlderDir, "Readme.txt");
     try (FileOutputStream s = new FileOutputStream(f, true); FileLock ignored = s.getChannel().lock()) {
-      String message = UtilsTest.mIsWindows
+      String message = UtilsTest.IS_WINDOWS
                        ? System.getProperty("java.vm.name").contains("OpenJDK")
                          ? "Locked by: OpenJDK Platform binary"
                          : "Locked by: Java(TM) Platform SE binary"
                        : ValidationResult.ACCESS_DENIED_MESSAGE;
-      ValidationResult.Option option = UtilsTest.mIsWindows ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
+      ValidationResult.Option option = UtilsTest.IS_WINDOWS ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
       assertThat(patch.validate(myOlderDir, TEST_UI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,
                              "Readme.txt",
@@ -196,14 +196,16 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testSaveLoad() throws Exception {
-    Patch patch = createPatch();
+    Patch original = createPatch();
     File f = getTempFile("file");
     try (FileOutputStream out = new FileOutputStream(f)) {
-      patch.write(out);
+      original.write(out);
     }
+    Patch recreated;
     try (FileInputStream in = new FileInputStream(f)) {
-      assertThat(new Patch(in).getActions()).isEqualTo(patch.getActions());
+      recreated = new Patch(in);
     }
+    assertThat(recreated.getActions()).isEqualTo(original.getActions());
   }
 
   private Patch createPatch() throws IOException, OperationCancelledException {
@@ -215,19 +217,19 @@ public class PatchTest extends PatchTestCase {
 
   private Patch createCaseOnlyRenamePatch() throws IOException, OperationCancelledException {
     Patch patch = createPatch();
-    PatchAction action = patch.getActions().get(0);
-    assertThat(action).isInstanceOf(DeleteAction.class);
-    assertThat(action.getPath()).isEqualTo("bin/idea.bat");
+    assertThat(patch.getActions().get(0))
+      .isInstanceOf(DeleteAction.class)
+      .hasFieldOrPropertyWithValue("path", "bin/idea.bat");
     patch.getActions().add(1, new CreateAction(patch, "bin/IDEA.bat")); // simulates rename "idea.bat" -> "IDEA.bat"
     return patch;
   }
 
   private static List<PatchAction> sortActions(List<PatchAction> actions) {
-    return sort(actions, a -> a.getClass().getSimpleName().charAt(0), (a1, a2) -> a1.getPath().compareTo(a2.getPath()));
+    return sort(actions, a -> a.getClass().getSimpleName().charAt(0), Comparator.comparing(PatchAction::getPath));
   }
 
   private static List<ValidationResult> sortResults(List<ValidationResult> results) {
-    return sort(results, r -> r.action, (r1, r2) -> r1.path.compareTo(r2.path));
+    return sort(results, r -> r.action, Comparator.comparing(r -> r.path));
   }
 
   private static <T> List<T> sort(List<T> list, Function<T, ?> classifier, Comparator<T> sorter) {
@@ -236,7 +238,7 @@ public class PatchTest extends PatchTestCase {
     // verifies the list is monotonic
     List<T> joined = groups.stream().reduce(new ArrayList<>(list.size()), (acc, elements) -> { acc.addAll(elements); return acc; });
     assertThat(list).isEqualTo(joined);
-    // sorts group elements by paths and joins groups back into a list
+    // sorts group elements and concatenates groups into a list
     return groups.stream()
       .map(elements -> elements.stream().sorted(sorter))
       .flatMap(stream -> stream)

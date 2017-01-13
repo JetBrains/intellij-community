@@ -35,7 +35,7 @@ public class CreateAction extends PatchAction {
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     Runner.logger().info("building PatchFile");
-    patchOutput.putNextEntry(new ZipEntry(myPath));
+    patchOutput.putNextEntry(new ZipEntry(getPath()));
     if (!newerFile.isDirectory()) {
       if (Utils.isLink(newerFile)) {
         writeLinkInfo(newerFile, patchOutput);
@@ -59,7 +59,7 @@ public class CreateAction extends PatchAction {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, myPath,
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(),
                                   ValidationResult.Action.CREATE,
                                   ValidationResult.ALREADY_EXISTS_MESSAGE,
                                   options);
@@ -77,16 +77,16 @@ public class CreateAction extends PatchAction {
     Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
-    ZipEntry entry = Utils.getZipEntry(patchFile, myPath);
+    ZipEntry entry = Utils.getZipEntry(patchFile, getPath());
     if (entry.isDirectory()) {
       if (!toFile.mkdir()) {
-        throw new IOException("Unable to create directory " + myPath);
+        throw new IOException("Unable to create directory " + getPath());
       }
     }
     else {
       try (InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry)) {
         if (in == null) {
-          throw new IOException("Invalid entry " + myPath);
+          throw new IOException("Invalid entry " + getPath());
         }
 
         int filePermissions = in.read();

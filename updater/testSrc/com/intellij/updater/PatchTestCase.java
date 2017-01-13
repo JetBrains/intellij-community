@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
 
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public abstract class PatchTestCase extends UpdaterTestCase {
   protected File myNewerDir;
   protected File myOlderDir;
@@ -28,16 +27,13 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myOlderDir = getDataDir();
+    myOlderDir = dataDir;
     myNewerDir = getTempFile("newDir");
     FileUtil.copyDir(myOlderDir, myNewerDir);
 
     FileUtil.delete(new File(myNewerDir, "bin/idea.bat"));
     FileUtil.writeToFile(new File(myNewerDir, "Readme.txt"), "hello");
-    File newFile = new File(myNewerDir, "newDir/newFile.txt");
-    newFile.getParentFile().mkdirs();
-    newFile.createNewFile();
-    FileUtil.writeToFile(newFile, "hello");
+    FileUtil.writeToFile(new File(myNewerDir, "newDir/newFile.txt"), "hello");
 
     FileUtil.delete(new File(myOlderDir, "lib/annotations_changed.jar"));
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
