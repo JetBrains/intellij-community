@@ -25,8 +25,9 @@ import java.util.zip.ZipFile;
 public class Utils {
   private static final long REQUIRED_FREE_SPACE = 10_0000_0000L;
 
-  // keep buffer static as there may be many calls of the copyStream method.
-  private static final byte[] BUFFER = new byte[64 * 1024];
+  private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
+  private static final byte[] BUFFER = new byte[BUFFER_SIZE];
+
   private static File myTempDir;
 
   public static boolean isZipFile(String fileName) {
@@ -163,31 +164,26 @@ public class Utils {
     }
   }
 
-  public static void copyBytesToStream(ByteArrayOutputStream from, OutputStream to) throws IOException {
-    OutputStream out = new BufferedOutputStream(to);
-    try {
-      from.writeTo(out);
-    }
-    finally {
-      out.flush();
-    }
-  }
-
-  public static void copyBytesToStream(byte[] bytes, OutputStream to) throws IOException {
-    to.write(bytes);
-  }
-
   public static byte[] readBytes(InputStream in) throws IOException {
     ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     copyStream(in, byteOut);
     return byteOut.toByteArray();
   }
 
-  public static void copyStream(InputStream in, OutputStream out) throws IOException {
+  public static void writeBytes(byte[] from, int length, OutputStream to) throws IOException {
+    int offset = 0;
+    while (offset < length) {
+      int chunkSize = Math.min(BUFFER_SIZE, length - offset);
+      to.write(from, offset, chunkSize);
+      offset += chunkSize;
+    }
+  }
+
+  public static void copyStream(InputStream from, OutputStream to) throws IOException {
     while (true) {
-      int read = in.read(BUFFER);
+      int read = from.read(BUFFER);
       if (read < 0) break;
-      out.write(BUFFER, 0, read);
+      to.write(BUFFER, 0, read);
     }
   }
 
@@ -293,6 +289,14 @@ public class Utils {
         myStream.close();
       }
       myZip.close();
+    }
+  }
+
+  public static class OpenByteArrayOutputStream extends ByteArrayOutputStream {
+    @Override
+    @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
+    public synchronized void writeTo(OutputStream out) throws IOException {
+      writeBytes(buf, count, out);
     }
   }
 }

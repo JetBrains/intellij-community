@@ -79,7 +79,7 @@ public class Digester {
   }
 
   private static void doDigestStream(InputStream in, CRC32 crc) throws IOException {
-    byte[] BUFFER = new byte[65536];
+    byte[] BUFFER = new byte[8192];
     int size;
     while ((size = in.read(BUFFER)) != -1) {
       crc.update(BUFFER, 0, size);

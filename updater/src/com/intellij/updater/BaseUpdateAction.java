@@ -15,6 +15,7 @@
  */
 package com.intellij.updater;
 
+import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 import ie.wombat.jbdiff.JBDiff;
 import ie.wombat.jbdiff.JBPatch;
 
@@ -106,17 +107,17 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
     Runner.logger().info("writing diff");
-    ByteArrayOutputStream diffOutput = new ByteArrayOutputStream();
+    ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();
     byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
     diffOutput.close();
 
     if (!isCritical() && diffOutput.size() < newerFileBuffer.length) {
       patchOutput.write(1);
-      Utils.copyBytesToStream(diffOutput, patchOutput);
+      diffOutput.writeTo(patchOutput);
     }
     else {
       patchOutput.write(0);
-      Utils.copyBytesToStream(newerFileBuffer, patchOutput);
+      Utils.writeBytes(newerFileBuffer, newerFileBuffer.length, patchOutput);
     }
   }
 
