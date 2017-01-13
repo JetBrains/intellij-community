@@ -47,7 +47,7 @@ import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.GCUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -59,6 +59,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
@@ -145,25 +147,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = toCanonicalName(filePath);
 
-    //noinspection ConstantConditions
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
-      // Check for leaked projects ~ every 20 tests
-      if (LOG_PROJECT_LEAKAGE_IN_TESTS && Math.random() < 0.05) {
-        for (int i = 0; i < 42; i++) {
-          if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
-          System.gc();
-          TimeoutUtil.sleep(100);
-          System.gc();
-        }
-
-        if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
-          List<Project> copy = new ArrayList<>(myProjects.keySet());
-          myProjects.clear();
-          throw new TooManyProjectLeakedException(copy);
-        }
-      }
+      //noinspection TestOnlyProblems
+      checkProjectLeaksInTests();
     }
 
     File projectFile = new File(filePath);
@@ -209,6 +197,30 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     return message;
+  }
+
+  @TestOnly
+  private void checkProjectLeaksInTests() {
+    if (!LOG_PROJECT_LEAKAGE_IN_TESTS || getLeakedProjects().count() < MAX_LEAKY_PROJECTS) {
+      return;
+    }
+
+    if (Math.random() >= 0.05) {
+      return; // Check for leaked projects ~ every 20 tests
+    }
+
+    GCUtil.tryGcSoftlyReachableObjects();
+
+    if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
+      List<Project> copy = getLeakedProjects().collect(Collectors.toList());
+      myProjects.clear();
+      throw new TooManyProjectLeakedException(copy);
+    }
+  }
+
+  @TestOnly
+  private Stream<Project> getLeakedProjects() {
+    return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed());
   }
 
   private void initProject(@NotNull ProjectImpl project, @Nullable Project template) {
