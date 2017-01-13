@@ -138,7 +138,7 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
         <property name="patchFile"
-                  value="${community.folder}/../build/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
+                  value="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="--check"/>
