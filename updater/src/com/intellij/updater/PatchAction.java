@@ -27,31 +27,33 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public abstract class PatchAction {
+  private static final byte CRITICAL = 0x1;
+  private static final byte OPTIONAL = 0x2;
+
   protected final transient Patch myPatch;
   private final String myPath;
   private final long myChecksum;
-  private boolean isCritical;
-  private boolean isOptional;
+  private byte myFlags;
 
   public PatchAction(Patch patch, String path, long checksum) {
-    myPatch = patch;
-    myChecksum = checksum;
-    myPath = path;
+    this(patch, path, checksum, (byte)0);
   }
 
   public PatchAction(Patch patch, DataInputStream in) throws IOException {
+    this(patch, in.readUTF(), in.readLong(), in.readByte());
+  }
+
+  private PatchAction(Patch patch, String path, long checksum, byte flags) {
     myPatch = patch;
-    myPath = in.readUTF();
-    myChecksum = in.readLong();
-    isCritical = in.readBoolean();
-    isOptional = in.readBoolean();
+    myPath = path;
+    myChecksum = checksum;
+    myFlags = flags;
   }
 
   public void write(DataOutputStream out) throws IOException {
     out.writeUTF(myPath);
     out.writeLong(myChecksum);
-    out.writeBoolean(isCritical);
-    out.writeBoolean(isOptional);
+    out.writeByte(myFlags);
   }
 
   public String getPath() {
@@ -67,19 +69,19 @@ public abstract class PatchAction {
   }
 
   public boolean isCritical() {
-    return isCritical;
+    return (myFlags & CRITICAL) != 0;
   }
 
   public void setCritical(boolean critical) {
-    isCritical = critical;
+    if (critical) myFlags |= CRITICAL; else myFlags &= ~CRITICAL;
   }
 
   public boolean isOptional() {
-    return isOptional;
+    return (myFlags & OPTIONAL) != 0;
   }
 
   public void setOptional(boolean optional) {
-    isOptional = optional;
+    if (optional) myFlags |= OPTIONAL; else myFlags &= ~OPTIONAL;
   }
 
   protected static void writeExecutableFlag(OutputStream out, File file) throws IOException {
@@ -161,14 +163,15 @@ public abstract class PatchAction {
       if (isModified(toFile)) {
         ValidationResult.Option[] options;
         if (myPatch.isStrict()) {
-          if (isCritical) {
+          if (isCritical()) {
             options = new ValidationResult.Option[]{ ValidationResult.Option.REPLACE };
           }
           else {
             options = new ValidationResult.Option[]{ ValidationResult.Option.NONE };
           }
-        } else {
-          if (isCritical) {
+        }
+        else {
+          if (isCritical()) {
             options = new ValidationResult.Option[]{ ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE };
           }
           else {
@@ -178,7 +181,7 @@ public abstract class PatchAction {
         return new ValidationResult(kind, myPath, action, ValidationResult.MODIFIED_MESSAGE, options);
       }
     }
-    else if (!isOptional) {
+    else if (!isOptional()) {
       ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
       return new ValidationResult(kind, myPath, action, ValidationResult.ABSENT_MESSAGE, options);
     }
@@ -220,8 +223,7 @@ public abstract class PatchAction {
 
     PatchAction that = (PatchAction)o;
 
-    if (isCritical != that.isCritical) return false;
-    if (isOptional != that.isOptional) return false;
+    if (myFlags != that.myFlags) return false;
     if (myChecksum != that.myChecksum) return false;
     if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
 
@@ -232,8 +234,7 @@ public abstract class PatchAction {
   public int hashCode() {
     int result = myPath != null ? myPath.hashCode() : 0;
     result = 31 * result + (int)(myChecksum ^ (myChecksum >>> 32));
-    result = 31 * result + (isCritical ? 1 : 0);
-    result = 31 * result + (isOptional ? 1 : 0);
+    result = 31 * result + myFlags;
     return result;
   }
 }
