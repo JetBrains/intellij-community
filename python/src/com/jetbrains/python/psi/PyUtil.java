@@ -70,7 +70,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -1361,45 +1360,6 @@ public class PyUtil {
         "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
     }
     return (PyFile)psi;
-  }
-
-  /**
-   * counts elements in iterable
-   *
-   * @param expression to count containing elements (iterable)
-   * @return element count
-   */
-  public static int getElementsCount(PyExpression expression, TypeEvalContext evalContext) {
-    int valuesLength = -1;
-    PyType type = evalContext.getType(expression);
-    if (type instanceof PyTupleType) {
-      valuesLength = ((PyTupleType)type).getElementCount();
-    }
-    else if (type instanceof PyNamedTupleType) {
-      valuesLength = ((PyNamedTupleType)type).getElementCount();
-    }
-    else if (expression instanceof PySequenceExpression) {
-      valuesLength = ((PySequenceExpression)expression).getElements().length;
-    }
-    else if (expression instanceof PyStringLiteralExpression) {
-      valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
-    }
-    else if (expression instanceof PyNumericLiteralExpression || expression instanceof PyNoneLiteralExpression || type instanceof PyNoneType) {
-      valuesLength = 1;
-    }
-    else if (expression instanceof PyCallExpression) {
-      PyCallExpression call = (PyCallExpression)expression;
-      if (call.isCalleeText("dict")) {
-        valuesLength = call.getArguments().length;
-      }
-      else if (call.isCalleeText("tuple")) {
-        PyExpression[] arguments = call.getArguments();
-        if (arguments.length > 0 && arguments[0] instanceof PySequenceExpression) {
-          valuesLength = ((PySequenceExpression)arguments[0]).getElements().length;
-        }
-      }
-    }
-    return valuesLength;
   }
 
   @Nullable
