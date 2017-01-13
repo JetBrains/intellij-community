@@ -23,6 +23,9 @@ import java.io.*;
 import java.util.zip.ZipOutputStream;
 
 public abstract class BaseUpdateAction extends PatchAction {
+  private static final byte RAW = 0;
+  private static final byte COMPRESSED = 1;
+
   private final String mySource;
   private final boolean myIsMove;
 
@@ -112,21 +115,25 @@ public abstract class BaseUpdateAction extends PatchAction {
     diffOutput.close();
 
     if (!isCritical() && diffOutput.size() < newerFileBuffer.length) {
-      patchOutput.write(1);
+      patchOutput.write(COMPRESSED);
       diffOutput.writeTo(patchOutput);
     }
     else {
-      patchOutput.write(0);
+      patchOutput.write(RAW);
       Utils.writeBytes(newerFileBuffer, newerFileBuffer.length, patchOutput);
     }
   }
 
   protected void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
-    if (patchInput.read() == 1) {
+    int type = patchInput.read();
+    if (type == COMPRESSED) {
       JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
     }
-    else {
+    else if (type == RAW) {
       Utils.copyStream(patchInput, toFileOut);
+    }
+    else {
+      throw new IOException("Corrupted patch");
     }
   }
 
