@@ -16,6 +16,7 @@
 package com.intellij.updater;
 
 import com.intellij.testFramework.rules.TempDirectory;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -31,6 +32,11 @@ public class UtilsTest {
   public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   @Rule public TempDirectory tempDir = new TempDirectory();
+
+  @BeforeClass
+  public static void initLogger() {
+    Runner.initTestLogger();
+  }
 
   @Test
   public void testDelete() throws Exception {

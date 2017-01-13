@@ -19,6 +19,8 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.spi.NOPLogger;
+import org.apache.log4j.spi.NOPLoggerRepository;
 
 import java.io.*;
 import java.net.URI;
@@ -340,6 +342,15 @@ public class Runner {
     catch (URISyntaxException e) {
       printStackTrace(e);
       throw new IOException(e.getMessage());
+    }
+  }
+
+  static void initTestLogger() {
+    if (logger == null) {
+      logger = new NOPLogger(new NOPLoggerRepository(), "root");
+    }
+    else if (!(logger instanceof NOPLogger)) {
+      throw new IllegalStateException("Non-test logger already defined");
     }
   }
 }

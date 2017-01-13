@@ -18,9 +18,7 @@ package com.intellij.updater;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.*;
 
 import java.io.File;
 
@@ -43,7 +41,7 @@ public abstract class UpdaterTestCase {
     FileUtil.copyDir(PathManagerEx.findFileUnderCommunityHome("updater/testData"), dataDir);
 
     Runner.checkCaseSensitivity(dataDir.getPath());
-    Runner.initLogger();
+    Runner.initTestLogger();
 
     boolean windowsLineEnds = new File(dataDir, "Readme.txt").length() == 7132;
     CHECKSUMS = new CheckSums(windowsLineEnds);
