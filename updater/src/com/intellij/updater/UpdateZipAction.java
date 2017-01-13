@@ -170,7 +170,7 @@ public class UpdateZipAction extends BaseUpdateAction {
 
   @Override
   protected void doApply(final ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    File temp = Utils.createTempFile();
+    File temp = Utils.getTempFile(toFile.getName());
     try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp), 0)) {
       processZipFile(getSource(backupDir), new Processor() {
         @Override

@@ -68,7 +68,7 @@ public class UpdateAction extends BaseUpdateAction {
           return;
         }
 
-        updated = Utils.createTempFile();
+        updated = Utils.getTempFile(toFile.getName());
         try (OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
              InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized())) {
           applyDiff(in, oldFileIn, out);

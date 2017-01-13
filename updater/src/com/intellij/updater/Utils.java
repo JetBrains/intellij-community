@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Utils {
+  private static final long REQUIRED_FREE_SPACE = 10_0000_0000L;
+
   // keep buffer static as there may be many calls of the copyStream method.
   private static final byte[] BUFFER = new byte[64 * 1024];
   private static File myTempDir;
@@ -34,42 +36,36 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  public static File getTempFile(String path) throws IOException {
+  private static File findUniqueName(String path) throws IOException {
     int index = 0;
-    File myTempFile = new File(path + ".tmp." + index++);
-    while (myTempFile.exists()) {
+    File myTempFile;
+    do {
       myTempFile = new File(path + ".tmp." + index++);
     }
-    if (myTempFile.setWritable(true, false)) throw new IOException("Cannot set write permissions for dir: " + myTempFile);
+    while (myTempFile.exists());
     return myTempFile;
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
-  public static File createTempFile() throws IOException {
+  public static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
-      long requiredFreeSpace = 1000000000;
-      myTempDir = getTempFile(Runner.getDir(requiredFreeSpace) + "/idea.updater.files");
-      delete(myTempDir);
-      myTempDir.mkdirs();
-      Runner.logger().info("created temp file: " + myTempDir.getPath());
+      myTempDir = findUniqueName(Runner.getDir(REQUIRED_FREE_SPACE) + "/idea.updater.files");
+      if (!myTempDir.mkdirs()) throw new IOException("Cannot create working directory: " + myTempDir);
+      Runner.logger().info("created working directory: " + myTempDir);
     }
-    return getTempFile(myTempDir + "/temp");
+    return findUniqueName(myTempDir.getPath() + '/' + name);
   }
 
   public static File createTempDir() throws IOException {
-    File result = createTempFile();
-    delete(result);
-    Runner.logger().info("deleted tmp dir: " + result.getPath());
-    result.mkdirs();
-    Runner.logger().info("created tmp dir: " + result.getPath());
-    if (! result.exists()) throw new IOException("Cannot create temp dir: " + result);
-    return result;
+    File tempDir = getTempFile("temp");
+    if (!tempDir.mkdir()) throw new IOException("Cannot create temp directory: " + tempDir);
+    Runner.logger().info("created temp directory: " + tempDir.getPath());
+    return tempDir;
   }
 
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
-    Runner.logger().info("deleted file " + myTempDir.getPath());
+    Runner.logger().info("deleted working directory: " + myTempDir.getPath());
     myTempDir = null;
   }
 
