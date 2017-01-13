@@ -155,6 +155,25 @@
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
+
+    <group id="FileHistory.KeymapGroup" text="File History">
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
+      <reference id="Vcs.Log.ShowDiff"/>
+      <reference id="Vcs.Log.ShowDiffWithLocal"/>
+      <reference id="Vcs.Log.CreatePatch"/>
+      <reference id="Vcs.GetVersion"/>
+      <reference id="Vcs.Log.AnnotateRevisionAction"/>
+      <reference id="VcsHistory.ShowAllAffected"/>
+      <reference id="Vcs.CopyRevisionNumberAction"/>
+      <separator/>
+      <reference id="Vcs.Log.ShowOtherBranches"/>
+      <reference id="Vcs.Log.Refresh"/>
+      <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="VcsHistoryActionsGroup"/>
+      <reference ref="Vcs.Log.CloseLogTabAction"/>
+
+      <add-to-group group-id="Vcs.KeymapGroup"/>
+    </group>
   </actions>
 
 </idea-plugin>
