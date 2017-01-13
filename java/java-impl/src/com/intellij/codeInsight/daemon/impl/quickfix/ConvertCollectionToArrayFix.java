@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Pavel.Dolgov
  */
 public class ConvertCollectionToArrayFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(ConvertCollectionToArrayFix.class);
-
   private final PsiExpression myCollectionExpression;
   private final String myNewArrayText;
 
@@ -64,17 +61,9 @@ public class ConvertCollectionToArrayFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    PsiMethodCallExpression toArrayCall =
-      (PsiMethodCallExpression)factory.createExpressionFromText("(a).toArray(" + myNewArrayText + ")", myCollectionExpression);
-    PsiParenthesizedExpression parenthesized = (PsiParenthesizedExpression)toArrayCall.getMethodExpression().getQualifierExpression();
-    LOG.assertTrue(parenthesized != null);
-    PsiExpression placeholder = parenthesized.getExpression();
-    LOG.assertTrue(placeholder != null);
-    placeholder.replace(myCollectionExpression);
-    if (!ParenthesesUtils.areParenthesesNeeded(parenthesized, false)) {
-      parenthesized.replace(myCollectionExpression);
-    }
-    myCollectionExpression.replace(toArrayCall);
+    String replacement = ParenthesesUtils.getText(myCollectionExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) +
+                         ".toArray(" + myNewArrayText + ")";
+    myCollectionExpression.replace(factory.createExpressionFromText(replacement, myCollectionExpression));
   }
 
   @Override
