@@ -52,7 +52,6 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
-  private static final String DIMENSION_SERVICE_KEY = "Vcs.Branch.Popup";
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
   private MyPopupListElementRenderer myListElementRenderer;
 
@@ -60,7 +59,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull Condition<AnAction> preselectActionCondition, @NotNull ActionGroup actions) {
     super(title, new DefaultActionGroup(actions, createBranchSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project),
           preselectActionCondition, true);
-    setDimensionServiceKey(DIMENSION_SERVICE_KEY);
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
   }
