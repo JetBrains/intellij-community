@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -605,7 +605,7 @@ public class NestedClassProcessor {
         DirectGraph graph = method.getOrBuildGraph();
 
         if (graph != null) { // something gone wrong, should not be null
-          List<VarFieldPair> fields = new ArrayList<>();
+          List<VarFieldPair> fields = new ArrayList<>(md.params.length);
 
           int varIndex = 1;
           for (int i = 0; i < md.params.length; i++) {  // no static methods allowed
