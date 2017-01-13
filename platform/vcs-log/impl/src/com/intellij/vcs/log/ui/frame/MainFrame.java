@@ -53,7 +53,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String HELP_ID = "reference.changesToolWindow.log";
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogClassicFilterUi myFilterUi;
 
@@ -75,11 +74,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull VisiblePack initialDataPack) {
     // collect info
     myLogData = logData;
-    myUi = ui;
     myLog = log;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(myUi, logData, myUiProperties, initialDataPack);
+    myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack);
 
     // initialize components
     myGraphTable = new VcsLogGraphTable(ui, logData, initialDataPack);
