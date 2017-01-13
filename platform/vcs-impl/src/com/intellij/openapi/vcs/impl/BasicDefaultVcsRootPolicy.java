@@ -50,7 +50,7 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     return result;
   }
 
-  public boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext) {
+  public boolean matchesDefaultMapping(@NotNull final VirtualFile file, final Object matchContext) {
     return VfsUtil.isAncestor(ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir), file, false);
   }
 
@@ -60,7 +60,7 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   @Nullable
-  public VirtualFile getVcsRootFor(final VirtualFile file) {
+  public VirtualFile getVcsRootFor(@NotNull final VirtualFile file) {
     return ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
   }
 

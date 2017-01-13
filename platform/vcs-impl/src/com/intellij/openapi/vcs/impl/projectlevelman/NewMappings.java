@@ -247,7 +247,7 @@ public class NewMappings {
     return mapping.getVcs();
   }
 
-  private boolean fileMatchesMapping(final VirtualFile file,
+  private boolean fileMatchesMapping(@NotNull VirtualFile file,
                                      final Object matchContext,
                                      final String systemIndependentPath,
                                      final VcsDirectoryMapping mapping) {

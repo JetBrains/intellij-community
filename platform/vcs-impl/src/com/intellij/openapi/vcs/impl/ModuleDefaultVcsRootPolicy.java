@@ -98,7 +98,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   @Override
-  public boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext) {
+  public boolean matchesDefaultMapping(@NotNull final VirtualFile file, final Object matchContext) {
     if (matchContext != null) {
       return true;
     }
@@ -113,17 +113,17 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
   @Override
   @Nullable
-  public VirtualFile getVcsRootFor(final VirtualFile file) {
-    if (myBaseDir != null && PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class)
-      .isValidAncestor(myBaseDir, file)) {
+  public VirtualFile getVcsRootFor(@NotNull VirtualFile file) {
+    FileIndexFacade indexFacade = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
+    if (myBaseDir != null && indexFacade.isValidAncestor(myBaseDir, file)) {
       return myBaseDir;
     }
-    final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file, Registry.is("ide.hide.excluded.files"));
+    VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file, Registry.is("ide.hide.excluded.files"));
     if (contentRoot != null && contentRoot.isDirectory()) {
       return contentRoot;
     }
     if (ProjectKt.isDirectoryBased(myProject)) {
-      final VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
+      VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
       if (ideaDir != null && VfsUtilCore.isAncestor(ideaDir, file, false)) {
         return ideaDir;
       }

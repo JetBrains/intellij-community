@@ -38,13 +38,13 @@ public abstract class DefaultVcsRootPolicy {
   @NotNull
   public abstract List<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName);
 
-  public abstract boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext);
+  public abstract boolean matchesDefaultMapping(@NotNull VirtualFile file, final Object matchContext);
 
   @Nullable
   public abstract Object getMatchContext(final VirtualFile file);
 
   @Nullable
-  public abstract VirtualFile getVcsRootFor(final VirtualFile file);
+  public abstract VirtualFile getVcsRootFor(@NotNull VirtualFile file);
 
   @NotNull
   public abstract Collection<VirtualFile> getDirtyRoots();
