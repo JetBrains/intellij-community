@@ -15,16 +15,18 @@
  */
 package com.intellij.openapi.components
 
-import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-abstract class BaseState : SimpleModificationTracker(), SerializationFilter {
+abstract class BaseState : SerializationFilter, ModificationTracker {
   // if property value differs from default
   private val properties: MutableList<StoredProperty<*>> = SmartList()
+
+  @Volatile internal var modificationCount: Long = 0
 
   override fun accepts(accessor: Accessor, bean: Any): Boolean {
     for (property in properties) {
@@ -38,6 +40,17 @@ abstract class BaseState : SimpleModificationTracker(), SerializationFilter {
   fun <T : Any> storedProperty(defaultValue: T? = null): ReadWriteProperty<BaseState, T?> {
     val result = StoredProperty(defaultValue)
     properties.add(result)
+    return result
+  }
+
+  override fun getModificationCount(): Long {
+    var result = modificationCount
+    for (property in properties) {
+      val value = property.value
+      if (value is ModificationTracker) {
+        result += value.modificationCount
+      }
+    }
     return result
   }
 
@@ -60,7 +73,7 @@ internal class StoredProperty<T>(internal val defaultValue: T?) : ReadWritePrope
   @Suppress("UNCHECKED_CAST")
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T?) {
     if (value != newValue) {
-      thisRef.incModificationCount()
+      thisRef.modificationCount++
 
       name = property.name
       value = newValue

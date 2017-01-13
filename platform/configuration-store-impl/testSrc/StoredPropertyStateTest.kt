@@ -12,6 +12,12 @@ private class AState : BaseState() {
   var languageLevel: String? by storedProperty()
 
   var property2 by storedProperty(0)
+
+  var nestedComplex: NestedState? by storedProperty()
+}
+
+private class NestedState : BaseState() {
+  var childProperty: String? by storedProperty()
 }
 
 class StoredPropertyStateTest {
@@ -32,5 +38,17 @@ class StoredPropertyStateTest {
 
     assertThat(XmlSerializer.serialize(state)).isEqualTo("""<AState customName="foo" />""")
     assertThat(XmlSerializer.deserialize(loadElement("""<AState customName="foo" />"""), AState::class.java)!!.languageLevel).isEqualTo("foo")
+  }
+
+  @Test
+  fun childModificationCount() {
+    val state = AState()
+    assertThat(state.modificationCount).isEqualTo(0)
+    val nestedState = NestedState()
+    state.nestedComplex = nestedState
+    assertThat(state.modificationCount).isEqualTo(1)
+
+    nestedState.childProperty = "test"
+    assertThat(state.modificationCount).isEqualTo(2)
   }
 }
