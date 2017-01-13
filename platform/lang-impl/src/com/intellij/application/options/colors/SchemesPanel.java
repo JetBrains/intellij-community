@@ -18,8 +18,12 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
-import com.intellij.application.options.schemes.DefaultSchemeActions;
+import com.intellij.application.options.schemes.AbstractSchemeActions;
+import com.intellij.application.options.schemes.SchemeListItem;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +76,7 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
   }
 
   @Override
-  protected DefaultSchemeActions<EditorColorsScheme> createSchemeActions() {
+  protected AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
     return
       new ColorSchemeActions(this) {
 
@@ -92,19 +96,62 @@ public class SchemesPanel extends AbstractSchemesPanel<EditorColorsScheme> imple
           }
         }
 
-        @Nullable
         @Override
-        protected EditorColorsScheme getCurrentScheme() {
-          EditorColorsScheme selectedScheme = getSelectedScheme();
-          return selectedScheme != null ? myOptions.getScheme(selectedScheme.getName()) : null;
-        }
-
-        @Override
-        public SchemeLevel getSchemeLevel(@NotNull EditorColorsScheme scheme) {
-          return SchemeLevel.IDE_Only;
+        protected void doRename(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
+          if (myOptions.saveSchemeAs(scheme, newName)) {
+            myOptions.removeScheme(scheme.getName());
+            myOptions.selectScheme(newName);
+          }
         }
       };
   }
 
-  
+
+  @Override
+  public SchemeListItem<EditorColorsScheme> createItem(@NotNull EditorColorsScheme scheme) {
+    return new SchemeListItem<EditorColorsScheme>(scheme) {
+      @Override
+      public boolean isDuplicateAvailable() {
+        return true;
+      }
+
+      @Override
+      public boolean isResetAvailable() {
+        AbstractColorsScheme originalScheme =
+          scheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)scheme).getOriginal() : null;
+        return
+          !ColorAndFontOptions.isReadOnly(scheme) &&
+          scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX) &&
+          originalScheme instanceof ReadOnlyColorsScheme;
+      }
+
+      @Override
+      public boolean isDeleteAvailable() {
+        return !ColorAndFontOptions.isReadOnly(scheme) && ColorAndFontOptions.canBeDeleted(scheme);
+      }
+
+      @Override
+      public SchemeLevel getSchemeLevel() {
+        return SchemeLevel.IDE_Only;
+      }
+
+      @Override
+      public boolean isRenameAvailable() {
+        return isDeleteAvailable();
+      }
+
+      @Nullable
+      @Override
+      public String validateSchemeName(@NotNull String name) {
+        EditorColorsScheme scheme = myOptions.getScheme(name);
+        if (scheme == null) {
+          scheme = myOptions.getScheme(SchemeManager.EDITABLE_COPY_PREFIX + name);
+        }
+        if (scheme != null && name.equals(SchemeManager.getDisplayName(scheme)) && scheme != getScheme()) {
+          return NAME_ALREADY_EXISTS_MESSAGE;
+        }
+        return super.validateSchemeName(name);
+      }
+    };
+  }
 }

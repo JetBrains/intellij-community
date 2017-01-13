@@ -18,7 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
-import com.intellij.application.options.schemes.DefaultSchemeActions;
+import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -44,7 +44,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 
-abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleScheme> {
+abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleScheme> {
 
   private final static String SHARED_IMPORT_SOURCE = ApplicationBundle.message("import.scheme.shared");
 
@@ -133,16 +133,6 @@ abstract class CodeStyleSchemesActions extends DefaultSchemeActions<CodeStyleSch
   @Override
   protected void doDelete(@NotNull CodeStyleScheme scheme) {
     getSchemesModel().removeScheme(scheme);
-  }
-
-  @Override
-  protected boolean isDeleteAvailable(@NotNull CodeStyleScheme scheme) {
-    return !getSchemesModel().isProjectScheme(scheme) && !scheme.isDefault();
-  }
-
-  @Override
-  protected boolean isCopyToAvailable(@NotNull CodeStyleScheme scheme) {
-    return !getSchemesModel().isProjectScheme(scheme);
   }
 
   @Override

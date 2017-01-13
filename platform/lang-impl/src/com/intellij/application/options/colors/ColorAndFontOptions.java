@@ -201,22 +201,30 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   public void saveSchemeAs(String name) {
     MyColorScheme scheme = mySelectedScheme;
     if (scheme == null) return;
+    saveSchemeAs(scheme, name);
+  }
 
-    EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
-    scheme.apply(clone);
-    if (clone instanceof AbstractColorsScheme) {
-      ((AbstractColorsScheme)clone).setSaveNeeded(true);
+  public boolean saveSchemeAs(@NotNull EditorColorsScheme editorScheme, @NotNull String name) {
+    if (editorScheme instanceof MyColorScheme) {
+      MyColorScheme scheme = (MyColorScheme)editorScheme;
+      EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
+      scheme.apply(clone);
+      if (clone instanceof AbstractColorsScheme) {
+        ((AbstractColorsScheme)clone).setSaveNeeded(true);
+      }
+
+      clone.setName(name);
+      MyColorScheme newScheme = new MyColorScheme(clone);
+      initScheme(newScheme);
+
+      newScheme.setIsNew();
+
+      mySchemes.put(name, newScheme);
+      selectScheme(newScheme.getName());
+      resetSchemesCombo(null);
+      return true;
     }
-
-    clone.setName(name);
-    MyColorScheme newScheme = new MyColorScheme(clone);
-    initScheme(newScheme);
-
-    newScheme.setIsNew();
-
-    mySchemes.put(name, newScheme);
-    selectScheme(newScheme.getName());
-    resetSchemesCombo(null);
+    return false;
   }
 
   public void addImportedScheme(@NotNull EditorColorsScheme imported) {

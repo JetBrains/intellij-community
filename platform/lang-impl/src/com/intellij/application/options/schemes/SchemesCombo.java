@@ -16,8 +16,8 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,26 +26,81 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
 
 public class SchemesCombo<T extends Scheme> {
-  private ComboBox<MySchemeItem> myComboBox;
-  private DefaultSchemeActions<T> myActions;
+  private ComboBox<SchemeListItem<T>> myComboBox;
+  private JPanel myRootPanel;
+  private AbstractSchemesPanel<T> mySchemesPanel;
+  private final CardLayout myLayout;
+  private final JTextField myNameEditorField;
+  
+  private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
 
-  public SchemesCombo(@NotNull DefaultSchemeActions<T> actions) {
-    myActions = actions;
+  public SchemesCombo(@NotNull AbstractSchemesPanel<T> schemesPanel) {
+    mySchemesPanel = schemesPanel;
+    myLayout = new CardLayout();
+    myRootPanel = new JPanel(myLayout);
+    createCombo();
+    myRootPanel.add(myComboBox);
+    myNameEditorField = createNameEditorField();
+    myRootPanel.add(myNameEditorField);
+    myRootPanel.setMaximumSize(new Dimension(myNameEditorField.getPreferredSize().width, Short.MAX_VALUE));
+  }
+
+  private JTextField createNameEditorField() {
+    JTextField nameEditorField = new JTextField(15);
+    nameEditorField.registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        cancelEdit();
+      }
+    }, ESC_KEY_STROKE, JComponent.WHEN_FOCUSED);
+    nameEditorField.registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        stopEdit();
+      }
+    }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
+    return nameEditorField;
+  }
+
+  private void stopEdit() {
+    String newName = myNameEditorField.getText();
+    SchemeListItem<T> selectedItem = getSelectedItem();
+    String validationMessage = selectedItem != null ? selectedItem.validateSchemeName(newName) : null;
+    if (validationMessage != null) {
+      mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
+    }
+    else {
+      cancelEdit();
+      if (selectedItem != null && selectedItem.getScheme() != null) {
+        mySchemesPanel.getActions().doRename(selectedItem.getScheme(), newName);
+      }
+    }
+  }
+  
+  private void cancelEdit() {
+    mySchemesPanel.clearInfo();
+    myLayout.first(myRootPanel);
+    myRootPanel.requestFocus();
+  }
+
+  private void createCombo() {
     myComboBox = new ComboBox<>();
     myComboBox.setRenderer(new MyListCellRenderer());
     myComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myActions.onSchemeChanged(getSelectedScheme());
+        mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
       }
     });
-    myComboBox.setModel(new DefaultComboBoxModel<MySchemeItem>() {
+    myComboBox.setModel(new DefaultComboBoxModel<SchemeListItem<T>>() {
       @Override
       public void setSelectedItem(Object anObject) {
-        if (anObject instanceof OptionalSeparatorItem && ((OptionalSeparatorItem)anObject).isSeparator()) {
+        if (anObject instanceof SchemeListItem && ((SchemeListItem)anObject).isSeparator()) {
           return;
         }
         super.setSelectedItem(anObject);
@@ -53,30 +108,40 @@ public class SchemesCombo<T extends Scheme> {
     });
   }
   
-  private SimpleTextAttributes getSchemeAttributes(@NotNull T scheme) {
-    return myActions.isDeleteAvailable(scheme) ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES; 
+  public void startEdit() {
+    T scheme = getSelectedScheme();
+    if (scheme != null) {
+      myNameEditorField.setText(scheme.getName());
+      myLayout.last(myRootPanel);
+      myNameEditorField.requestFocus();
+    }
+  }
+
+  private SimpleTextAttributes getSchemeAttributes(@NotNull SchemeListItem<T> item) {
+    return item.isDeleteAvailable() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
   }
   
   public void resetSchemes(@NotNull Collection<T> schemes) {
     myComboBox.removeAllItems();
-    DefaultSchemeActions.SchemeLevel currSchemeLevel = DefaultSchemeActions.SchemeLevel.IDE_Only;
+    SchemeListItem.SchemeLevel currSchemeLevel = SchemeListItem.SchemeLevel.IDE_Only;
     for (T scheme : schemes) {
-      DefaultSchemeActions.SchemeLevel schemeLevel = myActions.getSchemeLevel(scheme);
+      SchemeListItem<T> item = mySchemesPanel.createItem(scheme);
+      SchemeListItem.SchemeLevel schemeLevel = item.getSchemeLevel();
       if (!currSchemeLevel.equals(schemeLevel)) {
         currSchemeLevel = schemeLevel;
-        if (!schemeLevel.equals(DefaultSchemeActions.SchemeLevel.IDE_Only)) {
-          myComboBox.addItem(new MySchemeItem(currSchemeLevel.toString()));
+        if (!schemeLevel.equals(SchemeListItem.SchemeLevel.IDE_Only)) {
+          myComboBox.addItem(mySchemesPanel.createSeparator(currSchemeLevel.toString()));
         }
       }
-      myComboBox.addItem(new MySchemeItem(scheme));
+      myComboBox.addItem(item);
     }
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<MySchemeItem> {
-    private ListCellRendererWrapper<MySchemeItem> myWrapper = new ListCellRendererWrapper<MySchemeItem>() {
+  private class MyListCellRenderer extends ColoredListCellRenderer<SchemeListItem<T>> {
+    private ListCellRendererWrapper<SchemeListItem> myWrapper = new ListCellRendererWrapper<SchemeListItem>() {
       @Override
       public void customize(JList list,
-                            MySchemeItem value,
+                            SchemeListItem value,
                             int index,
                             boolean selected,
                             boolean hasFocus) {
@@ -88,8 +153,8 @@ public class SchemesCombo<T extends Scheme> {
     };
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends MySchemeItem> list,
-                                                  MySchemeItem value,
+    public Component getListCellRendererComponent(JList<? extends SchemeListItem<T>> list,
+                                                  SchemeListItem<T> value,
                                                   int index,
                                                   boolean selected,
                                                   boolean hasFocus) {
@@ -104,15 +169,15 @@ public class SchemesCombo<T extends Scheme> {
     }
 
     @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends MySchemeItem> list,
-                                         MySchemeItem value,
+    protected void customizeCellRenderer(@NotNull JList<? extends SchemeListItem<T>> list,
+                                         SchemeListItem<T> value,
                                          int index,
                                          boolean selected,
                                          boolean hasFocus) {
       if (value.getScheme() != null) {
-        append(value.getPresentableText(), getSchemeAttributes(value.getScheme()));
-        DefaultSchemeActions.SchemeLevel schemeLevel = myActions.getSchemeLevel(value.getScheme());
-        if (index == -1 && !DefaultSchemeActions.SchemeLevel.IDE_Only.equals(schemeLevel)) {
+        append(value.getPresentableText(), getSchemeAttributes(value));
+        SchemeListItem.SchemeLevel schemeLevel = value.getSchemeLevel();
+        if (index == -1 && !SchemeListItem.SchemeLevel.IDE_Only.equals(schemeLevel)) {
           append("  " + schemeLevel.toString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
@@ -121,8 +186,14 @@ public class SchemesCombo<T extends Scheme> {
   
   @Nullable
   public T getSelectedScheme() {
+    SchemeListItem<T> item = getSelectedItem();
+    return item != null ? item.getScheme() : null;
+  }
+  
+  @Nullable
+  public SchemeListItem<T> getSelectedItem() {
     int i = myComboBox.getSelectedIndex();
-    return i >= 0 ? myComboBox.getItemAt(i).getScheme() : null;
+    return i >= 0 ? myComboBox.getItemAt(i) : null;
   }
   
   public void selectScheme(@Nullable T scheme) {
@@ -134,44 +205,8 @@ public class SchemesCombo<T extends Scheme> {
     }
   }
   
-  public ComboBox getComboBox() {
-    return myComboBox;
+  public JComponent getComponent() {
+    return myRootPanel;
   }
-
-  private interface OptionalSeparatorItem {
-    boolean isSeparator();
-  }
-
-  private final class MySchemeItem implements OptionalSeparatorItem {
-    private @Nullable T myScheme;
-    private @Nullable String myText;
-
-    public MySchemeItem(@NotNull String text) {
-      myText = text;
-    }
-
-    public MySchemeItem(@Nullable T scheme) {
-      myScheme = scheme;
-    }
-
-    @Nullable
-    public String getSchemeName() {
-      return myScheme != null ? myScheme.getName() : null;
-    }
-
-    @Nullable
-    public T getScheme() {
-      return myScheme;
-    }
-
-    @NotNull
-    public String getPresentableText() {
-      return myScheme != null ? SchemeManager.getDisplayName(myScheme) : myText != null ? myText : "";
-    }
-
-    @Override
-    public boolean isSeparator() {
-      return myScheme == null;
-    }
-  }
+  
 }

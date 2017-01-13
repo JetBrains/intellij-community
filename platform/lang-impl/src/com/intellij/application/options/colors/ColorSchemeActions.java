@@ -17,13 +17,12 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
-import com.intellij.application.options.schemes.DefaultSchemeActions;
+import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
-import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
@@ -37,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColorsScheme> {
+public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorColorsScheme> {
 
   protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme> schemesPanel) {
     super(schemesPanel);
@@ -118,21 +117,6 @@ public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColo
   @Override
   protected void doDelete(@NotNull EditorColorsScheme scheme) {
     getOptions().removeScheme(scheme.getName());
-  }
-
-  @Override
-  protected boolean isDeleteAvailable(@NotNull EditorColorsScheme scheme) {
-    return !ColorAndFontOptions.isReadOnly(scheme) && ColorAndFontOptions.canBeDeleted(scheme);
-  }
-  
-  @Override
-  protected boolean isResetAvailable(@NotNull EditorColorsScheme scheme) {
-    AbstractColorsScheme originalScheme =
-      scheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)scheme).getOriginal() : null;
-    return
-      !ColorAndFontOptions.isReadOnly(scheme) &&
-      scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX) &&
-      originalScheme instanceof ReadOnlyColorsScheme;
   }
 
   @Override

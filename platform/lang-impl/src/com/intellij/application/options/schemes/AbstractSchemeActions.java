@@ -30,16 +30,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class DefaultSchemeActions<T extends Scheme> {
+public abstract class AbstractSchemeActions<T extends Scheme> {
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
   private AbstractSchemesPanel<T> mySchemesPanel;
   
-  public enum SchemeLevel {
-    IDE_Only, IDE, Project
-  }
-
-  protected DefaultSchemeActions(@NotNull AbstractSchemesPanel<T> schemesPanel) {
+  protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T> schemesPanel) {
     mySchemesPanel = schemesPanel;
     mySchemeImportersNames = getSchemeImportersNames();
     mySchemeExporterNames = getSchemeExporterNames();
@@ -65,6 +61,7 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   public final Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
     actions.add(new CopyAction());
+    actions.add(new RenameAction());
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
     if (!mySchemeExporterNames.isEmpty()) {
@@ -109,8 +106,8 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      T currentScheme = getCurrentScheme();
-      p.setEnabled(currentScheme != null && isResetAvailable(currentScheme));
+      SchemeListItem<T> item = mySchemesPanel.getSelectedItem();
+      p.setEnabled(item != null && item.isResetAvailable());
     }
   }
   
@@ -131,8 +128,30 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
+      SchemeListItem<T> item = mySchemesPanel.getSelectedItem();
+      p.setEnabledAndVisible(item != null && item.isDuplicateAvailable());
+    }
+  }
+  
+  
+  private class RenameAction extends DumbAwareAction {
+    public RenameAction() {
+      super("Rename...");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
       T currentScheme = getCurrentScheme();
-      p.setEnabledAndVisible(currentScheme != null && isCopyToAvailable(currentScheme));
+      if (currentScheme != null) {
+        mySchemesPanel.startEdit();
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Presentation p = e.getPresentation();
+      SchemeListItem<T> item = mySchemesPanel.getSelectedItem();
+      p.setEnabled(item != null && item.isRenameAvailable());
     }
   }
   
@@ -152,8 +171,8 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      T currentScheme = getCurrentScheme(); 
-      p.setEnabledAndVisible(currentScheme != null && isDeleteAvailable(currentScheme));
+      SchemeListItem<T> item = mySchemesPanel.getSelectedItem(); 
+      p.setEnabledAndVisible(item != null && item.isDeleteAvailable());
     }
   }
 
@@ -225,29 +244,21 @@ public abstract class DefaultSchemeActions<T extends Scheme> {
   
   protected abstract void doDelete(@NotNull T scheme);
   
-  protected abstract boolean isDeleteAvailable(@NotNull T scheme);
-  
-  protected boolean isResetAvailable(@NotNull T scheme) {
-    return true;
-  }
-  
-  protected boolean isCopyToAvailable(@NotNull T scheme) {
-    return true;
-  }
-  
   protected abstract void doExport(@NotNull T scheme, @NotNull String exporterName);
-  
+
   protected abstract void onSchemeChanged(@Nullable T scheme);
   
+  protected abstract void doRename(@NotNull T scheme, @NotNull String newName);
+  
   @Nullable
-  protected abstract T getCurrentScheme();
+  protected final T getCurrentScheme() {
+    return mySchemesPanel.getSelectedScheme();
+  }
   
   protected abstract Class<T> getSchemeType();
 
   public AbstractSchemesPanel<T> getSchemesPanel() {
     return mySchemesPanel;
   }
-  
-  public abstract SchemeLevel getSchemeLevel(@NotNull T scheme);
 }
 
