@@ -972,6 +972,10 @@
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
       <category>Java/Control Flow</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.InlineElseBranchAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction</className>
