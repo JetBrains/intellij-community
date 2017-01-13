@@ -78,7 +78,9 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowDiffWithLocalFromFileHistory" id="Vcs.Log.ShowDiffWithLocal"/>
     <action class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" id="Vcs.Log.ShowDiff"
             text="Show Diff"
-            icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
+            icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff">
+      <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
+    </action>
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
 
     <group id="Vcs.Log.Settings">
