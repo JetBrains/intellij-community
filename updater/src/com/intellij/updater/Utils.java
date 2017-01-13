@@ -16,8 +16,8 @@
 package com.intellij.updater;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -70,24 +70,40 @@ public class Utils {
   }
 
   public static void delete(File file) throws IOException {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File each : files) {
-          delete(each);
-          Runner.logger().info("deleted file " + each.getPath());
+    Path start = file.toPath();
+    if (Files.exists(start)) {
+      Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          tryDelete(file);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+          tryDelete(dir);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
+  }
+
+  @SuppressWarnings("BusyWait")
+  private static void tryDelete(Path path) throws IOException {
+    for (int i = 0; i < 10; i++) {
+      try {
+        if (Files.deleteIfExists(path) || !Files.exists(path)) {
+          Runner.logger().info("deleted: " + path);
+          return;
         }
       }
+      catch (IOException ignore) { }
+
+      try { Thread.sleep(10); }
+      catch (InterruptedException ignore) { }
     }
-    for (int i = 0; i < 10; i++) {
-      if (file.delete() || !file.exists()) return;
-      try {
-        Thread.sleep(10);
-      } catch (InterruptedException ignore) {
-        Runner.printStackTrace(ignore);
-      }
-    }
-    if (file.exists()) throw new IOException("Cannot delete file " + file);
+
+    throw new IOException("Cannot delete: " + path);
   }
 
   public static void setExecutable(File file, boolean executable) throws IOException {

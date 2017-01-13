@@ -15,6 +15,7 @@
  */
 package com.intellij.updater;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -66,7 +67,7 @@ public class UtilsTest {
     }
     catch (IOException e) {
       millis = System.currentTimeMillis() - millis;
-      assertEquals("Cannot delete file " + f.getAbsolutePath(), e.getMessage());
+      assertEquals("Cannot delete: " + f.getAbsolutePath(), e.getMessage());
       assertThat(millis).as("Utils.delete took " + millis + " ms, which is less than expected").isGreaterThanOrEqualTo(100);
     }
   }
@@ -82,5 +83,39 @@ public class UtilsTest {
       fw.write("test");
       Utils.delete(f);
     }
+  }
+
+  @Test
+  public void testRecursiveDelete() throws Exception {
+    File topDir = tempDir.newFolder("temp_dir");
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        File file = new File(topDir, "dir" + i + "/file" + j);
+        FileUtil.writeToFile(file, "test");
+        assertTrue(file.exists());
+      }
+    }
+
+    Utils.delete(topDir);
+    assertFalse(topDir.exists());
+  }
+
+  @Test
+  public void testNonRecursiveSymlinkDelete() throws Exception {
+    assumeTrue(!IS_WINDOWS);
+
+    File dir = tempDir.newFolder("temp_dir");
+    File file = new File(dir, "file");
+    FileUtil.writeToFile(file, "test");
+    assertThat(dir.listFiles()).containsExactly(file);
+
+    File link = new File(tempDir.getRoot(), "link");
+    Utils.createLink(dir.getName(), link);
+    assertTrue(Utils.isLink(link));
+    assertThat(link.listFiles()).hasSize(1);
+
+    Utils.delete(link);
+    assertFalse(link.exists());
+    assertThat(dir.listFiles()).containsExactly(file);
   }
 }
