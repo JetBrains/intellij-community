@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInspection.reference.EntryPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiUtil;
 
@@ -23,12 +24,19 @@ import com.intellij.psi.util.PsiUtil;
  * Register entry points which visibility can be decreased,
  * e.g. package private test methods in junit 5
  */
-public abstract class EntryPointWithModifiableVisibilityLevel extends EntryPoint {
-
+public abstract class EntryPointWithVisibilityLevel extends EntryPoint {
   /**
    * @return minimum accepted modifier (see {@link PsiUtil.AccessLevel}) or -1 when not applicable
    */
-  public int getMinVisibilityLevel(PsiMember member) {
-    return -1;
-  }
+  public abstract int getMinVisibilityLevel(PsiMember member);
+
+  /**
+   * Title for checkbox in visibility inspection settings
+   */
+  public abstract String getTitle();
+
+  /**
+   * Id to serialize checkbox state in visibility inspection settings
+   */
+  public abstract String getId();
 }
