@@ -2,5 +2,5 @@ def foo(x, y):
     pass
 
 
-def empty():
+def empty( ):
     pass

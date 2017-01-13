@@ -376,6 +376,27 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testSpaceWithinDeclarationParentheses() {  // PY-8818
     getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
+    doTest();
+  }
+
+  // PY-21598
+  public void testSpaceBetweenParenthesesInEmptyParameterList() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = true;
+    doTest();
+  }
+
+  public void testSpaceWithingCallParentheses() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
+    doTest();
+  }
+
+  // PY-21598
+  public void testSpaceBetweenParenthesesInEmptyArgumentList() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
     doTest();
   }
 
@@ -711,7 +732,6 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
   }
-
 
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
