@@ -393,7 +393,7 @@ public class NestedClassProcessor {
       mergeListSignatures(interPairMask, interMask, true);
 
       for (VarFieldPair pair : interPairMask) {
-        if (pair != null && pair.fieldKey.length() > 0) {
+        if (pair != null && !pair.fieldKey.isEmpty()) {
           nestedNode.mapFieldsToVars.put(pair.fieldKey, pair.varPair);
         }
       }
@@ -406,7 +406,7 @@ public class NestedClassProcessor {
         method.signatureFields = new ArrayList<>();
 
         for (VarFieldPair pair : entry.getValue()) {
-          method.signatureFields.add(pair == null ? null : pair.varPair);
+          method.signatureFields.add(pair == null || pair.fieldKey.isEmpty() ? null : pair.varPair);
         }
       }
     }

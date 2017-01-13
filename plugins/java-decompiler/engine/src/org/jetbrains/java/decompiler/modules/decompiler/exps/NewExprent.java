@@ -210,8 +210,8 @@ public class NewExprent extends Exprent {
 
         ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invSuper.getClassname());
 
-        List<VarVersionPair> sigFields = null;
-        if (newNode != null) { // own class
+        List<VarVersionPair> sigFields = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).signatureFields;
+        if (sigFields == null && newNode != null) { // own class
           if (newNode.getWrapper() != null) {
             sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, invSuper.getStringDescriptor()).signatureFields;
           }
@@ -224,27 +224,17 @@ public class NewExprent extends Exprent {
           }
         }
 
+        List<Exprent> lstParameters = constructor.getLstParameters();
+
+        int start = enumConst ? 2 : 0;
         boolean firstParam = true;
-        int start = 0, end = invSuper.getLstParameters().size();
-        if (enumConst) {
-          start += 2;
-          end -= 1;
-        }
-        for (int i = start; i < end; i++) {
+        for (int i = start; i < lstParameters.size(); i++) {
           if (sigFields == null || sigFields.get(i) == null) {
             if (!firstParam) {
               buf.append(", ");
             }
 
-            Exprent param = invSuper.getLstParameters().get(i);
-            if (param.type == Exprent.EXPRENT_VAR) {
-              int varIndex = ((VarExprent)param).getIndex();
-              if (varIndex > 0 && varIndex <= constructor.getLstParameters().size()) {
-                param = constructor.getLstParameters().get(varIndex - 1);
-              }
-            }
-
-            ExprProcessor.getCastedExprent(param, invSuper.getDescriptor().params[i], buf, indent, true, tracer);
+            ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buf, indent, true, tracer);
 
             firstParam = false;
           }

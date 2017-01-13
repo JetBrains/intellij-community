@@ -62,6 +62,7 @@ public class SingleClassesTest {
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
   @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
   @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }
+  @Test public void testAnonymousClassConstructor() { doTest("pkg/TestAnonymousClassConstructor"); }
   @Test public void testInnerClassConstructor() { doTest("pkg/TestInnerClassConstructor"); }
   @Test public void testInnerClassConstructor11() { doTest("v11/TestInnerClassConstructor"); }
   @Test public void testTryCatchFinally() { doTest("pkg/TestTryCatchFinally"); }
@@ -94,6 +95,7 @@ public class SingleClassesTest {
   @Test public void testKotlinConstructor() { doTest("pkg/TestKotlinConstructorKt"); }
   @Test public void testAsserts() { doTest("pkg/TestAsserts"); }
   @Test public void testLocalsNames() { doTest("pkg/TestLocalsNames"); }
+  @Test public void testAnonymousParamNames() { doTest("pkg/TestAnonymousParamNames"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
