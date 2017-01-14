@@ -68,7 +68,6 @@ def getProperties(String home, String buildNumber) {
                       "# See https://developer.android.com/studio/intro/studio-config.html\n" +
                       "#\n"
       mainClassName = enableUITests ? "com.intellij.ide.BootstrapUITestRunner" : "com.intellij.idea.Main"
-      macShowProductState = false
       setPluginAndIDEVersionInPluginXml = false
     }
 

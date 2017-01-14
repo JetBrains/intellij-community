@@ -25,7 +25,6 @@ public abstract class ProductProperties {
   String appInfoModulePath
 
   String configNotice = ""
-  boolean macShowProductState
   String mainClassName = "com.intellij.idea.Main";
 
   abstract def String appInfoFile()
