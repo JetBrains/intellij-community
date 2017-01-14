@@ -353,8 +353,10 @@ public class Task implements StudyItem {
     setText(task.getText());
     getTestsText().clear();
     setStatus(StudyStatus.Unchecked);
-    setChoiceVariants(task.getChoiceVariants());
-    setMultipleChoice(task.isMultipleChoice());
+    if (task.isChoiceTask()) {
+      setChoiceVariants(task.getChoiceVariants());
+      setMultipleChoice(task.isMultipleChoice());
+    }
     final Map<String, String> testsText = task.getTestsText();
     for (String testName : testsText.keySet()) {
       addTestsTexts(testName, testsText.get(testName));
