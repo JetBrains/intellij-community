@@ -73,8 +73,7 @@ public class VFSTestFrameworkListener {
           final String path = event.getPath();
           final boolean containsNose = path.contains(PyNames.NOSE_TEST);
           final boolean containsPy = path.contains("py-1") || path.contains(PyNames.PY_TEST);
-          final boolean containsAt = path.contains(PyNames.AT_TEST);
-          if (!containsAt && !containsNose && !containsPy) continue;
+          if (!containsNose && !containsPy) continue;
           for (Sdk sdk : PythonSdkType.getAllSdks()) {
             if (PySdkUtil.isRemote(sdk)) {
               continue;
@@ -90,10 +89,6 @@ public class VFSTestFrameworkListener {
                   scheduleTestFrameworkCheck(sdk, PyNames.PY_TEST);
                   return;
                 }
-                else {
-                  scheduleTestFrameworkCheck(sdk, PyNames.AT_TEST);
-                  return;
-                }
               }
             }
           }
@@ -104,7 +99,7 @@ public class VFSTestFrameworkListener {
   }
 
   public void updateAllTestFrameworks(@NotNull Sdk sdk) {
-    final Map<String, Boolean> whichInstalled = checkTestFrameworksInstalled(sdk, PyNames.PY_TEST, PyNames.NOSE_TEST, PyNames.AT_TEST);
+    final Map<String, Boolean> whichInstalled = checkTestFrameworksInstalled(sdk, PyNames.PY_TEST, PyNames.NOSE_TEST);
     ApplicationManager.getApplication().invokeLater(() -> {
       for (Map.Entry<String, Boolean> entry : whichInstalled.entrySet()) {
         final Boolean installed = entry.getValue();
@@ -191,14 +186,6 @@ public class VFSTestFrameworkListener {
     myService.SDK_TO_ATTEST.put(sdkHome, installed);
   }
 
-  public boolean isAtTestInstalled(@NotNull Sdk sdk) {
-    final Boolean isInstalled = myService.SDK_TO_ATTEST.get(sdk.getHomePath());
-    if (isInstalled == null) {
-      scheduleTestFrameworkCheck(sdk, PyNames.AT_TEST);
-      return true;
-    }
-    return isInstalled;
-  }
 
   public void setTestFrameworkInstalled(boolean installed, @NotNull String sdkHome, @NotNull String name) {
     switch (name) {
@@ -207,9 +194,6 @@ public class VFSTestFrameworkListener {
         break;
       case PyNames.PY_TEST:
         setPyTestInstalled(installed, sdkHome);
-        break;
-      case PyNames.AT_TEST:
-        setAtTestInstalled(installed, sdkHome);
         break;
     }
   }

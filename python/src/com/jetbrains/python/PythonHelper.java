@@ -54,7 +54,6 @@ public enum PythonHelper implements HelperPackage {
   SETUPPY("pycharm", "pycharm_setup_runner"),
   NOSE("pycharm", "noserunner"),
   PYTEST("pycharm", "pytestrunner"),
-  ATTEST("pycharm", "attestrunner"),
   DOCSTRING("pycharm", "docrunner"),
 
   BEHAVE("pycharm", "behave_runner"),
