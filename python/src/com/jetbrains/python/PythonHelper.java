@@ -56,6 +56,12 @@ public enum PythonHelper implements HelperPackage {
   PYTEST("pycharm", "pytestrunner"),
   DOCSTRING("pycharm", "docrunner"),
 
+  // Runners for new test runner API.
+
+  UNIVERSAL_UT("pycharm", "_jb_unittest_runner"),
+  UNIVERSAL_PYTEST("pycharm", "_jb_pytest_runner"),
+  UNIVERSAL_NOSE("pycharm", "_jb_nosetest_runner"),
+
   BEHAVE("pycharm", "behave_runner"),
   LETTUCE("pycharm", "lettuce_runner"),
 

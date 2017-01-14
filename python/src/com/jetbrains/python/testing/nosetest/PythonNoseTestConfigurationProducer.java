@@ -27,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PythonNoseTestConfigurationProducer extends
-                                                 PythonTestConfigurationProducer {
+                                                 PythonTestOldConfigurationProducer {
   public PythonNoseTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().PY_NOSETEST_FACTORY);
+    super(PythonTestOldConfigurationType.getInstance().PY_NOSETEST_FACTORY);
   }
 
   protected boolean isAvailable(@NotNull final Location location) {
@@ -45,7 +45,7 @@ public class PythonNoseTestConfigurationProducer extends
   }
 
   @Override
-  protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonTestRunConfiguration configuration) {
+  protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonOldTestRunConfiguration configuration) {
     return PythonUnitTestUtil.isTestCaseFunction(pyFunction, true);
   }
 }

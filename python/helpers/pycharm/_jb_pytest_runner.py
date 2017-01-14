@@ -1,0 +1,17 @@
+# coding=utf-8
+import sys
+
+import pytest
+
+from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args
+from teamcity import pytest_plugin
+
+if __name__ == '__main__':
+    path, targets, additional_args = jb_start_tests()
+    sys.argv += additional_args
+    joined_targets = jb_patch_separator(targets, fs_glue=":", python_glue="::", fs_to_python_glue=".py::")
+    # When file is launched in py.test it should be file.py: you can't provide it as bare module
+    joined_targets = [t + ".py" if ":" not in t else t for t in joined_targets]
+    sys.argv += [path] if path else joined_targets
+    jb_doc_args("py.test", sys.argv[1:])
+    pytest.main(sys.argv[1:], [pytest_plugin])

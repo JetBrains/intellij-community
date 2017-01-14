@@ -37,6 +37,7 @@ public abstract class PyPsiFacade {
     return ServiceManager.getService(project, PyPsiFacade.class);
   }
 
+  @NotNull
   public abstract QualifiedNameResolver qualifiedNameResolver(String qNameString);
   public abstract QualifiedNameResolver qualifiedNameResolver(QualifiedName qualifiedName);
 
