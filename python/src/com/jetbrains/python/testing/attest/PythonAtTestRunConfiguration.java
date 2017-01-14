@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  */
-public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfiguration
+public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfiguration<PythonAtTestRunConfiguration>
                                           implements PythonAtTestRunConfigurationParams {
   protected String myTitle = "Attest";
   protected String myPluralTitle = "Attests";
@@ -44,7 +44,7 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   }
 
   @Override
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PythonAtTestRunConfiguration> createConfigurationEditor() {
     return new PythonAtTestRunConfigurationEditor(getProject(), this);
   }
 
