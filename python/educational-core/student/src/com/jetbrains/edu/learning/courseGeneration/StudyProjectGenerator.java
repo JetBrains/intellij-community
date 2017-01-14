@@ -93,7 +93,7 @@ public class StudyProjectGenerator {
       Messages.showWarningDialog("Some problems occurred while creating the course", "Error in Course Creation");
       return;
     }
-    else if (course.isAdaptive() && course.getLessons().isEmpty()) {
+    else if (course.isAdaptive() && !StudyUtils.isCourseValid(course)) {
       Messages.showWarningDialog("There is no recommended tasks for this adaptive course", "Error in Course Creation");
       return;
     }
