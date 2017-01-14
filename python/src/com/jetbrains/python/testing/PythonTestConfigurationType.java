@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
-import com.jetbrains.python.testing.attest.PythonAtTestRunConfiguration;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration;
 import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
@@ -42,7 +41,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
   public final PythonUnitTestConfigurationFactory PY_UNITTEST_FACTORY = new PythonUnitTestConfigurationFactory(this);
   public final PythonNoseTestConfigurationFactory PY_NOSETEST_FACTORY = new PythonNoseTestConfigurationFactory(this);
   public final PythonPyTestConfigurationFactory PY_PYTEST_FACTORY = new PythonPyTestConfigurationFactory(this);
-  public final PythonAtTestConfigurationFactory PY_ATTEST_FACTORY = new PythonAtTestConfigurationFactory(this);
 
   public static PythonTestConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
@@ -112,22 +110,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
     }
   }
 
-  private static class PythonAtTestConfigurationFactory extends PythonConfigurationFactoryBase {
-    protected PythonAtTestConfigurationFactory(ConfigurationType configurationType) {
-      super(configurationType);
-    }
-
-    @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonAtTestRunConfiguration(project, this);
-    }
-
-    @Override
-    public String getName() {
-      return PyBundle.message("runcfg.attest.display_name");
-    }
-  }
-
   @Override
   public String getDisplayName() {
     return PyBundle.message("runcfg.test.display_name");
@@ -152,6 +134,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[] {PY_UNITTEST_FACTORY, PY_DOCTEST_FACTORY, PY_NOSETEST_FACTORY,
-        PY_PYTEST_FACTORY, PY_ATTEST_FACTORY};
+        PY_PYTEST_FACTORY};
   }
 }

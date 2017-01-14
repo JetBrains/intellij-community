@@ -119,13 +119,10 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
           if (packages != null) {
             final boolean nose = PyPackageUtil.findPackage(packages, PyNames.NOSE_TEST) != null;
             final boolean pytest = PyPackageUtil.findPackage(packages, PyNames.PY_TEST) != null;
-            final boolean attest = PyPackageUtil.findPackage(packages, PyNames.AT_TEST) != null;
             if (nose)
               testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
             else if (pytest)
               testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-            else if (attest)
-              testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
             if (!testRunner.isEmpty()) {
               LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
             }
@@ -165,9 +162,6 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
         }
         if (stringValue.contains(PyNames.PY_TEST)) {
           return PythonTestConfigurationsModel.PY_TEST_NAME;
-        }
-        if (stringValue.contains(PyNames.AT_TEST_IMPORT)) {
-          return PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
         }
       }
     }
@@ -210,9 +204,6 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
         }
         if (PyNames.PY_TEST.equals(importElement.getVisibleName())) {
           return PythonTestConfigurationsModel.PY_TEST_NAME;
-        }
-        if (PyNames.AT_TEST_IMPORT.equals(importElement.getVisibleName())) {
-          return PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
         }
       }
     }

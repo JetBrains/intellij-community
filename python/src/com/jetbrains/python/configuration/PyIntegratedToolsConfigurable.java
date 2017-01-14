@@ -144,12 +144,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
                                           createQuickFix(sdk, facetErrorPanel, PyNames.NOSE_TEST));
             }
           }
-          else if (PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk)) {
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "attest"),
-                                          createQuickFix(sdk, facetErrorPanel, PyNames.AT_TEST));
-            }
-          }
         }
         return ValidationResult.OK;
       }
