@@ -47,14 +47,14 @@ import java.util.Map;
 /**
  * @author yole
  */
-public abstract class PythonTestCommandLineStateBase extends PythonCommandLineState {
-  protected final AbstractPythonRunConfiguration myConfiguration;
+public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRunConfiguration<?>> extends PythonCommandLineState {
+  protected final T myConfiguration;
 
-  public AbstractPythonRunConfiguration<?> getConfiguration() {
+  public T getConfiguration() {
     return myConfiguration;
   }
 
-  public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
+  public PythonTestCommandLineStateBase(T configuration, ExecutionEnvironment env) {
     super(configuration, env);
     myConfiguration = configuration;
     setRunWithPty(false);

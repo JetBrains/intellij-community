@@ -16,7 +16,7 @@
 package com.jetbrains.env.ut;
 
 import com.jetbrains.env.ProcessWithConsoleRunner;
-import com.jetbrains.python.testing.PythonTestConfigurationType;
+import com.jetbrains.python.testing.PythonTestOldConfigurationType;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PythonUnitTestRunConfiguration> {
   public PyUnitTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY,
+    super(PythonTestOldConfigurationType.getInstance().PY_UNITTEST_FACTORY,
           PythonUnitTestRunConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 }

@@ -40,8 +40,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
-import com.jetbrains.python.testing.PythonTestConfigurationType;
+import com.jetbrains.python.testing.AbstractPythonOldTestRunConfiguration;
+import com.jetbrains.python.testing.PythonTestOldConfigurationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -154,7 +154,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   @Override
   public void runTestOn(String sdkHome) throws Exception {
     final Project project = getProject();
-    final ConfigurationFactory factory = PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY;
+    final ConfigurationFactory factory = PythonTestOldConfigurationType.getInstance().PY_UNITTEST_FACTORY;
     runConfiguration(factory, sdkHome, project);
   }
 
@@ -162,7 +162,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     final RunnerAndConfigurationSettings settings =
       RunManager.getInstance(project).createRunConfiguration("test", factory);
 
-    AbstractPythonTestRunConfiguration config = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
+    AbstractPythonOldTestRunConfiguration config = (AbstractPythonOldTestRunConfiguration)settings.getConfiguration();
 
 
     config.setSdkHome(sdkHome);
@@ -271,7 +271,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     return 60000;
   }
 
-  protected void configure(AbstractPythonTestRunConfiguration config) {
+  protected void configure(AbstractPythonOldTestRunConfiguration config) {
   }
 
   /**

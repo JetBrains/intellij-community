@@ -39,9 +39,9 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalTestsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +54,14 @@ import java.util.List;
 /**
  * User: ktisha
  */
-abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRunConfiguration<T>> extends RunConfigurationProducer<AbstractPythonTestRunConfiguration<T>> {
+abstract public class PythonTestOldConfigurationProducer<T extends AbstractPythonOldTestRunConfiguration<T>> extends RunConfigurationProducer<AbstractPythonOldTestRunConfiguration<T>> {
 
-  public PythonTestConfigurationProducer(final ConfigurationFactory configurationFactory) {
+  public PythonTestOldConfigurationProducer(final ConfigurationFactory configurationFactory) {
     super(configurationFactory);
   }
 
     @Override
-  public boolean isConfigurationFromContext(AbstractPythonTestRunConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(AbstractPythonOldTestRunConfiguration configuration, ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
     final PsiElement element = location.getPsiElement();
@@ -73,12 +73,12 @@ abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRu
     final PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
-    final AbstractPythonTestRunConfiguration.TestType confType = configuration.getTestType();
+    final AbstractPythonOldTestRunConfiguration.TestType confType = configuration.getTestType();
     final String workingDirectory = configuration.getWorkingDirectory();
 
     if (element instanceof PsiDirectory) {
       final String path = ((PsiDirectory)element).getVirtualFile().getPath();
-      return confType == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER &&
+      return confType == AbstractPythonOldTestRunConfiguration.TestType.TEST_FOLDER &&
              path.equals(configuration.getFolderName()) ||
              path.equals(new File(workingDirectory, configuration.getFolderName()).getAbsolutePath());
     }
@@ -90,27 +90,27 @@ abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRu
     if (pyFunction != null) {
       final String methodName = configuration.getMethodName();
       if (pyFunction.getContainingClass() == null) {
-        return confType == AbstractPythonTestRunConfiguration.TestType.TEST_FUNCTION &&
+        return confType == AbstractPythonOldTestRunConfiguration.TestType.TEST_FUNCTION &&
                methodName.equals(pyFunction.getName()) && isTestFileEquals;
       }
       else {
         final String className = configuration.getClassName();
 
-        return confType == AbstractPythonTestRunConfiguration.TestType.TEST_METHOD &&
+        return confType == AbstractPythonOldTestRunConfiguration.TestType.TEST_METHOD &&
                methodName.equals(pyFunction.getName()) &&
                pyClass != null && className.equals(pyClass.getName()) && isTestFileEquals;
       }
     }
     if (pyClass != null) {
       final String className = configuration.getClassName();
-      return confType == AbstractPythonTestRunConfiguration.TestType.TEST_CLASS &&
+      return confType == AbstractPythonOldTestRunConfiguration.TestType.TEST_CLASS &&
              className.equals(pyClass.getName()) && isTestFileEquals;
     }
-    return confType == AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT && isTestFileEquals;
+    return confType == AbstractPythonOldTestRunConfiguration.TestType.TEST_SCRIPT && isTestFileEquals;
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonTestRunConfiguration<T> configuration,
+  protected boolean setupConfigurationFromContext(AbstractPythonOldTestRunConfiguration<T> configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
     if (context == null) return false;
@@ -147,12 +147,12 @@ abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRu
   }
 
   private boolean setupConfigurationFromFolder(@NotNull final PsiDirectory element,
-                                                      @NotNull final AbstractPythonTestRunConfiguration configuration) {
+                                                      @NotNull final AbstractPythonOldTestRunConfiguration configuration) {
     final VirtualFile virtualFile = element.getVirtualFile();
     if (!isTestFolder(virtualFile, element.getProject())) return false;
     final String path = virtualFile.getPath();
 
-    configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
+    configuration.setTestType(AbstractPythonOldTestRunConfiguration.TestType.TEST_FOLDER);
     configuration.setFolderName(path);
     configuration.setWorkingDirectory(path);
     configuration.setGeneratedName();
@@ -160,40 +160,40 @@ abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRu
     return true;
   }
 
-  private static void setModuleSdk(@NotNull final PsiElement element, @NotNull final AbstractPythonTestRunConfiguration configuration) {
+  private static void setModuleSdk(@NotNull final PsiElement element, @NotNull final AbstractPythonOldTestRunConfiguration configuration) {
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
   protected boolean setupConfigurationFromFunction(@NotNull final PyFunction pyFunction,
-                                                   @NotNull final AbstractPythonTestRunConfiguration configuration) {
+                                                   @NotNull final AbstractPythonOldTestRunConfiguration configuration) {
     final PyClass containingClass = pyFunction.getContainingClass();
     configuration.setMethodName(pyFunction.getName());
 
     if (containingClass != null) {
       configuration.setClassName(containingClass.getName());
-      configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_METHOD);
+      configuration.setTestType(AbstractPythonOldTestRunConfiguration.TestType.TEST_METHOD);
     }
     else {
-      configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FUNCTION);
+      configuration.setTestType(AbstractPythonOldTestRunConfiguration.TestType.TEST_FUNCTION);
     }
     return setupConfigurationScript(configuration, pyFunction);
   }
 
   protected boolean setupConfigurationFromClass(@NotNull final PyClass pyClass,
-                                                @NotNull final AbstractPythonTestRunConfiguration configuration) {
-    configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_CLASS);
+                                                @NotNull final AbstractPythonOldTestRunConfiguration configuration) {
+    configuration.setTestType(AbstractPythonOldTestRunConfiguration.TestType.TEST_CLASS);
     configuration.setClassName(pyClass.getName());
     return setupConfigurationScript(configuration, pyClass);
   }
 
   protected boolean setupConfigurationFromFile(@NotNull final PyFile pyFile,
-                                               @NotNull final AbstractPythonTestRunConfiguration configuration) {
-    configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT);
+                                               @NotNull final AbstractPythonOldTestRunConfiguration configuration) {
+    configuration.setTestType(AbstractPythonOldTestRunConfiguration.TestType.TEST_SCRIPT);
     return setupConfigurationScript(configuration, pyFile);
   }
 
-  protected static boolean setupConfigurationScript(@NotNull final AbstractPythonTestRunConfiguration cfg,
+  protected static boolean setupConfigurationScript(@NotNull final AbstractPythonOldTestRunConfiguration cfg,
                                                     @NotNull final PyElement element) {
     final PyFile containingFile = PyUtil.getContainingPyFile(element);
     if (containingFile == null) return false;
@@ -227,12 +227,12 @@ abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRu
   }
 
   protected boolean isTestClass(@NotNull final PyClass pyClass,
-                                @Nullable final AbstractPythonTestRunConfiguration configuration, @Nullable final TypeEvalContext context) {
+                                @Nullable final AbstractPythonOldTestRunConfiguration configuration, @Nullable final TypeEvalContext context) {
     return PythonUnitTestUtil.isTestCaseClass(pyClass, context);
   }
 
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
-                                   @Nullable final AbstractPythonTestRunConfiguration configuration) {
+                                   @Nullable final AbstractPythonOldTestRunConfiguration configuration) {
     return PythonUnitTestUtil.isTestCaseFunction(pyFunction);
   }
 
@@ -264,11 +264,14 @@ abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRu
 
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    if (PyUniversalTestsKt.isUniversalModeEnabled()) {
+      return false;
+    }
     final RunConfiguration configuration = self.getConfiguration();
     if (configuration instanceof PythonUnitTestRunConfiguration &&
-        ((PythonUnitTestRunConfiguration)configuration).getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER) {
+        ((AbstractPythonTestRunConfigurationParams)configuration).getTestType() == AbstractPythonOldTestRunConfiguration.TestType.TEST_FOLDER) {
       return true;
     }
-    return other.isProducedBy(PythonTestConfigurationProducer.class) || other.isProducedBy(PythonRunConfigurationProducer.class);
+    return other.isProducedBy(PythonTestOldConfigurationProducer.class) || other.isProducedBy(PythonRunConfigurationProducer.class);
   }
 }
