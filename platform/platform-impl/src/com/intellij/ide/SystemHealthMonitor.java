@@ -62,7 +62,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
-  public static final String LATEST_JDK_RELEASE = "1.8.0u112";
+  private static final String LATEST_JDK_RELEASE = "1.8.0u112";
 
   private final PropertiesComponent myProperties;
 
@@ -87,11 +87,25 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     if (bundle != null && !bundle.isBundled()) {
       Version version = bundle.getVersion();
       Integer updateNumber = bundle.getUpdateNumber();
-      if (version != null && (version.lessThan(1, 8, 0) || (updateNumber != null && updateNumber < 112))) {
-        final String bundleVersion = version.toCompactString() + (updateNumber != null ? "u" + updateNumber : "");
-        if (JdkBundle.getBundledJDKAbsoluteLocation().exists() &&
-            (bundle.getBitness() == Bitness.x64 && (SystemInfo.isMacIntel64 || SystemInfo.isWindows || SystemInfo.isLinux)))
-        {
+      if (version != null && updateNumber != null && updateNumber < 112) {
+        final String bundleVersion = version.toCompactString() + "u" + updateNumber;
+        boolean showSwitchOption = false;
+
+        final File bundledJDKAbsoluteLocation = JdkBundle.getBundledJDKAbsoluteLocation();
+        if (bundledJDKAbsoluteLocation.exists() && bundle.getBitness() == Bitness.x64) {
+          if (!SystemInfo.isMacIntel64) {
+            if (SystemInfo.isWindows || SystemInfo.isLinux) {
+              JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
+              if (bundledJdk.getVersion() != null)
+                showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
+            }
+          }
+          else {
+            showSwitchOption = true;
+          }
+        }
+
+        if (showSwitchOption) {
           showNotification(new KeyHyperlinkAdapter("outdated.jvm.version.message1") {
                            @Override
                            protected void hyperlinkActivated(HyperlinkEvent e) {
