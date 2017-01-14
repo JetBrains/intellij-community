@@ -3,10 +3,13 @@ package de.plushnikov.intellij.plugin.processor.modifier;
 import com.google.common.collect.Iterables;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.AccessLevel;
@@ -27,7 +30,9 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
   public boolean isSupported(@NotNull PsiModifierList modifierList) {
 
     // FieldDefaults only change modifiers of class fields
-    if (!(modifierList.getParent() instanceof PsiField)) {
+    // but nor for enum constants or lombok generated fields
+    final PsiElement psiElement = modifierList.getParent();
+    if (!(psiElement instanceof PsiField) || psiElement instanceof PsiEnumConstant || psiElement instanceof LombokLightFieldBuilder) {
       return false;
     }
 

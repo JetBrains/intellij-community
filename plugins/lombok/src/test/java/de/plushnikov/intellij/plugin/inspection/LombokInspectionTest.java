@@ -1,33 +1,33 @@
-package de.plushnikov.intellij.plugin.action.intellij;
+package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.util.PathUtil;
 import com.siyeh.ig.LightInspectionTestCase;
-import com.siyeh.ig.style.FieldMayBeFinalInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class FieldMayBeFinalInspectionTest extends LightInspectionTestCase {
+import java.io.File;
 
-  @Override
-  protected String getTestDataPath() {
-    return "testData/inspection/canBeFinalInspection";
-  }
+import static com.intellij.testFramework.LightPlatformTestCase.getModule;
+
+public abstract class LombokInspectionTest extends LightInspectionTestCase {
+  static final String TEST_DATA_INSPECTION_DIRECTORY = "testData/inspection";
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package lombok;\npublic @interface Setter { }");
-    myFixture.addClass("package lombok;\npublic @interface Getter { }");
-    myFixture.addClass("package lombok;\npublic @interface Data { }");
-    myFixture.addClass("package lombok;\npublic @interface Value { }");
+    final String lombokLibPath = PathUtil.toSystemIndependentName(new File(TEST_DATA_INSPECTION_DIRECTORY, "lib").getAbsolutePath());
+    VfsRootAccess.allowRootAccess(lombokLibPath);
+    PsiTestUtil.addLibrary(getModule(), "Lombok", lombokLibPath, "lombok.jar");
   }
 
   @NotNull
@@ -45,34 +45,4 @@ public class FieldMayBeFinalInspectionTest extends LightInspectionTestCase {
       }
     };
   }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new FieldMayBeFinalInspection();
-  }
-
-  public void testClassNormal() throws Exception {
-    doTest();
-  }
-
-  public void testClassWithData() throws Exception {
-    doTest();
-  }
-
-  public void testClassWithFieldSetter() throws Exception {
-    doTest();
-  }
-
-  public void testClassWithGetter() throws Exception {
-    doTest();
-  }
-
-  public void testClassWithSetter() throws Exception {
-    doTest();
-  }
-
-  public void testClassWithValue() throws Exception {
-    doTest();
-  }
-
 }

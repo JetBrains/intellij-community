@@ -262,7 +262,7 @@
 		<ul>
 		<li>0.15
 				<ol>
-            <li>Fixed #xxx: </li>
+            <li>Fixed #290: Getter and FieldDefaults with parameter AccessLevel in Enum shows "cannot access"</li>
 				</ol>
 			</li>
 		<li>0.14
