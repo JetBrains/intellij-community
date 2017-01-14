@@ -39,6 +39,7 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfigurationProducer;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +54,7 @@ import java.util.List;
 /**
  * User: ktisha
  */
-abstract public class PythonTestConfigurationProducer extends RunConfigurationProducer<AbstractPythonTestRunConfiguration> {
+abstract public class PythonTestConfigurationProducer<T extends AbstractPythonRunConfiguration<T>> extends RunConfigurationProducer<AbstractPythonTestRunConfiguration<T>> {
 
   public PythonTestConfigurationProducer(final ConfigurationFactory configurationFactory) {
     super(configurationFactory);
@@ -109,7 +110,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonTestRunConfiguration configuration,
+  protected boolean setupConfigurationFromContext(AbstractPythonTestRunConfiguration<T> configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
     if (context == null) return false;

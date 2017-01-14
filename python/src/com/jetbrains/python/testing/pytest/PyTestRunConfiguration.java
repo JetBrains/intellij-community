@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration implements PyTestRunConfigurationParams {
+public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration<PyTestRunConfiguration> implements PyTestRunConfigurationParams {
   private String myTestToRun = "";
   private String myKeywords = "";
   private String myParams = "";
@@ -64,7 +64,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     super(project, factory);
   }
 
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PyTestRunConfiguration> createConfigurationEditor() {
     return new PyTestConfigurationEditor(getProject(), this);
   }
 

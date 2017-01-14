@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestRunConfiguration extends
-                                            AbstractPythonTestRunConfiguration
+                                            AbstractPythonTestRunConfiguration<PythonUnitTestRunConfiguration>
                                               implements PythonUnitTestRunConfigurationParams {
   private boolean myIsPureUnittest = true;
   protected String myTitle = "Unittest";
@@ -48,7 +48,7 @@ public class PythonUnitTestRunConfiguration extends
   }
 
   @Override
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PythonUnitTestRunConfiguration> createConfigurationEditor() {
     return new PythonUnitTestRunConfigurationEditor(getProject(), this);
   }
 
