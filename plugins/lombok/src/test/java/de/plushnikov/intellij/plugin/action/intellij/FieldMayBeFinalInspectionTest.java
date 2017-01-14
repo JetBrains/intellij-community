@@ -10,11 +10,11 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.siyeh.ig.LightInspectionTestCase;
 import com.siyeh.ig.style.FieldMayBeFinalInspection;
-import de.plushnikov.intellij.plugin.LombokLightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class FieldMayBeFinalInspectionTest extends LombokLightInspectionTestCase {
+public class FieldMayBeFinalInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected String getTestDataPath() {
