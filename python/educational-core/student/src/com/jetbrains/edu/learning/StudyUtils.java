@@ -850,6 +850,13 @@ public class StudyUtils {
   }
   
   public static boolean isCourseValid(@Nullable Course course) {
-    return course != null && !(course.isAdaptive() && course.getLessons().isEmpty());
+    if (course == null) return false;
+    if (course.isAdaptive()) {
+      final List<Lesson> lessons = course.getLessons();
+      if (lessons.size() == 1) {
+        return !lessons.get(0).getTaskList().isEmpty();
+      }
+    }
+    return true;
   }
 }
