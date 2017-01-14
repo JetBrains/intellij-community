@@ -31,28 +31,28 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
-import com.jetbrains.python.testing.PythonTestConfigurationProducer;
-import com.jetbrains.python.testing.PythonTestConfigurationType;
+import com.jetbrains.python.testing.AbstractPythonOldTestRunConfiguration;
+import com.jetbrains.python.testing.PythonTestOldConfigurationProducer;
+import com.jetbrains.python.testing.PythonTestOldConfigurationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonDocTestConfigurationProducer extends PythonTestConfigurationProducer {
+public class PythonDocTestConfigurationProducer extends PythonTestOldConfigurationProducer {
 
   public PythonDocTestConfigurationProducer() {
-    super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY);
+    super(PythonTestOldConfigurationType.getInstance().PY_DOCTEST_FACTORY);
   }
 
   @Override
-  protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonTestRunConfiguration configuration) {
+  protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonOldTestRunConfiguration configuration) {
     return PythonDocTestUtil.isDocTestFunction(pyFunction);
   }
 
   @Override
   protected boolean isTestClass(@NotNull PyClass pyClass,
-                                @Nullable final AbstractPythonTestRunConfiguration configuration,
+                                @Nullable final AbstractPythonOldTestRunConfiguration configuration,
                                 @Nullable final TypeEvalContext context) {
     return PythonDocTestUtil.isDocTestClass(pyClass);
   }

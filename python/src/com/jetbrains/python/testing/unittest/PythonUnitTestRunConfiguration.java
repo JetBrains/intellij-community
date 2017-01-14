@@ -18,14 +18,13 @@ package com.jetbrains.python.testing.unittest;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonOldTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestRunConfiguration extends
-                                            AbstractPythonTestRunConfiguration<PythonUnitTestRunConfiguration>
+                                            AbstractPythonOldTestRunConfiguration<PythonUnitTestRunConfiguration>
                                               implements PythonUnitTestRunConfigurationParams {
   private boolean myIsPureUnittest = true;
   protected String myTitle = "Unittest";

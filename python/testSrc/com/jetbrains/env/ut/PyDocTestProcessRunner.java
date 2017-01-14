@@ -16,7 +16,7 @@
 package com.jetbrains.env.ut;
 
 import com.jetbrains.env.ProcessWithConsoleRunner;
-import com.jetbrains.python.testing.PythonTestConfigurationType;
+import com.jetbrains.python.testing.PythonTestOldConfigurationType;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyDocTestProcessRunner extends PyScriptTestProcessRunner<PythonDocTestRunConfiguration> {
   public PyDocTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY,
+    super(PythonTestOldConfigurationType.getInstance().PY_DOCTEST_FACTORY,
           PythonDocTestRunConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 }

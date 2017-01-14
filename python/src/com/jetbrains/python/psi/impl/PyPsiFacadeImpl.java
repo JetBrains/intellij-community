@@ -44,6 +44,7 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   }
 
   @Override
+  @NotNull
   public QualifiedNameResolver qualifiedNameResolver(String qNameString) {
     return new QualifiedNameResolverImpl(qNameString);
   }

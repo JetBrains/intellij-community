@@ -28,6 +28,7 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.jetbrains.python.PyFileChooserDescriptor;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,12 +58,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myProject = configuration.getProject();
 
-    FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return file.isDirectory() || file.getExtension() == null || Comparing.equal(file.getExtension(), "py");
-      }
-    };
+    FileChooserDescriptor chooserDescriptor = new PyFileChooserDescriptor(false);
     //chooserDescriptor.setRoot(s.getProject().getBaseDir());
 
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =

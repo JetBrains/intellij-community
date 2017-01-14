@@ -215,11 +215,17 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   }
 
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(@NotNull final ConfigurationContext context) {
-    final RunConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
+    return cloneTemplateConfigurationStatic(context, myConfigurationFactory);
+  }
+
+  @NotNull
+  protected static RunnerAndConfigurationSettings cloneTemplateConfigurationStatic(@NotNull final ConfigurationContext context,
+                                                                                   @NotNull final ConfigurationFactory configurationFactory) {
+    final RunConfiguration original = context.getOriginalConfiguration(configurationFactory.getType());
     if (original != null) {
-      return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), myConfigurationFactory);
+      return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), configurationFactory);
     }
-    return RunManager.getInstance(context.getProject()).createRunConfiguration("", myConfigurationFactory);
+    return RunManager.getInstance(context.getProject()).createRunConfiguration("", configurationFactory);
   }
 
   @NotNull
