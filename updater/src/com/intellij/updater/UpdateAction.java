@@ -37,13 +37,16 @@ public class UpdateAction extends BaseUpdateAction {
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     if (!isMove()) {
       patchOutput.putNextEntry(new ZipEntry(getPath()));
-      if (Utils.isLink(newerFile)) {
+
+      FileType type = getFileType(newerFile);
+      writeFileType(patchOutput, type);
+      if (type == FileType.SYMLINK) {
         writeLinkInfo(newerFile, patchOutput);
       }
       else {
-        writeExecutableFlag(patchOutput, newerFile);
         writeDiff(olderFile, newerFile, patchOutput);
       }
+
       patchOutput.closeEntry();
     }
   }
@@ -55,16 +58,14 @@ public class UpdateAction extends BaseUpdateAction {
 
     File updated;
     if (!isMove()) {
-      int filePermissions;
-
       try (InputStream in = Utils.findEntryInputStream(patchFile, getPath())) {
         if (in == null) {
           throw new IOException("Invalid entry " + getPath());
         }
 
-        filePermissions = in.read();
-        if (filePermissions > 1) {
-          Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+        FileType type = readFileType(in);
+        if (type == FileType.SYMLINK) {
+          Utils.createLink(readLinkInfo(in), toFile);
           return;
         }
 
@@ -73,9 +74,11 @@ public class UpdateAction extends BaseUpdateAction {
              InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized())) {
           applyDiff(in, oldFileIn, out);
         }
-      }
 
-      Utils.setExecutable(updated, filePermissions == 1);
+        if (type == FileType.EXECUTABLE_FILE) {
+          Utils.setExecutable(updated);
+        }
+      }
     }
     else {
       updated = source;

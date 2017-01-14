@@ -27,6 +27,10 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public abstract class PatchAction {
+  public enum FileType {
+    REGULAR_FILE, EXECUTABLE_FILE, SYMLINK
+  }
+
   private static final byte CRITICAL = 0x1;
   private static final byte OPTIONAL = 0x2;
 
@@ -84,8 +88,21 @@ public abstract class PatchAction {
     if (optional) myFlags |= OPTIONAL; else myFlags &= ~OPTIONAL;
   }
 
-  protected static void writeExecutableFlag(OutputStream out, File file) throws IOException {
-    out.write(file.canExecute() ? 1 : 0);
+  protected static FileType getFileType(File file) throws IOException {
+    if (Utils.isLink(file)) return FileType.SYMLINK;
+    if (Utils.isExecutable(file)) return FileType.EXECUTABLE_FILE;
+    return FileType.REGULAR_FILE;
+  }
+
+  protected static void writeFileType(OutputStream out, FileType type) throws IOException {
+    out.write(type.ordinal());
+  }
+
+  protected static FileType readFileType(InputStream in) throws IOException {
+    int value = in.read();
+    FileType[] types = FileType.values();
+    if (value < 0 || value >= types.length) throw new IOException("Stream format error");
+    return types[value];
   }
 
   protected static void writeLinkInfo(File file, OutputStream out) throws IOException {
@@ -96,9 +113,11 @@ public abstract class PatchAction {
     out.write(bytes);
   }
 
-  protected static String readLinkInfo(InputStream in, int length) throws IOException {
+  protected static String readLinkInfo(InputStream in) throws IOException {
+    int length = in.read();
+    if (length <= 0) throw new IOException("Stream format error");
     byte[] bytes = new byte[length];
-    if (length == 0 || in.read(bytes) != length) throw new IOException("Stream format error");
+    if (in.read(bytes) != length) throw new IOException("Stream format error");
     return new String(bytes, "UTF-8");
   }
 

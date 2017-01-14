@@ -34,14 +34,15 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    Runner.logger().info("building PatchFile");
     patchOutput.putNextEntry(new ZipEntry(getPath()));
+
     if (!newerFile.isDirectory()) {
+      FileType type = getFileType(newerFile);
+      writeFileType(patchOutput, type);
       if (Utils.isLink(newerFile)) {
         writeLinkInfo(newerFile, patchOutput);
       }
       else {
-        writeExecutableFlag(patchOutput, newerFile);
         Utils.copyFileToStream(newerFile, patchOutput);
       }
     }
@@ -89,13 +90,15 @@ public class CreateAction extends PatchAction {
           throw new IOException("Invalid entry " + getPath());
         }
 
-        int filePermissions = in.read();
-        if (filePermissions > 1) {
-          Utils.createLink(readLinkInfo(in, filePermissions), toFile);
+        FileType type = readFileType(in);
+        if (type == FileType.SYMLINK) {
+          Utils.createLink(readLinkInfo(in), toFile);
         }
         else {
           Utils.copyStreamToFile(in, toFile);
-          Utils.setExecutable(toFile, filePermissions == 1);
+          if (type == FileType.EXECUTABLE_FILE) {
+            Utils.setExecutable(toFile);
+          }
         }
       }
     }

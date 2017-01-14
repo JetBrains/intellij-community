@@ -104,9 +104,13 @@ public class Utils {
     throw new IOException("Cannot delete: " + path);
   }
 
-  public static void setExecutable(File file, boolean executable) throws IOException {
-    if (executable && !file.setExecutable(true, false)) {
-      Runner.logger().error("Can't set executable permissions for file: " + file);
+  public static boolean isExecutable(File file) {
+    return file.canExecute();
+  }
+
+  public static void setExecutable(File file) throws IOException {
+    Runner.logger().info("Setting executable permissions for: " + file);
+    if (!file.setExecutable(true, false)) {
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
@@ -138,7 +142,9 @@ public class Utils {
       try (InputStream in = new BufferedInputStream(new FileInputStream(from))) {
         copyStreamToFile(in, to);
       }
-      setExecutable(to, from.canExecute());
+      if (isExecutable(from)) {
+        setExecutable(to);
+      }
     }
   }
 
