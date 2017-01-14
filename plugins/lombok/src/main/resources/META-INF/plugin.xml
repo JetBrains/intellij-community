@@ -3,7 +3,7 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.13</version>
+  <version>0.15</version>
 
   <idea-version since-build="138.00"/>
 
@@ -36,7 +36,6 @@
         <li><a href="https://projectlombok.org/features/experimental/Wither.html">@Wither</a></li>
         <li><a href="https://projectlombok.org/features/SneakyThrows.html">@SneakyThrows</a></li>
         <li><a href="https://projectlombok.org/features/val.html">from Intellij 14.1 @val</a></li>
-        <li><a href="https://projectlombok.org/features/var.html">from Intellij 14.1 @var</a></li>
         <li><a href="https://projectlombok.org/features/experimental/var.html">from Intellij 14.1 @var</a></li>
         <li><a href="https://projectlombok.org/features/experimental/UtilityClass.html">from Intellij 2016.2 @UtilityClass</a></li>
         <li><a href="https://projectlombok.org/features/configuration.html">Lombok config system</a></li>
@@ -261,6 +260,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.15
+				<ol>
+            <li>Fixed #xxx: </li>
+				</ol>
+			</li>
 		<li>0.14
 				<ol>
             <li>Fixed #209: Fixed @EqualsAndHashCode unnecessary warning</li>
