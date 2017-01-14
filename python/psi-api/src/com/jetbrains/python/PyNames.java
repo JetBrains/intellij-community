@@ -203,8 +203,6 @@ public class PyNames {
 
   public static final String NOSE_TEST = "nose";
   public static final String PY_TEST = "pytest";
-  public static final String AT_TEST = "Attest";
-  public static final String AT_TEST_IMPORT = "attest";
 
   public static final String TEST_CASE = "TestCase";
 
