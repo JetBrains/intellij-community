@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  */
-public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfiguration
+public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfiguration<PythonDocTestRunConfiguration>
                                           implements PythonDocTestRunConfigurationParams {
   protected String myPluralTitle = "Doctests";
   protected String myTitle = "Doctest";
@@ -40,7 +40,7 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
   }
 
   @Override
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PythonDocTestRunConfiguration> createConfigurationEditor() {
     return new PythonDocTestRunConfigurationEditor(getProject(), this);
   }
 

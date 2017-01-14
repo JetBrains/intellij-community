@@ -44,14 +44,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-public class PyTestConfigurationProducer extends PythonTestConfigurationProducer {
+public class PyTestConfigurationProducer extends PythonTestConfigurationProducer<PyTestRunConfiguration> {
 
   public PyTestConfigurationProducer() {
     super(PythonTestConfigurationType.getInstance().PY_PYTEST_FACTORY);
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonTestRunConfiguration configuration,
+  protected boolean setupConfigurationFromContext(AbstractPythonTestRunConfiguration<PyTestRunConfiguration> configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
     final PsiElement element = sourceElement.get();

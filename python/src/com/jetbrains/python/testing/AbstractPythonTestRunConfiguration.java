@@ -50,7 +50,7 @@ import java.io.File;
 /**
  * User: catherine
  */
-public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonRunConfiguration
+public abstract class AbstractPythonTestRunConfiguration<T extends AbstractPythonRunConfiguration<T>> extends AbstractPythonRunConfiguration<T>
                             implements AbstractPythonRunConfigurationParams,
                                        AbstractPythonTestRunConfigurationParams,
                                        RefactoringListenerProvider {

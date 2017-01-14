@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  */
-public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfiguration
+public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfiguration<PythonNoseTestRunConfiguration>
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests
   protected String myTitle = "Nosetest";
@@ -47,7 +47,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   }
 
   @Override
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PythonNoseTestRunConfiguration> createConfigurationEditor() {
     return new PythonNoseTestRunConfigurationEditor(getProject(), this);
   }
 
