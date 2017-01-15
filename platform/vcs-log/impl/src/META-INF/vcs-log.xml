@@ -12,8 +12,8 @@
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogTabsProperties"
-                    serviceImplementation="com.intellij.vcs.log.data.VcsLogTabsProperties"/>
+    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogTabsProperties"
+                    serviceImplementation="com.intellij.vcs.log.impl.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
 
