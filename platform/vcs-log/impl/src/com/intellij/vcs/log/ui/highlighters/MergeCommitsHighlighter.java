@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui;
+package com.intellij.vcs.log.ui.highlighters;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.index.VcsLogIndex;
 import org.jetbrains.annotations.NotNull;
 
-public class IndexHighlighter implements VcsLogHighlighter {
-  public static final JBColor NOT_INDEXED_COMMIT_FOREGROUND = JBColor.BLUE;
-  @NotNull private final VcsLogData myLogData;
+public class MergeCommitsHighlighter implements VcsLogHighlighter {
+  public static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._128, Gray._96);
+  @NotNull private final VcsLogUi myLogUi;
 
-  public IndexHighlighter(@NotNull VcsLogData logData) {
-    myLogData = logData;
+  public MergeCommitsHighlighter(@NotNull VcsLogUi logUi) {
+    myLogUi = logUi;
   }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails details, boolean isSelected) {
-    if (isSelected || !Registry.is("vcs.log.highlight.not.indexed")) return VcsCommitStyle.DEFAULT;
-    VcsLogIndex index = myLogData.getIndex();
-    if (!index.isIndexed(myLogData.getCommitIndex(details.getId(), details.getRoot()))) {
-      return VcsCommitStyleFactory.foreground(NOT_INDEXED_COMMIT_FOREGROUND);
-    }
+    if (isSelected || !myLogUi.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
+    if (details.getParents().size() >= 2) return VcsCommitStyleFactory.foreground(MERGE_COMMIT_FOREGROUND);
     return VcsCommitStyle.DEFAULT;
   }
 
@@ -46,12 +42,12 @@ public class IndexHighlighter implements VcsLogHighlighter {
   }
 
   public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull private static final String ID = "INDEXED_COMMITS";
+    @NotNull private static final String ID = "MERGE_COMMITS";
 
     @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
-      return new IndexHighlighter(logData);
+      return new MergeCommitsHighlighter(logUi);
     }
 
     @NotNull
@@ -63,12 +59,12 @@ public class IndexHighlighter implements VcsLogHighlighter {
     @NotNull
     @Override
     public String getTitle() {
-      return "Indexed Commits";
+      return "Merge Commits";
     }
 
     @Override
     public boolean showMenuItem() {
-      return false;
+      return true;
     }
   }
 }
