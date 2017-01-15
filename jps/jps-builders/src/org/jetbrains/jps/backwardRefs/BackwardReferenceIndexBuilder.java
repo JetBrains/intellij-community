@@ -72,7 +72,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
     }
 
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      if (target instanceof JVMModuleBuildTarget) {
+      if (context.getScope().isWholeTargetAffected(target)) {
         final JpsModule module = target.getModule();
         final String moduleName = module.getName();
         context.processMessage(new CustomBuilderMessage(BUILDER_ID, "processed module", moduleName));
