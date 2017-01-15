@@ -193,7 +193,6 @@ public class GitCherryPicker extends VcsCherryPicker {
       }
       else if (isNothingToCommitMessage(result)) {
         alreadyPicked.add(commitWrapper);
-        return true;
       }
       else {
         notifyError(result.getErrorOutputAsHtmlString(), commitWrapper, successfulCommits);
