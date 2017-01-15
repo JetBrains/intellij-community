@@ -20,6 +20,8 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -27,8 +29,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
+  public static final String BUILDER_ID = "compiler.ref.index";
+
   public BackwardReferenceIndexBuilder() {
-    super(BuilderCategory.INITIAL);
+    super(BuilderCategory.CLASS_POST_PROCESSOR);
   }
 
   @NotNull
@@ -66,6 +70,15 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
         }
       }
     }
+
+    for (ModuleBuildTarget target : chunk.getTargets()) {
+      if (context.getScope().isWholeTargetAffected(target)) {
+        final JpsModule module = target.getModule();
+        final String moduleName = module.getName();
+        context.processMessage(new CustomBuilderMessage(BUILDER_ID, "processed module", moduleName));
+      }
+    }
+
     return null;
   }
 }

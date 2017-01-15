@@ -16,13 +16,16 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -35,14 +38,17 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DirtyScopeHolder extends UserDataHolderBase {
   private final CompilerReferenceServiceImpl myService;
@@ -55,6 +61,8 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private final List<ExcludeEntryDescription> myExcludedDescriptions = new SmartList<>(); // guarded by myLock
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
+  private final Set<String> myCompilationAffectedModules = ContainerUtil.newConcurrentSet(); // used outside myLock
+
 
   public DirtyScopeHolder(@NotNull CompilerReferenceServiceImpl service,
                           FileDocumentManager fileDocumentManager,
@@ -63,16 +71,25 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     myFileDocManager = fileDocumentManager;
     myPsiDocManager = psiDocumentManager;
 
-    service.getProject().getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
-      @Override
-      public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
-        synchronized (myLock) {
-          if (myCompilationPhase) {
-            myExcludedDescriptions.add(description);
+    if (CompilerReferenceService.isEnabled()) {
+      final MessageBusConnection connect = service.getProject().getMessageBus().connect();
+      connect.subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
+        @Override
+        public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
+          synchronized (myLock) {
+            if (myCompilationPhase) {
+              myExcludedDescriptions.add(description);
+            }
           }
         }
-      }
-    });
+      });
+
+      connect.subscribe(CustomBuilderMessageHandler.TOPIC, (builderId, messageType, messageText) -> {
+        if (BackwardReferenceIndexBuilder.BUILDER_ID.equals(builderId)) {
+          myCompilationAffectedModules.add(messageText);
+        }
+      });
+    }
   }
 
   void compilerActivityStarted() {
@@ -80,22 +97,57 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       myCompilationPhase = true;
       Collections.addAll(myExcludedDescriptions, CompilerConfiguration.getInstance(myService.getProject()).getExcludedEntriesConfiguration().getExcludeEntryDescriptions());
       myExcludedFilesScope = null;
+      myCompilationAffectedModules.clear();
     }
   }
 
-  void compilerActivityFinished(Module[] affectedModules, Module[] markAsDirty) {
+  void upToDateChecked(boolean isUpToDate) {
+    compilationFinished(() -> {
+      if (!isUpToDate) {
+        final Module[] modules = ReadAction.compute(() -> {
+          final Project project = myService.getProject();
+          if (project.isDisposed()) {
+            return null;
+          }
+          return ModuleManager.getInstance(project).getModules();
+        });
+        if (modules == null) return;
+        ContainerUtil.addAll(myVFSChangedModules, modules);
+      }
+    });
+  }
+
+  void compilerActivityFinished(Module[] affectedModules) {
+    compilationFinished(() -> {
+      final List<Module> compiledModules = ReadAction.compute(() -> {
+        final Project project = myService.getProject();
+        if (project.isDisposed()) {
+          return null;
+        }
+        final ModuleManager moduleManager = ModuleManager.getInstance(myService.getProject());
+        return myCompilationAffectedModules.stream().map(moduleManager::findModuleByName).collect(Collectors.toList());
+      });
+      if (compiledModules == null) return;
+
+      Set<Module> dirtyModulesAfterCompilation = ContainerUtil.set(affectedModules);
+      dirtyModulesAfterCompilation.removeAll(compiledModules);
+      ContainerUtil.addAll(myVFSChangedModules, dirtyModulesAfterCompilation);
+    });
+  }
+
+  private void compilationFinished(Runnable action) {
     ExcludeEntryDescription[] descriptions;
     synchronized (myLock) {
       myCompilationPhase = false;
-
-      ContainerUtil.removeAll(myVFSChangedModules, affectedModules);
-      Collections.addAll(myVFSChangedModules, markAsDirty);
+      action.run();
+      myCompilationAffectedModules.clear();
       myVFSChangedModules.addAll(myChangedModulesDuringCompilation);
       myChangedModulesDuringCompilation.clear();
       descriptions = myExcludedDescriptions.toArray(new ExcludeEntryDescription[myExcludedDescriptions.size()]);
       myExcludedDescriptions.clear();
     }
     myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
+
   }
 
   GlobalSearchScope getDirtyScope() {
@@ -122,7 +174,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   @NotNull
-  private Set<Module> getAllDirtyModules() {
+  Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
