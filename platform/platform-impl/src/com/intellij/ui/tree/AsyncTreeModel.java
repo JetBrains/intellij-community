@@ -110,18 +110,19 @@ public class AsyncTreeModel extends InvokableTreeModel {
 
   @Override
   public Object getChild(Object object, int index) {
-    List<Object> children = getChildren(object);
-    return 0 <= index && index < children.size() ? children.get(index) : null;
+    Entry<Object> entry = getEntry(object, true);
+    return entry == null ? null : entry.getChild(index);
   }
 
   @Override
   public int getChildCount(Object object) {
-    return getChildren(object).size();
+    Entry<Object> entry = getEntry(object, true);
+    return entry == null ? 0 : entry.getChildCount();
   }
 
   @Override
   public boolean isLeaf(Object object) {
-    Entry<Object> entry = getEntry(object);
+    Entry<Object> entry = getEntry(object, false);
     return entry == null || entry.isLeaf();
   }
 
@@ -131,8 +132,9 @@ public class AsyncTreeModel extends InvokableTreeModel {
   }
 
   @Override
-  public int getIndexOfChild(Object parent, Object object) {
-    return getIndex(getChildren(parent), object);
+  public int getIndexOfChild(Object object, Object child) {
+    Entry<Object> entry = getEntry(object, true);
+    return entry == null ? -1 : entry.getIndexOf(child);
   }
 
   @NotNull
@@ -145,31 +147,16 @@ public class AsyncTreeModel extends InvokableTreeModel {
     return null;
   }
 
-  private static int getIndex(List<Object> children, Object object) {
-    int index = children.size();
-    while (0 < index--) {
-      if (object == children.get(index)) break;
-    }
-    return index;
-  }
-
   private boolean isValidThread() {
     if (processor.foreground.isValidThread()) return true;
     LOG.warn("AsyncTreeModel is used from unexpected thread");
     return false;
   }
 
-  private Entry<Object> getEntry(Object object) {
-    return object == null || !isValidThread() ? null : tree.findEntry(object);
-  }
-
-  private List<Object> getChildren(Object object) {
-    Entry<Object> entry = getEntry(object);
-    if (entry == null) return emptyList();
-    List<Object> children = entry.getChildren();
-    if (children != null) return children;
-    loadChildren(entry, true);
-    return entry.getChildren();
+  private Entry<Object> getEntry(Object object, boolean loadChildren) {
+    Entry<Object> entry = object == null || !isValidThread() ? null : tree.findEntry(object);
+    if (entry != null && loadChildren && entry.isLoadingRequired()) loadChildren(entry, true);
+    return entry;
   }
 
   private void loadChildren(Entry<Object> entry, boolean insertLoadingNode) {
