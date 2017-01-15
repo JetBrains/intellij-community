@@ -34,10 +34,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class SnapshotVisiblePackBuilder {
-  @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final VcsLogStorage myStorage;
 
-  public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage hashMap) {
-    myHashMap = hashMap;
+  public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
+    myStorage = storage;
   }
 
   @NotNull
@@ -64,7 +64,7 @@ public class SnapshotVisiblePackBuilder {
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
 
     GraphColorManagerImpl colorManager =
-      new GraphColorManagerImpl(newRefsModel, VcsLogStorageImpl.createHashGetter(myHashMap),
+      new GraphColorManagerImpl(newRefsModel, VcsLogStorageImpl.createHashGetter(myStorage),
                                 DataPack.getRefManagerMap(oldPack.getLogProviders()));
 
     VisibleGraph<Integer> newGraph =
@@ -75,7 +75,7 @@ public class SnapshotVisiblePackBuilder {
 
   @NotNull
   private RefsModel createEmptyRefsModel() {
-    return new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), myHashMap, ContainerUtil.newHashMap());
+    return new RefsModel(ContainerUtil.newHashMap(), ContainerUtil.newHashSet(), myStorage, ContainerUtil.newHashMap());
   }
 
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
@@ -84,7 +84,7 @@ public class SnapshotVisiblePackBuilder {
                                     @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     Set<VcsRef> branchesAndHeads = ContainerUtil.newHashSet();
     refsModel.getBranches().stream().filter(ref -> {
-      int index = myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
+      int index = myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
       Integer row = visibleGraph.getVisibleRowIndex(index);
       return row != null && row >= 0;
     }).forEach(branchesAndHeads::add);
@@ -94,8 +94,8 @@ public class SnapshotVisiblePackBuilder {
     Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
     for (VirtualFile root : providers.keySet()) {
       Set<VcsRef> refsForRoot = map.get(root);
-      refs.put(root, new CompressedRefs(refsForRoot == null ? ContainerUtil.newHashSet() : refsForRoot, myHashMap));
+      refs.put(root, new CompressedRefs(refsForRoot == null ? ContainerUtil.newHashSet() : refsForRoot, myStorage));
     }
-    return new RefsModel(refs, heads, myHashMap, providers);
+    return new RefsModel(refs, heads, myStorage, providers);
   }
 }

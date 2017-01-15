@@ -42,18 +42,18 @@ class VcsLogFilterer {
 
   private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
 
-  @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final VcsLogStorage myStorage;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsLogIndex myIndex;
 
   VcsLogFilterer(@NotNull Map<VirtualFile, VcsLogProvider> providers,
-                 @NotNull VcsLogStorage hashMap,
+                 @NotNull VcsLogStorage storage,
                  @NotNull TopCommitsCache topCommitsDetailsCache,
                  @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
                  @NotNull VcsLogIndex index) {
-    myHashMap = hashMap;
+    myStorage = storage;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myCommitDetailsGetter = detailsGetter;
     myLogProviders = providers;
@@ -162,8 +162,8 @@ class VcsLogFilterer {
                                       @NotNull Collection<String> hashes,
                                       @NotNull PermanentGraph.SortType sortType) {
     final Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, partOfHash -> {
-      CommitId commitId = myHashMap.findCommitId(new CommitIdByStringCondition(partOfHash));
-      return commitId != null ? myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
+      CommitId commitId = myStorage.findCommitId(new CommitIdByStringCondition(partOfHash));
+      return commitId != null ? myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
     });
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
     return new VisiblePack(dataPack, visibleGraph, false,
@@ -197,7 +197,7 @@ class VcsLogFilterer {
   private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull final VcsLogBranchFilter filter) {
     return new HashSet<>(ContainerUtil.mapNotNull(refs.getBranches(), ref -> {
       boolean acceptRef = filter.matches(ref.getName());
-      return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot()) : null;
+      return acceptRef ? myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot()) : null;
     }));
   }
 
@@ -205,7 +205,7 @@ class VcsLogFilterer {
     Set<Integer> result = new HashSet<>();
     for (VcsRef branch : refs.getBranches()) {
       if (roots.contains(branch.getRoot())) {
-        result.add(myHashMap.getCommitIndex(branch.getCommitHash(), branch.getRoot()));
+        result.add(myStorage.getCommitIndex(branch.getCommitHash(), branch.getRoot()));
       }
     }
     return result;
@@ -244,7 +244,7 @@ class VcsLogFilterer {
       return true;
     }
     // TODO O(n^2)
-    int commitIndex = myHashMap.getCommitIndex(commit.getId(), commit.getRoot());
+    int commitIndex = myStorage.getCommitIndex(commit.getId(), commit.getRoot());
     return ContainerUtil.intersects(permanentGraph.getContainingBranches(commitIndex), matchingHeads);
   }
 
@@ -294,7 +294,7 @@ class VcsLogFilterer {
       return null;
     }
 
-    return ContainerUtil.map2Set(commits, commitId -> myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot()));
+    return ContainerUtil.map2Set(commits, commitId -> myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
   }
 
   private static class FilterResult {

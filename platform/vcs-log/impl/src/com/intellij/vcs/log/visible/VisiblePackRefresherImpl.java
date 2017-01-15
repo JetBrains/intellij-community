@@ -56,7 +56,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
                                   @NotNull PermanentGraph.SortType initialSortType) {
     myLogData = logData;
     myVisiblePackBuilder =
-      new VcsLogFilterer(myLogData.getLogProviders(), myLogData.getHashMap(), myLogData.getTopCommitsCache(),
+      new VcsLogFilterer(myLogData.getLogProviders(), myLogData.getStorage(), myLogData.getTopCommitsCache(),
                          myLogData.getCommitDetailsGetter(),
                          myLogData.getIndex());
     myFilters = new VcsLogFilterCollectionBuilder().build();
@@ -197,7 +197,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
           if (filterRequest != null) {
             frozenVisiblePack = refresh(visiblePack, filterRequest, moreCommitsRequests);
           }
-          return new SnapshotVisiblePackBuilder(myLogData.getHashMap()).build(frozenVisiblePack);
+          return new SnapshotVisiblePackBuilder(myLogData.getStorage()).build(frozenVisiblePack);
         }
 
         Request nonValidateRequest = ContainerUtil.find(requests, request -> !(request instanceof ValidateRequest));

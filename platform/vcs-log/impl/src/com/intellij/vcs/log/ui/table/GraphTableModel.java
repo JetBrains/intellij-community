@@ -76,7 +76,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
     final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
-    CommitId commitId = myLogData.getHashMap().findCommitId(
+    CommitId commitId = myLogData.getStorage().findCommitId(
       commitId1 -> hashByString.value(commitId1) && getRowOfCommit(commitId1.getHash(), commitId1.getRoot()) != -1);
     return commitId != null ? getRowOfCommit(commitId.getHash(), commitId.getRoot()) : -1;
   }
