@@ -18,7 +18,10 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefManager;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -56,7 +59,7 @@ public class DataPack extends DataPackBase {
     }
     else {
       refsModel = new RefsModel(refs, getHeads(commits), hashMap, providers);
-      Function<Integer, Hash> hashGetter = createHashGetter(hashMap);
+      Function<Integer, Hash> hashGetter = VcsLogStorageImpl.createHashGetter(hashMap);
       GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), hashMap);
 
@@ -66,15 +69,6 @@ public class DataPack extends DataPackBase {
     }
 
     return new DataPack(refsModel, permanentGraph, providers, full);
-  }
-
-  @NotNull
-  public static Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage hashMap) {
-    return commitIndex -> {
-      CommitId commitId = hashMap.getCommitId(commitIndex);
-      if (commitId == null) return null;
-      return commitId.getHash();
-    };
   }
 
   @NotNull

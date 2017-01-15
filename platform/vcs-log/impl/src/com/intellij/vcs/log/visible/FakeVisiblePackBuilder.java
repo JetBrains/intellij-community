@@ -64,7 +64,8 @@ public class FakeVisiblePackBuilder {
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
 
     GraphColorManagerImpl colorManager =
-      new GraphColorManagerImpl(newRefsModel, DataPack.createHashGetter(myHashMap), DataPack.getRefManagerMap(oldPack.getLogProviders()));
+      new GraphColorManagerImpl(newRefsModel, VcsLogStorageImpl.createHashGetter(myHashMap),
+                                DataPack.getRefManagerMap(oldPack.getLogProviders()));
 
     VisibleGraph<Integer> newGraph =
       new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null), info, colorManager);
