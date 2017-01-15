@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  */
-public interface VcsLogFilterer {
+public interface VisiblePackRefresher {
 
   void addVisiblePackChangeListener(@NotNull VisiblePackChangeListener listener);
 

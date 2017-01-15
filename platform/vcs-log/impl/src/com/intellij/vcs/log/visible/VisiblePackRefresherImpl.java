@@ -36,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class VcsLogFiltererImpl implements VcsLogFilterer {
-  private static final Logger LOG = Logger.getInstance(VcsLogFiltererImpl.class);
+public class VisiblePackRefresherImpl implements VisiblePackRefresher {
+  private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
@@ -51,10 +51,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
   private volatile boolean myIsValid = true;
 
-  public VcsLogFiltererImpl(@NotNull
-                            final Project project,
-                            @NotNull VcsLogData logData,
-                            @NotNull PermanentGraph.SortType initialSortType) {
+  public VisiblePackRefresherImpl(@NotNull Project project,
+                                  @NotNull VcsLogData logData,
+                                  @NotNull PermanentGraph.SortType initialSortType) {
     myLogData = logData;
     myVisiblePackBuilder =
       new VisiblePackBuilder(myLogData.getLogProviders(), myLogData.getHashMap(), myLogData.getTopCommitsCache(),

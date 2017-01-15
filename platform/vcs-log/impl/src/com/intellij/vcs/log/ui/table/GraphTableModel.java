@@ -93,7 +93,7 @@ public class GraphTableModel extends AbstractTableModel {
    */
   public void requestToLoadMore(@NotNull Runnable onLoaded) {
     myMoreRequested = true;
-    myUi.getFilterer().moreCommitsNeeded(onLoaded);
+    myUi.getRefresher().moreCommitsNeeded(onLoaded);
     myUi.getTable().setPaintBusy(true);
   }
 

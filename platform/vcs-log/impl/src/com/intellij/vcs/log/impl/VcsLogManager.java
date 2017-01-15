@@ -38,7 +38,7 @@ import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
+import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +118,8 @@ public class VcsLogManager implements Disposable {
   @NotNull
   public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName, @Nullable VcsLogFilter filter) {
     MainVcsLogUiProperties properties = myUiProperties.createProperties(logId);
-    VcsLogFiltererImpl filterer = new VcsLogFiltererImpl(myProject, myLogData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
+    VisiblePackRefresherImpl filterer =
+      new VisiblePackRefresherImpl(myProject, myLogData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
     VcsLogUiImpl ui = new VcsLogUiImpl(myLogData, myProject, myColorManager, properties, filterer);
     if (filter != null) {
       ui.getFilterUi().setFilter(filter);
@@ -126,10 +127,10 @@ public class VcsLogManager implements Disposable {
 
     Disposable disposable;
     if (contentTabName != null) {
-      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getFilterer());
+      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getRefresher());
     }
     else {
-      disposable = myPostponableRefresher.addLogWindow(ui.getFilterer());
+      disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
     }
     Disposer.register(ui, disposable);
 
