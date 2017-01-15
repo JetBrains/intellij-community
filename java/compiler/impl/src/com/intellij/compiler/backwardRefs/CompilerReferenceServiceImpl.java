@@ -118,7 +118,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
               return context.getCompileScope().getAffectedModules();
             });
             if (compilationModules == null) return;
-            myDirtyScopeHolder.compilerActivityFinished(compilationModules);
+            myDirtyScopeHolder.compilerActivityFinished();
             myCompilationCount.increment();
             openReaderIfNeed();
           };

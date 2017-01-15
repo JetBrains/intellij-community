@@ -117,7 +117,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     });
   }
 
-  void compilerActivityFinished(Module[] affectedModules) {
+  void compilerActivityFinished() {
     compilationFinished(() -> {
       final List<Module> compiledModules = ReadAction.compute(() -> {
         final Project project = myService.getProject();
@@ -128,10 +128,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
         return myCompilationAffectedModules.stream().map(moduleManager::findModuleByName).collect(Collectors.toList());
       });
       if (compiledModules == null) return;
-
-      Set<Module> dirtyModulesAfterCompilation = ContainerUtil.set(affectedModules);
-      dirtyModulesAfterCompilation.removeAll(compiledModules);
-      ContainerUtil.addAll(myVFSChangedModules, dirtyModulesAfterCompilation);
+      myVFSChangedModules.removeAll(compiledModules);
     });
   }
 
