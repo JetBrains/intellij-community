@@ -33,10 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-public class FakeVisiblePackBuilder {
+public class SnapshotVisiblePackBuilder {
   @NotNull private final VcsLogStorage myHashMap;
 
-  public FakeVisiblePackBuilder(@NotNull VcsLogStorage hashMap) {
+  public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage hashMap) {
     myHashMap = hashMap;
   }
 

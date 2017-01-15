@@ -197,7 +197,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher {
           if (filterRequest != null) {
             frozenVisiblePack = refresh(visiblePack, filterRequest, moreCommitsRequests);
           }
-          return new FakeVisiblePackBuilder(myLogData.getHashMap()).build(frozenVisiblePack);
+          return new SnapshotVisiblePackBuilder(myLogData.getHashMap()).build(frozenVisiblePack);
         }
 
         Request nonValidateRequest = ContainerUtil.find(requests, request -> !(request instanceof ValidateRequest));
