@@ -37,6 +37,7 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RectanglePainter;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
-class CommitPanel extends JBPanel {
+public class CommitPanel extends JBPanel {
   public static final int BOTTOM_BORDER = 2;
   private static final int REFERENCES_BORDER = 12;
   private static final int TOP_BORDER = 4;

@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.ui.tables;
+package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
