@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +26,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.SingleTaskController;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -48,11 +51,15 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
   private volatile boolean myIsValid = true;
 
-  public VcsLogFiltererImpl(@NotNull final Project project,
+  public VcsLogFiltererImpl(@NotNull
+                            final Project project,
                             @NotNull VcsLogData logData,
                             @NotNull PermanentGraph.SortType initialSortType) {
     myLogData = logData;
-    myVisiblePackBuilder = myLogData.createVisiblePackBuilder();
+    myVisiblePackBuilder =
+      new VisiblePackBuilder(myLogData.getLogProviders(), myLogData.getHashMap(), myLogData.getTopCommitsCache(),
+                             myLogData.getCommitDetailsGetter(),
+                             myLogData.getIndex());
     myFilters = new VcsLogFilterCollectionBuilder().build();
     mySortType = initialSortType;
 

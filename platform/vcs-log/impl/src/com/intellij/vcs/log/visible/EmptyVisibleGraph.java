@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.visible;
 
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.RowInfo;
@@ -29,7 +29,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 
-class EmptyVisibleGraph implements VisibleGraph<Integer> {
+public class EmptyVisibleGraph implements VisibleGraph<Integer> {
 
   private static final VisibleGraph<Integer> INSTANCE = new EmptyVisibleGraph();
 

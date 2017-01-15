@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.data
+package com.intellij.vcs.log.visible
 
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.progress.ProgressIndicator
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -125,7 +126,7 @@ class VisiblePackBuilderTest {
   data class Data(val user: VcsUser? = DEFAULT_USER, val subject: String = "default commit message")
 
   inner class Graph(val commits: List<GraphCommit<Int>>,
-                    val refs: Set<VisiblePackBuilderTest.Ref>,
+                    val refs: Set<Ref>,
                     val data: HashMap<GraphCommit<Int>, Data>) {
     val root: VirtualFile = MockVirtualFile("root")
     val providers: Map<VirtualFile, TestVcsLogProvider> = mapOf(root to TestVcsLogProvider(root))
@@ -159,7 +160,7 @@ class VisiblePackBuilderTest {
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
-    fun generateHashMap(num: Int, refs: Set<VisiblePackBuilderTest.Ref>, root: VirtualFile): ConstantVcsLogStorage {
+    fun generateHashMap(num: Int, refs: Set<Ref>, root: VirtualFile): ConstantVcsLogStorage {
       val hashes = HashMap<Int, Hash>()
       for (i in 1..num) {
         hashes.put(i, HashImpl.build(i.toString()))

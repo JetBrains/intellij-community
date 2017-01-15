@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogFilterer;
+import com.intellij.vcs.log.visible.VcsLogFilterer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

@@ -43,11 +43,11 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
-                        @NotNull Map<VirtualFile, CompressedRefs> refs,
-                        @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                        @NotNull final VcsLogStorage hashMap,
-                        boolean full) {
+  public static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
+                               @NotNull Map<VirtualFile, CompressedRefs> refs,
+                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                               @NotNull VcsLogStorage hashMap,
+                               boolean full) {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
@@ -69,7 +69,7 @@ public class DataPack extends DataPackBase {
   }
 
   @NotNull
-  public static Function<Integer, Hash> createHashGetter(@NotNull final VcsLogStorage hashMap) {
+  public static Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage hashMap) {
     return commitIndex -> {
       CommitId commitId = hashMap.getCommitId(commitIndex);
       if (commitId == null) return null;

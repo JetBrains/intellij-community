@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,15 @@ import java.util.*;
  */
 public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
-  private static final Set<VcsLogUiProperty> SUPPORTED_PROPERTIES = ContainerUtil.newHashSet(MainVcsLogUiProperties.SHOW_DETAILS,
-                                                                                             MainVcsLogUiProperties.SHOW_LONG_EDGES,
-                                                                                             MainVcsLogUiProperties.BEK_SORT_TYPE,
-                                                                                             MainVcsLogUiProperties.SHOW_ROOT_NAMES,
-                                                                                             MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW,
-                                                                                             MainVcsLogUiProperties.SHOW_TAG_NAMES,
-                                                                                             MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
-                                                                                             MainVcsLogUiProperties.TEXT_FILTER_REGEX);
+  private static final Set<VcsLogUiProperties.VcsLogUiProperty> SUPPORTED_PROPERTIES =
+    ContainerUtil.newHashSet(MainVcsLogUiProperties.SHOW_DETAILS,
+                             MainVcsLogUiProperties.SHOW_LONG_EDGES,
+                             MainVcsLogUiProperties.BEK_SORT_TYPE,
+                             MainVcsLogUiProperties.SHOW_ROOT_NAMES,
+                             MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW,
+                             MainVcsLogUiProperties.SHOW_TAG_NAMES,
+                             MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
+                             MainVcsLogUiProperties.TEXT_FILTER_REGEX);
   private final Set<VcsLogUiPropertiesListener> myListeners = ContainerUtil.newLinkedHashSet();
 
   public static class State {
@@ -59,7 +60,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public <T> T get(@NotNull VcsLogUiProperty<T> property) {
+  public <T> T get(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
     if (SHOW_DETAILS.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_DETAILS_IN_CHANGES);
     }
@@ -93,7 +94,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   @Override
-  public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
+  public <T> void set(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property, @NotNull T value) {
     if (SHOW_DETAILS.equals(property)) {
       getState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
     }
@@ -128,7 +129,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   }
 
   @Override
-  public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
+  public <T> boolean exists(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
     if (SUPPORTED_PROPERTIES.contains(property) || property instanceof VcsLogHighlighterProperty) {
       return true;
     }
@@ -251,7 +252,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public abstract void onHighlighterChanged();
 
     @Override
-    public <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property) {
+    public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
       if (SHOW_DETAILS.equals(property)) {
         onShowDetailsChanged();
       }
