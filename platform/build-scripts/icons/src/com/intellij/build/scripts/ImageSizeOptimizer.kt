@@ -17,13 +17,13 @@ package com.intellij.build.scripts
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.module.JpsModule
+import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import javax.imageio.ImageIO
 
 class ImageSizeOptimizer(val projectHome: File) {
-  private var initialTotal: Long = 0
   private var optimizedTotal: Long = 0
 
   fun optimizeIcons(module: JpsModule) {
@@ -48,36 +48,50 @@ class ImageSizeOptimizer(val projectHome: File) {
 
   fun printStats() {
     println("")
-    println("PNG size optimization: ${initialTotal - optimizedTotal} bytes in total")
+    println("PNG size optimization: $optimizedTotal bytes in total")
   }
 
   private fun tryToReduceSize(file: File) {
-    if (!file.name.endsWith(".png")) return
-    val image = ImageIO.read(file)
-    if (image == null) {
-      println(file.absolutePath + " loading failed")
-      return
-    }
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    ImageIO.write(image, "png", byteArrayOutputStream)
+    val image = optimizeImage(file) ?: return
 
-    val byteArray = byteArrayOutputStream.toByteArray()
+    if (image.hasOptimumSize) return
 
-    val initialSize = file.length()
-    initialTotal += initialSize
-    if (initialSize <= byteArray.size) {
-      optimizedTotal += initialSize
-      return
-    }
-
-    optimizedTotal += byteArray.size
     try {
-      FileUtil.writeToFile(file, byteArray)
+      FileUtil.writeToFile(file, image.optimizedArray)
+      optimizedTotal += image.sizeBefore - image.sizeAfter
     }
     catch (e: IOException) {
       throw Exception("Cannot optimize " + file.absolutePath)
     }
-    val compression = (initialSize - byteArray.size) * 100 / initialSize
-    println(file.absolutePath + " $compression% optimized ($initialSize->${byteArray.size} bytes)")
+    println("${file.absolutePath} ${image.compressionStats}")
+  }
+
+  companion object {
+    fun optimizeImage(file: File): OptimizedImage? {
+      if (!file.name.endsWith(".png")) return null
+      val image = ImageIO.read(file)
+      if (image == null) {
+        println(file.absolutePath + " loading failed")
+        return null
+      }
+
+      val byteArrayOutputStream = ByteArrayOutputStream()
+      ImageIO.write(image, "png", byteArrayOutputStream)
+
+      val byteArray = byteArrayOutputStream.toByteArray()
+      return OptimizedImage(file, image, byteArray)
+    }
+  }
+
+  class OptimizedImage(val file: File, val image: BufferedImage, val optimizedArray: ByteArray) {
+    val sizeBefore = file.length()
+    val sizeAfter = optimizedArray.size
+
+    val compressionStats: String get() {
+      val compression = (sizeBefore - sizeAfter) * 100 / sizeBefore
+      return "$compression% optimized ($sizeBefore->$sizeAfter bytes)"
+    }
+
+    val hasOptimumSize: Boolean get() = sizeBefore <= sizeAfter
   }
 }

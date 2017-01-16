@@ -28,7 +28,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
 
     val (images, broken) = allImages.partition { it.file != null }
-    logErrors(Severity.ERROR, "image without base version", module, broken)
+    log(Severity.ERROR, "image without base version", module, broken)
 
     checkHaveRetinaVersion(images, module)
     checkHaveCompleteIconSet(images, module)
@@ -95,17 +95,10 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     images.forEach {
       if (!processor(it)) result.add(it)
     }
-    logErrors(severity, message, module, result)
+    log(severity, message, module, result)
   }
 
-  private fun logErrors(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>) {
-    log(severity, message, module, images.map {
-      val path = it.file ?: it.files.values.first()
-      Pair(it.id, path)
-    })
-  }
-
-  abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<Pair<String, File>>)
+  internal abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>)
 
   enum class Severity { INFO, WARNING, ERROR }
 }
@@ -128,7 +121,7 @@ class ImageSanityChecker(projectHome: File) : ImageSanityCheckerBase(projectHome
     }
   }
 
-  override fun log(severity: Severity, message: String, module: JpsModule, images: Collection<Pair<String, File>>) {
+  override fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>) {
     val logger = when (severity) {
       ERROR -> warnings
       WARNING -> warnings
@@ -142,8 +135,8 @@ class ImageSanityChecker(projectHome: File) : ImageSanityCheckerBase(projectHome
 
     if (images.isEmpty()) return
     logger.append("$prefix $message found in module '${module.name}'\n")
-    images.sortedBy { it.first }.forEach {
-      logger.append("    ${it.first} - ${it.second}\n")
+    images.sortedBy { it.id }.forEach {
+      logger.append("    ${it.id} - ${it.presentablePath.path}\n")
     }
     logger.append("\n")
   }

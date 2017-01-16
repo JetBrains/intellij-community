@@ -32,6 +32,7 @@ internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, v
   var ambiguous: Boolean = false
 
   val file: File? get() = files[ImageType.BASIC]
+  val presentablePath: File get() = file ?: files.values.first() ?: File("<unknown>")
 }
 
 internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {

@@ -31,7 +31,7 @@ import java.util.*
 import kotlin.comparisons.compareBy
 import kotlin.comparisons.thenBy
 
-class CommunityImageResourcesTest : ImageResourcesTestBase() {
+class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
@@ -41,8 +41,18 @@ class CommunityImageResourcesTest : ImageResourcesTestBase() {
   }
 }
 
+class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any>> {
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(false)
+    }
+  }
+}
+
 @Ignore
-class AllImageResourcesTest : ImageResourcesTestBase() {
+class AllImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
@@ -51,6 +61,18 @@ class AllImageResourcesTest : ImageResourcesTestBase() {
     }
   }
 }
+
+@Ignore
+class AllImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any>> {
+      return ImageResourcesTestBase.collectIconsWithNonOptimumSize(true)
+    }
+  }
+}
+
 
 @RunWith(Parameterized::class)
 abstract class ImageResourcesTestBase {
@@ -65,44 +87,76 @@ abstract class ImageResourcesTestBase {
   companion object {
     @JvmStatic
     fun collectBadIcons(ignoreSkipTag: Boolean): List<Array<Any>> {
+      val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
+      forEachModule {
+        checker.check(it)
+      }
+      return createTestData(checker.failures)
+    }
+
+    @JvmStatic
+    fun collectIconsWithNonOptimumSize(ignoreSkipTag: Boolean): List<Array<Any>> {
+      val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), ignoreSkipTag)
+      forEachModule {
+        checker.checkOptimumSizes(it)
+      }
+      return createTestData(checker.failures)
+    }
+
+    private fun createTestData(failures: Collection<FailedTest>): List<Array<Any>> {
+      return failures
+        .sortedWith(compareBy<FailedTest> { it.module }.thenBy { it.id }.thenBy { it.message })
+        .map { arrayOf<Any>(it.getTestName(), it.getException()) }
+    }
+
+    private fun forEachModule(action: (JpsModule) -> Unit) {
       val home = PathManager.getHomePath()
       val model = JpsElementFactory.getInstance().createModel()
 
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
       JpsProjectLoader.loadProject(model.project, pathVariables, home)
 
-      val modules = model.project.modules
-
-      val checker = MyChecker(File(home), ignoreSkipTag)
-      modules.forEach {
-        checker.check(it)
-      }
-      return checker.collectFailures()
-        .sortedWith(compareBy<FailedTest> { it.module }.thenBy { it.id }.thenBy { it.message })
-        .map { arrayOf<Any>(it.getTestName(), it.getException()) }
+      model.project.modules.forEach(action)
     }
   }
 }
 
-private class MyChecker(projectHome: File, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
-  private val failures = ArrayList<FailedTest>()
+private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
+  val failures = ArrayList<FailedTest>()
 
   override fun log(severity: ImageSanityCheckerBase.Severity,
                    message: String,
                    module: JpsModule,
-                   images: Collection<Pair<String, File>>) {
+                   images: Collection<ImagePaths>) {
     if (severity == Severity.INFO) return
     images.forEach { image ->
-      failures.add(FailedTest(module.name, message, image.first, image.second.path))
+      failures.add(FailedTest(module, message, image))
     }
   }
+}
 
-  fun collectFailures(): Collection<FailedTest> {
-    return failures
+private class MyOptimumSizeChecker(val projectHome: File, val ignoreSkipTag: Boolean) {
+  val failures = ArrayList<FailedTest>()
+
+  fun checkOptimumSizes(module: JpsModule) {
+    val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
+    val images = allImages.filter { it.file != null }
+
+    images.forEach { image ->
+      image.files.values.forEach { file ->
+        val optimized = ImageSizeOptimizer.optimizeImage(file)
+        if (optimized != null && !optimized.hasOptimumSize) {
+          failures.add(FailedTest(module, "image size can be optimized: ${optimized.compressionStats}", image, file))
+        }
+      }
+    }
   }
 }
 
 class FailedTest(val module: String, val message: String, val id: String, val path: String) {
+  internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File = image.presentablePath) :
+    this(module.name, message, image.id, file.absolutePath)
+
   fun getTestName(): String = "'${module}' - $id - $message"
   fun getException(): Throwable = Exception("${message} - ${path}")
 }
