@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -124,8 +125,7 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
     myDispatcher.removeListener(listener);
   }
 
-  private void fireLibraryAdded (Library library) {
-    myModificationCount++;
+  private void fireLibraryAdded(Library library) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("fireLibraryAdded: " + library);
     }
@@ -133,7 +133,6 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
   }
 
   private void fireBeforeLibraryRemoved (Library library) {
-    myModificationCount++;
     if (LOG.isDebugEnabled()) {
       LOG.debug("fireBeforeLibraryRemoved: " + library);
     }
@@ -154,8 +153,15 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
   }
 
   public void fireLibraryRenamed(@NotNull LibraryImpl library) {
-    myModificationCount++;
+    incrementModificationCount();
     myDispatcher.getMulticaster().afterLibraryRenamed(library);
+  }
+
+  private void incrementModificationCount() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("library");
+    }
+    myModificationCount++;
   }
 
   @Override
@@ -181,7 +187,7 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
       return;
     }
 
-    myModificationCount++;
+    incrementModificationCount();
     //todo[nik] remove LibraryImpl#equals method instead of using identity sets
     Set<Library> addedLibraries = ContainerUtil.newIdentityTroveSet(model.myLibraries);
     addedLibraries.removeAll(myModel.myLibraries);
@@ -302,7 +308,7 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
 
     @Override
     public void removeLibrary(@NotNull Library library) {
-      myModificationCount++;
+      incrementModificationCount();
 
       assertWritable();
       myLibraries.remove(library);
@@ -318,7 +324,7 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
     }
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
       myLibraries.clear();
 
       final List<Element> libraryElements = element.getChildren(LibraryImpl.ELEMENT);
@@ -341,7 +347,7 @@ public abstract class LibraryTableBase implements PersistentStateComponentWithMo
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       final List<Library> libraries = ContainerUtil.findAll(myLibraries, library -> !((LibraryEx)library).isDisposed());
 
       // todo: do not sort if project is directory-based

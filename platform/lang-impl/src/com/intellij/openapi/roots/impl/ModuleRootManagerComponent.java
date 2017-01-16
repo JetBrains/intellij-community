@@ -78,7 +78,7 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
         long count = ((PersistentStateComponentWithModificationTracker)table).getStateModificationCount();
         if (count > 0) {
           if (Registry.is("store.track.module.root.manager.changes", false)) {
-            LOG.error("modification count changed due to library  " + library.getName() + " change, module " + getModule().getName());
+            LOG.error("modification count changed due to library  " + library.getName() + " change (" + count + "), module " + getModule().getName());
           }
         }
         result[0] += count;
