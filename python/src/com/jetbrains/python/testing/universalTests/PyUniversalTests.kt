@@ -286,7 +286,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
   }
 
 
-  private fun getConfigFields() = getProperties(this, ConfigField::class)
+  private fun getConfigFields() = getProperties(this, ConfigField::class.java)
 
   /**
    * Checks if element could be test target for this config.

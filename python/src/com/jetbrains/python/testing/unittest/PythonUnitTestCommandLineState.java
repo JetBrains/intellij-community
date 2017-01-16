@@ -48,7 +48,7 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
     if (myConfig.getTestType() == AbstractPythonOldTestRunConfiguration.TestType.TEST_SCRIPT &&
         myConfig.getScriptName().endsWith(PyNames.SETUP_DOT_PY))
       return PythonHelper.SETUPPY;
-    return PythonHelper.UT;
+    return PythonHelper.UT_OLD;
   }
 
   @NotNull

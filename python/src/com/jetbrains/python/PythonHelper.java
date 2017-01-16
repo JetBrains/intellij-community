@@ -49,18 +49,18 @@ public enum PythonHelper implements HelperPackage {
   LOAD_ENTRY_POINT("pycharm", "pycharm_load_entry_point"),
 
   // Test runners
-  UT("pycharm", "utrunner"),
+  UT_OLD("pycharm", "utrunner"),
   TOX("pycharm", "_jb_tox_runner"),
   SETUPPY("pycharm", "pycharm_setup_runner"),
-  NOSE("pycharm", "noserunner"),
-  PYTEST("pycharm", "pytestrunner"),
+  NOSE_OLD("pycharm", "noserunner"),
+  PYTEST_OLD("pycharm", "pytestrunner"),
   DOCSTRING("pycharm", "docrunner"),
 
   // Runners for new test runner API.
 
-  UNIVERSAL_UT("pycharm", "_jb_unittest_runner"),
-  UNIVERSAL_PYTEST("pycharm", "_jb_pytest_runner"),
-  UNIVERSAL_NOSE("pycharm", "_jb_nosetest_runner"),
+  UNITTEST("pycharm", "_jb_unittest_runner"),
+  PYTEST("pycharm", "_jb_pytest_runner"),
+  NOSE("pycharm", "_jb_nosetest_runner"),
 
   BEHAVE("pycharm", "behave_runner"),
   LETTUCE("pycharm", "lettuce_runner"),

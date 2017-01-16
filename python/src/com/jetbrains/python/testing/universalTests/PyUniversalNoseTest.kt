@@ -34,7 +34,7 @@ class PyUniversalNoseTestSettingsEditor(configuration: PyUniversalTestConfigurat
 
 class PyUniversalNoseTestExecutionEnvironment(configuration: PyUniversalNoseTestConfiguration, environment: ExecutionEnvironment) :
   PyUniversalTestExecutionEnvironment<PyUniversalNoseTestConfiguration>(configuration, environment) {
-  override fun getRunner() = PythonHelper.UNIVERSAL_NOSE
+  override fun getRunner() = PythonHelper.NOSE
 }
 
 

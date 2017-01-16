@@ -36,7 +36,7 @@ messages.TeamcityServiceMessages.message = __jb_message
 def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
     """
     Targets are always dot separated according to manual.
-    How ever, some runners may need different separators.
+    However, some runners may need different separators.
     This function splits target to file/symbol parts and glues them using provided glues.
 
     :param targets: list of dot-separated targets
