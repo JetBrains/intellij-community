@@ -106,49 +106,49 @@ object TrimUtil {
   }
 
 
-  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence,
-                         start1: Int, start2: Int, end1: Int, end2: Int): Range {
+  @JvmStatic fun expandWhitespaces(text1: CharSequence, text2: CharSequence,
+                                   start1: Int, start2: Int, end1: Int, end2: Int): Range {
     return expandIgnored(start1, start2, end1, end2,
                          { index1, index2 -> text1[index1] == text2[index2] },
                          { index -> isWhiteSpace(text1[index]) })
   }
 
 
-  @JvmStatic fun expandForwardW(text1: CharSequence, text2: CharSequence,
-                                start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    return expandForwardIgnored(start1, start2, end1, end2,
+  @JvmStatic fun expandWhitespacesForward(text1: CharSequence, text2: CharSequence,
+                                          start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    return expandIgnoredForward(start1, start2, end1, end2,
                                 { index1, index2 -> text1[index1] == text2[index2] },
                                 { index -> isWhiteSpace(text1[index]) })
   }
 
 
-  @JvmStatic fun expandBackwardW(text1: CharSequence, text2: CharSequence,
-                                 start1: Int, start2: Int, end1: Int, end2: Int): Int {
-    return expandBackwardIgnored(start1, start2, end1, end2,
+  @JvmStatic fun expandWhitespacesBackward(text1: CharSequence, text2: CharSequence,
+                                           start1: Int, start2: Int, end1: Int, end2: Int): Int {
+    return expandIgnoredBackward(start1, start2, end1, end2,
                                  { index1, index2 -> text1[index1] == text2[index2] },
                                  { index -> isWhiteSpace(text1[index]) })
   }
 
 
-  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
-                         start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
+  @JvmStatic fun expandWhitespaces(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                                   start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
     return expandIgnored(start1, start2, start3, end1, end2, end3,
                          { index1, index2 -> text1[index1] == text2[index2] },
                          { index1, index3 -> text1[index1] == text3[index3] },
                          { index -> isWhiteSpace(text1[index]) })
   }
 
-  @JvmStatic fun expandForwardW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
-                                start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
-    return expandForwardIgnored(start1, start2, start3, end1, end2, end3,
+  @JvmStatic fun expandWhitespacesForward(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                                          start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
+    return expandIgnoredForward(start1, start2, start3, end1, end2, end3,
                                 { index1, index2 -> text1[index1] == text2[index2] },
                                 { index1, index3 -> text1[index1] == text3[index3] },
                                 { index -> isWhiteSpace(text1[index]) })
   }
 
-  @JvmStatic fun expandBackwardW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
-                                 start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
-    return expandBackwardIgnored(start1, start2, start3, end1, end2, end3,
+  @JvmStatic fun expandWhitespacesBackward(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                                           start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): Int {
+    return expandIgnoredBackward(start1, start2, start3, end1, end2, end3,
                                  { index1, index2 -> text1[index1] == text2[index2] },
                                  { index1, index3 -> text1[index1] == text3[index3] },
                                  { index -> isWhiteSpace(text1[index]) })
@@ -179,14 +179,14 @@ object TrimUtil {
     return expand(text1, text2, range.start1, range.start2, range.end1, range.end2)
   }
 
-  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence,
-                         range: Range): Range {
-    return expandW(text1, text2, range.start1, range.start2, range.end1, range.end2)
+  @JvmStatic fun expandWhitespaces(text1: CharSequence, text2: CharSequence,
+                                   range: Range): Range {
+    return expandWhitespaces(text1, text2, range.start1, range.start2, range.end1, range.end2)
   }
 
-  @JvmStatic fun expandW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
-                         range: MergeRange): MergeRange {
-    return expandW(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3)
+  @JvmStatic fun expandWhitespaces(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                                   range: MergeRange): MergeRange {
+    return expandWhitespaces(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3)
   }
 
 
@@ -197,8 +197,8 @@ object TrimUtil {
     return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.DEFAULT)
   }
 
-  @JvmStatic fun isEqualsIW(text1: CharSequence, text2: CharSequence,
-                            range: Range): Boolean {
+  @JvmStatic fun isEqualsIgnoreWhitespaces(text1: CharSequence, text2: CharSequence,
+                                           range: Range): Boolean {
     val sequence1 = text1.subSequence(range.start1, range.end1)
     val sequence2 = text2.subSequence(range.start2, range.end2)
     return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES)
@@ -213,8 +213,8 @@ object TrimUtil {
            ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.DEFAULT)
   }
 
-  @JvmStatic fun isEqualsIW(text1: CharSequence, text2: CharSequence, text3: CharSequence,
-                            range: MergeRange): Boolean {
+  @JvmStatic fun isEqualsIgnoreWhitespaces(text1: CharSequence, text2: CharSequence, text3: CharSequence,
+                                           range: MergeRange): Boolean {
     val sequence1 = text1.subSequence(range.start1, range.end1)
     val sequence2 = text2.subSequence(range.start2, range.end2)
     val sequence3 = text3.subSequence(range.start3, range.end3)
@@ -360,18 +360,18 @@ object TrimUtil {
     var end1 = end1
     var end2 = end2
 
-    val count1 = expandForwardIgnored(start1, start2, end1, end2, equals, ignored1)
+    val count1 = expandIgnoredForward(start1, start2, end1, end2, equals, ignored1)
     start1 += count1
     start2 += count1
 
-    val count2 = expandBackwardIgnored(start1, start2, end1, end2, equals, ignored1)
+    val count2 = expandIgnoredBackward(start1, start2, end1, end2, equals, ignored1)
     end1 -= count2
     end2 -= count2
 
     return Range(start1, end1, start2, end2)
   }
 
-  private inline fun expandForwardIgnored(start1: Int, start2: Int, end1: Int, end2: Int,
+  private inline fun expandIgnoredForward(start1: Int, start2: Int, end1: Int, end2: Int,
                                           equals: (Int, Int) -> Boolean,
                                           ignored1: (Int) -> Boolean): Int {
     var start1 = start1
@@ -388,7 +388,7 @@ object TrimUtil {
     return start1 - oldStart1
   }
 
-  private inline fun expandBackwardIgnored(start1: Int, start2: Int, end1: Int, end2: Int,
+  private inline fun expandIgnoredBackward(start1: Int, start2: Int, end1: Int, end2: Int,
                                            equals: (Int, Int) -> Boolean,
                                            ignored1: (Int) -> Boolean): Int {
     var end1 = end1
@@ -416,12 +416,12 @@ object TrimUtil {
     var end2 = end2
     var end3 = end3
 
-    val count1 = expandForwardIgnored(start1, start2, start3, end1, end2, end3, equals12, equals13, ignored1)
+    val count1 = expandIgnoredForward(start1, start2, start3, end1, end2, end3, equals12, equals13, ignored1)
     start1 += count1
     start2 += count1
     start3 += count1
 
-    val count2 = expandBackwardIgnored(start1, start2, start3, end1, end2, end3, equals12, equals13, ignored1)
+    val count2 = expandIgnoredBackward(start1, start2, start3, end1, end2, end3, equals12, equals13, ignored1)
     end1 -= count2
     end2 -= count2
     end3 -= count2
@@ -429,7 +429,7 @@ object TrimUtil {
     return MergeRange(start1, end1, start2, end2, start3, end3)
   }
 
-  private inline fun expandForwardIgnored(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
+  private inline fun expandIgnoredForward(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
                                           equals12: (Int, Int) -> Boolean,
                                           equals13: (Int, Int) -> Boolean,
                                           ignored1: (Int) -> Boolean): Int {
@@ -450,7 +450,7 @@ object TrimUtil {
     return start1 - oldStart1
   }
 
-  private inline fun expandBackwardIgnored(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
+  private inline fun expandIgnoredBackward(start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int,
                                            equals12: (Int, Int) -> Boolean,
                                            equals13: (Int, Int) -> Boolean,
                                            ignored1: (Int) -> Boolean): Int {
