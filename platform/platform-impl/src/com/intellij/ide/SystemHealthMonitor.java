@@ -93,15 +93,14 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
         final File bundledJDKAbsoluteLocation = JdkBundle.getBundledJDKAbsoluteLocation();
         if (bundledJDKAbsoluteLocation.exists() && bundle.getBitness() == Bitness.x64) {
-          if (!SystemInfo.isMacIntel64) {
-            if (SystemInfo.isWindows || SystemInfo.isLinux) {
-              JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
-              if (bundledJdk.getVersion() != null)
-                showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
-            }
-          }
-          else {
+          if (SystemInfo.isMacIntel64) {
             showSwitchOption = true;
+          }
+          else if (SystemInfo.isWindows || SystemInfo.isLinux) {
+            JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
+            if (bundledJdk.getVersion() != null) {
+              showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
+            }
           }
         }
 
