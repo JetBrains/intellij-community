@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
@@ -310,7 +311,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       Arrays.sort(clone, (sdk1, sdk2) -> {
         SdkType sdkType1 = (SdkType)sdk1.getSdkType();
         SdkType sdkType2 = (SdkType)sdk2.getSdkType();
-        if (!sdkType1.getComparator().equals(sdkType2.getComparator())) return SdkType.ALPHABETICAL_COMPARATOR.compare(sdk1, sdk2);
+        if (!sdkType1.getComparator().equals(sdkType2.getComparator())) return StringUtil.compare(sdkType1.getPresentableName(), sdkType2.getPresentableName(), true);
         return sdkType1.getComparator().compare(sdk1, sdk2);
       });
       return clone;
