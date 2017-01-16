@@ -144,31 +144,29 @@ public class JsonSchemaWalker {
             final List<Step> steps = new ArrayList<>();
             // add value step if needed
             if (!isName) steps.add(new Step(StateType._value, null));
-            visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, schemaObject, steps);
+            visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, schemaObject.getDefinitionAddress(), steps);
           }
         }
         consumer.consume(isName, definitionsResolver.getSchemaObject(), schemaFile, path);
       } else {
         final List<Pair<JsonSchemaObject, List<Step>>> variants = definitionsResolver.getVariants();
         for (Pair<JsonSchemaObject, List<Step>> variant : variants) {
-          visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, variant.getFirst(), variant.getSecond());
+          if (variant.getFirst().getDefinitionAddress() == null) continue;
+          visitSchemaByDefinitionAddress(serviceEx, queue, schemaFile, variant.getFirst().getDefinitionAddress(), variant.getSecond());
         }
       }
     }
   }
 
-  //todo change signature
-  private static boolean visitSchemaByDefinitionAddress(JsonSchemaServiceEx serviceEx,
-                                                        ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue,
-                                                        VirtualFile schemaFile, JsonSchemaObject schemaObject, final List<Step> steps) {
-    final String definitionAddress = schemaObject.getDefinitionAddress();
+  private static void visitSchemaByDefinitionAddress(JsonSchemaServiceEx serviceEx,
+                                                     ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue,
+                                                     VirtualFile schemaFile, @NotNull final String definitionAddress, final List<Step> steps) {
     // we can have also non-absolute transfers here, because allOf and others can not be put in-place into schema
-    if (definitionAddress == null) return false;
     final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(definitionAddress);
     //noinspection ConstantConditions
     final VirtualFile variantSchemaFile = splitter.isAbsolute() ? serviceEx.getSchemaFileById(splitter.getSchemaId(), schemaFile) :
       schemaFile;
-    if (variantSchemaFile == null) return false;
+    if (variantSchemaFile == null) return;
     serviceEx.visitSchemaObject(variantSchemaFile,
                                 variantObject -> {
                                   final List<Step> variantSteps = buildSteps(splitter.getRelativePath()).getFirst();
@@ -176,7 +174,6 @@ public class JsonSchemaWalker {
                                   queue.add(Trinity.create(variantObject, variantSchemaFile, variantSteps));
                                   return true;
                                 });
-    return true;
   }
 
   private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer,
