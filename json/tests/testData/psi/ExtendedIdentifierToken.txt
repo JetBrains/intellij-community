@@ -1,0 +1,23 @@
+JsonFile: ExtendedIdentifierToken.json
+  JsonObject
+    PsiElement({)('{')
+    PsiWhiteSpace('\n  ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"devDependencies"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonObject
+        PsiElement({)('{')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonReferenceExpression
+            PsiElement(IDENTIFIER)('@types/3d-bin.packing')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonNumberLiteral
+            PsiElement(NUMBER)('42')
+        PsiWhiteSpace('\n  ')
+        PsiElement(})('}')
+    PsiWhiteSpace('\n')
+    PsiElement(})('}')
