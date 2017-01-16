@@ -26,7 +26,9 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -52,8 +54,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
@@ -68,6 +73,8 @@ import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,7 +157,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void setConsoleEnabled(boolean flag) {
     if (myExecuteActionHandler != null) {
       myExecuteActionHandler.setEnabled(flag);
-    } else {
+    }
+    else {
       myInitialized.doWhenDone(() -> myExecuteActionHandler.setEnabled(flag));
     }
   }
@@ -208,20 +216,42 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
 
   public void executeInConsole(final String code) {
-    final String codeToExecute = code.endsWith("\n") ? code : code + "\n";
-
     TransactionGuard.submitTransaction(this, () -> {
-      String text = getConsoleEditor().getDocument().getText();
-      ApplicationManager.getApplication().runWriteAction(() -> setInputText(codeToExecute));
+      DocumentEx document = getConsoleEditor().getDocument();
+      String oldText = document.getText();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        setInputText(code);
+        PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+        PsiFile psiFile = (PyFile)PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+        if (psiFile != null) {
+          CommandProcessor.getInstance().runUndoTransparentAction(() ->
+                                                                    CodeStyleManager.getInstance(getProject())
+                                                                      .adjustLineIndent(psiFile,
+                                                                                        new TextRange(0, psiFile.getTextLength())));
+
+          addNewLineIfNeeded(psiFile, document);
+        }
+      });
       int oldOffset = getConsoleEditor().getCaretModel().getOffset();
-      getConsoleEditor().getCaretModel().moveToOffset(codeToExecute.length());
+      getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
       myExecuteActionHandler.runExecuteAction(this);
 
-      if (!StringUtil.isEmpty(text)) {
-        ApplicationManager.getApplication().runWriteAction(() -> setInputText(text));
+      if (!StringUtil.isEmpty(oldText)) {
+        ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
         getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
       }
     });
+  }
+
+  private static void addNewLineIfNeeded(PsiFile psiFile, Document document) {
+    if (psiFile instanceof PyFile) {
+      PyFile pyFile = (PyFile)psiFile;
+      if (!psiFile.getText().endsWith("\n")) {
+        if (PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList.class) != null || pyFile.getStatements().size() > 1) {
+          CommandProcessor.getInstance().runUndoTransparentAction(() -> document.insertString(document.getTextLength(), "\n"));
+        }
+      }
+    }
   }
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
