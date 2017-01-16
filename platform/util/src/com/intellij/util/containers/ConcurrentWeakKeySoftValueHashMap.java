@@ -275,7 +275,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     return deref(prevValReference);
   }
 
-  boolean processQueues() {
+  private boolean processQueues() {
     boolean removed = false;
     KeyReference<K,V> keyReference;
     while ((keyReference = (KeyReference<K, V>)myKeyQueue.poll()) != null) {
