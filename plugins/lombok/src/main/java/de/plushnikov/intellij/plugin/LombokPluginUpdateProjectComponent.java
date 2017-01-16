@@ -27,7 +27,7 @@ public class LombokPluginUpdateProjectComponent implements ProjectComponent {
   @NotNull
   @Override
   public String getComponentName() {
-    return "UpdateComponent";
+    return "LombokPluginUpdateProjectComponent";
   }
 
   @Override
