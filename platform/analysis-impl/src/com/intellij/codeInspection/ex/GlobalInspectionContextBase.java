@@ -383,7 +383,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                           @Nullable Runnable postRunnable,
                           final boolean modal) {}
 
-  public static void codeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
+  public static void modalCodeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     globalContext.codeCleanup(scope, profile, null, runnable, true);
