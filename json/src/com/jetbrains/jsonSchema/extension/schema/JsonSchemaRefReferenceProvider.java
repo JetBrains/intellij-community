@@ -16,7 +16,6 @@
 package com.jetbrains.jsonSchema.extension.schema;
 
 import com.intellij.json.psi.JsonValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
@@ -31,6 +30,9 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -71,8 +73,19 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       if (StringUtil.isEmptyOrSpaces(normalized) || normalized.replace("\\", "/").split("/").length == 0) {
         return myElement.getManager().findFile(schemaFile);
       }
-      final Pair<List<JsonSchemaWalker.Step>, String> steps = JsonSchemaWalker.buildSteps(normalized);
-      return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, normalized, steps.getFirst())
+      final ArrayList<String> chain = new ArrayList<String>(Arrays.asList(normalized.replace("\\", "/").split("/")));
+      final Iterator<String> iterator = chain.iterator();
+      boolean canSkip = true;
+      while (iterator.hasNext()) {
+        final String step = iterator.next();
+        if (canSkip && "properties".equals(step)) {
+          iterator.remove();
+          canSkip = false;
+        } else canSkip = true;
+      }
+
+      final List<JsonSchemaWalker.Step> steps = JsonSchemaWalker.buildSteps(StringUtil.join(chain, "/")).getFirst();
+      return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, normalized, steps)
         .resolveInSchemaRecursively();
     }
   }

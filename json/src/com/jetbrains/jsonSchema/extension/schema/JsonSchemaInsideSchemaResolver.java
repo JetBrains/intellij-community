@@ -24,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaExportedDefinitions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,10 +49,6 @@ public class JsonSchemaInsideSchemaResolver {
   }
 
   public PsiElement resolveInSchemaRecursively() {
-    final PsiElement element = new JsonSchemaByPropertyIndexResolver(JsonSchemaExportedDefinitions.normalizeId(myReference),
-                                                                     myProject, mySchemaFile).resolveByName();
-    if (element != null) return element;
-
     final Ref<PsiElement> ref = new Ref<>();
     JsonSchemaService.Impl.getEx(myProject).visitSchemaObject(mySchemaFile,
                                                               object -> {
