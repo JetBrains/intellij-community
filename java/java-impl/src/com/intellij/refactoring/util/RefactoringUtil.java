@@ -992,7 +992,6 @@ public class RefactoringUtil {
    * </p>
    *
    * @param expression an expression which should be located inside the code block
-   * @param factory a factory to use to generate code if necessary
    * @return a passed expression if it's already surrounded by code block and no changes are necessary;
    *         a replacement expression (which is equivalent to the passed expression) if a new code block was created;
    *         {@code null} if the expression cannot be surrounded with code block.
