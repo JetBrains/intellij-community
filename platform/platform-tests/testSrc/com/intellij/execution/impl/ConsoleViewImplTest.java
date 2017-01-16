@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -42,6 +41,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -224,6 +224,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
           UIUtil.dispatchAllInvocationEvents();
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
+        console.waitAllRequests();
       }).cpuBound().assertTiming());
   }
 
@@ -269,7 +270,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testUserInputIsSentToProcessAfterNewLinePressed() {
     Process testProcess = AnsiEscapeDecoderTest.createTestProcess();
-    BufferExposingByteArrayOutputStream outputStream = (BufferExposingByteArrayOutputStream)testProcess.getOutputStream();
+    ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
 
     AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
       withCycleConsole(100, console -> {
@@ -283,14 +284,13 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         assertEquals(0, outputStream.size());
         console.print("\n", ConsoleViewContentType.USER_INPUT);
         console.waitAllRequests();
-        assertEquals(3, outputStream.size());
         assertEquals("IK\n", outputStream.toString());
     }));
   }
 
   public void testUserTypingIsSentToProcessAfterNewLinePressed() {
     Process testProcess = AnsiEscapeDecoderTest.createTestProcess();
-    BufferExposingByteArrayOutputStream outputStream = (BufferExposingByteArrayOutputStream)testProcess.getOutputStream();
+    ByteArrayOutputStream outputStream = (ByteArrayOutputStream)testProcess.getOutputStream();
 
     AnsiEscapeDecoderTest.withProcessHandlerFrom(testProcess, handler ->
       withCycleConsole(100, console -> {

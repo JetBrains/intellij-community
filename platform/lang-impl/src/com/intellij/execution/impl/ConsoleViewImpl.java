@@ -43,19 +43,16 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterClient;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -68,11 +65,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -91,7 +86,7 @@ import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.*;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
@@ -132,10 +127,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   /** the text from {@link #print(String, ConsoleViewContentType)} goes there and stays there until {@link #flushDeferredText()} is called */
   private final TokenBuffer myDeferredBuffer = new TokenBuffer(ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : Integer.MAX_VALUE);
-  // Range markers created for tokens returned from myDeferredBuffer.
-  // Each range marker contains ConsoleViewContentType in its user data CONTENT_TYPE
-  // Accessed in EDT only
-  private final Queue<RangeMarker> tokenRangeMarkers = new Queue<>(1000); // strong referenced range markers which store ConsoleViewContentType in their user data
 
   private boolean myUpdateFoldingsEnabled = true;
   private EditorHyperlinkSupport myHyperlinks;
@@ -518,12 +509,34 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @TestOnly
   void waitAllRequests() {
-    myFlushAlarm.flush();
-    myFlushUserInputAlarm.flush();
-    myFlushAlarm.flush();
-    myFlushUserInputAlarm.flush();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+        myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+        myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+        myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException | ExecutionException | TimeoutException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    try {
+      while (true) {
+        try {
+          future.get(10, TimeUnit.MILLISECONDS);
+          break;
+        }
+        catch (TimeoutException ignored) {
+        }
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
-  
+
   protected void disposeEditor() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       if (!myEditor.isDisposed()) {
@@ -567,7 +580,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (contentType == ConsoleViewContentType.USER_INPUT) {
         requestFlushImmediately();
       }
-      if (myEditor != null) {
+      else if (myEditor != null) {
         final boolean shouldFlushNow = myDeferredBuffer.length() >= myDeferredBuffer.getCycleBufferSize();
         addFlushRequest(FLUSH, shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY);
       }
@@ -575,6 +588,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void sendUserInput(@NotNull CharSequence typedText) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myState.isRunning() && NEW_LINE_MATCHER.indexIn(typedText) >= 0) {
       StringBuilder textToSend = new StringBuilder();
       // compute text input from the console contents:
@@ -689,20 +703,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           if (info != null) {
             myHyperlinks.createHyperlink(start, offset, null, info);
           }
-          createTokenRangeMarker(document, token.contentType, start, offset);
+          createTokenRangeHighlighter(token.contentType, start, offset);
           offset = start;
-        }
-        // remove invalid markers from tokenRangeMarkers
-        while (true) {
-          RangeMarker marker = tokenRangeMarkers.peekFirst();
-          if (marker == null) break;
-          if (!marker.isValid() || marker.getStartOffset() == marker.getEndOffset()) {
-            marker.dispose();
-            tokenRangeMarkers.pullFirst();
-          }
-          else {
-            break;
-          }
         }
       }
       finally {
@@ -728,14 +730,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     sendUserInput(addedText);
   }
 
-  private void createTokenRangeMarker(@NotNull Document document,
-                                      @NotNull ConsoleViewContentType contentType,
-                                      int startOffset,
-                                      int endOffset) {
+  private void createTokenRangeHighlighter(@NotNull ConsoleViewContentType contentType,
+                                           int startOffset,
+                                           int endOffset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    RangeMarker tokenMarker = document.createRangeMarker(startOffset, endOffset);
+    TextAttributes attributes = contentType.getAttributes();
+    MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
+    RangeHighlighter tokenMarker = model.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.CONSOLE_FILTER,
+                                                             attributes, HighlighterTargetArea.EXACT_RANGE);
     tokenMarker.putUserData(CONTENT_TYPE, contentType);
-    tokenRangeMarkers.addLast(tokenMarker);
   }
 
   boolean isDisposed() {
@@ -853,7 +856,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
 
       editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
-      editor.setHighlighter(createHighlighter());
 
       return editor;
     });
@@ -862,11 +864,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @NotNull
   protected EditorEx doCreateConsoleEditor() {
     return ConsoleViewUtil.setupConsoleEditor(myProject, true, false);
-  }
-
-  @NotNull
-  private TokenHighlighter createHighlighter() {
-    return new TokenHighlighter();
   }
 
   private void registerConsoleEditorActions() {
@@ -1113,9 +1110,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private RangeMarker findTokenMarker(int offset) {
-    DocumentEx document = myEditor.getDocument();
     RangeMarker[] marker = new RangeMarker[1];
-    document.processRangeMarkersOverlappingWith(offset, offset, m->{
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
+    model.processRangeHighlightersOverlappingWith(offset, offset, m->{
       if (getTokenType(m) == null) return true;
       marker[0] = m;
       return false;
@@ -1126,81 +1123,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static ConsoleViewContentType getTokenType(@Nullable RangeMarker m) {
     return m == null ? null : m.getUserData(CONTENT_TYPE);
-  }
-
-  private class TokenHighlighter extends DocumentAdapter implements EditorHighlighter {
-    private HighlighterClient myEditor;
-
-    @NotNull
-    @Override
-    public HighlighterIterator createIterator(final int startOffset) {
-      // iterate all range markers searching for ones with CONTENT_TYPE user data
-      RangeMarker marker = findTokenMarker(startOffset);
-
-      return new HighlighterIterator() {
-        private RangeMarker myCursor = marker;
-
-        @Override
-        public TextAttributes getTextAttributes() {
-          return atEnd() ? null : ConsoleViewImpl.getTokenType(myCursor).getAttributes();
-        }
-
-        @Override
-        public int getStart() {
-          return atEnd() ? 0 : myCursor.getStartOffset();
-        }
-
-        @Override
-        public int getEnd() {
-          return atEnd() ? 0 : myCursor.getEndOffset();
-        }
-
-        @Override
-        public IElementType getTokenType() {
-          return null;
-        }
-
-        @Override
-        public void advance() {
-          while (true) {
-            myCursor = ((RangeMarkerImpl)myCursor).findRangeMarkerAfter();
-            if (myCursor == null || ConsoleViewImpl.getTokenType(myCursor) != null) break;
-          }
-        }
-
-        @Override
-        public void retreat() {
-          while (true) {
-            myCursor = ((RangeMarkerImpl)myCursor).findRangeMarkerBefore();
-            if (myCursor == null || ConsoleViewImpl.getTokenType(myCursor) != null) break;
-          }
-        }
-
-        @Override
-        public boolean atEnd() {
-          return myCursor == null;
-        }
-
-        @Override
-        public Document getDocument() {
-          return myEditor.getDocument();
-        }
-      };
-    }
-
-    @Override
-    public void setText(@NotNull final CharSequence text) {
-    }
-
-    @Override
-    public void setEditor(@NotNull final HighlighterClient editor) {
-      LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
-      myEditor = editor;
-    }
-
-    @Override
-    public void setColorScheme(@NotNull EditorColorsScheme scheme) {
-    }
   }
 
   private static class MyTypedHandler extends TypedActionHandlerBase {
@@ -1507,7 +1429,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     int newEndOffset = document.getTextLength() - oldDocLength + offset; // take care of trim document
 
     if (findTokenMarker(newEndOffset) == null) {
-      createTokenRangeMarker(document, ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset);
+      createTokenRangeHighlighter(ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset);
     }
 
     moveScrollRemoveSelection(editor, newEndOffset);

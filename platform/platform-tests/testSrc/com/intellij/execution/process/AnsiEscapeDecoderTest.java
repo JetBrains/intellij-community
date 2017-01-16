@@ -3,7 +3,6 @@ package com.intellij.execution.process;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
@@ -11,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -102,9 +102,9 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
 
   @NotNull
   public static Process createTestProcess() {
-    byte[] buffer = new byte[1000];
-    BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(buffer);
-    BufferExposingByteArrayInputStream inputStream = new BufferExposingByteArrayInputStream(buffer);
+    // have to be synchronised because used from pooled thread
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(10000);
+    BufferExposingByteArrayInputStream inputStream = new BufferExposingByteArrayInputStream(new byte[0]);
     AtomicBoolean finished = new AtomicBoolean();
     return new Process() {
       @Override
@@ -156,6 +156,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
   public static void withProcessHandlerFrom(@NotNull Process testProcess, @NotNull Consumer<ProcessHandler> actionToTest) {
     KillableColoredProcessHandler handler = new KillableColoredProcessHandler(testProcess, "testProcess");
     handler.setShouldDestroyProcessRecursively(false);
+    handler.setShouldKillProcessSoftly(false);
     handler.startNotify();
     handler.notifyTextAvailable("Running stuff...\n", ProcessOutputTypes.STDOUT);
 
@@ -163,10 +164,8 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
       actionToTest.consume(handler);
     }
     finally {
-      handler.doDestroyProcess();
-      handler.notifyProcessTerminated(0);
+      handler.destroyProcess();
       handler.waitFor();
     }
-
   }
 }
