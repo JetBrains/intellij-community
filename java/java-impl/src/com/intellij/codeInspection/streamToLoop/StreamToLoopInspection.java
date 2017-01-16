@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,7 +235,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)element;
       if(!isSupportedCodeLocation(terminalCall)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      terminalCall = ensureCodeBlock(terminalCall, factory);
+      terminalCall = RefactoringUtil.ensureCodeBlock(terminalCall);
       if (terminalCall == null) return;
       PsiType resultType = terminalCall.getType();
       if (resultType == null) return;
@@ -285,42 +285,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
       CodeStyleManager.getInstance(project).reformat(element);
-    }
-
-    /**
-     * Ensures that given call is surrounded by {@link PsiCodeBlock} (that is, it has a parent statement
-     * which is located inside the code block). If not, tries to create a code block.
-     *
-     * <p>
-     * Note that the expression is not necessarily a child of {@link PsiExpressionStatement}; it could be a subexpression,
-     * {@link PsiIfStatement}, etc.
-     * </p>
-     *
-     * @param expression an expression which should be located inside the code block
-     * @param factory a factory to use to generate code if necessary
-     * @return a passed expression if it's already surrounded by code block and no changes are necessary;
-     *         a replacement expression (which is equivalent to the passed expression) if a new code block was created;
-     *         {@code null} if the expression cannot be surrounded with code block.
-     */
-    @Nullable
-    private static PsiMethodCallExpression ensureCodeBlock(PsiMethodCallExpression expression, PsiElementFactory factory) {
-      PsiElement parent = RefactoringUtil.getParentStatement(expression, false);
-      if (parent == null) return null;
-      if (parent instanceof PsiStatement && parent.getParent() instanceof PsiCodeBlock) return expression;
-      Object marker = new Object();
-      PsiTreeUtil.mark(expression, marker);
-      PsiElement copy = parent.copy();
-      PsiElement newParent;
-      if (parent instanceof PsiExpression) {
-        PsiLambdaExpression lambda = (PsiLambdaExpression)parent.getParent();
-        String replacement = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda)) ? "{a;}" : "{return a;}";
-        PsiElement block = parent.replace(factory.createCodeBlockFromText(replacement, lambda));
-        newParent = LambdaUtil.extractSingleExpressionFromBody(block).replace(copy);
-      } else {
-        PsiBlockStatement blockStatement = (PsiBlockStatement)parent.replace(factory.createStatementFromText("{}", parent));
-        newParent = blockStatement.getCodeBlock().add(copy);
-      }
-      return (PsiMethodCallExpression)PsiTreeUtil.releaseMark(newParent, marker);
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {
