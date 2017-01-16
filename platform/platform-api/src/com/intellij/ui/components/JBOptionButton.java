@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,7 +367,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     boolean dark = UIUtil.isUnderDarcula();
     int off = dark ? 6 : 0;
-    AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
+    Icon icon = AllIcons.General.ArrowDown;
+    if (UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderWin10LookAndFeel()) {
+      icon = AllIcons.General.ArrowDown_white;
+    }
+    icon.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
     if (dark) return;
 
     final Insets insets = getInsets();
