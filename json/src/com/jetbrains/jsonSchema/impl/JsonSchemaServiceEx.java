@@ -39,4 +39,6 @@ public interface JsonSchemaServiceEx extends JsonSchemaService {
   Collection<Pair<VirtualFile, String>> getSchemaFilesByFile(@NotNull final VirtualFile file);
 
   Set<VirtualFile> getSchemaFiles();
+
+  void refreshSchemaIds(Set<VirtualFile> toRefresh);
 }

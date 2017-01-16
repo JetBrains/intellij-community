@@ -21,14 +21,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -422,19 +420,5 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertEquals("\"begriff\"", resolve.getText());
       }
     });
-  }
-
-  @NotNull
-  private static String getModuleDir(@NotNull final Project project) {
-    String moduleDir = null;
-    VirtualFile[] children = project.getBaseDir().getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        moduleDir = child.getName();
-        break;
-      }
-    }
-    Assert.assertNotNull(moduleDir);
-    return moduleDir;
   }
 }

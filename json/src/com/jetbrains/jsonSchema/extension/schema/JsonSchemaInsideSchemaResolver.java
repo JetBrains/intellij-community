@@ -15,21 +15,19 @@
  */
 package com.jetbrains.jsonSchema.extension.schema;
 
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaExportedDefinitions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -41,13 +39,6 @@ public class JsonSchemaInsideSchemaResolver {
   @NotNull private final VirtualFile mySchemaFile;
   @NotNull private final String myReference;
   @NotNull private final List<JsonSchemaWalker.Step> mySteps;
-  @NotNull private final MultiMap<VirtualFile, String> myVisitedDefinitions = new MultiMap<VirtualFile, String>() {
-    @NotNull
-    @Override
-    protected Collection<String> createCollection() {
-      return new HashSet<>();
-    }
-  };
 
   public JsonSchemaInsideSchemaResolver(@NotNull Project project,
                                         @NotNull VirtualFile schemaFile,
@@ -59,31 +50,25 @@ public class JsonSchemaInsideSchemaResolver {
   }
 
   public PsiElement resolveInSchemaRecursively() {
-    int cnt = 1000;
-    final ArrayDeque<Trinity<VirtualFile, List<JsonSchemaWalker.Step>, String>> queue = new ArrayDeque<>();
-    queue.add(Trinity.create(mySchemaFile, mySteps, myReference));
-    myVisitedDefinitions.putValue(mySchemaFile, myReference);
-    while (!queue.isEmpty()) {
-      if (cnt < 0) break;
-      --cnt;
-      final Trinity<VirtualFile, List<JsonSchemaWalker.Step>, String> trinity = queue.removeFirst();
-      final VirtualFile schemaFile = trinity.getFirst();
-      final String reference = JsonSchemaExportedDefinitions.normalizeId(trinity.getThird());
-      final PsiElement element = new JsonSchemaByPropertyIndexResolver(reference, myProject, schemaFile).resolveByName();
-      if (element != null) return element;
-      final List<String> parts = ContainerUtil.filter(reference.replace("\\", "/").split("/"), s -> !StringUtil.isEmptyOrSpaces(s));
-      final String shortName = parts.get(parts.size() - 1);
-      final List<JsonSchemaWalker.Step> steps = trinity.getSecond();
-      new JsonSchemaDefinitionsClimber(myProject, schemaFile, shortName, steps,
-                                       (file, relativeReference) -> {
-                                             final Pair<List<JsonSchemaWalker.Step>, String> innerSteps = JsonSchemaWalker.buildSteps(relativeReference);
-                                             if (mySchemaFile.equals(file) &&
-                                                 (myReference.equals(relativeReference) || myVisitedDefinitions.get(file).contains(relativeReference)))
-                                               return;
-                                             myVisitedDefinitions.putValue(file, relativeReference);
-                                             queue.add(Trinity.create(file, innerSteps.getFirst(), relativeReference));
-                                           }).iterateMatchingDefinitions();
-    }
-    return null;
+    final PsiElement element = new JsonSchemaByPropertyIndexResolver(JsonSchemaExportedDefinitions.normalizeId(myReference),
+                                                                     myProject, mySchemaFile).resolveByName();
+    if (element != null) return element;
+
+    final Ref<PsiElement> ref = new Ref<>();
+    JsonSchemaService.Impl.getEx(myProject).visitSchemaObject(mySchemaFile,
+                                                              object -> {
+      JsonSchemaWalker.extractSchemaVariants(myProject, (isName, schema, schemaFile, steps) -> {
+        if (!ref.isNull()) return;
+        final PsiFile file = PsiManager.getInstance(myProject).findFile(mySchemaFile);
+        if (file == null) return;
+        final JsonObject jsonObject = schema.getPeerPointer().getElement();
+        if (jsonObject != null && jsonObject.isValid()) {
+          if (jsonObject.getParent() instanceof JsonProperty) ref.set(((JsonProperty)jsonObject.getParent()).getNameElement());
+          else ref.set(jsonObject);
+        }
+      }, mySchemaFile, object, true, mySteps);
+      return true;
+    });
+    return ref.get();
   }
 }
