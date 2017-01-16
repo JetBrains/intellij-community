@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.dashboard;
+package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.dashboard.GroupingRule;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
-public interface DashboardNode {
-  @Nullable
-  default RunContentDescriptor getDescriptor() {
-    return null;
+public class Grouper {
+  @NotNull private final GroupingRule myRule;
+  private boolean myEnabled = true;
+
+  public Grouper(@NotNull GroupingRule rule) {
+    myRule = rule;
   }
 
-  @Nullable
-  default Content getContent() {
-    return getDescriptor() == null ? null : getDescriptor().getAttachedContent();
+  @NotNull
+  public GroupingRule getRule() {
+    return myRule;
   }
 
-  Project getProject();
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
+  }
 }

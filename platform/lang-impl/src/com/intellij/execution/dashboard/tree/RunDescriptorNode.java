@@ -44,8 +44,9 @@ class RunDescriptorNode extends AbstractRunConfigurationNode<RunContentDescripto
     return Collections.emptyList();
   }
 
+  @Nullable
   @Override
-  protected RunContentDescriptor getDescriptor() {
+  public RunContentDescriptor getDescriptor() {
     return getValue();
   }
 
@@ -61,5 +62,10 @@ class RunDescriptorNode extends AbstractRunConfigurationNode<RunContentDescripto
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return getContent() == null || RunContentManagerImpl.isTerminated(getContent());
   }
 }

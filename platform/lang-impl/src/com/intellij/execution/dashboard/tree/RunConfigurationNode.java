@@ -77,10 +77,20 @@ class RunConfigurationNode extends AbstractRunConfigurationNode<RunnerAndConfigu
 
   @Nullable
   @Override
-  protected RunContentDescriptor getDescriptor() {
+  public RunContentDescriptor getDescriptor() {
     if (myChildren.size() == 1) {
       return myChildren.get(0).getDescriptor();
     }
     return null;
+  }
+
+  @Override
+  public boolean isTerminated() {
+    for (RunDescriptorNode node : myChildren) {
+      if (!node.isTerminated()) {
+        return false;
+      }
+    }
+    return true;
   }
 }

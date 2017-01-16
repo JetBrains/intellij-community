@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.dashboard;
+package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+
+import javax.swing.*;
 
 /**
  * @author konstantin.aleev
  */
-public interface DashboardNode {
-  @Nullable
-  default RunContentDescriptor getDescriptor() {
-    return null;
+public abstract class RunConfigurationTreeAction extends RuntimeDashboardTreeAction<DashboardRunConfigurationNode> {
+  protected RunConfigurationTreeAction(String text, String description, Icon icon) {
+    super(text, description, icon);
   }
 
-  @Nullable
-  default Content getContent() {
-    return getDescriptor() == null ? null : getDescriptor().getAttachedContent();
+  @Override
+  protected Class<DashboardRunConfigurationNode> getTargetNodeClass() {
+    return DashboardRunConfigurationNode.class;
   }
-
-  Project getProject();
 }

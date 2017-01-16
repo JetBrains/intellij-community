@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -124,7 +125,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
       int todoSize = cancellableProcesses.size() + stoppableDescriptors.size();
       if (todoSize == 1) {
         if (!stoppableDescriptors.isEmpty()) {
-          stopProcess(stoppableDescriptors.get(0));
+          ExecutionManagerImpl.stopProcess(stoppableDescriptors.get(0));
         } else {
           cancellableProcesses.get(0).second.cancel();
         }
@@ -182,12 +183,12 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
       }
     }
     else {
-      stopProcess(getRecentlyStartedContentDescriptor(dataContext));
+      ExecutionManagerImpl.stopProcess(getRecentlyStartedContentDescriptor(dataContext));
     }
   }
 
   @NotNull
-  private static List<Pair<TaskInfo, ProgressIndicator>> getCancellableProcesses(@Nullable Project project) {
+  private static List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
     IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
     StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
     if (statusBar == null) return Collections.emptyList();
@@ -212,7 +213,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         HandlerItem item = new HandlerItem(descriptor.getDisplayName(), descriptor.getIcon(), false) {
           @Override
           void stop() {
-            stopProcess(descriptor);
+            ExecutionManagerImpl.stopProcess(descriptor);
           }
         };
         items.add(item);
@@ -233,22 +234,6 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
       hasSeparator = false;
     }
     return Pair.create(items, selected);
-  }
-
-  private static void stopProcess(@Nullable RunContentDescriptor descriptor) {
-    ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
-    if (processHandler == null) return;
-    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
-      ((KillableProcess)processHandler).killProcess();
-      return;
-    }
-
-    if (processHandler.detachIsDefault()) {
-      processHandler.detachProcess();
-    }
-    else {
-      processHandler.destroyProcess();
-    }
   }
 
   @Nullable

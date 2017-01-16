@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,13 @@
  */
 package com.intellij.execution.dashboard;
 
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
-public interface DashboardNode {
-  @Nullable
-  default RunContentDescriptor getDescriptor() {
-    return null;
-  }
-
-  @Nullable
-  default Content getContent() {
-    return getDescriptor() == null ? null : getDescriptor().getAttachedContent();
-  }
-
-  Project getProject();
+public interface TreeContent {
+  @NotNull
+  AbstractTreeBuilder getBuilder();
 }
