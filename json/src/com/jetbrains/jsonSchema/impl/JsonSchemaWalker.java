@@ -68,7 +68,7 @@ public class JsonSchemaWalker {
     final boolean isName = isName(checkable);
     final List<Step> position = findPosition(checkable, isName, !isName);
     if (position == null || position.isEmpty()) {
-      if (isName) consumer.consume(true, rootSchema, schemaFile, position);
+      if (isName) consumer.consume(true, rootSchema, schemaFile, Collections.emptyList());
       return;
     }
 
