@@ -16,6 +16,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,10 @@ public class JsonSchemaWalker {
                                               @NotNull final JsonSchemaObject rootSchema, @NotNull VirtualFile schemaFile) {
     final List<Step> position = findPosition(element, false, true);
     if (position == null || position.isEmpty()) return;
-
+    // but this does not validate definitions section against general schema --> should be done separately
+    if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType()) &&
+        position.get(0).getTransition() instanceof PropertyTransition &&
+        "definitions".equals(((PropertyTransition)position.get(0).getTransition()).getName())) return;
     extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, false, position);
   }
 
@@ -360,6 +364,7 @@ public class JsonSchemaWalker {
           final JsonSchemaObject object = new JsonSchemaObject(pointer);
           object.setProperties(parent.getDefinitions());
           resultConsumer.setSchema(object);
+          return;
         }
       }
       final JsonSchemaObject child = parent.getProperties().get(myName);
