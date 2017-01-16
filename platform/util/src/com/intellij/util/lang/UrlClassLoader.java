@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,8 @@ import java.util.List;
 public class UrlClassLoader extends ClassLoader {
   public static final String CLASS_EXTENSION = ".class";
 
-  private static final boolean HAS_PARALLEL_LOADERS = SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm;
+  private static final boolean HAS_PARALLEL_LOADERS = SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm &&
+                                                      SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
 
   static {
     if (HAS_PARALLEL_LOADERS) {
