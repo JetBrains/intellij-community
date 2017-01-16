@@ -15,15 +15,17 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetIndex;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -34,6 +36,7 @@ import java.util.Set;
 public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_ID = "compiler.ref.index";
   private static final String MESSAGE_TYPE = "processed module";
+  private final Set<ModuleBuildTarget> myCompiledTargets = ContainerUtil.newConcurrentSet();
 
   public BackwardReferenceIndexBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
@@ -52,23 +55,20 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildFinished(CompileContext context) {
-
-    final List<BuildTarget<?>> targets = context.getProjectDescriptor().getBuildTargetIndex().getAllTargets();
-    Set<String> classFilesTargets = new THashSet<String>();
-    for (BuildTarget<?> target : targets) {
-      if (target instanceof ModuleBuildTarget) {
-        classFilesTargets.add(((ModuleBuildTarget)target).getModule().getName());
-      }
-    }
-
-    for (BuildTarget<?> target : targets) {
-      if (target instanceof ModuleBasedTarget && !(target instanceof ModuleBuildTarget)) {
-        final String moduleName = ((ModuleBasedTarget)target).getModule().getName();
-        if (!classFilesTargets.contains(moduleName)) {
-          context.processMessage(new CustomBuilderMessage(BUILDER_ID, MESSAGE_TYPE, moduleName));
+    final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
+    for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
+      boolean allAreDummyOrCompiled = true;
+      for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
+        if (target instanceof ModuleBuildTarget && !myCompiledTargets.contains(target) && !targetIndex.isDummy(target)) {
+          allAreDummyOrCompiled = false;
         }
       }
+      if (allAreDummyOrCompiled) {
+        context.processMessage(new CustomBuilderMessage(BUILDER_ID, MESSAGE_TYPE, module.getName()));
+      }
     }
+    myCompiledTargets.clear();
+
     BackwardReferenceIndexWriter.closeIfNeed();
   }
 
@@ -94,11 +94,9 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
     for (ModuleBuildTarget target : chunk.getTargets()) {
       if (context.getScope().isWholeTargetAffected(target)) {
-        final String moduleName = target.getModule().getName();
-        context.processMessage(new CustomBuilderMessage(BUILDER_ID, MESSAGE_TYPE, moduleName));
+        myCompiledTargets.add(target);
       }
     }
-
     return null;
   }
 }
