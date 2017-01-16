@@ -121,11 +121,13 @@ public class JsonSchemaWalker {
   public static void extractSchemaVariants(@NotNull final Project project, @NotNull final CompletionSchemesConsumer consumer,
                                            @NotNull VirtualFile rootSchemaFile,
                                            @NotNull JsonSchemaObject rootSchema, boolean isName, List<Step> position) {
+    final Set<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> control = new HashSet<>();
     final JsonSchemaServiceEx serviceEx = JsonSchemaServiceEx.Impl.getEx(project);
     final ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue = new ArrayDeque<>();
     queue.add(Trinity.create(rootSchema, rootSchemaFile, position));
     while (!queue.isEmpty()) {
       final Trinity<JsonSchemaObject, VirtualFile, List<Step>> trinity = queue.removeFirst();
+      if (!control.add(trinity)) break;
       final JsonSchemaObject object = trinity.getFirst();
       final VirtualFile schemaFile = trinity.getSecond();
       final List<Step> path = trinity.getThird();
