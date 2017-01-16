@@ -529,7 +529,7 @@ public class IterationState {
     }
 
     List<TextAttributes> cachedAttributes = myCachedAttributesList;
-    cachedAttributes.clear();
+    if (!cachedAttributes.isEmpty()) cachedAttributes.clear();
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
