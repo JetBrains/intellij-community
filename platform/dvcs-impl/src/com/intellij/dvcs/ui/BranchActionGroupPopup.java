@@ -265,10 +265,12 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
       JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
       myIconLabel = new IconComponent();
+      myInfoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+      JPanel textPanel = new OpaquePanel(new BorderLayout(), compoundPanel.getBackground());
       compoundPanel.add(myIconLabel, BorderLayout.WEST);
-      compoundPanel.add(myTextLabel, BorderLayout.CENTER);
-      compoundPanel.add(myInfoLabel, BorderLayout.EAST);
-
+      textPanel.add(myTextLabel, BorderLayout.WEST);
+      textPanel.add(myInfoLabel, BorderLayout.CENTER);
+      compoundPanel.add(textPanel, BorderLayout.CENTER);
       return layoutComponent(compoundPanel);
     }
 
