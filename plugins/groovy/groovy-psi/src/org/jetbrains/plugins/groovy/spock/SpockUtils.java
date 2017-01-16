@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -114,7 +115,7 @@ public class SpockUtils {
     PsiElement e = elementUnderLabel;
 
     while (e != null) {
-      if (e instanceof GrBinaryExpression && ((GrBinaryExpression)e).getOperationTokenType() == GroovyTokenTypes.mLSHIFT) {
+      if (e instanceof GrBinaryExpression && ((GrBinaryExpression)e).getOperationTokenType() == GroovyElementTypes.COMPOSITE_LSHIFT_SIGN) {
         GrBinaryExpression shift = (GrBinaryExpression)e;
         GrExpression leftOperand = shift.getLeftOperand();
         GrExpression rightOperand = shift.getRightOperand();

@@ -72,7 +72,7 @@ public class GroovyWrappingProcessor {
     GroovyTokenTypes.kAS, GroovyTokenTypes.kIN,
     GroovyTokenTypes.mMOD, GroovyTokenTypes.mPLUS, GroovyTokenTypes.mSTAR, GroovyTokenTypes.mSTAR_STAR, GroovyTokenTypes.mNOT_EQUAL,
     GroovyTokenTypes.mCOMPARE_TO, GroovyTokenTypes.mLAND, GroovyTokenTypes.kINSTANCEOF,
-    GroovyTokenTypes.mLSHIFT, GroovyTokenTypes.mRSHIFT, GroovyTokenTypes.mTRIPLE_SHIFT,
+    GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
     GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH, GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE,
 
     GroovyTokenTypes.mBNOT, GroovyTokenTypes.mLNOT, GroovyTokenTypes.mMINUS, GroovyTokenTypes.mDEC, GroovyTokenTypes.mPLUS,
@@ -80,7 +80,7 @@ public class GroovyWrappingProcessor {
 
     GroovyTokenTypes.mSPREAD_DOT, GroovyTokenTypes.mOPTIONAL_DOT, GroovyTokenTypes.mMEMBER_POINTER, GroovyTokenTypes.mDOT,
 
-    GroovyTokenTypes.mLSHIFT, GroovyTokenTypes.mRSHIFT, GroovyTokenTypes.mTRIPLE_SHIFT,
+    GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
 
     GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, GroovyTokenTypes.mLE, GroovyTokenTypes.mGE, GroovyTokenTypes.kIN,
 

@@ -34,7 +34,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleProp
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleTask
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder.DOCUMENTATION
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLSHIFT
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_LSHIFT_SIGN
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -230,7 +230,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
     val closureInLeftShiftMethod = groovyClosure().withTreeParent(
       groovyBinaryExpression().with(object : PatternCondition<GrBinaryExpression?>("leftShiftCondition") {
         override fun accepts(t: GrBinaryExpression, context: ProcessingContext?): Boolean {
-          return t.operationTokenType == mLSHIFT
+          return t.operationTokenType == COMPOSITE_LSHIFT_SIGN
         }
       }))
 
@@ -262,7 +262,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       buffer.append(" " + gradleProp.name)
       val hasInitializer = !gradleProp.value.isNullOrBlank()
       if (hasInitializer) {
-        buffer.append(" = ")
+        buffer.append(" = ");
         val longString = gradleProp.value!!.toString().length > 100
         if (longString) {
           buffer.append("<blockquote>")

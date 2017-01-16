@@ -81,7 +81,7 @@ public class ShiftExpression {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(GroovyTokenTypes.mTRIPLE_SHIFT);
+      marker.done(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
       return true;
     }
     else if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mLT, GroovyTokenTypes.mLT)) {
@@ -90,7 +90,7 @@ public class ShiftExpression {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(GroovyTokenTypes.mLSHIFT);
+      marker.done(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN);
       return true;
     }
     else if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mGT, GroovyTokenTypes.mGT)) {
@@ -99,7 +99,7 @@ public class ShiftExpression {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(GroovyTokenTypes.mRSHIFT);
+      marker.done(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN);
       return true;
     }
     else {

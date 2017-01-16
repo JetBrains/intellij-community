@@ -21,7 +21,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleLog;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -149,6 +149,6 @@ public class GradleResolverUtil {
 
   public static boolean isLShiftElement(@Nullable PsiElement psiElement) {
     return (psiElement instanceof GrBinaryExpression &&
-            GroovyTokenTypes.mLSHIFT.equals(GrBinaryExpression.class.cast(psiElement).getOperationTokenType()));
+            GroovyElementTypes.COMPOSITE_LSHIFT_SIGN.equals(GrBinaryExpression.class.cast(psiElement).getOperationTokenType()));
   }
 }

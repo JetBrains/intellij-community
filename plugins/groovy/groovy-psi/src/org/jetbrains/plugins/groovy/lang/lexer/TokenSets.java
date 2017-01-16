@@ -210,9 +210,9 @@ public abstract class TokenSets {
                                                                GroovyTokenTypes.mSTAR_STAR, GroovyTokenTypes.mNOT_EQUAL,
                                                                GroovyTokenTypes.mCOMPARE_TO, GroovyTokenTypes.mLAND,
                                                                GroovyTokenTypes.kINSTANCEOF,
-                                                               GroovyTokenTypes.mLSHIFT,
-                                                               GroovyTokenTypes.mRSHIFT,
-                                                               GroovyTokenTypes.mTRIPLE_SHIFT,
+                                                               GroovyElementTypes.COMPOSITE_LSHIFT_SIGN,
+                                                               GroovyElementTypes.COMPOSITE_RSHIFT_SIGN,
+                                                               GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
                                                                GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH,
                                                                GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE);
 
@@ -253,9 +253,9 @@ public abstract class TokenSets {
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mDIV_ASSIGN, GroovyTokenTypes.mDIV);
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSTAR_ASSIGN, GroovyTokenTypes.mSTAR);
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mMOD_ASSIGN, GroovyTokenTypes.mMOD);
-    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSL_ASSIGN, GroovyTokenTypes.mLSHIFT);
-    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSR_ASSIGN, GroovyTokenTypes.mRSHIFT);
-    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBSR_ASSIGN, GroovyTokenTypes.mTRIPLE_SHIFT);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSL_ASSIGN, GroovyElementTypes.COMPOSITE_LSHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mSR_ASSIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBSR_ASSIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBAND_ASSIGN, GroovyTokenTypes.mBAND);
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBOR_ASSIGN, GroovyTokenTypes.mBOR);
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mBXOR_ASSIGN, GroovyTokenTypes.mBXOR);
@@ -278,9 +278,9 @@ public abstract class TokenSets {
     GroovyTokenTypes.mSTAR_STAR_ASSIGN
   );
 
-  public static final TokenSet SHIFT_SIGNS = TokenSet.create(GroovyTokenTypes.mLSHIFT,
-                                                             GroovyTokenTypes.mRSHIFT,
-                                                             GroovyTokenTypes.mTRIPLE_SHIFT);
+  public static final TokenSet SHIFT_SIGNS = TokenSet.create(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN,
+                                                             GroovyElementTypes.COMPOSITE_RSHIFT_SIGN,
+                                                             GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
   public static final TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(GroovyTokenTypes.mIDENT, GroovyTokenTypes.kDEF,
                                                                                     GroovyTokenTypes.kIN, GroovyTokenTypes.kAS,
                                                                                     GroovyTokenTypes.kTRAIT);
