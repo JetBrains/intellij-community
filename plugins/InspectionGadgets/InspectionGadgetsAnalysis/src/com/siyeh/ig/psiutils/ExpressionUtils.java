@@ -904,6 +904,9 @@ public class ExpressionUtils {
       PsiClass memberClass = member.getContainingClass();
       if (memberClass != null) {
         PsiClass containingClass = ClassUtils.getContainingClass(ref);
+        if (containingClass == null) {
+          containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
+        }
         if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
           containingClass = ClassUtils.getContainingClass(containingClass);
           while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {

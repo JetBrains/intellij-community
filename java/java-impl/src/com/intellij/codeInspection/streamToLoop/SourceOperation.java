@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,15 +104,17 @@ abstract class SourceOperation extends Operation {
   }
 
   static class ForEachSource extends SourceOperation {
-    private PsiExpression myQualifier;
+    private @Nullable PsiExpression myQualifier;
 
-    ForEachSource(PsiExpression qualifier) {
+    ForEachSource(@Nullable PsiExpression qualifier) {
       myQualifier = qualifier;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
+      if(myQualifier != null) {
+        myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
+      }
     }
 
     @Override
@@ -135,8 +137,9 @@ abstract class SourceOperation extends Operation {
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + ": " + (myQualifier == null ? "this" : myQualifier.getText()) + ") {" + code + "}\n";
+      PsiExpression iterationParameter = myQualifier == null ? ExpressionUtils
+        .getQualifierOrThis(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
+      return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameter.getText() + ") {" + code + "}\n";
     }
   }
 

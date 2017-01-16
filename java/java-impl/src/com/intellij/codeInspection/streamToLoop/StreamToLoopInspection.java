@@ -355,7 +355,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       mySuffix = "Inner";
     }
 
-    public void registerReusedElement(PsiElement element) {
+    public void registerReusedElement(@Nullable PsiElement element) {
+      if(element == null) return;
       element.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitVariable(PsiVariable variable) {
