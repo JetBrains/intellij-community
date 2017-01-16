@@ -457,7 +457,8 @@ public class GitCherryPicker extends VcsCherryPicker {
       return null;
     }
 
-    String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
+    String adjustedMessage = commitMessage.replace('\n', ' ').replaceAll("[ ]{2,}", " ");
+    String changeListName = createNameForChangeList(adjustedMessage, 0);
     LocalChangeList createdChangeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
     LocalChangeList actualChangeList = moveChanges(originalChanges, createdChangeList);
     if (actualChangeList != null && !actualChangeList.getChanges().isEmpty()) {
