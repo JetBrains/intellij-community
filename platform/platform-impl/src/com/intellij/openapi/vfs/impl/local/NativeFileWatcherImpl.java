@@ -157,7 +157,10 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
     if (names == null) return null;
 
-    String[] dirs = {PathManager.getBinPath(), PathManager.getHomePath() + "/community/bin/" + prefix, PathManager.getBinPath() + '/' + prefix};
+    String[] dirs = {PathManager.getBinPath(),
+                     PathManager.getHomePath() + "/ultimate/community/bin/" + prefix,
+                     PathManager.getHomePath() + "/community/bin/" + prefix,
+                     PathManager.getBinPath() + '/' + prefix};
     for (String dir : dirs) {
       for (String name : names) {
         File candidate = new File(dir, name);

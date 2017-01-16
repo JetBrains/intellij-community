@@ -138,7 +138,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static final String[] PREFIX_CANDIDATES = {
     "AppCode", "CLion", "CidrCommon",
-    "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea", "PlatformLangXml" };
+    "Python", "PyCharmCore", "Ruby", "Rider", "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
    * @deprecated calling this method is no longer necessary
