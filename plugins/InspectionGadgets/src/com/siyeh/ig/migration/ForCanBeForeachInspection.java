@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -49,6 +50,12 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     panel.addCheckbox(InspectionGadgetsBundle.message(
       "for.can.be.foreach.option2"), "ignoreUntypedCollections");
     return panel;
+  }
+
+  @Nullable
+  static PsiType getContentType(PsiType type, String containerClassName) {
+    PsiType parameterType = PsiUtil.substituteTypeParameter(type, containerClassName, 0, true);
+    return GenericsUtil.getVariableTypeByExpressionType(parameterType);
   }
 
   private class ForCanBeForeachFix extends InspectionGadgetsFix {
@@ -145,7 +152,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
       if (type == null) {
         return null;
       }
-      parameterType = WhileCanBeForeachInspection.getContentType(type, CommonClassNames.JAVA_UTIL_COLLECTION);
+      parameterType = getContentType(type, CommonClassNames.JAVA_UTIL_COLLECTION);
       if (parameterType == null) {
         parameterType = TypeUtils.getObjectType(forStatement);
       }
@@ -238,13 +245,13 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
       if (iteratorType == null) {
         return null;
       }
-      final PsiType iteratorContentType = WhileCanBeForeachInspection.getContentType(iteratorType, CommonClassNames.JAVA_UTIL_ITERATOR);
+      final PsiType iteratorContentType = getContentType(iteratorType, CommonClassNames.JAVA_UTIL_ITERATOR);
       final PsiType iteratorVariableType = iteratorVariable.getType();
       final PsiType contentType;
       final PsiClassType javaLangObject = TypeUtils.getObjectType(forStatement);
       if (iteratorContentType == null) {
         final PsiType iteratorVariableContentType =
-          WhileCanBeForeachInspection.getContentType(iteratorVariableType, CommonClassNames.JAVA_UTIL_ITERATOR);
+          getContentType(iteratorVariableType, CommonClassNames.JAVA_UTIL_ITERATOR);
         if (iteratorVariableContentType == null) {
           contentType = javaLangObject;
         }
@@ -803,6 +810,6 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     final String text = reference.getText();
     final PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(context.getProject());
     final PsiVariable target = resolveHelper.resolveReferencedVariable(text, context);
-    return variable != target ? "this." + text : text;
+    return variable != target ? ExpressionUtils.getQualifierOrThis(reference).getText() + "." + text : text;
   }
 }

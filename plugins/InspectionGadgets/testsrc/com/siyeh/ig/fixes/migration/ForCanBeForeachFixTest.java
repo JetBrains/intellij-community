@@ -25,6 +25,7 @@ public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testInstanceofAndWhitespace() { doTest(); }
   public void testQualifyWithThis1() { doTest(); }
   public void testQualifyWithThis2() { doTest(); }
+  public void testQualifyWithThisInner() { doTest(); }
   public void testNoQualifier() { doTest(); }
   public void testForThisClass() { doTest(); }
   public void testForOuterClass() { doTest(); }
