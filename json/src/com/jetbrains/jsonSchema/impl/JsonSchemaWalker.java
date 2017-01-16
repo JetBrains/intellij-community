@@ -96,7 +96,7 @@ public class JsonSchemaWalker {
       mySchemaObject = schema;
     }
 
-    public void consumeSmallStep(boolean isName, @NotNull JsonSchemaObject schema, int idx) {
+    public void consumeSmallStep(@NotNull JsonSchemaObject schema, int idx) {
       final List<JsonSchemaObject> list = gatherSchemas(schema);
       for (JsonSchemaObject object : list) {
         if (!StringUtil.isEmptyOrSpaces(object.getDefinitionAddress())) {
@@ -135,7 +135,7 @@ public class JsonSchemaWalker {
         continue;
       }
       final DefinitionsResolver definitionsResolver = new DefinitionsResolver(path);
-      extractSchemaVariants(definitionsResolver, object, isName, path);
+      extractSchemaVariants(definitionsResolver, object, path);
 
       if (definitionsResolver.isFound()) {
         final List<JsonSchemaObject> list = gatherSchemas(definitionsResolver.getSchemaObject());
@@ -176,8 +176,7 @@ public class JsonSchemaWalker {
                                 });
   }
 
-  private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer,
-                                            @NotNull JsonSchemaObject rootSchema, boolean isName, List<Step> position) {
+  private static void extractSchemaVariants(@NotNull DefinitionsResolver consumer, @NotNull JsonSchemaObject rootSchema, @NotNull List<Step> position) {
     final ArrayDeque<Pair<JsonSchemaObject, Integer>> queue = new ArrayDeque<>();
     queue.add(Pair.create(rootSchema, 0));
     while (!queue.isEmpty()) {
@@ -205,7 +204,7 @@ public class JsonSchemaWalker {
       final Consumer<JsonSchemaObject> reporter = object -> {
         if ((level + 1) >= position.size()) consumer.consumeResult(object);
         else {
-          consumer.consumeSmallStep(isName, object, level);
+          consumer.consumeSmallStep(object, level);
           queue.add(Pair.create(object, level + 1));
         }
       };
