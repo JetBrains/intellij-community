@@ -162,6 +162,7 @@ public class JsonSchemaWalker {
                                                         ArrayDeque<Trinity<JsonSchemaObject, VirtualFile, List<Step>>> queue,
                                                         VirtualFile schemaFile, JsonSchemaObject schemaObject, final List<Step> steps) {
     final String definitionAddress = schemaObject.getDefinitionAddress();
+    // we can have also non-absolute transfers here, because allOf and others can not be put in-place into schema
     if (definitionAddress == null) return false;
     final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(definitionAddress);
     //noinspection ConstantConditions

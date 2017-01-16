@@ -48,14 +48,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     skeleton(new Callback() {
       @Override
       public void doCheck() {
-        assertStringItems("\"one\"", "\"two\"");
-
-        LookupImpl lookup = getActiveLookup();
-        if (lookup != null) lookup.hide();
-        JsonSchemaService.Impl.get(getProject()).reset();
-        doHighlighting();
-        complete();
-        assertStringItems("\"one\"", "\"two\"");
+        checkCompletion("\"one\"", "\"two\"");
       }
 
       @Override
@@ -78,6 +71,17 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         addSchema(inherited);
       }
     });
+  }
+
+  private void checkCompletion(String... strings) {
+    assertStringItems(strings);
+
+    LookupImpl lookup = getActiveLookup();
+    if (lookup != null) lookup.hide();
+    JsonSchemaService.Impl.get(getProject()).reset();
+    doHighlighting();
+    complete();
+    assertStringItems(strings);
   }
 
   public void testRefreshSchemaCompletionSimpleVariant() throws Exception {
@@ -418,6 +422,84 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(resolve);
         Assert.assertEquals("nestedAllOfOneOfDefinitionsSchema.json", resolve.getContainingFile().getName());
         Assert.assertEquals("\"begriff\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testNestedAllOneAnyWithInheritanceNavigation() throws Exception {
+    final String prefix = "nestedAllOneAnyWithInheritance/";
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testNavigation.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/referentSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, prefix + "testNavigation.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("baseSchema.json", resolve.getContainingFile().getName());
+        Assert.assertEquals("\"findMe\"", resolve.getText());
+      }
+    });
+  }
+
+  public void testNestedAllOneAnyWithInheritanceCompletion() throws Exception {
+    final String prefix = "nestedAllOneAnyWithInheritance/";
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testCompletion.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/referentSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, prefix + "testCompletion.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        checkCompletion("1","2");
+      }
+    });
+  }
+
+  public void testNestedAllOneAnyWithInheritanceHighlighting() throws Exception {
+    final String prefix = "nestedAllOneAnyWithInheritance/";
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        final List<JsonSchemaMappingsConfigurationBase.Item> patterns = Collections.singletonList(
+          new JsonSchemaMappingsConfigurationBase.Item("testHighlighting.json", true, false));
+        addSchema(new JsonSchemaMappingsConfigurationBase.SchemaInfo("two", moduleDir + "/referentSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, prefix + "testHighlighting.json", prefix + "baseSchema.json", prefix + "referentSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        doDoTest(true, false);
       }
     });
   }
