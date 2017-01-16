@@ -224,7 +224,7 @@ public abstract class IndexedContainer {
 
     @Override
     public PsiType getElementType() {
-      PsiType type = PsiUtil.substituteTypeParameter(getQualifier().getType(), CommonClassNames.JAVA_UTIL_LIST, 0, true);
+      PsiType type = PsiUtil.substituteTypeParameter(getQualifier().getType(), CommonClassNames.JAVA_UTIL_LIST, 0, false);
       return GenericsUtil.getVariableTypeByExpressionType(type);
     }
 

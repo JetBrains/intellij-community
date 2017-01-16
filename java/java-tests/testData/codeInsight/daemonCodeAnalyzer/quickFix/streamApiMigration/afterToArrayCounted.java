@@ -2,11 +2,10 @@
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class Test {
   public void test(List<Integer> ints) {
-      long[] arr = IntStream.range(0, ints.size()).mapToLong(ints::get).toArray();
+      long[] arr = ints.stream().mapToLong(anInt -> anInt).toArray();
       System.out.println(Arrays.toString(arr));
   }
 }
