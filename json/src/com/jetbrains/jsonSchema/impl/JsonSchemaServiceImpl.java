@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -157,20 +158,22 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private JsonSchemaObject readObject(@NotNull JsonSchemaFileProvider provider) {
     final VirtualFile file = provider.getSchemaFile();
     if (file == null) return null;
-    try {
-      final JsonSchemaReader reader = JsonSchemaReader.create(myProject, file);
-      if (reader == null) return null;
-      final JsonSchemaObject schemaObject = reader.read();
-      if (schemaObject.getId() != null) myDefinitions.register(file, schemaObject.getId());
-      return schemaObject;
-    }
-    catch (ProcessCanceledException e) {
-      //ignored
-    }
-    catch (Exception e) {
-      logException(provider, e);
-    }
-    return null;
+    return ApplicationManager.getApplication().runReadAction((Computable<JsonSchemaObject>)() -> {
+      try {
+        final JsonSchemaReader reader = JsonSchemaReader.create(myProject, file);
+        if (reader == null) return null;
+        final JsonSchemaObject schemaObject = reader.read();
+        if (schemaObject.getId() != null) myDefinitions.register(file, schemaObject.getId());
+        return schemaObject;
+      }
+      catch (ProcessCanceledException e) {
+        //ignored
+      }
+      catch (Exception e) {
+        logException(provider, e);
+      }
+      return null;
+    });
   }
 
   private static void logException(@NotNull JsonSchemaFileProvider provider, Exception e) {
