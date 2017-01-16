@@ -247,6 +247,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         ApplicationManager.getApplication().invokeLater(() -> {
           myForcePressed = false;
           myPopup = null;
+          repaint();
         }, ModalityState.any());
         repaint();
         fireStateChanged();
