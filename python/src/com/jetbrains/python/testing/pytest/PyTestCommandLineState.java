@@ -52,7 +52,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
 
   @Override
   protected HelperPackage getRunner() {
-    return PythonHelper.PYTEST;
+    return PythonHelper.PYTEST_OLD;
   }
 
   @NotNull

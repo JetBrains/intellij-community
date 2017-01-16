@@ -100,11 +100,12 @@ private fun KProperty<*>.isAnnotated(annotation: KClass<*>): Boolean {
 
 /**
  * @param instance object with properties (see module doc)
- * @param annotationToFilterBy optional annotation class to fetch only kotlin properties annotated with it. Only supported in Kotlin
+ * @param annotationToFilterByClass optional annotation class to fetch only kotlin properties annotated with it. Only supported in Kotlin
  * @param usePojoProperties search for java-style properties (kotlin otherwise)
  * @return properties of some object
  */
-fun getProperties(instance: Any, annotationToFilterBy: KClass<*>? = null, usePojoProperties: Boolean = false): Properties {
+fun getProperties(instance: Any, annotationToFilterByClass: Class<*>? = null, usePojoProperties: Boolean = false): Properties {
+  val annotationToFilterBy = annotationToFilterByClass?.kotlin
 
   if (usePojoProperties) {
     // Java props
@@ -121,7 +122,7 @@ fun getProperties(instance: Any, annotationToFilterBy: KClass<*>? = null, usePoj
     allKotlinProperties.filter { it.isAnnotated(DelegationProperty::class) }.forEach {
       val delegatedInstance = it.getter.call(instance)
       if (delegatedInstance != null) {
-        delegatedProperties = getProperties(delegatedInstance, annotationToFilterBy, false).properties
+        delegatedProperties = getProperties(delegatedInstance, annotationToFilterBy?.java, false).properties
         allKotlinProperties.remove(it)
       }
     }
