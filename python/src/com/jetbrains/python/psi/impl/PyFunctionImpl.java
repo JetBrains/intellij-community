@@ -837,7 +837,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @NotNull
   private static List<PyAssignmentStatement> findAttributesStatic(@NotNull final PsiElement self) {
     final List<PyAssignmentStatement> result = new ArrayList<>();
-    for (final PyAssignmentStatement statement : PsiQuery.create(self).siblings(PyAssignmentStatement.class)
+    for (final PyAssignmentStatement statement : new PsiQuery<>(self).siblings(PyAssignmentStatement.class)
       .getElements()) {
       for (final PyQualifiedExpression targetExpression : new PsiQuery<PsiElement>(statement.getTargets())
         .filter(new PsiQuery.PsiFilter<>(PyQualifiedExpression.class))
