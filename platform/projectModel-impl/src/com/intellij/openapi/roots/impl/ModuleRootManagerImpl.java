@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
   private final ProjectRootManagerImpl myProjectRootManager;
@@ -333,6 +333,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   public ModuleRootManagerState getState() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("getState, module " + myModule.getName());
+    }
     return new ModuleRootManagerState(myRootModel);
   }
 

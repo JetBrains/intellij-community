@@ -21,6 +21,7 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,13 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
       LibraryTable table = library.getTable();
       if (table instanceof PersistentStateComponentWithModificationTracker && !handledLibraryTables.contains(table.getTableLevel())) {
         handledLibraryTables.add(table.getTableLevel());
-        result[0] += ((PersistentStateComponentWithModificationTracker)table).getStateModificationCount();
+        long count = ((PersistentStateComponentWithModificationTracker)table).getStateModificationCount();
+        if (count > 0) {
+          if (Registry.is("store.track.module.root.manager.changes", false)) {
+            LOG.error("modification count changed due to library  " + library.getName() + " change, module " + getModule().getName());
+          }
+        }
+        result[0] += count;
       }
       return true;
     });
