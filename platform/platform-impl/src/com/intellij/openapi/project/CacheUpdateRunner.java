@@ -44,9 +44,7 @@ public class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
-
-  private static final int FILE_SIZE_TO_SHOW_THRESHOLD = 500 * 1024;
-
+  
   public static void processFiles(final ProgressIndicator indicator,
                                   boolean processInReadAction,
                                   Collection<VirtualFile> files,
@@ -59,7 +57,6 @@ public class CacheUpdateRunner {
     ProgressUpdater progressUpdater = new ProgressUpdater() {
       final Set<VirtualFile> myFilesBeingProcessed = new THashSet<>();
       final AtomicInteger myNumberOfFilesProcessed = new AtomicInteger();
-      private boolean fileNameWasShown;
 
       @Override
       public void processingStarted(VirtualFile virtualFile) {
@@ -70,12 +67,9 @@ public class CacheUpdateRunner {
             indicator.setFraction(myNumberOfFilesProcessed.incrementAndGet() / total);
           }
 
-          if (!added || (virtualFile.isValid() && virtualFile.getLength() > FILE_SIZE_TO_SHOW_THRESHOLD)) {
-            indicator.setText2(virtualFile.getPresentableUrl());
-            fileNameWasShown = true;
-          } else if (fileNameWasShown) {
-            indicator.setText2("");
-            fileNameWasShown = false;
+          if (added) {
+            VirtualFile parent = virtualFile.getParent();
+            if (parent != null) indicator.setText2(parent.getPresentableUrl());
           }
         }
       }
