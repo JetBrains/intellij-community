@@ -28,6 +28,11 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   @Volatile internal var modificationCount: Long = 0
 
+  // reset on load state
+  fun resetModificationCount() {
+    modificationCount = 0
+  }
+
   override fun accepts(accessor: Accessor, bean: Any): Boolean {
     for (property in properties) {
       if (property.name == accessor.name) {

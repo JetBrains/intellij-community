@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.configurationStore.SerializationUtilKt;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.diagnostic.Logger;
@@ -129,10 +129,10 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       ModuleExtension model = extension.getModifiableModel(false);
 
       if (model instanceof PersistentStateComponent) {
-        PersistentStateComponent<?> component = (PersistentStateComponent)model;
-        component.loadState(XmlSerializer.deserialize(element, ComponentSerializationUtil.getStateClass((component.getClass()))));
+        SerializationUtilKt.deserializeAndLoadState((PersistentStateComponent)model, element);
       }
       else {
+        //noinspection deprecation
         model.readExternal(element);
       }
 
@@ -167,8 +167,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     myWritable = writable;
     myConfigurationAccessor = rootConfigurationAccessor;
 
-    final Set<ContentEntry> thatContent = rootModel.myContent;
-    for (ContentEntry contentEntry : thatContent) {
+    for (ContentEntry contentEntry : rootModel.myContent) {
       if (contentEntry instanceof ClonableContentEntry) {
         ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(this);
         myContent.add(cloned);
@@ -436,6 +435,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
         XmlSerializer.serializeInto(((PersistentStateComponent)extension).getState(), element);
       }
       else {
+        //noinspection deprecation
         extension.writeExternal(element);
       }
     }

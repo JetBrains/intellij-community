@@ -24,7 +24,6 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements LanguageLevelModuleExtension,
