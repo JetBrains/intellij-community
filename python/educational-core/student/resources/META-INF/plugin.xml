@@ -108,9 +108,6 @@
     <applicationService serviceImplementation="com.jetbrains.edu.learning.stepic.StepicUpdateSettings"/>
     <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
     <typedHandler implementation="com.jetbrains.edu.learning.StudyTypeHandlerDelegate" order="first, before completionAutoPopup"/>
-    <localInspection shortName="StudyLanguageLevelInspection" suppressId="StudyLanguageLevelInspection" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.jetbrains.edu.learning.StudyLanguageLevelInspection" 
-                     displayName="Unsupported language level for a course" groupName="Inspection.Study.Python"/>
   </extensions>
 
   <extensions defaultExtensionNs="Edu">
