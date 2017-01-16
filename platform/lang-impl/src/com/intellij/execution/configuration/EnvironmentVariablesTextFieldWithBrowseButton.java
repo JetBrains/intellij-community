@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +37,10 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
@@ -82,7 +83,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     EnvironmentVariablesData oldData = myData;
     myData = data;
     setText(stringifyEnvs(data.getEnvs()));
-    if (oldData.isPassParentEnvs() != data.isPassParentEnvs()) {
+    if (!oldData.equals(data)) {
       fireStateChanged();
     }
   }
