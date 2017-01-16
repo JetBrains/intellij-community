@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.testing.universalTests;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
@@ -23,7 +25,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PyFileChooserDescriptor;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import com.jetbrains.reflection.ReflectionUtilsKt;
@@ -106,8 +108,9 @@ public final class PyUniversalTestForm implements SimplePropertiesProvider {
 
 
     final PyUniversalTestForm form = new PyUniversalTestForm();
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(PythonFileType.INSTANCE);
     form.myTargetText.addBrowseFolderListener("Choose File or Folder", null, configuration.getProject(),
-                                              new PyFileChooserDescriptor(true));
+                                              descriptor);
 
     for (final TestTargetType testTargetType : TestTargetType.values()) {
       final JBRadioButton button = new JBRadioButton(StringUtil.capitalize(testTargetType.name().toLowerCase(Locale.getDefault())));

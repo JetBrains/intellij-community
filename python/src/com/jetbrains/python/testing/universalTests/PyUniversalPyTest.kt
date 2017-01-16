@@ -32,7 +32,7 @@ class PyUniversalPyTestSettingsEditor(configuration: PyUniversalTestConfiguratio
 
 class PyUniversalPyTestExecutionEnvironment(configuration: PyUniversalPyTestConfiguration, environment: ExecutionEnvironment) :
   PyUniversalTestExecutionEnvironment<PyUniversalPyTestConfiguration>(configuration, environment) {
-  override fun getRunner() = PythonHelper.UNIVERSAL_PYTEST
+  override fun getRunner() = PythonHelper.PYTEST
 }
 
 
