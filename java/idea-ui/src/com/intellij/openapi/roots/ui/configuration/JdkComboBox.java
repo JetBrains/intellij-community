@@ -44,6 +44,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -321,9 +322,9 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       SdkType[] types = SdkType.getAllTypes();
       for (SdkType type : types) {
         if (sdkTypeFilter == null || sdkTypeFilter.value(type) && ContainerUtil.find(jdks, sdk -> sdk.getSdkType() == type) == null) {
-          String homePath = type.suggestHomePath();
-          if (homePath != null && type.isValidSdkHome(homePath)) {
-            addElement(new SuggestedJdkItem(type, homePath));
+          Collection<String> paths = type.suggestHomePaths();
+          for (String path : paths) {
+            addElement(new SuggestedJdkItem(type, path));
           }
         }
       }
