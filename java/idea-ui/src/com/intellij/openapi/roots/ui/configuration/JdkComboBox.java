@@ -310,7 +310,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       Arrays.sort(clone, (sdk1, sdk2) -> {
         SdkType sdkType1 = (SdkType)sdk1.getSdkType();
         SdkType sdkType2 = (SdkType)sdk2.getSdkType();
-        if (sdkType1.getComparator() != sdkType2.getComparator()) return SdkType.ALPHABETICAL_COMPARATOR.compare(sdk1, sdk2);
+        if (!sdkType1.getComparator().equals(sdkType2.getComparator())) return SdkType.ALPHABETICAL_COMPARATOR.compare(sdk1, sdk2);
         return sdkType1.getComparator().compare(sdk1, sdk2);
       });
       return clone;
