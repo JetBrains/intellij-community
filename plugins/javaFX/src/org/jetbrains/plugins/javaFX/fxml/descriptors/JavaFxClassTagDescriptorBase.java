@@ -165,7 +165,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
       final String parentTagName = contextTag.getName();
       if (!FxmlConstants.FX_DEFINE.equals(parentTagName)) {
         if (FxmlConstants.FX_ROOT.equals(parentTagName)) {
-          final Map<String, PsiMember> properties = JavaFxPsiUtil.collectWritableProperties(psiClass);
+          final Map<String, PsiMember> properties = JavaFxPsiUtil.getWritableProperties(psiClass);
           if (properties.get(name) != null) {
             return new JavaFxPropertyTagDescriptor(psiClass, name, false);
           }
@@ -180,7 +180,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
               }
             }
           }
-          final Map<String, PsiMember> properties = JavaFxPsiUtil.collectWritableProperties(psiClass);
+          final Map<String, PsiMember> properties = JavaFxPsiUtil.getWritableProperties(psiClass);
           if (properties.get(name) != null) {
             return new JavaFxPropertyTagDescriptor(psiClass, name, false);
           }
@@ -227,7 +227,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
 
   @NotNull
   private <T> Set<String> collectWritableProperties(final List<T> children, final Function<PsiMember, T> factory) {
-    final Map<String, PsiMember> fieldList = JavaFxPsiUtil.collectWritableProperties(getPsiClass());
+    final Map<String, PsiMember> fieldList = JavaFxPsiUtil.getWritableProperties(getPsiClass());
     for (PsiMember field : fieldList.values()) {
       children.add(factory.fun(field));
     }
@@ -246,7 +246,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     if (propertySetter != null) {
       return new JavaFxStaticSetterAttributeDescriptor(propertySetter, attributeName);
     }
-    final PsiMember psiMember = JavaFxPsiUtil.collectWritableProperties(psiClass).get(attributeName);
+    final PsiMember psiMember = JavaFxPsiUtil.getWritableProperties(psiClass).get(attributeName);
     if (psiMember != null) {
       return new JavaFxPropertyAttributeDescriptor(attributeName, psiClass);
     }
@@ -331,7 +331,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
   public boolean isReadOnlyAttribute(String attributeName) {
     final PsiClass psiClass = getPsiClass();
     return psiClass != null &&
-           !JavaFxPsiUtil.collectWritableProperties(psiClass).containsKey(attributeName) &&
+           !JavaFxPsiUtil.getWritableProperties(psiClass).containsKey(attributeName) &&
            !JavaFxPsiUtil.getConstructorNamedArgProperties(psiClass).contains(attributeName);
   }
 

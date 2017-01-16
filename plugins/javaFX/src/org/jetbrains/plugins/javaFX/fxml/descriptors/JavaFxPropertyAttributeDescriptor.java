@@ -190,7 +190,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       final List<String> remainingPropertyNames = propertyNames.subList(1, propertyNames.size());
       for (String propertyName : remainingPropertyNames) {
         if (aClass == null) break;
-        final PsiMember member = JavaFxPsiUtil.collectReadableProperties(aClass).get(propertyName);
+        final PsiMember member = JavaFxPsiUtil.getReadableProperties(aClass).get(propertyName);
         aClass = JavaFxPsiUtil.getPropertyClass(JavaFxPsiUtil.getReadablePropertyType(member), xmlAttributeValue);
       }
       if (aClass != null && !InheritanceUtil.isInheritorOrSelf(aClass, targetPropertyClass, true)) {
@@ -273,7 +273,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   private PsiMember getDeclarationMember() {
-    return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
+    return JavaFxPsiUtil.getWritableProperties(myPsiClass).get(myName);
   }
 
   @Override
