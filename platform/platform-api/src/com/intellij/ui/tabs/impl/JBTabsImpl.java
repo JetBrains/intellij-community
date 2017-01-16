@@ -417,6 +417,7 @@ public class JBTabsImpl extends JComponent
     myInfo2Page.clear();
     myInfo2Toolbar.clear();
     myTabListeners.clear();
+    myLastLayoutPass = null;
   }
 
   protected void resetTabsCache() {
