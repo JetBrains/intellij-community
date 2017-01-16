@@ -52,7 +52,7 @@ public class EduAnswerPlaceholderPainter {
     if (placeholder.isActive()) {
       drawAnswerPlaceholder(editor, startOffset, endOffset, textAttributes, PLACEHOLDERS_LAYER);
     }
-    else if (!placeholder.getUseLength()) {
+    else if (!placeholder.getUseLength() && length != 0) {
       drawAnswerPlaceholderFromPrevStep(editor, startOffset, endOffset);
     }
   }
