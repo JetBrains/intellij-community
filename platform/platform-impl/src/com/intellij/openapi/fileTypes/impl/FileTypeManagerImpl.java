@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
@@ -763,7 +762,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       // for empty file there is still hope its type will change
       return false;
     }
-    return file.getFileSystem() instanceof FileSystemInterface && !SingleRootFileViewProvider.isTooLargeForContentLoading(file);
+    return file.getFileSystem() instanceof FileSystemInterface;
   }
 
   private boolean processFirstBytes(@NotNull final InputStream stream, final int length, @NotNull Processor<ByteSequence> processor) throws IOException {
