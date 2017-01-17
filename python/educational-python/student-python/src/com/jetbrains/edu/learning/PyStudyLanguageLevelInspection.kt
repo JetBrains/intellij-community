@@ -40,10 +40,12 @@ class PyStudyLanguageLevelInspection : PyInspection() {
       val virtualFile = PsiUtilCore.getVirtualFile(node)
       if (module != null && virtualFile != null) {
         val sdk = PythonSdkType.findPythonSdk(module)
-        val projectLanguageLevel = PythonSdkType.getLanguageLevelForSdk(sdk)
-        val project = ProjectUtil.guessProjectForContentFile(node.virtualFile) ?: return
-        val course = StudyTaskManager.getInstance(project).course ?: return
-        checkIfLanguageLevelSupported(course, projectLanguageLevel, node)
+        if (sdk != null) {
+          val projectLanguageLevel = PythonSdkType.getLanguageLevelForSdk(sdk)
+          val project = ProjectUtil.guessProjectForContentFile(node.virtualFile) ?: return
+          val course = StudyTaskManager.getInstance(project).course ?: return
+          checkIfLanguageLevelSupported(course, projectLanguageLevel, node)
+        }
       }
     }
 
