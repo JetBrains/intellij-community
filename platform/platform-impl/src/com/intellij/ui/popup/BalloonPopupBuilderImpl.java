@@ -54,7 +54,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myHideOnLinkClick    = false;
 
   private ActionListener myClickHandler;
-  private boolean        myCloseOnClick;
+  private boolean        myCloseOnClick = true;
   private int myAnimationCycle = 500;
 
   private int myCalloutShift;
