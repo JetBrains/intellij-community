@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +75,7 @@ public class TestAll implements Test {
     public boolean shouldRun(Description description) {
       String className = description.getClassName();
       String methodName = description.getMethodName();
-      return className != null && hasPerformance(className) ||
-             methodName != null && hasPerformance(methodName);
+      return UsefulTestCase.isPerformanceTest(methodName, className);
     }
 
     @Override
@@ -466,7 +466,7 @@ public class TestAll implements Test {
 
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
         JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
-        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest(testCaseClass) && isPerformanceTestsRun();
+        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest(null, testCaseClass) && isPerformanceTestsRun();
         if (!runEverything) {
           try {
             adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
@@ -486,7 +486,7 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ (hasPerformance(name) || isPerformanceTest(testCaseClass))))
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass)))
               return;
 
             Method method = findTestMethod((TestCase)test);
@@ -525,26 +525,17 @@ public class TestAll implements Test {
     }
   }
 
-  public static boolean shouldIncludePerformanceTestCase(Class aClass) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(aClass);
+  static boolean shouldIncludePerformanceTestCase(Class aClass) {
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null,aClass);
   }
 
-  public static boolean isPerformanceTest(Class aClass) {
-    return hasPerformance(aClass.getSimpleName());
-  }
-
-  private static boolean hasPerformance(String name) {
-    return name.toLowerCase(Locale.US).contains("performance");
+  private static boolean isPerformanceTest(String methodName, Class aClass) {
+    return UsefulTestCase.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
   @Nullable
   private static Method safeFindMethod(Class<?> klass, String name) {
-    try {
-      return klass.getMethod(name);
-    }
-    catch (NoSuchMethodException e) {
-      return null;
-    }
+    return ReflectionUtil.getMethod(klass, name);
   }
 
   private static void tryGc(int times) {
