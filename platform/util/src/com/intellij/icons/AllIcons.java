@@ -524,6 +524,7 @@ public class AllIcons {
     public static final Icon Settings = IconLoader.getIcon("/general/settings.png"); // 16x16
     public static final Icon Show_to_implement = IconLoader.getIcon("/general/show_to_implement.png"); // 16x16
     public static final Icon Show_to_override = IconLoader.getIcon("/general/show_to_override.png"); // 16x16
+    public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/general/siblingInheritedMethod.png"); // 12x12
     public static final Icon SmallConfigurableVcs = IconLoader.getIcon("/general/smallConfigurableVcs.png"); // 16x16
     public static final Icon SplitCenterH = IconLoader.getIcon("/general/splitCenterH.png"); // 7x7
     public static final Icon SplitCenterV = IconLoader.getIcon("/general/splitCenterV.png"); // 6x7
