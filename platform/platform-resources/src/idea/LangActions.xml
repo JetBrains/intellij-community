@@ -921,6 +921,9 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
+    <action id="JumpToTextAttributes" class="com.intellij.application.options.colors.JumpToTextAttributesAction"
+            text="Jump to Text Attributes" icon="AllIcons.General.EditColors"/>
+
     <!-- Arrangement rules -->
     <action id="Arrangement.Rule.Add"
             use-shortcut-of="NewElement"
