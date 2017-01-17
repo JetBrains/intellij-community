@@ -18,9 +18,18 @@ package com.intellij.application.options.schemes;
 import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NotNull;
 
-public interface SchemeListItemFactory<T extends Scheme> {
+public interface SchemesModel<T extends Scheme> {
+  boolean supportsProjectSchemes();
   
-  SchemeListItem<T> createItem(@NotNull T scheme);
-
-  SchemeListItem<T> createSeparator(@NotNull String title);
+  boolean canDuplicateScheme(@NotNull T scheme );
+  
+  boolean canResetScheme(@NotNull T scheme);
+  
+  boolean canDeleteScheme(@NotNull T scheme);
+  
+  boolean isProjectScheme(@NotNull T scheme);
+  
+  boolean canRenameScheme(@NotNull T scheme);
+  
+  boolean nameExists(@NotNull String name);
 }

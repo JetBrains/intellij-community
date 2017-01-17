@@ -15,21 +15,23 @@
  */
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.SaveSchemeDialog;
-import com.intellij.application.options.schemes.AbstractSchemesPanel;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
+import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.options.SchemeImportUtil;
+import com.intellij.openapi.options.SchemeImporter;
+import com.intellij.openapi.options.SchemeImporterEP;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -53,7 +55,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   }
 
   @Override
-  protected void doImport(@NotNull String importerName) {
+  protected void importScheme(@NotNull String importerName) {
     if (tryImportWithImportHandler(importerName)) {
       return;
     }
@@ -65,7 +67,9 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
           EditorColorsScheme imported =
             importer.importScheme(DefaultProjectFactory.getInstance().getDefaultProject(), importSource, getOptions().getSelectedScheme(),
                                   name -> {
-                                    String newName = getOptions().getUniqueName(name != null ? name : "Unnamed");
+                                    String newName = SchemeNameGenerator.getUniqueName(name != null ? name : "Unnamed",
+                                                                                       candidate -> getSchemesPanel().getModel()
+                                                                                         .nameExists(candidate));
                                     AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
                                     newScheme.setName(newName);
                                     newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
@@ -95,7 +99,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   }
 
   @Override
-  protected void doReset(@NotNull EditorColorsScheme scheme) {
+  protected void resetScheme(@NotNull EditorColorsScheme scheme) {
       if (Messages
             .showOkCancelDialog(ApplicationBundle.message("color.scheme.reset.message"),
                                 ApplicationBundle.message("color.scheme.reset.title"), Messages.getQuestionIcon()) == Messages.OK) {
@@ -104,23 +108,17 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   }
 
   @Override
-  protected void doSaveAs(@NotNull  EditorColorsScheme scheme) {
-    List<String> names = ContainerUtil.newArrayList(getOptions().getSchemeNames());
-    String selectedName = SchemeManager.getDisplayName(scheme);
-    SaveSchemeDialog dialog =
-      new SaveSchemeDialog(getSchemesPanel(), ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
-    if (dialog.showAndGet()) {
-      getOptions().saveSchemeAs(dialog.getSchemeName());
-    }
+  protected void duplicateScheme(@NotNull  EditorColorsScheme scheme, @NotNull String newName) {
+      getOptions().saveSchemeAs(scheme, newName);
   }
 
   @Override
-  protected void doDelete(@NotNull EditorColorsScheme scheme) {
+  protected void deleteScheme(@NotNull EditorColorsScheme scheme) {
     getOptions().removeScheme(scheme.getName());
   }
 
   @Override
-  protected void doExport(@NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
+  protected void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
     // Unsupported for now.
   }
 

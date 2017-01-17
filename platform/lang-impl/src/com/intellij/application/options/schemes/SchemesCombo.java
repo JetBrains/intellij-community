@@ -16,6 +16,7 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.*;
@@ -28,9 +29,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
+import java.util.function.Function;
 
 public class SchemesCombo<T extends Scheme> {
-  private ComboBox<SchemeListItem<T>> myComboBox;
+  
+  // region Message constants
+  public static final String PROJECT_LEVEL = "Project";
+  public static final String IDE_LEVEL = "IDE";
+  public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
+  public static final String NAME_ALREADY_EXISTS_MESSAGE = "The name already exists";
+  // endregion
+  
+  private ComboBox<MySchemeListItem<T>> myComboBox;
   private JPanel myRootPanel;
   private AbstractSchemesPanel<T> mySchemesPanel;
   private final CardLayout myLayout;
@@ -69,20 +79,26 @@ public class SchemesCombo<T extends Scheme> {
 
   private void stopEdit() {
     String newName = myNameEditorField.getText();
-    SchemeListItem<T> selectedItem = getSelectedItem();
-    String validationMessage = selectedItem != null ? selectedItem.validateSchemeName(newName) : null;
-    if (validationMessage != null) {
-      mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
-    }
-    else {
-      cancelEdit();
-      if (selectedItem != null && selectedItem.getScheme() != null) {
-        mySchemesPanel.getActions().doRename(selectedItem.getScheme(), newName);
+    MySchemeListItem<T> selectedItem = getSelectedItem();
+    if (selectedItem != null) {
+      if (newName.equals(selectedItem.getSchemeName())) {
+        cancelEdit();
+        return;
+      }
+      String validationMessage = validateSchemeName(newName);
+      if (validationMessage != null) {
+        mySchemesPanel.showInfo(validationMessage, MessageType.ERROR);
+      }
+      else {
+        cancelEdit();
+        if (selectedItem.getScheme() != null) {
+          mySchemesPanel.getActions().renameScheme(selectedItem.getScheme(), newName);
+        }
       }
     }
   }
   
-  private void cancelEdit() {
+  public void cancelEdit() {
     mySchemesPanel.clearInfo();
     myLayout.first(myRootPanel);
     myRootPanel.requestFocus();
@@ -97,10 +113,10 @@ public class SchemesCombo<T extends Scheme> {
         mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
       }
     });
-    myComboBox.setModel(new DefaultComboBoxModel<SchemeListItem<T>>() {
+    myComboBox.setModel(new DefaultComboBoxModel<MySchemeListItem<T>>() {
       @Override
       public void setSelectedItem(Object anObject) {
-        if (anObject instanceof SchemeListItem && ((SchemeListItem)anObject).isSeparator()) {
+        if (anObject instanceof MySchemeListItem && ((MySchemeListItem)anObject).isSeparator()) {
           return;
         }
         super.setSelectedItem(anObject);
@@ -117,31 +133,40 @@ public class SchemesCombo<T extends Scheme> {
     }
   }
 
-  private SimpleTextAttributes getSchemeAttributes(@NotNull SchemeListItem<T> item) {
-    return item.isDeleteAvailable() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+  private SimpleTextAttributes getSchemeAttributes(@NotNull MySchemeListItem<T> item) {
+    T scheme = item.getScheme();
+    return scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme)
+           ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+           : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
   }
-  
+
   public void resetSchemes(@NotNull Collection<T> schemes) {
     myComboBox.removeAllItems();
-    SchemeListItem.SchemeLevel currSchemeLevel = SchemeListItem.SchemeLevel.IDE_Only;
+    SchemesModel<T> model = mySchemesPanel.getModel();
+    if (model.supportsProjectSchemes()) {
+      myComboBox.addItem(new MySeparatorItem(PROJECT_LEVEL));
+      addItems(schemes, scheme -> model.isProjectScheme(scheme));
+      myComboBox.addItem(new MySeparatorItem(IDE_LEVEL));
+      addItems(schemes, scheme -> !model.isProjectScheme(scheme));
+    }
+    else {
+      addItems(schemes, scheme -> true);
+    }
+  }
+  
+  private void addItems(@NotNull Collection<T> schemes, Function<T,Boolean> filter) {
     for (T scheme : schemes) {
-      SchemeListItem<T> item = mySchemesPanel.createItem(scheme);
-      SchemeListItem.SchemeLevel schemeLevel = item.getSchemeLevel();
-      if (!currSchemeLevel.equals(schemeLevel)) {
-        currSchemeLevel = schemeLevel;
-        if (!schemeLevel.equals(SchemeListItem.SchemeLevel.IDE_Only)) {
-          myComboBox.addItem(mySchemesPanel.createSeparator(currSchemeLevel.toString()));
-        }
+      if (filter.apply(scheme)) {
+        myComboBox.addItem(new MySchemeListItem<>(scheme));
       }
-      myComboBox.addItem(item);
     }
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<SchemeListItem<T>> {
-    private ListCellRendererWrapper<SchemeListItem> myWrapper = new ListCellRendererWrapper<SchemeListItem>() {
+  private class MyListCellRenderer extends ColoredListCellRenderer<MySchemeListItem<T>> {
+    private ListCellRendererWrapper<MySchemeListItem> myWrapper = new ListCellRendererWrapper<MySchemeListItem>() {
       @Override
       public void customize(JList list,
-                            SchemeListItem value,
+                            MySchemeListItem value,
                             int index,
                             boolean selected,
                             boolean hasFocus) {
@@ -153,8 +178,8 @@ public class SchemesCombo<T extends Scheme> {
     };
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends SchemeListItem<T>> list,
-                                                  SchemeListItem<T> value,
+    public Component getListCellRendererComponent(JList<? extends MySchemeListItem<T>> list,
+                                                  MySchemeListItem<T> value,
                                                   int index,
                                                   boolean selected,
                                                   boolean hasFocus) {
@@ -169,29 +194,32 @@ public class SchemesCombo<T extends Scheme> {
     }
 
     @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends SchemeListItem<T>> list,
-                                         SchemeListItem<T> value,
+    protected void customizeCellRenderer(@NotNull JList<? extends MySchemeListItem<T>> list,
+                                         MySchemeListItem<T> value,
                                          int index,
                                          boolean selected,
                                          boolean hasFocus) {
-      if (value.getScheme() != null) {
+      T scheme = value.getScheme();
+      if (scheme != null) {
         append(value.getPresentableText(), getSchemeAttributes(value));
-        SchemeListItem.SchemeLevel schemeLevel = value.getSchemeLevel();
-        if (index == -1 && !SchemeListItem.SchemeLevel.IDE_Only.equals(schemeLevel)) {
-          append("  " + schemeLevel.toString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        if (mySchemesPanel.getModel().supportsProjectSchemes()) {
+          if (index == -1) {
+            append("  " + (mySchemesPanel.getModel().isProjectScheme(scheme) ? PROJECT_LEVEL : IDE_LEVEL),
+                   SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
         }
       }
     }
   }
-  
+
   @Nullable
   public T getSelectedScheme() {
-    SchemeListItem<T> item = getSelectedItem();
+    MySchemeListItem<T> item = getSelectedItem();
     return item != null ? item.getScheme() : null;
   }
   
   @Nullable
-  public SchemeListItem<T> getSelectedItem() {
+  public MySchemeListItem<T> getSelectedItem() {
     int i = myComboBox.getSelectedIndex();
     return i >= 0 ? myComboBox.getItemAt(i) : null;
   }
@@ -209,4 +237,64 @@ public class SchemesCombo<T extends Scheme> {
     return myRootPanel;
   }
   
+  private class MySeparatorItem extends MySchemeListItem<T> {
+    
+    private String myTitle;
+
+    public MySeparatorItem(@NotNull String title) {
+      super(null);
+      myTitle = title;
+    }
+
+    @Override
+    public boolean isSeparator() {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableText() {
+      return myTitle;
+    }
+  }
+
+  private static class MySchemeListItem<T extends Scheme> {
+
+    private @Nullable T myScheme;
+
+    public MySchemeListItem(@Nullable T scheme) {
+      myScheme = scheme;
+    }
+
+    @Nullable
+    public String getSchemeName() {
+      return myScheme != null ? myScheme.getName() : null;
+    }
+
+    @Nullable
+    public T getScheme() {
+      return myScheme;
+    }
+
+    @NotNull
+    public String getPresentableText() {
+      return myScheme != null ? SchemeManager.getDisplayName(myScheme) : "";
+    }
+
+    public boolean isSeparator() {
+      return false;
+    }
+    
+  }
+
+  @Nullable
+  public String validateSchemeName(@NotNull String name) {
+    if (name.isEmpty()) {
+      return EMPTY_NAME_MESSAGE;
+    }
+    else if (mySchemesPanel.getModel().nameExists(name)) {
+      return NAME_ALREADY_EXISTS_MESSAGE;
+    }
+    return null;
+  }
 }

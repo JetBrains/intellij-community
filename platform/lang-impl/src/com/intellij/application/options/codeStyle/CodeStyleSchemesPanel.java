@@ -17,9 +17,9 @@
 
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.schemes.AbstractSchemesPanel;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
-import com.intellij.application.options.schemes.SchemeListItem;
+import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
@@ -113,7 +113,7 @@ public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme>
         }
 
         @Override
-        protected void doRename(@NotNull CodeStyleScheme scheme, @NotNull String newName) {
+        protected void renameScheme(@NotNull CodeStyleScheme scheme, @NotNull String newName) {
           CodeStyleSchemeImpl newScheme = new CodeStyleSchemeImpl(newName, false, scheme);
           myModel.addScheme(newScheme, false);
           myModel.removeScheme(scheme);
@@ -122,44 +122,10 @@ public class CodeStyleSchemesPanel extends AbstractSchemesPanel<CodeStyleScheme>
       };
   }
 
+  @NotNull
   @Override
-  public SchemeListItem<CodeStyleScheme> createItem(@NotNull CodeStyleScheme scheme) {
-    return new SchemeListItem<CodeStyleScheme>(scheme) {
-      @Override
-      public boolean isDuplicateAvailable() {
-        return !myModel.isProjectScheme(scheme);
-      }
-
-      @Override
-      public boolean isResetAvailable() {
-        return true;
-      }
-
-      @Override
-      public boolean isDeleteAvailable() {
-        return !myModel.isProjectScheme(scheme) && !scheme.isDefault();
-      }
-
-      @Override
-      public SchemeLevel getSchemeLevel() {
-        return myModel.isProjectScheme(scheme) ? SchemeLevel.Project : SchemeLevel.IDE;
-      }
-
-      @Override
-      public boolean isRenameAvailable() {
-        return isDeleteAvailable();
-      }
-
-      @Nullable
-      @Override
-      public String validateSchemeName(@NotNull String name) {
-        for (CodeStyleScheme scheme : myModel.getSchemes()) {
-          if (name.equals(scheme.getName()) && scheme != getScheme()) {
-            return NAME_ALREADY_EXISTS_MESSAGE;
-          }
-        }
-        return super.validateSchemeName(name);
-      }
-    };
+  public SchemesModel<CodeStyleScheme> getModel() {
+    return myModel;
   }
+  
 }

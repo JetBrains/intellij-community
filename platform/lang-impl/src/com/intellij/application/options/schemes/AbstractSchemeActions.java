@@ -17,9 +17,7 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeExporterEP;
-import com.intellij.openapi.options.SchemeImporterEP;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -31,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class AbstractSchemeActions<T extends Scheme> {
+  
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
   private AbstractSchemesPanel<T> mySchemesPanel;
@@ -99,15 +98,16 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void actionPerformed(AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
-        doReset(currentScheme);
-      }
+        mySchemesPanel.cancelEdit();
+        resetScheme(currentScheme);
+      }                                                                             
     }
 
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      SchemeListItem<T> item = mySchemesPanel.getSelectedItem();
-      p.setEnabled(item != null && item.isResetAvailable());
+      T scheme = getCurrentScheme();
+      p.setEnabled(scheme != null && mySchemesPanel.getModel().canResetScheme(scheme));
     }
   }
   
@@ -121,15 +121,23 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void actionPerformed(AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
-        doSaveAs(currentScheme);
+        mySchemesPanel.cancelEdit();
+        duplicateScheme(currentScheme,
+                        SchemeNameGenerator.getUniqueName(
+                      SchemeManager.getDisplayName(currentScheme), 
+                      name -> mySchemesPanel.getModel().nameExists(name)));
+        currentScheme = getCurrentScheme();
+        if (currentScheme != null)  {
+          mySchemesPanel.startEdit();
+        }
       }
     }
 
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      SchemeListItem<T> item = mySchemesPanel.getSelectedItem();
-      p.setEnabledAndVisible(item != null && item.isDuplicateAvailable());
+      T scheme = getCurrentScheme();
+      p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDuplicateScheme(scheme));
     }
   }
   
@@ -150,8 +158,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      SchemeListItem<T> item = mySchemesPanel.getSelectedItem();
-      p.setEnabled(item != null && item.isRenameAvailable());
+      T scheme = getCurrentScheme();
+      p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canRenameScheme(scheme));
     }
   }
   
@@ -164,15 +172,16 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void actionPerformed(AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
-        doDelete(currentScheme);
+        mySchemesPanel.cancelEdit();
+        deleteScheme(currentScheme);
       }
     }
 
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      SchemeListItem<T> item = mySchemesPanel.getSelectedItem(); 
-      p.setEnabledAndVisible(item != null && item.isDeleteAvailable());
+      T scheme = getCurrentScheme(); 
+      p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme));
     }
   }
 
@@ -215,7 +224,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      doImport(myImporterName);
+      mySchemesPanel.cancelEdit();
+      importScheme(myImporterName);
     }
   }
   
@@ -231,24 +241,25 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void actionPerformed(AnActionEvent e) {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
-        doExport(currentScheme, myExporterName);
+        mySchemesPanel.cancelEdit();
+        exportScheme(currentScheme, myExporterName);
       }
     }
   }
+  
+  protected abstract void importScheme(@NotNull String importerName);
 
-  protected abstract void doImport(@NotNull String importerName);
-
-  protected abstract void doReset(@NotNull T scheme);
+  protected abstract void resetScheme(@NotNull T scheme);
   
-  protected abstract void doSaveAs(@NotNull T scheme);
+  protected abstract void duplicateScheme(@NotNull T scheme, @NotNull String newName);
   
-  protected abstract void doDelete(@NotNull T scheme);
+  protected abstract void deleteScheme(@NotNull T scheme);
   
-  protected abstract void doExport(@NotNull T scheme, @NotNull String exporterName);
+  protected abstract void exportScheme(@NotNull T scheme, @NotNull String exporterName);
 
   protected abstract void onSchemeChanged(@Nullable T scheme);
   
-  protected abstract void doRename(@NotNull T scheme, @NotNull String newName);
+  protected abstract void renameScheme(@NotNull T scheme, @NotNull String newName);
   
   @Nullable
   protected final T getCurrentScheme() {

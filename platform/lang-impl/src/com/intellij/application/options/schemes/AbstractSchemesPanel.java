@@ -28,7 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel implements SchemeListItemFactory<T> {
+public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel {
   
   private SchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
@@ -98,10 +98,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel impl
     return mySchemesCombo.getSelectedScheme();
   }
   
-  public SchemeListItem<T> getSelectedItem() {
-    return mySchemesCombo.getSelectedItem();
-  }
-  
   public void selectScheme(@Nullable T scheme) {
     mySchemesCombo.selectScheme(scheme);
   }
@@ -117,6 +113,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel impl
   public void startEdit() {
     mySchemesCombo.startEdit();
   }
+  
+  public void cancelEdit() {
+    mySchemesCombo.cancelEdit();
+  }
 
   public void showInfo(@Nullable String message, @NotNull MessageType messageType) {
     myInfoLabel.setText(message);
@@ -131,54 +131,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme> extends JPanel impl
     return myActions;
   }
 
-  @Override
-  public SchemeListItem<T> createSeparator(@NotNull String title) {
-    return new SeparatorItem(title);
-  }
-  
-  private class SeparatorItem extends SchemeListItem<T> {
-
-    private String myTitle;
-
-    public SeparatorItem(@NotNull String title) {
-      super(null);
-      myTitle = title;
-    }
-
-    @Override
-    public boolean isSeparator() {
-      return true;
-    }
-
-    @Override
-    public boolean isDuplicateAvailable() {
-      return false;
-    }
-
-    @Override
-    public boolean isResetAvailable() {
-      return false;
-    }
-
-    @Override
-    public boolean isDeleteAvailable() {
-      return false;
-    }
-
-    @Override
-    public SchemeLevel getSchemeLevel() {
-      return SchemeLevel.IDE_Only;
-    }
-
-    @Override
-    public boolean isRenameAvailable() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public String getPresentableText() {
-      return myTitle;
-    }
-  }
+  @NotNull
+  public abstract SchemesModel<T> getModel();
 }

@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -30,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CodeStyleSchemesModel {
+public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
   private CodeStyleScheme myGlobalSelected;
   private final CodeStyleSchemeImpl myProjectScheme;
@@ -207,29 +209,9 @@ public class CodeStyleSchemesModel {
   }
 
   public CodeStyleScheme createNewScheme(final String preferredName, final CodeStyleScheme parentScheme) {
-    String name;
-    if (preferredName == null) {
-      if (parentScheme == null) throw new IllegalArgumentException("parentScheme must not be null");
-      // Generate using parent name
-      name = null;
-      for (int i = 1; name == null; i++) {
-        String currName = parentScheme.getName() + " (" + i + ")";
-        if (findSchemeByName(currName) == null) {
-          name = currName;
-        }
-      }
-    }
-    else {
-      name = null;
-      for (int i = 0; name == null; i++) {
-        String currName = i == 0 ? preferredName : preferredName + " (" + i + ")";
-        if (findSchemeByName(currName) == null) {
-          name = currName;
-        }
-      }
-    }
-
-    return new CodeStyleSchemeImpl(name, false, parentScheme);
+    return new CodeStyleSchemeImpl(SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> nameExists(name)),
+                                   false,
+                                   parentScheme);
   }
 
   @Nullable
@@ -244,8 +226,39 @@ public class CodeStyleSchemesModel {
     return myProjectScheme;
   }
 
-  public boolean isProjectScheme(CodeStyleScheme scheme) {
+  @Override
+  public boolean supportsProjectSchemes() {
+    return true;
+  }
+
+  @Override
+  public boolean canDuplicateScheme(@NotNull CodeStyleScheme scheme) {
+    return !isProjectScheme(scheme);
+  }
+
+  @Override
+  public boolean canResetScheme(@NotNull CodeStyleScheme scheme) {
+    return true;
+  }
+
+  @Override
+  public boolean canDeleteScheme(@NotNull CodeStyleScheme scheme) {
+    return !isProjectScheme(scheme) && !scheme.isDefault();
+  }
+
+  @Override
+  public boolean isProjectScheme(@NotNull CodeStyleScheme scheme) {
     return myProjectScheme == scheme;
+  }
+
+  @Override
+  public boolean canRenameScheme(@NotNull CodeStyleScheme scheme) {
+    return canDeleteScheme(scheme);
+  }
+
+  @Override
+  public boolean nameExists(@NotNull String name) {
+    return findSchemeByName(name) != null;
   }
 
   public List<CodeStyleScheme> getAllSortedSchemes() {
