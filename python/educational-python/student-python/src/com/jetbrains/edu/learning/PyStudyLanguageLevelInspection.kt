@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectUtil
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.PlatformUtils
 import com.jetbrains.edu.learning.courseFormat.Course
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -37,17 +36,14 @@ class PyStudyLanguageLevelInspection : PyInspection() {
 
     override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)
-      
-      if (PlatformUtils.isPyCharm()) {
-        val module = ModuleUtilCore.findModuleForPsiElement(node)
-        val virtualFile = PsiUtilCore.getVirtualFile(node)
-        if (module != null && virtualFile != null) {
-          val sdk = PythonSdkType.findPythonSdk(module)
-          val projectLanguageLevel = PythonSdkType.getLanguageLevelForSdk(sdk)
-          val project = ProjectUtil.guessProjectForContentFile(node.virtualFile) ?: return
-          val course = StudyTaskManager.getInstance(project).course ?: return
-          checkIfLanguageLevelSupported(course, projectLanguageLevel, node)
-        }
+      val module = ModuleUtilCore.findModuleForPsiElement(node)
+      val virtualFile = PsiUtilCore.getVirtualFile(node)
+      if (module != null && virtualFile != null) {
+        val sdk = PythonSdkType.findPythonSdk(module)
+        val projectLanguageLevel = PythonSdkType.getLanguageLevelForSdk(sdk)
+        val project = ProjectUtil.guessProjectForContentFile(node.virtualFile) ?: return
+        val course = StudyTaskManager.getInstance(project).course ?: return
+        checkIfLanguageLevelSupported(course, projectLanguageLevel, node)
       }
     }
 
