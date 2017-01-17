@@ -5,7 +5,7 @@ IS_PY36_OR_OLDER = False
 if (sys.version_info[0] == 3 and sys.version_info[1] >= 6) or sys.version_info[0] > 3:
     IS_PY36_OR_OLDER = True
 
-set_frame_eval = None
+frame_eval_func = None
 stop_frame_eval = None
 
 use_frame_eval = os.environ.get('PYDEVD_USE_FRAME_EVAL', None)

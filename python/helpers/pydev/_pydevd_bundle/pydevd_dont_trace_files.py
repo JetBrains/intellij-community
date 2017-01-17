@@ -17,6 +17,7 @@ DONT_TRACE = {
     '_weakrefset.py':LIB_FILE,
     'linecache.py':LIB_FILE,
     'threading.py':LIB_FILE,
+    'dis.py':LIB_FILE,
 
     #things from pydev that we don't want to trace
     '_pydev_execfile.py':PYDEV_FILE,
@@ -80,9 +81,11 @@ DONT_TRACE = {
     'pydevd_file_utils.py': PYDEV_FILE,
     'pydevd_frame.py': PYDEV_FILE,
     'pydevd_frame_utils.py': PYDEV_FILE,
+    'pydevd_frame_tracing.py': PYDEV_FILE,
     'pydevd_import_class.py': PYDEV_FILE,
     'pydevd_io.py': PYDEV_FILE,
     'pydevd_kill_all_pydevd_threads.py': PYDEV_FILE,
+    'pydevd_modify_bytecode.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_process_net_command.py': PYDEV_FILE,
     'pydevd_referrers.py': PYDEV_FILE,

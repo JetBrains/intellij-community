@@ -2,7 +2,6 @@ import sys
 
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK
 
 
@@ -12,19 +11,20 @@ def update_globals_dict(globals_dict):
 
 
 def _pydev_stop_at_break():
-    debugger = get_global_debugger()
-    t = threading.currentThread()
-    try:
-        additional_info = t.additional_info
-        if additional_info is None:
-            raise AttributeError()
-    except:
-        t.additional_info = PyDBAdditionalThreadInfo()
     frame = sys._getframe(1)
-    pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, frame.f_lineno))
 
-    debugger.set_suspend(t, CMD_SET_BREAK)
-    debugger.do_wait_suspend(t, frame, 'line', None)
+    t = threading.currentThread()
+    if t.additional_info.is_tracing:
+        return
+
+    if t.additional_info.pydev_step_cmd == -1:
+        # do not handle breakpoints while stepping, because they're handled by old tracing function
+        t.additional_info.is_tracing = True
+        debugger = get_global_debugger()
+        pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, frame.f_lineno))
+        debugger.set_suspend(t, CMD_SET_BREAK)
+        debugger.do_wait_suspend(t, frame, 'line', None)
+        t.additional_info.is_tracing = False
 
 
 def pydev_trace_code_wrapper():
