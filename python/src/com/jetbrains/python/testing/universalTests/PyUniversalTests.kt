@@ -39,11 +39,14 @@ import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.extenstions.asList
+import com.jetbrains.extenstions.toElement
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -75,39 +78,6 @@ fun isUniversalModeEnabled(): Boolean = Registry.`is`("python.tests.enableUniver
 internal fun getAdditionalArgumentsPropertyName() = PyUniversalTestConfiguration::additionalArguments.name
 
 /**
- * Resolves qname of any symbol to appropriate PSI element.
- */
-private fun findElementByQualifiedName(name: QualifiedName, module: Module, context: TypeEvalContext): PsiElement? {
-  val facade = PyPsiFacadeImpl.getInstance(module.project)
-  var currentName = name
-
-
-  var element: PsiElement? = null
-
-  // Drill as deep, as we can
-  var lastElement: String? = null
-  while (currentName.componentCount > 0 && element == null) {
-
-    element = facade.qualifiedNameResolver(currentName).fromModule(module).withMembers().firstResult()
-    if (element != null) {
-      break
-    }
-    lastElement = name.lastComponent!!
-    currentName = name.removeLastComponent()
-  }
-
-  if (lastElement != null && element is PyClass) {
-    // Drill in class
-    val method = element.findMethodByName(lastElement, true, context)
-    if (method != null) {
-      return method
-    }
-
-  }
-  return element
-}
-
-/**
  * @return factory chosen by user in "test runner" settings
  */
 private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory {
@@ -123,8 +93,8 @@ private object PyUniversalTestsLocator : SMTestLocator {
     if (scope !is ModuleWithDependenciesScope) {
       return ArrayList()
     }
-    val result = findElementByQualifiedName(QualifiedName.fromDottedString(path), scope.module,
-                                            TypeEvalContext.userInitiated(project, null))
+    val result = QualifiedName.fromDottedString(path).toElement(scope.module,
+                                                                TypeEvalContext.userInitiated(project, null))
     if (result != null) {
       return arrayListOf(PsiLocation.fromPsiElement(result))
     }
