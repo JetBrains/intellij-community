@@ -183,57 +183,56 @@ class CollectMigration extends BaseStreamApiMigration {
     return false;
   }
 
-  interface CollectTerminal {
+  abstract static class CollectTerminal {
+    private final PsiLocalVariable myTargetVariable;
+
+    protected CollectTerminal(PsiLocalVariable variable) {
+      myTargetVariable = variable;
+    }
+
     @Nullable
-    default PsiElement getElementToReplace() { return null; }
+    PsiElement getElementToReplace() { return null; }
 
-    default String getMethodName() { return "collect"; }
+    String getMethodName() { return "collect"; }
 
-    @Nullable
-    PsiVariable getTargetVariable();
+    PsiLocalVariable getTargetVariable() { return myTargetVariable; }
 
-    default String generateIntermediate() { return ""; }
+    String generateIntermediate() { return ""; }
 
-    String generateTerminal();
+    abstract String generateTerminal();
 
-    default void cleanUp() {}
+    void cleanUp() {}
 
-    default boolean isTrivial() {
+    boolean isTrivial() {
       return generateIntermediate().isEmpty();
     }
   }
 
-  static class AddingTerminal implements CollectTerminal {
-    @Nullable PsiVariable myTarget;
+  static class AddingTerminal extends CollectTerminal {
     final PsiType myTargetType;
     final PsiExpression myInitializer;
     final PsiVariable myElement;
     final PsiMethodCallExpression myAddCall;
 
-    AddingTerminal(@NotNull PsiVariable target,
+    AddingTerminal(@NotNull PsiLocalVariable target,
                    PsiVariable element,
                    PsiMethodCallExpression addCall) {
-      this(target.getType(), target.getInitializer(), element, addCall);
-      if (isEmptyCollectionInitializer(myInitializer)) {
-        myTarget = target;
-      }
+      super(isEmptyCollectionInitializer(target.getInitializer()) ? target : null);
+      myTargetType = target.getType();
+      myInitializer = target.getInitializer();
+      myElement = element;
+      myAddCall = addCall;
     }
 
     AddingTerminal(@NotNull PsiType targetType,
                    PsiExpression initializer,
                    PsiVariable element,
                    PsiMethodCallExpression addCall) {
-      myTarget = null;
+      super(null);
       myTargetType = targetType;
       myInitializer = initializer;
       myElement = element;
       myAddCall = addCall;
-    }
-
-    @Override
-    @Nullable
-    public PsiVariable getTargetVariable() {
-      return myTarget;
     }
 
     PsiVariable getElementVariable() {
@@ -306,7 +305,7 @@ class CollectMigration extends BaseStreamApiMigration {
   static class AddingAllTerminal extends AddingTerminal {
     private final PsiMethodCallExpression myAddAllCall;
 
-    AddingAllTerminal(PsiVariable target, PsiVariable element, PsiMethodCallExpression addAllCall) {
+    AddingAllTerminal(PsiLocalVariable target, PsiVariable element, PsiMethodCallExpression addAllCall) {
       super(target, element, null);
       myAddAllCall = addAllCall;
     }
@@ -343,26 +342,19 @@ class CollectMigration extends BaseStreamApiMigration {
     }
   }
 
-  static class GroupingTerminal implements CollectTerminal {
+  static class GroupingTerminal extends CollectTerminal {
     private final AddingTerminal myDownstream;
-    private final PsiLocalVariable myTarget;
     private final PsiExpression myKeyExpression;
 
     GroupingTerminal(AddingTerminal downstream, PsiLocalVariable target, PsiExpression expression) {
+      super(target);
       myDownstream = downstream;
-      myTarget = target;
       myKeyExpression = expression;
     }
 
     @Override
     public boolean isTrivial() {
       return false;
-    }
-
-    @Nullable
-    @Override
-    public PsiVariable getTargetVariable() {
-      return myTarget;
     }
 
     @Override
@@ -377,9 +369,9 @@ class CollectMigration extends BaseStreamApiMigration {
       StringBuilder builder = new StringBuilder();
       builder.append(".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".groupingBy(")
         .append(LambdaUtil.createLambda(elementVariable, myKeyExpression));
-      PsiExpression initializer = myTarget.getInitializer();
+      PsiExpression initializer = getTargetVariable().getInitializer();
       LOG.assertTrue(initializer != null);
-      if (!isHashMap(myTarget)) {
+      if (!isHashMap(getTargetVariable())) {
         builder.append(",()->").append(initializer.getText()).append(",").append(downstreamCollector);
       }
       else if (!(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + "toList()").equals(downstreamCollector)) {
@@ -418,21 +410,14 @@ class CollectMigration extends BaseStreamApiMigration {
     }
   }
 
-  static class ToMapTerminal implements CollectTerminal {
+  static class ToMapTerminal extends CollectTerminal {
     private final PsiMethodCallExpression myMapUpdateCall;
-    private final PsiLocalVariable myTargetVariable;
     private final PsiVariable myElementVariable;
 
     ToMapTerminal(PsiMethodCallExpression call, PsiVariable elementVariable, PsiLocalVariable variable) {
+      super(variable);
       myMapUpdateCall = call;
-      myTargetVariable = variable;
       myElementVariable = elementVariable;
-    }
-
-    @Nullable
-    @Override
-    public PsiVariable getTargetVariable() {
-      return myTargetVariable;
     }
 
     @Override
@@ -464,9 +449,9 @@ class CollectMigration extends BaseStreamApiMigration {
       collector.append(LambdaUtil.createLambda(myElementVariable, args[0])).append(',')
         .append(LambdaUtil.createLambda(myElementVariable, args[1])).append(',')
         .append(merger);
-      PsiExpression initializer = myTargetVariable.getInitializer();
+      PsiExpression initializer = getTargetVariable().getInitializer();
       LOG.assertTrue(initializer != null);
-      if (!isHashMap(myTargetVariable)) {
+      if (!isHashMap(getTargetVariable())) {
         collector.append(",()->").append(initializer.getText());
       }
       collector.append("))");
@@ -485,12 +470,13 @@ class CollectMigration extends BaseStreamApiMigration {
     }
   }
 
-  static class SortingTerminal implements CollectTerminal {
+  static class SortingTerminal extends CollectTerminal {
     private final CollectTerminal myDownstream;
     private final PsiExpression myComparator;
     private final PsiStatement myStatement;
 
     SortingTerminal(CollectTerminal downstream, PsiStatement statement, PsiExpression comparator) {
+      super(downstream.getTargetVariable());
       myDownstream = downstream;
       myStatement = statement;
       myComparator = comparator;
@@ -499,12 +485,6 @@ class CollectMigration extends BaseStreamApiMigration {
     @Override
     public String getMethodName() {
       return myDownstream.getMethodName();
-    }
-
-    @Nullable
-    @Override
-    public PsiVariable getTargetVariable() {
-      return myDownstream.getTargetVariable();
     }
 
     @Override
@@ -568,7 +548,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
   }
 
-  static class ToArrayTerminal implements CollectTerminal {
+  static class ToArrayTerminal extends CollectTerminal {
     static final Map<String, String> INTERMEDIATE_STEPS = EntryStream.of(
       CommonClassNames.JAVA_UTIL_ARRAY_LIST, "",
       "java.util.LinkedList", "",
@@ -586,6 +566,7 @@ class CollectMigration extends BaseStreamApiMigration {
                     String intermediate,
                     String supplier,
                     PsiMethodCallExpression toArrayExpression) {
+      super(upstream.getTargetVariable());
       myUpstream = upstream;
       mySupplier = supplier;
       myIntermediate = intermediate;
@@ -606,12 +587,6 @@ class CollectMigration extends BaseStreamApiMigration {
     @Override
     public PsiElement getElementToReplace() {
       return myToArrayExpression;
-    }
-
-    @Nullable
-    @Override
-    public PsiVariable getTargetVariable() {
-      return myUpstream.getTargetVariable();
     }
 
     @Override
