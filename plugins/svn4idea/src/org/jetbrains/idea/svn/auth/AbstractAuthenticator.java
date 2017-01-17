@@ -75,7 +75,7 @@ abstract class AbstractAuthenticator {
   @NotNull
   protected SvnAuthenticationManager createTmpManager() throws IOException {
     if (myTmpDirManager == null) {
-      myAuthenticationService.initTmpDir(myVcs.getSvnConfiguration());
+      myAuthenticationService.initTmpDir();
       myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myAuthenticationService.getTempDirectory());
       myTmpDirManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
       myTmpDirManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, myTmpDirManager));

@@ -112,7 +112,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final Map<String, Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
     new SoftHashMap<>();
 
-  private final SvnConfiguration myConfiguration;
+  @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
 
   private CheckinEnvironment myCheckinEnvironment;
@@ -474,7 +474,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return new SvnConfigurable(myProject);
   }
 
-
+  @NotNull
   public SvnConfiguration getSvnConfiguration() {
     return myConfiguration;
   }
