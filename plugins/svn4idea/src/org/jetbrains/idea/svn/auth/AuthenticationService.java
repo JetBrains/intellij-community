@@ -309,7 +309,7 @@ public class AuthenticationService {
 
   @NotNull
   public SvnAuthenticationManager getAuthenticationManager() {
-    return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs.getProject());
+    return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs);
   }
 
   public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {

@@ -54,7 +54,7 @@ abstract class AbstractAuthenticator {
   }
 
   protected boolean tryAuthenticate() {
-    final SvnAuthenticationManager passive = myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs.getProject());
+    final SvnAuthenticationManager passive = myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs);
     final SvnAuthenticationManager active = myVcs.getSvnConfiguration().getAuthenticationManager(myVcs);
 
     try {
@@ -76,7 +76,7 @@ abstract class AbstractAuthenticator {
   protected SvnAuthenticationManager createTmpManager() throws IOException {
     if (myTmpDirManager == null) {
       myAuthenticationService.initTmpDir();
-      myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myAuthenticationService.getTempDirectory());
+      myTmpDirManager = new SvnAuthenticationManager(myVcs, myAuthenticationService.getTempDirectory());
       myTmpDirManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
       myTmpDirManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, myTmpDirManager));
     }
