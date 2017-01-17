@@ -429,6 +429,9 @@ public class UIUtil {
         LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
       } catch (NoSuchMethodException e) {
         LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
+      } catch (Exception e) {
+        LOG.debug(e);
+        LOG.debug("CGraphicsDevice.getScaleFactor(): probably it is Java 9");
       }
 
       try {
