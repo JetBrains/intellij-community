@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,7 @@ public class MethodCallUtils {
   public static boolean isSimpleCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @NonNls @Nullable String methodName, @NonNls @Nullable String... parameterTypeStrings) {
     if (parameterTypeStrings == null) {
-      return isCallToMethod(expression, calledOnClassName, returnType, methodName, null);
+      return isCallToMethod(expression, calledOnClassName, returnType, methodName, (PsiType[])null);
     }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expression.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -302,9 +303,10 @@ public class MethodCallUtils {
    * @return true if call is resolved to the var-arg method and var-arg form is actually used
    */
   public static boolean isVarArgCall(PsiMethodCallExpression call) {
-    PsiMethod method = call.resolveMethod();
+    JavaResolveResult result = call.resolveMethodGenerics();
+    PsiMethod method = ObjectUtils.tryCast(result.getElement(), PsiMethod.class);
     if(method == null || !method.isVarArgs()) return false;
-    PsiSubstitutor substitutor = call.resolveMethodGenerics().getSubstitutor();
+    PsiSubstitutor substitutor = result.getSubstitutor();
     return MethodCallInstruction
       .isVarArgCall(method, substitutor, call.getArgumentList().getExpressions(), method.getParameterList().getParameters());
   }
