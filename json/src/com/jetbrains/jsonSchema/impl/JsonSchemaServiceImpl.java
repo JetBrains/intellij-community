@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -57,8 +56,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     myLock = new Object();
     myProject = project;
     myDefinitions = new JsonSchemaExportedDefinitions();
-    ApplicationManager
-      .getApplication().getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(project, this));
+    JsonSchemaVfsListener.startListening(project, this);
     ensureSchemaFiles();
   }
 
@@ -211,6 +209,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   }
 
   //! the only point for refreshing json schema caches
+  @Override
   public void dropProviderFromCache(@NotNull final VirtualFile schemaFile) {
     synchronized (myLock) {
       myDefinitions.dropKey(schemaFile);
