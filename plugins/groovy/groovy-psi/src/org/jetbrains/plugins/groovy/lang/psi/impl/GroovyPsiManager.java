@@ -81,7 +81,7 @@ public class GroovyPsiManager {
 
   public PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     if (ourPopularClasses.contains(fqName)) {
-      PsiClass result = findClassWithCache(fqName, resolveScope);
+      PsiClass result = JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
       if (result != null) {
         return JavaPsiFacade.getElementFactory(myProject).createType(result);
       }
@@ -119,6 +119,7 @@ public class GroovyPsiManager {
   }
 
   @Nullable
+  @Deprecated
   public PsiClass findClassWithCache(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
   }
