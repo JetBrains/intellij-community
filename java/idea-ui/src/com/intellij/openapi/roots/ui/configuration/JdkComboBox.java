@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
@@ -319,6 +320,8 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     }
 
     protected void addSuggestedItems(@Nullable Condition<SdkTypeId> sdkTypeFilter, Sdk[] jdks) {
+      // todo remove it when unix is supported
+      if (!SystemInfo.isWindows) return;
       SdkType[] types = SdkType.getAllTypes();
       for (SdkType type : types) {
         if (sdkTypeFilter == null || sdkTypeFilter.value(type) && ContainerUtil.find(jdks, sdk -> sdk.getSdkType() == type) == null) {
