@@ -733,6 +733,13 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20633
+  public void testFromImportWrappingChopDownIfLong() {
+    getPythonCodeStyleSettings().FROM_IMPORT_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
