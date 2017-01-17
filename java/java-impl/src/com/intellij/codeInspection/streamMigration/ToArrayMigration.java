@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CountingLoop;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CountingLoopSource;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
 import com.intellij.openapi.project.Project;
@@ -45,7 +45,7 @@ public class ToArrayMigration extends BaseStreamApiMigration {
     if(initializer == null) return null;
     PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
     if(dimension == null) return null;
-    CountingLoop loop = tb.getLastOperation(CountingLoop.class);
+    CountingLoopSource loop = tb.getLastOperation(CountingLoopSource.class);
     if(loop == null) return null;
     PsiArrayType arrayType = tryCast(initializer.getType(), PsiArrayType.class);
     if(arrayType == null) return null;

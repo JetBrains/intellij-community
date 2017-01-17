@@ -32,7 +32,6 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -688,7 +687,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   @Nullable
   static PsiLocalVariable extractArray(TerminalBlock tb) {
-    CountingLoop loop = tb.getLastOperation(CountingLoop.class);
+    CountingLoopSource loop = tb.getLastOperation(CountingLoopSource.class);
     if(loop == null || loop.myIncluding) return null;
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if(assignment == null || !assignment.getOperationTokenType().equals(JavaTokenType.EQ)) return null;
@@ -945,7 +944,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Contract("null -> null")
     static StreamSource tryCreate(PsiLoopStatement statement) {
       if(statement instanceof PsiForStatement) {
-        return CountingLoop.from((PsiForStatement)statement);
+        return CountingLoopSource.from((PsiForStatement)statement);
       }
       if(statement instanceof PsiForeachStatement) {
         ArrayStream source = ArrayStream.from((PsiForeachStatement)statement);
@@ -1073,15 +1072,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
-  static class CountingLoop extends StreamSource {
+  static class CountingLoopSource extends StreamSource {
     final PsiExpression myBound;
     final boolean myIncluding;
 
-    private CountingLoop(PsiLoopStatement loop,
-                         PsiVariable counter,
-                         PsiExpression initializer,
-                         PsiExpression bound,
-                         boolean including) {
+    private CountingLoopSource(PsiLoopStatement loop,
+                               PsiVariable counter,
+                               PsiExpression initializer,
+                               PsiExpression bound,
+                               boolean including) {
       super(loop, counter, initializer);
       myBound = bound;
       myIncluding = including;
@@ -1099,8 +1098,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return className+"."+methodName+"("+myExpression.getText()+", "+myBound.getText()+")";
     }
 
-    CountingLoop withBound(PsiExpression bound) {
-      return new CountingLoop(getLoop(), getVariable(), getExpression(), bound, myIncluding);
+    CountingLoopSource withBound(PsiExpression bound) {
+      return new CountingLoopSource(getLoop(), getVariable(), getExpression(), bound, myIncluding);
     }
 
     @Override
@@ -1115,45 +1114,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     @Nullable
-    public static CountingLoop from(PsiForStatement forStatement) {
-      // check that initialization is for(int/long i = <initial_value>;...;...)
-      PsiDeclarationStatement initialization = tryCast(forStatement.getInitialization(), PsiDeclarationStatement.class);
-      if (initialization == null || initialization.getDeclaredElements().length != 1) return null;
-      PsiLocalVariable counter = tryCast(initialization.getDeclaredElements()[0], PsiLocalVariable.class);
-      if(counter == null) return null;
-      if(!counter.getType().equals(PsiType.INT) && !counter.getType().equals(PsiType.LONG)) return null;
-
-      PsiExpression initializer = counter.getInitializer();
-      if(initializer == null) return null;
-
-      // check that increment is like for(...;...;i++)
-      if(!VariableAccessUtils.variableIsIncremented(counter, forStatement.getUpdate())) return null;
-
-      // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
-      PsiBinaryExpression condition = tryCast(forStatement.getCondition(), PsiBinaryExpression.class);
-      if(condition == null) return null;
-      IElementType type = condition.getOperationTokenType();
-      boolean closed = false;
-      PsiExpression bound;
-      PsiExpression ref;
-      if(type.equals(JavaTokenType.LE)) {
-        bound = condition.getROperand();
-        ref = condition.getLOperand();
-        closed = true;
-      } else if(type.equals(JavaTokenType.LT)) {
-        bound = condition.getROperand();
-        ref = condition.getLOperand();
-      } else if(type.equals(JavaTokenType.GE)) {
-        bound = condition.getLOperand();
-        ref = condition.getROperand();
-        closed = true;
-      } else if(type.equals(JavaTokenType.GT)) {
-        bound = condition.getLOperand();
-        ref = condition.getROperand();
-      } else return null;
-      if(bound == null || !ExpressionUtils.isReferenceTo(ref, counter)) return null;
-      if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
-      return new CountingLoop(forStatement, counter, initializer, bound, closed);
+    public static CountingLoopSource from(PsiForStatement forStatement) {
+      CountingLoop loop = CountingLoop.from(forStatement);
+      if (loop == null) return null;
+      return new CountingLoopSource(forStatement, loop.getCounter(), loop.getInitializer(), loop.getBound(), loop.isIncluding());
     }
   }
 }

@@ -43,15 +43,6 @@ public abstract class IndexedContainer {
   public abstract boolean isGetMethodReference(PsiMethodReferenceExpression methodReference);
 
   /**
-   * Extracts the qualifier if the supplied expression obtains the container length (either array.length or list.size())
-   *
-   * @param expression expression to extract the qualifier from
-   * @return the extracted qualifier or null if the supplied expression is not a length expression. The extracted qualifier might be
-   * non-physical if it was implicit in the original code (e.g. "this" could be returned if original call was simply "size()")
-   */
-  public abstract PsiExpression extractQualifierFromLengthExpression(@Nullable PsiExpression expression);
-
-  /**
    * Returns an ancestor element retrieval expression if the supplied expression is the index used in it
    * (e.g. index in arr[index] or in list.get(index))
    *
@@ -74,6 +65,10 @@ public abstract class IndexedContainer {
    */
   public PsiExpression getQualifier() {
     return myQualifier;
+  }
+
+  public boolean isQualifierEquivalent(@Nullable PsiExpression candidate) {
+    return candidate != null && PsiEquivalenceUtil.areElementsEquivalent(myQualifier, candidate);
   }
 
   /**
@@ -103,28 +98,6 @@ public abstract class IndexedContainer {
     return null;
   }
 
-  /**
-   * Creates an IndexedContainer from element retrieval expression (like array[idx] or list.get(idx))
-   *
-   * @param expression expression to create an IndexedContainer from
-   * @return newly created IndexedContainer or null if the supplied expression is not element retrieval expression
-   */
-  @Nullable
-  public static IndexedContainer fromGetExpression(PsiExpression expression) {
-    expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)expression;
-      return new ArrayIndexedContainer(arrayAccess.getArrayExpression());
-    }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length != 1 || !ListIndexedContainer.isGetCall(call)) return null;
-      return new ListIndexedContainer(ExpressionUtils.getQualifierOrThis(call.getMethodExpression()));
-    }
-    return null;
-  }
-
   static class ArrayIndexedContainer extends IndexedContainer {
     ArrayIndexedContainer(PsiExpression qualifier) {
       super(qualifier);
@@ -133,13 +106,6 @@ public abstract class IndexedContainer {
     @Override
     public boolean isGetMethodReference(PsiMethodReferenceExpression methodReference) {
       return false;
-    }
-
-    @Override
-    public PsiExpression extractQualifierFromLengthExpression(@Nullable PsiExpression expression) {
-      expression = PsiUtil.skipParenthesizedExprDown(expression);
-      PsiExpression lengthQualifier = ExpressionUtils.getArrayFromLengthExpression(expression);
-      return lengthQualifier != null && PsiEquivalenceUtil.areElementsEquivalent(getQualifier(), lengthQualifier) ? lengthQualifier : null;
     }
 
     @Override
@@ -159,7 +125,7 @@ public abstract class IndexedContainer {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (expression instanceof PsiArrayAccessExpression) {
         PsiArrayAccessExpression arrayAccess = (PsiArrayAccessExpression)expression;
-        if (PsiEquivalenceUtil.areElementsEquivalent(getQualifier(), arrayAccess.getArrayExpression())) {
+        if (isQualifierEquivalent(arrayAccess.getArrayExpression())) {
           return arrayAccess.getIndexExpression();
         }
       }
@@ -181,18 +147,9 @@ public abstract class IndexedContainer {
     @Override
     public boolean isGetMethodReference(PsiMethodReferenceExpression methodReference) {
       if (!"get".equals(methodReference.getReferenceName())) return false;
-      PsiExpression qualifier = methodReference.getQualifierExpression();
-      if (qualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(getQualifier(), qualifier)) return false;
+      if (!isQualifierEquivalent(ExpressionUtils.getQualifierOrThis(methodReference))) return false;
       PsiMethod method = ObjectUtils.tryCast(methodReference.resolve(), PsiMethod.class);
       return method != null && MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT);
-    }
-
-    @Override
-    public PsiExpression extractQualifierFromLengthExpression(@Nullable PsiExpression expression) {
-      PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
-      if (call == null || !isSizeCall(call)) return null;
-      PsiExpression lengthQualifier = ExpressionUtils.getQualifierOrThis(call.getMethodExpression());
-      return PsiEquivalenceUtil.areElementsEquivalent(getQualifier(), lengthQualifier) ? lengthQualifier : null;
     }
 
     @Override
@@ -215,8 +172,7 @@ public abstract class IndexedContainer {
       PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
       if (call == null) return null;
       PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length == 1 && isGetCall(call) &&
-          PsiEquivalenceUtil.areElementsEquivalent(getQualifier(), ExpressionUtils.getQualifierOrThis(call.getMethodExpression()))) {
+      if (args.length == 1 && isGetCall(call) && isQualifierEquivalent(ExpressionUtils.getQualifierOrThis(call.getMethodExpression()))) {
         return args[0];
       }
       return null;
