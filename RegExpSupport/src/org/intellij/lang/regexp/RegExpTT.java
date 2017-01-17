@@ -54,8 +54,10 @@ public interface RegExpTT {
     /** ")" */
     IElementType GROUP_END = new RegExpElementType("GROUP_END");
 
-    /** "(?:" or "(?>" */
+    /** "(?:" */
     IElementType NON_CAPT_GROUP = new RegExpElementType("NON_CAPT_GROUP");
+    /** "(?>" */
+    IElementType ATOMIC_GROUP = new RegExpElementType("ATOMIC_GROUP");
     /** "(?<=" */
     IElementType POS_LOOKBEHIND = new RegExpElementType("POS_LOOKBEHIND");
     /** "(?<!" */
@@ -161,7 +163,7 @@ public interface RegExpTT {
 
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 
-    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND);
+    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, ATOMIC_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }

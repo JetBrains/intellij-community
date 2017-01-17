@@ -27,6 +27,20 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
  */
 public class RegExpLexerTest extends LexerTestCase {
 
+  public void testAtomicGroup() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("(?>atom)", "ATOMIC_GROUP ('(?>')\n" +
+                       "CHARACTER ('a')\n" +
+                       "CHARACTER ('t')\n" +
+                       "CHARACTER ('o')\n" +
+                       "CHARACTER ('m')\n" +
+                       "GROUP_END (')')", lexer);
+    doTest("(?:no)", "NON_CAPT_GROUP ('(?:')\n" +
+                     "CHARACTER ('n')\n" +
+                     "CHARACTER ('o')\n" +
+                     "GROUP_END (')')", lexer);
+  }
+
   public void testAmpersand() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("[a&&]", "CLASS_BEGIN ('[')\n" +

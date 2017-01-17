@@ -349,7 +349,8 @@ HEX_CHAR=[0-9a-fA-F]
   "$"           { return RegExpTT.DOLLAR; }
   {DOT}         { return RegExpTT.DOT;    }
 
-  "(?:"|"(?>" { return RegExpTT.NON_CAPT_GROUP;  }
+  "(?:"       { return RegExpTT.NON_CAPT_GROUP;  }
+  "(?>"       { return RegExpTT.ATOMIC_GROUP;  }
   "(?="       { return RegExpTT.POS_LOOKAHEAD;   }
   "(?!"       { return RegExpTT.NEG_LOOKAHEAD;   }
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }

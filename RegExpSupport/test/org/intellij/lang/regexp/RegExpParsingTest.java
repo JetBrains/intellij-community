@@ -190,6 +190,8 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testGroups38() throws IOException { doCodeTest("\\g'name'"); }
   public void testGroups39() throws IOException { doCodeTest("(?(name)yes-pattern|no-pattern)"); }
   public void testGroups40() throws IOException { doCodeTest("(?(name)yes-pattern|{"); }
+  public void testGroups41() throws IOException { doCodeTest("(?>atomic)"); }
+  public void testGroups42() throws IOException { doCodeTest("(?:non-capturing)"); }
 
   public void testEscapes1() throws IOException { doCodeTest("\\q"); }
   public void testEscapes2() throws IOException { doCodeTest("\\#"); }

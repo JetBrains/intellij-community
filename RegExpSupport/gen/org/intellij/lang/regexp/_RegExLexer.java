@@ -200,13 +200,13 @@ class _RegExLexer implements FlexLexer {
     "\1\74\1\75\1\76\1\77\1\100\1\101\1\12\1\102"+
     "\1\103\1\104\1\105\1\106\1\107\1\110\1\111\1\112"+
     "\2\53\1\113\1\0\1\114\1\115\1\116\1\117\1\120"+
-    "\1\0\1\121\2\0\1\122\1\123\1\124\1\73\1\125"+
-    "\1\126\1\127\1\130\2\131\1\132\1\133\1\134\1\135"+
-    "\1\136\1\137\1\140\2\0\1\73\1\141\1\130\2\131"+
-    "\1\142\1\130\1\143\1\144";
+    "\1\121\1\0\1\122\2\0\1\123\1\124\1\125\1\73"+
+    "\1\126\1\127\1\130\1\131\2\132\1\133\1\134\1\135"+
+    "\1\136\1\137\1\140\1\141\2\0\1\73\1\142\1\131"+
+    "\2\132\1\143\1\131\1\144\1\145";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[148];
+    int [] result = new int[149];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -245,14 +245,14 @@ class _RegExLexer implements FlexLexer {
     "\0\u046e\0\u046e\0\u0a95\0\u046e\0\u0ad4\0\u0b13\0\u0b52\0\u046e"+
     "\0\u046e\0\u0b91\0\u046e\0\u046e\0\u046e\0\u046e\0\u046e\0\u046e"+
     "\0\u046e\0\u046e\0\u046e\0\u046e\0\u0bd0\0\u046e\0\u0c0f\0\u0c4e"+
-    "\0\u046e\0\u046e\0\u046e\0\u046e\0\u0c8d\0\u046e\0\u0ccc\0\u0d0b"+
-    "\0\u046e\0\u046e\0\u046e\0\u0d4a\0\u046e\0\u0d89\0\u046e\0\u0dc8"+
-    "\0\u0e07\0\u0e46\0\u046e\0\u046e\0\u046e\0\u046e\0\u046e\0\u046e"+
-    "\0\u046e\0\u0e85\0\u0ec4\0\u046e\0\u046e\0\u0f03\0\u0f42\0\u046e"+
-    "\0\u046e\0\u0f81\0\u046e\0\u046e";
+    "\0\u046e\0\u046e\0\u046e\0\u046e\0\u046e\0\u0c8d\0\u046e\0\u0ccc"+
+    "\0\u0d0b\0\u046e\0\u046e\0\u046e\0\u0d4a\0\u046e\0\u0d89\0\u046e"+
+    "\0\u0dc8\0\u0e07\0\u0e46\0\u046e\0\u046e\0\u046e\0\u046e\0\u046e"+
+    "\0\u046e\0\u046e\0\u0e85\0\u0ec4\0\u046e\0\u046e\0\u0f03\0\u0f42"+
+    "\0\u046e\0\u046e\0\u0f81\0\u046e\0\u046e";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[148];
+    int [] result = new int[149];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -326,26 +326,26 @@ class _RegExLexer implements FlexLexer {
     "\1\0\1\100\2\0\3\100\17\0\1\153\74\0\1\154"+
     "\17\0\2\155\1\0\1\155\4\0\3\155\5\0\3\155"+
     "\3\0\3\155\23\0\1\156\37\0\1\157\17\0\1\160"+
-    "\1\161\4\0\1\162\1\0\1\162\1\163\1\164\1\165"+
-    "\6\0\1\166\7\0\1\107\31\0\1\107\3\0\3\107"+
-    "\11\0\1\167\24\0\1\167\31\0\1\167\3\0\3\167"+
-    "\25\0\1\170\154\0\1\171\1\172\13\0\77\173\47\0"+
-    "\1\174\3\0\3\174\25\0\1\175\20\0\2\176\1\0"+
-    "\1\176\4\0\3\176\5\0\3\176\3\0\3\176\25\0"+
-    "\1\177\20\0\2\200\1\0\1\200\4\0\3\200\5\0"+
-    "\3\200\3\0\3\200\74\0\1\201\1\202\1\201\103\0"+
-    "\1\203\1\204\20\0\1\205\17\0\2\155\1\0\1\155"+
-    "\4\0\3\155\5\0\3\155\3\0\3\155\103\0\1\206"+
-    "\10\0\1\207\76\0\1\210\1\211\2\0\3\212\1\0"+
-    "\73\212\5\0\1\166\7\0\1\167\31\0\1\167\3\0"+
-    "\3\167\50\0\1\213\116\0\1\214\3\0\3\214\46\0"+
-    "\2\215\1\0\1\215\4\0\3\215\5\0\3\215\3\0"+
-    "\3\215\46\0\2\216\1\0\1\216\4\0\3\216\5\0"+
-    "\3\216\3\0\3\216\74\0\3\217\74\0\3\220\21\0"+
-    "\3\212\1\221\73\212\5\0\1\124\116\0\2\222\1\0"+
-    "\1\222\4\0\3\222\5\0\3\222\3\0\3\222\74\0"+
-    "\3\223\46\0\2\224\1\0\1\224\4\0\3\224\5\0"+
-    "\3\224\3\0\3\224\21\0";
+    "\1\161\4\0\1\162\1\0\1\163\1\164\1\165\1\166"+
+    "\6\0\1\167\7\0\1\107\31\0\1\107\3\0\3\107"+
+    "\11\0\1\170\24\0\1\170\31\0\1\170\3\0\3\170"+
+    "\25\0\1\171\154\0\1\172\1\173\13\0\77\174\47\0"+
+    "\1\175\3\0\3\175\25\0\1\176\20\0\2\177\1\0"+
+    "\1\177\4\0\3\177\5\0\3\177\3\0\3\177\25\0"+
+    "\1\200\20\0\2\201\1\0\1\201\4\0\3\201\5\0"+
+    "\3\201\3\0\3\201\74\0\1\202\1\203\1\202\103\0"+
+    "\1\204\1\205\20\0\1\206\17\0\2\155\1\0\1\155"+
+    "\4\0\3\155\5\0\3\155\3\0\3\155\103\0\1\207"+
+    "\10\0\1\210\76\0\1\211\1\212\2\0\3\213\1\0"+
+    "\73\213\5\0\1\167\7\0\1\170\31\0\1\170\3\0"+
+    "\3\170\50\0\1\214\116\0\1\215\3\0\3\215\46\0"+
+    "\2\216\1\0\1\216\4\0\3\216\5\0\3\216\3\0"+
+    "\3\216\46\0\2\217\1\0\1\217\4\0\3\217\5\0"+
+    "\3\217\3\0\3\217\74\0\3\220\74\0\3\221\21\0"+
+    "\3\213\1\222\73\213\5\0\1\124\116\0\2\223\1\0"+
+    "\1\223\4\0\3\223\5\0\3\223\3\0\3\223\74\0"+
+    "\3\224\46\0\2\225\1\0\1\225\4\0\3\225\5\0"+
+    "\3\225\3\0\3\225\21\0";
 
   private static int [] zzUnpackTrans() {
     int [] result = new int[4032];
@@ -392,12 +392,12 @@ class _RegExLexer implements FlexLexer {
     "\1\1\1\11\1\1\1\11\1\1\3\11\2\1\2\11"+
     "\1\1\3\11\3\1\2\0\11\11\2\1\2\11\1\1"+
     "\4\11\1\1\1\11\3\1\2\11\1\1\12\11\1\1"+
-    "\1\11\1\0\1\1\4\11\1\0\1\11\2\0\3\11"+
+    "\1\11\1\0\1\1\5\11\1\0\1\11\2\0\3\11"+
     "\1\1\1\11\1\1\1\11\3\1\7\11\2\0\2\11"+
     "\2\1\2\11\1\1\2\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[148];
+    int [] result = new int[149];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -773,238 +773,238 @@ class _RegExLexer implements FlexLexer {
           case 1: 
             { yypopstate(); return RegExpTT.COMMENT;
             }
-          case 101: break;
+          case 102: break;
           case 2: 
             { return RegExpTT.CHARACTER;
             }
-          case 102: break;
+          case 103: break;
           case 3: 
             { return RegExpTT.DOT;
             }
-          case 103: break;
+          case 104: break;
           case 4: 
             { capturingGroupCount++; return RegExpTT.GROUP_BEGIN;
             }
-          case 104: break;
+          case 105: break;
           case 5: 
             { return RegExpTT.GROUP_END;
             }
-          case 105: break;
+          case 106: break;
           case 6: 
             { if (allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;
             }
-          case 106: break;
+          case 107: break;
           case 7: 
             { return (allowDanglingMetacharacters != Boolean.FALSE) ? RegExpTT.CHARACTER : RegExpTT.RBRACE;
             }
-          case 107: break;
+          case 108: break;
           case 8: 
             { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN;
             }
-          case 108: break;
+          case 109: break;
           case 9: 
             { return allowDanglingMetacharacters == Boolean.FALSE ? RegExpTT.CLASS_END : RegExpTT.CHARACTER;
             }
-          case 109: break;
+          case 110: break;
           case 10: 
             { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
             }
-          case 110: break;
+          case 111: break;
           case 11: 
             { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER;
             }
-          case 111: break;
+          case 112: break;
           case 12: 
             { return RegExpTT.CARET;
             }
-          case 112: break;
+          case 113: break;
           case 13: 
             { return RegExpTT.DOLLAR;
             }
-          case 113: break;
+          case 114: break;
           case 14: 
             { return RegExpTT.QUEST;
             }
-          case 114: break;
+          case 115: break;
           case 15: 
             { return RegExpTT.STAR;
             }
-          case 115: break;
+          case 116: break;
           case 16: 
             { return RegExpTT.PLUS;
             }
-          case 116: break;
+          case 117: break;
           case 17: 
             { return RegExpTT.UNION;
             }
-          case 117: break;
+          case 118: break;
           case 18: 
             { if (commentMode) { yypushstate(COMMENT); return RegExpTT.COMMENT; } else return RegExpTT.CHARACTER;
             }
-          case 118: break;
+          case 119: break;
           case 19: 
             { yypopstate(); yypushback(1);
             }
-          case 119: break;
+          case 120: break;
           case 20: 
             { yypopstate(); return RegExpTT.RBRACE;
             }
-          case 120: break;
+          case 121: break;
           case 21: 
             { return RegExpTT.NAME;
             }
-          case 121: break;
+          case 122: break;
           case 22: 
             { return RegExpTT.NUMBER;
             }
-          case 122: break;
+          case 123: break;
           case 23: 
             { return RegExpTT.COMMA;
             }
-          case 123: break;
+          case 124: break;
           case 24: 
             { yybegin(CLASS1); return RegExpTT.CARET;
             }
-          case 124: break;
+          case 125: break;
           case 25: 
             { states.set(states.size() - 1, CLASS2); return RegExpTT.CHARACTER;
             }
-          case 125: break;
+          case 126: break;
           case 26: 
             { yypushback(1); yybegin(CLASS2);
             }
-          case 126: break;
+          case 127: break;
           case 27: 
             { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER;
             }
-          case 127: break;
+          case 128: break;
           case 28: 
             { if (allowEmptyCharacterClass) { yypopstate(); return RegExpTT.CLASS_END; } yybegin(CLASS2); return RegExpTT.CHARACTER;
             }
-          case 128: break;
+          case 129: break;
           case 29: 
             { if (commentMode) return com.intellij.psi.TokenType.WHITE_SPACE; yypushback(1); yybegin(CLASS2);
             }
-          case 129: break;
+          case 130: break;
           case 30: 
             { if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER;
             }
-          case 130: break;
+          case 131: break;
           case 31: 
             { yypopstate(); return RegExpTT.CLASS_END;
             }
-          case 131: break;
+          case 132: break;
           case 32: 
             { return RegExpTT.MINUS;
             }
-          case 132: break;
+          case 133: break;
           case 33: 
             { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE;
             }
-          case 133: break;
+          case 134: break;
           case 34: 
             { yypopstate(); return RegExpTT.CATEGORY_SHORT_HAND;
             }
-          case 134: break;
+          case 135: break;
           case 35: 
             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER;
             }
-          case 135: break;
+          case 136: break;
           case 36: 
             { yybegin(YYINITIAL); return RegExpTT.GROUP_END;
             }
-          case 136: break;
+          case 137: break;
           case 37: 
             { handleOptions(); return RegExpTT.OPTIONS_ON;
             }
-          case 137: break;
+          case 138: break;
           case 38: 
             { handleOptions(); return RegExpTT.OPTIONS_OFF;
             }
-          case 138: break;
+          case 139: break;
           case 39: 
             { yybegin(YYINITIAL); return RegExpTT.COLON;
             }
-          case 139: break;
+          case 140: break;
           case 40: 
             { yybegin(YYINITIAL); return RegExpTT.GT;
             }
-          case 140: break;
+          case 141: break;
           case 41: 
             { yybegin(YYINITIAL); return RegExpTT.QUOTE;
             }
-          case 141: break;
+          case 142: break;
           case 42: 
             { return RegExpTT.BAD_CHARACTER;
             }
-          case 142: break;
+          case 143: break;
           case 43: 
             { yypopstate(); return (yycharat(-1) == 'u') ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : RegExpTT.BAD_HEX_VALUE;
             }
-          case 143: break;
+          case 144: break;
           case 44: 
             { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS;
             }
-          case 144: break;
+          case 145: break;
           case 45: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN;
             }
-          case 145: break;
+          case 146: break;
           case 46: 
             { return RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 146: break;
+          case 147: break;
           case 47: 
             { return (yystate() == CLASS2) ? RegExpTT.REDUNDANT_ESCAPE : RegExpTT.ESC_CHARACTER;
             }
-          case 147: break;
+          case 148: break;
           case 48: 
             { return (allowDanglingMetacharacters != Boolean.TRUE && yystate() != CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 148: break;
+          case 149: break;
           case 49: 
             { return (allowDanglingMetacharacters == Boolean.FALSE && yystate() != CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 149: break;
+          case 150: break;
           case 50: 
             { return RegExpTT.ESC_CHARACTER;
             }
-          case 150: break;
+          case 151: break;
           case 51: 
             { return (yystate() == CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 151: break;
+          case 152: break;
           case 52: 
             { return commentMode ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 152: break;
+          case 153: break;
           case 53: 
             { return RegExpTT.ESC_CTRL_CHARACTER;
             }
-          case 153: break;
+          case 154: break;
           case 54: 
             { return RegExpTT.BOUNDARY;
             }
-          case 154: break;
+          case 155: break;
           case 55: 
             { return RegExpTT.CHAR_CLASS;
             }
-          case 155: break;
+          case 156: break;
           case 56: 
             { if (xmlSchemaMode) return RegExpTT.CHAR_CLASS; else return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
             }
-          case 156: break;
+          case 157: break;
           case 57: 
             { yypushstate(PROP); return RegExpTT.PROPERTY;
             }
-          case 157: break;
+          case 158: break;
           case 58: 
             { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
             }
-          case 158: break;
+          case 159: break;
           case 59: 
             { String text = yytext().toString().substring(1);
                                 if (allowOctalNoLeadingZero) {
@@ -1047,64 +1047,64 @@ class _RegExLexer implements FlexLexer {
                                   return RegExpTT.BACKREF;
                                 }
             }
-          case 159: break;
+          case 160: break;
           case 60: 
             { yypushstate(QUOTED); return RegExpTT.QUOTE_BEGIN;
             }
-          case 160: break;
+          case 161: break;
           case 61: 
             { return RegExpTT.BAD_HEX_VALUE;
             }
-          case 161: break;
+          case 162: break;
           case 62: 
             { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
             }
-          case 162: break;
+          case 163: break;
           case 63: 
             { return (allowOctalNoLeadingZero ? RegExpTT.OCT_CHAR : RegExpTT.BAD_OCT_VALUE);
             }
-          case 163: break;
+          case 164: break;
           case 64: 
             { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
             }
-          case 164: break;
+          case 165: break;
           case 65: 
             { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER;
             }
-          case 165: break;
+          case 166: break;
           case 66: 
             { yypopstate(); return RegExpTT.QUOTE_END;
             }
-          case 166: break;
+          case 167: break;
           case 67: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER;
             }
-          case 167: break;
+          case 168: break;
           case 68: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { yybegin(CLASS2); if (allowPosixBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; }
             }
-          case 168: break;
+          case 169: break;
           case 69: 
             { yybegin(CLASS2); return allowEmptyCharacterClass ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE;
             }
-          case 169: break;
+          case 170: break;
           case 70: 
             { yypushstate(QUOTED_CLASS1); return RegExpTT.QUOTE_BEGIN;
             }
-          case 170: break;
+          case 171: break;
           case 71: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER;
             }
-          case 171: break;
+          case 172: break;
           case 72: 
             { if (allowPosixBracketExpressions) {
                             yybegin(BRACKET_EXPRESSION);
@@ -1114,128 +1114,132 @@ class _RegExLexer implements FlexLexer {
                             return allowNestedCharacterClasses ? RegExpTT.CLASS_BEGIN : RegExpTT.CHARACTER;
                           }
             }
-          case 172: break;
+          case 173: break;
           case 73: 
             { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER;
             }
-          case 173: break;
+          case 174: break;
           case 74: 
             { yybegin(CLASS2); return RegExpTT.BRACKET_EXPRESSION_END;
             }
-          case 174: break;
+          case 175: break;
           case 75: 
             { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF;
             }
-          case 175: break;
+          case 176: break;
           case 76: 
             { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP;
             }
-          case 176: break;
+          case 177: break;
           case 77: 
             { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP;
             }
-          case 177: break;
+          case 178: break;
           case 78: 
             { return RegExpTT.NON_CAPT_GROUP;
             }
-          case 178: break;
-          case 79: 
-            { return RegExpTT.POS_LOOKAHEAD;
-            }
           case 179: break;
-          case 80: 
-            { return RegExpTT.NEG_LOOKAHEAD;
+          case 79: 
+            { return RegExpTT.ATOMIC_GROUP;
             }
           case 180: break;
+          case 80: 
+            { return RegExpTT.POS_LOOKAHEAD;
+            }
+          case 181: break;
           case 81: 
+            { return RegExpTT.NEG_LOOKAHEAD;
+            }
+          case 182: break;
+          case 82: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 1);
             { yypushstate(QUANTIFIER); return RegExpTT.LBRACE;
             }
-          case 181: break;
-          case 82: 
+          case 183: break;
+          case 83: 
             { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL;
             }
-          case 182: break;
-          case 83: 
+          case 184: break;
+          case 84: 
             { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL;
             }
-          case 183: break;
-          case 84: 
+          case 185: break;
+          case 85: 
             { if (xmlSchemaMode) { yypushback(1); return RegExpTT.CHAR_CLASS; } else return RegExpTT.CTRL;
             }
-          case 184: break;
-          case 85: 
+          case 186: break;
+          case 86: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 2);
             { if (allowExtendedUnicodeCharacter) yypushstate(EMBRACED_HEX); else return RegExpTT.BAD_HEX_VALUE;
             }
-          case 185: break;
-          case 86: 
+          case 187: break;
+          case 87: 
             { if (allowOneHexCharEscape) { return RegExpTT.HEX_CHAR; } else { yypushback(1); return RegExpTT.BAD_HEX_VALUE; }
             }
-          case 186: break;
-          case 87: 
+          case 188: break;
+          case 88: 
             // lookahead expression with fixed base length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzStartRead, 2);
             { if (allowExtendedUnicodeCharacter) yypushstate(EMBRACED_HEX); else return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
             }
-          case 187: break;
-          case 88: 
+          case 189: break;
+          case 89: 
             { yypushback(yylength() - 2); return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
             }
-          case 188: break;
-          case 89: 
+          case 190: break;
+          case 90: 
             { return RegExpTT.OCT_CHAR;
             }
-          case 189: break;
-          case 90: 
+          case 191: break;
+          case 91: 
             { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF;
             }
-          case 190: break;
-          case 91: 
+          case 192: break;
+          case 92: 
             { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF;
             }
-          case 191: break;
-          case 92: 
+          case 193: break;
+          case 93: 
             { yypopstate(); return (yycharat(-1) == 'u') ? RegExpTT.UNICODE_CHAR : RegExpTT.HEX_CHAR;
             }
-          case 192: break;
-          case 93: 
+          case 194: break;
+          case 94: 
             { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP;
             }
-          case 193: break;
-          case 94: 
+          case 195: break;
+          case 95: 
             { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF;
             }
-          case 194: break;
-          case 95: 
+          case 196: break;
+          case 96: 
             { return RegExpTT.POS_LOOKBEHIND;
             }
-          case 195: break;
-          case 96: 
+          case 197: break;
+          case 97: 
             { return RegExpTT.NEG_LOOKBEHIND;
             }
-          case 196: break;
-          case 97: 
+          case 198: break;
+          case 98: 
             { return RegExpTT.HEX_CHAR;
             }
-          case 197: break;
-          case 98: 
+          case 199: break;
+          case 99: 
             { return RegExpTT.COMMENT;
             }
-          case 198: break;
-          case 99: 
+          case 200: break;
+          case 100: 
             { if (allowOctalNoLeadingZero) yypushback(1); return RegExpTT.OCT_CHAR;
             }
-          case 199: break;
-          case 100: 
+          case 201: break;
+          case 101: 
             { return RegExpTT.UNICODE_CHAR;
             }
-          case 200: break;
+          case 202: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }
