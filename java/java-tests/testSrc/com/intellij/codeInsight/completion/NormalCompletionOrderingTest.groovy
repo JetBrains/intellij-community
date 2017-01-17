@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.ui.JBColor
 
 class NormalCompletionOrderingTest extends CompletionSortingTestCase {
@@ -197,27 +196,6 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
     invokeCompletion("SameStatsForDifferentQualifiersJLabel.java")
     assertPreferredItems(0, "getComponents", "getComponent")
-  }
-
-  void testAbandonSameStatsForDifferentQualifiers() throws Throwable {
-    invokeCompletion(getTestName(false) + ".java")
-    assertPreferredItems 0, "method1", "equals"
-    myFixture.type('eq\n2);\nf2.')
-
-    myFixture.completeBasic()
-    assertPreferredItems 0, "equals", "method2"
-    myFixture.type('me\n);\n')
-
-    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
-      myFixture.type('f2.')
-      myFixture.completeBasic()
-      assertPreferredItems 0, "method2", "equals"
-      myFixture.type('me\n);\n')
-    }
-
-    myFixture.type('f3.')
-    myFixture.completeBasic()
-    assertPreferredItems 0, "method3", "equals"
   }
 
   void testDispreferFinalize() throws Throwable {
@@ -393,13 +371,6 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(1, "Foo", "foo1", "foo2")
   }
 
-  void testExpectedTypeIsMoreImportantThanCase() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    checkPreferredItems 0, "enable", "ENABLED"
-    incUseCount(lookup, 1)
-    assertPreferredItems 0, "ENABLED", "enable"
-  }
-
   void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {
     checkPreferredItems 0, 'noo', 'new', 'null', 'noo2', 'notify', 'notifyAll'
   }
@@ -514,41 +485,6 @@ interface TxANotAnno {}
     myFixture.completeBasic()
     assert lookup
     assert lookup.currentItem.lookupString == 'JComponent'
-  }
-
-  void testStatisticsByPrefix() {
-    Closure repeatCompletion = { String letter ->
-      String var1 = "_${letter}oo1"
-      String var2 = "_${letter}oo2"
-
-      myFixture.type("_$letter")
-      myFixture.completeBasic()
-      assertPreferredItems(0, var1, var2)
-      myFixture.type('2\n;\n')
-
-      for (i in 0..<StatisticsManager.OBLIVION_THRESHOLD - 2) {
-        myFixture.type('_')
-        myFixture.completeBasic()
-        assert myFixture.lookupElementStrings.indexOf(var2) < myFixture.lookupElementStrings.indexOf(var1)
-        myFixture.type(letter)
-        assertPreferredItems(0, var2, var1)
-        myFixture.type('\n;\n')
-      }
-    }
-
-    configureByFile(getTestName(false) + ".java")
-    repeatCompletion 'g'
-    repeatCompletion 'f'
-    repeatCompletion 'b'
-
-    myFixture.completeBasic()
-    assertPreferredItems(0, 'return', '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
-    myFixture.type('_')
-    assertPreferredItems(0, '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
-    myFixture.type('g')
-    assertPreferredItems(0, '_goo2', '_goo1')
-    myFixture.type('o')
-    assertPreferredItems(0, '_goo2', '_goo1')
   }
 
   void testPreferFieldToMethod() {
