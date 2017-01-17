@@ -1149,7 +1149,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitModifierList(PsiModifierList list) {
     if (myType1 == JavaElementType.ANNOTATION && myType2 == JavaTokenType.FINAL_KEYWORD) {
-      myResult = Spacing.createSpacing(1, Integer.MAX_VALUE, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      myResult = Spacing.createSpacing(1, Integer.MAX_VALUE, 0, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else if (myType1 == JavaTokenType.END_OF_LINE_COMMENT) {
       myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
