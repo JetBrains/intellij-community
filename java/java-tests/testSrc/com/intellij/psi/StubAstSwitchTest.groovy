@@ -218,4 +218,15 @@ class B {
     assert !file.treeElement
   }
 
+  void "test node is not deeply parsed when loaded in green stub presence"() {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
+    def stubTree = file.stubTree
+    PsiClass psiClass = ((PsiJavaFile)file).classes[0]
+    assert psiClass.nameIdentifier
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assert stubTree.is(file.greenStubTree)
+    assert !file.node.parsed
+  }
+
 }
