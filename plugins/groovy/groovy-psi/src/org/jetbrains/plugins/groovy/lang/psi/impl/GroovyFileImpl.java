@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -544,6 +544,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
 
   @Override
   public boolean shouldChangeModificationCount(PsiElement place) {
+    if (!isContentsLoaded()) return true;
     // 1. We actually should never get GrTypeDefinition as a parent, because it is a PsiClass,
     //    and PsiClasses prevent to go up in a tree any further
     // 2. If place is under a variable then @BaseScript or @Field may be changed,
