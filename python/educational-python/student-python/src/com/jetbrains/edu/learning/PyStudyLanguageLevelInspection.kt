@@ -50,7 +50,7 @@ class PyStudyLanguageLevelInspection : PyInspection() {
     fun checkIfLanguageLevelSupported(course: Course, languageLevel: LanguageLevel, node: PyFile) {
       if (course.isAdaptive) {
         if(!languageLevel.isPy3K) {
-          registerProblem(node, "Adaptive courses supports Python 3 only", ConfigureInterpreterFix())
+          registerProblem(node, "Adaptive courses support Python 3 only", ConfigureInterpreterFix())
         }
       }
     }
