@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -54,6 +53,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -334,7 +335,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
             // because inner annotations are not permitted and it can cause infinite recursion
             PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
             if (placeToStartWalking != null) {
-              ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
+              treeWalkUp(placeToStartWalking, processor);
               GroovyResolveResult[] candidates = processor.getCandidates();
               if (candidates.length > 0) return candidates;
             }
