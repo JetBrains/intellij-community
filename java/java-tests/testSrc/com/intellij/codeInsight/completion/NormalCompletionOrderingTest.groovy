@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
@@ -170,32 +169,6 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     configureSecondCompletion()
     incUseCount(getLookup(), 1)
     assertPreferredItems(0, "FooBee", "FooBar")
-  }
-
-  void testSameStatsForDifferentQualifiers() throws Throwable {
-    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java")
-    assertPreferredItems(0, "getComponent")
-    incUseCount(getLookup(), myFixture.lookupElementStrings.indexOf('getComponents'))
-    FileDocumentManager.instance.saveAllDocuments()
-
-    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
-
-    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
-  }
-
-  void testSameStatsForDifferentQualifiers2() throws Throwable {
-    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java")
-    assertPreferredItems(0, "getComponent")
-    incUseCount(getLookup(), myFixture.lookupElementStrings.indexOf('getComponents'))
-    FileDocumentManager.instance.saveAllDocuments()
-
-    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
-
-    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java")
-    assertPreferredItems(0, "getComponents", "getComponent")
   }
 
   void testDispreferFinalize() throws Throwable {
@@ -730,6 +703,16 @@ class ContainerUtil extends ContainerUtilRt {
     checkPreferredItems 1, 'SameNamed', 'SameNamed'
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).tailText.contains('pack1')
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).tailText.contains('pack2')
+  }
+
+  void testMethodStatisticsPerQualifierType() {
+    checkPreferredItems 0, 'charAt'
+    myFixture.type('eq\n);\n')
+    assert myFixture.editor.document.text.contains('equals();\n')
+
+    myFixture.type('this.')
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'someMethod'
   }
 
 }

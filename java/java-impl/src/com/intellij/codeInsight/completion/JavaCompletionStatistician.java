@@ -48,8 +48,6 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
     if (item == null) return null;
 
-    PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
-
     if (o instanceof PsiMember) {
       final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
       final ExpectedTypeInfo firstInfo = infos != null && infos.length > 0 ? infos[0] : null;
@@ -62,7 +60,9 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       PsiClass containingClass = ((PsiMember)o).getContainingClass();
       if (containingClass != null) {
         String expectedName = firstInfo instanceof ExpectedTypeInfoImpl ? ((ExpectedTypeInfoImpl)firstInfo).getExpectedName() : null;
-        String contextPrefix = expectedName == null ? "" : "expectedName=" + expectedName + "###";
+        PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
+        String contextPrefix = (qualifierType == null ? "" : JavaStatisticsManager.getMemberUseKey1(qualifierType) + "###") +
+                               (expectedName == null ? "" : "expectedName=" + expectedName + "###");
 
         if (o instanceof PsiMethod) {
           String memberValue = JavaStatisticsManager.getMemberUseKey2(RecursionWeigher.findDeepestSuper((PsiMethod)o));
@@ -72,8 +72,6 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         return new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass), key2);
       }
     }
-
-    if (qualifierType != null) return StatisticsInfo.EMPTY;
 
     return null;
   }
