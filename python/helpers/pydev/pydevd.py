@@ -809,6 +809,16 @@ class PyDB:
                 info.pydev_step_cmd = -1
                 info.pydev_state = STATE_RUN
 
+        if self.frame_eval_func is not None and info.pydev_state == STATE_RUN:
+            if info.pydev_step_cmd == -1:
+                # disable old tracing function without stepping commands
+                self.SetTrace(None)
+            else:
+                if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
+                    self.set_trace_for_frame_and_parents(frame)
+                # enable old tracing function for stepping
+                self.SetTrace(self.trace_dispatch)
+
         del frame
         cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
         self.writer.add_command(cmd)

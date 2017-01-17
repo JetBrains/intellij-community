@@ -1,8 +1,11 @@
 import dis
+from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from _pydevd_bundle.pydevd_comm import get_global_debugger
+from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
-from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
 
 def get_breakpoints_for_file(filename):
@@ -10,7 +13,7 @@ def get_breakpoints_for_file(filename):
     breakpoints_for_file = main_debugger.breakpoints.get(filename)
     return breakpoints_for_file
 
-cdef PyObject*get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
+cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
     filepath = str(<object> frame.f_code.co_filename)
     skip_file = False
     breakpoints = None
@@ -20,17 +23,34 @@ cdef PyObject*get_bytecode_while_frame_eval(PyFrameObject *frame, int exc):
             break
 
     if not skip_file:
-        breakpoints = get_breakpoints_for_file(filepath)
-        if breakpoints:
-            was_break = False
-            for offset, line in dis.findlinestarts(<object> frame.f_code):
-                if line in breakpoints:
-                    was_break = True
-                    new_code = insert_code(<object> frame.f_code, pydev_trace_code_wrapper.__code__, line)
-                    Py_INCREF(new_code)
-                    frame.f_code = <PyCodeObject *> new_code
-            if was_break:
-                update_globals_dict(<object> frame.f_globals)
+        t = threading.currentThread()
+        try:
+            additional_info = t.additional_info
+            if additional_info is None:
+                raise AttributeError()
+        except:
+            additional_info = t.additional_info = PyDBAdditionalThreadInfo()
+
+        if not additional_info.is_tracing:
+            additional_info.is_tracing = True
+            try:
+                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[<object> frame.f_code.co_filename]
+            except:
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(<object> frame)
+
+            filepath = abs_path_real_path_and_base[1]
+            breakpoints = get_breakpoints_for_file(filepath)
+            if breakpoints:
+                was_break = False
+                for offset, line in dis.findlinestarts(<object> frame.f_code):
+                    if line in breakpoints:
+                        was_break = True
+                        new_code = insert_code(<object> frame.f_code, pydev_trace_code_wrapper.__code__, line)
+                        Py_INCREF(new_code)
+                        frame.f_code = <PyCodeObject *> new_code
+                if was_break:
+                    update_globals_dict(<object> frame.f_globals)
+            additional_info.is_tracing = False
     return _PyEval_EvalFrameDefault(frame, exc)
 
 def frame_eval_func():
