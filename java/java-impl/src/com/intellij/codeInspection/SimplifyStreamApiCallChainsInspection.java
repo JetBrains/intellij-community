@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -41,7 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -463,48 +465,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     if (ctor == null || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
     PsiParameterList list = ctor.getParameterList();
     if (list.getParametersCount() != 1) return false;
-    PsiParameter parameter = list.getParameters()[0];
-    PsiTypeElement typeElement = parameter.getTypeElement();
+    PsiTypeElement typeElement = list.getParameters()[0].getTypeElement();
     if (typeElement == null) return false;
     PsiType type = typeElement.getType();
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if(aClass == null || !CommonClassNames.JAVA_UTIL_COLLECTION.equals(aClass.getQualifiedName())) return false;
-    PsiClass curClass = ctor.getContainingClass();
-    LOG.assertTrue(curClass != null);
-    // Do not perform deep check for standard Collections
-    if(Objects.requireNonNull(curClass.getQualifiedName()).startsWith("java.util.")) return true;
-    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, curClass, PsiSubstitutor.EMPTY);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ctor.getProject());
-    PsiClassType collectionType = factory.createType(aClass, substitutor);
-    if (!(type.isAssignableFrom(collectionType))) return false;
-    // Check that body either contains addAll(arg) or super(arg)
-    return !PsiTreeUtil.processElements(ctor.getBody(), e -> {
-      if(e instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)e;
-        PsiExpression[] args = call.getArgumentList().getExpressions();
-        if(args.length == 1 && ExpressionUtils.isReferenceTo(args[0], parameter)) {
-          PsiReferenceExpression methodExpression = call.getMethodExpression();
-          if("super".equals(methodExpression.getReferenceName())) {
-            return !isCollectionConstructor(call.resolveMethod());
-          }
-          if("addAll".equals(methodExpression.getReferenceName())) {
-            PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if(qualifier == null || qualifier instanceof PsiThisExpression) {
-              return false;
-            }
-          }
-        }
-      }
-      return true;
-    });
+    return aClass != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(aClass.getQualifiedName());
   }
-
-  private static final Key<ParameterizedCachedValue<Boolean, PsiClass>> HAS_COLLECTION_CONSTRUCTOR = Key.create("HasCollectionConstructor");
-  private static final ParameterizedCachedValueProvider<Boolean, PsiClass> HAS_COLLECTION_CONSTRUCTOR_PROVIDER = psiClass -> {
-    boolean hasCollectionConstructor =
-      Stream.of(psiClass.getConstructors()).anyMatch(SimplifyStreamApiCallChainsInspection::isCollectionConstructor);
-    return CachedValueProvider.Result.create(hasCollectionConstructor, psiClass);
-  };
 
   @Nullable
   private static String collectorToCollection(PsiMethodCallExpression call) {
@@ -525,10 +491,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
             PsiMethod ctor = (PsiMethod)element;
             if(ctor.getParameterList().getParametersCount() == 0) {
               PsiClass aClass = ctor.getContainingClass();
-              if (aClass != null &&
-                  CachedValuesManager.getManager(aClass.getProject())
-                    .getParameterizedCachedValue(aClass, HAS_COLLECTION_CONSTRUCTOR, HAS_COLLECTION_CONSTRUCTOR_PROVIDER, false, aClass)) {
-                return aClass.getQualifiedName();
+              if (aClass != null) {
+                String name = aClass.getQualifiedName();
+                if(name != null && name.startsWith("java.util.") &&
+                   Stream.of(aClass.getConstructors()).anyMatch(SimplifyStreamApiCallChainsInspection::isCollectionConstructor)) {
+                  return name;
+                }
               }
             }
           }
