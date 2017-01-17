@@ -2758,6 +2758,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return set == null ? Collections.<T>emptySet() : set;
   }
 
+  @Contract(pure = true)
+  public static <T> boolean startsWith(@NotNull List<T> list, @NotNull List<T> prefix) {
+    return list.size() >= prefix.size() && list.subList(0, prefix.size()).equals(prefix);
+  }
+
   @Nullable
   @Contract(pure=true)
   public static <T, C extends Collection<T>> C nullize(@Nullable C collection) {

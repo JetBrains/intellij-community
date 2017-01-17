@@ -167,4 +167,6 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    */
   @Nullable
   public abstract String[] getModuleGroupPath(@NotNull Module module);
+
+  public abstract boolean hasModuleGroups();
 }
