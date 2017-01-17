@@ -108,19 +108,19 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   private boolean handleSurrogates(RegExpCharRange range, Character f, Character t) {
     // \ud800\udc00-\udbff\udfff
-    PsiElement prevSibling = range.getPrevSibling();
-    PsiElement nextSibling = range.getNextSibling();
+    final PsiElement prevSibling = range.getPrevSibling();
+    final PsiElement nextSibling = range.getNextSibling();
 
     if (prevSibling instanceof RegExpChar && nextSibling instanceof RegExpChar) {
-      Character prevSiblingValue = ((RegExpChar)prevSibling).getValue();
-      Character nextSiblingValue = ((RegExpChar)nextSibling).getValue();
+      final Character prevSiblingValue = ((RegExpChar)prevSibling).getValue();
+      final Character nextSiblingValue = ((RegExpChar)nextSibling).getValue();
 
       if (prevSiblingValue != null && nextSiblingValue != null &&
           Character.isSurrogatePair(prevSiblingValue, f) && Character.isSurrogatePair(t, nextSiblingValue)) {
         if (Character.toCodePoint(prevSiblingValue, f) > Character.toCodePoint(t, nextSiblingValue)) {
-          TextRange prevSiblingRange = prevSibling.getTextRange();
-          TextRange nextSiblingRange = nextSibling.getTextRange();
-          TextRange errorRange = new TextRange(prevSiblingRange.getStartOffset(), nextSiblingRange.getEndOffset());
+          final TextRange prevSiblingRange = prevSibling.getTextRange();
+          final TextRange nextSiblingRange = nextSibling.getTextRange();
+          final TextRange errorRange = new TextRange(prevSiblingRange.getStartOffset(), nextSiblingRange.getEndOffset());
           myHolder.createErrorAnnotation(errorRange, ILLEGAL_CHARACTER_RANGE_TO_FROM);
         }
         return true;
@@ -183,7 +183,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final PsiElement child = ch.getFirstChild();
-    IElementType type = child.getNode().getElementType();
+    final IElementType type = child.getNode().getElementType();
     if (type == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) {
       myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
       return;
@@ -275,7 +275,8 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       else if (branches.length == 1) {
         final RegExpAtom[] atoms = branches[0].getAtoms();
         if (atoms.length == 1 && atoms[0] instanceof RegExpGroup) {
-          if (group.isSimple()) {
+          final RegExpGroup.Type type = group.getType();
+          if (type == RegExpGroup.Type.CAPTURING_GROUP || type == RegExpGroup.Type.ATOMIC || type == RegExpGroup.Type.NON_CAPTURING) {
             final RegExpGroup innerGroup = (RegExpGroup)atoms[0];
             if (group.isCapturing() == innerGroup.isCapturing()) {
               myHolder.createWarningAnnotation(group, "Redundant group nesting");
@@ -284,7 +285,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         }
       }
     }
-    if (group.isPythonNamedGroup() || group.isRubyNamedGroup()) {
+    if (group.isAnyNamedGroup()) {
       if (!myLanguageHosts.supportsNamedGroupSyntax(group)) {
         myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
       }
