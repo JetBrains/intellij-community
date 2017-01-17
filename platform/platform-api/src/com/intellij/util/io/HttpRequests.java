@@ -405,7 +405,7 @@ public final class HttpRequests {
     if (!UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
       return true;
     }
-    return SystemProperties.getBooleanProperty("http.requests.override.context.classloader", false);
+    return SystemProperties.getBooleanProperty("http.requests.override.context.classloader", true);
   }
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
