@@ -464,6 +464,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
+  public Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
+    return Lookbehind.FIXED_LENGTH_ALTERNATION;
+  }
+
+  @Override
   public Long getQuantifierValue(@NotNull RegExpNumber number) {
     try {
       final long result = Long.parseLong(number.getText());
