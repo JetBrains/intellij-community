@@ -31,18 +31,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
  */
 class ResourceBundleEditorFileListener extends VirtualFileAdapter {
+  private static final Update FORCE_UPDATE = new Update("FORCE_UPDATE") {
+    @Override
+    public void run() {
+      throw new IllegalStateException();
+    }
+  };
+
   private final ResourceBundleEditor myEditor;
   private final MyVfsEventsProcessor myEventsProcessor;
   private final Project myProject;
@@ -79,28 +90,29 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
   }
 
   private class MyVfsEventsProcessor {
-    private final MergingUpdateQueue myMergeQueue =
+    private final AtomicReference<Set<EventWithType>> myEventQueue = new AtomicReference<>(ContainerUtil.newConcurrentSet());
+
+    private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
         @Override
         protected void execute(@NotNull Update[] updates) {
           final ReadTask task = new ReadTask() {
-            private final EventWithType[] myEvents =
-              Arrays.stream(updates).map(u -> (EventWithType)u.getEqualityObjects()[0]).toArray(EventWithType[]::new);
+            final Set<EventWithType> myEvents = myEventQueue.getAndSet(ContainerUtil.newConcurrentSet());
 
             @Nullable
             @Override
             public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
               if (!myEditor.isValid()) return null;
               Runnable toDo = null;
+              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = new NotNullLazyValue<Set<VirtualFile>>() {
+                @NotNull
+                @Override
+                protected Set<VirtualFile> compute() {
+                  return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
+                    .collect(Collectors.toSet());
+                }
+              };
               for (EventWithType e : myEvents) {
-                NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = new NotNullLazyValue<Set<VirtualFile>>() {
-                  @NotNull
-                  @Override
-                  protected Set<VirtualFile> compute() {
-                    return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
-                      .collect(Collectors.toSet());
-                  }
-                };
                 if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED &&
                                                               ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_NAME))) {
                   if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
@@ -176,9 +188,11 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
 
             @Override
             public void onCanceled(@NotNull ProgressIndicator indicator) {
-              for (EventWithType event : myEvents) {
-                queue(new MyUpdate(event));
-              }
+              myEventQueue.updateAndGet(s -> {
+                s.addAll(myEvents);
+                return s;
+              });
+              myUpdateQueue.queue(FORCE_UPDATE);
             }
           };
           ProgressIndicatorUtils.scheduleWithWriteActionPriority(task);
@@ -186,22 +200,15 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
       };
 
     public void queue(VirtualFileEvent event, EventType type) {
-      myMergeQueue.queue(new MyUpdate(new EventWithType(type, event)));
+      myEventQueue.updateAndGet(s -> {
+        s.add(new EventWithType(type, event));
+        return s;
+      });
+      myUpdateQueue.queue(FORCE_UPDATE);
     }
 
     public void flush() {
-      myMergeQueue.flush();
-    }
-
-    private class MyUpdate extends Update {
-      public MyUpdate(EventWithType identity) {
-        super(identity);
-      }
-
-      @Override
-      public void run() {
-        throw new IllegalStateException();
-      }
+      myUpdateQueue.flush();
     }
   }
 
