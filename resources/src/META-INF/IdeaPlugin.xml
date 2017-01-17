@@ -978,7 +978,7 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.InlineElseBranchAction</className>
+      <className>com.intellij.codeInsight.intention.impl.UnwrapElseBranchAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
 

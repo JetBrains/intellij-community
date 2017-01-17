@@ -20,11 +20,11 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 /**
  * @author Pavel.Dolgov
  */
-public class InlineElseBranchTest extends LightIntentionActionTestCase {
+public class UnwrapElseBranchTest extends LightIntentionActionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/inlineElseBranch/";
+    return "/codeInsight/unwrapElseBranch/";
   }
 
   public void test() throws Exception {
