@@ -163,17 +163,21 @@ abstract class SourceOperation extends Operation {
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String type = outVar.getType();
-      String collection;
+      String iterationParameter;
       PsiExpressionList argList = myCall.getArgumentList();
       if (TypeConversionUtil.isPrimitive(type)) {
-        collection = StreamEx.of(argList.getChildren()).remove(child -> child.textMatches("(") || child.textMatches(")"))
-          .map(PsiElement::getText).joining("", "new " + type + "[] {", "}");
+        // Not using argList.getExpressions() here as we want to preserve comments and formatting between the expressions
+        PsiElement[] children = argList.getChildren();
+        // first and last children are (parentheses), we need to remove them
+        iterationParameter = StreamEx.of(children, 1, children.length - 1)
+          .map(PsiElement::getText)
+          .joining("", "new " + type + "[] {", "}");
       }
       else {
-        collection = "java.util.Arrays.<" + type + ">asList" + argList.getText();
+        iterationParameter = "java.util.Arrays.<" + type + ">asList" + argList.getText();
       }
       return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + ": " + collection + ") {" + code + "}\n";
+             "for(" + outVar.getDeclaration() + ": " + iterationParameter + ") {" + code + "}\n";
     }
   }
 
