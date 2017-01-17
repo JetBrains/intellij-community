@@ -28,6 +28,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
@@ -295,6 +296,16 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
       if (node != null) myHolder.createErrorAnnotation(node, "Invalid group name");
     }
+    final RegExpGroup.Type groupType = group.getType();
+    if (groupType == RegExpGroup.Type.POSITIVE_LOOKBEHIND || groupType == RegExpGroup.Type.NEGATIVE_LOOKBEHIND) {
+      final RegExpLanguageHost.Lookbehind support = myLanguageHosts.supportsLookbehind(group);
+      if (support == RegExpLanguageHost.Lookbehind.NOT_SUPPORTED) {
+        myHolder.createErrorAnnotation(group, "Look-behind groups not supported in this regex dialect");
+      }
+      else {
+        group.accept(new LookbehindVisitor(support, myHolder));
+      }
+    }
   }
 
   @Override
@@ -426,4 +437,152 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+
+  private static class LookbehindVisitor extends RegExpRecursiveElementVisitor {
+
+    private final RegExpLanguageHost.Lookbehind mySupport;
+    private final AnnotationHolder myHolder;
+    private int myLength = 0;
+    private boolean myStop = false;
+
+    LookbehindVisitor(RegExpLanguageHost.Lookbehind support, AnnotationHolder holder) {
+      mySupport = support;
+      myHolder = holder;
+    }
+
+    @Override
+    public void visitRegExpElement(RegExpElement element) {
+      if (myStop) {
+        return;
+      }
+      super.visitRegExpElement(element);
+    }
+
+    @Override
+    public void visitRegExpChar(RegExpChar ch) {
+      super.visitRegExpChar(ch);
+      myLength++;
+    }
+
+    @Override
+    public void visitSimpleClass(RegExpSimpleClass simpleClass) {
+      super.visitSimpleClass(simpleClass);
+      myLength++;
+    }
+
+    @Override
+    public void visitRegExpClass(RegExpClass expClass) {
+      super.visitRegExpClass(expClass);
+      myLength++;
+    }
+
+    @Override
+    public void visitRegExpProperty(RegExpProperty property) {
+      super.visitRegExpProperty(property);
+      myLength++;
+    }
+
+    @Override
+    public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
+      super.visitRegExpNamedCharacter(namedCharacter);
+      myLength++;
+    }
+
+    @Override
+    public void visitRegExpBackref(RegExpBackref backref) {
+      super.visitRegExpBackref(backref);
+      if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {
+        stopAndReportError(backref, "Group reference not allowed inside lookbehind");
+      }
+    }
+
+    @Override
+    public void visitRegExpPattern(RegExpPattern pattern) {
+      if (mySupport != RegExpLanguageHost.Lookbehind.FIXED_LENGTH_ALTERNATION) {
+        super.visitRegExpPattern(pattern);
+        return;
+      }
+      final int length = myLength;
+      int branchLength = -1;
+      final RegExpBranch[] branches = pattern.getBranches();
+      for (RegExpBranch branch : branches) {
+        myLength = 0;
+        super.visitRegExpBranch(branch);
+        if (branchLength == -1) {
+          branchLength = myLength;
+        } else if (branchLength != myLength) {
+          stopAndReportError(pattern, "Alternation alternatives needs to have the same length inside lookbehind");
+          return;
+        }
+      }
+      myLength = length;
+    }
+
+    @Override
+    public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
+      super.visitRegExpQuantifier(quantifier);
+      if (mySupport == RegExpLanguageHost.Lookbehind.FULL) {
+        return;
+      }
+      if (quantifier.isCounted()) {
+        final RegExpNumber minElement = quantifier.getMin();
+        final RegExpNumber maxElement = quantifier.getMax();
+        if (minElement != null && maxElement != null) {
+          try {
+            final long min = Long.parseLong(minElement.getText());
+            final long max = Long.parseLong(maxElement.getText());
+            if (min == max) {
+              myLength += min;
+              return;
+            }
+          } catch (NumberFormatException ignore) {}
+        }
+        if (mySupport != RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
+          stopAndReportError(quantifier, "Unequal min and max in counted quantifier not allowed inside lookbehind");
+        }
+      }
+      else {
+        final ASTNode token = quantifier.getToken();
+        assert token != null;
+        final String tokenText = token.getText();
+        if ("?".equals(tokenText) && mySupport == RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
+          return;
+        }
+        stopAndReportError(quantifier, tokenText + " repetition not allowed inside lookbehind");
+      }
+    }
+
+    @Override
+    public void visitRegExpBoundary(RegExpBoundary boundary) {
+      super.visitRegExpBoundary(boundary);
+      // is zero length
+    }
+
+    @Override
+    public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
+      super.visitRegExpNamedGroupRef(groupRef);
+      if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {
+        stopAndReportError(groupRef, "Named group reference not allowed inside lookbehind");
+      }
+    }
+
+    @Override
+    public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
+      super.visitRegExpPyCondRef(condRef);
+      if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {
+        stopAndReportError(condRef, "Conditional group reference not allowed inside lookbehind");
+      }
+    }
+
+    @Override
+    public void visitPosixBracketExpression(RegExpPosixBracketExpression posixBracketExpression) {
+      super.visitPosixBracketExpression(posixBracketExpression);
+      myLength++;
+    }
+
+    public void stopAndReportError(RegExpElement element, String message) {
+      myHolder.createErrorAnnotation(element, message);
+      myStop = true;
+    }
+  }
 }

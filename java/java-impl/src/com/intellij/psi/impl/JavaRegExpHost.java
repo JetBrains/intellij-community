@@ -329,6 +329,11 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
+    return Lookbehind.FINITE_REPETITION;
+  }
+
+  @Override
   public Integer getQuantifierValue(@NotNull RegExpNumber number) {
     try {
       return Integer.valueOf(number.getText());

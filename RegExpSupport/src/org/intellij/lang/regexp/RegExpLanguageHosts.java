@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,6 +160,14 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean isValidNamedCharacter(@NotNull final RegExpNamedCharacter namedCharacter) {
     final RegExpLanguageHost host = findRegExpHost(namedCharacter);
     return host != null && host.isValidNamedCharacter(namedCharacter);
+  }
+
+  public RegExpLanguageHost.Lookbehind supportsLookbehind(RegExpGroup group) {
+    final RegExpLanguageHost host = findRegExpHost(group);
+    if (host == null) {
+      return RegExpLanguageHost.Lookbehind.FULL;
+    }
+    return host.supportsLookbehind(group);
   }
 
   @Nullable

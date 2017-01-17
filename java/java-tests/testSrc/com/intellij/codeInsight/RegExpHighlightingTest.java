@@ -212,6 +212,14 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("(?i)<error descr=\"Dangling metacharacter\">{5,6}</error>");
   }
 
+  public void testLookbehind() {
+    doTest("(?<!(aa)<error descr=\"* repetition not allowed inside lookbehind\">*</error>)");
+    doTest("(?<!(aa)<error descr=\"+ repetition not allowed inside lookbehind\">+</error>)");
+    doTest("(?<!(aa)?)");
+    doTest("(?<!(aa){2,6})");
+    doTest("(one)(?<!<error descr=\"Group reference not allowed inside lookbehind\">\\1</error>)");
+  }
+
   private void doTest(@Language("RegExp") String code) {
     code = StringUtil.escapeBackSlashes(code);
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
