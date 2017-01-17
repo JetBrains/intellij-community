@@ -45,10 +45,9 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
 
     PsiElement firstChild = e.getFirstChild();
     PsiElement[] children = e.getChildren();
+    int i = 1;
 
     if (firstChild instanceof PsiDocComment) {
-      int i = 1;
-
       while (children[i] instanceof PsiWhiteSpace) {
         i++;
       }
@@ -59,10 +58,10 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
 
       range = TextRange.create(firstChild.getTextRange());
       result.addAll(expandToWholeLinesWithBlanks(editorText, range));
-    }
-    else if (firstChild instanceof PsiComment) {
-      int i = 1;
 
+      firstChild = children[i++];
+    }
+    if (firstChild instanceof PsiComment) {
       while (children[i] instanceof PsiComment || children[i] instanceof PsiWhiteSpace) {
         i++;
       }
