@@ -178,15 +178,29 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                        "        pass";
   @SuppressWarnings("FieldCanBeLocal")
   private static String WRAP_SETTINGS_PREVIEW = "from foo import (bar,\n" +
-                                                "    baz)\n\n" +
-                                                "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
+                                                "    baz)\n" +
+                                                "\n" +
+                                                "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
+                                                "\n" +
                                                 "def xyzzy(long_parameter_1,\n" +
                                                 "long_parameter_2):\n" +
                                                 "    pass\n\n" +
                                                 "xyzzy('long_string_constant1',\n" +
                                                 "    'long_string_constant2')\n" +
+                                                "\n" +
+                                                "xyzzy(\n" +
+                                                "    'with',\n" +
+                                                "    'hanging',\n" +
+                                                "      'indent'\n" +
+                                                ")\n" +
                                                 "attrs = [e.attr for e in\n" +
-                                                "    items]\n\n" +
+                                                "    items]\n" +
+                                                "\n" +
+                                                "ingredients = [\n" +
+                                                "    'green',\n" +
+                                                "    'eggs',\n" +
+                                                "]\n" +
+                                                "\n" +
                                                 "if True: pass\n\n" +
                                                 "try: pass\n" +
                                                 "finally: pass\n";
