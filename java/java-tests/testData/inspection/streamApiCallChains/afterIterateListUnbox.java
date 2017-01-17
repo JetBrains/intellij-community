@@ -6,6 +6,6 @@ import java.util.stream.IntStream;
 
 public class Test extends ArrayList<String> {
   public void test(List<Integer> list) {
-    long[] arr = IntStream.range(0, list.size()).map<caret>ToLong(list::get).toArray();
+    long[] arr = list.stream().mapToLong(integer -> integer).toArray();
   }
 }
