@@ -282,7 +282,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     model.reload(firstItem, ProjectStructureConfigurable.getInstance(project).getProjectJdksModel(), mySdkTypeFilter, myFilter, false);
   }
 
-  private static class JdkComboBoxModel extends DefaultComboBoxModel {
+  private static class JdkComboBoxModel extends DefaultComboBoxModel<JdkComboBoxItem> {
     public JdkComboBoxModel(@NotNull final ProjectSdksModel jdksModel, @Nullable Condition<SdkTypeId> sdkTypeFilter,
                             @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
       reload(null, jdksModel, sdkTypeFilter, sdkFilter, addSuggested);
@@ -332,16 +332,10 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
         }
       }
     }
-
-    // implements javax.swing.ListModel
-    @Override
-    public JdkComboBoxItem getElementAt(int index) {
-      return (JdkComboBoxItem)super.getElementAt(index);
-    }
   }
 
   public static Condition<Sdk> getSdkFilter(@Nullable final Condition<SdkTypeId> filter) {
-    return filter == null ? Conditions.<Sdk>alwaysTrue() : (Condition<Sdk>)sdk -> filter.value(sdk.getSdkType());
+    return filter == null ? Conditions.alwaysTrue() : sdk -> filter.value(sdk.getSdkType());
   }
 
   public abstract static class JdkComboBoxItem {
