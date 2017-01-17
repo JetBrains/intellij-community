@@ -53,6 +53,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -377,63 +378,59 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       }
 
       RunProfile profile = environment.getRunProfile();
-      boolean started = false;
-      try {
-        project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), environment);
+      project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), environment);
 
-        final RunContentDescriptor descriptor = starter.execute(state, environment);
-        if (descriptor != null) {
-          final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
-            Trinity.create(descriptor, environment.getRunnerAndConfigurationSettings(), executor);
-          myRunningConfigurations.add(trinity);
-          Disposer.register(descriptor, () -> myRunningConfigurations.remove(trinity));
-          getContentManager().showRunContent(executor, descriptor, environment.getContentToReuse());
-          final ProcessHandler processHandler = descriptor.getProcessHandler();
-          if (processHandler != null) {
-            if (!processHandler.isStartNotified()) {
-              processHandler.startNotify();
-            }
-            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), environment, processHandler);
-            started = true;
+      starter.executeAsync(state, environment).done(descriptor -> {
+        AppUIUtil.invokeOnEdt(() -> {
+          if (descriptor != null) {
+            final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
+              Trinity.create(descriptor, environment.getRunnerAndConfigurationSettings(), executor);
+            myRunningConfigurations.add(trinity);
+            Disposer.register(descriptor, () -> myRunningConfigurations.remove(trinity));
+            getContentManager().showRunContent(executor, descriptor, environment.getContentToReuse());
+            final ProcessHandler processHandler = descriptor.getProcessHandler();
+            if (processHandler != null) {
+              if (!processHandler.isStartNotified()) {
+                processHandler.startNotify();
+              }
+              project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarted(executor.getId(), environment, processHandler);
 
-            ProcessExecutionListener listener = new ProcessExecutionListener(project, executor.getId(), environment, processHandler, descriptor);
-            processHandler.addProcessListener(listener);
-            
-            // Since we cannot guarantee that the listener is added before process handled is start notified,
-            // we have to make sure the process termination events are delivered to the clients.
-            // Here we check the current process state and manually deliver events, while 
-            // the ProcessExecutionListener guarantees each such event is only delivered once 
-            // either by this code, or by the ProcessHandler.
+              ProcessExecutionListener listener = new ProcessExecutionListener(project, executor.getId(), environment, processHandler, descriptor);
+              processHandler.addProcessListener(listener);
 
-            boolean terminating = processHandler.isProcessTerminating();
-            boolean terminated = processHandler.isProcessTerminated();
-            if (terminating || terminated) {
-              listener.processWillTerminate(new ProcessEvent(processHandler), false /*doesn't matter*/);
+              // Since we cannot guarantee that the listener is added before process handled is start notified,
+              // we have to make sure the process termination events are delivered to the clients.
+              // Here we check the current process state and manually deliver events, while
+              // the ProcessExecutionListener guarantees each such event is only delivered once
+              // either by this code, or by the ProcessHandler.
 
-              if (terminated) {
-                //noinspection ConstantConditions
-                int exitCode = processHandler.getExitCode();
-                listener.processTerminated(new ProcessEvent(processHandler, exitCode));
+              boolean terminating = processHandler.isProcessTerminating();
+              boolean terminated = processHandler.isProcessTerminated();
+              if (terminating || terminated) {
+                listener.processWillTerminate(new ProcessEvent(processHandler), false /*doesn't matter*/);
+
+                if (terminated) {
+                  //noinspection ConstantConditions
+                  int exitCode = processHandler.getExitCode();
+                  listener.processTerminated(new ProcessEvent(processHandler, exitCode));
+                }
               }
             }
+            environment.setContentToReuse(descriptor);
           }
-          environment.setContentToReuse(descriptor);
+          else {
+            project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
+          }
+        }, o -> project.isDisposed());
+      }).rejected(e -> {
+        if (!(e instanceof ProcessCanceledException)) {
+          ExecutionException error = e instanceof ExecutionException ? (ExecutionException)e : new ExecutionException(e);
+          ExecutionUtil.handleExecutionError(project, ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
+                                             profile, error);
         }
-      }
-      catch (ProcessCanceledException e) {
         LOG.info(e);
-      }
-      catch (ExecutionException e) {
-        ExecutionUtil.handleExecutionError(project,
-                                           ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
-                                           profile, e);
-        LOG.info(e);
-      }
-      finally {
-        if (!started) {
-          project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
-        }
-      }
+        project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), environment);
+      });
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode() && !myForceCompilationInTests) {
