@@ -25,7 +25,6 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -74,13 +73,6 @@ public class GroovyPsiManager {
   public void dropTypesCache() {
     myCalculatedTypes.clear();
     myCompileStatic.clear();
-  }
-
-  public static boolean isInheritorCached(@Nullable PsiType type, @NotNull String baseClassName) {
-    if (type instanceof PsiClassType) {
-      return InheritanceUtil.isInheritor(((PsiClassType)type).resolve(), baseClassName);
-    }
-    return false;
   }
 
   public static GroovyPsiManager getInstance(Project project) {
