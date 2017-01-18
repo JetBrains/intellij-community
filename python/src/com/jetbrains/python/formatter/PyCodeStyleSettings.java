@@ -97,6 +97,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    * Affects wrapping of multiple imported names in a single "from" import.
    */
   public int FROM_IMPORT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
+  public boolean FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = false;
+  public boolean FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = false;
 
   /**
    * Corresponds to the option of pycodestyle.py "--hang-closing". Basically, it means that the closing brace of a collection literal, 

@@ -119,10 +119,17 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS",
                                 PyBundle.message("formatter.align.when.multiline"),
                                 PyBundle.message("formatter.collections.and.comprehensions"));
+      
       consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_WRAPPING",
                                 PyBundle.message("formatter.from.import.statements"), null, WRAP_OPTIONS, WRAP_VALUES);
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_MULTILINE_IMPORTS",
                                 PyBundle.message("formatter.align.when.multiline"),
+                                PyBundle.message("formatter.from.import.statements"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                PyBundle.message("formatter.from.import.statements"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 PyBundle.message("formatter.from.import.statements"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
