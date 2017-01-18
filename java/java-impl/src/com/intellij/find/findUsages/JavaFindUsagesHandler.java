@@ -49,7 +49,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * @author peter
@@ -246,11 +245,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final Collection<PsiReference> result = new ArrayList<>();
       GlobalSearchScope resolveScope = null;
       if (searchScope instanceof LocalSearchScope) {
-        resolveScope = Stream.of(((LocalSearchScope)searchScope).getScope())
-          .map(PsiElement::getResolveScope)
-          .reduce(GlobalSearchScope.EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+        final PsiElement[] scopeElements = ((LocalSearchScope)searchScope).getScope();
+        resolveScope = GlobalSearchScope.union(ContainerUtil.map2Array(scopeElements, GlobalSearchScope.class, PsiElement::getResolveScope));
       }
-
       for (PsiMethod superMethod : superMethods) {
         if (resolveScope != null) {
           superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope);
