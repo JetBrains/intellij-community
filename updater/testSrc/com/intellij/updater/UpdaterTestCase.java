@@ -16,9 +16,10 @@
 package com.intellij.updater;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 
 import java.io.File;
 
@@ -37,8 +38,7 @@ public abstract class UpdaterTestCase {
 
   @Before
   public void setUp() throws Exception {
-    dataDir = getTempFile("data");
-    FileUtil.copyDir(PathManagerEx.findFileUnderCommunityHome("updater/testData"), dataDir);
+    dataDir = PathManagerEx.findFileUnderCommunityHome("updater/testData");
 
     Runner.checkCaseSensitivity(dataDir.getPath());
     Runner.initTestLogger();

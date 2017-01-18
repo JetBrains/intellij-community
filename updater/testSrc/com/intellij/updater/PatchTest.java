@@ -35,7 +35,7 @@ public class PatchTest extends PatchTestCase {
   @Test
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
-    Map<String, Long> checkSums = patch.digestFiles(dataDir, Collections.emptyList(), false, TEST_UI);
+    Map<String, Long> checkSums = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
     assertThat(checkSums.size()).isEqualTo(11);
   }
 

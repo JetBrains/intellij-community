@@ -27,9 +27,10 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myOlderDir = dataDir;
+    myOlderDir = getTempFile("oldDir");
     myNewerDir = getTempFile("newDir");
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    FileUtil.copyDir(dataDir, myOlderDir);
+    FileUtil.copyDir(dataDir, myNewerDir);
 
     FileUtil.delete(new File(myNewerDir, "bin/idea.bat"));
     FileUtil.writeToFile(new File(myNewerDir, "Readme.txt"), "hello");
