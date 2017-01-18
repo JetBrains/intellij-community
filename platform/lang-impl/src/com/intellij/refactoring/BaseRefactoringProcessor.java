@@ -425,7 +425,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
     addDoRefactoringAction(usageView, refactoringRunnable, canNotMakeString);
-    UIUtil.invokeLaterIfNeeded(((UsageViewImpl)usageView)::expandRoot);
+    ((UsageViewImpl)usageView).expandRoot();
   }
 
   private void addDoRefactoringAction(@NotNull UsageView usageView, @NotNull Runnable refactoringRunnable, @NotNull String canNotMakeString) {
