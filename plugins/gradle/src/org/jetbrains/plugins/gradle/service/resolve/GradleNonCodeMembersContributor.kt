@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -121,8 +120,8 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       if (GradleResolverUtil.canBeMethodOf(propCandidate, aClass)) return
 
       val domainObjectFqn = TypesUtil.getQualifiedName(domainObjectType) ?: return
-      val psiManager = GroovyPsiManager.getInstance(place.project)
-      val domainObjectPsiClass = psiManager.findClassWithCache(domainObjectFqn, place.resolveScope) ?: return
+      val javaPsiFacade = JavaPsiFacade.getInstance(place.project)
+      val domainObjectPsiClass = javaPsiFacade.findClass(domainObjectFqn, place.resolveScope) ?: return
       if (GradleResolverUtil.canBeMethodOf(propCandidate, domainObjectPsiClass)) return
       if (GradleResolverUtil.canBeMethodOf("get" + propCandidate.capitalize(), domainObjectPsiClass)) return
       if (GradleResolverUtil.canBeMethodOf("set" + propCandidate.capitalize(), domainObjectPsiClass)) return
@@ -131,7 +130,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       val typeToDelegate = closure?.let { getDelegatesToInfo(it)?.typeToDelegate }
       if (typeToDelegate != null) {
         val fqNameToDelegate = TypesUtil.getQualifiedName(typeToDelegate) ?: return
-        val classToDelegate = psiManager.findClassWithCache(fqNameToDelegate, place.resolveScope) ?: return
+        val classToDelegate = javaPsiFacade.findClass(fqNameToDelegate, place.resolveScope) ?: return
         if (classToDelegate !== aClass) {
           val parent = place.parent
           if (parent is GrMethodCall) {
