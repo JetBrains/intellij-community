@@ -39,6 +39,10 @@ abstract class ModuleGrouper {
    */
   abstract fun getShortenedName(module: Module): String
 
+  abstract fun getShortenedNameByFullModuleName(name: String): String
+
+  abstract fun getGroupPathByModuleName(name: String): List<String>
+
   abstract fun getAllModules(): Array<Module>
 
   companion object {
@@ -58,15 +62,20 @@ fun isQualifiedModuleNamesEnabled() = Registry.`is`("project.qualified.module.na
 
 private abstract class ModuleGrouperBase(protected val project: Project, protected val model: ModifiableModuleModel?) : ModuleGrouper() {
   override fun getAllModules(): Array<Module> = model?.modules ?: ModuleManager.getInstance(project).modules
+
   protected fun getModuleName(module: Module) = model?.getNewName(module) ?: module.name
+
+  override fun getShortenedName(module: Module) = getShortenedNameByFullModuleName(getModuleName(module))
 }
 
 private class QualifiedNameGrouper(project: Project, model: ModifiableModuleModel?) : ModuleGrouperBase(project, model) {
   override fun getGroupPath(module: Module): List<String> {
-    return getModuleName(module).split('.').dropLast(1)
+    return getGroupPathByModuleName(getModuleName(module))
   }
 
-  override fun getShortenedName(module: Module) = StringUtil.getShortName(getModuleName(module))
+  override fun getShortenedNameByFullModuleName(name: String) = StringUtil.getShortName(name)
+
+  override fun getGroupPathByModuleName(name: String) = name.split('.').dropLast(1)
 }
 
 private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleModel?): ModuleGrouperBase(project, model) {
@@ -75,5 +84,7 @@ private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleMod
     return if (path != null) Arrays.asList(*path) else emptyList()
   }
 
-  override fun getShortenedName(module: Module) = getModuleName(module)
+  override fun getShortenedNameByFullModuleName(name: String) = name
+
+  override fun getGroupPathByModuleName(name: String): List<String> = emptyList()
 }

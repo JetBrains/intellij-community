@@ -16,10 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
@@ -36,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -43,16 +41,16 @@ import javax.swing.*;
  */
 public class ModuleConfigurable extends ProjectStructureElementConfigurable<Module> implements Place.Navigator {
   private final Module myModule;
+  private final ModuleGrouper myModuleGrouper;
   private final ModulesConfigurator myConfigurator;
   private String myModuleName;
   private final ModuleProjectStructureElement myProjectStructureElement;
   private final StructureConfigurableContext myContext;
 
-  public ModuleConfigurable(ModulesConfigurator modulesConfigurator,
-                            Module module,
-                            final Runnable updateTree) {
+  public ModuleConfigurable(ModulesConfigurator modulesConfigurator, Module module, Runnable updateTree, ModuleGrouper moduleGrouper) {
     super(true, updateTree);
     myModule = module;
+    myModuleGrouper = moduleGrouper;
     myModuleName = myModule.getName();
     myConfigurator = modulesConfigurator;
     myContext = ModuleStructureConfigurable.getInstance(myModule.getProject()).getContext();
@@ -74,6 +72,22 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     myModuleName = name;
     myConfigurator.setModified(!Comparing.strEqual(myModuleName, myModule.getName()));
     myContext.getDaemonAnalyzer().queueUpdateForAllElementsWithErrors();
+  }
+
+  @Override
+  protected void checkName(@NotNull String name) throws ConfigurationException {
+    super.checkName(name);
+    if (myModuleGrouper.getShortenedNameByFullModuleName(name).isEmpty()) {
+      throw new ConfigurationException("Short name of a module cannot be empty");
+    }
+    List<String> list = myModuleGrouper.getGroupPathByModuleName(name);
+    if (list.stream().anyMatch(s -> s.isEmpty())) {
+      throw new ConfigurationException("Names of parent groups for a module cannot be empty");
+    }
+  }
+
+  public ModuleGrouper getModuleGrouper() {
+    return myModuleGrouper;
   }
 
   @Override
