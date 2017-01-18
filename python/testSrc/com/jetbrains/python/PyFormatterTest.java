@@ -741,10 +741,19 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   // PY-20633
-  // XXX causes jumping closing parenthesis, because of the hanging indent detection
   public void testFromImportParenthesesPlacement() {
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
     getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    getCommonCodeStyleSettings().SPACE_AFTER_COLON = true;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 35);
+    doTest();
+  }
+  
+  // PY-20633
+  public void testFromImportParenthesesPlacementHangClosingParenthesis() {
+    getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     getCommonCodeStyleSettings().SPACE_AFTER_COLON = true;
     getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 35);
     doTest();

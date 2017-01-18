@@ -295,7 +295,8 @@ public class PyBlock implements ASTBlock {
         }
         if (childType == PyTokenTypes.RPAR) {
           childIndent = Indent.getNoneIndent();
-          if (!hasHangingIndent(myNode.getPsi())) {
+          // Don't have hanging indent and is not going to have it due to the setting about opening parenthesis
+          if (!hasHangingIndent(myNode.getPsi()) && !settings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS) {
             childAlignment = getAlignmentForChildren();
           }
           else if (settings.HANG_CLOSING_BRACKETS) {
