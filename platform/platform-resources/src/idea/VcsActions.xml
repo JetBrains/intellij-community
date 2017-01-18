@@ -171,17 +171,8 @@
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-    </group>
-
-    <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
-      <reference ref="ShelveChanges.UnshelveWithDialog"/>
-      <reference ref="ShelvedChanges.Restore"/>
-      <reference ref="ShelvedChanges.ImportPatches"/>
-      <separator/>
-      <reference ref="ShelvedChanges.Rename" />
-      <reference ref="$Delete" />
-      <separator/>
-      <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
+     <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
+              text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.SecondaryGroup"/>
     </group>
 
     <group id="VcsHistoryActionsGroup"/>

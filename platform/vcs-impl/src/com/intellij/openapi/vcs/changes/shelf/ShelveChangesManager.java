@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
@@ -65,10 +66,12 @@ import org.jetbrains.annotations.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.openapi.components.StoragePathMacros.PROJECT_CONFIG_DIR;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
@@ -88,6 +91,23 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private static final String SHELVE_MANAGER_DIR_PATH = "shelf";
+
+  /**
+   * Should work for Default project, don't use as a real path; (un)wrap deprecated PROJECT_CONFIG_DIR manually if needed
+   *
+   * @return presentation string for default shelf directory a.e. <Project>/.idea/shelf
+   */
+  @NotNull
+  public static String getDefaultShelfPresentationPath(@NotNull Project project) {
+    //noinspection deprecation
+    return project.isDefault() ? PROJECT_CONFIG_DIR : Paths.get(getConfigDirPath(project), SHELVE_MANAGER_DIR_PATH).toString();
+  }
+
+  private static String getConfigDirPath(Project project) {
+    VirtualFile projectStoreDirectory = ProjectKt.getProjectStoreDirectory(project.getBaseDir());
+    return projectStoreDirectory != null ? projectStoreDirectory.getPath() : project.getBasePath();
+  }
+
   private final MessageBus myBus;
 
   @NonNls private static final String ATTRIBUTE_SHOW_RECYCLED = "show_recycled";
