@@ -60,7 +60,7 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   }
 
   @Nullable
-  public Icon getIcon(@Nullable LibraryProperties properties) {
+  public Icon getIcon(@Nullable P properties) {
     //noinspection deprecation
     return getIcon();
   }
