@@ -214,6 +214,17 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     buildTypeModel(type, context).toBodyWithLinks(body, anchor);
   }
 
+  /**
+   * @param type    type which description will be calculated
+   * @param context type evaluation context
+   * @return more user-friendly description than result of {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)}.
+   * <code>Any</code> is excluded from <code>Union[Any, ...]</code>-like types.
+   */
+  @NotNull
+  public static String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return buildTypeModel(type, context).asDescription();
+  }
+
   @NotNull
   private static PyTypeModelBuilder.TypeModel buildTypeModel(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return new PyTypeModelBuilder(context).build(type, true);

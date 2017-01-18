@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,17 +43,25 @@ public class PyTypeModelBuilder {
   }
 
   abstract static class TypeModel {
-    abstract void accept(TypeVisitor visitor);
+    abstract void accept(@NotNull TypeVisitor visitor);
 
+    @NotNull
     public String asString() {
-      TypeToStringVisitor visitor = new TypeToStringVisitor();
-      this.accept(visitor);
+      final TypeToStringVisitor visitor = new TypeToStringVisitor();
+      accept(visitor);
       return visitor.getString();
     }
 
     public void toBodyWithLinks(@NotNull ChainIterable<String> body, @NotNull PsiElement anchor) {
-      TypeToBodyWithLinksVisitor visitor = new TypeToBodyWithLinksVisitor(body, anchor);
-      this.accept(visitor);
+      final TypeToBodyWithLinksVisitor visitor = new TypeToBodyWithLinksVisitor(body, anchor);
+      accept(visitor);
+    }
+
+    @NotNull
+    public String asDescription() {
+      final TypeToDescriptionVisitor visitor = new TypeToDescriptionVisitor();
+      accept(visitor);
+      return visitor.getDescription();
     }
   }
 
@@ -65,7 +73,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.oneOf(this);
     }
   }
@@ -80,7 +88,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.collectionOf(this);
     }
   }
@@ -93,7 +101,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.name(this.name);
     }
   }
@@ -106,7 +114,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.unknown(this);
     }
   }
@@ -119,7 +127,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.optional(this);
     }
   }
@@ -134,7 +142,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.tuple(this);
     }
   }
@@ -158,7 +166,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.function(this);
     }
   }
@@ -174,7 +182,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    void accept(TypeVisitor visitor) {
+    void accept(@NotNull TypeVisitor visitor) {
       visitor.param(this);
     }
   }
@@ -356,6 +364,27 @@ public class PyTypeModelBuilder {
       else {
         add(name);
       }
+    }
+  }
+
+  private static class TypeToDescriptionVisitor extends TypeNameVisitor {
+
+    @NotNull
+    private final StringBuilder myResult = new StringBuilder();
+
+    @Override
+    protected void add(String s) {
+      myResult.append(s);
+    }
+
+    @Override
+    protected void addType(String name) {
+      add(name);
+    }
+
+    @NotNull
+    public String getDescription() {
+      return myResult.toString();
     }
   }
 

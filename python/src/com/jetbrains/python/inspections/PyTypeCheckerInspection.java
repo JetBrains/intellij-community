@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,10 +189,8 @@ public class PyTypeCheckerInspection extends PyInspection {
         problemsSet.add(checkMapping(results.getReceiver(), results.getArguments()));
       }
       if (!problemsSet.isEmpty()) {
-        Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(
-          problemsSet,
-          (o1, o2) -> o1.size() - o2.size()
-        );
+        final Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(problemsSet,
+                                                                                                  Comparator.comparingInt(Map::size));
         for (Map.Entry<PyExpression, Pair<String, ProblemHighlightType>> entry : minProblems.entrySet()) {
           registerProblem(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
         }
@@ -222,7 +220,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
         final PyNamedParameter param = entry.getValue();
         final PyExpression arg = entry.getKey();
-        final PyType expectedArgType = PyTypeChecker.getExpectedArgumentType(param, myTypeEvalContext);
+        final PyType expectedArgType = param.getArgumentType(myTypeEvalContext);
         if (expectedArgType == null) {
           continue;
         }
