@@ -24,7 +24,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
@@ -55,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -143,6 +141,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final int MAX_LEAKY_PROJECTS = 5;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
 
+  @Override
   @Nullable
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = toCanonicalName(filePath);
@@ -250,9 +249,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (isDefault) {
       return new DefaultProject(this, "");
     }
-    else {
-      return new ProjectImpl(this, FileUtilRt.toSystemIndependentName(filePath), projectName);
-    }
+    return new ProjectImpl(this, FileUtilRt.toSystemIndependentName(filePath), projectName);
   }
 
   @Override
@@ -331,7 +328,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     }
 
-    for (Project p : myOpenProjects) {
+    for (Project p : getOpenProjects()) {
       if (ProjectUtil.isSameProject(project.getProjectFilePath(), p)) {
         GuiUtils.invokeLaterIfNeeded(() -> ProjectUtil.focusProjectWindow(p, false), ModalityState.NON_MODAL);
         return false;
@@ -395,12 +392,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
-  @NotNull
-  private Collection<Project> removeFromOpened(@NotNull Project project) {
+  private void removeFromOpened(@NotNull Project project) {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
       ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
-      return Arrays.asList(myOpenProjects);
     }
   }
 
@@ -633,12 +628,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   public void addProjectManagerListener(@NotNull final ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
     addProjectManagerListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeProjectManagerListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removeProjectManagerListener(listener));
   }
 
   @Override
@@ -745,18 +735,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     public UnableToSaveProjectNotification(@NotNull final Project project, @NotNull VirtualFile[] readOnlyFiles) {
       super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
-                                                           " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
-          final Project _project = unableToSaveProjectNotification.myProject;
-          notification.expire();
+                                                           " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR,
+            (notification, event) -> {
+              final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+              final Project _project = unableToSaveProjectNotification.myProject;
+              notification.expire();
 
-          if (_project != null && !_project.isDisposed()) {
-            _project.save();
-          }
-        }
-      });
+              if (_project != null && !_project.isDisposed()) {
+                _project.save();
+              }
+            });
 
       myProject = project;
       myFiles = readOnlyFiles;

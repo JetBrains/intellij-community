@@ -24,8 +24,9 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -152,12 +153,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
 
-    actionManager.addAnActionListener(new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (myCurrentState != KeyState.hold) {
-          resetHoldState();
-        }
+    actionManager.addAnActionListener((action, dataContext, event) -> {
+      if (myCurrentState != KeyState.hold) {
+        resetHoldState();
       }
     }, project);
 
@@ -201,12 +199,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     };
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(focusListener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(focusListener);
-      }
-    });
+    Disposer.register(this, () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(focusListener));
   }
 
   private void updateToolWindowHeaders() {
@@ -683,10 +676,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   /**
    * Helper method. It makes window visible, activates it and request focus into the tool window.
-   * But it doesn't deactivate other tool windows. Use <code>prepareForActivation</code> method to
+   * But it doesn't deactivate other tool windows. Use {@code prepareForActivation} method to
    * deactivates other tool windows.
    *
-   * @param dirtyMode if <code>true</code> then all UI operations are performed in "dirty" mode.
+   * @param dirtyMode if {@code true} then all UI operations are performed in "dirty" mode.
    *                  It means that UI isn't validated and repainted just after each add/remove operation.
    */
   private void showAndActivate(@NotNull String id,
@@ -757,8 +750,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * Checks whether the specified <code>id</code> defines installed tool
-   * window. If it's not then throws <code>IllegalStateException</code>.
+   * Checks whether the specified {@code id} defines installed tool
+   * window. If it's not then throws {@code IllegalStateException}.
    *
    * @throws IllegalStateException if tool window isn't installed.
    */
@@ -769,10 +762,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * Helper method. It deactivates (and hides) window with specified <code>id</code>.
+   * Helper method. It deactivates (and hides) window with specified {@code id}.
    *
-   * @param id         <code>id</code> of the tool window to be deactivated.
-   * @param shouldHide if <code>true</code> then also hides specified tool window.
+   * @param id         {@code id} of the tool window to be deactivated.
+   * @param shouldHide if {@code true} then also hides specified tool window.
    */
   private void deactivateToolWindowImpl(@NotNull String id, final boolean shouldHide, @NotNull List<FinalizableCommand> commandsList) {
     if (LOG.isDebugEnabled()) {
@@ -829,33 +822,33 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * @return floating decorator for the tool window with specified <code>ID</code>.
+   * @return floating decorator for the tool window with specified {@code ID}.
    */
   private FloatingDecorator getFloatingDecorator(@NotNull String id) {
     return myId2FloatingDecorator.get(id);
   }
   /**
-   * @return windowed decorator for the tool window with specified <code>ID</code>.
+   * @return windowed decorator for the tool window with specified {@code ID}.
    */
   private WindowedDecorator getWindowedDecorator(@NotNull String id) {
     return myId2WindowedDecorator.get(id);
   }
   /**
-   * @return internal decorator for the tool window with specified <code>ID</code>.
+   * @return internal decorator for the tool window with specified {@code ID}.
    */
   private InternalDecorator getInternalDecorator(@NotNull String id) {
     return myId2InternalDecorator.get(id);
   }
 
   /**
-   * @return tool button for the window with specified <code>ID</code>.
+   * @return tool button for the window with specified {@code ID}.
    */
   StripeButton getStripeButton(@NotNull String id) {
     return myId2StripeButton.get(id);
   }
 
   /**
-   * @return info for the tool window with specified <code>ID</code>.
+   * @return info for the tool window with specified {@code ID}.
    */
   private WindowInfoImpl getInfo(@NotNull String id) {
     return myLayout.getInfo(id, true);
@@ -989,7 +982,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * @param dirtyMode if <code>true</code> then all UI operations are performed in dirty mode.
+   * @param dirtyMode if {@code true} then all UI operations are performed in dirty mode.
    */
   private void showToolWindowImpl(@NotNull String id, final boolean dirtyMode, @NotNull List<FinalizableCommand> commandsList) {
     final WindowInfoImpl toBeShownInfo = getInfo(id);
@@ -1432,11 +1425,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public void run() {
         final StripeButton button = stripe.getButtonFor(toolWindowId);
         LOG.assertTrue(button != null, "Button was not found, popup won't be shown. Toolwindow id: " +
-                                       toolWindowId +
-                                       ", message: " +
-                                       text +
-                                       ", message type: " +
-                                       type);
+                                       toolWindowId + ", message: " + text + ", message type: " + type);
         //noinspection ConstantConditions
         if (button == null) return;
 
@@ -1932,7 +1921,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     if (wnd.getType() == ToolWindowType.WINDOWED && wnd instanceof ToolWindowImpl) {
       WindowedDecorator decorator = getWindowedDecorator(((ToolWindowImpl)wnd).getId());
-      Frame frame = decorator != null && decorator.getFrame() instanceof Frame ? ((Frame)decorator.getFrame()) : null;
+      Frame frame = decorator != null && decorator.getFrame() instanceof Frame ? (Frame)decorator.getFrame() : null;
       if (frame != null) {
         int state = frame.getState();
         if (state == Frame.NORMAL) {
@@ -1972,7 +1961,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
 
   /**
-   * This command creates and shows <code>FloatingDecorator</code>.
+   * This command creates and shows {@code FloatingDecorator}.
    */
   private final class AddFloatingDecoratorCmd extends FinalizableCommand {
     private final FloatingDecorator myFloatingDecorator;
@@ -2014,7 +2003,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   /**
    * This command hides and destroys floating decorator for tool window
-   * with specified <code>ID</code>.
+   * with specified {@code ID}.
    */
   private final class RemoveFloatingDecoratorCmd extends FinalizableCommand {
     private final FloatingDecorator myFloatingDecorator;
@@ -2044,7 +2033,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * This command creates and shows <code>WindowedDecorator</code>.
+   * This command creates and shows {@code WindowedDecorator}.
    */
   private final class AddWindowedDecoratorCmd extends FinalizableCommand {
     private final WindowedDecorator myWindowedDecorator;
@@ -2101,7 +2090,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   /**
    * This command hides and destroys floating decorator for tool window
-   * with specified <code>ID</code>.
+   * with specified {@code ID}.
    */
   private final class RemoveWindowedDecoratorCmd extends FinalizableCommand {
     private final WindowedDecorator myWindowedDecorator;
