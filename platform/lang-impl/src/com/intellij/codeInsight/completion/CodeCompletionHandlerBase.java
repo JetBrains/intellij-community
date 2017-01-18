@@ -78,7 +78,7 @@ public class CodeCompletionHandlerBase {
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
-  private static int autoInsertItemTimeout = 2000;
+  private static int ourAutoInsertItemTimeout = 2000;
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);
@@ -321,7 +321,7 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
-    if (freezeSemaphore.waitFor(autoInsertItemTimeout)) {
+    if (freezeSemaphore.waitFor(ourAutoInsertItemTimeout)) {
       if (!indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
         try {
           indicator.getLookup().refreshUi(true, false);
@@ -818,6 +818,6 @@ public class CodeCompletionHandlerBase {
 
   @TestOnly
   public static void setAutoInsertTimeout(int timeout) {
-    autoInsertItemTimeout = timeout;
+    ourAutoInsertItemTimeout = timeout;
   }
 }
