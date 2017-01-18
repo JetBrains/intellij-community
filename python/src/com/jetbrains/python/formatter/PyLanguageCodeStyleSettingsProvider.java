@@ -131,6 +131,10 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 PyBundle.message("formatter.from.import.statements"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_PARENTHESES_FORCE",
+                                PyBundle.message("formatter.from.import.statements.force.parentheses"),
+                                PyBundle.message("formatter.from.import.statements"),
+                                BRACE_OPTIONS, BRACE_VALUES);
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PyBundle.message("formatter.dictionary.literals"), null, WRAP_OPTIONS, WRAP_VALUES);

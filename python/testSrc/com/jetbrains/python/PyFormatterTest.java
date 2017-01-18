@@ -20,6 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
@@ -761,6 +762,31 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     getCommonCodeStyleSettings().SPACE_AFTER_COLON = true;
     getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 35);
+    doTest();
+  }
+
+  // PY-20633
+  public void testFromImportForceParenthesesAlways() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
+    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    doTest();
+  }
+
+  // PY-20633
+  public void testFromImportForceParenthesesIfMultiline() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.INSTANCE, 30);
+    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
+    doTest();
+  }
+
+  // PY-20633
+  // See http://docs.pylonsproject.org/en/latest/community/codestyle.html
+  public void testPyramidFromImportFormatting() {
+    getPythonCodeStyleSettings().FROM_IMPORT_PARENTHESES_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().FROM_IMPORT_WRAPPING = WrapType.ALWAYS.getLegacyRepresentation();
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
   }
 
