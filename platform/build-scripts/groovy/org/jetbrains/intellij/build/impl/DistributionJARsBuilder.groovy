@@ -293,8 +293,20 @@ class DistributionJARsBuilder {
     def enabledModulesSet = buildContext.productProperties.productLayout.enabledPluginModules
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
+      checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values())
       buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars)
     }
+  }
+
+  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames) {
+    def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml") }
+    if (modulesWithPluginXml.size() > 1) {
+      buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
+    }
+  }
+
+  private boolean containsFileInOutput(String moduleName, String filePath) {
+    return new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(moduleName), false), filePath).exists()
   }
 
   private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars) {
