@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     // formatting of hints: hint index -> flags. this includes flags for parens.
     final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags = new HashMap<>();
 
-    final List<String> hintsList = buildParameterListHint(parameterList, namedParameters, parameterToIndex, hintFlags);
+    final List<String> hintsList = buildParameterListHint(parameterList, namedParameters, parameterToIndex, hintFlags, typeEvalContext);
 
     final int currentParamOffset = context.getCurrentParameterIndex(); // in Python mode, we get an offset here, not an index!
 
@@ -324,15 +324,17 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   /**
    * builds the textual picture and the list of named parameters
    *
-   * @param parameters parameters of a callable
-   * @param namedParameters used to collect all named parameters of callable
+   * @param parameters       parameters of a callable
+   * @param namedParameters  used to collect all named parameters of callable
    * @param parameterToIndex used to collect info about parameter indexes
-   * @param hintFlags mark parameter as deprecated/highlighted/strikeout
+   * @param hintFlags        mark parameter as deprecated/highlighted/strikeout
+   * @param context          context to be used to get parameter representation
    */
   private static List<String> buildParameterListHint(@NotNull List<PyParameter> parameters,
                                                      @NotNull final List<PyNamedParameter> namedParameters,
                                                      @NotNull final Map<PyNamedParameter, Integer> parameterToIndex,
-                                                     @NotNull final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags) {
+                                                     @NotNull final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags,
+                                                     @NotNull TypeEvalContext context) {
     final List<String> hintsList = new ArrayList<>();
     ParamHelper.walkDownParamArray(
       parameters.toArray(new PyParameter[parameters.size()]),
@@ -350,7 +352,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
           namedParameters.add(param);
           StringBuilder stringBuilder = new StringBuilder();
-          stringBuilder.append(param.getRepr(true));
+          stringBuilder.append(param.getRepr(true, context));
           if (!last) stringBuilder.append(", ");
           int hintIndex = hintsList.size();
           parameterToIndex.put(param, hintIndex);
