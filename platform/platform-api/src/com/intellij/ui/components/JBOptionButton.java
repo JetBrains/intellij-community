@@ -31,6 +31,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -60,6 +61,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   private IdeGlassPane myGlassPane;
   private final Disposable myDisposable = Disposer.newDisposable();
+  private boolean myPaintDefaultIfSingle = false;
 
   public JBOptionButton(Action action, Action[] options) {
     super(action);
@@ -69,6 +71,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     myUnderPopup = fillMenu(true);
     myAbovePopup = fillMenu(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+  }
+
+  public JBOptionButton(Action action, Action[] options, boolean paintDefaultWhenSingle) {
+    this(action, options);
+    myPaintDefaultIfSingle = paintDefaultWhenSingle;
   }
 
   @Override
@@ -246,6 +253,18 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     myAbovePopup.setVisible(false);
   }
 
+  public void updateOptions(@Nullable Action[] options) {
+    if (options == null) {
+      options = new Action[0];
+    }
+
+    myOptions = options;
+    myUnderPopup = fillMenu(true);
+    myAbovePopup = fillMenu(false);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    repaint();
+  }
+
   private JPopupMenu fillMenu(boolean under) {
     final JPopupMenu result = new JBPopupMenu();
 
@@ -355,6 +374,10 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
+    if (myPaintDefaultIfSingle && myOptions.length == 0) {
+      return;
+    }
+
     if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
       int x = getWidth() - getInsets().right - 10;
       Icon icon = AllIcons.Mac.YosemiteOptionButtonSelector;

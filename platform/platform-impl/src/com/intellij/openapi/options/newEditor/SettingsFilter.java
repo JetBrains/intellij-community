@@ -37,7 +37,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
+public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
   final OptionsEditorContext myContext = new OptionsEditorContext();
   final Project myProject;
 
