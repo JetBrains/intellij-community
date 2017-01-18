@@ -2,6 +2,7 @@
 <problems>
   <problem>
     <file>A.java</file>
+    <line>3</line>
     <description>Variable &lt;code&gt;i&lt;/code&gt; is never used</description>
   </problem>
 </problems>
