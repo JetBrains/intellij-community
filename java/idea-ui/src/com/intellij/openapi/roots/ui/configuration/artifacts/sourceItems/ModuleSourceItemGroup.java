@@ -121,7 +121,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
 
     @Override
     public String getPresentableName() {
-      return ModuleGrouper.Companion.instanceFor(myContext.getProject(), myContext.getModifiableModuleModel()).getPresentableName(myModule);
+      return ModuleGrouper.instanceFor(myContext.getProject(), myContext.getModifiableModuleModel()).getPresentableName(myModule);
     }
 
     @Override

@@ -59,7 +59,7 @@ public class ModuleGroup {
 
   @NotNull
   public Collection<Module> modulesInGroup(Project project, boolean recursively) {
-    return modulesInGroup(ModuleGrouper.Companion.instanceFor(project), recursively);
+    return modulesInGroup(ModuleGrouper.instanceFor(project), recursively);
   }
 
   @NotNull

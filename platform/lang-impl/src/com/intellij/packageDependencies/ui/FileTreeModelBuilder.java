@@ -93,7 +93,7 @@ public class FileTreeModelBuilder {
     myContentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
     final boolean multiModuleProject = ModuleManager.getInstance(myProject).getModules().length > 1;
     myShowModules = settings.UI_SHOW_MODULES && multiModuleProject;
-    myGrouper = ModuleGrouper.Companion.instanceFor(project);
+    myGrouper = ModuleGrouper.instanceFor(project);
     final ProjectViewDirectoryHelper directoryHelper = ProjectViewDirectoryHelper.getInstance(myProject);
     myFlattenPackages = directoryHelper.supportsFlattenPackages() && settings.UI_FLATTEN_PACKAGES;
     myCompactEmptyMiddlePackages = directoryHelper.supportsHideEmptyMiddlePackages() && settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES;

@@ -23,18 +23,19 @@ import java.util.*
 /**
  * @author nik
  */
-interface ModuleGrouper {
-  fun getGroupPath(module: Module): List<String>
+abstract class ModuleGrouper {
+  abstract fun getGroupPath(module: Module): List<String>
 
-  fun getPresentableName(module: Module): String
+  abstract fun getPresentableName(module: Module): String
 
-  fun getAllModules(): Array<Module>
+  abstract fun getAllModules(): Array<Module>
 
   companion object {
+    @JvmStatic
     @JvmOverloads
     fun instanceFor(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
       val hasGroups = moduleModel?.hasModuleGroups() ?: ModuleManager.getInstance(project).hasModuleGroups()
-      if (!isQualifiedModuleGroupsEnabled() || hasGroups) {
+      if (!isQualifiedModuleNamesEnabled() || hasGroups) {
         return ExplicitModuleGrouper(project, moduleModel)
       }
       return QualifiedNameGrouper(project, moduleModel)
@@ -42,9 +43,9 @@ interface ModuleGrouper {
   }
 }
 
-fun isQualifiedModuleGroupsEnabled() = Registry.`is`("project.qualified.module.names")
+fun isQualifiedModuleNamesEnabled() = Registry.`is`("project.qualified.module.names")
 
-private abstract class ModuleGrouperBase(protected val project: Project, protected val model: ModifiableModuleModel?) : ModuleGrouper {
+private abstract class ModuleGrouperBase(protected val project: Project, protected val model: ModifiableModuleModel?) : ModuleGrouper() {
   override fun getAllModules(): Array<Module> = model?.modules ?: ModuleManager.getInstance(project).modules
   protected fun getModuleName(module: Module) = model?.getNewName(module) ?: module.name
 }

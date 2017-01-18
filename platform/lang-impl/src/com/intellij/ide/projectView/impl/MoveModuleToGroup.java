@@ -62,7 +62,7 @@ public class MoveModuleToGroup extends ActionGroup {
     result.add(new MoveModulesToGroupAction(myModuleGroup, IdeBundle.message("action.move.module.to.this.group")));
     result.add(new MoveModulesToSubGroupAction(myModuleGroup));
     result.add(Separator.getInstance());
-    ModuleGrouper grouper = ModuleGrouper.Companion.instanceFor(project, modifiableModuleModel);
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(project, modifiableModuleModel);
     result.addAll(myModuleGroup.childGroups(grouper).stream().sorted((moduleGroup1, moduleGroup2) -> {
           assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
           return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());

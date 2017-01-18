@@ -472,7 +472,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private ModuleGrouper getModuleGrouper() {
-    return ModuleGrouper.Companion.instanceFor(myProject, myContext.myModulesConfigurator.getModuleModel());
+    return ModuleGrouper.instanceFor(myProject, myContext.myModulesConfigurator.getModuleModel());
   }
 
 
@@ -776,7 +776,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleGroupsEnabled() && !myContext.getModulesConfigurator().getModuleModel().hasModuleGroups());
+      e.getPresentation().setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleNamesEnabled() && !myContext.getModulesConfigurator().getModuleModel().hasModuleGroups());
     }
 
     @Override

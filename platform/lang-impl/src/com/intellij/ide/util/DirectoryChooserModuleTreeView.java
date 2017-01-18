@@ -66,7 +66,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myProject = project;
-    myModuleGrouper = ModuleGrouper.Companion.instanceFor(myProject);
+    myModuleGrouper = ModuleGrouper.instanceFor(myProject);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());

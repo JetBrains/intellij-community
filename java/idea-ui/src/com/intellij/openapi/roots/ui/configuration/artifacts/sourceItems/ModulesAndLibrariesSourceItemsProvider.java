@@ -86,7 +86,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   @NotNull
   private static Collection<? extends PackagingSourceItem> createModuleItems(@NotNull ArtifactEditorContext editorContext, @NotNull List<String> groupPath) {
     final List<PackagingSourceItem> items = new ArrayList<>();
-    ModuleGrouper grouper = ModuleGrouper.Companion.instanceFor(editorContext.getProject(), editorContext.getModifiableModuleModel());
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(editorContext.getProject(), editorContext.getModifiableModuleModel());
     Set<String> groups = new HashSet<>();
     for (Module module : grouper.getAllModules()) {
       List<String> path = grouper.getGroupPath(module);

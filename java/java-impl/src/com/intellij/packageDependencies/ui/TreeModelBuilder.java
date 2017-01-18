@@ -95,7 +95,7 @@ public class TreeModelBuilder {
     myShowFiles = settings.UI_SHOW_FILES;
     myShowIndividualLibs = showIndividualLibs;
     myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
-    myModuleGrouper = ModuleGrouper.Companion.instanceFor(project);
+    myModuleGrouper = ModuleGrouper.instanceFor(project);
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
     myRoot = new RootNode(project);

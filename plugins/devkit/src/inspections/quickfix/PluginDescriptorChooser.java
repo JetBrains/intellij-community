@@ -150,7 +150,7 @@ public class PluginDescriptorChooser {
 
   private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
                                                                   List<DomFileElement<IdeaPlugin>> elements) {
-    ModuleGrouper grouper = ModuleGrouper.Companion.instanceFor(currentModule.getProject());
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(currentModule.getProject());
     final List<String> groupPath = grouper.getGroupPath(currentModule);
 
     elements.sort((o1, o2) -> {
