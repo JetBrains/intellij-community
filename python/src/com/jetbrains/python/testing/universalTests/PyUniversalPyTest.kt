@@ -36,7 +36,7 @@ class PyUniversalPyTestExecutionEnvironment(configuration: PyUniversalPyTestConf
 }
 
 
-class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalTestFactory) : PyUniversalTestConfiguration(project, factory) {
+class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalPyTestFactory) : PyUniversalTestConfiguration(project, factory) {
   @ConfigField
   var keywords = ""
 
@@ -53,7 +53,7 @@ class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalTestF
     }
 }
 
-object PyUniversalPyTestFactory : PyUniversalTestFactory() {
+object PyUniversalPyTestFactory : PyUniversalTestFactory<PyUniversalPyTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project) = PyUniversalPyTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PY_TEST_NAME
