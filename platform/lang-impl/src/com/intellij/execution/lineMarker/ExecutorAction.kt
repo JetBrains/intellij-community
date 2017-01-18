@@ -54,7 +54,7 @@ class ExecutorAction private constructor(private val origin: AnAction, private v
     fun getActionList(order: Int = 0): List<AnAction> {
       val actionManager = ActionManager.getInstance()
       return ExecutorRegistry.getInstance().registeredExecutors.mapSmart {
-        ExecutorAction(actionManager.getAction(it.contextActionId), it, order)
+        ExecutorAction(actionManager.getAction(it.contextActionId)!!, it, order)
       }
     }
 
