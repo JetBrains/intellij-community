@@ -101,7 +101,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     @Override
     public void run() {
       updateLookup();
-      myQueue.setMergingTimeSpan(20);
+      myQueue.setMergingTimeSpan(showPopupGroupingTime);
     }
   };
   private final Semaphore myFreezeSemaphore;
@@ -114,6 +114,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private static int insertSingleItemTimeSpan = 300;
+
+  //temp external setters to make Rider autopopup more reactive
+  private static int showPopupGroupingTime = 300;
+  private static int showPopupAfterFirstItemGroupingTime = 100;
+
   private volatile int myCount;
   private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
@@ -155,7 +160,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     };
     LookupManager.getInstance(getProject()).addPropertyChangeListener(myLookupManagerListener);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 10, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", showPopupAfterFirstItemGroupingTime, true, myEditor.getContentComponent());
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -787,6 +792,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   @TestOnly
   public static void setGroupingTimeSpan(int timeSpan) {
     insertSingleItemTimeSpan = timeSpan;
+  }
+
+  @Deprecated
+  public static void setAutopopupTriggerTime(int timeSpan) {
+    showPopupGroupingTime = timeSpan;
+    showPopupAfterFirstItemGroupingTime = timeSpan;
   }
 
   private static class ModifierTracker extends KeyAdapter {
