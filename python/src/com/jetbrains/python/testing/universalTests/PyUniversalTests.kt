@@ -39,19 +39,16 @@ import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.extenstions.asList
 import com.jetbrains.extenstions.toElement
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
-import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher
@@ -279,7 +276,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
 object PyUniversalTestsConfigurationType : PythonTestConfigurationType() {
   override fun getId() = "py_universal_tests"
 
-  override fun getConfigurationFactories(): Array<ConfigurationFactory> {
+  override fun getConfigurationFactories(): Array<PyUniversalTestFactory<*>> {
     if (isUniversalModeEnabled()) {
       return arrayOf(PyUniversalUnitTestFactory,
                      PyUniversalPyTestFactory,
@@ -290,7 +287,11 @@ object PyUniversalTestsConfigurationType : PythonTestConfigurationType() {
   }
 }
 
-abstract class PyUniversalTestFactory : PythonConfigurationFactoryBase(PyUniversalTestsConfigurationType)
+// TODO: DOC
+abstract class PyUniversalTestFactory<out CONF_T : PyUniversalTestConfiguration> : PythonConfigurationFactoryBase(
+  PyUniversalTestsConfigurationType) {
+  override abstract fun createTemplateConfiguration(project: Project): CONF_T
+}
 
 /**
  * Only one producer is registered with EP, but it uses factory configured by user to prdouce different configs
