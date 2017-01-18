@@ -87,17 +87,16 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   @Nullable
   private static ResourceBundleWithCachedFiles getResourceBundle(@NotNull final String baseName,
-                                                                @Nullable final String extension,
-                                                                @NotNull final PsiDirectory baseDirectory) {
+                                                                 @Nullable final String extension,
+                                                                 @NotNull final PsiDirectory baseDirectory) {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
-    PsiFile[] compute = ReadAction.compute(new ThrowableComputable<PsiFile[], RuntimeException>() {
-      @Override
-      public PsiFile[] compute() throws RuntimeException {
-        return baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY;
-      }
-    });
     final List<PropertiesFile> bundleFiles = Stream
-      .of(compute)
+      .of(ReadAction.compute(new ThrowableComputable<PsiFile[], RuntimeException>() {
+        @Override
+        public PsiFile[] compute() throws RuntimeException {
+          return baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY;
+        }
+      }))
       .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension))
       .filter(PropertiesImplUtil::isPropertiesFile)
       .filter(f -> Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
