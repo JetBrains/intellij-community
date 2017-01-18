@@ -94,15 +94,25 @@ public class PyTypeModelBuilder {
   }
 
   static class NamedType extends TypeModel {
+
+    @NotNull
+    private static final NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
+
+    @Nullable
     private String name;
 
-    private NamedType(String name) {
+    private NamedType(@Nullable String name) {
       this.name = name;
     }
 
     @Override
     void accept(@NotNull TypeVisitor visitor) {
-      visitor.name(this.name);
+      visitor.name(name);
+    }
+
+    @NotNull
+    private static NamedType nameOrAny(@Nullable PyType type) {
+      return type == null ? ANY : new NamedType(type.getName());
     }
   }
 
@@ -147,21 +157,12 @@ public class PyTypeModelBuilder {
     }
   }
 
-  private static TypeModel _(String name) {
-    return new NamedType(name);
-  }
-
   static class FunctionType extends TypeModel {
-    private TypeModel returnType;
-    @Nullable private Collection<TypeModel> parameters;
+    @NotNull private final TypeModel returnType;
+    @Nullable private final Collection<TypeModel> parameters;
 
-    FunctionType(@Nullable TypeModel returnType, @Nullable Collection<TypeModel> parameters) {
-      if (returnType != null) {
-        this.returnType = returnType;
-      }
-      else {
-        this.returnType = _(PyNames.UNKNOWN_TYPE);
-      }
+    private FunctionType(@Nullable TypeModel returnType, @Nullable Collection<TypeModel> parameters) {
+      this.returnType = returnType != null ? returnType : NamedType.ANY;
       this.parameters = parameters;
     }
 
@@ -174,7 +175,6 @@ public class PyTypeModelBuilder {
   static class ParamType extends TypeModel {
     @Nullable private final String name;
     @Nullable private final TypeModel type;
-
 
     private ParamType(@Nullable String name, @Nullable TypeModel type) {
       this.name = name;
@@ -201,7 +201,7 @@ public class PyTypeModelBuilder {
       return evaluated;
     }
     if (myVisited.containsKey(type)) { //already evaluating?
-      return type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
+      return NamedType.nameOrAny(type);
     }
     myVisited.put(type, null); //mark as evaluating
 
@@ -252,7 +252,7 @@ public class PyTypeModelBuilder {
       result = build((PyCallableType)type);
     }
     if (result == null) {
-      result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
+      result = NamedType.nameOrAny(type);
     }
     myVisited.put(type, result);
     return result;
@@ -356,10 +356,9 @@ public class PyTypeModelBuilder {
 
     @Override
     protected void addType(String name) {
-      PyType type = PyTypeParser.getTypeByName(myAnchor, name);
+      final PyType type = PyTypeParser.getTypeByName(myAnchor, name);
       if (type instanceof PyClassType) {
-        myBody.addWith(new DocumentationBuilderKit.LinkWrapper(PythonDocumentationProvider.LINK_TYPE_TYPENAME + name),
-                       $(name));
+        myBody.addWith(new DocumentationBuilderKit.LinkWrapper(PythonDocumentationProvider.LINK_TYPE_TYPENAME + name), $(name));
       }
       else {
         add(name);
@@ -400,16 +399,16 @@ public class PyTypeModelBuilder {
         return;
       }
       add("Union[");
-      processList(oneOf.oneOfTypes, ", ");
+      processList(oneOf.oneOfTypes);
       add("]");
       myDepth--;
     }
 
-    private void processList(Collection<TypeModel> list, String separator) {
+    private void processList(@NotNull Collection<TypeModel> list) {
       boolean first = true;
       for (TypeModel t : list) {
         if (!first) {
-          add(separator);
+          add(", ");
         }
         else {
           first = false;
@@ -432,7 +431,7 @@ public class PyTypeModelBuilder {
       final String typingName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(name);
       addType(typingName != null ? typingName : name);
       add("[");
-      processList(collectionOf.elementTypes, ", ");
+      processList(collectionOf.elementTypes);
       add("]");
       myDepth--;
     }
@@ -454,7 +453,7 @@ public class PyTypeModelBuilder {
       add("(");
       final Collection<TypeModel> parameters = function.parameters;
       if (parameters != null) {
-        processList(parameters, ", ");
+        processList(parameters);
       }
       else {
         add("...");
@@ -498,7 +497,7 @@ public class PyTypeModelBuilder {
     @Override
     public void tuple(TupleType type) {
       add("Tuple[");
-      processList(type.members, ", ");
+      processList(type.members);
       if (type.homogeneous) {
         add(", ...");
       }
