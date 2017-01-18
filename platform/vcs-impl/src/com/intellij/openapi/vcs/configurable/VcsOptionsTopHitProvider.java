@@ -60,7 +60,6 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     String id = "project.propVCSSupport.Mappings"; // process Version Control settings
     options.add(option(vcs, id, "Limit history by " + vcs.MAXIMUM_HISTORY_ROWS + " rows", "LIMIT_HISTORY"));
     options.add(option(vcs, id, "Show directories with changed descendants", "SHOW_DIRTY_RECURSIVELY"));
-    options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
     VcsContentAnnotationSettings vcsCA = VcsContentAnnotationSettings.getInstance(project);
     if (vcsCA != null) {
       options.add(option(vcsCA, id, "Show changed in last " + vcsCA.getLimitDays() + " days", "isShow", "setShow"));
@@ -85,6 +84,9 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     options.add(option(vcs, id, "Perform in background: Edit/Checkout", "PERFORM_EDIT_IN_BACKGROUND"));
     options.add(option(vcs, id, "Perform in background: Add/Remove", "PERFORM_ADD_REMOVE_IN_BACKGROUND"));
     options.add(option(vcs, id, "Perform in background: revert", "PERFORM_ROLLBACK_IN_BACKGROUND"));
+    
+    id = ShelfProjectConfigurable.HELP_ID;
+    options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
 
     if (!project.isDefault()) {
       // process Version Control / Changelist Conflicts settings
