@@ -68,6 +68,10 @@ public class EduAdaptiveStepicConnector {
   public static Task getNextRecommendation(@NotNull Project project, @NotNull Course course) {
     try {
       final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+      if (client == null) {
+        LOG.warn("Http client is null");
+        return null;
+      }
       final URI uri = new URIBuilder(EduStepicNames.STEPIC_API_URL + EduStepicNames.RECOMMENDATIONS_URL)
         .addParameter(EduNames.COURSE, String.valueOf(course.getId()))
         .build();
@@ -89,7 +93,7 @@ public class EduAdaptiveStepicConnector {
           final String lessonId = recommendation.lesson;
           final StepicWrappers.LessonContainer lessonContainer = EduStepicAuthorizedClient.getFromStepic(EduStepicNames.LESSONS + lessonId,
                                                                                                          StepicWrappers.LessonContainer.class);
-          if (lessonContainer.lessons.size() == 1) {
+          if (lessonContainer != null && lessonContainer.lessons.size() == 1) {
             final Lesson realLesson = lessonContainer.lessons.get(0);
             course.getLessons().get(0).setId(Integer.parseInt(lessonId));
 
@@ -104,7 +108,7 @@ public class EduAdaptiveStepicConnector {
             return getNextRecommendation(project, course);
           }
           else {
-            LOG.warn("Got unexpected number of lessons: " + lessonContainer.lessons.size());
+            LOG.warn("Got unexpected number of lessons: " + (lessonContainer == null ? null : lessonContainer.lessons.size()));
           }
         }
         else {
@@ -243,6 +247,7 @@ public class EduAdaptiveStepicConnector {
       .toJson(new StepicWrappers.RecommendationReactionWrapper(new StepicWrappers.RecommendationReaction(reaction, user, lessonId)));
     post.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+    if (client == null) return false;
     setTimeout(post);
     try {
       final CloseableHttpResponse execute = client.execute(post);
@@ -538,18 +543,20 @@ public class EduAdaptiveStepicConnector {
   private static Pair<Boolean, String> doAdaptiveCheck(@NotNull StepicWrappers.SubmissionToPostWrapper submission,
                                                        int attemptId) {
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-    StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, submission);
-    if (wrapper != null) {
-      wrapper = getCheckResults(client, wrapper, attemptId, user.getId());
-      if (wrapper.submissions.length > 0) {
-        final String status = wrapper.submissions[0].status;
-        final String hint = wrapper.submissions[0].hint;
-        final boolean isSolved = !status.equals("wrong");
-        return Pair.create(isSolved, hint.isEmpty() ? StringUtil.capitalize(status) + " solution" : hint);
-      }
-      else {
-        LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
+    if (client != null) {
+      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, submission);
+      if (wrapper != null) {
+        wrapper = getCheckResults(client, wrapper, attemptId, user.getId());
+        if (wrapper.submissions.length > 0) {
+          final String status = wrapper.submissions[0].status;
+          final String hint = wrapper.submissions[0].hint;
+          final boolean isSolved = !status.equals("wrong");
+          return Pair.create(isSolved, hint.isEmpty() ? StringUtil.capitalize(status) + " solution" : hint);
+        }
+        else {
+          LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
+        }
       }
     }
 
@@ -637,6 +644,7 @@ public class EduAdaptiveStepicConnector {
     post.setEntity(new StringEntity(new Gson().toJson(attemptWrapper)));
 
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
+    if (client == null) return -1;
     setTimeout(post);
     final CloseableHttpResponse httpResponse = client.execute(post);
     final int statusCode = httpResponse.getStatusLine().getStatusCode();
