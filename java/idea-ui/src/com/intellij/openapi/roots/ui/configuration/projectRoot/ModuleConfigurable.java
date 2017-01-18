@@ -61,7 +61,6 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
 
   @Override
   public void setDisplayName(String name) {
-    name = name.trim();
     final ModifiableModuleModel modifiableModuleModel = myConfigurator.getModuleModel();
     if (StringUtil.isEmpty(name)) return; //empty string comes on double click on module node
     if (Comparing.strEqual(name, myModuleName)) return; //nothing changed
