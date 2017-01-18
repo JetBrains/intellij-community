@@ -199,7 +199,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
       WriteAction.run(() -> enterDumbMode(contextTransaction, trace));
-      ApplicationManager.getApplication().invokeLater(this::startBackgroundProcess);
+      ApplicationManager.getApplication().invokeLater(this::startBackgroundProcess, myProject.getDisposed());
     }
   }
 
