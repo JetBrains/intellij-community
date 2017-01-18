@@ -182,7 +182,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected void updateSelection(@Nullable final NamedConfigurable configurable) {
+  protected void updateSelection(@Nullable NamedConfigurable configurable) {
     FacetStructureConfigurable.getInstance(myProject).disposeMultipleSettingsEditor();
     ApplicationManager.getApplication().assertIsDispatchThread();
     super.updateSelection(configurable);
@@ -203,7 +203,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void updateModuleEditorSelection(final NamedConfigurable configurable) {
-    if (configurable instanceof ModuleConfigurable){
+    if (configurable instanceof ModuleConfigurable) {
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       if (editor != null) { //already deleted
@@ -214,7 +214,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       ((FacetConfigurable)configurable).getEditor().onFacetSelected();
     }
   }
-
 
 
   private void createProjectNodes() {
@@ -278,21 +277,22 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
     if (myRoot.getChildCount() == 0) return false; //isn't visible
-    final MyNode [] nodes = new MyNode[modules.length];
+    final MyNode[] nodes = new MyNode[modules.length];
     int i = 0;
     for (Module module : modules) {
       MyNode node = findModuleNode(module);
       LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
       node.removeFromParent();
-      nodes[i ++] = node;
+      nodes[i++] = node;
     }
     for (final MyNode moduleNode : nodes) {
       List<String> groupPath = myHideModuleGroups || myFlattenModules
-                                 ? Collections.emptyList()
-                                 : group != null ? group.getGroupPathList() : Collections.emptyList();
+                               ? Collections.emptyList()
+                               : group != null ? group.getGroupPathList() : Collections.emptyList();
       if (groupPath.isEmpty()) {
         myRoot.add(moduleNode);
-      } else {
+      }
+      else {
         final MyNode moduleGroupNode = getOrCreateModuleGroupNode(groupPath, null);
         moduleGroupNode.add(moduleNode);
       }
@@ -310,7 +310,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                                    MyNode parent = parentChildRelation.getParent();
                                                    parent.add(parentChildRelation.getChild());
                                                    if (treeModel != null) {
-                                                     treeModel.nodesWereInserted(parent, new int[] {parent.getChildCount() - 1});
+                                                     treeModel.nodesWereInserted(parent, new int[]{parent.getChildCount() - 1});
                                                    }
                                                  },
                                                  ModuleStructureConfigurable::createModuleGroupNode);
@@ -408,7 +408,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   public void dispose() {}
 
-
+  @NotNull
   @Override
   public JComponent createComponent() {
     return new MyDataProviderWrapper(super.createComponent());
@@ -440,7 +440,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return "reference.settingsdialog.project.structure.module";
   }
 
-  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+  public ActionCallback selectOrderEntry(@NotNull Module module, @Nullable OrderEntry orderEntry) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       final ActionCallback callback = extension.selectOrderEntry(module, orderEntry);
       if (callback != null) {
@@ -487,7 +487,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (myContext.myModulesConfigurator != null) {
       final ModifiableModuleModel model = myContext.myModulesConfigurator.getModuleModel();
       return model.getModules();
-    } else {
+    }
+    else {
       return myModuleManager.getModules();
     }
   }
@@ -561,7 +562,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (o instanceof ModuleGroup) {
         myContext.myModulesConfigurator.getModuleModel().setModuleGroupPath(module, ((ModuleGroup)o).getGroupPath());
         parent = selected;
-      } else if (o instanceof Module) { //create near selected
+      }
+      else if (o instanceof Module) { //create near selected
         final ModifiableModuleModel modifiableModuleModel = myContext.myModulesConfigurator.getModuleModel();
         final String[] groupPath = modifiableModuleModel.getModuleGroupPath((Module)o);
         if (groupPath != null) {
@@ -606,7 +608,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Nullable
   public Module getModule(final String moduleName) {
     if (moduleName == null) return null;
-    return (myContext != null && myContext.myModulesConfigurator != null) ? myContext.myModulesConfigurator.getModule(moduleName) : myModuleManager.findModuleByName(moduleName);
+    return (myContext != null && myContext.myModulesConfigurator != null)
+           ? myContext.myModulesConfigurator.getModule(moduleName)
+           : myModuleManager.findModuleByName(moduleName);
   }
 
   public StructureConfigurableContext getContext() {
@@ -672,7 +676,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           }
 
           newParent.add(this);
-          treeModel.nodesWereInserted(newParent, new int[] {newParent.getChildCount()-1});
+          treeModel.nodesWereInserted(newParent, new int[]{newParent.getChildCount() - 1});
           if (wasSelected) {
             myTree.expandPath(TreeUtil.getPath(myRoot, newParent));
             myTree.setSelectionPath(TreeUtil.getPath(myRoot, this));

@@ -159,13 +159,13 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   }
 
   @Override
-  public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
+  public ActionCallback navigateTo(@Nullable Place place, final boolean requestFocus) {
     ModuleEditor editor = getModuleEditor();
     return editor == null ? ActionCallback.REJECTED : editor.navigateTo(place, requestFocus);
   }
 
   @Override
-  public void queryPlace(@NotNull final Place place) {
+  public void queryPlace(@NotNull Place place) {
     final ModuleEditor editor = getModuleEditor();
     if (editor != null) {
       editor.queryPlace(place);
