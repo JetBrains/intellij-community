@@ -71,10 +71,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
+  private final StartupManager myStartupManager;
 
-  public DumbServiceImpl(Project project) {
+  public DumbServiceImpl(Project project, StartupManager startupManager) {
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
+    myStartupManager = startupManager;
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -145,7 +147,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@NotNull Runnable runnable) {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+    myStartupManager.runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
           myRunWhenSmartQueue.addLast(runnable);
