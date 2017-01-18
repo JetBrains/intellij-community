@@ -253,8 +253,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
           DocumentEx document = myEditor.getDocument();
           if (myLastStamp != document.getModificationStamp()) {
-            clearHyperlinkAndFoldings();
-            highlightHyperlinksAndFoldings(0);
+            rehighlightHyperlinksAndFoldings();
           }
         });
       }
@@ -933,6 +932,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (myUpdateFoldingsEnabled) {
       updateFoldings(startLine, endLine);
     }
+  }
+
+  public void rehighlightHyperlinksAndFoldings() {
+    if (myEditor == null || myProject.isDisposed()) return;
+
+    clearHyperlinkAndFoldings();
+    highlightHyperlinksAndFoldings(0);
   }
 
   private void runHeavyFilters(int line1, int endLine) {
