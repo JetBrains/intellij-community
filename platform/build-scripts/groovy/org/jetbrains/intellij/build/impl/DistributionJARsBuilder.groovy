@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.io.FileUtil
+import org.apache.tools.ant.types.FileSet
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
@@ -301,6 +302,7 @@ class DistributionJARsBuilder {
     def resourceExcluded = RESOURCES_EXCLUDED
     def resourcesIncluded = RESOURCES_INCLUDED
     def buildContext = buildContext
+    checkModuleExcludes(layout.moduleExcludes)
     layoutBuilder.layout(targetDirectory) {
       dir("lib") {
         moduleJars.entrySet().each {
@@ -319,7 +321,7 @@ class DistributionJARsBuilder {
                 }
                 layout.moduleExcludes.get(moduleName)?.each {
                   //noinspection GrUnresolvedAccess
-                  ant.exclude(name: "$it/**")
+                  ant.exclude(name: it)
                 }
               }
             }
@@ -389,6 +391,21 @@ class DistributionJARsBuilder {
               ant.fileset(dir: path)
             }
           }
+        }
+      }
+    }
+  }
+
+  private void checkModuleExcludes(MultiValuesMap<String, String> moduleExcludes) {
+    moduleExcludes.entrySet().each { entry ->
+      String module = entry.key
+      entry.value.each { pattern ->
+        def fileSet = new FileSet()
+        fileSet.setProject(buildContext.ant.antProject)
+        fileSet.setDir(new File(buildContext.projectBuilder.getModuleOutput(buildContext.findRequiredModule(module), false)))
+        fileSet.createInclude().setName(pattern)
+        if (fileSet.size() == 0) {
+          buildContext.messages.error("Incorrect exludes for module '$module': nothing matches to $pattern in the module output")
         }
       }
     }
