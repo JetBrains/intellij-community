@@ -38,7 +38,7 @@ class PyUniversalNoseTestExecutionEnvironment(configuration: PyUniversalNoseTest
 }
 
 
-class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalTestFactory) : PyUniversalTestConfiguration(project, factory) {
+class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalNoseTestFactory) : PyUniversalTestConfiguration(project, factory) {
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
     PyUniversalNoseTestExecutionEnvironment(this, environment)
 
@@ -48,7 +48,7 @@ class PyUniversalNoseTestConfiguration(project: Project, factory: PyUniversalTes
 
 }
 
-object PyUniversalNoseTestFactory : PyUniversalTestFactory() {
+object PyUniversalNoseTestFactory : PyUniversalTestFactory<PyUniversalNoseTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project) = PyUniversalNoseTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME

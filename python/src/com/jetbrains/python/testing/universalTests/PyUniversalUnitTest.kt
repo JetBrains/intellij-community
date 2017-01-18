@@ -38,7 +38,7 @@ class PyUniversalUnitTestExecutionEnvironment(configuration: PyUniversalUnitTest
 }
 
 
-class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalTestFactory) :
+class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalUnitTestFactory) :
   PyUniversalTestConfiguration(project, factory, runBareFunctions = false) { // Bare functions not supported in unittest: classes only
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
     PyUniversalUnitTestExecutionEnvironment(this, environment)
@@ -48,7 +48,7 @@ class PyUniversalUnitTestConfiguration(project: Project, factory: PyUniversalTes
 
 }
 
-object PyUniversalUnitTestFactory : PyUniversalTestFactory() {
+object PyUniversalUnitTestFactory : PyUniversalTestFactory<PyUniversalUnitTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project) = PyUniversalUnitTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME
