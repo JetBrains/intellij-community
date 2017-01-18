@@ -70,9 +70,9 @@ import static com.intellij.ui.SimpleTextAttributes.*;
 /**
  * @author gregsh
  */
-public class JumpToTextAttributesAction extends DumbAwareAction {
+public class JumpToColorsAndFontsAction extends DumbAwareAction {
 
-  public JumpToTextAttributesAction() {
+  public JumpToColorsAndFontsAction() {
     setInjectedContext(true);
   }
 
