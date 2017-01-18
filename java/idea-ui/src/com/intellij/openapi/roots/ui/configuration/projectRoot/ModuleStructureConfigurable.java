@@ -640,7 +640,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
-      return myFlattenModules ? getModule().getName() : myGrouper.getPresentableName(getModule());
+      return myFlattenModules ? getModule().getName() : myGrouper.getShortenedName(getModule());
     }
 
     private Module getModule() {
@@ -776,7 +776,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleNamesEnabled() && !myContext.getModulesConfigurator().getModuleModel().hasModuleGroups());
+      e.getPresentation().setEnabledAndVisible(
+        ModuleGrouperKt.isQualifiedModuleNamesEnabled() && !myContext.getModulesConfigurator().getModuleModel().hasModuleGroups());
     }
 
     @Override

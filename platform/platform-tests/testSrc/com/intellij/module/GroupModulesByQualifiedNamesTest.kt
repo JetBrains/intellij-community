@@ -29,7 +29,7 @@ class GroupModulesByQualifiedNamesTest : PlatformTestCase() {
   @Test
   fun `test single module`() {
     val module = createModule("a.b.module")
-    assertEquals("module", grouper.getPresentableName(module))
+    assertEquals("module", grouper.getShortenedName(module))
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertEmpty(parentGroup.modulesInGroup(grouper, false))
@@ -45,8 +45,8 @@ class GroupModulesByQualifiedNamesTest : PlatformTestCase() {
     val module1 = createModule("a.module1")
     val module2 = createModule("a.b.module2")
 
-    assertEquals("module1", grouper.getPresentableName(module1))
-    assertEquals("module2", grouper.getPresentableName(module2))
+    assertEquals("module1", grouper.getShortenedName(module1))
+    assertEquals("module2", grouper.getShortenedName(module2))
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertSameElements(parentGroup.modulesInGroup(grouper, false), module1)

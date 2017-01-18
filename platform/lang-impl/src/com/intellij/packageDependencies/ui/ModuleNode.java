@@ -71,7 +71,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   @Override
   public String toString() {
-    return myModuleGrouper != null ? myModuleGrouper.getPresentableName(myModule) : myModule.getName();
+    return myModuleGrouper != null ? myModuleGrouper.getShortenedName(myModule) : myModule.getName();
   }
 
   public String getModuleName() {

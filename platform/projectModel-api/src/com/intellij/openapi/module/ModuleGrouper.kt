@@ -18,15 +18,26 @@ package com.intellij.openapi.module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
+ * Use this class to determine how modules show by organized in a tree. It supports the both ways of module grouping: the old one where
+ * groups are specified explicitly and the new one where modules are grouped accordingly to their qualified names.
+ *
  * @author nik
  */
+@ApiStatus.Experimental
 abstract class ModuleGrouper {
+  /**
+   * Returns names of parent groups for a module
+   */
   abstract fun getGroupPath(module: Module): List<String>
 
-  abstract fun getPresentableName(module: Module): String
+  /**
+   * Returns name which should be used for a module when it's shown under its group
+   */
+  abstract fun getShortenedName(module: Module): String
 
   abstract fun getAllModules(): Array<Module>
 
@@ -55,7 +66,7 @@ private class QualifiedNameGrouper(project: Project, model: ModifiableModuleMode
     return getModuleName(module).split('.').dropLast(1)
   }
 
-  override fun getPresentableName(module: Module) = StringUtil.getShortName(getModuleName(module))
+  override fun getShortenedName(module: Module) = StringUtil.getShortName(getModuleName(module))
 }
 
 private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleModel?): ModuleGrouperBase(project, model) {
@@ -64,5 +75,5 @@ private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleMod
     return if (path != null) Arrays.asList(*path) else emptyList()
   }
 
-  override fun getPresentableName(module: Module) = getModuleName(module)
+  override fun getShortenedName(module: Module) = getModuleName(module)
 }
