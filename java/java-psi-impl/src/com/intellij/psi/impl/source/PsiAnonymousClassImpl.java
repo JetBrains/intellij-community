@@ -21,6 +21,7 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     PsiClassType type = SoftReference.dereference(myCachedBaseType);
     if (type != null) return type;
 
-    if (!isInQualifiedNew()) {
+    if (!isInQualifiedNew() && !isDiamond()) {
       final String refText = stub.getBaseClassReferenceText();
       assert refText != null : stub;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
@@ -95,6 +96,19 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     else {
       return getTypeByTree();
     }
+  }
+  
+  private boolean isDiamond() {
+    if (PsiUtil.isLanguageLevel9OrHigher(this)) {
+      final PsiReferenceParameterList parameterList = getBaseClassReference().getParameterList();
+      if (parameterList != null) {
+        final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
+        if (parameterElements.length == 1) {
+          return parameterElements[0].getType() instanceof PsiDiamondType;
+        }
+      }
+    }
+    return false;
   }
 
   private PsiClassType getTypeByTree() {
