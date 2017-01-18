@@ -19,7 +19,6 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class UpdateZipAction extends BaseUpdateAction {
@@ -87,23 +86,11 @@ public class UpdateZipAction extends BaseUpdateAction {
 
   @Override
   protected boolean doCalculate(File olderFile, File newerFile) throws IOException {
-    final Map<String, Long> oldCheckSums = new HashMap<>();
-    final Map<String, Long> newCheckSums = new HashMap<>();
+    Map<String, Long> oldCheckSums = new HashMap<>(), newCheckSums = new HashMap<>();
+    processZipFile(olderFile, (entry, in) -> oldCheckSums.put(entry.getName(), Digester.digestStream(in)));
+    processZipFile(newerFile, (entry, in) -> newCheckSums.put(entry.getName(), Digester.digestStream(in)));
 
-    processZipFile(olderFile, new Processor() {
-      public void process(ZipEntry entry, InputStream in) throws IOException {
-        oldCheckSums.put(entry.getName(), Digester.digestStream(in));
-      }
-    });
-
-    processZipFile(newerFile, new Processor() {
-      public void process(ZipEntry entry, InputStream in) throws IOException {
-        newCheckSums.put(entry.getName(), Digester.digestStream(in));
-      }
-    });
-
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums, new LinkedList<>(), false);
-
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums, Collections.emptyList(), false);
     myFilesToCreate = diff.filesToCreate.keySet();
     myFilesToUpdate = diff.filesToUpdate.keySet();
     myFilesToDelete = diff.filesToDelete.keySet();
@@ -112,38 +99,17 @@ public class UpdateZipAction extends BaseUpdateAction {
   }
 
   @Override
-  public void doBuildPatchFile(final File olderFile, final File newerFile, final ZipOutputStream patchOutput) throws IOException {
-    try {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      new ZipFile(newerFile).close();
-    }
-    catch (IOException e) {
-      Runner.logger().error("Corrupted target file: " + newerFile);
-      Runner.printStackTrace(e);
-      throw new IOException("Corrupted target file: " + newerFile, e);
-    }
-
-    final Set<String> filesToProcess = new HashSet<>(myFilesToCreate);
+  public void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
+    int changes = myFilesToCreate.size() + myFilesToUpdate.size();
+    if (changes == 0) return;
+    Set<String> filesToProcess = new HashSet<>(changes);
+    filesToProcess.addAll(myFilesToCreate);
     filesToProcess.addAll(myFilesToUpdate);
-    if (filesToProcess.isEmpty()) return;
 
-    final ZipFile olderZip;
-    try {
-      olderZip = new ZipFile(olderFile);
-    }
-    catch (IOException e) {
-      Runner.logger().error("Corrupted source file: " + olderFile);
-      Runner.printStackTrace(e);
-      throw new IOException("Corrupted source file: " + olderFile, e);
-    }
-
-    try {
-      processZipFile(newerFile, new Processor() {
-        public void process(ZipEntry newerEntry, InputStream newerEntryIn) throws IOException {
-          if (newerEntry.isDirectory()) return;
-          String name = newerEntry.getName();
-          if (!filesToProcess.contains(name)) return;
-
+    try (ZipFile olderZip = new ZipFile(olderFile)) {
+      processZipFile(newerFile, (newerEntry, newerEntryIn) -> {
+        String name = newerEntry.getName();
+        if (filesToProcess.contains(name)) {
           try {
             patchOutput.putNextEntry(new ZipEntry(getPath() + "/" + name));
             InputStream olderEntryIn = Utils.findEntryInputStream(olderZip, name);
@@ -163,33 +129,22 @@ public class UpdateZipAction extends BaseUpdateAction {
         }
       });
     }
-    finally {
-      olderZip.close();
-    }
   }
 
   @Override
   protected void doApply(final ZipFile patchFile, File backupDir, File toFile) throws IOException {
     File temp = Utils.getTempFile(toFile.getName());
-    try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp), 0)) {
-      processZipFile(getSource(backupDir), new Processor() {
-        @Override
-        public void process(ZipEntry entry, InputStream in) throws IOException {
-          String path = entry.getName();
-          if (myFilesToDelete.contains(path)) return;
 
-          if (myFilesToUpdate.contains(path)) {
-            OutputStream entryOut = out.zipStream(path);
-            try {
-              applyDiff(Utils.findEntryInputStream(patchFile, getPath() + "/" + path), in, entryOut);
-            }
-            finally {
-              entryOut.close();
-            }
+    try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp), 0)) {
+      processZipFile(getSource(backupDir), (entry, in) -> {
+        String path = entry.getName();
+        if (myFilesToUpdate.contains(path)) {
+          try (OutputStream entryOut = out.zipStream(path)) {
+            applyDiff(Utils.findEntryInputStream(patchFile, getPath() + "/" + path), in, entryOut);
           }
-          else {
-            out.zipEntry(entry, in);
-          }
+        }
+        else if (!myFilesToDelete.contains(path)) {
+          out.zipEntry(entry, in);
         }
       });
 
@@ -206,25 +161,34 @@ public class UpdateZipAction extends BaseUpdateAction {
   }
 
   private static void processZipFile(File file, Processor processor) throws IOException {
-    ZipInputStream in = new ZipInputStream(new FileInputStream(file));
+    ZipFile zip;
     try {
-      ZipEntry inEntry;
+      zip = new ZipFile(file);
+    }
+    catch (IOException e) {
+      throw new IOException("Corrupted file: " + file, e);
+    }
+    try {
       Set<String> processed = new HashSet<>();
-      while ((inEntry = in.getNextEntry()) != null) {
+      Enumeration<? extends ZipEntry> entries = zip.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry inEntry = entries.nextElement();
         if (inEntry.isDirectory()) continue;
         if (processed.contains(inEntry.getName())) {
           throw new IOException("Duplicate entry '" + inEntry.getName() + "' in " + file.getPath());
         }
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        processor.process(inEntry, new BufferedInputStream(in));
-        processed.add(inEntry.getName());
+        try (InputStream in = new BufferedInputStream(zip.getInputStream(inEntry))) {
+          processor.process(inEntry, new BufferedInputStream(in));
+          processed.add(inEntry.getName());
+        }
       }
     }
     finally {
-      in.close();
+      zip.close();
     }
   }
 
+  @FunctionalInterface
   private interface Processor {
     void process(ZipEntry entry, InputStream in) throws IOException;
   }

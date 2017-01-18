@@ -157,7 +157,7 @@ public class PatchTest extends PatchTestCase {
   @Test
   public void testValidationWithOptionalFiles() throws Exception {
     Patch patch1 = createPatch();
-    FileUtil.writeToFile(new File(myOlderDir, "lib/annotations.jar"), "changed");
+    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "lib/annotations.jar"));
     assertThat(patch1.validate(myOlderDir, TEST_UI)).containsExactly(
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
