@@ -59,6 +59,7 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -144,23 +145,28 @@ public class JumpToTextAttributesAction extends DumbAwareAction {
                                              boolean selected,
                                              boolean hasFocus) {
           TextAttributes ta = colorsScheme.getAttributes(value.second.getKey());
+          Color fg = ObjectUtils.chooseNotNull(ta.getForegroundColor(), colorsScheme.getDefaultForeground());
+          Color bg = ObjectUtils.chooseNotNull(ta.getBackgroundColor(), colorsScheme.getDefaultBackground());
           SimpleTextAttributes sa = fromTextAttributes(ta);
-          int style = STYLE_OPAQUE | sa.getStyle();
-          SimpleTextAttributes saOpaque = sa.derive(style, null, null, null);
+          SimpleTextAttributes saOpaque = sa.derive(STYLE_OPAQUE | sa.getStyle(), fg, bg, null);
           SimpleTextAttributes saSelected = REGULAR_ATTRIBUTES.derive(sa.getStyle(), null, null, null);
+          SimpleTextAttributes saCur = REGULAR_ATTRIBUTES;
           List<String> split = StringUtil.split(value.first.getDisplayName() + "//" + value.second.getDisplayName(), "//");
           for (int i = 0, len = split.size(); i < len; i++) {
             boolean last = i == len - 1;
-            SimpleTextAttributes cur = !last ? REGULAR_ATTRIBUTES : selected ? saSelected : saOpaque;
-            if (last) append(" ", cur);
-            append(split.get(i), cur);
+            saCur = !last ? REGULAR_ATTRIBUTES : selected ? saSelected : saOpaque;
+            if (last) append(" ", saCur);
+            append(split.get(i), saCur);
             if (!last) append(" > ", GRAYED_ATTRIBUTES);
           }
-          if (ta.getEffectType() == EffectType.BOXED && ta.getEffectColor() != null) {
-            append("\u25A2", REGULAR_ATTRIBUTES.derive(-1, ta.getEffectColor(), null, null));
+          Color stripeColor = ta.getErrorStripeColor();
+          boolean addStripe = stripeColor != null && stripeColor != saCur.getBgColor();
+          boolean addBoxed = ta.getEffectType() == EffectType.BOXED && ta.getEffectColor() != null;
+          if (addBoxed) {
+            append("\u25A2" + (addStripe ? "" : " "), saCur.derive(-1, ta.getEffectColor(), null, null));
           }
-          if (ta.getErrorStripeColor() != null) {
-            append(" ", REGULAR_ATTRIBUTES.derive(STYLE_OPAQUE, null, ta.getErrorStripeColor(), null));
+          if (addStripe) {
+            append(" ", saCur.derive(STYLE_OPAQUE, null, stripeColor, null));
           }
         }
       });
