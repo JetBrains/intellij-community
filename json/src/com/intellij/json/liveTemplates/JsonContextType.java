@@ -2,6 +2,7 @@ package com.intellij.json.liveTemplates;
 
 import com.intellij.codeInsight.template.FileTypeBasedContextType;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonPsiUtil;
@@ -36,7 +37,9 @@ public class JsonContextType extends FileTypeBasedContextType {
                                                                                  @Override
                                                                                  public boolean accepts(@NotNull PsiElement element,
                                                                                                         ProcessingContext context) {
-                                                                                   return JsonPsiUtil.isPropertyKey(element);
+                                                                                   return JsonPsiUtil.isPropertyKey(element) &&
+                                                                                          element.getNextSibling() != null &&
+                                                                                          element.getNextSibling().getNode().getElementType() == JsonElementTypes.COLON;
                                                                                  }
                                                                                })));
     return !illegalPattern.accepts(file.findElementAt(offset));
