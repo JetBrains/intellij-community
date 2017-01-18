@@ -84,6 +84,24 @@ public class CompilerPathsEx extends CompilerPaths {
     String getPath();
   }
 
+  private static class VirtualFileClassFileDescriptor implements ClassFileDescriptor {
+    private final VirtualFile myClassFile;
+
+    public VirtualFileClassFileDescriptor(VirtualFile file) {
+      myClassFile = file;
+    }
+
+    @Override
+    public byte[] loadFileBytes() throws IOException {
+      return myClassFile.contentsToByteArray(false);
+    }
+
+    @Override
+    public String getPath() {
+      return myClassFile.getPath();
+    }
+  }
+
   @Nullable
   public static ClassFileDescriptor findClassFileInOutput(@NotNull PsiClass aClass) {
     String jvmClassName = getJVMClassName(aClass);
@@ -100,18 +118,11 @@ public class CompilerPathsEx extends CompilerPaths {
           if (classRoot != null) {
             VirtualFile classFile = classRoot.findFileByRelativePath(relativePath);
             if (classFile != null) {
-              return new ClassFileDescriptor() {
-                @Override
-                public byte[] loadFileBytes() throws IOException {
-                  return classFile.contentsToByteArray(false);
-                }
-
-                @Override
-                public String getPath() {
-                  return classFile.getPath();
-                }
-              };
+              return new VirtualFileClassFileDescriptor(classFile);
             }
+          }
+          else {
+            return new VirtualFileClassFileDescriptor(file);
           }
         }
       }
