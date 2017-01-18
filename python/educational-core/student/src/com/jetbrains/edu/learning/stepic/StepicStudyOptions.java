@@ -15,7 +15,6 @@
  */
 package com.jetbrains.edu.learning.stepic;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,6 @@ import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 
 public class StepicStudyOptions implements StudyOptionsProvider {
-  private static final Logger LOG = Logger.getInstance(StepicStudyOptions.class);
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JPanel myPane;
