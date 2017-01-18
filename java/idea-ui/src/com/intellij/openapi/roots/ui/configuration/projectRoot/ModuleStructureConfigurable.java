@@ -650,33 +650,31 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     protected void reloadNode(DefaultTreeModel treeModel) {
       TreeNode parent = getParent();
-      if (parent instanceof ModuleGroupNode) {
-        List<String> actualPath = ((ModuleGroupNode)parent).myModuleGroup.getGroupPathList();
-        List<String> expectedPath = myGrouper.getGroupPath(getModule());
-        if (!actualPath.equals(expectedPath)) {
-          TreePath path = myTree.getSelectionPath();
-          boolean wasSelected = path != null && this.equals(path.getLastPathComponent());
-          boolean autoScrollWasEnabled = myAutoScrollEnabled;
-          try {
-            myAutoScrollEnabled = false;
-            MyNode newParent = getOrCreateModuleGroupNode(expectedPath, treeModel);
-            treeModel.removeNodeFromParent(this);
-            while (parent instanceof ModuleGroupNode && parent.getChildCount() == 0) {
-              TreeNode grandParent = parent.getParent();
-              treeModel.removeNodeFromParent((MutableTreeNode)parent);
-              parent = grandParent;
-            }
+      List<String> actualPath = parent instanceof ModuleGroupNode ? ((ModuleGroupNode)parent).myModuleGroup.getGroupPathList() : Collections.emptyList();
+      List<String> expectedPath = myGrouper.getGroupPath(getModule());
+      if (!actualPath.equals(expectedPath)) {
+        TreePath path = myTree.getSelectionPath();
+        boolean wasSelected = path != null && this.equals(path.getLastPathComponent());
+        boolean autoScrollWasEnabled = myAutoScrollEnabled;
+        try {
+          myAutoScrollEnabled = false;
+          MyNode newParent = getOrCreateModuleGroupNode(expectedPath, treeModel);
+          treeModel.removeNodeFromParent(this);
+          while (parent instanceof ModuleGroupNode && parent.getChildCount() == 0) {
+            TreeNode grandParent = parent.getParent();
+            treeModel.removeNodeFromParent((MutableTreeNode)parent);
+            parent = grandParent;
+          }
 
-            newParent.add(this);
-            treeModel.nodesWereInserted(newParent, new int[] {newParent.getChildCount()-1});
-            if (wasSelected) {
-              myTree.expandPath(TreeUtil.getPath(myRoot, newParent));
-              myTree.setSelectionPath(TreeUtil.getPath(myRoot, this));
-            }
+          newParent.add(this);
+          treeModel.nodesWereInserted(newParent, new int[] {newParent.getChildCount()-1});
+          if (wasSelected) {
+            myTree.expandPath(TreeUtil.getPath(myRoot, newParent));
+            myTree.setSelectionPath(TreeUtil.getPath(myRoot, this));
           }
-          finally {
-            myAutoScrollEnabled = autoScrollWasEnabled;
-          }
+        }
+        finally {
+          myAutoScrollEnabled = autoScrollWasEnabled;
         }
       }
       super.reloadNode(treeModel);
