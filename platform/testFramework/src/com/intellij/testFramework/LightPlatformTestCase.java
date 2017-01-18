@@ -631,7 +631,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (!ourProject.isDisposed()) {
       @SuppressWarnings("ConstantConditions")
       File ioFile = new File(ourProject.getProjectFilePath());
-      WriteAction.run(() -> Disposer.dispose(ourProject));
       if (ioFile.exists()) {
         File dir = ioFile.getParentFile();
         if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
