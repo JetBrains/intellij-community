@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,17 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A helper class to implement quick-fix which collects removed comments from the PSI and can restore them at once.
@@ -30,7 +35,7 @@ import java.util.List;
  * @author Tagir Valeev
  */
 public class CommentTracker {
-  private List<PsiElement> ignoredParents = new ArrayList<>();
+  private Set<PsiElement> ignoredParents = new HashSet<>();
   private List<PsiComment> comments = new ArrayList<>();
 
   /**
@@ -42,7 +47,7 @@ public class CommentTracker {
    */
   public @NotNull String text(@NotNull PsiElement element) {
     checkState();
-    ignoredParents.add(element);
+    addIgnored(element);
     return element.getText();
   }
 
@@ -56,7 +61,7 @@ public class CommentTracker {
    */
   public @NotNull <T extends PsiElement> T markUnchanged(@NotNull T element) {
     checkState();
-    ignoredParents.add(element);
+    addIgnored(element);
     return element;
   }
 
@@ -209,18 +214,27 @@ public class CommentTracker {
         PsiElement added = parent.addBefore(factory.createCommentFromText(comment.getText(), anchor), anchor);
         PsiElement prevSibling = added.getPrevSibling();
         if (prevSibling instanceof PsiWhiteSpace) {
-          PsiWhiteSpace whiteSpaceBefore = (PsiWhiteSpace)prevSibling;
+          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling);
           PsiElement prev = anchor.getPrevSibling();
+          parent.getNode().addChild(whiteSpaceBefore, anchor.getNode());
           if (prev instanceof PsiWhiteSpace) {
-            prev.replace(whiteSpaceBefore);
-          }
-          else {
-            parent.addBefore(whiteSpaceBefore, anchor);
+            prev.delete();
           }
         }
       }
     }
     comments = null;
+  }
+
+  @NotNull
+  private static ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace) {
+    String text = whiteSpace.getText();
+    int endLPos = text.lastIndexOf('\n');
+    if(text.lastIndexOf('\n', endLPos-1) >= 0) {
+      // has at least two line breaks
+      return ASTFactory.whitespace(text.substring(endLPos));
+    }
+    return ASTFactory.whitespace(text);
   }
 
   private boolean shouldIgnore(PsiComment comment) {
@@ -240,5 +254,10 @@ public class CommentTracker {
     if(comments == null) {
       throw new IllegalStateException(getClass().getSimpleName()+" has been already used");
     }
+  }
+
+  private void addIgnored(PsiElement element) {
+    if(element instanceof LeafPsiElement && !(element instanceof PsiComment)) return;
+    ignoredParents.add(element);
   }
 }
