@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Tagir Valeev
@@ -63,31 +65,29 @@ class FindFirstMigration extends BaseStreamApiMigration {
         return loopStatement.replace(elementFactory.createStatementFromText(
           tb.generate() + ".findFirst().ifPresent(" + LambdaUtil.createLambda(tb.getVariable(), expression) + ");", loopStatement));
       }
-      PsiExpression lValue = assignment.getLExpression();
-      if (!(lValue instanceof PsiReferenceExpression)) return null;
-      PsiElement element = ((PsiReferenceExpression)lValue).resolve();
-      if (!(element instanceof PsiVariable)) return null;
-      PsiVariable var = (PsiVariable)element;
+      PsiReferenceExpression lValue = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
+      if (lValue == null) return null;
+      PsiVariable var = tryCast(lValue.resolve(), PsiVariable.class);
+      if (var == null) return null;
       PsiExpression value = assignment.getRExpression();
       if (value == null) return null;
       restoreComments(loopStatement, body);
       InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
-      if (status != InitializerUsageStatus.UNKNOWN) {
-        PsiExpression initializer = var.getInitializer();
-        if (initializer != null) {
-          String replacementText = generateOptionalUnwrap(tb, value, initializer, var.getType());
-          return replaceInitializer(loopStatement, var, initializer, replacementText, status);
+      PsiExpression initializer = var.getInitializer();
+      PsiExpression falseExpression = lValue;
+      if (status != InitializerUsageStatus.UNKNOWN &&
+          (status != InitializerUsageStatus.AT_WANTED_PLACE || ExpressionUtils.isSimpleExpression(initializer))) {
+        falseExpression = initializer;
+      } else {
+        PsiElement maybeAssignment = PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class);
+        PsiExpression prevRValue = ExpressionUtils.getAssignmentTo(maybeAssignment, var);
+        if (prevRValue != null) {
+          maybeAssignment.delete();
+          falseExpression = prevRValue;
         }
       }
-      PsiElement maybeAssignment = PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class);
-      PsiExpression prevRValue = ExpressionUtils.getAssignmentTo(maybeAssignment, var);
-      if(prevRValue != null) {
-        maybeAssignment.delete();
-        return loopStatement.replace(elementFactory.createStatementFromText(
-          var.getName() + " = " + generateOptionalUnwrap(tb, value, prevRValue, var.getType()) + ";", loopStatement));
-      }
-      return loopStatement.replace(elementFactory.createStatementFromText(
-        var.getName() + " = " + generateOptionalUnwrap(tb, value, lValue, var.getType()) + ";", loopStatement));
+      String replacementText = generateOptionalUnwrap(tb, value, falseExpression, var.getType());
+      return replaceInitializer(loopStatement, var, initializer, replacementText, status);
     }
   }
 
