@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 
@@ -31,6 +32,11 @@ public abstract class QuickEvaluateHandler {
 
   @Nullable
   public abstract AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type);
+
+  @NotNull
+  public Promise<AbstractValueHint> createValueHintAsync(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type) {
+    return Promise.resolve(createValueHint(project, editor, point, type));
+  }
 
   public abstract boolean canShowHint(@NotNull Project project);
 

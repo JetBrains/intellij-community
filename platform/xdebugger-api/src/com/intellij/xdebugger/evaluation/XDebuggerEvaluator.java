@@ -25,6 +25,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 /**
  * @author nik
@@ -88,6 +89,14 @@ public abstract class XDebuggerEvaluator {
     return range == null ? null : new ExpressionInfo(range);
   }
 
+  /**
+   * Async version of {@link #getExpressionInfoAtOffset(Project, Document, int, boolean)}. Overload this method if you cannot evaluate ExpressionInfo in sync way.
+   * The value of the resulting Promise can be null
+   */
+  @NotNull
+  public Promise<ExpressionInfo> getExpressionInfoAtOffsetAsync(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
+    return Promise.resolve(getExpressionInfoAtOffset(project, document, offset, sideEffectsAllowed));
+  }
   /**
    * Override this method to format selected text before it is shown in 'Evaluate' dialog
    */
