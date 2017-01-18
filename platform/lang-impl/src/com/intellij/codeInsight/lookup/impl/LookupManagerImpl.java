@@ -133,7 +133,7 @@ public class LookupManagerImpl extends LookupManager {
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
-    final LookupImpl lookup = lookupFactory(editor, arranger, myProject);
+    final LookupImpl lookup = createLookup(editor, arranger, myProject);
 
     final Alarm alarm = new Alarm();
     final Runnable request = () -> {
@@ -209,7 +209,7 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   @NotNull
-  protected LookupImpl lookupFactory(@NotNull Editor editor, @NotNull LookupArranger arranger, Project project) {
+  protected LookupImpl createLookup(@NotNull Editor editor, @NotNull LookupArranger arranger, Project project) {
     return new LookupImpl(project, editor, arranger);
   }
 
