@@ -21,8 +21,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,6 +260,46 @@ public class MethodCallUtils {
     final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
     final PsiElement element = referenceExpression.resolve();
     return variable.equals(element);
+  }
+
+  /**
+   * Returns true if the supplied expression is the functional expression (method reference or lambda)
+   * which refers to the given method call
+   *
+   * @param expression     expression to test
+   * @param className      class name where the wanted method should be located
+   * @param returnType     the return type of the wanted method (null if should not be checked)
+   * @param methodName     method name of the wanted method
+   * @param parameterTypes wanted method parameter types (nulls for parameters which should not be checked)
+   * @return true if the supplied expression references the wanted call
+   */
+  public static boolean isFunctionalReferenceTo(PsiExpression expression, String className, PsiType returnType,
+                                                String methodName, PsiType... parameterTypes) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiMethodReferenceExpression) {
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+      PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
+      PsiReferenceExpression ref = ObjectUtils.tryCast(methodRef.getQualifier(), PsiReferenceExpression.class);
+      return ref != null &&
+             method != null &&
+             MethodUtils.methodMatches(method, className, returnType, methodName, parameterTypes) &&
+             ref.isReferenceTo(method.getContainingClass());
+    }
+    if (expression instanceof PsiLambdaExpression) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
+      PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
+      PsiMethodCallExpression call = ObjectUtils.tryCast(body, PsiMethodCallExpression.class);
+      if (call == null || !isCallToMethod(call, className, returnType, methodName, parameterTypes)) return false;
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      PsiMethod method = call.resolveMethod();
+      if (method != null && !method.hasModifierProperty(PsiModifier.STATIC)) {
+        args = ArrayUtil.prepend(call.getMethodExpression().getQualifierExpression(), args);
+      }
+      if (parameters.length != args.length || StreamEx.zip(args, parameters, ExpressionUtils::isReferenceTo).has(false)) return false;
+      return isCallToMethod(call, className, returnType, methodName, parameterTypes);
+    }
+    return false;
   }
 
   @Nullable
