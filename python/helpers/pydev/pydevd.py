@@ -967,10 +967,15 @@ class PyDB:
             # The file being run ust be in the pythonpath (even if it was not before)
             sys.path.insert(0, os.path.split(file)[0])
 
-            self.prepare_to_run()
-
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
+
+            if self.break_on_caught_exceptions:
+                # disable frame evaluation if there are exception breakpoints with 'On raise' activation policy
+                self.frame_eval_func = None
+
+            # call prepare_to_run when we already have all information about breakpoints
+            self.prepare_to_run()
 
         if self.thread_analyser is not None:
             wrap_threads()
