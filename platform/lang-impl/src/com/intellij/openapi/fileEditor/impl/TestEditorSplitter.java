@@ -53,8 +53,6 @@ public class TestEditorSplitter {
     result.openTab(virtualFile, fileEditor, provider);
   }
 
-
-
   @Nullable
   public FileEditor getFocusedFileEditor() {
     Pair<FileEditor, FileEditorProvider> openedEditor = getDefaultTabWell().getOpenedEditor();
