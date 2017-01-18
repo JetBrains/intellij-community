@@ -101,6 +101,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   };
 
   private boolean myHideModuleGroups;
+  private boolean myFlattenModules;
 
   private final ModuleManager myModuleManager;
 
@@ -148,6 +149,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final ArrayList<AnAction> result = super.createActions(fromPopup);
     if (fromPopup) {
       result.add(Separator.getInstance());
+      result.add(new FlattenModulesAction());
       result.add(new HideGroupsAction());
       addCollapseExpandActions(result);
     }
@@ -227,7 +229,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (nodesAdded) {
         myTree.setShowsRootHandles(true);
       }
-      final List<String> groupPath = myHideModuleGroups ? Collections.emptyList() : moduleGrouper.getGroupPath(module);
+      final List<String> groupPath = myHideModuleGroups || myFlattenModules ? Collections.emptyList() : moduleGrouper.getGroupPath(module);
       if (groupPath.isEmpty()) {
         myRoot.add(moduleNode);
       }
@@ -286,7 +288,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       nodes[i ++] = node;
     }
     for (final MyNode moduleNode : nodes) {
-      List<String> groupPath = myHideModuleGroups
+      List<String> groupPath = myHideModuleGroups || myFlattenModules
                                  ? Collections.emptyList()
                                  : group != null ? group.getGroupPathList() : Collections.emptyList();
       if (groupPath.isEmpty()) {
@@ -638,7 +640,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
-      return myGrouper.getPresentableName(getModule());
+      return myFlattenModules ? getModule().getName() : myGrouper.getPresentableName(getModule());
     }
 
     private Module getModule() {
@@ -766,6 +768,28 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
+  private class FlattenModulesAction extends ToggleAction implements DumbAware {
+    public FlattenModulesAction() {
+      super(ProjectBundle.message("project.roots.flatten.modules.action.text"), ProjectBundle.message("project.roots.flatten.modules.action.description"), AllIcons.ObjectBrowser.FlattenModules);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleGroupsEnabled() && !myContext.getModulesConfigurator().getModuleModel().hasModuleGroups());
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myFlattenModules;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myFlattenModules = state;
+      regroupModules(myFlattenModules);
+    }
+  }
 
   private class HideGroupsAction extends ToggleAction implements DumbAware {
 
@@ -795,33 +819,37 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myHideModuleGroups = state;
-      DefaultMutableTreeNode selection = null;
-      final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null){
-        selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-      }
-      ModuleGrouper grouper = getModuleGrouper();
-      for (Module module : grouper.getAllModules()) {
-        final List<String> groupPath = grouper.getGroupPath(module);
-        updateProjectTree(new Module[]{module}, !groupPath.isEmpty() ? new ModuleGroup(groupPath) : null);
-      }
-      if (state) {
-        removeModuleGroups();
-      }
-      if (selection != null){
-        TreeUtil.selectInTree(selection, true, myTree);
-      }
+      regroupModules(state);
     }
+  }
 
-    private void removeModuleGroups() {
-      for(int i = myRoot.getChildCount() - 1; i >=0; i--){
-        final MyNode node = (MyNode)myRoot.getChildAt(i);
-        if (node.getConfigurable().getEditableObject() instanceof ModuleGroup){
-          node.removeFromParent();
-        }
-      }
-      ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
+  private void regroupModules(boolean removeGroupNodes) {
+    DefaultMutableTreeNode selection = null;
+    final TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null) {
+      selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
     }
+    ModuleGrouper grouper = getModuleGrouper();
+    for (Module module : grouper.getAllModules()) {
+      final List<String> groupPath = grouper.getGroupPath(module);
+      updateProjectTree(new Module[]{module}, !groupPath.isEmpty() ? new ModuleGroup(groupPath) : null);
+    }
+    if (removeGroupNodes) {
+      removeModuleGroups();
+    }
+    if (selection != null) {
+      TreeUtil.selectInTree(selection, true, myTree);
+    }
+  }
+
+  private void removeModuleGroups() {
+    for (int i = myRoot.getChildCount() - 1; i >= 0; i--) {
+      final MyNode node = (MyNode)myRoot.getChildAt(i);
+      if (node.getConfigurable().getEditableObject() instanceof ModuleGroup) {
+        node.removeFromParent();
+      }
+    }
+    ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
   }
 
   @Override
