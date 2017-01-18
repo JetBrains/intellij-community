@@ -484,6 +484,11 @@ public class PyFormatterTest extends PyTestCase {
   public void testAlignmentOfClosingBraceInDictLiteralWhenNoHangingIndent() {
     doTest();
   }
+  
+  public void testNoAlignmentClosingBraceInDictLiteralWhenOpeningBraceIsForcedOnNewLine() {
+    getPythonCodeStyleSettings().DICT_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
 
   // PY-13004
   public void testAlignmentOfClosingParenthesisOfArgumentListWhenNoHangingIndent() {
