@@ -94,8 +94,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
-          myDirtyScopeHolder.compilerActivityStarted();
-          closeReaderIfNeed();
+          if (project == myProject) {
+            myDirtyScopeHolder.compilerActivityStarted();
+            closeReaderIfNeed();
+          }
         }
       });
 
@@ -112,17 +114,19 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         }
 
         private void compilationFinished(CompileContext context) {
-          Runnable compilationFinished = () -> {
-            final Module[] compilationModules = ReadAction.compute(() -> {
-              if (myProject.isDisposed()) return null;
-              return context.getCompileScope().getAffectedModules();
-            });
-            if (compilationModules == null) return;
-            myDirtyScopeHolder.compilerActivityFinished();
-            myCompilationCount.increment();
-            openReaderIfNeed();
-          };
-          executeOnBuildThread(compilationFinished);
+          if (context.getProject() == myProject) {
+            Runnable compilationFinished = () -> {
+              final Module[] compilationModules = ReadAction.compute(() -> {
+                if (myProject.isDisposed()) return null;
+                return context.getCompileScope().getAffectedModules();
+              });
+              if (compilationModules == null) return;
+              myDirtyScopeHolder.compilerActivityFinished();
+              myCompilationCount.increment();
+              openReaderIfNeed();
+            };
+            executeOnBuildThread(compilationFinished);
+          }
         }
       });
 
