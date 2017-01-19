@@ -15,29 +15,15 @@
  */
 package com.intellij.diff.tools.util.text;
 
-import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class MergeInnerDifferences {
-  @Nullable private final List<TextRange> myLeft;
-  @Nullable private final List<TextRange> myBase;
-  @Nullable private final List<TextRange> myRight;
+public interface TextDiffProvider {
+  @NotNull
+  List<AnAction> getToolbarActions();
 
-  public MergeInnerDifferences(@Nullable List<TextRange> left, @Nullable List<TextRange> base, @Nullable List<TextRange> right) {
-    myLeft = left;
-    myBase = base;
-    myRight = right;
-  }
-
-  /**
-   * NB: ranges might overlap and might be not in order
-   */
-  @Nullable
-  public List<TextRange> get(@NotNull ThreeSide side) {
-    return side.select(myLeft, myBase, myRight);
-  }
+  @NotNull
+  List<AnAction> getPopupActions();
 }

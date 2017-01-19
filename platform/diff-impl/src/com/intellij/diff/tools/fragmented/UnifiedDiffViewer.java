@@ -26,9 +26,12 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.base.*;
+import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
+import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
+import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.icons.AllIcons;
@@ -77,6 +80,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final MyFoldingModel myFoldingModel;
 
+  @NotNull private final TwosideTextDiffProvider.NoIgnore myTextDiffProvider;
+
   @NotNull protected Side myMasterSide = Side.RIGHT;
 
   @Nullable private ChangedBlockData myChangedBlockData;
@@ -116,6 +121,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
+
+    myTextDiffProvider = DiffUtil.createNoIgnoreTextDiffProvider(getRequest(), getTextSettings(), this::rediff);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 
@@ -184,9 +191,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
-    // TODO: allow to choose myMasterSide
-    group.add(new MyIgnorePolicySettingAction());
-    group.add(new MyHighlightPolicySettingAction());
+    group.addAll(myTextDiffProvider.getToolbarActions());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
@@ -203,11 +208,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
-    group.add(Separator.getInstance());
-    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
-    group.add(Separator.getInstance());
-    group.add(new MyHighlightPolicySettingAction().getPopupGroup());
-    group.add(Separator.getInstance());
+    group.addAll(myTextDiffProvider.getPopupActions());
     group.add(new MyToggleExpandByDefaultAction());
 
     group.add(Separator.getInstance());
@@ -260,7 +261,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
       });
 
-      final List<LineFragment> fragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
+      final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
       final DocumentContent content1 = getContent1();
       final DocumentContent content2 = getContent2();
@@ -788,18 +789,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return TextDiffViewerUtil.getFoldingModelSettings(myContext);
   }
 
-  @NotNull
-  private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
-  }
-
-  @NotNull
-  private HighlightPolicy getHighlightPolicy() {
-    HighlightPolicy policy = getTextSettings().getHighlightPolicy();
-    if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
-    return policy;
-  }
-
   //
   // Getters
   //
@@ -992,42 +981,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Override
     protected void expandAll(boolean expand) {
       myFoldingModel.expandAll(expand);
-    }
-  }
-
-  private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
-    public MyHighlightPolicySettingAction() {
-      super(getTextSettings());
-    }
-
-    @NotNull
-    @Override
-    protected HighlightPolicy getCurrentSetting() {
-      return getHighlightPolicy();
-    }
-
-    @NotNull
-    @Override
-    protected List<HighlightPolicy> getAvailableSettings() {
-      ArrayList<HighlightPolicy> settings = ContainerUtil.newArrayList(HighlightPolicy.values());
-      settings.remove(HighlightPolicy.DO_NOT_HIGHLIGHT);
-      return settings;
-    }
-
-    @Override
-    protected void onSettingsChanged() {
-      rediff();
-    }
-  }
-
-  private class MyIgnorePolicySettingAction extends TextDiffViewerUtil.IgnorePolicySettingAction {
-    public MyIgnorePolicySettingAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void onSettingsChanged() {
-      rediff();
     }
   }
 

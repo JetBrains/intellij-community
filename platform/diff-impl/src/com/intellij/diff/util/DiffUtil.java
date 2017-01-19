@@ -34,11 +34,12 @@ import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.util.text.MergeInnerDifferences;
-import com.intellij.diff.tools.util.base.HighlightPolicy;
-import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.MergeInnerDifferences;
+import com.intellij.diff.tools.util.text.SimpleTextDiffProvider;
+import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -599,31 +600,25 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static List<LineFragment> compare(@NotNull DiffRequest request,
-                                           @NotNull CharSequence text1,
-                                           @NotNull CharSequence text2,
-                                           @NotNull DiffConfig config,
-                                           @NotNull ProgressIndicator indicator) {
-    indicator.checkCanceled();
-
+  public static TwosideTextDiffProvider createTextDiffProvider(@NotNull ContentDiffRequest request,
+                                                               @NotNull TextDiffSettings settings,
+                                                               @NotNull Runnable rediff) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
-
-    List<LineFragment> fragments;
     if (diffComputer != null) {
-      fragments = diffComputer.compute(text1, text2, config.policy, config.innerFragments, indicator);
+      return new SimpleTextDiffProvider(settings, rediff, diffComputer);
     }
-    else {
-      if (config.innerFragments) {
-        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
-      }
-      else {
-        fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
-      }
-    }
+    return new SimpleTextDiffProvider(settings, rediff);
+  }
 
-    indicator.checkCanceled();
-    return ComparisonManager.getInstance().processBlocks(fragments, text1, text2,
-                                                         config.policy, config.squashFragments, config.trimFragments);
+  @NotNull
+  public static TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@NotNull ContentDiffRequest request,
+                                                                                @NotNull TextDiffSettings settings,
+                                                                                @NotNull Runnable rediff) {
+    DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+    if (diffComputer != null) {
+      return new SimpleTextDiffProvider.NoIgnore(settings, rediff, diffComputer);
+    }
+    return new SimpleTextDiffProvider.NoIgnore(settings, rediff);
   }
 
   @Nullable
@@ -1392,24 +1387,6 @@ public class DiffUtil {
   // Helpers
   //
 
-  public static class DiffConfig {
-    @NotNull public final ComparisonPolicy policy;
-    public final boolean innerFragments;
-    public final boolean squashFragments;
-    public final boolean trimFragments;
-
-    public DiffConfig(@NotNull ComparisonPolicy policy, boolean innerFragments, boolean squashFragments, boolean trimFragments) {
-      this.policy = policy;
-      this.innerFragments = innerFragments;
-      this.squashFragments = squashFragments;
-      this.trimFragments = trimFragments;
-    }
-
-    public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
-      this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
-           ignorePolicy.isShouldTrimChunks());
-    }
-  }
 
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<JComponent> myComponents;
