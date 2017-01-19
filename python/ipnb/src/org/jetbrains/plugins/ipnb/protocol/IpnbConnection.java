@@ -2,7 +2,12 @@ package org.jetbrains.plugins.ipnb.protocol;
 
 import com.google.common.collect.Lists;
 import com.google.gson.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.net.HTTPMethod;
+import com.intellij.util.net.ssl.CertificateManager;
+import com.jetbrains.python.psi.PyUtil;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.Draft_17;
@@ -10,28 +15,36 @@ import org.java_websocket.handshake.ClientHandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author vlan
- *
- * To be removed
-*/
+ *         <p>
+ *         To be removed
+ */
 public class IpnbConnection {
+  private static final Logger LOG = Logger.getInstance(IpnbConnection.class);
   protected static final String API_URL = "/api";
   protected static final String KERNELS_URL = API_URL + "/kernels";
-  protected static final String HTTP_POST = "POST";
   // TODO: Serialize cookies for the authentication message
   protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
                                               "\"channel\":\"shell\" }";
-  public static final String HTTP_DELETE = "DELETE";
   public static final String AUTHENTICATION_NEEDED = "Authentication needed";
+  private static final String LOGIN_URL = "/login";
 
   @NotNull protected final URI myURI;
   @NotNull protected final String myKernelId;
@@ -50,18 +63,138 @@ public class IpnbConnection {
   private IpnbOutputCell myOutput;
   private int myExecCount;
   private String myXsrf;
+  private HashMap<String, String> myHeaders = new HashMap<>();
 
 
   public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener,
-                        @Nullable final String token) throws IOException, URISyntaxException {
+                        @Nullable final String token, @NotNull Project project, @NotNull String pathToFile) throws IOException, URISyntaxException {
     myURI = new URI(uri);
     myListener = listener;
     myToken = token;
     mySessionId = UUID.randomUUID().toString();
-    initXSRF();
-    myKernelId = startKernel();
+    HttpsURLConnection.setDefaultSSLSocketFactory(CertificateManager.getInstance().getSslContext().getSocketFactory());
+    HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+      @Override
+      public boolean verify(String s, SSLSession session) {
+        return myURI.getHost().equals(s);
+      }
+    });
+    final boolean needed = isLoginNeeded();
+    if (needed) {
+      final IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
+      final List<HttpCookie> cookies = login(ipnbSettings.getUsername(), ipnbSettings.getPassword());
+      final String cookieString =
+        cookies.stream().map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining(";"));
+      myHeaders.put("Cookie", cookieString);
+      myKernelId = getExistingKernelForSession(pathToFile);
+    }
+    else {
+      initXSRF();
+      if (myToken != null) {
+        myHeaders.put("Authorization", "token " + myToken);
+      }
+      myKernelId = startKernel();
+    }
 
     initializeClients();
+  }
+
+  private List<HttpCookie> login(@NotNull String username, @NotNull String password) throws IOException {
+    CookieManager cookieManager = new CookieManager();
+    CookieHandler.setDefault(cookieManager);
+    String urlParameters = "username=" + username + "&" + "password=" + password;
+    byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
+    final HttpsURLConnection connection = (HttpsURLConnection)new URL(myURI + LOGIN_URL).openConnection();
+    connection.setUseCaches(false);
+    connection.setRequestMethod(HTTPMethod.POST.name());
+    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+    connection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+    connection.setDoOutput(true);
+
+    final OutputStream outputStream = connection.getOutputStream();
+    try (DataOutputStream wr = new DataOutputStream(outputStream)) {
+      wr.write(postData);
+      wr.flush();
+    }
+    connection.connect();
+
+    final int code = connection.getResponseCode();
+    if (code == HttpURLConnection.HTTP_OK) {
+      return cookieManager.getCookieStore().getCookies();
+    }
+    else {
+      throw new IOException("Unable to login: " + code + " " + connection.getResponseMessage());
+    }
+  }
+
+  private String getDefaultKernelName() {
+    try {
+      final String response = httpRequest(myURI + "/api/kernelspecs", HTTPMethod.GET.name());
+      final JsonObject kernelSpecs = PyUtil.as(new JsonParser().parse(response), JsonObject.class);
+      if (kernelSpecs != null && kernelSpecs.has("default")) {
+        return kernelSpecs.get("default").getAsString();
+      }
+      else {
+        LOG.warn("Got wrong kernel specs: " + response);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+
+    return "";
+  }
+
+  private String getExistingKernelForSession(@NotNull String pathToFile) {
+    try {
+      final URLConnection connection = new URL(myURI + "/api/sessions").openConnection();
+      if (connection instanceof HttpsURLConnection) {
+        final String kernelName = getDefaultKernelName();
+        if (kernelName.isEmpty()) return "";
+        final SessionWrapper sessionWrapper = new SessionWrapper(kernelName, pathToFile);
+        final Gson gsonBuilder = new GsonBuilder().serializeNulls().create();
+        final byte[] postData = gsonBuilder.toJson(sessionWrapper).getBytes(StandardCharsets.UTF_8);
+        final HttpsURLConnection httpsConnection = (HttpsURLConnection)configureConnection((HttpURLConnection)connection, 
+                                                                                           HTTPMethod.POST.name());
+        httpsConnection.setRequestProperty("Content-Type", "application/json");
+        httpsConnection.setRequestProperty("Content-Length", Integer.toString(postData.length));
+        httpsConnection.setRequestProperty("Referer", myURI + "/notebooks/" + pathToFile);
+        httpsConnection.setUseCaches(false);
+        httpsConnection.setDoOutput(true);
+
+        final OutputStream outputStream = connection.getOutputStream();
+        try (DataOutputStream wr = new DataOutputStream(outputStream)) {
+          wr.write(postData);
+          wr.flush();
+        }
+        connection.connect();
+        final String response = getResponse(httpsConnection);
+        final SessionWrapper wrapper = gsonBuilder.fromJson(response, SessionWrapper.class);
+
+        return wrapper.kernel.id;
+      }
+      else {
+        throw new UnsupportedOperationException("Only HTTP URLs are supported");
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    return "";
+  }
+
+  private boolean isLoginNeeded() throws IOException {
+    final HttpsURLConnection connection = PyUtil.as(new URL(myURI.toString() + "/tree").openConnection(), HttpsURLConnection.class);
+    if (connection != null) {
+      connection.setInstanceFollowRedirects(false);
+      connection.connect();
+      if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+        final String location = connection.getHeaderField("Location");
+        connection.disconnect();
+        if (location != null && location.startsWith("/login")) return true;
+      }
+    }
+    return false;
   }
 
   private void initXSRF() {
@@ -84,7 +217,7 @@ public class IpnbConnection {
   protected void initializeClients() throws URISyntaxException {
     final Draft draft = new Draft17WithOrigin();
 
-    myShellClient = new WebSocketClient(getShellURI(), draft) {
+    myShellClient = new WebSocketClient(getShellURI(), draft, myHeaders, 0) {
       @Override
       public void onOpen(@NotNull ServerHandshake handshakeData) {
         send(authMessage);
@@ -148,22 +281,22 @@ public class IpnbConnection {
 
   @NotNull
   private String startKernel() throws IOException {
-    final String s = httpRequest(myURI + KERNELS_URL, HTTP_POST);
+    final String s = httpRequest(myURI + KERNELS_URL, HTTPMethod.POST.name());
     final Gson gson = new Gson();
     final Kernel kernel = gson.fromJson(s, Kernel.class);
     return kernel.getId();
   }
 
   protected void shutdownKernel() throws IOException {
-    httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTP_DELETE);
+    httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTPMethod.DELETE.name());
   }
 
   public void interrupt() throws IOException {
-    httpRequest(myURI + KERNELS_URL + "/" + myKernelId + "/interrupt", HTTP_POST);
+    httpRequest(myURI + KERNELS_URL + "/" + myKernelId + "/interrupt", HTTPMethod.POST.name());
   }
 
   public void reload() throws IOException {
-    httpRequest(myURI + KERNELS_URL + "/" + myKernelId + "/restart", HTTP_POST);
+    httpRequest(myURI + KERNELS_URL + "/" + myKernelId + "/restart", HTTPMethod.POST.name());
   }
 
   @NotNull
@@ -178,42 +311,60 @@ public class IpnbConnection {
 
   @NotNull
   protected String getWebSocketURIBase() {
-    return "ws://" + myURI.getAuthority() + KERNELS_URL + "/" + myKernelId;
+    final String scheme = myURI.getScheme();
+    String prefix = scheme.equals("http") ? "ws://" : "wss://";
+    return prefix + myURI.getAuthority() + KERNELS_URL + "/" + myKernelId;
   }
 
   @NotNull
   private String httpRequest(@NotNull String url, @NotNull String method) throws IOException {
     final URLConnection urlConnection = new URL(url).openConnection();
     if (urlConnection instanceof HttpURLConnection) {
-      final HttpURLConnection connection = (HttpURLConnection)urlConnection;
-      connection.setRequestMethod(method);
-      connection.setReadTimeout(60000);
-      if (!StringUtil.isEmptyOrSpaces(myToken)) {
-        connection.setRequestProperty("Authorization", "token " + myToken);
-      }
-      else if (!StringUtil.isEmptyOrSpaces(myXsrf)) {
-        connection.setRequestProperty("X-XSRFToken", myXsrf);
-      }
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+      final HttpURLConnection connection = configureConnection((HttpURLConnection)urlConnection, method);
+      final int code = connection.getResponseCode();
+      if (code == HttpURLConnection.HTTP_FORBIDDEN) {
         throw new IOException(AUTHENTICATION_NEEDED);
       }
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
-      try {
-        final StringBuilder builder = new StringBuilder();
-        char[] buffer = new char[4096];
-        int n;
-        while ((n = reader.read(buffer)) != -1) {
-          builder.append(buffer, 0, n);
-        }
-        return builder.toString();
-      }
-      finally {
-        reader.close();
-      }
+      return getResponse(connection);
     }
     else {
       throw new UnsupportedOperationException("Only HTTP URLs are supported");
     }
+  }
+
+  @NotNull
+  private static String getResponse(HttpURLConnection connection) throws IOException {
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
+    try {
+      final StringBuilder builder = new StringBuilder();
+      char[] buffer = new char[4096];
+      int n;
+      while ((n = reader.read(buffer)) != -1) {
+        builder.append(buffer, 0, n);
+      }
+      return builder.toString();
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  @NotNull
+  private HttpURLConnection configureConnection(HttpURLConnection urlConnection, @NotNull String method) throws ProtocolException {
+    urlConnection.setRequestMethod(method);
+    urlConnection.setReadTimeout(60000);
+    if (!StringUtil.isEmptyOrSpaces(myToken)) {
+      urlConnection.setRequestProperty("Authorization", "token " + myToken);
+    }
+    else if (!StringUtil.isEmptyOrSpaces(myXsrf)) {
+      urlConnection.setRequestProperty("X-XSRFToken", myXsrf);
+    }
+    else if (!myHeaders.isEmpty()) {
+      for (Map.Entry<String, String> entry : myHeaders.entrySet()) {
+        urlConnection.setRequestProperty(entry.getKey(), entry.getValue());
+      }
+    }
+    return urlConnection;
   }
 
   @NotNull
@@ -471,8 +622,20 @@ public class IpnbConnection {
 
   protected class IpnbWebSocketClient extends WebSocketClient {
     protected IpnbWebSocketClient(@NotNull final URI serverUri, @NotNull final Draft draft) {
-      super(serverUri, draft, myToken != null ? Collections.singletonMap("Authorization", "token " + myToken) :
-                                                Collections.emptyMap(), 5000);
+      super(serverUri, draft, myHeaders, 10000);
+      configureSsl(serverUri);
+    }
+
+    private void configureSsl(@NotNull URI serverUri) {
+      if (serverUri.getScheme().equals("wss")) {
+        final SSLContext sslContext = CertificateManager.getInstance().getSslContext();
+        try {
+          this.setSocket(sslContext.getSocketFactory().createSocket());
+        }
+        catch (IOException e) {
+          LOG.warn(e.getMessage());
+        }
+      }
     }
 
     @Override
@@ -529,12 +692,12 @@ public class IpnbConnection {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-
+      LOG.info("IPNB WebSocket was closed:  code " + code + " reason: " + reason);
     }
 
     @Override
     public void onError(Exception ex) {
-
+      LOG.error(ex);
     }
   }
 
@@ -544,5 +707,32 @@ public class IpnbConnection {
 
   public int getExecCount() {
     return myExecCount;
+  }
+
+  private static class SessionWrapper {
+    NotebookWrapper notebook;
+    KernelWrapper kernel;
+
+    public SessionWrapper(String interpreterName, String filePath) {
+      kernel = new KernelWrapper(interpreterName);
+      notebook = new NotebookWrapper(filePath);
+    }
+  }
+
+  private static class KernelWrapper {
+    String id;
+    String name;
+
+    public KernelWrapper(String name) {
+      this.name = name;
+    }
+  }
+
+  private static class NotebookWrapper {
+    String path;
+
+    public NotebookWrapper(String path) {
+      this.path = path;
+    }
   }
 }
