@@ -5,7 +5,15 @@ public class ClassEscapesItsScope<T> {
   public <warning descr="Class 'A' is made visible outside its defined scope">A</warning> giveMeA() {
     return new A();
   }
+  void printA(<warning descr="Class 'A' is made visible outside its defined scope">A</warning> a) {
+    System.out.println(a);
+  }
   private class A {}
+
+  void throwsE() throws <warning descr="Class 'E' is made visible outside its defined scope">E</warning> {
+    throw new E();
+  }
+  private static class E extends Exception {}
 }
 
 class BarInside {

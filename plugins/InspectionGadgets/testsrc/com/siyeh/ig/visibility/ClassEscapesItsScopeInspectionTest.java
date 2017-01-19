@@ -27,6 +27,8 @@ public class ClassEscapesItsScopeInspectionTest extends LightInspectionTestCase 
 
   public void testClassEscapesItsScope() { doTest(); }
 
+  public void testGenericParameterEscapesItsScope() { doTest(); }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
