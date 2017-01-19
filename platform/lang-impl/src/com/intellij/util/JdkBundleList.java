@@ -33,7 +33,7 @@ public class JdkBundleList {
   private HashMap<String, JdkBundle> nameVersionMap = new HashMap<>();
 
   public void addBundle(@NotNull JdkBundle bundle, boolean forceOldVersion) {
-    JdkBundle bundleDescr = bundleMap.get(bundle.getAbsoluteLocation().getAbsolutePath());
+    JdkBundle bundleDescr = bundleMap.get(bundle.getLocation().getAbsolutePath());
     if (bundleDescr == null) {
       addMostRecent(bundle, forceOldVersion);
     }
@@ -63,14 +63,14 @@ public class JdkBundleList {
           else if (!latestJdk.isBoot() && !latestJdk.isBundled()) { // preserve boot and bundled versions
             bundleList.remove(latestJdk);
             nameVersionMap.remove(latestJdk.getNameVersion());
-            bundleMap.remove(latestJdk.getAbsoluteLocation().getAbsolutePath());
+            bundleMap.remove(latestJdk.getLocation().getAbsolutePath());
           }
         }
       }
     }
 
     bundleList.add(bundleDescriptor);
-    bundleMap.put(bundleDescriptor.getAbsoluteLocation().getAbsolutePath(), bundleDescriptor);
+    bundleMap.put(bundleDescriptor.getLocation().getAbsolutePath(), bundleDescriptor);
 
     if (updateVersionMap) {
       nameVersionMap.put(bundleDescriptor.getNameVersion(), bundleDescriptor);
