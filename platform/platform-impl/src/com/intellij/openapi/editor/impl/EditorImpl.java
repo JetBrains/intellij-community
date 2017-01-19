@@ -108,6 +108,7 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.*;
 import java.awt.font.TextHitInfo;
+import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
@@ -1217,8 +1218,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.xyToVisualPosition(p);
   }
 
+  @Override
   @NotNull
-  Point offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
+  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+    return myView.xyToVisualPosition(p);
+  }
+
+  @NotNull
+  Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
     return myView.offsetToXY(offset, leanTowardsLargerOffsets, false);
   }
   
@@ -1279,6 +1286,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public Point visualPositionToXY(@NotNull VisualPosition visible) {
+    Point2D point2D = myView.visualPositionToXY(visible);
+    return new Point((int)point2D.getX(), (int)point2D.getY());
+  }
+
+  @Override
+  @NotNull
+  public Point2D visualPositionToPoint2D(@NotNull VisualPosition visible) {
     return myView.visualPositionToXY(visible);
   }
 

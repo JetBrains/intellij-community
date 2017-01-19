@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
@@ -140,7 +141,8 @@ class ImmediatePainter {
     final Font font1 = EditorUtil.fontForChar(c1, attributes1.getFontType(), editor).getFont();
     final Font font2 = EditorUtil.fontForChar(c1, attributes2.getFontType(), editor).getFont();
 
-    final Point p2 = editor.offsetToXY(offset, false);
+    final Point2D p2float = editor.offsetToXY(offset, false);
+    final Point p2 = new Point((int)p2float.getX(), (int)p2float.getY());
 
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
