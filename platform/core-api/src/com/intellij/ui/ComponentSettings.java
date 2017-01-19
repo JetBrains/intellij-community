@@ -52,27 +52,33 @@ public class ComponentSettings {
      NOTE: The implementation is a temporary, ad-hoc heuristics that is needed solely to
            facilitate testing of the experimental "true smooth scrolling" feature. */
   public boolean isInterpolationEligibleFor(JScrollBar scrollbar) {
-    Component[] components = getComponents((Window)scrollbar.getTopLevelAncestor());
+    Window window = (Window)scrollbar.getTopLevelAncestor();
+
+    if (window instanceof JDialog && "Commit Changes".equals(((JDialog)window).getTitle())) {
+      return false;
+    }
+
+    if (!(window instanceof RootPaneContainer)) {
+      return true;
+    }
+
+    Component[] components = ((RootPaneContainer)window).getContentPane().getComponents();
+
     if (components.length == 1 && components[0].getClass().getName().contains("DiffWindow")) {
       return false;
     }
+
     if (components.length == 2 && components[0] instanceof Container) {
       Component[] subComponents = ((Container)components[0]).getComponents();
-      if (subComponents.length == 1 && subComponents[0].getClass().getName().contains("MergeWindow")) {
-        return false;
+      if (subComponents.length == 1) {
+        String name = subComponents[0].getClass().getName();
+        if (name.contains("DiffWindow") || name.contains("MergeWindow")) {
+          return false;
+        }
       }
     }
-    return true;
-  }
 
-  private static Component[] getComponents(@Nullable Window window) {
-    if (window instanceof JFrame) {
-      return ((JFrame)window).getContentPane().getComponents();
-    }
-    if (window instanceof JDialog) {
-      return ((JDialog)window).getContentPane().getComponents();
-    }
-    return new Component[0];
+    return true;
   }
 
   public void setSmoothScrollingEnabled(boolean enabled) {
