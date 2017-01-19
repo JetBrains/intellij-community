@@ -100,7 +100,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       myWorkingCopiesList.setSelectedIndex(0);
     }
 
-    SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
+    SvnConfiguration svnConfig = myVcs.getSvnConfiguration();
     myDryRunCheckbox.setSelected(svnConfig.isMergeDryRun());
     myIgnoreWhitespacesCheckBox.setSelected(svnConfig.isIgnoreSpacesInMerge());
 
@@ -226,7 +226,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   public void saveOptions() {
-    SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
+    SvnConfiguration svnConfig = myVcs.getSvnConfiguration();
     svnConfig.setMergeDryRun(myDryRunCheckbox.isSelected());
     svnConfig.setIgnoreSpacesInMerge(myIgnoreWhitespacesCheckBox.isSelected());
   }

@@ -118,12 +118,12 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return myFirstRevisionNumber;
   }
 
-  public BaseSvnFileAnnotation(final SvnVcs vcs, final String contents, final VcsRevisionNumber baseRevision) {
+  public BaseSvnFileAnnotation(@NotNull SvnVcs vcs, final String contents, final VcsRevisionNumber baseRevision) {
     super(vcs.getProject());
     myVcs = vcs;
     myContents = contents;
     myBaseRevision = baseRevision;
-    myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
+    myConfiguration = vcs.getSvnConfiguration();
     myShowMergeSources = myConfiguration.isShowMergeSourcesInAnnotate();
 
     myInfos = new MyPartiallyCreatedInfos();

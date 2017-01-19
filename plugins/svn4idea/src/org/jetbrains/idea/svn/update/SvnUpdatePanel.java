@@ -51,7 +51,7 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
     myDepthLabel.setVisible(descend);
     myDepthLabel.setLabelFor(myDepthCombo);
 
-    final SvnConfiguration svnConfiguration = SvnConfiguration.getInstance(myVCS.getProject());
+    SvnConfiguration svnConfiguration = myVCS.getSvnConfiguration();
     myLockOnDemand.setSelected(svnConfiguration.isUpdateLockOnDemand());
     myLockOnDemand.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
