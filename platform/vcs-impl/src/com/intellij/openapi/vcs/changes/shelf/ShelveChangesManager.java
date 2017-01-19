@@ -69,7 +69,9 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.openapi.components.StoragePathMacros.PROJECT_CONFIG_DIR;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static java.io.File.separator;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
@@ -88,6 +90,18 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private static final String SHELVE_MANAGER_DIR_PATH = "shelf";
+
+  /**
+   * Should work for Default project, don't use as a real path; (un)wrap deprecated PROJECT_CONFIG_DIR manually if needed
+   *
+   * @return presentation string for default shelf directory a.e. <Project>/.idea/shelf
+   */
+  @NotNull
+  public static String getDefaultShelfPresentationPath(@NotNull Project project) {
+    //noinspection deprecation
+    return (project.isDefault() ? PROJECT_CONFIG_DIR : project.getBasePath()) + separator + SHELVE_MANAGER_DIR_PATH;
+  }
+
   private final MessageBus myBus;
 
   @NonNls private static final String ATTRIBUTE_SHOW_RECYCLED = "show_recycled";

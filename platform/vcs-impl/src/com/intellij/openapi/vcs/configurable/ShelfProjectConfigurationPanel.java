@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
@@ -27,43 +29,68 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.GridBagConstraints;
 
 import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
+import static java.awt.GridBagConstraints.*;
 
 public class ShelfProjectConfigurationPanel extends JPanel {
   @NotNull private final VcsConfiguration myVcsConfiguration;
+  private final String myDefaultPresentationPathString;
+  @NotNull private JBCheckBox myUseCustomShelfDirectory;
   @NotNull private TextFieldWithBrowseButton myShelfDirectoryPath;
-  @NotNull private final JBCheckBox myBaseRevisionTexts;
-  private JBCheckBox myUseCustomShelfDirectory;
+  @NotNull private final JCheckBox myBaseRevisionTexts;
+  private JComponent myCustomShelfDirectoryPanel;
 
-  public ShelfProjectConfigurationPanel(Project project) {
-    super(new GridBagLayout());
+  public ShelfProjectConfigurationPanel(@NotNull Project project) {
+    super(new BorderLayout());
     myVcsConfiguration = VcsConfiguration.getInstance(project);
     myUseCustomShelfDirectory = new JBCheckBox("Use custom shelf storage directory");
-    myBaseRevisionTexts = new JBCheckBox(VcsBundle.message("vcs.shelf.store.base.content"), myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
+    myShelfDirectoryPath = new TextFieldWithBrowseButton();
+    myCustomShelfDirectoryPanel = createCustomShelfDirectoryPanel();
+    myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
+    myDefaultPresentationPathString = ShelveChangesManager.getDefaultShelfPresentationPath(project);
+    initComponents();
     layoutComponents();
   }
 
+  private void initComponents() {
+    myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
+    myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
+    myUseCustomShelfDirectory.addActionListener(e -> {
+      boolean useCustomDir = myUseCustomShelfDirectory.isSelected();
+      myCustomShelfDirectoryPanel.setEnabled(useCustomDir);
+      if (useCustomDir) {
+        IdeFocusManager.findInstance().requestFocus(myShelfDirectoryPath, true);
+      }
+      else {
+        myShelfDirectoryPath.setText(myDefaultPresentationPathString);
+      }
+    });
+  }
+
   void layoutComponents() {
-    final GridBagConstraints gb = new GridBagConstraints();
-    myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    gb.fill = GridBagConstraints.HORIZONTAL;
+    JPanel contentPanel = new JPanel(new GridBagLayout());
+    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, NORTHWEST, NONE,
+                                                         JBUI.insets(0), 0, 0);
+    contentPanel.add(myUseCustomShelfDirectory, gb);
     gb.gridy++;
-    add(createCustomShelfDirectoryPanel(), gb);
+    gb.fill = HORIZONTAL;
+    contentPanel.add(myCustomShelfDirectoryPanel, gb);
     gb.gridy++;
-    add(createStoreBaseRevisionOption(), gb);
+    gb.fill = NONE;
+    contentPanel.add(createStoreBaseRevisionOption(), gb);
+    add(contentPanel, BorderLayout.NORTH);
   }
 
   private JComponent createCustomShelfDirectoryPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myUseCustomShelfDirectory, BorderLayout.NORTH);
     JPanel pathPanel = new JPanel(new BorderLayout());
-    JLabel pathLabel = new JBLabel("Path to shelf directory:");
-    pathLabel.setLabelFor(myShelfDirectoryPath);
-    pathPanel.add(pathLabel, BorderLayout.WEST);
+    JBLabel label = new JBLabel("Shelf directory:");
+    label.setLabelFor(myShelfDirectoryPath);
+    label.setBorder(JBUI.Borders.emptyLeft(25));
+    pathPanel.add(label, BorderLayout.WEST);
     pathPanel.add(myShelfDirectoryPath, BorderLayout.CENTER);
-    panel.add(pathPanel, BorderLayout.SOUTH);
-    return panel;
+    return pathPanel;
   }
 
   private JComponent createStoreBaseRevisionOption() {
@@ -80,10 +107,13 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   }
 
   public boolean isModified() {
+    if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
+    if (myVcsConfiguration.USE_CUSTOM_SHELF_PATH != myUseCustomShelfDirectory.isSelected()) return true;
     return false;
   }
 
   public void apply() {
-
+    myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
+    myVcsConfiguration.USE_CUSTOM_SHELF_PATH = myUseCustomShelfDirectory.isSelected();
   }
 }
