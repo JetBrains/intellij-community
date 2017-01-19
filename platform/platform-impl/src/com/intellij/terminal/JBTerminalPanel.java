@@ -17,9 +17,8 @@
 /* -*-mode:java; c-basic-offset:2; -*- */
 
 
-package org.jetbrains.plugins.terminal;
+package com.intellij.terminal;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
@@ -32,6 +31,7 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
@@ -90,24 +90,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "Switcher"
   };
 
-  private final JBTerminalSystemSettingsProvider mySettingsProvider;
+  private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
 
   private List<AnAction> myActionsToSkip;
 
-  public JBTerminalPanel(@NotNull JBTerminalSystemSettingsProvider settingsProvider,
+  public JBTerminalPanel(@NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                          @NotNull TerminalTextBuffer backBuffer,
                          @NotNull StyleState styleState) {
     super(settingsProvider, backBuffer, styleState);
 
     mySettingsProvider = settingsProvider;
-
-    JBTabbedTerminalWidget.convertActions(this, getActions(), new Predicate<KeyEvent>() {
-      @Override
-      public boolean apply(KeyEvent input) {
-        JBTerminalPanel.this.handleKeyEvent(input);
-        return true;
-      }
-    });
 
     registerKeymapActions(this);
 
@@ -255,7 +247,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   private void installKeyDispatcher() {
-    if (TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts()) {
+    if (mySettingsProvider.overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
       IdeEventQueue.getInstance().addDispatcher(this, this);
     }
@@ -283,7 +275,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       IdeEventQueue.getInstance().removeDispatcher(this);
     }
 
-    JBTerminalStarter.refreshAfterExecution();
+    refreshAfterExecution();
   }
 
   @Override
@@ -306,6 +298,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   public void dispose() {
     super.dispose();
     mySettingsProvider.removeListener(this);
+  }
+
+  public static void refreshAfterExecution() {
+    if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+      //we need to refresh local file system after a command has been executed in the terminal
+      LocalFileSystem.getInstance().refresh(true);
+    }
   }
 }
 

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
@@ -20,6 +35,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
+import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.docking.DockManager;
@@ -48,11 +65,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable {
 
   private Project myProject;
-  private final JBTerminalSystemSettingsProvider mySettingsProvider;
+  private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private Disposable myParent;
 
   public JBTabbedTerminalWidget(@NotNull Project project,
-                                @NotNull JBTerminalSystemSettingsProvider settingsProvider,
+                                @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                                 final @NotNull Predicate<Pair<TerminalWidget, String>> createNewSessionAction, @NotNull Disposable parent) {
     super(settingsProvider, new Predicate<TerminalWidget>() {
       @Override
@@ -71,22 +88,22 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     Disposer.register(this, settingsProvider);
 
     DnDSupport.createBuilder(this).setDropHandler(new DnDDropHandler() {
-      @Override
-      public void drop(DnDEvent event) {
-        if (event.getAttachedObject() instanceof TransferableWrapper) {
-          TransferableWrapper ao = (TransferableWrapper)event.getAttachedObject();
-          if (ao != null &&
-              ao.getPsiElements() != null &&
-              ao.getPsiElements().length == 1 &&
-              ao.getPsiElements()[0] instanceof PsiFileSystemItem) {
-            PsiFileSystemItem element = (PsiFileSystemItem)ao.getPsiElements()[0];
-            PsiDirectory dir = element instanceof PsiFile ? ((PsiFile)element).getContainingDirectory() : (PsiDirectory)element;
+                                                    @Override
+                                                    public void drop(DnDEvent event) {
+                                                      if (event.getAttachedObject() instanceof TransferableWrapper) {
+                                                        TransferableWrapper ao = (TransferableWrapper)event.getAttachedObject();
+                                                        if (ao != null &&
+                                                            ao.getPsiElements() != null &&
+                                                            ao.getPsiElements().length == 1 &&
+                                                            ao.getPsiElements()[0] instanceof PsiFileSystemItem) {
+                                                          PsiFileSystemItem element = (PsiFileSystemItem)ao.getPsiElements()[0];
+                                                          PsiDirectory dir = element instanceof PsiFile ? ((PsiFile)element).getContainingDirectory() : (PsiDirectory)element;
 
-            createNewSessionAction.apply(Pair.<TerminalWidget, String>create(JBTabbedTerminalWidget.this, dir.getVirtualFile().getPath()));
-          }
-        }
-      }
-    }
+                                                          createNewSessionAction.apply(Pair.<TerminalWidget, String>create(JBTabbedTerminalWidget.this, dir.getVirtualFile().getPath()));
+                                                        }
+                                                      }
+                                                    }
+                                                  }
 
     ).install();
   }
@@ -120,7 +137,17 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
   @Override
   protected JediTermWidget createInnerTerminalWidget(TabbedSettingsProvider settingsProvider) {
-    return new JBTerminalWidget(myProject, mySettingsProvider, myParent);
+    JBTerminalWidget widget = new JBTerminalWidget(myProject, mySettingsProvider, myParent);
+    convertActions(widget, widget.getActions());
+    convertActions(widget.getTerminalPanel(), widget.getTerminalPanel().getActions(), new Predicate<KeyEvent>() {
+      @Override
+      public boolean apply(KeyEvent input) {
+        widget.getTerminalPanel().handleKeyEvent(input);
+        return true;
+      }
+    });
+
+    return widget;
   }
 
   @Override
@@ -180,12 +207,12 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
     @Override
     public int indexOfComponent(Component component) {
-      for (int i = 0; i<myTabs.getTabCount(); i++) {
+      for (int i = 0; i < myTabs.getTabCount(); i++) {
         if (component.equals(myTabs.getTabAt(i).getComponent())) {
           return i;
         }
       }
-      
+
       return -1;
     }
 
