@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -35,7 +36,11 @@ import javax.swing.*;
 import static java.lang.String.valueOf;
 
 public class ToggleDistractionFreeModeAction extends DumbAwareAction {
+  private static final String TEXT_ENTER_PRESENTATION_MODE = ActionsBundle.message("action.ToggleDistractionFreeMode.text.enter");
+  private static final String TEXT_EXIT_PRESENTATION_MODE = ActionsBundle.message("action.ToggleDistractionFreeMode.text.exit");
   private static final String key = "editor.distraction.free.mode";
+  private static final String before = "BEFORE.DISTRACTION.MODE.";
+  private static final String after = "AFTER.DISTRACTION.MODE.";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -45,7 +50,7 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     }
     RegistryValue value = Registry.get(key);
     boolean selected = value.asBoolean();
-    e.getPresentation().setText((selected ? "Exit" : "Enter") + " Distraction Free Mode");
+    e.getPresentation().setText(selected ? TEXT_EXIT_PRESENTATION_MODE : TEXT_ENTER_PRESENTATION_MODE);
   }
 
   @Override
@@ -61,8 +66,6 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     EditorSettingsExternalizable.OptionSet eo = EditorSettingsExternalizable.getInstance().getOptions();
     DaemonCodeAnalyzerSettings ds = DaemonCodeAnalyzerSettings.getInstance();
 
-    String before = "BEFORE.DISTRACTION.MODE.";
-    String after = "AFTER.DISTRACTION.MODE.";
     if (enter) {
       applyAndSave(p, ui, eo, ds, before, after, false);
       TogglePresentationModeAction.storeToolWindows(project);
