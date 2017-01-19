@@ -27,7 +27,7 @@ import java.awt.event.MouseWheelEvent;
  * an <a href="https://github.com/JetBrains/jdk8u_jdk/commit/a3cb8807b148879e9c70a74a8a16c30a28991581">implementation</a> for Mac OS X).
  */
 class MouseWheelEventEx {
-  private static final MethodInvocator ourGetScrollingDeltaMethod = new MethodInvocator(MouseWheelEvent.class, "getScrollingDelta");
+  private static final MethodInvocator ourGetScrollingDeltaMethod = new MethodInvocator(false, MouseWheelEvent.class, "getScrollingDelta");
 
   /**
    * Returns scrolling delta as an absolute value (if available).
