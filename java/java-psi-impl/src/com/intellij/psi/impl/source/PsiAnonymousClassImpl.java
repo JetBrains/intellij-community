@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
@@ -75,7 +76,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     PsiClassType type = SoftReference.dereference(myCachedBaseType);
     if (type != null) return type;
 
-    if (!isInQualifiedNew() && !isDiamond()) {
+    if (!isInQualifiedNew() && !isDiamond(stub)) {
       final String refText = stub.getBaseClassReferenceText();
       assert refText != null : stub;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
@@ -98,14 +99,11 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     }
   }
   
-  private boolean isDiamond() {
+  private boolean isDiamond(PsiClassStub stub) {
     if (PsiUtil.isLanguageLevel9OrHigher(this)) {
-      final PsiReferenceParameterList parameterList = getBaseClassReference().getParameterList();
-      if (parameterList != null) {
-        final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
-        if (parameterElements.length == 1) {
-          return parameterElements[0].getType() instanceof PsiDiamondType;
-        }
+      final String referenceText = stub.getBaseClassReferenceText();
+      if (referenceText != null && referenceText.endsWith(">")) {
+        return StringUtil.trimEnd(referenceText, ">").trim().endsWith("<");
       }
     }
     return false;
