@@ -8,10 +8,10 @@ void PrintUsage() {
 	printf("Usage: runnerw.exe <app> <args>\n");
 	printf("where <app> is an executable file and <args> are its arguments.\n");
 	printf("\n");
-	printf("Creates a child process with inherited input, output and error streams.\n");
-	printf("The input stream is processed using these rules:\n");
-	printf("  5 and 3 char sequence => a CTRL+BREAK signal is sent to the child process;\n");
-	printf("  5 and 5 char sequence => a CTRL+C signal is sent to the child process.\n");
+	printf("Creates a child process with inherited input, output, and error streams.\n");
+	printf("The input stream is scanned for the presence of the 2-char control sequences:\n");
+	printf("  ENQ(5) and ETX(3) => a CTRL+BREAK signal is sent to the child process;\n");
+	printf("  ENQ(5) and ENQ(5) => a CTRL+C signal is sent to the child process.\n");
 	printf("Also in case of system shutdown a CTRL+BREAK signal is sent to the child process.\n");
 
 	exit(0);
