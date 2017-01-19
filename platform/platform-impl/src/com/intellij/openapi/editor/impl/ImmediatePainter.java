@@ -167,7 +167,8 @@ class ImmediatePainter {
       fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      fillRect(graphics, caretRectangle, getCaretColor(editor));
+      graphics.setColor(getCaretColor(editor));
+      graphics.fillRect(caretRectangle.x, caretRectangle.y, caretRectangle.width, caretRectangle.height);
 
       fillRect(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
