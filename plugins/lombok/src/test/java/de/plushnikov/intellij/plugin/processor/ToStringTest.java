@@ -9,11 +9,19 @@ import java.io.IOException;
  */
 public class ToStringTest extends AbstractLombokParsingTestCase {
 
-  public void testToStringInner() throws IOException {
+  public void testTostring$ToStringInner() throws IOException {
     doTest();
   }
 
-  public void testToStringPlain() throws IOException {
+  public void testTostring$ToStringPlain() throws IOException {
+    doTest();
+  }
+
+  public void testTostring$ToStringExplicitEmptyOf() throws Exception {
+    doTest();
+  }
+
+  public void testTostring$ToStringExplicitOfAndExclude() throws Exception {
     doTest();
   }
 }

@@ -72,6 +72,10 @@ public class PsiAnnotationUtil {
     return result;
   }
 
+  public static boolean hasDeclaredProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+    return null != psiAnnotation.findDeclaredAttributeValue(parameter);
+  }
+
   public static boolean getBooleanAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, boolean defaultValue) {
     PsiAnnotationMemberValue attrValue = psiAnnotation.findAttributeValue(parameter);
     final Boolean result = null != attrValue ? resolveElementValue(attrValue, Boolean.class) : null;
@@ -123,9 +127,12 @@ public class PsiAnnotationUtil {
 
   @Nullable
   public static Boolean getDeclaredBooleanAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiAnnotation.getProject());
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
-    Object constValue = javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(attributeValue);
+    Object constValue = null;
+    if (null != attributeValue) {
+      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiAnnotation.getProject());
+      constValue = javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(attributeValue);
+    }
     return constValue instanceof Boolean ? (Boolean) constValue : null;
   }
 

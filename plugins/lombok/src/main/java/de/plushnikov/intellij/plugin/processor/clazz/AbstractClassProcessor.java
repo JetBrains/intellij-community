@@ -141,8 +141,19 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   }
 
   protected Collection<PsiField> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean filterTransient) {
-    final Collection<String> excludeProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class));
-    final Collection<String> ofProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class));
+    final boolean explicitOf = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "of");
+    final boolean explicitExclude = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "exclude");
+
+    //Having both exclude and of generates a warning; the exclude parameter will be ignored in that case.
+    final Collection<String> ofProperty;
+    final Collection<String> excludeProperty;
+    if (!explicitOf) {
+      excludeProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class));
+      ofProperty = Collections.emptyList();
+    } else {
+      ofProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class));
+      excludeProperty = Collections.emptyList();
+    }
 
     final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
 
@@ -153,10 +164,13 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         continue;
       }
       final String fieldName = classField.getName();
-      if (null == fieldName || excludeProperty.contains(fieldName)) {
+      if (null == fieldName) {
         continue;
       }
-      if (!ofProperty.isEmpty() && !ofProperty.contains(fieldName)) {
+      if (explicitExclude && excludeProperty.contains(fieldName)) {
+        continue;
+      }
+      if (explicitOf && !ofProperty.contains(fieldName)) {
         continue;
       }
 

@@ -142,7 +142,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     Collection<PsiMethod> result = new ArrayList<PsiMethod>(3);
     result.add(createEqualsMethod(psiClass, psiAnnotation, shouldGenerateCanEqual));
-    result.add(createHashCodeMethod(psiClass, psiAnnotation, shouldGenerateCanEqual));
+    result.add(createHashCodeMethod(psiClass, psiAnnotation));
 
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (shouldGenerateCanEqual && !PsiMethodUtil.hasMethodByName(classMethods, CAN_EQUAL_METHOD_NAME)) {
@@ -193,7 +193,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   @NotNull
-  private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean hasCanEqualMethod) {
+  private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager psiManager = psiClass.getManager();
 
     return new LombokLightMethodBuilder(psiManager, HASH_CODE_METHOD_NAME)
