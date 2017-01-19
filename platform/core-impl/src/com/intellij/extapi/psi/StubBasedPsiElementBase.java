@@ -240,6 +240,13 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * Don't invoke this method, it's public for implementation reasons.
    */
+  public int getStubIndex() {
+    return myStubIndex;
+  }
+
+  /**
+   * Don't invoke this method, it's public for implementation reasons.
+   */
   @NotNull
   public final SubstrateRef getSubstrateRef() {
     return mySubstrateRef;
